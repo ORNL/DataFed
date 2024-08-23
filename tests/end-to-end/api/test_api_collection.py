@@ -11,15 +11,16 @@ import unittest
 # 1. Login
 # 2. Repo
 # 3. Allocation
-# 4. Collection
 
 
-class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
+class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
     def setUp(self):
         path_of_file = os.path.abspath(__file__)
         current_folder = os.path.dirname(path_of_file)
         path_to_python_datafed_module = os.path.normpath(
             current_folder
+            + os.sep
+            + ".."
             + os.sep
             + ".."
             + os.sep
@@ -89,6 +90,7 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
         self._repo_form["admins"] = ["u/" + self._username]
 
         # Create the repositories
+        print("Creating repo")
         result = self._df_api.repoCreate(
             repo_id=self._repo_form["id"],
             title=self._repo_form["title"],
@@ -136,9 +138,9 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
             if count > 2:
                 print(task_result)
                 self.fail(
-                    "Something went wrong task was unable to complete, attempt "
-                    "to create an allocation after 3 seconds failed, make sure "
-                    "all services are running."
+                    "Something went wrong task was unable to complete, attempt"
+                    " to create an allocation after 3 seconds failed, make "
+                    "sure all services are running."
                 )
                 break
             time.sleep(1)
@@ -146,81 +148,90 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
             status = task_result[0].task[0].status
             count = count + 1
 
-    def test_record_create_delete(self):
-        parameters = {
-            "testing_tempareture": 900000,
-            "voltage": [1, 2, -4, 7.123],
-            "creator": "Lex Luther",
-            "occupation": "super villan",
-            "equipment_serial_numbers": {"SEM": 14, "AFM": 9134},
-        }
+    def test_collection_create_delete(self):
+        # collectionItemsList in "root" of context
+        list_response = self._df_api.collectionItemsList("root")
+        self.assertEqual(list_response[0].total, 0)
 
-        title = "Kryptonite"
-        alias = "krpytonite"
-        data_result = self._df_api.dataCreate(
-            title=title,
-            alias=alias,
-            metadata=json.dumps(parameters),
-            tags=["material"],
-            parent_id="root",
+        title = "Materials"
+        alias = "materials"
+        col_result = self._df_api.collectionCreate(
+            title=title, alias=alias, parent_id="root"
+        )
+        col_id = col_result[0].coll[0].id
+        print(col_result)
+
+        self.assertEqual(col_result[0].coll[0].owner, f"u/{self._username}")
+        self.assertEqual(col_result[0].coll[0].creator, f"u/{self._username}")
+        self.assertEqual(col_result[0].coll[0].title, title)
+        self.assertEqual(col_result[0].coll[0].alias, alias)
+
+        # collectionItemsList in "root" of context
+        list_response = self._df_api.collectionItemsList("root")
+        self.assertEqual(list_response[0].total, 1)
+
+        # Get parents of the new collection should be the root collection
+        result_parent = self._df_api.collectionGetParents(alias)
+        self.assertEqual(
+            result_parent[0].path[0].item[0].id, f"c/u_{self._username}_root"
         )
 
-        self.assertEqual(data_result[0].data[0].title, title)
-        self.assertEqual(data_result[0].data[0].alias, alias)
-        data_id = data_result[0].data[0].id
+        # Use Alias
+        col_response = self._df_api.collectionView(alias)
 
-        new_alias = "wonder_material"
-        data_result_update = self._df_api.dataUpdate(data_id, alias=new_alias)
-        self.assertEqual(data_result_update[0].update[0].alias, new_alias)
+        self.assertEqual(col_response[0].coll[0].owner, f"u/{self._username}")
+        self.assertEqual(col_response[0].coll[0].creator, f"u/{self._username}")
+        self.assertEqual(col_response[0].coll[0].title, title)
+        self.assertEqual(col_response[0].coll[0].alias, alias)
+        self.assertEqual(col_response[0].coll[0].id, col_id)
 
-        # May not work depending on traffic
-        esnet_uuid = "ece400da-0182-4777-91d6-27a1808f8371"
+        # Use ID
+        col_response = self._df_api.collectionView(col_result[0].coll[0].id)
 
-        put_task = self._df_api.dataPut(new_alias, esnet_uuid + "/1M.dat")
+        self.assertEqual(col_response[0].coll[0].owner, f"u/{self._username}")
+        self.assertEqual(col_response[0].coll[0].creator, f"u/{self._username}")
+        self.assertEqual(col_response[0].coll[0].title, title)
+        self.assertEqual(col_response[0].coll[0].alias, alias)
+        self.assertEqual(col_response[0].coll[0].id, col_id)
 
-        task_id = put_task[0].task.id
+        new_title = "Material(s)"
+        col_response = self._df_api.collectionUpdate(col_id, title=new_title)
+        self.assertEqual(col_response[0].coll[0].owner, f"u/{self._username}")
+        self.assertEqual(col_response[0].coll[0].creator, f"u/{self._username}")
+        self.assertEqual(col_response[0].coll[0].title, new_title)
+        self.assertEqual(col_response[0].coll[0].alias, alias)
+        self.assertEqual(col_response[0].coll[0].id, col_id)
 
+        # Collection Delete
+        task_response = self._df_api.collectionDelete(col_id)
+
+        task_id = task_response[0].task[0].id
+
+        # Check the status of the task
         task_result = self._df_api.taskView(task_id)
 
         # If status is less than 3 it is in the works
         status = task_result[0].task[0].status
         count = 0
         while status < 3:
-            if count > 30:
-                break
-            time.sleep(4)
-            task_result = self._df_api.taskView(task_id)
-            print("task Result **************")
-            print(task_result)
-            status = task_result[0].task[0].status
-            count = count + 1
-
-        # if status < 3:
-        #    data_put_esnet_pass = True
-
-        print(f"Status is {status}")
-        assert status == 3
-        print(task_result)
-        print(f"Status is {status}")
-
-        task_result = self._df_api.dataDelete(data_id)
-
-        status = task_result[0].task[0].status
-        count = 0
-        while status < 3:
-            if count > 20:
+            if count > 2:
+                print(task_result)
+                self.fail(
+                    "Something went wrong task was unable to complete, "
+                    "attempt to delete a colleciton after 3 seconds failed, "
+                    "make sure all services are running."
+                )
                 break
             time.sleep(1)
             task_result = self._df_api.taskView(task_id)
             status = task_result[0].task[0].status
             count = count + 1
 
-        assert status == 3
-        # if not data_put_esnet_pass:
-        # Try data from a different location
+        # collectionItemsList in "root" of context
+        list_response = self._df_api.collectionItemsList("root")
+        self.assertEqual(list_response[0].total, 0)
 
     def tearDown(self):
-
         result = self._df_api.repoAllocationDelete(
             repo_id=self._repo_id, subject="datafed89"
         )
@@ -237,9 +248,9 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
             if count > 2:
                 print(task_result)
                 self.fail(
-                    "Something went wrong task was unable to complete, attempt"
-                    " to delete an allocation after 3 seconds failed, make sure"
-                    " all services are running."
+                    "Something went wrong task was unable to complete, "
+                    "attempt to delete an allocation after 3 seconds failed,"
+                    " make sure all services are running."
                 )
                 break
             time.sleep(1)
@@ -255,12 +266,13 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
             repo_id = "repo/" + repo_id
         result = self._df_api.repoDelete(repo_id)
         result = self._df_api.repoList(list_all=True)
+        self.assertEqual(len(result[0].repo), 0)
 
 
 if __name__ == "__main__":
     suite = unittest.TestSuite()
     # Add them in the order they should be executed
-    suite.addTest(TestDataFedPythonAPIRecordCRUD("test_record_create_delete"))
+    suite.addTest(TestDataFedPythonAPICollectionCRUD("test_collection_create_delete"))
     runner = unittest.TextTestRunner()
     result = runner.run(suite)
     # wasSuccessful() return True which is not 0

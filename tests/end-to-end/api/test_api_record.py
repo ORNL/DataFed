@@ -7,14 +7,21 @@ import sys
 import time
 import unittest
 
+# Depends on the success of the following tests
+# 1. Login
+# 2. Repo
+# 3. Allocation
+# 4. Collection
 
-# These tests should only be run after the repo tests have been validated
-class TestDataFedPythonAPIRepoAlloc(unittest.TestCase):
+
+class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
     def setUp(self):
         path_of_file = os.path.abspath(__file__)
         current_folder = os.path.dirname(path_of_file)
         path_to_python_datafed_module = os.path.normpath(
             current_folder
+            + os.sep
+            + ".."
             + os.sep
             + ".."
             + os.sep
@@ -45,13 +52,13 @@ class TestDataFedPythonAPIRepoAlloc(unittest.TestCase):
 
         self._df_api = API(opts)
 
-        username = "datafed89"
+        self._username = "datafed89"
         password = os.environ.get("DATAFED_USER89_PASSWORD")
 
         count = 0
         while True:
             try:
-                self._df_api.loginByPassword(username, password)
+                self._df_api.loginByPassword(self._username, password)
                 break
             except BaseException:
                 pass
@@ -81,10 +88,9 @@ class TestDataFedPythonAPIRepoAlloc(unittest.TestCase):
             )
             self._repo_form["exp_path"] = "/"
 
-        self._repo_form["admins"] = ["u/" + username]
+        self._repo_form["admins"] = ["u/" + self._username]
 
         # Create the repositories
-        print("Creating repository")
         result = self._df_api.repoCreate(
             repo_id=self._repo_form["id"],
             title=self._repo_form["title"],
@@ -98,7 +104,6 @@ class TestDataFedPythonAPIRepoAlloc(unittest.TestCase):
             exp_path=self._repo_form["exp_path"],
             admins=self._repo_form["admins"],
         )
-        print(result)
 
         result = self._df_api.repoList(list_all=True)
         count = 0
@@ -109,30 +114,21 @@ class TestDataFedPythonAPIRepoAlloc(unittest.TestCase):
             if count > 3:
                 self.fail("Setup failed with repo create")
 
-        print("\nDoes repo exist!\n")
-        print(result)
-
-    def test_repo_alloc_list_create_delete(self):
-        repo_id = self._repo_form["id"]
-        if not repo_id.startswith("repo/"):
-            repo_id = "repo/" + repo_id
-
-        result = self._df_api.repoListAllocations(repo_id)
-
-        print("Allocations")
-        print(result)
-        self.assertEqual(len(result[0].alloc), 0)
+        self._repo_id = self._repo_form["id"]
+        if not self._repo_id.startswith("repo/"):
+            self._repo_id = "repo/" + self._repo_id
 
         # Will return a task
-        print("Calling repoAllocationCreate")
         result = self._df_api.repoAllocationCreate(
-            repo_id=repo_id, subject="datafed89", data_limit=1000000000, rec_limit=100
+            repo_id=self._repo_id,
+            subject="datafed89",
+            data_limit=1000000000,
+            rec_limit=100,
         )
 
         task_id = result[0].task[0].id
 
         # Check the status of the task
-        print("Calling taskView")
         task_result = self._df_api.taskView(task_id)
 
         # If status is less than 3 it is in the works
@@ -142,26 +138,94 @@ class TestDataFedPythonAPIRepoAlloc(unittest.TestCase):
             if count > 2:
                 print(task_result)
                 self.fail(
-                    "Something went wrong task was unable to complete, attempt"
-                    " to create an allocation after 3 seconds failed, make sure"
-                    " all services are running."
+                    "Something went wrong task was unable to complete, attempt "
+                    "to create an allocation after 3 seconds failed, make sure "
+                    "all services are running."
                 )
                 break
             time.sleep(1)
-            print("Calling taskView")
             task_result = self._df_api.taskView(task_id)
             status = task_result[0].task[0].status
             count = count + 1
 
-        result = self._df_api.repoListAllocations(repo_id)
+    def test_record_create_delete(self):
+        parameters = {
+            "testing_tempareture": 900000,
+            "voltage": [1, 2, -4, 7.123],
+            "creator": "Lex Luther",
+            "occupation": "super villan",
+            "equipment_serial_numbers": {"SEM": 14, "AFM": 9134},
+        }
 
-        print("Allocations")
-        print(result)
-        self.assertEqual(len(result[0].alloc), 1)
+        title = "Kryptonite"
+        alias = "krpytonite"
+        data_result = self._df_api.dataCreate(
+            title=title,
+            alias=alias,
+            metadata=json.dumps(parameters),
+            tags=["material"],
+            parent_id="root",
+        )
 
-        self.assertEqual(status, 3)
+        self.assertEqual(data_result[0].data[0].title, title)
+        self.assertEqual(data_result[0].data[0].alias, alias)
+        data_id = data_result[0].data[0].id
 
-        result = self._df_api.repoAllocationDelete(repo_id=repo_id, subject="datafed89")
+        new_alias = "wonder_material"
+        data_result_update = self._df_api.dataUpdate(data_id, alias=new_alias)
+        self.assertEqual(data_result_update[0].update[0].alias, new_alias)
+
+        # May not work depending on traffic
+        esnet_uuid = "ece400da-0182-4777-91d6-27a1808f8371"
+
+        put_task = self._df_api.dataPut(new_alias, esnet_uuid + "/1M.dat")
+
+        task_id = put_task[0].task.id
+
+        task_result = self._df_api.taskView(task_id)
+
+        # If status is less than 3 it is in the works
+        status = task_result[0].task[0].status
+        count = 0
+        while status < 3:
+            if count > 30:
+                break
+            time.sleep(4)
+            task_result = self._df_api.taskView(task_id)
+            print("task Result **************")
+            print(task_result)
+            status = task_result[0].task[0].status
+            count = count + 1
+
+        # if status < 3:
+        #    data_put_esnet_pass = True
+
+        print(f"Status is {status}")
+        assert status == 3
+        print(task_result)
+        print(f"Status is {status}")
+
+        task_result = self._df_api.dataDelete(data_id)
+
+        status = task_result[0].task[0].status
+        count = 0
+        while status < 3:
+            if count > 20:
+                break
+            time.sleep(1)
+            task_result = self._df_api.taskView(task_id)
+            status = task_result[0].task[0].status
+            count = count + 1
+
+        assert status == 3
+        # if not data_put_esnet_pass:
+        # Try data from a different location
+
+    def tearDown(self):
+
+        result = self._df_api.repoAllocationDelete(
+            repo_id=self._repo_id, subject="datafed89"
+        )
 
         task_id = result[0].task[0].id
 
@@ -176,8 +240,8 @@ class TestDataFedPythonAPIRepoAlloc(unittest.TestCase):
                 print(task_result)
                 self.fail(
                     "Something went wrong task was unable to complete, attempt"
-                    " to delete an allocation after 3 seconds failed, make "
-                    "sure all services are running."
+                    " to delete an allocation after 3 seconds failed, make sure"
+                    " all services are running."
                 )
                 break
             time.sleep(1)
@@ -187,35 +251,18 @@ class TestDataFedPythonAPIRepoAlloc(unittest.TestCase):
 
         print("Delete Allocations")
         print(result)
-        self.assertEqual(status, 3)
 
-    def tearDown(self):
-        # Check all tasks
-        result = self._df_api.taskList(status="queued")
-        print("Queued tasks")
-        print(result)
-        result = self._df_api.taskList(status="ready")
-        print("Ready tasks")
-        print(result)
-        result = self._df_api.taskList(status="running")
-        print("Running tasks")
-        print(result)
-
-        print("Running Tear Down")
         repo_id = self._repo_form["id"]
         if not repo_id.startswith("repo/"):
             repo_id = "repo/" + repo_id
-
-        print("Deleting Repo")
         result = self._df_api.repoDelete(repo_id)
         result = self._df_api.repoList(list_all=True)
-        self.assertEqual(len(result[0].repo), 0)
 
 
 if __name__ == "__main__":
     suite = unittest.TestSuite()
     # Add them in the order they should be executed
-    suite.addTest(TestDataFedPythonAPIRepoAlloc("test_repo_alloc_list_create_delete"))
+    suite.addTest(TestDataFedPythonAPIRecordCRUD("test_record_create_delete"))
     runner = unittest.TextTestRunner()
     result = runner.run(suite)
     # wasSuccessful() return True which is not 0

@@ -1,6 +1,10 @@
 const { chromium } = require('playwright');
 const path = require('path');
 const process = require('process');
+const fs = require('fs');
+const raw = fs.readFileSync('./DataFed_config.json', 'utf-8');
+const rawJSON = JSON.parse(raw);
+const DataFedDomain = "https://" + rawJSON.domain;
 
 console.log("******Inside Setup file******");
 
@@ -18,7 +22,10 @@ module.exports = async function () {
     console.log("new page object created");
     
     // Go to the website and login through globus using a tester account
-    await page.goto('https://@DATAFED_DOMAIN@/ui/welcome');//TESTING
+    // if breaks here, check that DataFed_config.json is correct, if testing locally, use "localhost"
+    // if in CI, just let cmake generate the json file
+    await page.goto(DataFedDomain + '/ui/welcome');
+    await page.waitForTimeout(2000);
     if (await page.getByRole('button', { name: 'Log In / Register' }).isVisible()) {
         await page.getByRole('button', { name: 'Log In / Register' }).click();
         if (page.getByRole('link', { name: 'Globus globus' }).isVisible()) {
@@ -28,7 +35,7 @@ module.exports = async function () {
                 await page.getByLabel('Username @globusid.org').fill(process.env.DATAFED_WEB_TEST_USERNAME);
                 await page.getByLabel('Password').fill(process.env.DATAFED_WEB_TEST_PASSWORD);
                 await page.click('button[type="submit"]');
-                await page.waitForURL('https://@DATAFED_DOMAIN@/ui/main')
+                await page.waitForURL(DataFedDomain + '/ui/main')
                 console.log("******PAST LOGIN******");
                 await page.context().storageState({ path: './.auth/auth.json'}); //TESTING
                 console.log("******Done with login******");

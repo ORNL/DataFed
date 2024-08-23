@@ -17,6 +17,8 @@ class TestDataFedPythonAPILogin(unittest.TestCase):
             + os.sep
             + ".."
             + os.sep
+            + ".."
+            + os.sep
             + "python/datafed_pkg"
         )
         sys.path.insert(0, path_to_python_datafed_module)

@@ -5,6 +5,7 @@
 ## MINOR Feature
 1. [987] - This implements serialized GitLab CI pipelines
 2. [918] - Add admin script for making a user an admin
+3. [992] - Adds several web UI tests to existing login web test.
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 1. [984] - Fixes {server_default} from showing up in path.
@@ -12,6 +13,7 @@
 3. [988] - Removed non-working subscribe function.
 4. [958] - Addresses issues raised by static code analyzer.
 5. [962] - Adds script that will check that docker image is in registry
+6. [992] - Adds additional web tests to playwright.
 
 # v2024.6.17.10.40
 

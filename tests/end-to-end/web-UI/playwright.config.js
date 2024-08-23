@@ -1,5 +1,10 @@
 // @ts-check
 const { defineConfig, devices } = require('@playwright/test');
+const fs = require('fs');
+
+const raw = fs.readFileSync('./DataFed_config.json'); // sometimes vscode will give an error even after creating the DataFed_config.json file, ignore it.
+const rawJSON = JSON.parse(raw);
+const DataFedDomain = "https://" + rawJSON.domain;
 
 /**
  * @see https://playwright.dev/docs/test-configuration
@@ -9,6 +14,8 @@ module.exports = defineConfig({
   timeout: 30000,
 
   globalSetup: require.resolve('./auth.setup'),
+
+  globalTeardown: require.resolve('./auth.tearDown'),
 
   testDir: './scripts',
 
@@ -25,7 +32,7 @@ module.exports = defineConfig({
   workers: 1,
 
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'html',
+  // reporter: 'html',
 
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
@@ -37,7 +44,8 @@ module.exports = defineConfig({
     launchOptions: {
       args: ['--ignore-certificate-errors'],
     },
-    storageState: './.auth/auth.json'
+    storageState: './.auth/auth.json',
+    baseURL: DataFedDomain, //DOMAIN HERE make sure it's correct in the CI pipeline
   },
   
 

@@ -103,7 +103,7 @@ fi
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
-PROJECT_ROOT=$(realpath ${SOURCE}/../../)
+PROJECT_ROOT=$(realpath ${SOURCE}/../../../)
 source ${PROJECT_ROOT}/config/datafed.sh
 
 if [ -z "${FOXX_MAJOR_API_VERSION}" ]
