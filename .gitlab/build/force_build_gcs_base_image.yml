@@ -17,6 +17,6 @@ build-gcs-base:
     - source "scripts/dependency_versions.sh"
     - cd "external/globus-connect-server-deploy/docker"
     - git checkout "$DATAFED_GCS_SUBMODULE_VERSION"
-    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     - docker build --progress plain -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" - < "./docker-files/Dockerfile.ubuntu-20.04"
     - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"

@@ -38,7 +38,7 @@ end-to-end-foxx-setup:
     - mkdir foxx_tmp
     - ls -la foxx_tmp
     - if [ -f foxx_tmp/.foxx_is_installed ]; then rm foxx_tmp/.foxx_is_installed; fi
-    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     - ./scripts/container_stop.sh -n "foxx-" -p
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - echo "#!/bin/bash" > "${RUN_FILE}"
@@ -90,7 +90,7 @@ end-to-end-core-setup:
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
     - env > env_file
-    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     - ./scripts/container_stop.sh -n "core-" -p
     - ./scripts/ci_database_health_check.sh
     - cat $CI_DATAFED_CORE_PUB_KEY > /shared/keys/datafed-core-key.pub
@@ -145,7 +145,7 @@ end-to-end-ws-setup:
     - chmod o+w "${HOST_LOG_FILE_PATH}"
     - chown gitlab-runner "$HOST_LOG_FILE_PATH"
     - ./scripts/generate_datafed.sh
-    - docker login  "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+    - docker login  "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     - USER_ID=$(id -u)
     - GROUP_ID=$(id -g)
     - CORE_ADDRESS=$(hostname -I | awk '{print $1}')
@@ -196,12 +196,14 @@ end-to-end-repo-setup:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "$BRANCH_LOWER"
     - mkdir -p "$HOST_LOG_FILE_PATH"
-    - if [ ! -d "${DATAFED_HOST_COLLECTION_MOUNT}" ]; then mkdir -p "${DATAFED_HOST_COLLECTION_MOUNT}"; fi
+      # Clean out previous collection to be safe
+    - if [ -d "${DATAFED_HOST_COLLECTION_MOUNT}" ]; then rm -rf "${DATAFED_HOST_COLLECTION_MOUNT}"; fi
+    - mkdir -p "${DATAFED_HOST_COLLECTION_MOUNT}"
     - chmod o+w "${HOST_LOG_FILE_PATH}"
     - USER_ID=$(id -u)
     - chown gitlab-runner "$HOST_LOG_FILE_PATH"
     - ./scripts/generate_datafed.sh
-    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     - ./scripts/container_stop.sh -n "repo-" -p
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - cat $CI_DATAFED_CORE_PUB_KEY > /shared/datafed-repo-key.pub
@@ -263,7 +265,7 @@ end-to-end-gcs-authz-setup:
     - chmod o+w "${HOST_LOG_FILE_PATH}"
     - chown gitlab-runner "$HOST_LOG_FILE_PATH"
     - ./scripts/generate_datafed.sh
-    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     - ./scripts/container_stop.sh -n "gcs-authz" -p
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - cat $CI_DATAFED_CORE_PUB_KEY > /shared/datafed-repo-key.pub
