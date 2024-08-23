@@ -41,6 +41,12 @@ textarea
     resize: none;
 }
 
+select#matches
+{
+    background:#08090a!important;
+    resize: none;
+}
+
 /* text notice */
 .notice
 {
