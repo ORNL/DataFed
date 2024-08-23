@@ -26,5 +26,11 @@ build-core:
         - .gitlab-ci.yml
       when: on_success
 
-placeholder:
-  extends: .placeholder
+retag-image:
+  extends: .docker_retag_image
+  stage: build
+  variables:
+    IMAGE_TAG: "datafed/core"
+    GIT_STRATEGY: clone
+  tags:
+    - docker

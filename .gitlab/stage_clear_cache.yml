@@ -5,7 +5,7 @@
 # Used to clear out the cache on VMs where the images are being built
 .clear_cache:
   script:
-    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
+    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     - if [[ $(docker ps -q | wc -l) != "0" ]]; then docker stop $(docker ps -q); fi;
     - docker system prune -f
     - ./scripts/ci_purge_images.sh

@@ -12,6 +12,7 @@
 2. [990] - Will stop running containers so that we can prune them.
 3. [988] - Removed non-working subscribe function.
 4. [958] - Addresses issues raised by static code analyzer.
+5. [962] - Adds script that will check that docker image is in registry
 
 # v2024.6.17.10.40
 
