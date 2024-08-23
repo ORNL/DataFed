@@ -56,7 +56,7 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
         count = 0
         while True:
             try:
-                result = self._df_api.loginByPassword(self._username, password)
+                self._df_api.loginByPassword(self._username, password)
                 break
             except BaseException:
                 pass
@@ -64,8 +64,6 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
             # Try three times to authenticate
             assert count < 3
 
-        print("\nAttempt to login result\n")
-        print(result)
         path_to_repo_form = os.environ.get("DATAFED_REPO_FORM_PATH")
         if path_to_repo_form is None:
             self.fail("DATAFED_REPO_FORM_PATH env variable is not defined")
