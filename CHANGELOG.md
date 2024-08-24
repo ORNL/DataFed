@@ -49,6 +49,7 @@
 17. [983] - Fixes google analytics by adding nonce which was broken.
 18. [995] - Fixes issue with project and user folders in repo being created under root user permissions.
 19. [994] - Fixes issue with spaces not being preserved in shell scripts from docker compose .env file.
+20. [] - Fixes bug in lego install script where function name had additional s
 
 # v2023.10.23.15.50
 
