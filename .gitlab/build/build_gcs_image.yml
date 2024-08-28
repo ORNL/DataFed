@@ -1,0 +1,36 @@
+---
+stages:
+  - build
+
+include:
+  - local: .gitlab/common.yml
+
+build-gcs:
+  stage: build
+  variables:
+    IMAGE_TAG: "datafed/gcs"
+    GIT_STRATEGY: clone
+  tags:
+    - ci-datafed-globus
+    - docker
+  rules:
+    - changes:
+        - docker/**/*
+        - scripts/**/*
+        - common/**/*
+        - .gitlab-ci.yml
+        - CMakeLists.txt
+        - cmake/**/*
+        - repository/docker/entrypoint_authz.sh
+        - repository/docker/Dockerfile.gcs
+      when: on_success
+  script:
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    - echo "$BRANCH_LOWER"
+    - ./scripts/generate_datafed.sh
+    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
+    - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" --build-arg GCS_IMAGE="${REGISTRY}/datafed/gcs-base-${BRANCH_LOWER}:latest" -f repository/docker/Dockerfile.gcs -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
+
+placeholder:
+  extends: .placeholder

@@ -1,0 +1,23 @@
+---
+include:
+  - local: .gitlab/common.yml
+
+build-dependencies:
+  extends: .docker_base_build_script
+  stage: build-base
+  variables:
+    IMAGE_TAG: "datafed/dependencies"
+    GIT_STRATEGY: clone
+    DOCKER_FILE_PATH: "docker/Dockerfile.dependencies"
+  tags:
+    - docker
+
+build-runtime:
+  extends: .docker_base_build_script
+  stage: build-base
+  variables:
+    IMAGE_TAG: "datafed/runtime"
+    GIT_STRATEGY: clone
+    DOCKER_FILE_PATH: "docker/Dockerfile.runtime"
+  tags:
+    - docker

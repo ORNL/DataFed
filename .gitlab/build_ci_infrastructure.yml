@@ -1,3 +1,4 @@
+---
 stages:
   - build-infrastructure
 
@@ -7,5 +8,3 @@ build-infrastructure-job:
     project: dlsw/datafed/ci
     branch: main
     strategy: depend
-
-

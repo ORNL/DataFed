@@ -4,6 +4,15 @@
 
 ## MINOR Feature
 
+## PATCH Bug fixes/Technical Debt/Documentation
+
+
+# v2024.6.17.10.40
+
+## MAJOR Breaking changes
+
+## MINOR Feature
+
 1. [912] - Adds initial compose file and docker files for python-client
 2. [909] - Added Support for Google Analytics
 3. [916] - Reworked Docker build process to be faster and produce simpler and
@@ -12,6 +21,9 @@
 5. [937] - Working metadata services running together as part of CI
 6. [946] - Added docker compose for DataFed Repository and for Metadata Services
 7. [955] - Adds repo pieces to CI with working end-to-end tests
+8. [973] - Adds log output at the end of CI test pipeline
+9. [968] - Adds the ability to specify both base and root path when creating
+   Globus collections.
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 
@@ -31,6 +43,12 @@
 11. [953] - Refactored docker compose build scripts to address technical debt
 12. [957] - Updated ArangoDB version used in compose file.
 13. [956] - Adds improved error message, when paths of repo don't align.
+14. [966] - CI refactor check that containers exist if not force build for branch.
+15. [968] - Fixes bug by creating distinction between base and root path.
+16. [981] - Fixes html injection that can occur from user name when displaying owner in schema dlg box.
+17. [983] - Fixes google analytics by adding nonce which was broken.
+18. [995] - Fixes issue with project and user folders in repo being created under root user permissions.
+19. [994] - Fixes issue with spaces not being preserved in shell scripts from docker compose .env file.
 
 # v2023.10.23.15.50
 
