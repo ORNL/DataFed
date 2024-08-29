@@ -12,6 +12,7 @@
 3. [988] - Removed non-working subscribe function.
 4. [958] - Addresses issues raised by static code analyzer.
 5. [962] - Adds script that will check that docker image is in registry
+6. [986] - Design improvement to upload and download transfer box.
 
 # v2024.6.17.10.40
 
