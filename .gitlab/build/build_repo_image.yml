@@ -24,5 +24,11 @@ build-repo:
         - .gitlab-ci.yml
       when: on_success
 
-placeholder:
-  extends: .placeholder
+retag-image:
+  extends: .docker_retag_image
+  stage: build
+  variables:
+    IMAGE_TAG: "datafed/repo"
+    GIT_STRATEGY: clone
+  tags:
+    - docker

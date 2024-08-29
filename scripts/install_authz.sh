@@ -4,19 +4,19 @@ set -euf -o pipefail
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
-PROJECT_ROOT=$(realpath ${SOURCE}/..)
-source ${PROJECT_ROOT}/config/datafed.sh
+PROJECT_ROOT=$(realpath "${SOURCE}/..")
+source "${PROJECT_ROOT}/config/datafed.sh"
 
 # Make sure paths exist
-mkdir -p ${DATAFED_INSTALL_PATH}/keys
-mkdir -p ${DATAFED_DEFAULT_LOG_PATH}
+mkdir -p "${DATAFED_INSTALL_PATH}/keys"
+mkdir -p "${DATAFED_DEFAULT_LOG_PATH}"
 
 # Copy configuration files
 cp "$PROJECT_ROOT/config/gsi-authz.conf" /etc/grid-security
-cp "$PROJECT_ROOT/config/datafed-authz.cfg" ${DATAFED_INSTALL_PATH}/authz
+cp "$PROJECT_ROOT/config/datafed-authz.cfg" "${DATAFED_INSTALL_PATH}/authz"
 
 # Ensure permissions are correctly set on authz library
-chmod 755 ${DATAFED_INSTALL_PATH}/authz/libdatafed-authz.so
+chmod 755 "${DATAFED_INSTALL_PATH}/authz/libdatafed-authz.so"
 
 # Update GridFTP so it knows about env variable
 PATTERN1="("

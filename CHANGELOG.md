@@ -3,9 +3,16 @@
 ## MAJOR Breaking changes
 
 ## MINOR Feature
+1. [987] - This implements serialized GitLab CI pipelines
+2. [918] - Add admin script for making a user an admin
 
 ## PATCH Bug fixes/Technical Debt/Documentation
-1. [986] - Design improvdement to upload and download transfer box.
+1. [984] - Fixes {server_default} from showing up in path.
+2. [990] - Will stop running containers so that we can prune them.
+3. [988] - Removed non-working subscribe function.
+4. [958] - Addresses issues raised by static code analyzer.
+5. [962] - Adds script that will check that docker image is in registry
+6. [986] - Design improvement to upload and download transfer box.
 
 # v2024.6.17.10.40
 
