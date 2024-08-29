@@ -194,7 +194,7 @@ build-ws:
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" -f web/docker/Dockerfile -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
 
 build-core:
   needs: ["build-dependencies", "build-runtime"]
@@ -221,7 +221,7 @@ build-core:
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" -f core/docker/Dockerfile -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
 
 build-repo:
   needs: ["build-dependencies", "build-runtime"]
@@ -246,7 +246,7 @@ build-repo:
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" -f repository/docker/Dockerfile -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
 
 build-gcs-base:
   needs: ["build-dependencies", "build-runtime"]
@@ -275,7 +275,7 @@ build-gcs-base:
     - git checkout "$DATAFED_GCS_SUBMODULE_VERSION"
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - docker build --progress plain -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" - < "./docker-files/Dockerfile.ubuntu-20.04"
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
 
 build-gcs:
   needs: ["build-dependencies", "build-runtime", "build-gcs-base"]
@@ -303,7 +303,7 @@ build-gcs:
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" --build-arg GCS_IMAGE="${REGISTRY}/datafed/gcs-base-${BRANCH_LOWER}:latest" -f repository/docker/Dockerfile.gcs -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
 
 build-python-client-base:
   needs: ["clear-python-client-cache"]
@@ -345,7 +345,7 @@ build-foxx:
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY}"
     - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" -f docker/Dockerfile.foxx -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
 
 
 ################################################################################
