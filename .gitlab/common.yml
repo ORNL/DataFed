@@ -44,7 +44,7 @@
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" -f ${DOCKER_FILE_PATH} -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
-    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}"
+    - docker push "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest"
 
 .error_logs_client_end_to_end:
   stage: log
