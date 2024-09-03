@@ -152,6 +152,14 @@ then
   local_GCS_NAME="datafed-gcs_$local_DOCKER_TAG"
 fi
 
+chmod +x "$DATAFED_INSTALL_PATH/scripts/run_repo_container.sh"
+chmod +x "$DATAFED_INSTALL_PATH/scripts/stop_repo_container.sh"
+chmod +x "$DATAFED_INSTALL_PATH/scripts/remove_repo_container.sh"
+
+chmod +x "$DATAFED_INSTALL_PATH/scripts/run_gcs_container.sh"
+chmod +x "$DATAFED_INSTALL_PATH/scripts/stop_gcs_container.sh"
+chmod +x "$DATAFED_INSTALL_PATH/scripts/remove_gcs_container.sh"
+
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_repo_container.sh"
 #!/bin/bash
 

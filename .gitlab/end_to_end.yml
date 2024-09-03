@@ -97,9 +97,12 @@ end-to-end-core-setup:
     - cat $CI_DATAFED_CORE_PRIV_KEY > /shared/keys/datafed-core-key.priv
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - ./scripts/generate_metadata_container_scripts.sh --core-image "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" --docker-tag latest --core-name "core-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}"
+    - $DATAFED_INSTALL_PATH/scripts/create_datafed_network.sh
     - $DATAFED_INSTALL_PATH/scripts/run_core_container.sh
     - sleep 10
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest" 
+    - $DATAFED_INSTALL_PATH/scripts/remove_core_container.sh
+    - $DATAFED_INSTALL_PATH/scripts/remove_datafed_network.sh
 
 end-to-end-ws-setup:
   variables:
@@ -136,9 +139,12 @@ end-to-end-ws-setup:
     - ./scripts/container_stop.sh -n "ws-" -p 
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - ./scripts/generate_metadata_container_scripts.sh --web-image "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" --docker-tag latest --web-name "ws-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}"
+    - $DATAFED_INSTALL_PATH/scripts/create_datafed_network.sh
     - $DATAFED_INSTALL_PATH/scripts/run_web_container.sh
     - sleep 30
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest" 
+    - $DATAFED_INSTALL_PATH/scripts/remove_core_container.sh
+    - $DATAFED_INSTALL_PATH/scripts/remove_datafed_network.sh
 
 # Repo server currently will crash on startup if it cannot connect to the core
 # server.

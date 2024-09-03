@@ -105,10 +105,31 @@ then
   local_WEB_NAME="datafed-web_$local_DOCKER_TAG"
 fi
 
+touch "$DATAFED_INSTALL_PATH/scripts/create_datafed_network.sh"
+touch "$DATAFED_INSTALL_PATH/scripts/remove_datafed_network.sh"
+
+touch "$DATAFED_INSTALL_PATH/scripts/run_core_container.sh"
+touch "$DATAFED_INSTALL_PATH/scripts/stop_core_container.sh"
+touch "$DATAFED_INSTALL_PATH/scripts/remove_core_container.sh"
+
+touch "$DATAFED_INSTALL_PATH/scripts/run_web_container.sh"
+touch "$DATAFED_INSTALL_PATH/scripts/stop_web_container.sh"
+touch "$DATAFED_INSTALL_PATH/scripts/remove_web_container.sh"
+
+touch "$DATAFED_INSTALL_PATH/scripts/run_nginx_container.sh"
+touch "$DATAFED_INSTALL_PATH/scripts/stop_nginx_container.sh"
+touch "$DATAFED_INSTALL_PATH/scripts/remove_nginx_container.sh"
+
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/create_datafed_network.sh"
 #!/bin/bash
 
 docker network create datafed-network
+EOF
+
+cat << EOF > "$DATAFED_INSTALL_PATH/scripts/remove_datafed_network.sh"
+#!/bin/bash
+
+docker network rm datafed-network
 EOF
 
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_core_container.sh"
@@ -233,6 +254,7 @@ docker container rm datafed-nginx
 EOF
 
 chmod +x "$DATAFED_INSTALL_PATH/scripts/create_datafed_network.sh"
+chmod +x "$DATAFED_INSTALL_PATH/scripts/remove_datafed_network.sh"
 
 chmod +x "$DATAFED_INSTALL_PATH/scripts/run_core_container.sh"
 chmod +x "$DATAFED_INSTALL_PATH/scripts/stop_core_container.sh"
