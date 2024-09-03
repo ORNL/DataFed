@@ -20,11 +20,19 @@ Help()
   echo "Syntax: $(basename $0) [-h|u|p|o]"
   echo "options:"
   echo "-h, --help                        Print this help message."
-  echo "-t, --docker-tag		  The tag on Savannah that the currently released containers are under"
+  echo "-t, --docker-tag		  The tag on the selected registry that the currently released containers are under"
+  echo "-c, --core-name			  The name of the core container"
+  echo "-o, --core-image		  The name of the core image"
+  echo "-w, --web-name			  The name of the web container"
+  echo "-e, --web-image			  The name of the web image"
   echo
 }
 
 local_DOCKER_TAG=""
+local_CORE_NAME=""
+local_WEB_NAME=""
+local_CORE_IMAGE="datafed-core-prod"
+local_WEB_IMAGE="datafed-web-prod"
 
 if [ -z "${DATAFED_DOCKER_TAG}" ]
 then
@@ -33,7 +41,7 @@ else
   local_DOCKER_TAG=$(printenv DATAFED_DOCKER_TAG)
 fi
 
-VALID_ARGS=$(getopt -o ht: --long 'help',docker-tag: -- "$@")
+VALID_ARGS=$(getopt -o ht:c:n:o:e: --long 'help',docker-tag:,core-name:,web-name:,core-image:,web-image: -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
 fi
@@ -46,6 +54,22 @@ while [ : ]; do
         ;;
     -t | --docker-tag)
         local_DOCKER_TAG=$2
+        shift 2
+        ;;
+    -c | --core-name)
+        local_CORE_NAME=$2
+        shift 2
+        ;;
+    -o | --core-image)
+        local_CORE_IMAGE=$2
+        shift 2
+        ;;
+    -w | --web-name)
+        local_WEB_NAME=$2
+        shift 2
+        ;;
+    -e | --web-image)
+        local_WEB_IMAGE=$2
         shift 2
         ;;
     --) shift; 
@@ -71,6 +95,16 @@ then
   exit 1
 fi
 
+if [ -z "$local_CORE_NAME" ]
+then
+  local_CORE_NAME="datafed-core_$local_DOCKER_TAG"
+fi
+
+if [ -z "$local_WEB_NAME" ]
+then
+  local_WEB_NAME="datafed-web_$local_DOCKER_TAG"
+fi
+
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/create_datafed_network.sh"
 #!/bin/bash
 
@@ -87,7 +121,7 @@ USER_ID=$(id -u)
 
 docker run -d \\
 	--restart=always \\
-	--name datafed-core_$local_DOCKER_TAG \\
+	--name $local_CORE_NAME \\
 	-e DATAFED_GLOBUS_APP_SECRET="\$DATAFED_GLOBUS_APP_SECRET" \\
 	-e DATAFED_GLOBUS_APP_ID="\$DATAFED_GLOBUS_APP_ID" \\
 	-e DATAFED_ZEROMQ_SESSION_SECRET="\$DATAFED_ZEROMQ_SESSION_SECRET" \\
@@ -104,20 +138,20 @@ docker run -d \\
 	-v "\$DATAFED_INSTALL_PATH/logs:/datafed/logs" \\
 	-v "\$DATAFED_INSTALL_PATH/keys/datafed-core-key.pub:/opt/datafed/keys/datafed-core-key.pub" \\
 	-v "\$DATAFED_INSTALL_PATH/keys/datafed-core-key.priv:/opt/datafed/keys/datafed-core-key.priv" \\
-	-t "datafed-core-prod:$local_DOCKER_TAG" 
+	-t "$local_CORE_IMAGE:$local_DOCKER_TAG" 
 EOF
 
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/stop_core_container.sh"
 #!/bin/bash
 
-docker container stop datafed-core_$local_DOCKER_TAG
+docker container stop $local_CORE_NAME
 EOF
 
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/remove_core_container.sh"
 #!/bin/bash
 
-docker container stop datafed-core_$local_DOCKER_TAG
-docker container rm datafed-core_$local_DOCKER_TAG
+docker container stop $local_CORE_NAME
+docker container rm $local_CORE_NAME
 EOF
 
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_web_container.sh"
@@ -130,7 +164,7 @@ USER_ID=$(id -u)
 
 docker run -d \\
 	--restart=always \\
-	--name datafed-web_$local_DOCKER_TAG \\
+	--name $local_WEB_NAME \\
 	-e DATAFED_GLOBUS_APP_SECRET="\$DATAFED_GLOBUS_APP_SECRET" \\
 	-e DATAFED_GLOBUS_APP_ID="\$DATAFED_GLOBUS_APP_ID" \\
 	-e DATAFED_ZEROMQ_SESSION_SECRET="\$DATAFED_ZEROMQ_SESSION_SECRET" \\
@@ -147,20 +181,20 @@ docker run -d \\
 	-v "\$DATAFED_INSTALL_PATH/keys/datafed-core-key.pub:/opt/datafed/keys/datafed-core-key.pub" \\
 	-v "\$DATAFED_WEB_CERT_PATH:\$DATAFED_WEB_CERT_PATH" \\
 	-v "\$DATAFED_WEB_KEY_PATH:\$DATAFED_WEB_KEY_PATH" \\
-	-t "datafed-web-prod:$local_DOCKER_TAG"
+	-t "$local_WEB_IMAGE:$local_DOCKER_TAG"
 EOF
 
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/stop_web_container.sh"
 #!/bin/bash
 
-docker container stop datafed-web_$local_DOCKER_TAG
+docker container stop $local_WEB_NAME
 EOF
 
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/remove_web_container.sh"
 #!/bin/bash
 
-docker container stop datafed-web_$local_DOCKER_TAG
-docker container rm datafed-web_$local_DOCKER_TAG
+docker container stop $local_WEB_NAME
+docker container rm $local_WEB_NAME
 EOF
 
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_nginx_container.sh"

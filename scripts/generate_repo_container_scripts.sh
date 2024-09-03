@@ -24,6 +24,10 @@ Help()
   echo "-m, --host-collection-mount	  The path on the host that the container volume will mount to"
   echo "-i, --ip-address		  The public ip address of the host that the GCS container is running on"
   echo "-d, --repo-domain		  The publicly accessible domain of the server that the host is running on"
+  echo "-r, --repo-name			  The name of the repository container"
+  echo "-e, --repo-image		  The name of the repository image"
+  echo "-g, --gcs-name			  The name of the gcs container"
+  echo "-c, --gcs-image			  The name of the gcs image"
   echo
 }
 
@@ -31,6 +35,10 @@ local_DOCKER_TAG=""
 local_HOST_COLLECTION_MOUNT=""
 local_IP_ADDRESS=""
 local_REPO_DOMAIN=""
+local_REPO_NAME=""
+local_GCS_NAME=""
+local_REPO_IMAGE="datafed-repo-prod"
+local_GCS_IMAGE="datafed-gcs-prod"
 
 if [ -z "${DATAFED_DOCKER_TAG}" ]
 then
@@ -46,7 +54,7 @@ else
   local_HOST_COLLECTION_MOUNT=$(printenv DATAFED_HOST_COLLECTION_MOUNT)
 fi
 
-VALID_ARGS=$(getopt -o ht:m:i:d: --long 'help',docker-tag:,host-collection-mount:,ip-address:,repo-domain: -- "$@")
+VALID_ARGS=$(getopt -o ht:m:i:d:r:e:g:c: --long 'help',docker-tag:,host-collection-mount:,ip-address:,repo-domain:,repo-name:,repo-image:,gcs-name:,gcs-image: -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
 fi
@@ -71,6 +79,22 @@ while [ : ]; do
         ;;
     -d | --repo-domain)
         local_REPO_DOMAIN=$2
+        shift 2
+        ;;
+    -r | --repo-name)
+        local_REPO_NAME=$2
+        shift 2
+        ;;
+    -e | --repo-image)
+        local_REPO_IMAGE=$2
+        shift 2
+        ;;
+    -g | --gcs-name)
+        local_GCS_NAME=$2
+        shift 2
+        ;;
+    -c | --gcs-image)
+        local_GCS_IMAGE=$2
         shift 2
         ;;
     --) shift; 
@@ -118,6 +142,16 @@ then
   exit 1
 fi
 
+if [ -z "$local_REPO_NAME" ]
+then
+  local_REPO_NAME="datafed-repo_$local_DOCKER_TAG"
+fi
+
+if [ -z "$local_GCS_NAME" ]
+then
+  local_GCS_NAME="datafed-gcs_$local_DOCKER_TAG"
+fi
+
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_repo_container.sh"
 #!/bin/bash
 
@@ -128,7 +162,7 @@ USER_ID=$(id -u)
 
 docker run -d \\
 	--restart=always \\
-	--name "datafed-repo_$local_DOCKER_TAG" \\
+	--name "$local_REPO_NAME" \\
 	-e DATAFED_GLOBUS_APP_SECRET="\$DATAFED_GLOBUS_APP_SECRET" \\
 	-e DATAFED_GLOBUS_APP_ID="\$DATAFED_GLOBUS_APP_ID" \\
 	-e DATAFED_ZEROMQ_SESSION_SECRET="\$DATAFED_ZEROMQ_SESSION_SECRET" \\
@@ -145,20 +179,20 @@ docker run -d \\
 	-v "\$DATAFED_INSTALL_PATH/keys/datafed-repo-key.pub:/opt/datafed/keys/datafed-repo-key.pub" \\
 	-v "\$DATAFED_INSTALL_PATH/keys/datafed-repo-key.priv:/opt/datafed/keys/datafed-repo-key.priv" \\
 	-v $local_HOST_COLLECTION_MOUNT:\$DATAFED_GCS_COLLECTION_ROOT_PATH/\$DATAFED_REPO_ID_AND_DIR
-	-t "datafed-repo-prod:$local_DOCKER_TAG"
+	-t "$local_REPO_IMAGE:$local_DOCKER_TAG"
 EOF
 
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/stop_repo_container.sh"
 #!/bin/bash
 
-docker container stop datafed-repo_$local_DOCKER_TAG
+docker container stop $local_REPO_NAME
 EOF
 
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/remove_repo_container.sh"
 #!/bin/bash
 
-docker container stop datafed-repo_$local_DOCKER_TAG
-docker container rm datafed-repo_$local_DOCKER_TAG
+docker container stop $local_REPO_NAME
+docker container rm $local_REPO_NAME
 EOF
 
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_gcs_container.sh"
@@ -171,7 +205,7 @@ USER_ID=$(id -u)
 
 docker run -d \\
 	--restart=always \\
-	--name "datafed-gcs_$local_DOCKER_TAG" \\
+	--name "$local_GCS_NAME" \\
 	-e DATAFED_GLOBUS_APP_SECRET="\$DATAFED_GLOBUS_APP_SECRET" \\
 	-e DATAFED_GLOBUS_APP_ID="\$DATAFED_GLOBUS_APP_ID" \\
 	-e DATAFED_ZEROMQ_SESSION_SECRET="\$DATAFED_ZEROMQ_SESSION_SECRET" \\
@@ -198,20 +232,20 @@ docker run -d \\
 	-v "\$DATAFED_INSTALL_PATH/keys/datafed-repo-key.pub:/opt/datafed/keys/datafed-repo-key.pub" \\
 	-v "\$DATAFED_INSTALL_PATH/keys/datafed-repo-key.priv:/opt/datafed/keys/datafed-repo-key.priv" \\
 	-v $local_HOST_COLLECTION_MOUNT:\$DATAFED_GCS_COLLECTION_ROOT_PATH/\$DATAFED_REPO_ID_AND_DIR
-	-t "datafed-gcs-prod:$local_DOCKER_TAG"
+	-t "$local_GCS_IMAGE:$local_DOCKER_TAG"
 EOF
 
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/stop_gcs_container.sh"
 #!/bin/bash
 
-docker container stop datafed-gcs_$local_DOCKER_TAG
+docker container stop $local_GCS_NAME
 EOF
 
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/remove_gcs_container.sh"
 #!/bin/bash
 
-docker container stop datafed-gcs_$local_DOCKER_TAG
-docker container rm datafed-gcs_$local_DOCKER_TAG
+docker container stop $local_GCS_NAME
+docker container rm $local_GCS_NAME
 EOF
 
 chmod +x "$DATAFED_INSTALL_PATH/scripts/run_repo_container.sh"
