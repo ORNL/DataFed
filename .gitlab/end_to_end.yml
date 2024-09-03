@@ -85,6 +85,8 @@ end-to-end-core-setup:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - mkdir -p "$HOST_LOG_FILE_PATH"
     - chmod o+w "${HOST_LOG_FILE_PATH}"
+    - mkdir -p "/opt/datafed"
+    - chmod o+w "/opt/datafed"
     - USER_ID=$(id -u)
     - chown gitlab-runner "$HOST_LOG_FILE_PATH"
     - echo "$BRANCH_LOWER"
@@ -127,6 +129,8 @@ end-to-end-ws-setup:
     - echo "$BRANCH_LOWER"
     - mkdir -p "$HOST_LOG_FILE_PATH"
     - mkdir -p "${DATAFED_WEB_KEY_DIR}"
+    - mkdir -p "/opt/datafed"
+    - chmod o+w "/opt/datafed"
     - ./scripts/ci_setup_web_certs.sh
     - chmod o+w "${HOST_LOG_FILE_PATH}"
     - chown gitlab-runner "$HOST_LOG_FILE_PATH"
@@ -171,6 +175,8 @@ end-to-end-repo-setup:
     - if [ -d "${DATAFED_HOST_COLLECTION_MOUNT}" ]; then rm -rf "${DATAFED_HOST_COLLECTION_MOUNT}"; fi
     - mkdir -p "${DATAFED_HOST_COLLECTION_MOUNT}"
     - chmod o+w "${HOST_LOG_FILE_PATH}"
+    - mkdir -p "/opt/datafed"
+    - chmod o+w "/opt/datafed"
     - USER_ID=$(id -u)
     - chown gitlab-runner "$HOST_LOG_FILE_PATH"
     - ./scripts/generate_datafed.sh
@@ -213,6 +219,8 @@ end-to-end-gcs-authz-setup:
     - mkdir -p "${DATAFED_GLOBUS_DIR}"
     - cp "${CI_DATAFED_GCS_DEPLOYMENT_KEY}" "${DATAFED_GLOBUS_DIR}/deployment-key.json"
     - cp "${CI_DATAFED_GCS_CLIENT_CRED}" "${DATAFED_GLOBUS_DIR}/client_cred.json"
+    - mkdir -p "/opt/datafed"
+    - chmod o+w "/opt/datafed"
     - USER_ID=$(id -u)
     - chmod o+w "${HOST_LOG_FILE_PATH}"
     - chown gitlab-runner "$HOST_LOG_FILE_PATH"
