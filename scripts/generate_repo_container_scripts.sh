@@ -157,7 +157,7 @@ mkdir -p "$DATAFED_INSTALL_PATH"
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_repo_container.sh"
 #!/bin/bash
 
-CONFIG_FILE_PATH="\$DATAFED_INSTALL_PATH/config/datafed.sh"
+CONFIG_FILE_PATH="$DATAFED_INSTALL_PATH/config/datafed.sh"
 source "\${CONFIG_FILE_PATH}"
 
 USER_ID=$(id -u)
@@ -200,7 +200,7 @@ EOF
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_gcs_container.sh"
 #!/bin/bash
 
-CONFIG_FILE_PATH="\$DATAFED_INSTALL_PATH/config/datafed.sh"
+CONFIG_FILE_PATH="$DATAFED_INSTALL_PATH/config/datafed.sh"
 source "\${CONFIG_FILE_PATH}"
 
 USER_ID=$(id -u)

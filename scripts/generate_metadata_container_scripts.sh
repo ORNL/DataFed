@@ -122,7 +122,7 @@ EOF
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_core_container.sh"
 #!/bin/bash
 
-CONFIG_FILE_PATH="\$DATAFED_INSTALL_PATH/config/datafed.sh"
+CONFIG_FILE_PATH="$DATAFED_INSTALL_PATH/config/datafed.sh"
 source "\${CONFIG_FILE_PATH}"
 
 USER_ID=$(id -u)
@@ -165,7 +165,7 @@ EOF
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_web_container.sh"
 #!/bin/bash
 
-CONFIG_FILE_PATH="\$DATAFED_INSTALL_PATH/config/datafed.sh"
+CONFIG_FILE_PATH="$DATAFED_INSTALL_PATH/config/datafed.sh"
 source "\$CONFIG_FILE_PATH"
 
 USER_ID=$(id -u)
@@ -208,7 +208,7 @@ EOF
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_nginx_container.sh"
 #!/bin/bash
 
-CONFIG_FILE_PATH="\$DATAFED_INSTALL_PATH/config/datafed.sh"
+CONFIG_FILE_PATH="$DATAFED_INSTALL_PATH/config/datafed.sh"
 source "\$CONFIG_FILE_PATH"
 
 USER_ID=$(id -u)
