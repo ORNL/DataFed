@@ -85,12 +85,10 @@ end-to-end-core-setup:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - mkdir -p "$HOST_LOG_FILE_PATH"
     - chmod o+w "${HOST_LOG_FILE_PATH}"
-    - mkdir -p "/opt/datafed"
-    - chmod o+w "/opt/datafed"
     - USER_ID=$(id -u)
     - chown gitlab-runner "$HOST_LOG_FILE_PATH"
     - echo "$BRANCH_LOWER"
-    - ./scripts/generate_datafed.sh
+    - DATAFED_INSTALL_PATH=$(pwd) ./scripts/generate_datafed.sh
     - env > env_file
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     - ./scripts/container_stop.sh -n "core-" -p
@@ -100,12 +98,12 @@ end-to-end-core-setup:
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - ./scripts/generate_metadata_container_scripts.sh --core-image "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" --docker-tag latest --core-name "core-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}"
     - source  ../config/datafed.sh
-    - $DATAFED_INSTALL_PATH/scripts/create_datafed_network.sh
-    - $DATAFED_INSTALL_PATH/scripts/run_core_container.sh
+    - ./scripts/create_datafed_network.sh
+    - ./scripts/run_core_container.sh
     - sleep 10
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest" 
-    - $DATAFED_INSTALL_PATH/scripts/remove_core_container.sh
-    - $DATAFED_INSTALL_PATH/scripts/remove_datafed_network.sh
+    - ./scripts/remove_core_container.sh
+    - ./scripts/remove_datafed_network.sh
 
 end-to-end-ws-setup:
   variables:
@@ -129,12 +127,10 @@ end-to-end-ws-setup:
     - echo "$BRANCH_LOWER"
     - mkdir -p "$HOST_LOG_FILE_PATH"
     - mkdir -p "${DATAFED_WEB_KEY_DIR}"
-    - mkdir -p "/opt/datafed"
-    - chmod o+w "/opt/datafed"
     - ./scripts/ci_setup_web_certs.sh
     - chmod o+w "${HOST_LOG_FILE_PATH}"
     - chown gitlab-runner "$HOST_LOG_FILE_PATH"
-    - ./scripts/generate_datafed.sh
+    - DATAFED_INSTALL_PATH=$(pwd) ./scripts/generate_datafed.sh
     - docker login  "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     - USER_ID=$(id -u)
     - GROUP_ID=$(id -g)
@@ -145,12 +141,12 @@ end-to-end-ws-setup:
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - ./scripts/generate_metadata_container_scripts.sh --web-image "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" --docker-tag latest --web-name "ws-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}"
     - source  ../config/datafed.sh
-    - $DATAFED_INSTALL_PATH/scripts/create_datafed_network.sh
-    - $DATAFED_INSTALL_PATH/scripts/run_web_container.sh
+    - ./scripts/create_datafed_network.sh
+    - ./scripts/run_web_container.sh
     - sleep 30
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest" 
-    - $DATAFED_INSTALL_PATH/scripts/remove_core_container.sh
-    - $DATAFED_INSTALL_PATH/scripts/remove_datafed_network.sh
+    - ./scripts/remove_core_container.sh
+    - ./scripts/remove_datafed_network.sh
 
 # Repo server currently will crash on startup if it cannot connect to the core
 # server.
@@ -175,11 +171,9 @@ end-to-end-repo-setup:
     - if [ -d "${DATAFED_HOST_COLLECTION_MOUNT}" ]; then rm -rf "${DATAFED_HOST_COLLECTION_MOUNT}"; fi
     - mkdir -p "${DATAFED_HOST_COLLECTION_MOUNT}"
     - chmod o+w "${HOST_LOG_FILE_PATH}"
-    - mkdir -p "/opt/datafed"
-    - chmod o+w "/opt/datafed"
     - USER_ID=$(id -u)
     - chown gitlab-runner "$HOST_LOG_FILE_PATH"
-    - ./scripts/generate_datafed.sh
+    - DATAFED_INSTALL_PATH=$(pwd) ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     - ./scripts/container_stop.sh -n "repo-" -p
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
@@ -187,7 +181,7 @@ end-to-end-repo-setup:
     - cat $CI_DATAFED_CORE_PRIV_KEY > /shared/datafed-repo-key.priv
     - ./scripts/generate_repo_container_scripts.sh --repo-image "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" --docker-tag latest --repo-name "repo-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}" --host-collection-mount "$DATAFED_HOST_COLLECTION_MOUNT"
     - source  ../config/datafed.sh
-    - $DATAFED_INSTALL_PATH/scripts/run_repo_container.sh
+    - ./scripts/run_repo_container.sh
     - sleep 10
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest" 
 
@@ -219,12 +213,10 @@ end-to-end-gcs-authz-setup:
     - mkdir -p "${DATAFED_GLOBUS_DIR}"
     - cp "${CI_DATAFED_GCS_DEPLOYMENT_KEY}" "${DATAFED_GLOBUS_DIR}/deployment-key.json"
     - cp "${CI_DATAFED_GCS_CLIENT_CRED}" "${DATAFED_GLOBUS_DIR}/client_cred.json"
-    - mkdir -p "/opt/datafed"
-    - chmod o+w "/opt/datafed"
     - USER_ID=$(id -u)
     - chmod o+w "${HOST_LOG_FILE_PATH}"
     - chown gitlab-runner "$HOST_LOG_FILE_PATH"
-    - ./scripts/generate_datafed.sh
+    - DATAFED_INSTALL_PATH=$(pwd) ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     - ./scripts/container_stop.sh -n "gcs-authz" -p
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
@@ -232,7 +224,7 @@ end-to-end-gcs-authz-setup:
     - cat $CI_DATAFED_CORE_PRIV_KEY > /shared/datafed-repo-key.priv
     - ./scripts/generate_repo_container_scripts.sh --gcs-image "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" --docker-tag latest --gcs-name "gcs-authz-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}" --host-collection-mount "$DATAFED_HOST_COLLECTION_MOUNT" --ip-address "$CI_DATAFED_GCS_IP" --repo-domain "$CI_DATAFED_REPO_DOMAIN"
     - source  ../config/datafed.sh
-    - $DATAFED_INSTALL_PATH/scripts/run_gcs_container.sh
+    - ./scripts/run_gcs_container.sh
     - while [ ! -f "${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh" ]; do echo "Waiting for ${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh"; sleep 10; done
     - cat "${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh"
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest"
