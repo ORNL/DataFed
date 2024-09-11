@@ -22,12 +22,14 @@ Help()
   echo "-h, --help                        Print this help message."
   echo "-t, --docker-tag		  The tag on Savannah that the currently released containers are under"
   echo "-m, --host-collection-mount	  The path on the host that the container volume will mount to"
-  echo "-i, --ip-address		  The public ip address of the host that the GCS container is running on"
+  echo "-p, --ip-address		  The public ip address of the host that the GCS container is running on"
   echo "-d, --repo-domain		  The publicly accessible domain of the server that the host is running on"
   echo "-r, --repo-name			  The name of the repository container"
   echo "-e, --repo-image		  The name of the repository image"
   echo "-g, --gcs-name			  The name of the gcs container"
   echo "-c, --gcs-image			  The name of the gcs image"
+  echo "-v, --volume-base-path		  The base path for the majority of the volume mounts (Default: \$DATAFED_INSTALL_PATH)"
+  echo "-i, --install-path		  The path to install the generated scripts to (Default: \$DATAFED_INSTALL_PATH)"
   echo
 }
 
@@ -39,6 +41,8 @@ local_REPO_NAME=""
 local_GCS_NAME=""
 local_REPO_IMAGE="datafed-repo-prod"
 local_GCS_IMAGE="datafed-gcs-prod"
+local_VOLUME_BASE_PATH="\$DATAFED_INSTALL_PATH"
+local_INSTALL_PATH="$DATAFED_INSTALL_PATH"
 
 if [ -z "${DATAFED_DOCKER_TAG}" ]
 then
@@ -54,7 +58,7 @@ else
   local_HOST_COLLECTION_MOUNT=$(printenv DATAFED_HOST_COLLECTION_MOUNT)
 fi
 
-VALID_ARGS=$(getopt -o ht:m:i:d:r:e:g:c: --long 'help',docker-tag:,host-collection-mount:,ip-address:,repo-domain:,repo-name:,repo-image:,gcs-name:,gcs-image: -- "$@")
+VALID_ARGS=$(getopt -o ht:m:p:d:r:e:g:c:v:i: --long 'help',docker-tag:,host-collection-mount:,ip-address:,repo-domain:,repo-name:,repo-image:,gcs-name:,gcs-image:,volume-base-path:,install-path: -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
 fi
@@ -73,7 +77,7 @@ while [ : ]; do
         local_HOST_COLLECTION_MOUNT=$2
         shift 2
         ;;
-    -i | --ip-address)
+    -p | --ip-address)
         local_IP_ADDRESS=$2
         shift 2
         ;;
@@ -95,6 +99,14 @@ while [ : ]; do
         ;;
     -c | --gcs-image)
         local_GCS_IMAGE=$2
+        shift 2
+        ;;
+    -v | --volume-base-path)
+        local_VOLUME_BASE_PATH=$2
+        shift 2
+        ;;
+    -i | --install-path)
+        local_INSTALL_PATH=$2
         shift 2
         ;;
     --) shift; 
@@ -152,12 +164,12 @@ then
   local_GCS_NAME="datafed-gcs_$local_DOCKER_TAG"
 fi
 
-mkdir -p "$DATAFED_INSTALL_PATH"
+mkdir -p "$local_INSTALL_PATH"
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_repo_container.sh"
+cat << EOF > "$local_INSTALL_PATH/scripts/run_repo_container.sh"
 #!/bin/bash
 
-CONFIG_FILE_PATH="$DATAFED_INSTALL_PATH/config/datafed.sh"
+CONFIG_FILE_PATH="$local_INSTALL_PATH/config/datafed.sh"
 source "\${CONFIG_FILE_PATH}"
 
 USER_ID=$(id -u)
@@ -177,30 +189,30 @@ docker run -d \\
 	-e DATAFED_GCS_COLLECTION_ROOT_PATH="\$DATAFED_GCS_COLLECTION_ROOT_PATH" \\
 	-e UID="\$USER_ID" \\
 	-p 9000:9000 \\
-	-v "\$DATAFED_INSTALL_PATH/logs:/datafed/logs" \\
-	-v "\$DATAFED_INSTALL_PATH/keys/datafed-repo-key.pub:/opt/datafed/keys/datafed-repo-key.pub" \\
-	-v "\$DATAFED_INSTALL_PATH/keys/datafed-repo-key.priv:/opt/datafed/keys/datafed-repo-key.priv" \\
+	-v "$local_VOLUME_BASE_PATH/logs:/datafed/logs" \\
+	-v "$local_VOLUME_BASE_PATH/keys/datafed-repo-key.pub:/opt/datafed/keys/datafed-repo-key.pub" \\
+	-v "$local_VOLUME_BASE_PATH/keys/datafed-repo-key.priv:/opt/datafed/keys/datafed-repo-key.priv" \\
 	-v $local_HOST_COLLECTION_MOUNT:\$DATAFED_GCS_COLLECTION_ROOT_PATH/\$DATAFED_REPO_ID_AND_DIR
 	-t "$local_REPO_IMAGE:$local_DOCKER_TAG"
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/stop_repo_container.sh"
+cat << EOF > "$local_INSTALL_PATH/scripts/stop_repo_container.sh"
 #!/bin/bash
 
 docker container stop $local_REPO_NAME
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/remove_repo_container.sh"
+cat << EOF > "$local_INSTALL_PATH/scripts/remove_repo_container.sh"
 #!/bin/bash
 
 docker container stop $local_REPO_NAME
 docker container rm $local_REPO_NAME
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_gcs_container.sh"
+cat << EOF > "$local_INSTALL_PATH/scripts/run_gcs_container.sh"
 #!/bin/bash
 
-CONFIG_FILE_PATH="$DATAFED_INSTALL_PATH/config/datafed.sh"
+CONFIG_FILE_PATH="$local_INSTALL_PATH/config/datafed.sh"
 source "\${CONFIG_FILE_PATH}"
 
 USER_ID=$(id -u)
@@ -229,31 +241,31 @@ docker run -d \\
 	-e DATAFED_REPO_DOMAIN="$local_REPO_DOMAIN" \\
 	-e UID="\$USER_ID" \\
 	--network=host \\
-	-v "\$DATAFED_INSTALL_PATH/logs:/datafed/logs" \\
-	-v "\$DATAFED_INSTALL_PATH/globus:/opt/datafed/globus" \\
-	-v "\$DATAFED_INSTALL_PATH/keys/datafed-repo-key.pub:/opt/datafed/keys/datafed-repo-key.pub" \\
-	-v "\$DATAFED_INSTALL_PATH/keys/datafed-repo-key.priv:/opt/datafed/keys/datafed-repo-key.priv" \\
+	-v "$local_VOLUME_BASE_PATH/logs:/datafed/logs" \\
+	-v "$local_VOLUME_BASE_PATH/globus:/opt/datafed/globus" \\
+	-v "$local_VOLUME_BASE_PATH/keys/datafed-repo-key.pub:/opt/datafed/keys/datafed-repo-key.pub" \\
+	-v "$local_VOLUME_BASE_PATH/keys/datafed-repo-key.priv:/opt/datafed/keys/datafed-repo-key.priv" \\
 	-v $local_HOST_COLLECTION_MOUNT:\$DATAFED_GCS_COLLECTION_ROOT_PATH/\$DATAFED_REPO_ID_AND_DIR
 	-t "$local_GCS_IMAGE:$local_DOCKER_TAG"
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/stop_gcs_container.sh"
+cat << EOF > "$local_INSTALL_PATH/scripts/stop_gcs_container.sh"
 #!/bin/bash
 
 docker container stop $local_GCS_NAME
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/remove_gcs_container.sh"
+cat << EOF > "$local_INSTALL_PATH/scripts/remove_gcs_container.sh"
 #!/bin/bash
 
 docker container stop $local_GCS_NAME
 docker container rm $local_GCS_NAME
 EOF
 
-chmod +x "$DATAFED_INSTALL_PATH/scripts/run_repo_container.sh"
-chmod +x "$DATAFED_INSTALL_PATH/scripts/stop_repo_container.sh"
-chmod +x "$DATAFED_INSTALL_PATH/scripts/remove_repo_container.sh"
+chmod +x "$local_INSTALL_PATH/scripts/run_repo_container.sh"
+chmod +x "$local_INSTALL_PATH/scripts/stop_repo_container.sh"
+chmod +x "$local_INSTALL_PATH/scripts/remove_repo_container.sh"
 
-chmod +x "$DATAFED_INSTALL_PATH/scripts/run_gcs_container.sh"
-chmod +x "$DATAFED_INSTALL_PATH/scripts/stop_gcs_container.sh"
-chmod +x "$DATAFED_INSTALL_PATH/scripts/remove_gcs_container.sh"
+chmod +x "$local_INSTALL_PATH/scripts/run_gcs_container.sh"
+chmod +x "$local_INSTALL_PATH/scripts/stop_gcs_container.sh"
+chmod +x "$local_INSTALL_PATH/scripts/remove_gcs_container.sh"

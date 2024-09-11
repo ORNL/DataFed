@@ -25,6 +25,10 @@ Help()
   echo "-o, --core-image		  The name of the core image"
   echo "-w, --web-name			  The name of the web container"
   echo "-e, --web-image			  The name of the web image"
+  echo "-v, --volume-base-path		  The base path for the majority of the volume mounts (Default: \$DATAFED_INSTALL_PATH)"
+  echo "-r, --volume-cert-path		  The path for the web certificate file (Default: \$DATAFED_WEB_CERT_PATH)"
+  echo "-k, --volume-key-path		  The path for the web key file (Default: \$DATAFED_WEB_KEY_PATH)"
+  echo "-i, --install-path		  The path to install the generated scripts to (Default: \$DATAFED_INSTALL_PATH)"
   echo
 }
 
@@ -33,6 +37,10 @@ local_CORE_NAME=""
 local_WEB_NAME=""
 local_CORE_IMAGE="datafed-core-prod"
 local_WEB_IMAGE="datafed-web-prod"
+local_VOLUME_BASE_PATH="\$DATAFED_INSTALL_PATH"
+local_VOLUME_CERT_PATH="\$DATAFED_WEB_CERT_PATH"
+local_VOLUME_KEY_PATH="\$DATAFED_WEB_KEY_PATH"
+local_INSTALL_PATH="$DATAFED_INSTALL_PATH"
 
 if [ -z "${DATAFED_DOCKER_TAG}" ]
 then
@@ -41,7 +49,7 @@ else
   local_DOCKER_TAG=$(printenv DATAFED_DOCKER_TAG)
 fi
 
-VALID_ARGS=$(getopt -o ht:c:n:o:e: --long 'help',docker-tag:,core-name:,web-name:,core-image:,web-image: -- "$@")
+VALID_ARGS=$(getopt -o ht:c:n:o:e:v:r:k:i: --long 'help',docker-tag:,core-name:,web-name:,core-image:,web-image:,volume-base-path:,volume-cert-path:,volume-key-path:,install-path: -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
 fi
@@ -70,6 +78,22 @@ while [ : ]; do
         ;;
     -e | --web-image)
         local_WEB_IMAGE=$2
+        shift 2
+        ;;
+    -v | --volume-base-path)
+        local_VOLUME_BASE_PATH=$2
+        shift 2
+        ;;
+    -r | --volume-cert-path)
+        local_VOLUME_CERT_PATH=$2
+        shift 2
+        ;;
+    -k | --volume-key-path)
+        local_VOLUME_KEY_PATH=$2
+        shift 2
+        ;;
+    -i | --install-path)
+        local_INSTALL_PATH=$2
         shift 2
         ;;
     --) shift; 
@@ -105,24 +129,24 @@ then
   local_WEB_NAME="datafed-web_$local_DOCKER_TAG"
 fi
 
-mkdir -p "$DATAFED_INSTALL_PATH"
+mkdir -p "$local_INSTALL_PATH"
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/create_datafed_network.sh"
+cat << EOF > "$local_INSTALL_PATH/scripts/create_datafed_network.sh"
 #!/bin/bash
 
 docker network create datafed-network
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/remove_datafed_network.sh"
+cat << EOF > "$local_INSTALL_PATH/scripts/remove_datafed_network.sh"
 #!/bin/bash
 
 docker network rm datafed-network
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_core_container.sh"
+cat << EOF > "$local_INSTALL_PATH/scripts/run_core_container.sh"
 #!/bin/bash
 
-CONFIG_FILE_PATH="$DATAFED_INSTALL_PATH/config/datafed.sh"
+CONFIG_FILE_PATH="$local_INSTALL_PATH/config/datafed.sh"
 source "\${CONFIG_FILE_PATH}"
 
 USER_ID=$(id -u)
@@ -143,29 +167,29 @@ docker run -d \\
 	--network datafed-network \\
 	-p 7513:7513 \\
 	-p 7512:7512 \\
-	-v "\$DATAFED_INSTALL_PATH/logs:/datafed/logs" \\
-	-v "\$DATAFED_INSTALL_PATH/keys/datafed-core-key.pub:/opt/datafed/keys/datafed-core-key.pub" \\
-	-v "\$DATAFED_INSTALL_PATH/keys/datafed-core-key.priv:/opt/datafed/keys/datafed-core-key.priv" \\
+	-v "$local_VOLUME_BASE_PATH/logs:/datafed/logs" \\
+	-v "$local_VOLUME_BASE_PATH/keys/datafed-core-key.pub:/opt/datafed/keys/datafed-core-key.pub" \\
+	-v "$local_VOLUME_BASE_PATH/keys/datafed-core-key.priv:/opt/datafed/keys/datafed-core-key.priv" \\
 	-t "$local_CORE_IMAGE:$local_DOCKER_TAG" 
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/stop_core_container.sh"
+cat << EOF > "$local_INSTALL_PATH/scripts/stop_core_container.sh"
 #!/bin/bash
 
 docker container stop $local_CORE_NAME
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/remove_core_container.sh"
+cat << EOF > "$local_INSTALL_PATH/scripts/remove_core_container.sh"
 #!/bin/bash
 
 docker container stop $local_CORE_NAME
 docker container rm $local_CORE_NAME
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_web_container.sh"
+cat << EOF > "$local_INSTALL_PATH/scripts/run_web_container.sh"
 #!/bin/bash
 
-CONFIG_FILE_PATH="$DATAFED_INSTALL_PATH/config/datafed.sh"
+CONFIG_FILE_PATH="$local_INSTALL_PATH/config/datafed.sh"
 source "\$CONFIG_FILE_PATH"
 
 USER_ID=$(id -u)
@@ -185,30 +209,30 @@ docker run -d \\
 	-e DATAFED_GOOGLE_ANALYTICS_TAG="\$DATAFED_GOOGLE_ANALYTICS_TAG" \\
 	-e UID="\$USER_ID" \\
 	--network datafed-network \\
-	-v "\$DATAFED_INSTALL_PATH/logs:/datafed/logs" \\
-	-v "\$DATAFED_INSTALL_PATH/keys/datafed-core-key.pub:/opt/datafed/keys/datafed-core-key.pub" \\
-	-v "\$DATAFED_WEB_CERT_PATH:\$DATAFED_WEB_CERT_PATH" \\
-	-v "\$DATAFED_WEB_KEY_PATH:\$DATAFED_WEB_KEY_PATH" \\
+	-v "$local_VOLUME_BASE_PATH/logs:/datafed/logs" \\
+	-v "$local_VOLUME_BASE_PATH/keys/datafed-core-key.pub:/opt/datafed/keys/datafed-core-key.pub" \\
+	-v "$local_VOLUME_CERT_PATH:$local_VOLUME_CERT_PATH" \\
+	-v "$local_VOLUME_KEY_PATH:$local_VOLUME_KEY_PATH" \\
 	-t "$local_WEB_IMAGE:$local_DOCKER_TAG"
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/stop_web_container.sh"
+cat << EOF > "$local_INSTALL_PATH/scripts/stop_web_container.sh"
 #!/bin/bash
 
 docker container stop $local_WEB_NAME
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/remove_web_container.sh"
+cat << EOF > "$local_INSTALL_PATH/scripts/remove_web_container.sh"
 #!/bin/bash
 
 docker container stop $local_WEB_NAME
 docker container rm $local_WEB_NAME
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_nginx_container.sh"
+cat << EOF > "$local_INSTALL_PATH/scripts/run_nginx_container.sh"
 #!/bin/bash
 
-CONFIG_FILE_PATH="$DATAFED_INSTALL_PATH/config/datafed.sh"
+CONFIG_FILE_PATH="$local_INSTALL_PATH/config/datafed.sh"
 source "\$CONFIG_FILE_PATH"
 
 USER_ID=$(id -u)
@@ -219,38 +243,38 @@ docker run -d \
 	--network datafed-network \
 	-p 443:443 \
 	-p 80:80 \
-	-v "\$DATAFED_INSTALL_PATH/nginx/nginx.conf:/etc/nginx/conf.d/default.conf" \
-	-v "\$DATAFED_INSTALL_PATH/nginx/sites-enabled:/etc/nginx/sites-enabled" \
-	-v "\$DATAFED_INSTALL_PATH/nginx/www:/www" \
-	-v "\$DATAFED_INSTALL_PATH/keys/datafed.ornl.gov.crt:/etc/nginx/certs/datafed.ornl.gov.crt" \
-	-v "\$DATAFED_INSTALL_PATH/keys/datafed.ornl.gov.key:/etc/nginx/certs/datafed.ornl.gov.key" \
+	-v "$local_VOLUME_BASE_PATH/nginx/nginx.conf:/etc/nginx/conf.d/default.conf" \
+	-v "$local_VOLUME_BASE_PATH/nginx/sites-enabled:/etc/nginx/sites-enabled" \
+	-v "$local_VOLUME_BASE_PATH/nginx/www:/www" \
+	-v "$local_VOLUME_BASE_PATH/keys/datafed.ornl.gov.crt:/etc/nginx/certs/datafed.ornl.gov.crt" \
+	-v "$local_VOLUME_BASE_PATH/keys/datafed.ornl.gov.key:/etc/nginx/certs/datafed.ornl.gov.key" \
 	nginx:latest
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/stop_nginx_container.sh"
+cat << EOF > "$local_INSTALL_PATH/scripts/stop_nginx_container.sh"
 #!/bin/bash
 
 docker container stop datafed-nginx
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/remove_nginx_container.sh"
+cat << EOF > "$local_INSTALL_PATH/scripts/remove_nginx_container.sh"
 #!/bin/bash
 
 docker container stop datafed-nginx
 docker container rm datafed-nginx
 EOF
 
-chmod +x "$DATAFED_INSTALL_PATH/scripts/create_datafed_network.sh"
-chmod +x "$DATAFED_INSTALL_PATH/scripts/remove_datafed_network.sh"
+chmod +x "$local_INSTALL_PATH/scripts/create_datafed_network.sh"
+chmod +x "$local_INSTALL_PATH/scripts/remove_datafed_network.sh"
 
-chmod +x "$DATAFED_INSTALL_PATH/scripts/run_core_container.sh"
-chmod +x "$DATAFED_INSTALL_PATH/scripts/stop_core_container.sh"
-chmod +x "$DATAFED_INSTALL_PATH/scripts/remove_core_container.sh"
+chmod +x "$local_INSTALL_PATH/scripts/run_core_container.sh"
+chmod +x "$local_INSTALL_PATH/scripts/stop_core_container.sh"
+chmod +x "$local_INSTALL_PATH/scripts/remove_core_container.sh"
 
-chmod +x "$DATAFED_INSTALL_PATH/scripts/run_web_container.sh"
-chmod +x "$DATAFED_INSTALL_PATH/scripts/stop_web_container.sh"
-chmod +x "$DATAFED_INSTALL_PATH/scripts/remove_web_container.sh"
+chmod +x "$local_INSTALL_PATH/scripts/run_web_container.sh"
+chmod +x "$local_INSTALL_PATH/scripts/stop_web_container.sh"
+chmod +x "$local_INSTALL_PATH/scripts/remove_web_container.sh"
 
-chmod +x "$DATAFED_INSTALL_PATH/scripts/run_nginx_container.sh"
-chmod +x "$DATAFED_INSTALL_PATH/scripts/stop_nginx_container.sh"
-chmod +x "$DATAFED_INSTALL_PATH/scripts/remove_nginx_container.sh"
+chmod +x "$local_INSTALL_PATH/scripts/run_nginx_container.sh"
+chmod +x "$local_INSTALL_PATH/scripts/stop_nginx_container.sh"
+chmod +x "$local_INSTALL_PATH/scripts/remove_nginx_container.sh"
