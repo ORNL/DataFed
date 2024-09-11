@@ -339,6 +339,10 @@ TaskWorker::cmdRawDataUpdateSize(TaskWorker &me, const Value &a_task_params,
   if (response.time_out == true) {
     return response;
   } else if (response.error == false) {
+    if (not response.message) {
+      DL_ERROR(log_context,
+               "No timeout or error was reported but no message was defined.");
+    }
     auto proto_msg =
         std::get<google::protobuf::Message *>(response.message->getPayload());
     auto size_reply = dynamic_cast<Auth::RepoDataSizeReply *>(proto_msg);

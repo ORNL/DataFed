@@ -12,7 +12,7 @@ public:
 
   SmartTokenizer() {}
 
-  SmartTokenizer(const std::string &a_input_str) {
+  explicit SmartTokenizer(const std::string &a_input_str) {
     m_buffer.reserve(a_input_str.size());
     _parse(a_input_str.c_str(), a_input_str.size());
   }

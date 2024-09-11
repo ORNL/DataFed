@@ -1,15 +1,8 @@
 #!/usr/bin/env python3
 
-import sys
-import argparse
-import random
-import datafed.CommandLib
-import json
-import time
 import getpass
-import datafed.SDMS_Anon_pb2 as anon
+import datafed.CommandLib
 import datafed.SDMS_Auth_pb2 as auth
-import datafed.SDMS_pb2 as sdms
 
 
 opts = {}

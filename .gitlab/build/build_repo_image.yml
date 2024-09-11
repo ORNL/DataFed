@@ -1,0 +1,28 @@
+---
+stages:
+  - build
+
+include:
+  - local: .gitlab/common.yml
+
+build-repo:
+  extends: .docker_build_script
+  stage: build
+  variables:
+    IMAGE_TAG: "datafed/repo"
+    GIT_STRATEGY: clone
+    DOCKER_FILE_PATH: "repository/docker/Dockerfile"
+  tags:
+    - ci-datafed-repo
+    - docker
+  rules:
+    - changes:
+        - docker/**/*
+        - scripts/**/*
+        - web/**/*
+        - common/proto/**/*
+        - .gitlab-ci.yml
+      when: on_success
+
+placeholder:
+  extends: .placeholder

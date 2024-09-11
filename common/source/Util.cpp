@@ -79,11 +79,11 @@ void hexDump(const char *a_buffer, const char *a_buffer_end, ostream &a_out) {
   const unsigned char *e = (unsigned char *)a_buffer_end;
   bool done = false;
 
-  int l = 0, i = 0;
+  int l = 0;
   while (!done) {
     a_out << setw(4) << dec << l << ": ";
 
-    for (i = 0; i < 16; ++i) {
+    for (int i = 0; i < 16; ++i) {
       if (i == 8)
         a_out << "  ";
 
@@ -102,7 +102,7 @@ void hexDump(const char *a_buffer, const char *a_buffer_end, ostream &a_out) {
 
     a_out << "  ";
 
-    for (i = 0; i < 16; ++i) {
+    for (int i = 0; i < 16; ++i) {
       if (p + i != e) {
         if (isprint(*(p + i)))
           a_out << *(p + i);

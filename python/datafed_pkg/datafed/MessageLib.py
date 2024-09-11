@@ -1,4 +1,4 @@
-## @package datafed.MessageLib
+# @package datafed.MessageLib
 # Provides a low-level client interface to the DataFed server
 #
 # The DataFed MessageLib module contains a single API class that provides
@@ -11,8 +11,8 @@
 # secure ZeroMQ link.
 
 
-import os
 import xmlrpc.client
+import re
 import zmq
 from . import Version_pb2
 from . import SDMS_Anon_pb2 as anon
@@ -21,12 +21,30 @@ from . import Connection
 from . import VERSION
 
 
-# Check with pypi if a newer release is available
-def get_latest_version(package_name):
+# Function to check if a string contains any letters
+def contains_letters(s):
+    return bool(re.search("[a-zA-Z]", s))
+
+
+def remove_after_prefix_with_numbers(s):
+    # Use regular expression to match the prefix with numbers
+    match = re.match(r"(\d+.*?)(\D.*)", s)
+    if match:
+        return match.group(1)  # Return the part before the remaining string
+    return s  # If no match is found, return the original string
+
+
+# Check with pypi if a newer release is available, only look for stable
+# versions
+def get_latest_stable_version(package_name):
     try:
         client = xmlrpc.client.ServerProxy("https://pypi.org/pypi")
         releases = client.package_releases(package_name)
 
+        # Filter the list to remove entries that contain any letters, we don't
+        # want to look at entries that could be a pre-release of some sort and
+        # recommend that the user use for instance a beta version.
+        releases = [release for release in releases if not contains_letters(release)]
         if not releases:
             return None
 
@@ -49,7 +67,6 @@ def get_latest_version(package_name):
 # and both synchronous ans asynchronous message send/recv methods.
 #
 class API:
-
     ##
     # @brief MessageLib.API class initialization method.
     # @param server_host The DataFed core server hostname or IP address.
@@ -59,7 +76,8 @@ class API:
     # @param client_pub_key_file Client public key file (full path).
     # @param client_priv_key_file Client private key file (full path).
     # @param client_cfg_dir Client configuration directory.
-    # @param manual_auth Client intends to manually authenticate if True. Bypasses client key loading.
+    # @param manual_auth Client intends to manually authenticate if True.
+    #                    Bypasses client key loading.
     # @param kwargs Placeholder for any extra keyword arguments (ignored)
     # @exception Exception: On server key load error, timeout, or incompatible protocols.
     #
@@ -84,7 +102,6 @@ class API:
         manual_auth=None,
         **kwargs,
     ):
-
         self._ctxt = 0
         self._auth = False
         self._nack_except = True
@@ -93,7 +110,7 @@ class API:
         if not server_host:
             raise Exception("Server host is not defined")
 
-        if server_port == None:
+        if server_port is None:
             raise Exception("Server port is not defined")
 
         if not server_pub_key and not server_pub_key_file:
@@ -113,12 +130,12 @@ class API:
         _client_priv_key = None
 
         # Use or load server public key
-        if server_pub_key_file != None:
+        if server_pub_key_file is not None:
             try:
                 keyf = open(server_pub_key_file, "r")
                 _server_pub_key = keyf.read()
                 keyf.close()
-            except:
+            except BaseException:
                 raise Exception(
                     "Could not open server public key file: " + server_pub_key_file
                 )
@@ -167,7 +184,7 @@ class API:
                     self._keys_valid = True
                 self._keys_loaded = True
                 print
-            except:
+            except BaseException:
                 pub, priv = zmq.curve_keypair()
                 _client_pub_key = pub.decode("utf-8")
                 _client_priv_key = priv.decode("utf-8")
@@ -187,18 +204,24 @@ class API:
 
         # Make a request to pypi
         package_name = "datafed"  # Replace with the package name you want to check
-        latest_version_on_pypi = get_latest_version(package_name)
+        latest_version_on_pypi = get_latest_stable_version(package_name)
 
+        self.new_client_avail = False
         if latest_version_on_pypi:
             pypi_major, pypi_minor, pypi_patch = latest_version_on_pypi.split(".")
-            major, minor, patch = VERSION.__version__.split(".")
+            major, minor, patch_w_prerelease = VERSION.__version__.split(".")
 
-            if pypi_major != major or pypi_minor > minor or pypi_patch > patch:
+            # Remove prerelease part from patch
+            patch = remove_after_prefix_with_numbers(patch_w_prerelease)
+
+            if pypi_major > major:
                 self.new_client_avail = latest_version_on_pypi
-            else:
-                self.new_client_avail = False
-        else:
-            self.new_client_avail = False
+            elif pypi_major == major:
+                if pypi_minor > minor:
+                    self.new_client_avail = latest_version_on_pypi
+                elif pypi_minor == minor:
+                    if pypi_patch > patch:
+                        self.new_client_avail = latest_version_on_pypi
 
         # Check for compatible protocol versions
         reply, mt = self.sendRecv(anon.VersionRequest(), 10000)
@@ -210,9 +233,15 @@ class API:
 
         if reply.api_major != Version_pb2.DATAFED_COMMON_PROTOCOL_API_MAJOR:
             error_msg = (
-                "Incompatible server api detected {}.{}.{} consider "
+                "Incompatible server api detected {}.{}.{}, you are running "
+                "{}.{}.{} consider "
                 "upgrading the datafed python client.".format(
-                    reply.api_major, reply.api_minor, reply.api_patch
+                    reply.api_major,
+                    reply.api_minor,
+                    reply.api_patch,
+                    Version_pb2.DATAFED_COMMON_PROTOCOL_API_MAJOR,
+                    Version_pb2.DATAFED_COMMON_PROTOCOL_API_MINOR,
+                    Version_pb2.DATAFED_COMMON_PROTOCOL_API_PATCH,
                 )
             )
             if self.new_client_avail:
@@ -221,7 +250,7 @@ class API:
                     f" a new version is available {latest_version_on_pypi} that"
                     " should be compatible with the API."
                 )
-            raise Exception()
+            raise Exception(error_msg)
 
         if client_token:
             self.manualAuthByToken(client_token)
@@ -231,7 +260,7 @@ class API:
             self._auth = reply.auth
             self._uid = reply.uid
 
-    ## @brief Determines if client security keys were loaded.
+    # @brief Determines if client security keys were loaded.
     #
     # @return True if keys were loaded; false otherwise.
     # @retval bool
@@ -239,7 +268,7 @@ class API:
     def keysLoaded(self):
         return self._keys_loaded
 
-    ## @brief Determines if loaded client security keys had a valid format.
+    # @brief Determines if loaded client security keys had a valid format.
     #
     # Note that keys with valid format but invalid value will cause
     # a connection failure (exception or timeout).
@@ -250,7 +279,7 @@ class API:
     def keysValid(self):
         return self._keys_valid
 
-    ## @brief Gets the client authentication status and user ID.
+    # @brief Gets the client authentication status and user ID.
     #
     # @return A tuple of (bool,string) - The bool is True if client
     #    is authenticated; False otherwise. IF authenticated, the
@@ -260,7 +289,7 @@ class API:
     def getAuthStatus(self):
         return self._auth, self._uid
 
-    ## @brief Perform manual client authentication with DataFed user ID and password.
+    # @brief Perform manual client authentication with DataFed user ID and password.
     #
     # @param uid Client's DataFed user ID.
     # @param password Client's DataFed password.
@@ -278,7 +307,7 @@ class API:
         # Test auth status
         reply, mt = self.sendRecv(anon.GetAuthStatusRequest())
         if not reply.auth:
-            raise Exception(f"Password authentication failed.")
+            raise Exception("Password authentication failed.")
 
         self._auth = True
         self._uid = reply.uid
@@ -305,7 +334,7 @@ class API:
         self._auth = False
         self._uid = None
 
-    ## @brief Get NackReply exception enable state.
+    # @brief Get NackReply exception enable state.
     #
     # @return True if Nack exceptions are enabled; False otherwise.
     # @retval bool
@@ -313,7 +342,7 @@ class API:
     def getNackExceptionEnabled(self):
         return self._nack_except
 
-    ## @brief Set NackReply exception enable state.
+    # @brief Set NackReply exception enable state.
     #
     # If NackReply exceptions are enabled, any NackReply received by
     # the recv() or SendRecv() methods will be raised as an exception
@@ -337,12 +366,12 @@ class API:
     def getDailyMessage(self):
         # Get daily message, if set
         reply, mt = self.sendRecv(anon.DailyMessageRequest(), 10000)
-        if reply == None:
+        if reply is None:
             raise Exception("Timeout waiting for server connection.")
 
         return reply.message
 
-    ## @brief Synchronously send a message then receive a reply to/from DataFed server.
+    # @brief Synchronously send a message then receive a reply to/from DataFed server.
     #
     # @param msg: Protobuf message to send to the server
     #   timeout: Timeout in milliseconds
@@ -355,9 +384,9 @@ class API:
     #
     def sendRecv(self, msg, timeout=None, nack_except=None):
         self.send(msg)
-        _timeout = timeout if timeout != None else self._timeout
+        _timeout = timeout if timeout is not None else self._timeout
         reply, mt, ctxt = self.recv(_timeout, nack_except)
-        if reply == None:
+        if reply is None:
             raise Exception("Timeout!!!!!!!!!")
             return None, None
         if ctxt != self._ctxt:
@@ -366,7 +395,7 @@ class API:
             )
         return reply, mt
 
-    ## @brief Asynchronously send a protobuf message to DataFed server.
+    # @brief Asynchronously send a protobuf message to DataFed server.
     #
     # @param msg: Protobuf message to send to the server
     # @return Auto-generated message re-association context int
@@ -378,7 +407,7 @@ class API:
         self._conn.send(msg, self._ctxt)
         return self._ctxt
 
-    ## @brief Receive a protobuf message (reply) from DataFed server.
+    # @brief Receive a protobuf message (reply) from DataFed server.
     #
     # @param timeout: Timeout in milliseconds (0 = don't wait, -1 =
     #   wait forever).
@@ -391,13 +420,13 @@ class API:
     # @retval (obj,str,int)
     #
     def recv(self, timeout=None, nack_except=None):
-        _timeout = timeout if timeout != None else self._timeout
+        _timeout = timeout if timeout is not None else self._timeout
 
         reply, msg_type, ctxt = self._conn.recv(_timeout)
-        if reply == None:
+        if reply is None:
             return None, None, None
 
-        _nack_except = nack_except if nack_except != None else self._nack_except
+        _nack_except = nack_except if nack_except is not None else self._nack_except
 
         if msg_type == "NackReply" and _nack_except:
             if reply.err_msg:

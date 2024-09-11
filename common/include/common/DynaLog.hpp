@@ -73,7 +73,25 @@
 
 namespace SDMS {
 
-enum class LogLevel { CRITICAL, ERROR, WARNING, INFO, DEBUG, TRACE };
+/**
+ * Here unsigned int is used so that we can compare the numeric values when
+ * choosing whether to print a log message.
+ *
+ * CRITICAL = 0
+ * ERROR    = 1
+ * WARNING  = 2
+ * INFO     = 3
+ * DEBUG    = 4
+ * TRACE    = 5
+ **/
+enum class LogLevel : unsigned int {
+  CRITICAL,
+  ERROR,
+  WARNING,
+  INFO,
+  DEBUG,
+  TRACE
+};
 
 std::string toString(const LogLevel level);
 int toSysLog(const LogLevel level);

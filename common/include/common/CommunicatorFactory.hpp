@@ -18,7 +18,8 @@ private:
   LogContext m_log_context;
 
 public:
-  CommunicatorFactory(LogContext log_context) : m_log_context(log_context){};
+  explicit CommunicatorFactory(const LogContext &log_context)
+      : m_log_context(log_context){};
 
   std::unique_ptr<ICommunicator> create(const SocketOptions &socket_options,
                                         const ICredentials &credentials,

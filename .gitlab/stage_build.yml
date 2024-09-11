@@ -1,0 +1,105 @@
+---
+
+run-ws-build-job:
+  needs:
+    - job: build-dependencies
+    - job: build-runtime
+    - job: check-ws-image
+      artifacts: true
+  stage: build
+  trigger:
+    include:
+      - artifact: ws_image.yml
+        job: check-ws-image
+    strategy: depend
+  variables:
+    REGISTRY: "${REGISTRY}"
+    HARBOR_USER: "${HARBOR_USER}"
+    HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
+
+run-core-build-job:
+  needs:
+    - job: build-runtime
+    - job: check-core-image
+    - job: build-dependencies
+      artifacts: true
+  stage: build
+  trigger:
+    include:
+      - artifact: core_image.yml
+        job: check-core-image
+    strategy: depend
+  variables:
+    REGISTRY: "${REGISTRY}"
+    HARBOR_USER: "${HARBOR_USER}"
+    HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
+
+run-repo-build-job:
+  needs:
+    - job: build-dependencies
+    - job: build-runtime
+    - job: check-repo-image
+      artifacts: true
+  stage: build
+  trigger:
+    include:
+      - artifact: repo_image.yml
+        job: check-repo-image
+    strategy: depend
+  variables:
+    REGISTRY: "${REGISTRY}"
+    HARBOR_USER: "${HARBOR_USER}"
+    HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
+
+run-gcs-base-build-job:
+  needs:
+    - job: build-dependencies
+    - job: build-runtime
+    - job: check-gcs-base-image
+      artifacts: true
+  stage: build
+  trigger:
+    include:
+      - artifact: gcs_base_image.yml
+        job: check-gcs-base-image
+    strategy: depend
+  variables:
+    REGISTRY: "${REGISTRY}"
+    HARBOR_USER: "${HARBOR_USER}"
+    HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
+    DATAFED_GCS_SUBMODULE_VERSION: "${DATAFED_GCS_SUBMODULE_VERSION}"
+
+run-gcs-build-job:
+  needs:
+    - job: build-dependencies
+    - job: build-runtime
+    - job: run-gcs-base-build-job
+    - job: check-gcs-image
+      artifacts: true
+  stage: build
+  trigger:
+    include:
+      - artifact: gcs_image.yml
+        job: check-gcs-image
+    strategy: depend
+  variables:
+    REGISTRY: "${REGISTRY}"
+    HARBOR_USER: "${HARBOR_USER}"
+    HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
+
+run-foxx-build-job:
+  needs:
+    - job: build-dependencies
+    - job: build-runtime
+    - job: check-foxx-image
+      artifacts: true
+  stage: build
+  trigger:
+    include:
+      - artifact: foxx_image.yml
+        job: check-foxx-image
+    strategy: depend
+  variables:
+    REGISTRY: "${REGISTRY}"
+    HARBOR_USER: "${HARBOR_USER}"
+    HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"

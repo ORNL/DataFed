@@ -30,7 +30,8 @@ class ServerFactory {
   LogContext m_log_context;
 
 public:
-  ServerFactory(LogContext log_context) : m_log_context(log_context){};
+  explicit ServerFactory(const LogContext &log_context)
+      : m_log_context(log_context){};
 
   std::unique_ptr<IServer> create(
       ServerType server_type,

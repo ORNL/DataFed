@@ -9,6 +9,7 @@ if( ENABLE_END_TO_END_TESTS )
   add_test(NAME end_to_end_repo COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/test_api_repo.py")
   add_test(NAME end_to_end_alloc COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/test_api_alloc.py")
   add_test(NAME end_to_end_collection COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/test_api_collection.py")
+  add_test(NAME end_to_end_record COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/test_api_record.py")
 
   # Note because these tests are all using the same database we cannot run most of them concurrently
   # They must be run sequentially so that concurrent API calls do not create problems
@@ -24,5 +25,6 @@ if( ENABLE_END_TO_END_TESTS )
   set_tests_properties(end_to_end_alloc PROPERTIES FIXTURES_REQUIRED FIX_REPO)
   set_tests_properties(end_to_end_alloc PROPERTIES FIXTURES_SETUP FIX_ALLOC)
   set_tests_properties(end_to_end_collection PROPERTIES FIXTURES_REQUIRED FIX_ALLOC)
+  set_tests_properties(end_to_end_record PROPERTIES FIXTURES_REQUIRED FIX_ALLOC)
 
 endif()

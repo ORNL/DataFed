@@ -14,21 +14,28 @@ Help()
   echo
   echo "Syntax: $(basename $0) [-h|r|d|p]"
   echo "options:"
-  echo "-h, --help                        Print this help message"
-  echo "-r, --repo-id                     The repository id i.e. /repo/core"
-  echo "                                  This is the path in the Globus endpoint."
-  echo "-d, --domain                      The DataFed fully qualified domain"
-  echo "                                  this is the port that is open and listening on"
-  echo "                                  the core server. E.g."
-  echo "                                  datafed.ornl.gov"
-  echo "                                  It can also be set using the DATAFED_DOMAIN env variable."
-  echo "                                  NOTE: this does not use https it uses tcp."
-  echo "-p, --port                        The DataFed port."
-  echo "-u, --user                        The user the authz module will run as."
-  echo "-g, --globus-collection-path      The POSIX path to the Guest Globus Collection."
+  echo "-h, --help                          Print this help message"
+  echo "-r, --repo-id                       The repository id i.e. /repo/core"
+  echo "                                    This is the path in the Globus endpoint."
+  echo "-d, --domain                        The DataFed fully qualified domain"
+  echo "                                    this is the port that is open and listening on"
+  echo "                                    the core server. E.g."
+  echo "                                    datafed.ornl.gov"
+  echo "                                    It can also be set using the DATAFED_DOMAIN env variable."
+  echo "                                    NOTE: this does not use https it uses tcp."
+  echo "-p, --port                          The DataFed port."
+  echo "-u, --user                          The user the authz module will run as."
+  echo "-g, --globus-collection-base-path   The POSIX path to the Guest Globus Collection."
 }
 
 REPO_ID="datafed-home"
+
+if [ -z "${DATAFED_DEFAULT_LOG_PATH}" ]
+then
+  local_DATAFED_LOG_PATH="/var/log/datafed"
+else
+  local_DATAFED_LOG_PATH=$(printenv DATAFED_DEFAULT_LOG_PATH)
+fi
 
 if [ -z "DATAFED_DOMAIN" ]
 then
@@ -46,18 +53,18 @@ else
   local_DATAFED_SERVER_PORT=$(printenv DATAFED_SERVER_PORT)
 fi
 
-if [ -z "${GCS_COLLECTION_ROOT_PATH}" ]
+if [ -z "${DATAFED_GCS_COLLECTION_BASE_PATH}" ]
 then
-  local_GCS_COLLECTION_ROOT_PATH="/mnt/datafed-repo/mapped"
+  local_DATAFED_GCS_COLLECTION_BASE_PATH="/mnt/datafed-repo/mapped"
 else
-  local_GCS_COLLECTION_ROOT_PATH=$(printenv GCS_COLLECTION_ROOT_PATH)
+  local_DATAFED_GCS_COLLECTION_BASE_PATH=$(printenv DATAFED_GCS_COLLECTION_BASE_PATH)
 fi
 
-if [ -z $DATAFED_AUTHZ_USER ]
+if [ -z "${DATAFED_GLOBUS_REPO_USER}" ]
 then
-  local_DATAFED_AUTHZ_USER="$USER"
+  local_DATAFED_AUTHZ_USER="$DATAFED_GLOBUS_REPO_USER"
 else
-  local_DATAFED_AUTHZ_USER=$(printenv DATAFED_AUTHZ_USER)
+  local_DATAFED_AUTHZ_USER=$(printenv DATAFED_GLOBUS_REPO_USER)
 fi
 
 
@@ -92,9 +99,9 @@ while [ : ]; do
         local_DATAFED_AUTHZ_USER=$2
         shift 2
         ;;
-    -g | --globus-collection-path)
-        echo "Processing 'Globus Collection Path' option. Input argument is '$2'"
-        local_GCS_COLLECTION_ROOT_PATH=$2
+    -g | --globus-collection-base-path)
+        echo "Processing 'Globus Collection Base Path' option. Input argument is '$2'"
+        local_DATAFED_GCS_COLLECTION_BASE_PATH=$2
         shift 2
         ;;
     --) shift; 
@@ -115,8 +122,9 @@ server_key=${DATAFED_INSTALL_PATH}/keys/datafed-core-key.pub
 repo_id=repo/$DATAFED_REPO_ID_AND_DIR
 pub_key=${DATAFED_INSTALL_PATH}/keys/datafed-repo-key.pub
 priv_key=${DATAFED_INSTALL_PATH}/keys/datafed-repo-key.priv
+log_path=${local_DATAFED_LOG_PATH}/datafed-gsi-authz.log
 user=$local_DATAFED_AUTHZ_USER
-globus-collection-path=$local_GCS_COLLECTION_ROOT_PATH
+globus-collection-path=$local_DATAFED_GCS_COLLECTION_BASE_PATH
 EOF
 
 echo

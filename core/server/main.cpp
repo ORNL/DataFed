@@ -30,7 +30,7 @@ namespace po = boost::program_options;
 int main(int a_argc, char **a_argv) {
   global_logger.setSysLog(false);
   global_logger.addStream(std::cerr);
-  global_logger.setLevel(LogLevel::DEBUG);
+  global_logger.setLevel(LogLevel::INFO);
   LogContext log_context;
   log_context.thread_name = "core_server";
   log_context.thread_id = 0;

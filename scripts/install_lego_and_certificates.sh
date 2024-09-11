@@ -4,8 +4,9 @@ set -euf -o pipefail
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
-PROJECT_ROOT=$(realpath ${SOURCE}/..)
-source ${PROJECT_ROOT}/config/datafed.sh
+PROJECT_ROOT=$(realpath "${SOURCE}/..")
+source "${PROJECT_ROOT}/config/datafed.sh"
+source "${PROJECT_ROOT}/scripts/utils.sh"
 
 Help()
 {
@@ -78,9 +79,11 @@ then
   exit 1
 fi
 
-sudo add-apt-repository --yes ppa:longsleep/golang-backports
-sudo apt-get update
-sudo apt-get install golang-go
+sudo_command
+
+"$SUDO_CMD" add-apt-repository --yes ppa:longsleep/golang-backports
+"$SUDO_CMD" apt-get update
+"$SUDO_CMD" apt-get install golang-go
 
 #This was verified for go 1.17
 export GO111MODULE=on
@@ -89,13 +92,13 @@ GOBIN=/usr/local/bin/ go install github.com/go-acme/lego/v4/cmd/lego@latest
 # Create the folder
 if [ ! -d "${DATAFED_INSTALL_PATH}/keys" ]
 then
-	sudo mkdir -p "${DATAFED_INSTALL_PATH}/keys"
+	"$SUDO_CMD" mkdir -p "${DATAFED_INSTALL_PATH}/keys"
 fi
 
 # Check if the datafed-ws server is already running, will need to stop it if we want
 # to use port 443 to start the domain name
 datafed_ws_service=$(systemctl list-unit-files --type service | grep datafed-ws | awk '{print $1}')
-[[ "$datafed_ws_service" == 'datafed-ws.service' ]] && sudo systemctl stop datafed-ws.service
+[[ "$datafed_ws_service" == 'datafed-ws.service' ]] && "$SUDO_CMD" systemctl stop datafed-ws.service
 
 # This should create a folder in ~/.lego/certificates, that contains the
 # certificate files you need, we are going to copy them over to the
@@ -109,7 +112,7 @@ cert_file="datafed-server-test.ornl.gov.crt"
 key_file="datafed-server-test.ornl.gov.key"
 if [ ! -f "${DATAFED_INSTALL_PATH}/keys/$cert_file" ] || [ ! -f "${DATAFED_INSTALL_PATH}/keys/$key_file" ]
 then
-  sudo lego --accept-tos --email="$DATAFED_LEGO_EMAIL" --domains="$local_DATAFED_DOMAIN" --path "${DATAFED_INSTALL_PATH}/keys/" --tls run 
+  "$SUDO_CMD" lego --accept-tos --email="$DATAFED_LEGO_EMAIL" --domains="$local_DATAFED_DOMAIN" --path "${DATAFED_INSTALL_PATH}/keys/" --tls run 
   mv ${DATAFED_INSTALL_PATH}/keys/certificates/$cert_file ${DATAFED_INSTALL_PATH}/keys/
   mv ${DATAFED_INSTALL_PATH}/keys/certificates/$key_file  ${DATAFED_INSTALL_PATH}/keys/
   rm -rf ${DATAFED_INSTALL_PATH}/keys/certificates

@@ -5,6 +5,8 @@ configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/README ${CMAKE_CURRENT_BINARY_DIR} C
 
 # The files should exist in both the source and binary directories, they are needed in the 
 # source directory to run the tests and in the binary directory to install the package
+
+# Create Release Version
 configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/datafed/VERSION.py.in"
   "${CMAKE_CURRENT_BINARY_DIR}/datafed/VERSION.py"

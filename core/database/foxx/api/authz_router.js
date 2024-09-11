@@ -15,23 +15,16 @@ router.get('/gridftp', function(req, res) {
 
             const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
 
-            console.log("1");
             var idx = req.queryParams.file.lastIndexOf("/");
-            console.log("2");
             var data_key = req.queryParams.file.substr(idx + 1);
-            console.log("3");
             var data_id = "d/" + data_key;
 
-            console.log("4");
-            console.log("client is ", client);
             // Special case - allow unknown client to read a publicly accessible record
-            console.log(req.queryParams);
             if (!client) {
                 if (req.queryParams.act != "read" || !g_lib.hasPublicRead(data_id)) {
                     console.log("Permission to read denied!");
                     throw g_lib.ERR_PERM_DENIED;
                 }
-                console.log("5");
                 console.log("allow anon read of public record");
             } else {
                 console.log("client:", client);
@@ -45,6 +38,7 @@ router.get('/gridftp', function(req, res) {
                         break;
                     case "write":
                         console.log("Client: ", client, " write permissions?");
+                        break;
                     case "create":
                         console.log("Client: ", client, " create permissions?");
                         req_perm = g_lib.PERM_WR_DATA;
@@ -54,6 +48,7 @@ router.get('/gridftp', function(req, res) {
                         throw g_lib.ERR_PERM_DENIED;
                     case "chdir":
                         console.log("Client: ", client, " chdir permissions?");
+                        break;
                     case "lookup":
                         console.log("Client: ", client, " lookup permissions?");
                         // For TESTING, allow these actions
@@ -62,13 +57,10 @@ router.get('/gridftp', function(req, res) {
                         throw [g_lib.ERR_INVALID_PARAM, "Invalid gridFTP action: ", req.queryParams.act];
                 }
 
-                console.log("6 client: ", client, " data_id: ", data_id);
+                console.log("client: ", client, " data_id: ", data_id);
                 if (!g_lib.hasAdminPermObject(client, data_id)) {
-                    console.log("7");
                     var data = g_db.d.document(data_id);
-                    console.log("8");
                     if (!g_lib.hasPermissions(client, data, req_perm)) {
-                        console.log("9");
                         console.log("Client: ", client, " does not have permission!");
                         throw g_lib.ERR_PERM_DENIED;
                     }
@@ -78,9 +70,7 @@ router.get('/gridftp', function(req, res) {
             // Verify repo and path are correct for record
             // Note: only managed records have an allocations and this gridftp auth call is only made for managed records
             //var path = req.queryParams.file.substr( req.queryParams.file.indexOf("/",8));
-            console.log("10");
             var path = req.queryParams.file;
-            console.log("11");
             console.log("data_id is, ", data_id);
             var loc = g_db.loc.firstExample({
                 _from: data_id
@@ -91,7 +81,6 @@ router.get('/gridftp', function(req, res) {
                 console.log("Permission denied data is not managed by DataFed. This can happen if you try to do a transfer directly from Globus.")
                 throw g_lib.ERR_PERM_DENIED;
             }
-            console.log("12");
             var alloc = g_db.alloc.firstExample({
                 _from: loc.uid,
                 _to: loc._to
@@ -107,24 +96,27 @@ router.get('/gridftp', function(req, res) {
             }
 
             console.log("path:", path, " alloc path:", alloc.path + data_key, " loc: ", loc);
-            console.log("13");
             if (alloc.path + data_key != path) {
                 // This may be due to an alloc/owner change
-                // Allow IF new path matches
+                // Allow If new path matches
                 console.log("authz loc info:", loc);
 
                 if (!loc.new_repo) {
+                    console.log("Throw a permission denied error");
                     throw g_lib.ERR_PERM_DENIED;
                 }
 
+                console.log("Creating alloc");
                 alloc = g_db.alloc.firstExample({
                     _from: loc.new_owner ? loc.new_owner : loc.uid,
                     _to: loc.new_repo
                 });
 
 
+                console.log("alloc is ");
+                console.log(alloc);
                 if (!alloc || (alloc.path + data_key != path)) {
-                    throw g_lib.ERR_PERM_DENIED;
+                    throw [obj.ERR_PERM_DENIED, "Permission denied, DataFed registered path is '" + alloc.path + data_key + "' Globus path is '" + path + "'"]
                 }
             }
 
