@@ -103,7 +103,7 @@ end-to-end-core-setup:
     - sleep 60
     - echo "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest"
     - docker container ls
-    - docker container logs $(CONTAINER_ID)
+    - docker container logs $CONTAINER_ID
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest" 
     - ./scripts/remove_core_container.sh
     - ./scripts/remove_datafed_network.sh
