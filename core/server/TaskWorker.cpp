@@ -67,6 +67,7 @@ void TaskWorker::workerThread(LogContext log_context) {
   uint32_t cmd;
   int step;
   bool first;
+  int db_connection_backoff;
 
   while (m_running) {
     DL_DEBUG(log_context, "Grabbing next task");
@@ -74,6 +75,7 @@ void TaskWorker::workerThread(LogContext log_context) {
 
     err_msg.clear();
     first = true;
+    db_connection_backoff = 1;
 
     while (true) {
       try {
@@ -133,12 +135,22 @@ void TaskWorker::workerThread(LogContext log_context) {
             break;
           }
         }
+
+        db_connection_backoff = 1;
       } catch (TraceException &e) {
         err_msg = e.toString();
+
         DL_ERROR(log_context, "Task worker "
                                   << id() << " exception: " << err_msg
                                   << " task_id is " << m_task->task_id
                                   << " cmd is " << cmd);
+
+        if (err_msg.find("SDMS DB interface failed") != std::string::npos) {
+            int sleep_time = db_connection_backoff;
+            db_connection_backoff = max(db_connection_backoff * 2, 60);
+            sleep(sleep_time);
+        }
+
         if (err_msg.find("Task " + m_task->task_id + " does not exist") !=
             std::string::npos) {
           DL_ERROR(log_context, "Task is not found in the database something "
