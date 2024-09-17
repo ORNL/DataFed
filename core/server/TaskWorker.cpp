@@ -147,7 +147,7 @@ void TaskWorker::workerThread(LogContext log_context) {
 
         if (err_msg.find("SDMS DB interface failed") != std::string::npos) {
             int sleep_time = db_connection_backoff;
-            db_connection_backoff = max(db_connection_backoff * 2, 60);
+            db_connection_backoff = min(db_connection_backoff * 2, 60);
             sleep(sleep_time);
         }
 
