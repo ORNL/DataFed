@@ -8,7 +8,8 @@ SCRIPT=$(realpath "$0")
 FILE_NAME=$(basename "${SCRIPT}")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/..")
-source "${PROJECT_ROOT}/config/datafed.sh"
+
+$PROJECT_ROOT/config/datafed.sh
 
 VERSION="1.0.0"
 echo "$FILE_NAME $VERSION"
@@ -41,6 +42,7 @@ local_VOLUME_BASE_PATH="\$DATAFED_INSTALL_PATH"
 local_VOLUME_CERT_PATH="\$DATAFED_WEB_CERT_PATH"
 local_VOLUME_KEY_PATH="\$DATAFED_WEB_KEY_PATH"
 local_INSTALL_PATH="$DATAFED_INSTALL_PATH"
+local_CONFIG_PATH="$PROJECT_ROOT"
 
 if [ -z "${DATAFED_DOCKER_TAG}" ]
 then
@@ -146,7 +148,7 @@ EOF
 cat << EOF > "$local_INSTALL_PATH/scripts/run_core_container.sh"
 #!/bin/bash
 
-CONFIG_FILE_PATH="$local_INSTALL_PATH/config/datafed.sh"
+CONFIG_FILE_PATH="$local_CONFIG_PATH/config/datafed.sh"
 source "\${CONFIG_FILE_PATH}"
 
 USER_ID=$(id -u)
@@ -189,7 +191,7 @@ EOF
 cat << EOF > "$local_INSTALL_PATH/scripts/run_web_container.sh"
 #!/bin/bash
 
-CONFIG_FILE_PATH="$local_INSTALL_PATH/config/datafed.sh"
+CONFIG_FILE_PATH="$local_CONFIG_PATH/config/datafed.sh"
 source "\$CONFIG_FILE_PATH"
 
 USER_ID=$(id -u)
@@ -232,7 +234,7 @@ EOF
 cat << EOF > "$local_INSTALL_PATH/scripts/run_nginx_container.sh"
 #!/bin/bash
 
-CONFIG_FILE_PATH="$local_INSTALL_PATH/config/datafed.sh"
+CONFIG_FILE_PATH="$local_CONFIG_PATH/config/datafed.sh"
 source "\$CONFIG_FILE_PATH"
 
 USER_ID=$(id -u)

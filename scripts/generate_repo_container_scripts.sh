@@ -8,7 +8,8 @@ SCRIPT=$(realpath "$0")
 FILE_NAME=$(basename "${SCRIPT}")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/..")
-source "${PROJECT_ROOT}/config/datafed.sh"
+
+$PROJECT_ROOT/config/datafed.sh
 
 VERSION="1.0.0"
 echo "$FILE_NAME $VERSION"
@@ -43,6 +44,7 @@ local_REPO_IMAGE="datafed-repo-prod"
 local_GCS_IMAGE="datafed-gcs-prod"
 local_VOLUME_BASE_PATH="\$DATAFED_INSTALL_PATH"
 local_INSTALL_PATH="$DATAFED_INSTALL_PATH"
+local_CONFIG_PATH="$PROJECT_ROOT"
 
 if [ -z "${DATAFED_DOCKER_TAG}" ]
 then
@@ -169,7 +171,7 @@ mkdir -p "$local_INSTALL_PATH"
 cat << EOF > "$local_INSTALL_PATH/scripts/run_repo_container.sh"
 #!/bin/bash
 
-CONFIG_FILE_PATH="$local_INSTALL_PATH/config/datafed.sh"
+CONFIG_FILE_PATH="$local_CONFIG_PATH/config/datafed.sh"
 source "\${CONFIG_FILE_PATH}"
 
 USER_ID=$(id -u)
@@ -212,7 +214,7 @@ EOF
 cat << EOF > "$local_INSTALL_PATH/scripts/run_gcs_container.sh"
 #!/bin/bash
 
-CONFIG_FILE_PATH="$local_INSTALL_PATH/config/datafed.sh"
+CONFIG_FILE_PATH="$local_CONFIG_PATH/config/datafed.sh"
 source "\${CONFIG_FILE_PATH}"
 
 USER_ID=$(id -u)
