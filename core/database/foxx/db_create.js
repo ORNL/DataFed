@@ -25,8 +25,10 @@ graph._addVertexCollection("sch"); // Schemas
 graph._addVertexCollection("config"); // Configuration
 graph._addVertexCollection("metrics"); // Metrics
 
-var token = graph_module._relation("token", ["u"], ["globus_coll"]);
-graph._extendEdgeDefinitions(token);
+// Access and Refresh tokens needed by Globus on a per user basis to access
+// different collections
+const globus_token = graph_module._relation("globus_token", ["u"], ["globus_coll"]);
+graph._extendEdgeDefinitions(globus_token);
 
 var owner = graph_module._relation("owner", ["d", "c", "p", "g", "a", "q", "task"], ["u", "p"]);
 graph._extendEdgeDefinitions(owner);

@@ -9,7 +9,7 @@ db._truncate("c");
 db._truncate("t");
 db._truncate("a");
 db._truncate("q");
-db._truncate("token");
+db._truncate("globus_token");
 db._truncate("globus_coll");
 db._truncate("owner");
 db._truncate("member");
