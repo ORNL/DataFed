@@ -17,6 +17,7 @@ graph._addVertexCollection("t"); // Topic
 graph._addVertexCollection("a"); // Alias
 graph._addVertexCollection("n"); // Annotations (notes)
 graph._addVertexCollection("q"); // Saved queries
+graph._addVertexCollection("globus_coll"); // Globus Collections
 graph._addVertexCollection("repo"); // Repository servers
 graph._addVertexCollection("task"); // Tasks
 graph._addVertexCollection("tag"); // Tags
@@ -24,6 +25,8 @@ graph._addVertexCollection("sch"); // Schemas
 graph._addVertexCollection("config"); // Configuration
 graph._addVertexCollection("metrics"); // Metrics
 
+var token = graph_module._relation("token", ["u"], ["globus_coll"]);
+graph._extendEdgeDefinitions(token);
 
 var owner = graph_module._relation("owner", ["d", "c", "p", "g", "a", "q", "task"], ["u", "p"]);
 graph._extendEdgeDefinitions(owner);
