@@ -7,7 +7,6 @@ set -euf
 LOG_FILE="harbor_check.log"
 echo "CI Harbor Check Log File" > "$LOG_FILE"
 
-local_DATAFED_HARBOR_URL="https://$local_DATAFED_HARBOR_REGISTRY"
 
 if [ -z "${DATAFED_HARBOR_PROJECT}" ]
 then
@@ -39,6 +38,8 @@ for var in "${vars[@]}"; do
     exit 1
   fi
 done
+
+local_DATAFED_HARBOR_URL="https://$local_DATAFED_HARBOR_REGISTRY"
 
 URL="$local_DATAFED_HARBOR_URL/api/v2.0/projects/$local_DATAFED_HARBOR_PROJECT/repositories/$local_DATAFED_HARBOR_REPOSITORY/artifacts"
 echo "$URL" >> "$LOG_FILE"
