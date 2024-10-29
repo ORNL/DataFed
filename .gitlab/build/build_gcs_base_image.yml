@@ -11,6 +11,7 @@ build-gcs-base:
     IMAGE_TAG: "datafed/gcs-base"
     GIT_SUBMODULE_STRATEGY: recursive
     GIT_STRATEGY: clone
+    DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
   tags:
     - ci-datafed-globus
     - docker
@@ -52,5 +53,6 @@ retag-image:
   variables:
     IMAGE_TAG: "datafed/gcs-base"
     GIT_STRATEGY: clone
+    DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
   tags:
     - docker
