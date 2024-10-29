@@ -99,7 +99,9 @@ def delete_node_keys(
         # Configure our app
         app.config["CLIENT_ID"] = str(client_id)
         app.config["CLIENT_SECRET"] = secret
-        app.config["ENVIRONMENT"] = os.environ.get("GLOBUS_SDK_ENVIRONMENT", "production")
+        app.config["ENVIRONMENT"] = os.environ.get(
+            "GLOBUS_SDK_ENVIRONMENT", "production"
+        )
         app.config["DEPLOYMENT_KEY"] = deployment_key
 
         # Make sure the GCS services in AWS are accessible
@@ -137,11 +139,13 @@ def delete_node_keys(
             ctx.exit(1)
 
         assert len(items) == 1
-        globus_dns_domain = app.appsync_client.process_item(items[0], catch_exceptions=False)
+        globus_dns_domain = app.appsync_client.process_item(
+            items[0], catch_exceptions=False
+        )
         assert globus_dns_domain
 
         # Verify that we have something to delete
-        if len(app.keychain.node_keys) == (len(globus_dns_domain.nodes) + 1) :
+        if len(app.keychain.node_keys) == (len(globus_dns_domain.nodes) + 1):
             click.echo("No extra node keys to delete. Exiting.")
             ctx.exit(0)
 
@@ -174,14 +178,15 @@ def delete_node_keys(
         click.echo(f"Found {len(app.keychain.node_keys)-1} node key(s) to remove")
         for key in app.keychain.node_keys:
             if key.thumbprint() == deployment_key.thumbprint():
-                click.echo('...skipping deployment key')
+                click.echo("...skipping deployment key")
                 continue
-            click.echo(f'...deleting {key}')
+            click.echo(f"...deleting {key}")
             app.keychain.remove_node_key(key.thumbprint())
 
         # Update they keychain in appsync
         click.echo("Commiting updated keychain to GCS cloud services...")
         app.appsync_client.update_object(app.keychain, ignore_response=True)
+
 
 if __name__ == "__main__":
     delete_node_keys(sys.argv[1:])
