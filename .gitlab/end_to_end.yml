@@ -246,7 +246,6 @@ end-to-end-gcs-node-clean:
     - CLIENT=$(cat "${DATAFED_GLOBUS_DIR}/deployment-key.json" | jq -r .client_id)
     - GLOBUS_CLIENT_SECRET="${SECRET}" ./scripts/globus/clean_globus_nodes.py --client_id "${CLIENT}" --deployment-key "${DATAFED_GLOBUS_DIR}/node_deletion_key.json"
 
-
 # Requires setting up Globus Connect Server, requires firewall exceptions on
 # the machine running this.
 # Note we need the certificates to be available on the gcs-authz container
