@@ -12,6 +12,7 @@ build-core:
     IMAGE_TAG: "datafed/core"
     GIT_STRATEGY: clone
     DOCKER_FILE_PATH: "core/docker/Dockerfile"
+    DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
   tags:
     - ci-datafed-core
     - docker
