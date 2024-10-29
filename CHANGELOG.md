@@ -12,7 +12,7 @@
 3. [988] - Removed non-working subscribe function.
 4. [958] - Addresses issues raised by static code analyzer.
 5. [962] - Adds script that will check that docker image is in registry
-6. [1015] - Use CI_BUILDS_DIR when checking gcs base image with harbor check
+6. [1015] - Uses abs path to ci pipeline script for gcs build jobs
 7. [1013] - add set +e and set -e around is active check for arango service
 
 # v2024.6.17.10.40
