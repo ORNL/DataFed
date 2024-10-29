@@ -110,7 +110,7 @@ def delete_node_keys(
             if appsync_client is None:
                 click.echo("Unable to contact Globus services", err=True)
                 ctx.exit(1)
-        except globus_sdk.GlobusAPIError as e:
+        except globus_sdk.GlobusAPIError:
             click.echo(
                 "\n".join(
                     textwrap.wrap(
