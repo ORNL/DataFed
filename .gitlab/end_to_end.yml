@@ -69,6 +69,21 @@ end-to-end-foxx-setup:
 # STAGE: End to end setup
 ################################################################################
 
+end-to-end-gcs-node-clean:
+  variables:
+    GIT_STRATEGY: clone
+    DATAFED_GLOBUS_DIR: "/shared/globus"
+  stage: end-to-end-setup
+  needs: ["end-to-end-arango-setup", "end-to-end-foxx-setup"]
+  tags:
+    - ci-datafed-globus
+    - docker
+  script:
+    - cat "${DATAFED_GLOBUS_DIR}/deployment-key.json" | jq .node_key > "${DATAFED_GLOBUS_DIR}/node_deletion_key.json"
+    - SECRET=$(cat "${DATAFED_GLOBUS_DIR}/deployment-key.json" | jq -r .secret)
+    - CLIENT=$(cat "${DATAFED_GLOBUS_DIR}/deployment-key.json" | jq -r .client_id)
+    - GLOBUS_CLIENT_SECRET="${SECRET}" ./scripts/globus/clean_globus_nodes.py --client_id "${CLIENT}" --deployment-key "${DATAFED_GLOBUS_DIR}/node_deletion_key.json"
+
 end-to-end-core-setup:
   variables:
     IMAGE_TAG: "datafed/core-"
@@ -231,20 +246,6 @@ end-to-end-repo-setup:
     - sleep 10
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest" 
 
-
-end-to-end-gcs-node-clean:
-  variables:
-    GIT_STRATEGY: clone
-    DATAFED_GLOBUS_DIR: "/shared/globus"
-  stage: end-to-end-setup
-  tags:
-    - ci-datafed-globus
-    - docker
-  script:
-    - cat "${DATAFED_GLOBUS_DIR}/deployment-key.json" | jq .node_key > "${DATAFED_GLOBUS_DIR}/node_deletion_key.json"
-    - SECRET=$(cat "${DATAFED_GLOBUS_DIR}/deployment-key.json" | jq -r .secret)
-    - CLIENT=$(cat "${DATAFED_GLOBUS_DIR}/deployment-key.json" | jq -r .client_id)
-    - GLOBUS_CLIENT_SECRET="${SECRET}" ./scripts/globus/clean_globus_nodes.py --client_id "${CLIENT}" --deployment-key "${DATAFED_GLOBUS_DIR}/node_deletion_key.json"
 
 # Requires setting up Globus Connect Server, requires firewall exceptions on
 # the machine running this.
