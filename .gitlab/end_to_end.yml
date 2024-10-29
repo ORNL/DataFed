@@ -82,7 +82,7 @@ end-to-end-gcs-node-clean:
     - cat "${DATAFED_GLOBUS_DIR}/deployment-key.json" | jq .node_key > "${DATAFED_GLOBUS_DIR}/node_deletion_key.json"
     - SECRET=$(cat "${DATAFED_GLOBUS_DIR}/deployment-key.json" | jq -r .secret)
     - CLIENT=$(cat "${DATAFED_GLOBUS_DIR}/deployment-key.json" | jq -r .client_id)
-    - GLOBUS_CLIENT_SECRET="${SECRET}" ./scripts/globus/clean_globus_nodes.py --client_id "${CLIENT}" --deployment-key "${DATAFED_GLOBUS_DIR}/node_deletion_key.json"
+    - GLOBUS_CLIENT_SECRET="${SECRET}" ./scripts/globus/clean_globus_nodes.py --client-id "${CLIENT}" --deployment-key "${DATAFED_GLOBUS_DIR}/node_deletion_key.json"
 
 end-to-end-core-setup:
   variables:
