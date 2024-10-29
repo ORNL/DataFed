@@ -8,14 +8,14 @@ LOG_FILE="harbor_check.log"
 echo "CI Harbor Check Log File" > "$LOG_FILE"
 
 
-if [ -z "${DATAFED_HARBOR_PROJECT}" ]
+if [ -z "${DATAFED_HARBOR_PROJECT:-}" ]
 then
   local_DATAFED_HARBOR_PROJECT="datafed"
 else
   local_DATAFED_HARBOR_PROJECT=$(printenv DATAFED_HARBOR_PROJECT)
 fi
 
-if [ -z "${DATAFED_HARBOR_IMAGE_TAG}" ]
+if [ -z "${DATAFED_HARBOR_IMAGE_TAG:-}" ]
 then
   local_DATAFED_HARBOR_IMAGE_TAG="latest"
 else
