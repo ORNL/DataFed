@@ -154,22 +154,22 @@ def delete_node_keys(
         # in this endpoint.
         #
 
-        if len(globus_dns_domain.nodes):
-            click.echo(
-                "This endpoint still has the following node defintions:",
-                err=True,
-            )
-            for node in globus_dns_domain.nodes:
-                ips = [format(ip) for ip in node.ip_addresses]
-                click.echo(
-                    f"    {node.id}: {', '.join(ips)}",
-                    err=True,
-                )
-            click.echo(
-                "\nPerform 'node cleanup' on those nodes before continuing.",
-                err=True,
-            )
-            ctx.exit(1)
+        #if len(globus_dns_domain.nodes):
+        #    #click.echo(
+        #    #    "This endpoint still has the following node defintions:",
+        #    #    err=True,
+        #    #)
+        #    for node in globus_dns_domain.nodes:
+        #        ips = [format(ip) for ip in node.ip_addresses]
+        #        click.echo(
+        #            f"    {node.id}: {', '.join(ips)}",
+        #            err=True,
+        #        )
+        #    click.echo(
+        #        "\nPerform 'node cleanup' on those nodes before continuing.",
+        #        err=True,
+        #    )
+        #    ctx.exit(1)
 
         #
         # Delete all keys except for our deployment key
