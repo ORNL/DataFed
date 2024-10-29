@@ -149,32 +149,6 @@ def delete_node_keys(
             click.echo("No extra node keys to delete. Exiting.")
             ctx.exit(0)
 
-        #
-        # Now we know we have something to delete. Verify that there are no defined nodes
-        # in this endpoint.
-        #
-
-        #if len(globus_dns_domain.nodes):
-        #    #click.echo(
-        #    #    "This endpoint still has the following node defintions:",
-        #    #    err=True,
-        #    #)
-        #    for node in globus_dns_domain.nodes:
-        #        ips = [format(ip) for ip in node.ip_addresses]
-        #        click.echo(
-        #            f"    {node.id}: {', '.join(ips)}",
-        #            err=True,
-        #        )
-        #    click.echo(
-        #        "\nPerform 'node cleanup' on those nodes before continuing.",
-        #        err=True,
-        #    )
-        #    ctx.exit(1)
-
-        #
-        # Delete all keys except for our deployment key
-        #
-
         click.echo(f"Found {len(app.keychain.node_keys)-1} node key(s) to remove")
         for key in app.keychain.node_keys:
             if key.thumbprint() == deployment_key.thumbprint():
