@@ -16,6 +16,7 @@
 7. [1013] - add set +e and set -e around is active check for arango service
 8. [1011] - Add python script and ci job to clean up GCS node keys.
 9. [1023] - Address unbound variables in harbor ci script.
+10. [1027] - Fix clear_db.sh script by replacing console.log with print
 
 # v2024.6.17.10.40
 
