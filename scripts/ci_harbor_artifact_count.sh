@@ -7,16 +7,15 @@ set -euf
 LOG_FILE="harbor_check.log"
 echo "CI Harbor Check Log File" > "$LOG_FILE"
 
-local_DATAFED_HARBOR_URL="https://$local_DATAFED_HARBOR_REGISTRY"
 
-if [ -z "${DATAFED_HARBOR_PROJECT}" ]
+if [ -z "${DATAFED_HARBOR_PROJECT:-}" ]
 then
   local_DATAFED_HARBOR_PROJECT="datafed"
 else
   local_DATAFED_HARBOR_PROJECT=$(printenv DATAFED_HARBOR_PROJECT)
 fi
 
-if [ -z "${DATAFED_HARBOR_IMAGE_TAG}" ]
+if [ -z "${DATAFED_HARBOR_IMAGE_TAG:-}" ]
 then
   local_DATAFED_HARBOR_IMAGE_TAG="latest"
 else
@@ -39,6 +38,8 @@ for var in "${vars[@]}"; do
     exit 1
   fi
 done
+
+local_DATAFED_HARBOR_URL="https://$local_DATAFED_HARBOR_REGISTRY"
 
 URL="$local_DATAFED_HARBOR_URL/api/v2.0/projects/$local_DATAFED_HARBOR_PROJECT/repositories/$local_DATAFED_HARBOR_REPOSITORY/artifacts"
 echo "$URL" >> "$LOG_FILE"
