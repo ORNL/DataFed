@@ -23,7 +23,7 @@ then
 fi
 
 # Load the variables from the build_args
-. ./.build-args
+. "$BUILD_ARG_FILE"
 
 echo "BASE_IMAGE is $BASE_IMAGE"
 
