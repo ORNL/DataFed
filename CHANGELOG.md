@@ -6,6 +6,7 @@
 1. [987] - This implements serialized GitLab CI pipelines
 2. [918] - Add admin script for making a user an admin
 3. [1009] - Add collections to database for holding Globus tokens. 
+4. [1002] - Add backoff for task worker when database fails to prevent log overflow.
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 1. [984] - Fixes {server_default} from showing up in path.
@@ -61,6 +62,10 @@
 15. [968] - Fixes bug by creating distinction between base and root path.
 16. [981] - Fixes html injection that can occur from user name when displaying owner in schema dlg box.
 17. [983] - Fixes google analytics by adding nonce which was broken.
+18. [995] - Fixes issue with project and user folders in repo being created under root user permissions.
+19. [994] - Fixes issue with spaces not being preserved in shell scripts from docker compose .env file.
+20. [996] - Fixes bug in lego install script where function name had additional s
+21. [998] - Fixing missing :latest tag on push in container, in common.yml of ci files
 
 # v2023.10.23.15.50
 
