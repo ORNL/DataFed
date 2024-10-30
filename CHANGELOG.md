@@ -19,6 +19,7 @@
 9. [1023] - Address unbound variables in harbor ci script.
 10. [1027] - Fix clear_db.sh script by replacing console.log with print
 11. [1012] - Allow customized base build image for Docker dependencies and runtime Dockerfiles
+12. [985] - Handles longer than needed timeouts on ui pages.
 
 # v2024.6.17.10.40
 
