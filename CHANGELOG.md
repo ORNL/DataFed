@@ -5,6 +5,8 @@
 ## MINOR Feature
 1. [987] - This implements serialized GitLab CI pipelines
 2. [918] - Add admin script for making a user an admin
+3. [1009] - Add collections to database for holding Globus tokens. 
+4. [1002] - Add backoff for task worker when database fails to prevent log overflow.
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 1. [984] - Fixes {server_default} from showing up in path.
@@ -12,7 +14,13 @@
 3. [988] - Removed non-working subscribe function.
 4. [958] - Addresses issues raised by static code analyzer.
 5. [962] - Adds script that will check that docker image is in registry
-6. [986] - Design improvement to upload and download transfer box.
+6. [1015] - Uses abs path to ci pipeline script for gcs build jobs
+7. [1013] - add set +e and set -e around is active check for arango service
+8. [1011] - Add python script and ci job to clean up GCS node keys.
+9. [1023] - Address unbound variables in harbor ci script.
+10. [1027] - Fix clear_db.sh script by replacing console.log with print
+11. [1012] - Allow customized base build image for Docker dependencies and runtime Dockerfiles
+12. [986] - Design improvement to upload and download transfer box.
 
 # v2024.6.17.10.40
 
@@ -55,6 +63,10 @@
 15. [968] - Fixes bug by creating distinction between base and root path.
 16. [981] - Fixes html injection that can occur from user name when displaying owner in schema dlg box.
 17. [983] - Fixes google analytics by adding nonce which was broken.
+18. [995] - Fixes issue with project and user folders in repo being created under root user permissions.
+19. [994] - Fixes issue with spaces not being preserved in shell scripts from docker compose .env file.
+20. [996] - Fixes bug in lego install script where function name had additional s
+21. [998] - Fixing missing :latest tag on push in container, in common.yml of ci files
 
 # v2023.10.23.15.50
 
