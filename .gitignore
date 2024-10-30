@@ -4,6 +4,7 @@ cmake/sodium_version
 cmake/curl_version
 cmake/zlib_version
 common/proto/common/Version.proto
+compose/metadata/.build-args
 compose/**/.env
 compose/**/.env*
 compose/**/globus
