@@ -5,7 +5,7 @@
 ## MINOR Feature
 1. [987] - This implements serialized GitLab CI pipelines
 2. [918] - Add admin script for making a user an admin
-12. [1009] - Add collections to database for holding Globus tokens. 
+3. [1009] - Add collections to database for holding Globus tokens. 
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 1. [984] - Fixes {server_default} from showing up in path.
