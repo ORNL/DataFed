@@ -12,7 +12,11 @@ if [[ ! -z $systemctl_exists ]]
 then
   sudo systemctl daemon-reload
 
+  # Turn off exit - on non zero exit code for the below command, we don't want
+  # it to exit if arangodb is not reported as active.
+  set +e
   arango_status=$(systemctl is-active arangodb3.service)
+  set -e
   if [ ! "active" = "$arango_status" ]
   then
     sudo systemctl restart arangodb3.service

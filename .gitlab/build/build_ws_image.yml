@@ -12,6 +12,7 @@ build-ws:
     IMAGE_TAG: "datafed/ws"
     GIT_STRATEGY: clone
     DOCKER_FILE_PATH: "web/docker/Dockerfile"
+    DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
   tags:
     - ci-datafed-core
     - docker
@@ -24,5 +25,12 @@ build-ws:
         - .gitlab-ci.yml
       when: on_success
 
-placeholder:
-  extends: .placeholder
+retag-image:
+  extends: .docker_retag_image
+  stage: build
+  variables:
+    IMAGE_TAG: "datafed/ws"
+    GIT_STRATEGY: clone
+    DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
+  tags:
+    - docker
