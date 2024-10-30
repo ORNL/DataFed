@@ -139,7 +139,8 @@ void TaskWorker::workerThread(LogContext log_context) {
           }
         }
 
-        // Set back to default since a db connection was successfully established
+        // Set back to default since a db connection was successfully
+        // established
         db_connection_backoff = 1;
       } catch (TraceException &e) {
         err_msg = e.toString();
@@ -149,17 +150,18 @@ void TaskWorker::workerThread(LogContext log_context) {
                                   << " task_id is " << m_task->task_id
                                   << " cmd is " << cmd);
 
-        // Detect, log, and backoff the db connection until it can successfully be established
+        // Detect, log, and backoff the db connection until it can successfully
+        // be established
         if (err_msg.find("SDMS DB interface failed") != std::string::npos) {
-            DL_INFO(log_context, "Task worker "
-              << id() << " exception: " << err_msg
-              << " backoff is set to " << db_connection_backoff
-              << " task_id is " << m_task->task_id
-              << " cmd is " << cmd);
+          DL_INFO(log_context, "Task worker "
+                                   << id() << " exception: " << err_msg
+                                   << " backoff is set to "
+                                   << db_connection_backoff << " task_id is "
+                                   << m_task->task_id << " cmd is " << cmd);
 
-            int sleep_time = db_connection_backoff;
-            db_connection_backoff = min(db_connection_backoff * 2, 60);
-            sleep(sleep_time);
+          int sleep_time = db_connection_backoff;
+          db_connection_backoff = min(db_connection_backoff * 2, 60);
+          sleep(sleep_time);
         }
 
         if (err_msg.find("Task " + m_task->task_id + " does not exist") !=
