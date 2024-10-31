@@ -1,5 +1,5 @@
 #!/bin/bash
-SCRIPT=$(realpath "$0")
+SCRIPT=$(realpath "${BASH_SOURCE[0]}")
 SOURCE=$(dirname "$SCRIPT")
 source "${SOURCE}/dependency_versions.sh"
 PROJECT_ROOT=$(realpath "${SOURCE}/..")
@@ -384,8 +384,12 @@ install_node() {
 
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
     nvm install "$DATAFED_NODE_VERSION"
-    # Mark node as installed
-    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.node_installed-${DATAFED_NODE_VERSION}"
+    code="$?"
+    if [ "$code" == "0" ]
+    then 
+      # Mark node as installed
+      touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.node_installed-${DATAFED_NODE_VERSION}"
+    fi
     cd "$original_dir"
   else
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
@@ -409,8 +413,12 @@ install_foxx_cli() {
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
     export NODE_VERSION="$DATAFED_NODE_VERSION"
     "$NVM_DIR/nvm-exec" npm install --global foxx-cli --prefix "${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm"
-    # Mark foxx_cli as installed
-    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.foxx_cli_installed"
+    code="$?"
+    if [ "$code" == "0" ]
+    then
+      # Mark foxx_cli as installed
+      touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.foxx_cli_installed"
+    fi
     cd "$original_dir"
   else
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
@@ -420,17 +428,17 @@ install_foxx_cli() {
     # check that foxx can be found
     if [ ! -d "${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm" ]
     then
-	echo "Something went wrong Foxx is supposed to be installed i.e. "
-	echo "(${DATAFED_DEPENDENCIES_INSTALL_PATH}/.foxx_cli_installed) "
-	echo "exists. But there is no npm folder in: ${DATAFED_DEPENDENCIES_INSTALL_PATH}"
-	exit 1
+      echo "Something went wrong Foxx is supposed to be installed i.e. "
+      echo "(${DATAFED_DEPENDENCIES_INSTALL_PATH}/.foxx_cli_installed) "
+      echo "exists. But there is no npm folder in: ${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+      exit 1
     fi
     if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/bin/foxx" ]
     then
-	echo "Something went wrong Foxx is supposed to be installed i.e. "
-	echo "(${DATAFED_DEPENDENCIES_INSTALL_PATH}/.foxx_cli_installed) "
-	echo "exists. But there is no foxx binary here: ${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/bin/foxx"
-	exit 1
+      echo "Something went wrong Foxx is supposed to be installed i.e. "
+      echo "(${DATAFED_DEPENDENCIES_INSTALL_PATH}/.foxx_cli_installed) "
+      echo "exists. But there is no foxx binary here: ${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/bin/foxx"
+      exit 1
     fi
   fi
 }
