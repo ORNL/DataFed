@@ -225,7 +225,6 @@ echo "$local_DATAFED_DATABASE_PASSWORD" > "${PATH_TO_PASSWD_FILE}"
 
   RESULT=$(curl -s http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/version)
   CODE=$(echo "${RESULT}" | jq '.code' )
-  echo "Code is $CODE"
   if [ -z "${FOUND_API}" ]
   then
       INSTALL_API="TRUE"
