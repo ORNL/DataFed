@@ -4,10 +4,11 @@
 # -u has been removed because we are checking for possible non existent env variables
 set -f -o pipefail
 
-SCRIPT=$(realpath "$0")
+SCRIPT=$(realpath "$BASH_SOURCE[0]")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/../../../)
 source ${PROJECT_ROOT}/config/datafed.sh
+source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
 Help()
 {
@@ -118,20 +119,22 @@ fi
 ## Get the size of the file in bytes
 #bytes=$(wc -c < datafed.zip)
 
-NODE_VERSION="v14.21.3"
-
-export NVM_DIR="$HOME/.nvm"
+export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
 
-nvm use $NODE_VERSION
+nvm use "$DATAFED_NODE_VERSION"
 
 FOXX_PREFIX=""
-{
-	# Determine if exists globally first
-	which foxx
-} || {
-	FOXX_PREFIX="~/bin/"
-}
+if ! command -v foxx > /dev/null 2>&1; then
+    FOXX_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/bin/"
+else
+  {
+    # Determine if exists globally first
+    which foxx
+  } || {
+    FOXX_PREFIX="~/bin/"
+  }
+fi
 
 PATH_TO_PASSWD_FILE=${SOURCE}/database_temp.password
 if [ "$TEST_TO_RUN" == "all" ]
