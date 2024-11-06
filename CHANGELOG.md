@@ -23,6 +23,7 @@
 8. [973] - Adds log output at the end of CI test pipeline
 9. [968] - Adds the ability to specify both base and root path when creating
    Globus collections.
+10. [1005] - Consolidate Development Environment setup documentation.
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 
