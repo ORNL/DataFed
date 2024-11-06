@@ -66,7 +66,8 @@ by subsequent documents on this site.
    :maxdepth: 2
    :caption: Administration
 
-   admin/general
+   admin/install_docker
+   admin/install_bare_metal
 
 .. toctree::
    :maxdepth: 2
