@@ -74,7 +74,6 @@ by subsequent documents on this site.
    :caption: Development
 
    dev/project
-   dev/environment_setup
    dev/design
    dev/release
    dev/roadmap
