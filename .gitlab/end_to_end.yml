@@ -43,8 +43,7 @@ end-to-end-foxx-setup:
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - echo "#!/bin/bash" > "${RUN_FILE}"
     - echo "docker run -d \\" >> "${RUN_FILE}"
-    - echo "--name \"foxx-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> "${RUN_FILE}"
-    - echo "-e DATAFED_ZEROMQ_SYSTEM_SECRET=\"$CI_DATAFED_ZEROMQ_SYSTEM_SECRET\" \\" >> "${RUN_FILE}"
+    - echo "--name \"foxx-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> "${RUN_FILE}" - echo "-e DATAFED_ZEROMQ_SYSTEM_SECRET=\"$CI_DATAFED_ZEROMQ_SYSTEM_SECRET\" \\" >> "${RUN_FILE}"
     - echo "-e DATAFED_DOMAIN=\"$CI_DATAFED_DOMAIN\" \\" >> "${RUN_FILE}"
     - echo "-e DATAFED_DATABASE_PASSWORD=\"$CI_DATAFED_DATABASE_PASSWORD\" \\" >> "${RUN_FILE}"
     - echo "-e DATAFED_DATABASE_IP_ADDRESS_PORT=\"$CI_DATAFED_DATABASE_IP_ADDRESS_PORT\" \\" >> "${RUN_FILE}"
@@ -60,7 +59,11 @@ end-to-end-foxx-setup:
       # Make sure container is running immediately after because it is meant to
       # be ephermal anyway, this is not the same for the other containers
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest"
-    - while [ ! -f "foxx_tmp/.foxx_is_installed" ]; do echo "Waiting for foxx_tmp/.foxx_is_installed"; sleep 10; done
+    - while [ ! -f "foxx_tmp/.foxx_is_installed" ]; do
+    -   echo "Waiting for foxx_tmp/.foxx_is_installed";
+    -   docker logs "foxx-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}";
+    -   sleep 10;
+    - done
     - ./scripts/ci_database_health_check.sh
   after_script:
     - rm -rf foxx_tmp
