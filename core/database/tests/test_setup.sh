@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # -e has been removed so that if an error occurs the PASSWORD File is deleted and not left lying around
-# -u has been removed because we are checking for possible non existent env variables
-set -f -o pipefail
+set -uf -o pipefail
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
