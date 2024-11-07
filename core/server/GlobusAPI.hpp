@@ -67,8 +67,7 @@ public:
   void refreshAccessToken(const std::string &a_ref_tok,
                           std::string &a_new_acc_tok, uint32_t &a_expires_in);
 
-private:
-  void init();
+protected:
   long get(CURL *a_curl, const std::string &a_base_url,
            const std::string &a_url_path, const std::string &a_token,
            const std::vector<std::pair<std::string, std::string>> &a_params,
@@ -77,6 +76,9 @@ private:
             const std::string &a_url_path, const std::string &a_token,
             const std::vector<std::pair<std::string, std::string>> &a_params,
             const libjson::Value *a_body, std::string &a_result);
+
+private:
+  void init();
   std::string getSubmissionID(const std::string &a_acc_token);
   bool eventsHaveErrors(const std::vector<std::string> &a_events,
                         XfrStatus &status, std::string &a_err_msg);
