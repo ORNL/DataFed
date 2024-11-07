@@ -3,7 +3,7 @@
 # -e has been removed so that if an error occurs the PASSWORD File is deleted and not left lying around
 set -uf -o pipefail
 
-SCRIPT=$(realpath "$0")
+SCRIPT=$(realpath "$BASH_SOURCE[0]")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/../../../")
 source "${PROJECT_ROOT}/config/datafed.sh"
