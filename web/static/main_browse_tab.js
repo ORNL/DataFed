@@ -1279,23 +1279,6 @@ function actionRefresh(){
     }
 }
 
-function actionSubscribe(){
-    // Not implemented yet
-
-/*
-    var ids = getActionableIDs();
-    if ( ids.length != 1 )
-        return;
-
-    var id = ids[0];
-*/
-    //console.log("subscribe");
-    /*if ( id.charAt(0) == "d" ) {
-        graph_panel.load( id );
-        $('[href="#tab-prov-graph"]').closest('li').show();
-        $( "#data-tabs" ).tabs({ active: 3 });
-    }*/
-}
 
 function actionAnnotate(){
     var ids = getActionableIDs();
@@ -1472,7 +1455,6 @@ export function updateBtnState(){
     $("#btn_next_coll",frame).button("option","disabled",(bits & 0x200) != 0 );
     $("#btn_srch_first_par_coll",frame).button("option","disabled",(bits & 0x200) != 0 );
     $("#btn_cat_first_par_coll",frame).button("option","disabled",(bits & 0x200) != 0 );
-    $("#btn_subscribe",frame).button("option","disabled",(bits & 0x400) != 0 );
     $("#btn_annotate",frame).button("option","disabled",(bits & 0x400) != 0 );
 
     // Enable/disable file import/export menu items (by position, not name)
@@ -1965,7 +1947,6 @@ var ctxt_menu_opts = {
             {title: "Download", action: actionDataGet, cmd: "get" },
             {title: "Upload", action: actionDataPut, cmd: "put" },
             {title: "Provenance", action: actionDepGraph, cmd: "graph" },
-            {title: "Subscribe", action: actionSubscribe, cmd: "sub" },
             {title: "Annotate", action: actionAnnotate, cmd: "note" },
             {title: "----"},
             {title: "Delete", action: actionDeleteSelected, cmd: "del" }
@@ -2099,7 +2080,6 @@ $("#btn_unlock",frame).on('click', actionUnlockSelected );
 $("#btn_upload",frame).on('click', actionDataPut );
 $("#btn_download",frame).on('click', actionDataGet );
 $("#btn_dep_graph",frame).on('click', actionDepGraph );
-$("#btn_subscribe",frame).on('click', actionSubscribe );
 $("#btn_annotate",frame).on('click', actionAnnotate );
 $("#btn_prev_coll",frame).on('click', actionPrevParent );
 $("#btn_next_coll",frame).on('click', actionNextParent );
@@ -2191,7 +2171,6 @@ export function init(){
             {title:"By User",icon:"ui-icon ui-icon-persons",nodrag:true,notarg:true,checkbox:false,folder:true,lazy:true,key:"shared_user"},
             {title:"By Project",icon:"ui-icon ui-icon-view-icons",nodrag:true,notarg:true,checkbox:false,folder:true,lazy:true,key:"shared_proj"}
         ]},
-        /*{title:"Subscribed Data",folder:true,icon:"ui-icon ui-icon-sign-in",nodrag:true,lazy:true,key:"subscribed",checkbox:false,offset:0},*/
 
         {title:"Saved Queries",folder:true,icon:"ui-icon ui-icon-zoom",lazy:true,nodrag:true,notarg:true,key:"saved_queries",checkbox:false,offset:0},
         //{title:"Search Results",folder:true,icon:"ui-icon ui-icon-zoom",nodrag:true,key:"search_results",children:[]},

@@ -69,6 +69,21 @@ end-to-end-foxx-setup:
 # STAGE: End to end setup
 ################################################################################
 
+end-to-end-gcs-node-clean:
+  variables:
+    GIT_STRATEGY: clone
+    DATAFED_GLOBUS_DIR: "/shared/globus"
+  stage: end-to-end-setup
+  needs: ["end-to-end-arango-setup", "end-to-end-foxx-setup"]
+  tags:
+    - ci-datafed-globus
+    - docker
+  script:
+    - cat "${DATAFED_GLOBUS_DIR}/deployment-key.json" | jq .node_key > "${DATAFED_GLOBUS_DIR}/node_deletion_key.json"
+    - SECRET=$(cat "${DATAFED_GLOBUS_DIR}/deployment-key.json" | jq -r .secret)
+    - CLIENT=$(cat "${DATAFED_GLOBUS_DIR}/deployment-key.json" | jq -r .client_id)
+    - GLOBUS_CLIENT_SECRET="${SECRET}" ./scripts/globus/clean_globus_nodes.py --client-id "${CLIENT}" --deployment-key "${DATAFED_GLOBUS_DIR}/node_deletion_key.json"
+
 end-to-end-core-setup:
   variables:
     IMAGE_TAG: "datafed/core-"
@@ -233,6 +248,7 @@ end-to-end-repo-setup:
     - sleep 10
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest" 
 
+
 # Requires setting up Globus Connect Server, requires firewall exceptions on
 # the machine running this.
 # Note we need the certificates to be available on the gcs-authz container
@@ -250,7 +266,7 @@ end-to-end-gcs-authz-setup:
     DATAFED_HOST_COLLECTION_MOUNT: "/shared/collections"
     DATAFED_GLOBUS_DIR: "/shared/globus"
   stage: end-to-end-setup
-  needs: ["end-to-end-repo-setup"]
+  needs: ["end-to-end-repo-setup", "end-to-end-gcs-node-clean"]
   tags:
     - ci-datafed-globus
     - docker
@@ -352,11 +368,42 @@ end_to_end_client-test:
       -DBUILD_DOCS=OFF
       -DBUILD_PYTHON_CLIENT=ON
       -DBUILD_TESTS=ON
-      -DENABLE_END_TO_END_TESTS=ON
+      -DENABLE_END_TO_END_API_TESTS=ON
       -DINSTALL_FOXX=OFF
     - cmake --build build
     - cmake --build build --target pydatafed
     - cmake --build build --target test
+
+end_to_end_web_test:
+  variables:
+    GIT_STRATEGY: clone
+    DATAFED_DATABASE_HOST: "${CI_DATAFED_DATABASE_HOST}"
+    DATAFED_WEB_TEST_USERNAME: "datafed89"
+    DATAFED_WEB_TEST_PASSWORD: "${CI_DATAFED_USER89_GLOBUSID_PASSWORD}"
+    DATAFED_DOMAIN: "${CI_DATAFED_DOMAIN}"
+  stage: end-to-end-test
+  needs: ["end_to_end_client-test"]
+  tags:
+    - ci-datafed-client
+  script:
+    - cd tests/end-to-end/web-UI
+    - npm install
+    - sudo npx playwright install-deps
+    - npx playwright install
+    - cd ../../../
+    - ./scripts/generate_datafed.sh
+    - >
+      cmake -S. -B build
+      -DENABLE_FOXX_TESTS=OFF
+      -DBUILD_CORE_SERVER=OFF
+      -DBUILD_COMMON=OFF
+      -DBUILD_WEB_SERVER=OFF
+      -DBUILD_DOCS=OFF
+      -DBUILD_PYTHON_CLIENT=OFF
+      -DBUILD_TESTS=ON
+      -DENABLE_END_TO_END_WEB_TESTS=ON
+      -DINSTALL_FOXX=OFF
+    - cmake --build build --target end_to_end_web_tests
 
 end_to_end_error_discovery_arango:
   stage: log

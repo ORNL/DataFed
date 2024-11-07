@@ -4099,9 +4099,9 @@ std::string DatabaseAPI::parseSearchMetadata(const std::string &a_query,
   bool val_token, last_char = false;
   int back_cnt = 0; // Counts contiguous backslashes inside quoted strings
 
-  for (string::const_iterator c = a_query.begin(); c != a_query.end(); c++) {
+  for (string::const_iterator c = a_query.begin(); c != a_query.end(); ++c) {
     next_nws = 0;
-    for (c2 = c + 1; c2 != a_query.end(); c2++) {
+    for (c2 = c + 1; c2 != a_query.end(); ++c2) {
       if (!isspace(*c2)) {
         next_nws = *c2;
         break;
@@ -4278,7 +4278,7 @@ std::string DatabaseAPI::parseSearchIdAlias(const std::string &a_query,
       // Minimum len of key (numbers) is 2
       if (val.size() >= p + 3) {
         for (string::const_iterator c = val.begin() + p + 1; c != val.end();
-             c++) {
+             ++c) {
           if (!isdigit(*c)) {
             id_ok = false;
             break;
@@ -4293,7 +4293,7 @@ std::string DatabaseAPI::parseSearchIdAlias(const std::string &a_query,
     EXCEPT(1, "Invalid ID/Alias query value.");
   }
 
-  for (string::const_iterator c = val.begin(); c != val.end(); c++) {
+  for (string::const_iterator c = val.begin(); c != val.end(); ++c) {
     // ids (keys) are only digits
     // alias are alphanum plus "_-."
     if (!isdigit(*c)) {

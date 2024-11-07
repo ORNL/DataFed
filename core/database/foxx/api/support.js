@@ -553,7 +553,7 @@ module.exports = (function() {
             ids: uuids
         }).toArray();
 
-        if (result.length != 1) {
+        if (result.length !== 1) {
             throw [obj.ERR_NOT_FOUND, "No user matching Globus IDs found"];
         }
 
@@ -718,7 +718,7 @@ module.exports = (function() {
             ids: a_uuids
         }).toArray();
 
-        if (result.length == 0) {
+        if (result.length === 0) {
             throw [obj.ERR_NOT_FOUND, "No user matching Globus IDs found"];
 	} else if (result.length > 1) {
             throw [obj.ERR_NOT_FOUND, "Multiple DataFed accounts associated with the provided Globus identities" + result.toString() ];
@@ -732,7 +732,7 @@ module.exports = (function() {
         var result = obj.db._query("for i in u filter i.pub_key == @key return i._id", {
             key: a_pub_key
         }).toArray();
-        if (result.length != 1)
+        if (result.length !== 1)
             throw [obj.ERR_NOT_FOUND, "No user matching authentication key found"];
 
         return result[0];
@@ -1416,7 +1416,7 @@ module.exports = (function() {
 
         // Detect misplaced topic delimiters
         for (i in topics) {
-            if (topics[i].length == 0)
+            if (topics[i].length === 0)
                 throw [obj.ERR_INVALID_PARAM, "Invalid category"];
         }
 
@@ -1692,7 +1692,7 @@ module.exports = (function() {
         }
         //console.log("hasCommonAccessScope",p1, p2,i);
 
-        if (i == 0) {
+        if (i === 0) {
             return false;
         }
 
@@ -1736,7 +1736,7 @@ module.exports = (function() {
                 children: children
             }).toArray();
             console.log("children are ", children, " parents are, ", parents);
-            if (parents.length == 0)
+            if (parents.length === 0)
                 return false;
 
             for (i in parents) {
@@ -1844,7 +1844,7 @@ module.exports = (function() {
                 }
 
                 // User ACL first
-                if (parent.acls && ((parent.acls & 1) != 0)) {
+                if (parent.acls && ((parent.acls & 1) !== 0)) {
                     acls = obj.db._query("for v, e in 1..1 outbound @object acl filter v._id == @client return e", {
                         object: parent._id,
                         client: a_client._id
@@ -1862,7 +1862,7 @@ module.exports = (function() {
                 }
 
                 // Group ACL next
-                if (parent.acls && ((parent.acls & 2) != 0)) {
+                if (parent.acls && ((parent.acls & 2) !== 0)) {
                     acls = obj.db._query("for v, e, p in 2..2 outbound @object acl, outbound member filter is_same_collection('g',p.vertices[1]) and p.vertices[2]._id == @client return p.edges[0]", {
                         object: parent._id,
                         client: a_client._id
@@ -2634,7 +2634,7 @@ module.exports = (function() {
                     code = tag.charCodeAt(j);
                     if (!(code > 47 && code < 58) && // numeric (0-9)
                         !(code > 96 && code < 123) && // lower alpha (a-z)
-                        code != 45) // "-"
+                        code !== 45) // "-"
                         throw [obj.ERR_INVALID_CHAR, "Invalid character(s) in tag."];
                 }
 
