@@ -70,6 +70,13 @@ then
   touch "$install_flag"
   chown -R "$UID":"$UID" "/tmp"
 
+	if [ "$ENABLE_FOXX_TESTS" == "TRUE" ]
+  then
+    "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" \
+      --build build \
+      --target test
+  fi
+
 else
   echo "/tmp/.foxx_is_installed has been found skipping reinstall"
 fi
