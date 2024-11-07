@@ -30,21 +30,21 @@ Help()
 local_DATABASE_NAME="sdms"
 local_DATABASE_USER="root"
 
-if [ -z "${DATAFED_DATABASE_PASSWORD}" ]
+if [ -z "${DATAFED_DATABASE_PASSWORD:-}" ]
 then
   local_DATAFED_DATABASE_PASSWORD=""
 else
   local_DATAFED_DATABASE_PASSWORD=$(printenv DATAFED_DATABASE_PASSWORD)
 fi
 
-if [ -z "${DATAFED_ZEROMQ_SYSTEM_SECRET}" ]
+if [ -z "${DATAFED_ZEROMQ_SYSTEM_SECRET:-}" ]
 then
   local_DATAFED_ZEROMQ_SYSTEM_SECRET=""
 else
   local_DATAFED_ZEROMQ_SYSTEM_SECRET=$(printenv DATAFED_ZEROMQ_SYSTEM_SECRET)
 fi
 
-if [ -z "${FOXX_MAJOR_API_VERSION}" ]
+if [ -z "${FOXX_MAJOR_API_VERSION:-}" ]
 then
   local_FOXX_MAJOR_API_VERSION=$(cat ${PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs )
 else
