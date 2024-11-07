@@ -64,4 +64,4 @@ fi
 # container actually runs. If the container runs to fast the pipeline check
 # might fail because it wasn't able to determine if the container actually
 # ran.
-sleep 1000
+sleep 60
