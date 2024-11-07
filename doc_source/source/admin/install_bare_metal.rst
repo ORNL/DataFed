@@ -2,19 +2,16 @@
 Administration
 ==============
 
-System Deployment
+Bare Metal System Deployment (Unsupported Currently)
 =================
 
 Deploying DataFed requires building, installing, and configuring DataFed service as well as several
-third-party packages/services. The process described here is manual, but the goal is to eventually
-automate this process as much as possible (via container technology). The services to be deployed
-relate to either the DataFed "Central Services" (of which there is only one instance) and DataFed
-"Data Repositories". (These services are listed below.)
+third-party packages/services. The process described here is automated  as much as possible 
+(via container technology). The services to be deployed relate to either the DataFed "Central Services"
+(of which there is only one instance) and DataFed "Data Repositories". (These services are listed below.)
 
 The hardware configuration selection depends on desired performance/cost and can range from a single
-node/VM up to a dedicated high-performance cluster. The host operating system must be Linux, but
-the specific distribution is not important. Though through testing at the moment
-has been limited to ubuntu:focal.
+node/VM up to a dedicated high-performance cluster.
 
 Central Services:
 - DataFed Core Service
@@ -28,7 +25,7 @@ reduce latency and avoid the need for TLS connections.
 
 Data Repository:
 - DataFed Repository Service
-- Globus Connect Service (version 4)
+- Globus Connect Service (version 5)
 - DataFed GridFTP AUTHZ Module
 
 Client Applications:
