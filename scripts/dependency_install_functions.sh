@@ -1,5 +1,5 @@
 #!/bin/bash
-SCRIPT=$(realpath "$0")
+SCRIPT=$(realpath "$BASH_SOURCE[0]")
 SOURCE=$(dirname "$SCRIPT")
 source "${SOURCE}/dependency_versions.sh"
 PROJECT_ROOT=$(realpath "${SOURCE}/..")
