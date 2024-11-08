@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # -e has been removed so that if an error occurs the PASSWORD File is deleted and not left lying around
-# -u has been removed because we are checking for possible non existent env variables
-set -f -o pipefail
+set -uf -o pipefail
 
 SCRIPT=$(realpath "$BASH_SOURCE[0]")
 SOURCE=$(dirname "$SCRIPT")
@@ -32,14 +31,14 @@ Help()
 local_DATABASE_NAME="sdms"
 local_DATABASE_USER="root"
 
-if [ -z "${DATAFED_DATABASE_PASSWORD}" ]
+if [ -z "${DATAFED_DATABASE_PASSWORD:-}" ]
 then
   local_DATAFED_DATABASE_PASSWORD=""
 else
   local_DATAFED_DATABASE_PASSWORD=$(printenv DATAFED_DATABASE_PASSWORD)
 fi
 
-if [ -z "${FOXX_MAJOR_API_VERSION}" ]
+if [ -z "${FOXX_MAJOR_API_VERSION:-}" ]
 then
   local_FOXX_MAJOR_API_VERSION=$(cat ${PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs )
 else
