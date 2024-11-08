@@ -4,7 +4,7 @@
 # -u has been removed because we are checking for possible non existent env variables
 set -f -o pipefail
 
-SCRIPT=$(realpath "$0")
+SCRIPT=$(realpath "$BASH_SOURCE[0]")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/../../../)
 source ${PROJECT_ROOT}/config/datafed.sh
