@@ -33,17 +33,32 @@ then
   # Check to see if foxx has previously been installed
   "${PROJECT_ROOT}/scripts/generate_datafed.sh"
 
-  "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" -S. -B build						\
-    -DBUILD_REPO_SERVER=False		\
-    -DBUILD_COMMON=False        \
-    -DBUILD_AUTHZ=False					\
-    -DBUILD_CORE_SERVER=False		\
-    -DBUILD_WEB_SERVER=False		\
-    -DBUILD_DOCS=False					\
-    -DBUILD_PYTHON_CLIENT=False	\
-    -DBUILD_FOXX=True           \
-    -DINSTALL_FOXX=True
-
+  # Should only run this if you are ok with making changes to the database
+  if [ "$ENABLE_FOXX_TESTS" == "TRUE" ]
+  then
+    "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" -S. -B build \
+      -DBUILD_REPO_SERVER=False   \
+      -DBUILD_COMMON=False        \
+      -DBUILD_AUTHZ=False         \
+      -DBUILD_CORE_SERVER=False   \
+      -DBUILD_WEB_SERVER=False    \
+      -DBUILD_DOCS=False          \
+      -DBUILD_PYTHON_CLIENT=False \
+      -DBUILD_FOXX=True           \
+      -DINSTALL_FOXX=True         \
+      -DENABLE_FOXX_TESTS=True
+  else
+    "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" -S. -B build \
+      -DBUILD_REPO_SERVER=False   \
+      -DBUILD_COMMON=False        \
+      -DBUILD_AUTHZ=False         \
+      -DBUILD_CORE_SERVER=False   \
+      -DBUILD_WEB_SERVER=False    \
+      -DBUILD_DOCS=False          \
+      -DBUILD_PYTHON_CLIENT=False \
+      -DBUILD_FOXX=True           \
+      -DINSTALL_FOXX=True
+  fi
 
   "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" --build build
 

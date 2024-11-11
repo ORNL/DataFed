@@ -22,6 +22,7 @@
 11. [1012] - Allow customized base build image for Docker dependencies and runtime Dockerfiles
 12. [986] - Design improvement to upload and download transfer box.
 13. [985] - Handles longer than needed timeouts on ui pages.
+14. [1053] - Set CMake to enable foxx tests when built in the CI.
 
 # v2024.6.17.10.40
 
