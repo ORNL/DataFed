@@ -66,6 +66,9 @@ end-to-end-foxx-setup:
     -   docker logs "foxx-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}";
     -   sleep 10;
     - done
+    - docker logs "foxx-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}";
+    - EXIT_CODE=$(docker inspect "foxx-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}" --format '{{.State.ExitCode}}')
+    - if [ "$EXIT_CODE" != "0" ] then exit 1; fi 
     - ./scripts/ci_database_health_check.sh
   after_script:
     - rm -rf foxx_tmp

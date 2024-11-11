@@ -76,6 +76,8 @@ then
     "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" \
       --build build \
       --target test
+    EXIT_CODE="$?"
+    if [ "$EXIT_CODE" != "0" ]; then exit "$EXIT_CODE"; fi
   fi
 
 else
