@@ -66,7 +66,8 @@ then
   # should be replaced with health check at some point
   sleep 5
   "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" --build build --target install
-  
+
+  # Create flag to indicate container has done its job  
   touch "$install_flag"
   chown -R "$UID":"$UID" "/tmp"
 
@@ -78,9 +79,11 @@ then
   fi
 
 else
-  echo "/tmp/.foxx_is_installed has been found skipping reinstall"
+  echo "$install_flag has been found skipping reinstall"
 fi
 
-echo "Sleeping"
-sleep 1000
-
+# Keep container alive for a little bit, the CI pipelines check that the
+# container actually runs. If the container runs to fast the pipeline check
+# might fail because it wasn't able to determine if the container actually
+# ran.
+sleep 60

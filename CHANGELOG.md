@@ -41,7 +41,9 @@
 8. [973] - Adds log output at the end of CI test pipeline
 9. [968] - Adds the ability to specify both base and root path when creating
    Globus collections.
-10. [970] - Adds Web UI testing to the CI pipeline.
+10. [1003] - Updated admin install documentation.
+11. [1005] - Consolidate Development Environment setup documentation.
+12. [970] - Adds Web UI testing to the CI pipeline.
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 
@@ -49,7 +51,7 @@
 2. [910] - Static code analysis and status checks fixed, improvements to CI
 3. [923] - Fixed missing flag in certificate refresh script
 4. [917] - Add additional files to .gitignore
-5. [915] - Refactor CI to use pipelines Gitlab feature along with pipelines 
+5. [915] - Refactor CI to use pipelines Gitlab feature along with pipelines
 6. [927] - Add vim swp files to .gitignore
 7. [935] - Fixed CI branching with dynamic children, swiched to Harbor registry.
    Moved Blake's files into the correct folders.
@@ -69,12 +71,13 @@
 19. [994] - Fixes issue with spaces not being preserved in shell scripts from docker compose .env file.
 20. [996] - Fixes bug in lego install script where function name had additional s
 21. [998] - Fixing missing :latest tag on push in container, in common.yml of ci files
+22. [999] - Fixes repo service entrypoint script to append to log file instead of rewriting
 
 # v2023.10.23.15.50
 
 ## MINOR Feature
 
-1. [906] - Added backup and cert refresh scripts. 
+1. [906] - Added backup and cert refresh scripts.
 
 ## PATCH Bug Fixes/Technical Debt/Documentation
 
