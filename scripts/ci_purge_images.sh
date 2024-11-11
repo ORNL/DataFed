@@ -26,7 +26,10 @@ get_size_of_all_images_in_GB() {
 	then
 		if [ "${total_image_size: -2}" = "GB" ]
 		then
+      # Removes GB postfix
 			total_image_size_number="${total_image_size%??}"
+      # Removes any floating point pieces i.e. 2.4 = 2 so that it is interpreted
+      # as an integer
 			total_image_size_number="${total_image_size_number%%.*}"
 		fi
 	fi
