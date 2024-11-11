@@ -84,6 +84,9 @@ end-to-end-gcs-node-clean:
     - ci-datafed-globus
     - docker
   script:
+    - mkdir -p "${DATAFED_GLOBUS_DIR}"
+    - cp "${CI_DATAFED_GCS_DEPLOYMENT_KEY}" "${DATAFED_GLOBUS_DIR}/deployment-key.json"
+    - cp "${CI_DATAFED_GCS_CLIENT_CRED}" "${DATAFED_GLOBUS_DIR}/client_cred.json"
     - cat "${DATAFED_GLOBUS_DIR}/deployment-key.json" | jq .node_key > "${DATAFED_GLOBUS_DIR}/node_deletion_key.json"
     - SECRET=$(cat "${DATAFED_GLOBUS_DIR}/deployment-key.json" | jq -r .secret)
     - CLIENT=$(cat "${DATAFED_GLOBUS_DIR}/deployment-key.json" | jq -r .client_id)
