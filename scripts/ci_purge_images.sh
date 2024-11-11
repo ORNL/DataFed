@@ -17,34 +17,34 @@ fi
 echo "Docker Purge Threshold set to: $local_DATAFED_CI_PURGE_THRESHOLD"
 
 get_size_of_all_images_in_GB() {
-	declare -g total_image_size_number="0"
-	docker_size_stats=$(docker system df  --format "{{.Type}} {{.Size}}")
-	echo "docker_size_stats"
-	total_image_size=$(echo "${docker_size_stats}" | head -1 | awk '{print $2}'  )
-	echo "Image size is $total_image_size"
-	if [ ! -z  "${total_image_size}" ]
-	then
-		if [ "${total_image_size: -2}" = "GB" ]
-		then
+  declare -g total_image_size_number="0"
+  docker_size_stats=$(docker system df  --format "{{.Type}} {{.Size}}")
+  echo "docker_size_stats"
+  total_image_size=$(echo "${docker_size_stats}" | head -1 | awk '{print $2}'  )
+  echo "Image size is $total_image_size"
+  if [ ! -z  "${total_image_size}" ]
+  then
+    if [ "${total_image_size: -2}" = "GB" ]
+    then
       # Removes GB postfix
-			total_image_size_number="${total_image_size%??}"
+      total_image_size_number="${total_image_size%??}"
       # Removes any floating point pieces i.e. 2.4 = 2 so that it is interpreted
       # as an integer
-			total_image_size_number="${total_image_size_number%%.*}"
-		fi
-	fi
+      total_image_size_number="${total_image_size_number%%.*}"
+    fi
+  fi
 }
 
 purge_oldest_image() {
-	oldest_image_id=$(docker image list --format "{{.ID}}" | tail -n1)
-	docker image rm "$oldest_image_id" -f
+  oldest_image_id=$(docker image list --format "{{.ID}}" | tail -n1)
+  docker image rm "$oldest_image_id" -f
 }
 
 get_size_of_all_images_in_GB
 
 while [ "$total_image_size_number" -gt "$local_DATAFED_CI_PURGE_THRESHOLD" ]
 do
-	purge_oldest_image
-	get_size_of_all_images_in_GB
+  purge_oldest_image
+  get_size_of_all_images_in_GB
 done
 
