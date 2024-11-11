@@ -1,18 +1,20 @@
 #!/bin/bash
 
+set -euf
 # The purpose of this script is to prevent the number of images built on a 
 # VM from taking over to much storage, here we can set the number of GB, that
 # we will allow to be stored on the VM, after which we will start deleting
 # the oldest one
 
 # Max allowed size of all images in GB
-if [ -z "${DATAFED_CI_PURGE_THRESHOLD}" ]
+if [ -z "${DATAFED_CI_PURGE_THRESHOLD:-}" ]
 then
   local_DATAFED_CI_PURGE_THRESHOLD="15"
 else
   local_DATAFED_CI_PURGE_THRESHOLD=$(printenv DATAFED_CI_PURGE_THRESHOLD)
 fi
 
+echo "Docker Purge Threshold set to: $local_DATAFED_CI_PURGE_THRESHOLD"
 
 get_size_of_all_images_in_GB() {
 	declare -g total_image_size_number="0"
@@ -25,7 +27,7 @@ get_size_of_all_images_in_GB() {
 		if [ "${total_image_size: -2}" = "GB" ]
 		then
 			total_image_size_number="${total_image_size%??}"
-			total_image_size_number="${total_image_size%%.*}"
+			total_image_size_number="${total_image_size_number%%.*}"
 		fi
 	fi
 }
