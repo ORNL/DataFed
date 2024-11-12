@@ -3,6 +3,7 @@
 #define BOOST_TEST_MODULE databaseapi
 
 #include "DatabaseAPI.hpp"
+#include "Config.hpp"
 
 // Local public includes
 #include "common/DynaLog.hpp"
@@ -25,28 +26,43 @@ using namespace SDMS::Core;
 class TestDatabaseAPI: public DatabaseAPI {
 public:
   TestDatabaseAPI(const std::string &a_db_url, const std::string &a_db_user,
-              const std::string &a_db_pass);
-  ~TestDatabaseAPI();
+            const std::string &a_db_pass) : DatabaseAPI(a_db_url, a_db_user,a_db_pass) {}
+
+  ~TestDatabaseAPI() {}
 
   long dbGet(const char *a_url_path,
-             const std::vector<std::pair<std::string, std::string>> &a_params,
-             libjson::Value &a_result, LogContext, bool a_log = true);
-  bool
-  dbGetRaw(const char *a_url_path,
-           const std::vector<std::pair<std::string, std::string>> &a_params,
-           std::string &a_result);
+            const std::vector<std::pair<std::string, std::string>> &a_params,
+            libjson::Value &a_result, LogContext log_context, bool a_log = true) {
+                return DatabaseAPI::dbGet(a_url_path, a_params, a_result, log_context, a_log);
+            }
+
+  bool dbGetRaw(const char *a_url_path,
+            const std::vector<std::pair<std::string, std::string>> &a_params,
+            std::string &a_result) {
+                return DatabaseAPI::dbGetRaw(a_url_path, a_params, a_result)
+            }
+
   long dbPost(const char *a_url_path,
-              const std::vector<std::pair<std::string, std::string>> &a_params,
-              const std::string *a_body, libjson::Value &a_result, LogContext);
+            const std::vector<std::pair<std::string, std::string>> &a_params,
+            const std::string *a_body, libjson::Value &a_result, LogContext log_context) {
+                return DatabaseAPI::dbPost(a_url_path, a_params, a_body, a_result, log_context);
+            }
 };
 
 BOOST_AUTO_TEST_SUITE(DatabaseAPITest)
 
 BOOST_AUTO_TEST_CASE(testing_DatabaseAPIPost) {
+    TestDatabaseAPI api("", "", "");
     BOOST_TEST(true);
 }
 
 BOOST_AUTO_TEST_CASE(testing_DatabaseAPIGet) {
+    TestDatabaseAPI api("", "", "");
+    BOOST_TEST(true);
+}
+
+BOOST_AUTO_TEST_CASE(testing_DatabaseAPIGetRaw) {
+    TestDatabaseAPI api("", "", "");
     BOOST_TEST(true);
 }
 
