@@ -66,21 +66,25 @@ then
   # should be replaced with health check at some point
   sleep 5
   "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" --build build --target install
-  
-  touch "$install_flag"
-  chown -R "$UID":"$UID" "/tmp"
 
-	if [ "$ENABLE_FOXX_TESTS" == "TRUE" ]
+  if [ "$ENABLE_FOXX_TESTS" == "TRUE" ]
   then
     "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" \
       --build build \
       --target test
+    EXIT_CODE="$?"
+    if [ "$EXIT_CODE" != "0" ]; then exit "$EXIT_CODE"; fi
   fi
 
+  # Create flag to indicate container has done its job  
+  touch "$install_flag"
+  chown -R "$UID":"$UID" "/tmp"
 else
-  echo "/tmp/.foxx_is_installed has been found skipping reinstall"
+  echo "$install_flag has been found skipping reinstall"
 fi
 
-echo "Sleeping"
-sleep 1000
-
+# Keep container alive for a little bit, the CI pipelines check that the
+# container actually runs. If the container runs to fast the pipeline check
+# might fail because it wasn't able to determine if the container actually
+# ran.
+sleep 60

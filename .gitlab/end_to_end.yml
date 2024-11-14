@@ -65,6 +65,7 @@ end-to-end-foxx-setup:
     - while [ ! -f "foxx_tmp/.foxx_is_installed" ]; do
     -   if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
     -     echo "Waiting for foxx_tmp/.foxx_is_installed"
+    -     docker logs "foxx-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}";
     -     sleep 10
     -   else
     -     exit_code=$(docker inspect -f '{{.State.ExitCode}}' "$container_name")
@@ -73,6 +74,7 @@ end-to-end-foxx-setup:
     -     fi
     -   fi 
     - done
+    - docker logs "foxx-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}";
     - ./scripts/ci_database_health_check.sh
   after_script:
     - rm -rf foxx_tmp
@@ -91,6 +93,9 @@ end-to-end-gcs-node-clean:
     - ci-datafed-globus
     - docker
   script:
+    - mkdir -p "${DATAFED_GLOBUS_DIR}"
+    - cp "${CI_DATAFED_GCS_DEPLOYMENT_KEY}" "${DATAFED_GLOBUS_DIR}/deployment-key.json"
+    - cp "${CI_DATAFED_GCS_CLIENT_CRED}" "${DATAFED_GLOBUS_DIR}/client_cred.json"
     - cat "${DATAFED_GLOBUS_DIR}/deployment-key.json" | jq .node_key > "${DATAFED_GLOBUS_DIR}/node_deletion_key.json"
     - SECRET=$(cat "${DATAFED_GLOBUS_DIR}/deployment-key.json" | jq -r .secret)
     - CLIENT=$(cat "${DATAFED_GLOBUS_DIR}/deployment-key.json" | jq -r .client_id)
