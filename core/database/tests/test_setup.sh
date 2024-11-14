@@ -124,11 +124,11 @@ if [[ "$output" =~ .*"sdms".* ]]; then
 	echo "SDMS already exists do nothing"
 else
 	echo "Creating SDMS"
-  arangosh  --server.password "${local_DATAFED_DATABASE_PASSWORD}" --server.username "${local_DATABASE_USER}" --javascript.execute "${PROJECT_ROOT}/core/database/foxx/db_create.js"
+  arangosh  --server.endpoint "tcp://${DATAFED_DATABASE_HOST}:8529"   --server.password "${local_DATAFED_DATABASE_PASSWORD}" --server.username "${local_DATABASE_USER}" --javascript.execute "${PROJECT_ROOT}/core/database/foxx/db_create.js"
   # Give time for the database to be created
   sleep 2
-  arangosh --server.password "${local_DATAFED_DATABASE_PASSWORD}" --server.username "${local_DATABASE_USER}" --javascript.execute-string 'db._useDatabase("sdms"); db.config.insert({"_key": "msg_daily", "msg" : "DataFed servers will be off-line for regular maintenance every Sunday night from 11:45 pm until 12:15 am EST Monday morning."}, {overwrite: true});'
-  arangosh --server.password "${local_DATAFED_DATABASE_PASSWORD}" --server.username "${local_DATABASE_USER}" --javascript.execute-string "db._useDatabase(\"sdms\"); db.config.insert({ \"_key\": \"system\", \"_id\": \"config/system\", \"secret\": \"${local_DATAFED_ZEROMQ_SYSTEM_SECRET}\"}, {overwrite: true } );"
+  arangosh  --server.endpoint "tcp://${DATAFED_DATABASE_HOST}:8529" --server.password "${local_DATAFED_DATABASE_PASSWORD}" --server.username "${local_DATABASE_USER}" --javascript.execute-string 'db._useDatabase("sdms"); db.config.insert({"_key": "msg_daily", "msg" : "DataFed servers will be off-line for regular maintenance every Sunday night from 11:45 pm until 12:15 am EST Monday morning."}, {overwrite: true});'
+  arangosh  --server.endpoint "tcp://${DATAFED_DATABASE_HOST}:8529" --server.password "${local_DATAFED_DATABASE_PASSWORD}" --server.username "${local_DATABASE_USER}" --javascript.execute-string "db._useDatabase(\"sdms\"); db.config.insert({ \"_key\": \"system\", \"_id\": \"config/system\", \"secret\": \"${local_DATAFED_ZEROMQ_SYSTEM_SECRET}\"}, {overwrite: true } );"
 fi
 
 # There are apparently 3 different ways to deploy Foxx microservices,
@@ -162,7 +162,7 @@ if ! command -v foxx > /dev/null 2>&1; then
 fi
 
 # Check if database foxx services have already been installed
-existing_services=$("${FOXX_PREFIX}foxx" list -a -u "$local_DATABASE_USER" -p "${PATH_TO_PASSWD_FILE}" --database "$local_DATABASE_NAME")
+existing_services=$("${FOXX_PREFIX}foxx" list -a -u "$local_DATABASE_USER" -p "${PATH_TO_PASSWD_FILE}"  --server.endpoint "tcp://${DATAFED_DATABASE_HOST}:8529"  --database "$local_DATABASE_NAME")
 echo "existing services ${existing_services}"
 
 if [[ "$existing_services" =~ .*"DataFed".* ]]
