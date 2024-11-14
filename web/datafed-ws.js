@@ -28,9 +28,9 @@ import fs from 'fs';
 import ini from 'ini';
 import protobuf from "protobufjs";
 import zmq from "zeromq";
-import ECT from 'ect'); // for html templates
-import ClientOAuth2 from 'client-oauth2');
-import { v4: uuidv4 } from 'uuid';
+import ECT from 'ect'; // for html templates
+import ClientOAuth2 from 'client-oauth2';
+import { v4 as uuidv4 } from 'uuid';
 
 var ectRenderer = ECT({ watch: true, root: __dirname + '/views', ext : '.ect' });
 const app = express();
