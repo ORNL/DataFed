@@ -44,6 +44,20 @@ local_DATAFED_HARBOR_URL="https://$local_DATAFED_HARBOR_REGISTRY"
 URL="$local_DATAFED_HARBOR_URL/api/v2.0/projects/$local_DATAFED_HARBOR_PROJECT/repositories/$local_DATAFED_HARBOR_REPOSITORY/artifacts"
 echo "$URL" >> "$LOG_FILE"
 data=$(curl -u $local_DATAFED_HARBOR_USERNAME:$local_DATAFED_HARBOR_PASSWORD -s "${URL}?with_tag=$local_DATAFED_HARBOR_IMAGE_TAG" )
+
+# In the case that an image has not yet been uploaded the server will return
+# a json object of the following format
+#
+# {
+#   "errors": [
+#     {
+#       "code": "NOT_FOUND",
+#       "message": "path /api/v2.0/projects/datafed/repositories/datafed/gcs-1086-bug-python-client-pypi-version/artifacts was not found"
+#     }
+#   ]
+# }
+
+
 error_code=$(echo $?)
 if [ "$error_code" != "0" ]
 then
@@ -67,6 +81,26 @@ then
 	echo "$data" | jq >> "$LOG_FILE"
 fi
 number_of_artifacts=$(echo "$data" | jq ' . | length')
+
+# Make sure the response doesn't contain an error code before assumptions are made
+if [ "$number_of_artifacts" != "0" ]
+then
+  ERROR_FOUND=$(echo "$data" | jq -r 'if .errors and (.errors | length > 0) then "TRUE" else "FALSE" end')
+  if [ "$ERROR_FOUND" == "TRUE" ]
+  then
+    ERROR_CODE=$(echo "$data" | jq -r '.errors[0].code')
+    if [ "$ERROR_CODE" == "NOT_FOUND" ]
+    then
+      echo "0"
+      exit 0
+    else
+      echo "Aborting unhandled error $ERROR_CODE" >> "$LOG_FILE"
+      exit 1
+    fi
+  fi
+fi
+
 echo "Number of artifacts found: $number_of_artifacts" >> "$LOG_FILE"
 
+# Otherwise we assume the object contains the list of objects
 echo "$number_of_artifacts"
