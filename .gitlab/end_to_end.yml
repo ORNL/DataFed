@@ -63,12 +63,14 @@ end-to-end-foxx-setup:
       # be ephermal anyway, this is not the same for the other containers
     - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest"
     - while [ ! -f "foxx_tmp/.foxx_is_installed" ]; do
+      # Container is found to be running
     -   if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
     -     echo "Waiting for foxx_tmp/.foxx_is_installed"
     -     docker logs "foxx-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}";
     -     sleep 10
     -   else
-    -     exit_code=$(docker inspect -f '{{.State.ExitCode}}' "$container_name")
+      # Container is not running get exit code
+    -     exit_code=$(docker inspect -f '{{.State.ExitCode}}' "$CONTAINER_NAME")
     -     if [ "$exit_code" != "0" ]; then
     -       exit "$exit_code"
     -     fi
