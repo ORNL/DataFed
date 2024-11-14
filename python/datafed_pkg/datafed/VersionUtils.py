@@ -1,7 +1,7 @@
 # @package datafed.VersionUtils
 # version utilities for ensuring updated version of package are being used
 #
-# The functions included in here are to do version comparisons and to grab 
+# The functions included in here are to do version comparisons and to grab
 # the registered versions that are available on pypi.
 
 import re
@@ -10,13 +10,14 @@ import requests
 # Function to convert version string into a tuple of integers for comparison
 def version_key(version):
     # Split main version and optional build number (e.g., "1.1.0-4" -> ["1.1.0", "4"])
-    main_version, *build = version.split('-')
+    main_version, *build = version.split("-")
     # Convert main version part to tuple of integers for correct comparison
-    main_version_tuple = tuple(map(int, main_version.split('.')))
+    main_version_tuple = tuple(map(int, main_version.split(".")))
     # Convert build part to integer if it exists, or set to -1 for non-build versions
     build_number = int(build[0]) if build else -1
     # Return full tuple for sorting, making sure 0.x.y is distinct from x.y.z
     return main_version_tuple + (build_number,)
+
 
 # Function to check if a string contains any letters
 def contains_letters(s):
@@ -55,5 +56,3 @@ def get_latest_stable_version(package_name):
     except Exception as e:
         print(f"Unable to connect to pypi: {e}")
         return None
-
-
