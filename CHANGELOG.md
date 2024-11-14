@@ -23,7 +23,7 @@
 12. [986] - Design improvement to upload and download transfer box.
 13. [985] - Handles longer than needed timeouts on ui pages.
 14. [1053] - Set CMake to enable foxx tests when built in the CI.
-15. [1086] - Addres xml rpc bug from deprecated client
+15. [1086] - Address XML-RPC bug from deprecated client
 
 # v2024.6.17.10.40
 
