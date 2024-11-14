@@ -93,7 +93,7 @@
   stage: log
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - docker logs $(docker ps --filter "ancestor=${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" --format "{{.Names}}")
+    - docker logs $(docker ps -a --filter "ancestor=${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}" --format "{{.Names}}")
   rules:
     - when: always
 

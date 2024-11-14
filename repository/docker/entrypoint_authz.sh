@@ -147,7 +147,7 @@ echo "globus-gridftp-server pid file found!"
 DATAFED_GCS_URL=$(jq -r .domain_name < /var/lib/globus-connect-server/info.json)
 set +e
 HTTP_CODE=$("${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/curl" -s -o /dev/null -w "%{http_code}\n" -I "https://${DATAFED_GCS_URL}/api/info")
-echo "$?"
+echo "curl exit code: $?"
 set -e
 echo "Waiting for domain name (https://${DATAFED_GCS_URL}) to be registered! Code: $HTTP_CODE"
 printf "\n"
