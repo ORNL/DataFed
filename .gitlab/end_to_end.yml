@@ -72,6 +72,7 @@ end-to-end-foxx-setup:
       # Container is not running get exit code
     -     exit_code=$(docker inspect -f '{{.State.ExitCode}}' "$CONTAINER_NAME")
     -     if [ "$exit_code" != "0" ]; then
+    -       docker logs "foxx-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}";
     -       exit "$exit_code"
     -     fi
     -   fi 
