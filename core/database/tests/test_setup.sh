@@ -1,13 +1,14 @@
 #!/bin/bash
 
 # -e has been removed so that if an error occurs the PASSWORD File is deleted and not left lying around
-# -u has been removed because we are checking for possible non existent env variables
-set -f -o pipefail
+set -uf -o pipefail
 
-SCRIPT=$(realpath "$0")
+SCRIPT=$(realpath "$BASH_SOURCE[0]")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/../../../")
 source "${PROJECT_ROOT}/config/datafed.sh"
+source "${PROJECT_ROOT}/scripts/dependency_versions.sh"
+source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
 Help()
 {
@@ -31,21 +32,21 @@ Help()
 local_DATABASE_NAME="sdms"
 local_DATABASE_USER="root"
 
-if [ -z "${DATAFED_DATABASE_PASSWORD}" ]
+if [ -z "${DATAFED_DATABASE_PASSWORD:-}" ]
 then
   local_DATAFED_DATABASE_PASSWORD=""
 else
   local_DATAFED_DATABASE_PASSWORD=$(printenv DATAFED_DATABASE_PASSWORD)
 fi
 
-if [ -z "${DATAFED_ZEROMQ_SYSTEM_SECRET}" ]
+if [ -z "${DATAFED_ZEROMQ_SYSTEM_SECRET:-}" ]
 then
   local_DATAFED_ZEROMQ_SYSTEM_SECRET=""
 else
   local_DATAFED_ZEROMQ_SYSTEM_SECRET=$(printenv DATAFED_ZEROMQ_SYSTEM_SECRET)
 fi
 
-if [ -z "${FOXX_MAJOR_API_VERSION}" ]
+if [ -z "${FOXX_MAJOR_API_VERSION:-}" ]
 then
   local_FOXX_MAJOR_API_VERSION=$(cat ${PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs )
 else
@@ -146,21 +147,22 @@ fi
 ## Get the size of the file in bytes
 #bytes=$(wc -c < datafed.zip)
 
-NODE_VERSION="v14.21.3"
-
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
-
-nvm install "$NODE_VERSION"
-nvm use "$NODE_VERSION"
+# Will only install if it is not already installed
+install_nvm
+install_node
 
 PATH_TO_PASSWD_FILE=${SOURCE}/database_temp.password
 # Install foxx service node module
 $NVM_DIR/nvm-exec npm install --global foxx-cli
 echo "$local_DATAFED_DATABASE_PASSWORD" > "${PATH_TO_PASSWD_FILE}"
 
+FOXX_PREFIX=""
+if ! command -v foxx > /dev/null 2>&1; then
+    FOXX_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/bin/"
+fi
+
 # Check if database foxx services have already been installed
-existing_services=$(foxx list -a -u "$local_DATABASE_USER" -p "${PATH_TO_PASSWD_FILE}" --database "$local_DATABASE_NAME")
+existing_services=$("${FOXX_PREFIX}foxx" list -a -u "$local_DATABASE_USER" -p "${PATH_TO_PASSWD_FILE}" --database "$local_DATABASE_NAME")
 echo "existing services ${existing_services}"
 
 if [[ "$existing_services" =~ .*"DataFed".* ]]
