@@ -11,8 +11,8 @@
 # secure ZeroMQ link.
 
 
-import xmlrpc.client
 import re
+import requests
 import zmq
 from . import Version_pb2
 from . import SDMS_Anon_pb2 as anon
@@ -38,9 +38,13 @@ def remove_after_prefix_with_numbers(s):
 # versions
 def get_latest_stable_version(package_name):
     try:
-        client = xmlrpc.client.ServerProxy("https://pypi.org/pypi")
-        releases = client.package_releases(package_name)
+        url = f"https://pypi.org/pypi/{package_name}/json"
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
 
+        # Extract release versions
+        releases = list(data.get("releases", {}).keys())
         # Filter the list to remove entries that contain any letters, we don't
         # want to look at entries that could be a pre-release of some sort and
         # recommend that the user use for instance a beta version.
