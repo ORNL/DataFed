@@ -88,7 +88,7 @@ then
     --build-arg RUNTIME="datafed-runtime:latest" \
     --no-cache \
     "${PROJECT_ROOT}" \
-    -t datafed-core:latest > build.log 2>&1
+    -t datafed-core:latest
   docker build -f \
     "${PROJECT_ROOT}/web/docker/Dockerfile" \
     --build-arg DEPENDENCIES="datafed-dependencies:latest" \
