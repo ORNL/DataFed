@@ -7,6 +7,7 @@
 import re
 import requests
 
+
 # Function to convert version string into a tuple of integers for comparison
 def version_key(version):
     # Split main version and optional build number (e.g., "1.1.0-4" -> ["1.1.0", "4"])
