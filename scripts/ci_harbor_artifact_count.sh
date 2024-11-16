@@ -85,6 +85,7 @@ local_DATAFED_HARBOR_URL="https://$local_DATAFED_HARBOR_REGISTRY"
 # local_DATAFED_HARBOR_REPOSITORY="core-devel"
 URL="$local_DATAFED_HARBOR_URL/api/v2.0/projects/$local_DATAFED_HARBOR_PROJECT/repositories/$local_DATAFED_HARBOR_REPOSITORY/artifacts"
 echo "${URL}?with_tag=$local_DATAFED_HARBOR_IMAGE_TAG" >> "$LOG_FILE"
+# This requires artifact permissions for the token
 data=$(curl -u "$local_DATAFED_HARBOR_USERNAME:$local_DATAFED_HARBOR_PASSWORD" -s "${URL}?with_tag=$local_DATAFED_HARBOR_IMAGE_TAG" )
 
 # In the case that an image has not yet been uploaded the server will return
@@ -98,7 +99,28 @@ data=$(curl -u "$local_DATAFED_HARBOR_USERNAME:$local_DATAFED_HARBOR_PASSWORD" -
 #     }
 #   ]
 # }
-
+#
+# If credentials are wrong.
+#
+# {
+#   "errors": [
+#     {
+#       "code": "UNAUTHORIZED",
+#       "message": "unauthorized"
+#     }
+#   ]
+# }
+#
+# If authorization scope is wrong (needs artifact access)
+#
+# {
+#   "errors": [
+#     {
+#       "code": "FORBIDDEN",
+#       "message": "forbidden"
+#     }
+#   ]
+# } 
 
 error_code=$(echo $?)
 if [ "$error_code" != "0" ]
