@@ -169,7 +169,8 @@ if ! command -v foxx > /dev/null 2>&1; then
 fi
 
 # Check if database foxx services have already been installed
-existing_services=$("${FOXX_PREFIX}foxx" list -a -u "$local_DATABASE_USER" -p "${PATH_TO_PASSWD_FILE}"  --server.endpoint "tcp://${local_DATAFED_DATABASE_HOST}:8529"  --database "$local_DATABASE_NAME")
+# WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint
+existing_services=$("${FOXX_PREFIX}foxx" list -a -u "$local_DATABASE_USER" -p "${PATH_TO_PASSWD_FILE}"  --server "tcp://${local_DATAFED_DATABASE_HOST}:8529"  --database "$local_DATABASE_NAME")
 echo "existing services ${existing_services}"
 
 if [[ "$existing_services" =~ .*"DataFed".* ]]
