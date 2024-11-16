@@ -25,6 +25,4 @@ fi
 # Load the variables from the build_args
 . "$BUILD_ARG_FILE"
 
-echo "BASE_IMAGE is $BASE_IMAGE"
-
 "${PROJECT_ROOT}/scripts/compose_build_images.sh" -m -b "$BASE_IMAGE"
