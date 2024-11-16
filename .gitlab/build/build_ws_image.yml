@@ -38,8 +38,7 @@ retag-image:
   tags:
     - docker
   rules:
-    - if: true
-      changes:
+    - changes:
         - docker/**/*
         - scripts/**/*
         - web/**/*
