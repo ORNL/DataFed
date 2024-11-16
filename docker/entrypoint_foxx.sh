@@ -63,10 +63,18 @@ then
   sleep 5
   "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" --build build --target install
 
+  if [ "$ENABLE_FOXX_TESTS" == "TRUE" ]
+  then
+    "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" \
+      --build build \
+      --target test
+    EXIT_CODE="$?"
+    if [ "$EXIT_CODE" != "0" ]; then exit "$EXIT_CODE"; fi
+  fi
+
   # Create flag to indicate container has done its job  
   touch "$install_flag"
   chown -R "$UID":"$UID" "/tmp"
-
 else
   echo "$install_flag has been found skipping reinstall"
 fi
