@@ -88,6 +88,7 @@ echo "${URL}?with_tag=$local_DATAFED_HARBOR_IMAGE_TAG" >> "$LOG_FILE"
 # This requires artifact permissions for the token
 data=$(curl -u "$local_DATAFED_HARBOR_USERNAME:$local_DATAFED_HARBOR_PASSWORD" -s "${URL}?with_tag=$local_DATAFED_HARBOR_IMAGE_TAG" )
 
+echo "$data" >> "$LOG_FILE"
 # In the case that an image has not yet been uploaded the server will return
 # a json object of the following format
 #
