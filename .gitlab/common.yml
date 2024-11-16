@@ -44,14 +44,14 @@
     - export DATAFED_HARBOR_REPOSITORY="${COMPONENT}-${BRANCH_LOWER}"
     - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
     - export DATAFED_HARBOR_PASSWORD="${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
-    - docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:latest"
-    - docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+    - docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
+    - docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
     - |
       first_iteration="TRUE"
       while [ "$(./scripts/ci_harbor_artifact_count.sh -r ${DATAFED_HARBOR_REPOSITORY} )" == "0" ]; do
         echo "Artifact missing from harbor..."
-        docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:latest"
-        docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+        docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
+        docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
         if [ "$first_iteration" == "FALSE" ]
         then
           sleep 5  # Optional: Add a sleep to avoid busy waiting 
@@ -72,14 +72,14 @@
     - export DATAFED_HARBOR_REPOSITORY="${COMPONENT}-${BRANCH_LOWER}"
     - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
     - export DATAFED_HARBOR_PASSWORD="${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
-    - docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:latest"
-    - docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+    - docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
+    - docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
     - |
       first_iteration="TRUE"
       while [ "$(./scripts/ci_harbor_artifact_count.sh -r ${DATAFED_HARBOR_REPOSITORY})" == "0" ]; do
         echo "Artifact missing from harbor..."
-        docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:latest"
-        docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+        docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
+        docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
         if [ "$first_iteration" == "FALSE" ]
         then
           sleep 5  # Optional: Add a sleep to avoid busy waiting 
@@ -109,14 +109,14 @@
     - export DATAFED_HARBOR_PASSWORD="${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     - echo "$BRANCH_LOWER"
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
-    - docker pull "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:latest"
-    - docker tag "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:latest" "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
-    - docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+    - docker pull "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
+    - docker tag "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest" "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+    - docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
     - |
       first_iteration="TRUE"
       while [ "$(./scripts/ci_harbor_artifact_count.sh -r ${DATAFED_HARBOR_REPOSITORY})" == "0" ]; do
         echo "Artifact missing from harbor..."
-        docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+        docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
         if [ "$first_iteration" == "FALSE" ]
         then
           sleep 5  # Optional: Add a sleep to avoid busy waiting 
