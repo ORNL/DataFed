@@ -58,3 +58,5 @@ retag-image:
   tags:
     - ci-datafed-globus
     - docker
+  rules:
+    - !reference [build-gcs, rules]

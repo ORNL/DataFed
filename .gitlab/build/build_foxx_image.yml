@@ -35,3 +35,5 @@ retag-image:
     DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
   tags:
     - docker
+  rules:
+    - !reference [build-foxx, rules]
