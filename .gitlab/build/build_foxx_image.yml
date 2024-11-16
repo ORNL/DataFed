@@ -9,7 +9,8 @@ build-foxx:
   extends: .docker_build_script
   stage: build
   variables:
-    IMAGE_TAG: "datafed/foxx"
+    PROJECT: "datafed"
+    COMPONENT: "foxx"
     GIT_STRATEGY: clone
     DOCKER_FILE_PATH: "docker/Dockerfile.foxx"
     DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
@@ -28,7 +29,8 @@ retag-image:
   extends: .docker_retag_image
   stage: build
   variables:
-    IMAGE_TAG: "datafed/foxx"
+    PROJECT: "datafed"
+    COMPONENT: "foxx"
     GIT_STRATEGY: clone
     DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
   tags:
