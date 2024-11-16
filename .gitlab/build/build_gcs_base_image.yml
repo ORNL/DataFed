@@ -59,4 +59,12 @@ retag-image:
   tags:
     - docker
   rules:
-    - !reference [build-gcs-base, rules]
+    - changes:
+        - docker/**/*
+        - scripts/**/*
+        - common/**/*
+        - .gitlab-ci.yml
+        - CMakeLists.txt
+        - cmake/**/*
+      when: never
+    - when: on_success

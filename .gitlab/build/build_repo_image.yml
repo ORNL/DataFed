@@ -37,4 +37,12 @@ retag-image:
   tags:
     - docker
   rules:
-    - !reference [build-repo, rules]
+    - changes:
+        - docker/**/*
+        - scripts/**/*
+        - web/**/*
+        - common/proto/**/*
+        - .gitlab-ci.yml
+      when: never
+    - when: on_success
+
