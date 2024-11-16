@@ -94,7 +94,7 @@ data=$(curl -u "$local_DATAFED_HARBOR_USERNAME:$local_DATAFED_HARBOR_PASSWORD" -
 #   "errors": [
 #     {
 #       "code": "NOT_FOUND",
-#       "message": "path /api/v2.0/projects/datafed/repositories/datafed/gcs-1086-bug-python-client-pypi-version/artifacts was not found"
+#       "message": "path /api/v2.0/projects/datafed/repositories/gcs-1086-bug-python-client-pypi-version/artifacts was not found"
 #     }
 #   ]
 # }
