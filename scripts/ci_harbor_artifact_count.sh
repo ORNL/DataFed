@@ -150,17 +150,22 @@ number_of_artifacts=$(echo "$data" | jq ' . | length')
 # Make sure the response doesn't contain an error code before assumptions are made
 if [ "$number_of_artifacts" != "0" ]
 then
-  ERROR_FOUND=$(echo "$data" | jq -r 'if .errors and (.errors | length > 0) then "TRUE" else "FALSE" end')
-  if [ "$ERROR_FOUND" == "TRUE" ]
+  # Can only check for errors with .errors if it is an object not if it is an
+  # array
+  if [ "$is_obj" == "true" ]
   then
-    ERROR_CODE=$(echo "$data" | jq -r '.errors[0].code')
-    if [ "$ERROR_CODE" == "NOT_FOUND" ]
+    ERROR_FOUND=$(echo "$data" | jq -r 'if .errors and (.errors | length > 0) then "TRUE" else "FALSE" end')
+    if [ "$ERROR_FOUND" == "TRUE" ]
     then
-      echo "0"
-      exit 0
-    else
-      echo "Aborting unhandled error $ERROR_CODE" >> "$LOG_FILE"
-      exit 1
+      ERROR_CODE=$(echo "$data" | jq -r '.errors[0].code')
+      if [ "$ERROR_CODE" == "NOT_FOUND" ]
+      then
+        echo "0"
+        exit 0
+      else
+        echo "Aborting unhandled error $ERROR_CODE" >> "$LOG_FILE"
+        exit 1
+      fi
     fi
   fi
 fi
