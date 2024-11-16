@@ -2,11 +2,54 @@
 
 set -euf 
 
+Help()
+{
+  echo "$(basename ${BASH_SOURCE[0]}) Will check to make sure that the selected"
+  echo "               docker image has been uploaded to the registry."
+  echo
+  echo "Syntax: $(basename ${BASH_SOURCE[0]}) [-h|r]"
+  echo "options:"
+  echo "-h, --help                        Print this help message"
+  echo "-r, --repository                  The container image repository."
+}
+
+# Define an array with variable names
+vars=("DATAFED_HARBOR_REGISTRY" "DATAFED_HARBOR_REPOSITORY" "DATAFED_HARBOR_USERNAME" "DATAFED_HARBOR_PASSWORD")
+
+# Loop through the array and set local variables
+for var in "${vars[@]}"; do
+  eval "local_${var}=\${${var}:-\"\"}"
+done
+
+
+VALID_ARGS=$(getopt -o hr: --long 'help',repository: -- "$@")
+if [[ $? -ne 0 ]]; then
+      exit 2;
+fi
+eval set -- "$VALID_ARGS"
+while [ : ]; do
+  case "$1" in
+    -h | --help)
+        Help
+        exit 0
+        ;;
+    -r | --repository)
+        local_DATAFED_HARBOR_REPOSITORY=$2
+        shift 2
+        ;;
+    --) shift; 
+        break 
+        ;;
+    \?) # incorrect option
+        echo "Error: Invalid option"
+        exit;;
+  esac
+done
+
 # This script is created to determine if a harbor image exists in the repository
 # It will print the number of artifacts that exist for a particualar image.
 LOG_FILE="harbor_check.log"
 echo "CI Harbor Check Log File" > "$LOG_FILE"
-
 
 if [ -z "${DATAFED_HARBOR_PROJECT:-}" ]
 then
@@ -22,14 +65,6 @@ else
   local_DATAFED_HARBOR_IMAGE_TAG=$(printenv DATAFED_HARBOR_IMAGE_TAG)
 fi
 
-# Define an array with variable names
-vars=("DATAFED_HARBOR_REGISTRY" "DATAFED_HARBOR_REPOSITORY" "DATAFED_HARBOR_USERNAME" "DATAFED_HARBOR_PASSWORD")
-
-# Loop through the array and set local variables
-for var in "${vars[@]}"; do
-  eval "local_${var}=\${${var}:-\"\"}"
-done
-
 # Check for required variables
 for var in "${vars[@]}"; do
   local_var="local_${var}"
@@ -41,9 +76,16 @@ done
 
 local_DATAFED_HARBOR_URL="https://$local_DATAFED_HARBOR_REGISTRY"
 
+# Note HARBOR_REPOSITORY should not include the project path that is kept in the
+# variable DATAFED_HARBOR_PROJECT
+#
+# i.e. the below is correct
+#
+# local_DATAFED_HARBOR_PROJECT="datafed"
+# local_DATAFED_HARBOR_REPOSITORY="core-devel"
 URL="$local_DATAFED_HARBOR_URL/api/v2.0/projects/$local_DATAFED_HARBOR_PROJECT/repositories/$local_DATAFED_HARBOR_REPOSITORY/artifacts"
 echo "$URL" >> "$LOG_FILE"
-data=$(curl -u $local_DATAFED_HARBOR_USERNAME:$local_DATAFED_HARBOR_PASSWORD -s "${URL}?with_tag=$local_DATAFED_HARBOR_IMAGE_TAG" )
+data=$(curl -u "$local_DATAFED_HARBOR_USERNAME:$local_DATAFED_HARBOR_PASSWORD" -s "${URL}?with_tag=$local_DATAFED_HARBOR_IMAGE_TAG" )
 
 # In the case that an image has not yet been uploaded the server will return
 # a json object of the following format
