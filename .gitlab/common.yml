@@ -142,3 +142,6 @@
     -   fi
     - done
     - cat "./harbor_check.log"
+  after_script:
+    # Needed if the harbor check script errors out.
+    - if [ -f "./harbor_check.log" ]; then cat "./harbor_check.log"; fi;
