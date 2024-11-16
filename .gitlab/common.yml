@@ -81,7 +81,7 @@
     - while [ "$artifact_count" == "0" ]; do
     -   artifact_count=$(./scripts/ci_harbor_artifact_count.sh -r "${DATAFED_HARBOR_REPOSITORY}")
     -   error_code="$?"
-    -   if [ "$error_code" != "0" ]
+    -   if [ "$error_code" -ne 0 ]
     -   then
     -     echo "Error encountered in ci_harbor_artifact_count $error_code"
     -     cat "./harbor_check.log"
@@ -129,7 +129,7 @@
     - while [ "$artifact_count" == "0" ]; do
     -   artifact_count=$(./scripts/ci_harbor_artifact_count.sh -r "${DATAFED_HARBOR_REPOSITORY}")
     -   error_code="$?"
-    -   if [ "$error_code" != "0" ]
+    -   if [ "$error_code" -ne 0 ]
     -   then
     -     echo "Error encountered in ci_harbor_artifact_count $error_code"
     -     cat "./harbor_check.log"
