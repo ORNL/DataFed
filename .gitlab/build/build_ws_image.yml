@@ -24,6 +24,7 @@ build-ws:
         - web/**/*
         - common/proto/**/*
         - .gitlab-ci.yml
+        - CMakeLists.txt
       when: on_success
 
 retag-image:
@@ -37,4 +38,13 @@ retag-image:
   tags:
     - docker
   rules:
-    - !reference [build-ws, rules]
+    - if: true
+      changes:
+        - docker/**/*
+        - scripts/**/*
+        - web/**/*
+        - common/proto/**/*
+        - .gitlab-ci.yml
+        - CMakeLists.txt
+      when: never
+    - when: on_success
