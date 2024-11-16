@@ -84,7 +84,7 @@ local_DATAFED_HARBOR_URL="https://$local_DATAFED_HARBOR_REGISTRY"
 # local_DATAFED_HARBOR_PROJECT="datafed"
 # local_DATAFED_HARBOR_REPOSITORY="core-devel"
 URL="$local_DATAFED_HARBOR_URL/api/v2.0/projects/$local_DATAFED_HARBOR_PROJECT/repositories/$local_DATAFED_HARBOR_REPOSITORY/artifacts"
-echo "$URL" >> "$LOG_FILE"
+echo "${URL}?with_tag=$local_DATAFED_HARBOR_IMAGE_TAG" >> "$LOG_FILE"
 data=$(curl -u "$local_DATAFED_HARBOR_USERNAME:$local_DATAFED_HARBOR_PASSWORD" -s "${URL}?with_tag=$local_DATAFED_HARBOR_IMAGE_TAG" )
 
 # In the case that an image has not yet been uploaded the server will return
