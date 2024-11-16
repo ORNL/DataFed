@@ -74,9 +74,9 @@
     - export DATAFED_HARBOR_PASSWORD="${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     - docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
     - docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+    - first_iteration="TRUE"
+    - artifact_count="0"
     - |
-      first_iteration="TRUE"
-      artifact_count="0"
       while [ "$artifact_count" == "0" ]; do
         artifact_count=$(./scripts/ci_harbor_artifact_count.sh -r "${DATAFED_HARBOR_REPOSITORY}")
         error_code="$?"
@@ -121,9 +121,9 @@
     - docker pull "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
     - docker tag "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest" "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
     - docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+    - first_iteration="TRUE"
+    - artifact_count="0"
     - |
-      first_iteration="TRUE"
-      artifact_count="0"
       while [ "$artifact_count" == "0" ]; do
         artifact_count=$(./scripts/ci_harbor_artifact_count.sh -r "${DATAFED_HARBOR_REPOSITORY}")
         error_code="$?"
