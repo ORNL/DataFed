@@ -9,7 +9,8 @@ build-ws:
   extends: .docker_build_script
   stage: build
   variables:
-    IMAGE_TAG: "datafed/ws"
+    PROJECT: "datafed"
+    COMPONENT: "ws"
     GIT_STRATEGY: clone
     DOCKER_FILE_PATH: "web/docker/Dockerfile"
     DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
@@ -29,7 +30,8 @@ retag-image:
   extends: .docker_retag_image
   stage: build
   variables:
-    IMAGE_TAG: "datafed/ws"
+    PROJECT: "datafed"
+    COMPONENT: "ws"
     GIT_STRATEGY: clone
     DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
   tags:
