@@ -58,3 +58,15 @@ retag-image:
   tags:
     - ci-datafed-globus
     - docker
+  rules:
+    - changes:
+        - docker/**/*
+        - scripts/**/*
+        - common/**/*
+        - .gitlab-ci.yml
+        - CMakeLists.txt
+        - cmake/**/*
+        - repository/docker/entrypoint_authz.sh
+        - repository/docker/Dockerfile.gcs
+      when: never
+    - when: on_success

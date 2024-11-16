@@ -24,6 +24,7 @@ build-ws:
         - web/**/*
         - common/proto/**/*
         - .gitlab-ci.yml
+        - CMakeLists.txt
       when: on_success
 
 retag-image:
@@ -36,3 +37,13 @@ retag-image:
     DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
   tags:
     - docker
+  rules:
+    - changes:
+        - docker/**/*
+        - scripts/**/*
+        - web/**/*
+        - common/proto/**/*
+        - .gitlab-ci.yml
+        - CMakeLists.txt
+      when: never
+    - when: on_success
