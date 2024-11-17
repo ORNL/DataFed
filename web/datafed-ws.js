@@ -15,25 +15,31 @@ if ( process.argv.length != 3 ){
     throw "Invalid arguments, usage: datafed-ws config-file";
 }
 
-const web_version = require('./version.js');
-const express = require('express'); // For REST api
-var session = require('express-session');
-//var bodyParser = require('body-parser');
-const sanitizeHtml = require('sanitize-html');
-var cookieParser = require('cookie-parser'); // cookies for user state
-var http = require('http');
-var https = require('https');
-const crypto = require('crypto');
-const helmet = require('helmet');
-const fs = require('fs');
-const ini = require('ini');
-var protobuf = require("protobufjs");
-var zmq = require("zeromq");
-const app = express();
-var ECT = require('ect'); // for html templates
+import web_version from './version.js';
+import express from 'express'; // For REST api
+import session from 'express-session';
+import sanitizeHtml from 'sanitize-html';
+import cookieParser from 'cookie-parser'; // cookies for user state
+import http   from 'http';
+import https  from 'https';
+import crypto from 'crypto';
+import helmet from 'helmet';
+import fs from 'fs';
+import ini from 'ini';
+import protobuf from "protobufjs";
+import zmq from "zeromq";
+import ECT from 'ect'; // for html templates
+import ClientOAuth2 from 'client-oauth2';
+import { v4 as uuidv4 } from 'uuid';
+
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 var ectRenderer = ECT({ watch: true, root: __dirname + '/views', ext : '.ect' });
-const ClientOAuth2 = require('client-oauth2');
-const { v4: uuidv4 } = require('uuid');
+const app = express();
 
 const MAX_CTX = 50;
 
