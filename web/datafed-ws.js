@@ -32,6 +32,12 @@ import ECT from 'ect'; // for html templates
 import ClientOAuth2 from 'client-oauth2';
 import { v4 as uuidv4 } from 'uuid';
 
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 var ectRenderer = ECT({ watch: true, root: __dirname + '/views', ext : '.ect' });
 const app = express();
 

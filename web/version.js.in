@@ -3,4 +3,4 @@ const MAJOR = @DATAFED_WEB_MAJOR@;
 const MINOR = @DATAFED_WEB_MINOR@;
 const PATCH = @DATAFED_WEB_PATCH@;
 
-export { MAJOR, MINOR, PATCH };
+export default { MAJOR, MINOR, PATCH };
