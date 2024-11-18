@@ -86,7 +86,6 @@ then
     "${PROJECT_ROOT}/core/docker/Dockerfile" \
     --build-arg DEPENDENCIES="datafed-dependencies:latest" \
     --build-arg RUNTIME="datafed-runtime:latest" \
-    --no-cache \
     "${PROJECT_ROOT}" \
     -t datafed-core:latest
   docker build -f \
