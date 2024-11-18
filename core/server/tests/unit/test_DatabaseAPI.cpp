@@ -21,6 +21,8 @@
 #include <string>
 #include <vector>
 
+using namespace libjson;
+using namespace SDMS;
 using namespace SDMS::Core;
 
 class TestDatabaseAPI : public DatabaseAPI {
@@ -31,6 +33,14 @@ public:
 
   ~TestDatabaseAPI() {}
 
+  static TestDatabaseAPI create() {
+    return TestDatabaseAPI(
+      "https://restful-booker.herokuapp.com/",
+      "user",
+      "password"
+    );
+  }
+
   long dbGet(const char *a_url_path,
              const std::vector<std::pair<std::string, std::string>> &a_params,
              libjson::Value &a_result, LogContext log_context,
@@ -39,11 +49,10 @@ public:
                               a_log);
   }
 
-  bool
-  dbGetRaw(const char *a_url_path,
+  bool dbGetRaw(const char *a_url_path,
            const std::vector<std::pair<std::string, std::string>> &a_params,
            std::string &a_result) {
-    return DatabaseAPI::dbGetRaw(a_url_path, a_params, a_result)
+    return DatabaseAPI::dbGetRaw(a_url_path, a_params, a_result);
   }
 
   long dbPost(const char *a_url_path,
@@ -58,17 +67,32 @@ public:
 BOOST_AUTO_TEST_SUITE(DatabaseAPITest)
 
 BOOST_AUTO_TEST_CASE(testing_DatabaseAPIPost) {
-  TestDatabaseAPI api("", "", "");
+  TestDatabaseAPI api = TestDatabaseAPI::create();
+  LogContext log_context;
+  Value res;
+  std::string body = "{\"username\":\"admin\",\"password\":\"password123\"}";
+
+  api.dbPost("auth", {{"field", "test"}}, &body, res, log_context);
+
   BOOST_TEST(true);
 }
 
 BOOST_AUTO_TEST_CASE(testing_DatabaseAPIGet) {
-  TestDatabaseAPI api("", "", "");
+  TestDatabaseAPI api = TestDatabaseAPI::create();
+  LogContext log_context;
+  Value res;
+
+  api.dbGet("booking", {{"field", "test"}}, res, log_context);
+
   BOOST_TEST(true);
 }
 
 BOOST_AUTO_TEST_CASE(testing_DatabaseAPIGetRaw) {
-  TestDatabaseAPI api("", "", "");
+  TestDatabaseAPI api = TestDatabaseAPI::create();
+  std::string res;
+
+  api.dbGetRaw("booking", {{"field", "test"}}, res);
+
   BOOST_TEST(true);
 }
 
