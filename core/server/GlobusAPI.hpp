@@ -77,14 +77,14 @@ protected:
             const std::vector<std::pair<std::string, std::string>> &a_params,
             const libjson::Value *a_body, std::string &a_result);
 
+  Config &m_config;
+
 private:
   void init();
   std::string getSubmissionID(const std::string &a_acc_token);
   bool eventsHaveErrors(const std::vector<std::string> &a_events,
                         XfrStatus &status, std::string &a_err_msg);
   void checkResponsCode(long a_code, libjson::Value::Object &a_body) const;
-
-  Config &m_config;
   CURL *m_curl_xfr;
   CURL *m_curl_auth;
   LogContext m_log_context;
