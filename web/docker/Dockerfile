@@ -48,6 +48,8 @@ RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build
 RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build --target install
 # Only part of the final install can be done here
 
+ENTRYPOINT ["/opt/datafed/dependencies/bin/cmake", "--build", "build", "--target", "test"]
+
 FROM ${RUNTIME} AS ws
 
 SHELL ["/bin/bash", "-c"]
@@ -86,4 +88,5 @@ WORKDIR ${BUILD_DIR}
 
 USER root
 
-ENTRYPOINT ["/datafed/source/web/docker/entrypoint.sh", "/datafed/source/web/datafed-ws.js", "/datafed/source/config/datafed-ws.cfg" ]
+ENTRYPOINT ["/datafed/source/web/docker/entrypoint.sh"]
+CMD ["/datafed/source/web/datafed-ws.js", "/datafed/source/config/datafed-ws.cfg"]
