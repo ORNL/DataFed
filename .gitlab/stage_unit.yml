@@ -10,9 +10,6 @@ run-ws-unit-job:
       optional: true
   stage: unit
   variables:
-    REGISTRY: "${REGISTRY}"
-    HARBOR_USER: "${HARBOR_USER}"
-    HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     PROJECT: "datafed"
     COMPONENT: "ws"
     GIT_STRATEGY: clone
