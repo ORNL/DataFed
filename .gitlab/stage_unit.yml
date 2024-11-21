@@ -4,10 +4,7 @@ run-ws-unit-job:
   # Either the web container needs to be rebuilt or the container needs to be
   # retagged with the current git commit hash.
   needs:
-    - job: build-ws
-      optional: true
-    - job: retag-image
-      optional: true
+    - job: run-ws-build-job
   stage: unit
   variables:
     PROJECT: "datafed"
