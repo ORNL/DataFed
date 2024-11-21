@@ -14,6 +14,7 @@ ARG                           NVM_DIR="$DATAFED_DIR/.nvm"
 ARG                           NVM_INC="$DATAFED_DIR/.nvm/versions/node/v13.14.0/include/node"
 ARG                           NVM_BIN="$DATAFED_DIR/.nvm/versions/node/v13.14.0/bin"
 ARG                           LIB_DIR="/usr/local/lib"
+ARG                           ENABLE_FOXX_TESTS="FALSE"
 
 FROM ${DEPENDENCIES} AS foxx-build
 
@@ -53,7 +54,7 @@ RUN curl -OL https://download.arangodb.com/arangodb311/DEBIAN/Release.key; apt-k
 # i.e.
 RUN echo 'deb [trusted=yes] https://download.arangodb.com/arangodb311/DEBIAN/ /' | tee /etc/apt/sources.list.d/arangodb.list
 RUN apt update
-RUN apt install arangodb3-client -y
+RUN apt install arangodb3-client -y && apt update
 RUN arangosh --version
 
 USER root
