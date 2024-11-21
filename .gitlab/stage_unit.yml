@@ -1,0 +1,26 @@
+---
+
+run-ws-unit-job:
+  needs:
+    - job: run-ws-unit-job
+  stage: unit
+  variables:
+    REGISTRY: "${REGISTRY}"
+    HARBOR_USER: "${HARBOR_USER}"
+    HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
+    PROJECT: "datafed"
+    COMPONENT: "ws"
+    GIT_STRATEGY: clone
+    HOST_LOG_FILE_PATH: "/shared/logs"
+    CONTAINER_LOG_FILE_PATH: "/datafed/logs"
+    DATAFED_WEB_KEY_DIR: "/shared/keys"
+    DATAFED_WEB_CERT_NAME: "cert.crt"
+    DATAFED_WEB_KEY_NAME: "cert.key"
+    DATAFED_WEB_CERT_PATH: "${DATAFED_WEB_KEY_DIR}/${DATAFED_WEB_CERT_NAME}"
+    DATAFED_WEB_CSR_PATH: "${DATAFED_WEB_KEY_DIR}/cert.csr"
+    DATAFED_WEB_KEY_PATH: "${DATAFED_WEB_KEY_DIR}/${DATAFED_WEB_KEY_NAME}"
+  tags:
+    - docker
+  script:
+    - echo "Running ws unit tests"
+ 
