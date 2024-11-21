@@ -6,7 +6,7 @@ run-ws-unit-job:
   needs:
     - job: build-ws
       optional: true
-      job: retag-image
+    - job: retag-image
       optional: true
   stage: unit
   variables:
