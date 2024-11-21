@@ -69,6 +69,9 @@ fi
 if [ -n "$UID" ]; then
     echo "Switching datafed user to UID: ${UID}"
     usermod -u $UID datafed
+    # All files should be owned by the datafed user
+    chown -R datafed:root ${DATAFED_DIR}
+    chown -R datafed:root ${DATAFED_INSTALL_PATH}/authz
 fi
 
 if [ ! -f "${DATAFED_INSTALL_PATH}/keys/datafed-core-key.pub" ]
