@@ -9,6 +9,7 @@
 // Local public includes
 #include "common/DynaLog.hpp"
 #include "common/libjson.hpp"
+#include "common/Util.hpp"
 
 // Third party includes
 #include <curl/curl.h>
@@ -56,7 +57,7 @@ CURL* curl_setup() {
         EXCEPT(1, "libcurl init failed");
 
     curl_easy_setopt(m_curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
-    // curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, curlResponseWriteCB);
+    curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, curlResponseWriteCB);
     curl_easy_setopt(m_curl, CURLOPT_SSL_VERIFYPEER, 0);
     curl_easy_setopt(m_curl, CURLOPT_TCP_NODELAY, 1);
 }
