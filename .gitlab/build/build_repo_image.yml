@@ -14,6 +14,7 @@ build-repo:
     GIT_STRATEGY: clone
     DOCKER_FILE_PATH: "repository/docker/Dockerfile"
     DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
+    BUILD_INTERMEDIATE: "FALSE"
   tags:
     - ci-datafed-repo
     - docker
@@ -34,6 +35,7 @@ retag-image:
     COMPONENT: "repo"
     GIT_STRATEGY: clone
     DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
+    BUILD_INTERMEDIATE: "FALSE"
   tags:
     - docker
   rules:
