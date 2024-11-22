@@ -714,3 +714,41 @@ function _schemaResolveRefs( a_props, a_refs ){
     }
 }
 */
+
+// Note about the below, I am assuming that the client ID is readily available since it is used in datafed-ws.js
+/**
+ * Basic implementation of get_authorize_url from Globus SDK
+ *  @param {UUID} client_id The UUID of the Globus authentication client
+ *  @param {string} redirect_uri The URI safe application-wide Globus Auth redirect URI.
+ *  @param requested_scopes The scopes on the token(s) being requested
+ *      In the case of accessing a mapped collection, this should include the mapped collection's UUID
+ *      like so: https://auth.globus.org/scopes/YOUR-UUID-HERE/data_access
+ *  @param {string} state Allows the application to pass information back to itself
+ *  @param {boolean} refresh_tokens Request refresh tokens in addition to access tokens
+ *  @param {object} query_params Additional params
+ *  @returns {string} The URL a user can follow to provide authorization and consent via Globus
+ */
+export function globusGetAuthorizeURL(client_id, redirect_uri, requested_scopes, state, refresh_tokens=false, query_params) {
+    const auth_client = {
+        base_url: "https//auth.globus.org",
+    };
+    const authorize_base_url = auth_client.base_url + "/v2/oauth2/authorize";
+    let params = {
+        "client_id": client_id,
+        "redirect_uri": redirect_uri,
+        "scope": requested_scopes,
+        "state": state,
+        "response_type": "code",
+        "access_type": refresh_tokens ? "online" : "offline",
+    };
+    if (query_params) {
+        const temp = {...params, ...query_params};
+        params = temp;
+    }
+    // TODO: url encode params
+    const url_encoded_params = params;
+
+    return authorize_base_url + "?" + url_encoded_params;
+
+
+}
