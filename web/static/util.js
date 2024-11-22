@@ -734,13 +734,17 @@ export function globusGetAuthorizeURL(client_id, redirect_uri, requested_scopes,
         base_url: "https://auth.globus.org",
     };
     const authorize_base_url = auth_client.base_url + "/v2/oauth2/authorize";
+    let required_scopes = [...requested_scopes];
+    if (refresh_tokens) {
+        required_scopes = [...requested_scopes, "offline_access"];
+    }
     let params = {
         "client_id": client_id,
         "redirect_uri": redirect_uri,
-        "scope": requested_scopes.join(" "),    // Scopes need to be separated by a space
+        "scope": required_scopes.join(" "),    // Scopes need to be separated by a space
         "state": state,
         "response_type": "code",
-        "access_type": refresh_tokens ? "online" : "offline",
+        "access_type": refresh_tokens ? "offline" : "online",
         "prompt": "login",
     };
     if (query_params) {

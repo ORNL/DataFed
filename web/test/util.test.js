@@ -46,5 +46,20 @@ describe('globusGetAuthorizeURL', () => {
         )
     ).to.be.true;
   });
+
+  it('should contain requested information', () => {
+    const auth_url = globusGetAuthorizeURL(client_id, redirect_uri, requested_scopes, state, refresh_tokens, query_params)
+    expect(auth_url).to.have.string(client_id);
+    expect(auth_url).to.have.string(redirect_uri.split("/")[-1]);
+    requested_scopes.forEach((scope_str) => {
+      const split_scope = scope_str.split("/");
+      expect(auth_url).to.have.string(split_scope[-1]);
+      expect(auth_url).to.have.string(split_scope[-2]);
+    });
+    expect(auth_url).to.have.string(state);
+    expect(auth_url).to.have.string(refresh_tokens ? "offline" : "online");
+    expect(auth_url).to.have.string(refresh_tokens ? "offline_access" : "");
+    // TODO: also check additional query params!
+  });
 });
 
