@@ -1,6 +1,10 @@
 #!/bin/env bash
 
-set -uf -o pipefail
+# The setup script must throw an error if there is a problem. This has
+# implications on the CI pipelines as well as the ability to detect problems
+# when standing up datafed.
+# -e turns on failures if script hits a problem
+set -euf -o pipefail
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
