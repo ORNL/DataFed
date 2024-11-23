@@ -52,7 +52,8 @@ router.get('/gridftp', function(req, res) {
                     case "lookup":
                         console.log("Client: ", client, " lookup permissions?");
                         // For TESTING, allow these actions
-                        return;
+                        break;
+                        //return;
                     default:
                         throw [g_lib.ERR_INVALID_PARAM, "Invalid gridFTP action: ", req.queryParams.act];
                 }

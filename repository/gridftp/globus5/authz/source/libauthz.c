@@ -489,13 +489,13 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
                   callout_id_mapped1);
   AUTHZ_LOG_INFO("Allowed collection path: %s, action: %s, object is %s\n",
                  g_config.globus_collection_path, action, object);
-  if (strcmp(action, "lookup") == 0 || strcmp(action, "chdir") == 0) {
-    AUTHZ_LOG_INFO("Allowed collection path: %s, action: %s, object is %s\n",
-                   g_config.globus_collection_path, action, object);
-    result = GLOBUS_SUCCESS;
-    callback(callback_arg, handle, result);
-    return result;
-  }
+  //if (strcmp(action, "lookup") == 0 || strcmp(action, "chdir") == 0) {
+  //  AUTHZ_LOG_INFO("Allowed collection path: %s, action: %s, object is %s\n",
+  //                 g_config.globus_collection_path, action, object);
+  //  result = GLOBUS_SUCCESS;
+  //  callback(callback_arg, handle, result);
+  //  return result;
+  //}
 
   AUTHZ_LOG_ERROR("gsi_authz_authorize_async, handle: %p, act: %s, obj: %s\n",
                   handle, action, object);
