@@ -88,6 +88,7 @@ router.get('/gridftp', function(req, res) {
                       // <possibly_other_path>/<repo_name>/project/<project_name>/
                       // <possibly_other_path>/<repo_name>/user/<user_name>/
                       //
+                      //
                       const { u_or_p_name, project_or_user } = getFoldersFromPath(path);
 
                       if( project_or_user == "project" ) {
@@ -110,6 +111,8 @@ router.get('/gridftp', function(req, res) {
                           return;
                         }
                         console.log("Role returned as PROJ_NO_ROLE for client ");
+
+
                         console.log(client._id);
                         console.log("and project name");
                         console.log(u_or_p_name);
@@ -123,6 +126,17 @@ router.get('/gridftp', function(req, res) {
                         }
 
                       }
+
+                      var repo = obj.db._document(req.queryParams.repo);
+                      var repo_base_path = repo.path;
+                      if (!repo_base_path.startsWith("/") && repo_base_path.startsWith("/") ) {
+                        repo_base_path = "/" + repo_base_path;
+                      }
+                      
+                      if ( repo_base_path.startsWith(path) ) {
+                        return;
+                      }
+
                       throw g_lib.ERR_PERM_DENIED;
                     default:
                         throw [g_lib.ERR_INVALID_PARAM, "Invalid gridFTP action: ", req.queryParams.act];
