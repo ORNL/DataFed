@@ -91,6 +91,11 @@ router.get('/gridftp', function(req, res) {
                       //
                       const { u_or_p_name, project_or_user } = getFoldersFromPath(path);
 
+                      console.log("u_or_p_name");
+                      console.log(u_or_p_name);
+                      console.log("project_or_user");
+                      console.log(project_or_user);
+
                       if( project_or_user == "project" ) {
                         // how do we tie a user to a project through an allocation
                         //
@@ -128,6 +133,8 @@ router.get('/gridftp', function(req, res) {
                       }
 
                       var repo = g_db._document(req.queryParams.repo);
+                      console.log("repo ");
+                      console.log(repo);
                       var repo_base_path = repo.path;
                       if (!repo_base_path.startsWith("/") && repo_base_path.startsWith("/") ) {
                         repo_base_path = "/" + repo_base_path;
