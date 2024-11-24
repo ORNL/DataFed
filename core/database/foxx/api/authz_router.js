@@ -89,7 +89,18 @@ router.get('/gridftp', function(req, res) {
                       // <possibly_other_path>/<repo_name>/user/<user_name>/
                       //
                       //
-                      const { u_or_p_name, project_or_user } = getFoldersFromPath(path);
+                      const { dir1, dir2 } = getFoldersFromPath(path);
+
+
+                      project_or_user = null;
+                      u_or_p_name = null;
+                      if( dir1 == "project" || dir1 == "user") {
+                        project_or_user = dir1;
+                        return; 
+                      } else if ( dir2 == "project" || dir2 == "user" ) {
+                        project_or_user = dir2;
+                        u_or_p_name = dir1;
+                      }
 
                       console.log("u_or_p_name");
                       console.log(u_or_p_name);
