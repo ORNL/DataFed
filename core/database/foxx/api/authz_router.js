@@ -8,6 +8,19 @@ const g_lib = require('./support');
 
 module.exports = router;
 
+function getFoldersFromPath(path) {
+    // Split the path into components
+    const parts = path.split('/').filter(Boolean); // Remove empty elements caused by leading/trailing slashes
+
+    // Get the first folder from the end
+    const lastFolder = parts[parts.length - 1];
+
+    // Get the second folder from the end
+    const secondLastFolder = parts[parts.length - 2];
+
+    return { lastFolder, secondLastFolder };
+}
+
 
 router.get('/gridftp', function(req, res) {
         try {
@@ -52,8 +65,65 @@ router.get('/gridftp', function(req, res) {
                     case "lookup":
                         console.log("Client: ", client, " lookup permissions?");
                         // For TESTING, allow these actions
-                        break;
-                        //return;
+                    //
+                        // We need to determine if project or user
+                        // if user project
+                        //
+                      var path = req.queryParams.file;
+
+                      // If path is missing the starting "/" add it back in
+                      if (!path.startsWith("/") && alloc.path.startsWith("/") ) {
+                        path = "/" + path;
+                      }
+                      // Path will have the following form
+                      // GridFTP authz library will have removed the base of
+                      // the collection
+                      // /datafed-home/project/2024_transformer_vae_results_overflow/8524343
+                      // 
+                      // path should have the following forms to be supported 
+                      // Other paths may be provided but we are only interested
+                      // in supporting the following two everything else should
+                      // be denied
+                      // 
+                      // <possibly_other_path>/<repo_name>/project/<project_name>/
+                      // <possibly_other_path>/<repo_name>/user/<user_name>/
+                      //
+                      const { u_or_p_name, project_or_user } = getFoldersFromPath(path);
+
+                      if( project_or_user == "project" ) {
+                        // how do we tie a user to a project through an allocation
+                        //
+                        // alloc requires client to start with u/
+                        var temp_alloc = obj.db.alloc.firstExample({
+                          _from: client._id,
+                          _to: req.queryParams.repo
+                        });
+                        console.log("Alloc object ");
+                        console.log(temp_alloc);
+
+                        if (!temp_alloc) {
+                            throw [obj.ERR_NO_ALLOCATION, "No allocation on repo " + req.queryParams.repo];
+                        }
+
+                        // Ok but what about the individual project id
+                        if ( g_lib.getProjectRole( client._id, u_or_p_name ) != g_lib.PROJ_NO_ROLE ){
+                          return;
+                        }
+                        console.log("Role returned as PROJ_NO_ROLE for client ");
+                        console.log(client._id);
+                        console.log("and project name");
+                        console.log(u_or_p_name);
+                        throw [obj.ERR_NO_ALLOCATION, "No allocation on repo " + req.queryParams.repo];
+
+                      } else if( project_or_user == "user" ) {
+                        if ( client._key == u_or_p_name ) {
+                          // If the user is equal to the client than authorization
+                          // is approved
+                          return; 
+                        }
+
+                      }
+                      throw g_lib.ERR_PERM_DENIED;
                     default:
                         throw [g_lib.ERR_INVALID_PARAM, "Invalid gridFTP action: ", req.queryParams.act];
                 }
@@ -67,6 +137,8 @@ router.get('/gridftp', function(req, res) {
                     }
                 }
             }
+
+
 
             // Verify repo and path are correct for record
             // Note: only managed records have an allocations and this gridftp auth call is only made for managed records
