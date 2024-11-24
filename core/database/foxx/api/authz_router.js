@@ -92,8 +92,8 @@ router.get('/gridftp', function(req, res) {
                       const { dir1, dir2 } = getFoldersFromPath(path);
 
 
-                      project_or_user = null;
-                      u_or_p_name = null;
+                      var project_or_user = null;
+                      var u_or_p_name = null;
                       if( dir1 == "project" || dir1 == "user") {
                         // just because it is the project and or user path
                         // doesn't mean you should be able to see it you 
