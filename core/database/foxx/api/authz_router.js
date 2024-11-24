@@ -109,43 +109,46 @@ router.get('/gridftp', function(req, res) {
                       console.log("project_or_user");
                       console.log(project_or_user);
 
-                      if( project_or_user == "project" ) {
-                        // how do we tie a user to a project through an allocation
-                        //
-                        // alloc requires client to start with u/
-                        var temp_alloc = g_db.alloc.firstExample({
-                          _from: client._id,
-                          _to: req.queryParams.repo
-                        });
-                        console.log("Alloc object ");
-                        console.log(temp_alloc);
+                      // Only check this if it is defined
+                      if( project_or_user ) {
+                        if( project_or_user == "project" ) {
+                          // how do we tie a user to a project through an allocation
+                          //
+                          // alloc requires client to start with u/
+                          var temp_alloc = g_db.alloc.firstExample({
+                            _from: client._id,
+                            _to: req.queryParams.repo
+                          });
+                          console.log("Alloc object ");
+                          console.log(temp_alloc);
 
-                        if (!temp_alloc) {
-                            throw [g_lib.ERR_NO_ALLOCATION, "No allocation on repo " + req.queryParams.repo];
-                        }
-
-                        // Ok but what about the individual project id
-                        if( u_or_p_name ) {
-                          // Only do this if not null
-                          if ( g_lib.getProjectRole( client._id, u_or_p_name ) != g_lib.PROJ_NO_ROLE ){
-                            return;
+                          if (!temp_alloc) {
+                              throw [g_lib.ERR_NO_ALLOCATION, "No allocation on repo " + req.queryParams.repo];
                           }
+
+                          // Ok but what about the individual project id
+                          if( u_or_p_name ) {
+                            // Only do this if not null
+                            if ( g_lib.getProjectRole( client._id, u_or_p_name ) != g_lib.PROJ_NO_ROLE ){
+                              return;
+                            }
+                          }
+                          console.log("Role returned as PROJ_NO_ROLE for client ");
+
+
+                          console.log(client._id);
+                          console.log("and project name");
+                          console.log(u_or_p_name);
+                          throw [g_lib.ERR_NO_ALLOCATION, "No allocation on repo " + req.queryParams.repo];
+
+                        } else if( project_or_user == "user" ) {
+                          if ( client._key == u_or_p_name ) {
+                            // If the user is equal to the client than authorization
+                            // is approved
+                            return; 
+                          }
+
                         }
-                        console.log("Role returned as PROJ_NO_ROLE for client ");
-
-
-                        console.log(client._id);
-                        console.log("and project name");
-                        console.log(u_or_p_name);
-                        throw [g_lib.ERR_NO_ALLOCATION, "No allocation on repo " + req.queryParams.repo];
-
-                      } else if( project_or_user == "user" ) {
-                        if ( client._key == u_or_p_name ) {
-                          // If the user is equal to the client than authorization
-                          // is approved
-                          return; 
-                        }
-
                       }
 
                       var repo = g_db._document(req.queryParams.repo);
