@@ -95,7 +95,7 @@ router.get('/gridftp', function(req, res) {
                         // how do we tie a user to a project through an allocation
                         //
                         // alloc requires client to start with u/
-                        var temp_alloc = obj.db.alloc.firstExample({
+                        var temp_alloc = g_db.alloc.firstExample({
                           _from: client._id,
                           _to: req.queryParams.repo
                         });
@@ -103,7 +103,7 @@ router.get('/gridftp', function(req, res) {
                         console.log(temp_alloc);
 
                         if (!temp_alloc) {
-                            throw [obj.ERR_NO_ALLOCATION, "No allocation on repo " + req.queryParams.repo];
+                            throw [g_lib.ERR_NO_ALLOCATION, "No allocation on repo " + req.queryParams.repo];
                         }
 
                         // Ok but what about the individual project id
@@ -116,7 +116,7 @@ router.get('/gridftp', function(req, res) {
                         console.log(client._id);
                         console.log("and project name");
                         console.log(u_or_p_name);
-                        throw [obj.ERR_NO_ALLOCATION, "No allocation on repo " + req.queryParams.repo];
+                        throw [g_lib.ERR_NO_ALLOCATION, "No allocation on repo " + req.queryParams.repo];
 
                       } else if( project_or_user == "user" ) {
                         if ( client._key == u_or_p_name ) {
@@ -127,7 +127,7 @@ router.get('/gridftp', function(req, res) {
 
                       }
 
-                      var repo = obj.db._document(req.queryParams.repo);
+                      var repo = g_db._document(req.queryParams.repo);
                       var repo_base_path = repo.path;
                       if (!repo_base_path.startsWith("/") && repo_base_path.startsWith("/") ) {
                         repo_base_path = "/" + repo_base_path;
@@ -203,7 +203,7 @@ router.get('/gridftp', function(req, res) {
                 console.log("alloc is ");
                 console.log(alloc);
                 if (!alloc || (alloc.path + data_key != path)) {
-                    throw [obj.ERR_PERM_DENIED, "Permission denied, DataFed registered path is '" + alloc.path + data_key + "' Globus path is '" + path + "'"]
+                    throw [g_lib.ERR_PERM_DENIED, "Permission denied, DataFed registered path is '" + alloc.path + data_key + "' Globus path is '" + path + "'"]
                 }
             }
 
