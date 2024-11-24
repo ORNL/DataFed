@@ -158,7 +158,8 @@ router.get('/gridftp', function(req, res) {
                       if (!repo_base_path.startsWith("/") && repo_base_path.startsWith("/") ) {
                         repo_base_path = "/" + repo_base_path;
                       }
-                      
+                     
+                      console.log("Checking that repo base path ", repo_base_path, " starts with ", path );
                       if ( repo_base_path.startsWith(path) ) {
 
                         // Ok but how do we know that user has access to the 
