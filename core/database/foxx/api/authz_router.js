@@ -27,6 +27,20 @@ router.get('/gridftp', function(req, res) {
             console.log("/gridftp start authz client", req.queryParams.client, "repo", req.queryParams.repo, "file", req.queryParams.file, "act", req.queryParams.act);
 
             const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
+            // Client will contain the following information
+          // {
+          //   "_key" : "bob",
+          //   "_id" : "u/bob",
+          //   "name" : "bob junior ",
+          //   "name_first" : "bob",
+          //   "name_last" : "jones",
+          //   "is_admin" : true,
+          //   "max_coll" : 50,
+          //   "max_proj" : 10,
+          //   "max_sav_qry" : 20,
+          //   :
+          //   "email" : "bobjones@gmail.com"
+          // }
 
             var idx = req.queryParams.file.lastIndexOf("/");
             var data_key = req.queryParams.file.substr(idx + 1);
@@ -154,8 +168,33 @@ router.get('/gridftp', function(req, res) {
                       var repo = g_db._document(req.queryParams.repo);
                       console.log("repo ");
                       console.log(repo);
+
+                    // {
+                    //   "_key" : "datafed-folder",
+                    //   "_id" : "repo/datafed-folder",
+                    //   "_rev" : "_izwBzb----",
+                    //   "capacity" : 4345350,
+                    //   "pub_key" : "<repo rsa public key>",
+                    //   "address" : "tcp://<repo domain>:<repo port>",
+                    //   "endpoint" : "XXXXYYYY-XXXX-YYYY-XXXX-YYYYXXXXYYYY",
+                    //   "path" : "<path from root of guest collection to folder>",
+                    //   "title" : "<title>",
+                    //   "desc" : "<description>",
+                    //   "domain" : "",
+                    //   "exp_path" : "/"
+                    // }
+                    //
+                    // Example of repo.path
+                    //
+                    // "/datafed/datafedci-home/"
+                    //
+                    // Example of path might be
+                    //
+                    // "/datafed/datafedci-home"
+                    // "/datafed"
+                    // 
                       var repo_base_path = repo.path;
-                      if (!repo_base_path.startsWith("/") && repo_base_path.startsWith("/") ) {
+                      if (!repo_base_path.startsWith("/") && path.startsWith("/") ) {
                         repo_base_path = "/" + repo_base_path;
                       }
                      
@@ -168,8 +207,8 @@ router.get('/gridftp', function(req, res) {
                         //
                         console.log("Checking if client has allocation on repo");
                         var new_alloc = g_db.alloc.firstExample({
-                            _from: client._key,
-                            _to: repo._key
+                            _from: client._id,
+                            _to: repo._id
                         });
                         console.log("alloc");
                         console.log(new_alloc);
