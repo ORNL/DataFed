@@ -95,8 +95,10 @@ router.get('/gridftp', function(req, res) {
                       project_or_user = null;
                       u_or_p_name = null;
                       if( dir1 == "project" || dir1 == "user") {
+                        // just because it is the project and or user path
+                        // doesn't mean you should be able to see it you 
+                        // must have an allocation on the repo
                         project_or_user = dir1;
-                        return; 
                       } else if ( dir2 == "project" || dir2 == "user" ) {
                         project_or_user = dir2;
                         u_or_p_name = dir1;
@@ -123,8 +125,11 @@ router.get('/gridftp', function(req, res) {
                         }
 
                         // Ok but what about the individual project id
-                        if ( g_lib.getProjectRole( client._id, u_or_p_name ) != g_lib.PROJ_NO_ROLE ){
-                          return;
+                        if( u_or_p_name ) {
+                          // Only do this if not null
+                          if ( g_lib.getProjectRole( client._id, u_or_p_name ) != g_lib.PROJ_NO_ROLE ){
+                            return;
+                          }
                         }
                         console.log("Role returned as PROJ_NO_ROLE for client ");
 
@@ -152,7 +157,21 @@ router.get('/gridftp', function(req, res) {
                       }
                       
                       if ( repo_base_path.startsWith(path) ) {
-                        return;
+
+                        // Ok but how do we know that user has access to the 
+                        // repo, still shouldn't be able to see things unless
+                        // they actually access to the repo.
+                        //
+                        console.log("Checking if client has allocation on repo");
+                        var new_alloc = g_db.alloc.firstExample({
+                            _from: client._key,
+                            _to: repo._key
+                        });
+                        console.log("alloc");
+                        console.log(new_alloc);
+                        if (new_alloc) {
+                          return;
+                        }
                       }
 
                       throw g_lib.ERR_PERM_DENIED;
