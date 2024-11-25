@@ -18,7 +18,7 @@ function getFoldersFromPath(path) {
     // Get the second folder from the end
     const secondLastFolder = parts[parts.length - 2];
 
-    return { lastFolder, secondLastFolder };
+    return [lastFolder, secondLastFolder];
 }
 
 
@@ -78,7 +78,13 @@ router.get('/gridftp', function(req, res) {
                         break;
                     case "lookup":
                         console.log("Client: ", client, " lookup permissions?");
-                        // For TESTING, allow these actions
+                        break;
+
+                }
+
+                if(req.queryParams.act == "lookup" || req.queryParams.act == "create"){
+
+                                        // For TESTING, allow these actions
                     //
                         // We need to determine if project or user
                         // if user project
@@ -103,19 +109,19 @@ router.get('/gridftp', function(req, res) {
                       // <possibly_other_path>/<repo_name>/user/<user_name>/
                       //
                       //
-                      const { dir1, dir2 } = getFoldersFromPath(path);
+                      const dirs = getFoldersFromPath(path);
 
 
                       var project_or_user = null;
                       var u_or_p_name = null;
-                      if( dir1 == "project" || dir1 == "user") {
+                      if( dirs[0] == "project" || dirs[0] == "user") {
                         // just because it is the project and or user path
                         // doesn't mean you should be able to see it you 
                         // must have an allocation on the repo
-                        project_or_user = dir1;
-                      } else if ( dir2 == "project" || dir2 == "user" ) {
-                        project_or_user = dir2;
-                        u_or_p_name = dir1;
+                        project_or_user = dirs[0];
+                      } else if ( dirs[1] == "project" || dirs[1] == "user" ) {
+                        project_or_user = dirs[1];
+                        u_or_p_name = dirs[0];
                       }
 
                       console.log("u_or_p_name");
@@ -219,7 +225,6 @@ router.get('/gridftp', function(req, res) {
                       throw g_lib.ERR_PERM_DENIED;
                     default:
                         throw [g_lib.ERR_INVALID_PARAM, "Invalid gridFTP action: ", req.queryParams.act];
-                }
 
                 console.log("client: ", client, " data_id: ", data_id);
                 if (!g_lib.hasAdminPermObject(client, data_id)) {
