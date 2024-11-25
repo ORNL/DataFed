@@ -111,15 +111,20 @@ router.get('/gridftp', function(req, res) {
                       //
                       const dirs = getFoldersFromPath(path);
 
-
+                      console.log("dirs is");
+                      console.log(dirs);
                       var project_or_user = null;
                       var u_or_p_name = null;
-                      if( dirs[0] == "project" || dirs[0] == "user") {
+
+                      console.log("dirs 0 ", dirs[0]);
+                      console.log("dirs 1 ", dirs[1]);
+
+                      if( dirs[0] === "project" || dirs[0] === "user") {
                         // just because it is the project and or user path
                         // doesn't mean you should be able to see it you 
                         // must have an allocation on the repo
                         project_or_user = dirs[0];
-                      } else if ( dirs[1] == "project" || dirs[1] == "user" ) {
+                      } else if ( dirs[1] === "project" || dirs[1] === "user" ) {
                         project_or_user = dirs[1];
                         u_or_p_name = dirs[0];
                       }
