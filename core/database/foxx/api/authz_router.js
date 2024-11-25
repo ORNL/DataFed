@@ -199,12 +199,11 @@ router.get('/gridftp', function(req, res) {
                       }
                      
                       console.log("Checking that repo base path ", repo_base_path, " starts with ", path );
-                      if ( repo_base_path.startsWith(path) ) {
+                      // Ok but how do we know that user has access to the 
+                      // repo, still shouldn't be able to see things unless
+                      // they actually access to the repo.
+                      if ( repo_base_path.startsWith(path) || path.startsWith(repo_base_path) ) {
 
-                        // Ok but how do we know that user has access to the 
-                        // repo, still shouldn't be able to see things unless
-                        // they actually access to the repo.
-                        //
                         console.log("Checking if client has allocation on repo");
                         var new_alloc = g_db.alloc.firstExample({
                             _from: client._id,
