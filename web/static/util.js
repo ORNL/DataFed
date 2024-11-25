@@ -738,7 +738,7 @@ export function globusGetAuthorizeURL(client_id, redirect_uri, requested_scopes,
     if (refresh_tokens) {
         required_scopes = [...requested_scopes, "offline_access"];
     }
-    let params = {
+    let params = new URLSearchParams({
         "client_id": client_id,
         "redirect_uri": redirect_uri,
         "scope": required_scopes.join(" "),    // Scopes need to be separated by a space
@@ -746,38 +746,11 @@ export function globusGetAuthorizeURL(client_id, redirect_uri, requested_scopes,
         "response_type": "code",
         "access_type": refresh_tokens ? "offline" : "online",
         "prompt": "login",
-    };
-    if (query_params) {
-        const temp = {...params, ...query_params};
-        params = temp;
-    }
-    const url_encoded_params = encodeURLParams(params);
-    return authorize_base_url + "?" + url_encoded_params;
-}
-
-/**
- * Simple method for breaking a params object into url-safe string
- * @param {object} params Params object to be encoded
- * @return {string} Resulting URL encoded string
- */
-function encodeURLParams(params) {
-    let url_safe_string = "";
-    let first = true;
-    for (const key in params) {
-        if (!!params[key]) {  // short-circuit on empty param values, TODO: are there cases where we may want empty params?
-            let prepend = "&";
-            if (first) {
-                prepend = "";
-                first = false;
-            }
-
-            url_safe_string = url_safe_string.concat(
-                prepend,
-                encodeURIComponent(key),
-                "=",
-                encodeURIComponent(params[key])
-            );
-        }
-    }
-    return url_safe_string;
+    });
+    Object.entries(query_params).forEach(([key, value]) => {
+       if (!!value && !params.get(key)) { // short-circuit on empty param values or if param already defined, TODO: are there cases where we may want empty params?
+           params.set(key, value);
+       }
+    });
+    return authorize_base_url + "?" + params.toString();
 }
