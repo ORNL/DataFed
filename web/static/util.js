@@ -764,18 +764,20 @@ function encodeURLParams(params) {
     let url_safe_string = "";
     let first = true;
     for (const key in params) {
-        let prepend = "&";
-        if (first) {
-            prepend = "";
-            first = false;
+        if (!!params[key]) {  // short-circuit on empty param values, TODO: are there cases where we may want empty params?
+            let prepend = "&";
+            if (first) {
+                prepend = "";
+                first = false;
+            }
+
+            url_safe_string = url_safe_string.concat(
+                prepend,
+                encodeURIComponent(key),
+                "=",
+                encodeURIComponent(params[key])
+            );
         }
-        // TODO: check value not empty first
-        url_safe_string = url_safe_string.concat(
-            prepend,
-            encodeURIComponent(key),
-            "=",
-            encodeURIComponent(params[key])
-        );
     }
     return url_safe_string;
 }

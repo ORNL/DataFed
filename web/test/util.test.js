@@ -48,7 +48,7 @@ describe('globusGetAuthorizeURL', () => {
   });
 
   it('should contain requested information', () => {
-    const auth_url = globusGetAuthorizeURL(client_id, redirect_uri, requested_scopes, state, refresh_tokens, query_params)
+    const auth_url = globusGetAuthorizeURL(client_id, redirect_uri, requested_scopes, state, refresh_tokens, query_params);
     expect(auth_url).to.have.string(client_id);
     expect(auth_url).to.have.string(redirect_uri.split("/")[-1]);
     requested_scopes.forEach((scope_str) => {
@@ -59,7 +59,36 @@ describe('globusGetAuthorizeURL', () => {
     expect(auth_url).to.have.string(state);
     expect(auth_url).to.have.string(refresh_tokens ? "offline" : "online");
     expect(auth_url).to.have.string(refresh_tokens ? "offline_access" : "");
-    // TODO: also check additional query params!
+  });
+
+  it('should contain additional specified query parameters', ()=> {
+    const clean_param = {"other": "params"};
+    const unsafe_value_param = {"that": "we/"};
+    const unsafe_key_param = {"may || not": "see"};
+    const no_value_param = {"empty": ""}
+    const specified_params = {...clean_param, ...unsafe_value_param, ...unsafe_key_param, ...no_value_param};
+    const auth_url = globusGetAuthorizeURL(client_id, redirect_uri, requested_scopes, state, refresh_tokens, specified_params);
+
+    // clean params
+    const clean_key = Object.keys(clean_param)[0];
+    const clean_value = Object.values(clean_param)[0];
+    expect(auth_url).to.have.string(clean_key + "=" + clean_value);
+
+    // unsafe values
+    const unsafe_value_key = Object.keys(unsafe_value_param)[0];
+    const unsafe_value_value = Object.values(unsafe_value_param)[0];
+    expect(auth_url).to.have.string(unsafe_value_key + "=");
+    expect(auth_url).to.not.have.string(unsafe_value_value);
+
+    //unsafe keys
+    const unsafe_key_key = Object.keys(unsafe_key_param)[0];
+    const unsafe_key_value = Object.values(unsafe_key_param)[0];
+    expect(auth_url).to.not.have.string(unsafe_key_key);
+    expect(auth_url).to.have.string(unsafe_key_value);
+
+    //no values
+    const no_value_key = Object.keys(no_value_param)[0];
+    expect(auth_url).to.not.have.string(no_value_key);
   });
 });
 
