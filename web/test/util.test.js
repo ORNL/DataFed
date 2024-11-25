@@ -54,7 +54,7 @@ describe('globusGetAuthorizeURL', () => {
     requested_scopes.forEach((scope_str) => {
       const split_scope = scope_str.split("/");
       expect(auth_url).to.have.string(split_scope.slice(-1)[0]);
-      expect(auth_url).to.have.string(split_scope.slice(-2)[0]);
+      expect(auth_url).to.have.string(split_scope.slice(-2, -1)[0]);
     });
     expect(auth_url).to.have.string(state);
     expect(auth_url).to.have.string(refresh_tokens ? "offline" : "online");
