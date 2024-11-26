@@ -90,5 +90,28 @@ describe('globusGetAuthorizeURL', () => {
     const no_value_key = Object.keys(no_value_param)[0];
     expect(auth_url).to.not.have.string(no_value_key);
   });
+
+  it('should create a valid URL when given minimal parameters', () => {
+    const auth_url = globusGetAuthorizeURL(client_id, redirect_uri);
+    expect(Boolean(new URL(auth_url))).to.be.true;
+  });
+
+  it('should throw an error when client_id is not provided', () => {
+    expect(globusGetAuthorizeURL(null, redirect_uri)).to.throw(new Error("Missing required parameters, please provide client_id and redirect_uri"));
+  });
+  it('should throw an error when redirect_uri is not provided', () => {
+    expect(globusGetAuthorizeURL(client_id, null)).to.throw(new Error("Missing required parameters, please provide client_id and redirect_uri"));
+  });
+
+  it('should provide default scopes when no scopes are provided', () => {
+    const auth_url = globusGetAuthorizeURL(client_id, redirect_uri);
+    const default_scopes = [
+      "openid", "profile", "email",
+      "urn:globus:auth:scope:transfer.api.globus.org:all"
+    ];
+    default_scopes.forEach((default_scope) => {
+      expect(auth_url).to.have.string(default_scope);
+    })
+  });
 });
 
