@@ -113,5 +113,13 @@ describe('globusGetAuthorizeURL', () => {
       expect(auth_url).to.have.string(default_scope);
     })
   });
+
+  it('should have encoded url params', () => {
+    const auth_url_string = globusGetAuthorizeURL(client_id, redirect_uri, requested_scopes, state, refresh_tokens, query_params);
+    const decoded_url = decodeURIComponent(auth_url_string);
+
+    // NOTE: encoding changed during URLSearchParams.toString from " " to "+"
+    expect(decoded_url).to.have.string("scope=" + requested_scopes.join("+"));
+  });
 });
 

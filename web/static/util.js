@@ -747,6 +747,11 @@ export function globusGetAuthorizeURL(client_id, redirect_uri, requested_scopes=
     if (refresh_tokens) {
         required_scopes = [...requested_scopes, "offline_access"];
     }
+    /*
+        NOTE: using URLSearchParams changes encoding of  " " to "+" which Globus accepts, despite saying otherwise
+        https://docs.globus.org/api/auth/developer-guide/#obtaining-authorization
+    */
+    // TODO: consider moving back to custom encoding in anticipation that Globus will no longer accept a different encoding scheme
     let params = new URLSearchParams({
         "client_id": client_id,
         "redirect_uri": redirect_uri,
