@@ -85,7 +85,7 @@ router.get('/gridftp', function(req, res) {
 
             }
 
-            if(req.queryParams.act == "lookup" || req.queryParams.act == "create"){
+            if(req.queryParams.act == "lookup"){
 
               // For TESTING, allow these actions
               //
