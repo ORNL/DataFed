@@ -715,7 +715,6 @@ function _schemaResolveRefs( a_props, a_refs ){
 }
 */
 
-// Note about the below, I am assuming that the client ID is readily available since it is used in datafed-ws.js
 /**
  * Basic implementation of get_authorize_url from Globus SDK
  *  @param {UUID} client_id The UUID of the Globus authentication client
@@ -762,7 +761,7 @@ export function globusGetAuthorizeURL(client_id, redirect_uri, requested_scopes=
         "prompt": "login",
     });
     Object.entries(query_params).forEach(([key, value]) => {
-       if (!!value && !params.get(key)) { // short-circuit on empty param values or if param already defined, TODO: are there cases where we may want empty params?
+       if (!!value && !params.has(key)) { // short-circuit on empty param values or if param already defined, TODO: are there cases where we may want empty params?
            params.set(key, value);
        }
     });
