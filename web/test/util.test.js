@@ -50,11 +50,11 @@ describe('globusGetAuthorizeURL', () => {
   it('should contain requested information', () => {
     const auth_url = globusGetAuthorizeURL(client_id, redirect_uri, requested_scopes, state, refresh_tokens, query_params);
     expect(auth_url).to.have.string(client_id);
-    expect(auth_url).to.have.string(redirect_uri.split("/").slice(-1)[0]);
+    expect(auth_url).to.have.string(redirect_uri.split("/").at(-1));
     requested_scopes.forEach((scope_str) => {
       const split_scope = scope_str.split("/");
-      expect(auth_url).to.have.string(split_scope.slice(-1)[0]);
-      expect(auth_url).to.have.string(split_scope.slice(-2, -1)[0]);
+      expect(auth_url).to.have.string(split_scope.at(-1));
+      expect(auth_url).to.have.string(split_scope.at(-2));
     });
     expect(auth_url).to.have.string(state);
     expect(auth_url).to.have.string(refresh_tokens ? "offline" : "online");
