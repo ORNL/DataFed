@@ -389,83 +389,90 @@ app.get('/ui/authn', ( a_req, a_resp ) => {
     */
 
     g_globus_auth.code.getToken( a_req.originalUrl ).then( function( client_token ) {
-      
-        var xfr_token = client_token.data.other_tokens[0];
 
-        const opts = {
-            hostname: 'auth.globus.org',
-            method: 'POST',
-            path: '/v2/oauth2/token/introspect',
-            rejectUnauthorized: true,
-            auth: g_oauth_credentials.clientId + ":" + g_oauth_credentials.clientSecret,
-            headers:{
-                'Content-Type' : 'application/x-www-form-urlencoded',
-                'Accept' : 'application/json',
-            }
-        };
+        if (client_token.data.resource_server === "auth.globus.org") {
+            var xfr_token = client_token.data.other_tokens[0];
 
-        // Request user info from token
-        const req = https.request( opts, (res) => {
-            var data = '';
-
-            res.on('data', (chunk) => {
-                data += chunk;
-            });
-
-            res.on('end', () => {
-
-                if ( res.statusCode >= 200 && res.statusCode < 300 ){
-                    var userinfo = JSON.parse( data ),
-                        uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
-
-                    logger.info('/ui/authn', getCurrentLineNumber(), 'User: ' + uid + ' authenticated, verifying DataFed account' );
-                    sendMessageDirect( "UserFindByUUIDsRequest", "datafed-ws", { uuid: userinfo.identities_set }, function( reply ) {
-                        if ( !reply  ) {
-                            logger.error('/ui/authn', getCurrentLineNumber(),  "Error - Find user call failed." );
-                            a_resp.redirect( "/ui/error" );
-                        } else if ( !reply.user || !reply.user.length ) {
-                            // Not registered
-                            logger.info('/ui/authn', getCurrentLineNumber(),  "User: " + uid + "not registered" );
-
-                            // Store all data need for registration in session (temporarily)
-                            a_req.session.uid = uid;
-                            a_req.session.name = userinfo.name;
-                            a_req.session.email = userinfo.email;
-                            a_req.session.uuids = userinfo.identities_set;
-                            a_req.session.acc_tok = xfr_token.access_token;
-                            a_req.session.acc_tok_ttl = xfr_token.expires_in;
-                            a_req.session.ref_tok = xfr_token.refresh_token;
-
-                            a_resp.redirect( "/ui/register" );
-                        } else {
-                            logger.info('/ui/authn', getCurrentLineNumber(),  'User: ' + uid + ' verified, acc:' + xfr_token.access_token + ", ref: " + xfr_token.refresh_token + ", exp:" + xfr_token.expires_in );
-
-                            // Store only data needed for active session
-                            a_req.session.uid = uid;
-                            a_req.session.reg = true;
-
-                            // Refresh Globus access & refresh tokens to Core/DB
-                            setAccessToken( uid, xfr_token.access_token, xfr_token.refresh_token, xfr_token.expires_in );
-
-                            // TODO Account may be disable from SDMS (active = false)
-                            a_resp.redirect( "/ui/main" );
-                        }
-                    });
-                }else{
-                    // TODO - Not sure this is required - req.on('error'...) should catch this?
-                    logger.error('ui/authn', getCurrentLineNumber(), "Error: Globus introspection failed. User token:", xfr_token );
-                    a_resp.redirect( "/ui/error" );
+            const opts = {
+                hostname: 'auth.globus.org',
+                method: 'POST',
+                path: '/v2/oauth2/token/introspect',
+                rejectUnauthorized: true,
+                auth: g_oauth_credentials.clientId + ":" + g_oauth_credentials.clientSecret,
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Accept': 'application/json',
                 }
+            };
+
+            // Request user info from token
+            const req = https.request(opts, (res) => {
+                var data = '';
+
+                res.on('data', (chunk) => {
+                    data += chunk;
+                });
+
+                res.on('end', () => {
+
+                    if (res.statusCode >= 200 && res.statusCode < 300) {
+                        var userinfo = JSON.parse(data),
+                            uid = userinfo.username.substr(0, userinfo.username.indexOf("@"));
+
+                        logger.info('/ui/authn', getCurrentLineNumber(), 'User: ' + uid + ' authenticated, verifying DataFed account');
+                        sendMessageDirect("UserFindByUUIDsRequest", "datafed-ws", {uuid: userinfo.identities_set}, function (reply) {
+                            if (!reply) {
+                                logger.error('/ui/authn', getCurrentLineNumber(), "Error - Find user call failed.");
+                                a_resp.redirect("/ui/error");
+                            } else if (!reply.user || !reply.user.length) {
+                                // Not registered
+                                logger.info('/ui/authn', getCurrentLineNumber(), "User: " + uid + "not registered");
+
+                                // Store all data need for registration in session (temporarily)
+                                a_req.session.uid = uid;
+                                a_req.session.name = userinfo.name;
+                                a_req.session.email = userinfo.email;
+                                a_req.session.uuids = userinfo.identities_set;
+                                a_req.session.acc_tok = xfr_token.access_token;
+                                a_req.session.acc_tok_ttl = xfr_token.expires_in;
+                                a_req.session.ref_tok = xfr_token.refresh_token;
+
+                                a_resp.redirect("/ui/register");
+                            } else {
+                                logger.info('/ui/authn', getCurrentLineNumber(), 'User: ' + uid + ' verified, acc:' + xfr_token.access_token + ", ref: " + xfr_token.refresh_token + ", exp:" + xfr_token.expires_in);
+
+                                // Store only data needed for active session
+                                a_req.session.uid = uid;
+                                a_req.session.reg = true;
+
+                                // Refresh Globus access & refresh tokens to Core/DB
+                                setAccessToken(uid, xfr_token.access_token, xfr_token.refresh_token, xfr_token.expires_in);
+
+                                // TODO Account may be disable from SDMS (active = false)
+                                a_resp.redirect("/ui/main");
+                            }
+                        });
+                    } else {
+                        // TODO - Not sure this is required - req.on('error'...) should catch this?
+                        logger.error('ui/authn', getCurrentLineNumber(), "Error: Globus introspection failed. User token:", xfr_token);
+                        a_resp.redirect("/ui/error");
+                    }
+                });
             });
-        });
 
-        req.on('error', (e) => {
-            logger.error('ui/authn', getCurrentLineNumber(),"Error: Globus introspection failed. User token:", xfr_token );
-            a_resp.redirect( "/ui/error" );
-        });
+            req.on('error', (e) => {
+                logger.error('ui/authn', getCurrentLineNumber(), "Error: Globus introspection failed. User token:", xfr_token);
+                a_resp.redirect("/ui/error");
+            });
 
-        req.write( 'token=' + client_token.accessToken + '&include=identities_set' );
-        req.end();
+            req.write('token=' + client_token.accessToken + '&include=identities_set');
+            req.end();
+        }
+        else {
+            // We got another resource!
+            const loggable_data = {access_token: null, refresh_token: null, ...client_token.data}
+            console.log(loggable_data)
+        }
     }, function( reason ){
         logger.error('ui/authn', getCurrentLineNumber(),"Error: Globus get token failed. Reason:", reason );
         a_resp.redirect( "/ui/error" );
