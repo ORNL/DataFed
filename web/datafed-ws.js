@@ -470,8 +470,9 @@ app.get('/ui/authn', ( a_req, a_resp ) => {
         }
         else {
             // We got another resource!
-            const loggable_data = {access_token: null, refresh_token: null, ...client_token.data}
+            const loggable_data = { ...client_token.data, access_token: null, refresh_token: null }
             console.log(loggable_data)
+            a_resp.redirect("/ui/main")
         }
     }, function( reason ){
         logger.error('ui/authn', getCurrentLineNumber(),"Error: Globus get token failed. Reason:", reason );
