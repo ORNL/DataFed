@@ -390,6 +390,12 @@ app.get('/ui/authn', ( a_req, a_resp ) => {
 
     g_globus_auth.code.getToken( a_req.originalUrl ).then( function( client_token ) {
 
+        // TODO: remove
+        console.log("Client token: ", client_token);
+        if (client_token.data.other_tokens) {
+            console.log("First other token: ", client_token.data().other_tokens[0]);
+        }
+
         if (client_token.data.resource_server === "auth.globus.org") {
             var xfr_token = client_token.data.other_tokens[0];
 
@@ -470,9 +476,17 @@ app.get('/ui/authn', ( a_req, a_resp ) => {
         }
         else {
             // We got another resource!
-            const loggable_data = { ...client_token.data, access_token: null, refresh_token: null }
-            console.log(loggable_data)
-            a_resp.redirect("/ui/main")
+            const loggable_data = { ...client_token.data, access_token: null, refresh_token: null };
+            console.log("Resource loggable data: ", loggable_data);
+            // a_resp.redirect("/ui/main");
+
+            // TODO: verify UID always set when fetching
+            console.log("Session UID: ", a_req.session.uid);
+            const uid = a_req.session.uid;
+            logger.info('/ui/authn', getCurrentLineNumber(), 'User: ' + uid + ' [MAY BE] verified, acc:' + client_token.data.access_token + ", ref: " + client_token.data.refresh_token + ", exp:" + client_token.data.expires_in);
+            setAccessToken(uid, client_token.data.access_token, client_token.data.refresh_token, client_token.data.expires_in);
+            a_resp.redirect("/ui/main");
+
         }
     }, function( reason ){
         logger.error('ui/authn', getCurrentLineNumber(),"Error: Globus get token failed. Reason:", reason );
