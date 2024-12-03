@@ -483,7 +483,7 @@ app.get('/ui/authn', ( a_req, a_resp ) => {
             // TODO: verify UID always set when fetching
             console.log("Session UID: ", a_req.session.uid);
             const uid = a_req.session.uid;
-            logger.info('/ui/authn', getCurrentLineNumber(), 'User: ' + uid + ' [MAY BE] verified, acc:' + client_token.data.access_token + ", ref: " + client_token.data.refresh_token + ", exp:" + client_token.data.expires_in);
+            logger.info('/ui/authn', getCurrentLineNumber(), 'User: ' + uid + ' verified, acc: ' + client_token.data.access_token + ", ref: " + client_token.data.refresh_token + ", exp:" + client_token.data.expires_in);
             setAccessToken(uid, client_token.data.access_token, client_token.data.refresh_token, client_token.data.expires_in);
             a_resp.redirect("/ui/main");
 
@@ -1548,6 +1548,7 @@ app.get('/ui/theme/save', ( a_req, a_resp ) => {
 
 function setAccessToken( a_uid, a_acc_tok, a_ref_tok, a_expires_sec ) {
     logger.info(setAccessToken.name, getCurrentLineNumber(), "setAccessToken uid: " + a_uid + " expires in: " + a_expires_sec);
+    // TODO: need to adjust this according to result of ticket #1106
     sendMessageDirect( "UserSetAccessTokenRequest", a_uid, { access: a_acc_tok, refresh: a_ref_tok, expiresIn: a_expires_sec }, function( reply ){
         // Should be an AckReply
     });
