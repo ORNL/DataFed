@@ -393,7 +393,7 @@ app.get('/ui/authn', ( a_req, a_resp ) => {
         // TODO: remove
         console.log("Client token: ", client_token);
         if (client_token.data.other_tokens) {
-            console.log("First other token: ", client_token.data().other_tokens[0]);
+            console.log("First other token: ", client_token.data.other_tokens[0]);
         }
 
         if (client_token.data.resource_server === "auth.globus.org") {
