@@ -1,2 +1,43 @@
+# Description
 
-DataFed is a federated scientific data management system developed by Oak Ridge National Laboratories to facilitate FAIR data practices within supported experimental, compute, and analytics environments. The DataFed Python package provides both a command-line-interface (CLI) and a programming API for interacting with DataFed services.
+DataFed is a federated scientific data management system developed by Oak Ridge
+National Laboratories to facilitate FAIR data practices within supported
+experimental, compute, and analytics environments. The DataFed Python package
+provides both a command-line-interface (CLI) and a programming API for
+interacting with DataFed services.
+
+# Developers
+
+For running datafed directly from the source folder located in the DataFed
+GitHub repository, without running a pip install of the package. Activate the
+python env. This might be installed at /opt/datafed/dependencies/python/bin if
+you used DataFed's provided dependency install scripts with the default
+location.
+
+```
+source /opt/datafed/dependencies/python/bin/activate
+```
+
+Run the following from the root of the DataFed repo. The generate_datafed 
+script will generate default settings. the ENABLE_PYTHON_CLIENT is to make
+sure you actually build the python client. Many other default flags may be
+turned on, you can disable them if needed.
+
+The build target will "pydatafed" is needed for compiling the protobuf files
+to python, you will need protobuf to be installed.
+
+NOTE - You will need to rerun this command any times changes are made to the
+.proto files.
+
+```
+./scripts/generated_datafed.sh
+/opt/datafed/dependencies/bin/cmake -S. -B build -DENABLE_PYTHON_CLIENT=ON
+/opt/datafed/dependencies/bin/cmake --build build --target pydatafed
+```
+
+Move into the python/datafed_pkg folder and then you can execute the python
+cli tool directly with.
+
+```
+PYTHON_PATH=. ./scripts/datafed
+```

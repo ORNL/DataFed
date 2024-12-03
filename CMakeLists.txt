@@ -35,6 +35,8 @@ setting is turned on DataFed will build it's libraries as shared and try to
 link to shared libraries." OFF)
 OPTION(ENABLE_END_TO_END_API_TESTS "Enable end-to-end API testing" FALSE) 
 OPTION(ENABLE_END_TO_END_WEB_TESTS "Enable end-to-end web testing with Playwright" FALSE)
+OPTION(ENABLE_FOXX_TESTS "Enable Foxx testing, off by default because it
+  will overwrite the test database." FALSE)
 
 set(INSTALL_REPO_SERVER ${BUILD_REPO_SERVER})
 set(INSTALL_AUTHZ ${BUILD_AUTHZ})
@@ -60,6 +62,7 @@ get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_OPENSSL" LOCAL_OPENSSL_V
 get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_LIBCURL" LOCAL_CURL_VERSION)
 get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_BOOST" LOCAL_BOOST_VERSION)
 get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_ZLIB_VERSION" LOCAL_ZLIB_VERSION)
+get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_NODE_VERSION" LOCAL_NODE_VERSION)
 # Prioritize the CMD line argument over config file
 if(NOT DEFINED DATAFED_INSTALL_PATH)
   get_value_from_datafed_sh("DATAFED_INSTALL_PATH" DATAFED_INSTALL_PATH)
@@ -114,6 +117,12 @@ file( GLOB ProtoFiles "${PROJECT_SOURCE_DIR}/common/proto/common/*.proto" )
 if( BUILD_WEB_SERVER )
   include(./cmake/Web.cmake)
   file(COPY ${ProtoFiles} DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/web/")
+
+  if( ENABLE_UNIT_TESTS )
+    add_test(NAME unit_tests_web COMMAND "${DEPENDENCY_INSTALL_PATH}/nvm/versions/node/${LOCAL_NODE_VERSION}/bin/npm" "test")
+    set_tests_properties(unit_tests_web PROPERTIES WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/web)
+  endif()
+
 endif()
 
 if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON OR BUILD_PYTHON_CLIENT) 

@@ -9,9 +9,11 @@ build-ws:
   extends: .docker_build_script
   stage: build
   variables:
-    IMAGE_TAG: "datafed/ws"
+    PROJECT: "datafed"
+    COMPONENT: "ws"
     GIT_STRATEGY: clone
     DOCKER_FILE_PATH: "web/docker/Dockerfile"
+    DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
   tags:
     - ci-datafed-core
     - docker
@@ -22,13 +24,26 @@ build-ws:
         - web/**/*
         - common/proto/**/*
         - .gitlab-ci.yml
+        - CMakeLists.txt
       when: on_success
 
 retag-image:
   extends: .docker_retag_image
   stage: build
   variables:
-    IMAGE_TAG: "datafed/ws"
+    PROJECT: "datafed"
+    COMPONENT: "ws"
     GIT_STRATEGY: clone
+    DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
   tags:
     - docker
+  rules:
+    - changes:
+        - docker/**/*
+        - scripts/**/*
+        - web/**/*
+        - common/proto/**/*
+        - .gitlab-ci.yml
+        - CMakeLists.txt
+      when: never
+    - when: on_success

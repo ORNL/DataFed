@@ -1,5 +1,5 @@
 #!/bin/bash
-SCRIPT=$(realpath "$0")
+SCRIPT=$(realpath "$BASH_SOURCE[0]")
 SOURCE=$(dirname "$SCRIPT")
 source "${SOURCE}/dependency_versions.sh"
 PROJECT_ROOT=$(realpath "${SOURCE}/..")
@@ -384,12 +384,16 @@ install_node() {
 
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
     nvm install "$DATAFED_NODE_VERSION"
+    nvm use "$DATAFED_NODE_VERSION"
     # Mark node as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.node_installed-${DATAFED_NODE_VERSION}"
     cd "$original_dir"
   else
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
+    # Used by nvm 
+    export NODE_VERSION="$DATAFED_NODE_VERSION"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
+    nvm use "$DATAFED_NODE_VERSION"
   fi
 }
 

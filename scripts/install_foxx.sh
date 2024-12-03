@@ -233,6 +233,7 @@ echo "$local_DATAFED_DATABASE_PASSWORD" > "${PATH_TO_PASSWD_FILE}"
   then
       INSTALL_API="TRUE"
     # Remove the api at this point
+    # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint 
     "${FOXX_PREFIX}foxx" remove \
       "/api/${local_FOXX_MAJOR_API_VERSION}" \
       --server "http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
@@ -244,6 +245,7 @@ echo "$local_DATAFED_DATABASE_PASSWORD" > "${PATH_TO_PASSWD_FILE}"
   echo "$RESULT"
   if [ "${INSTALL_API}" == "TRUE"  ]
   then
+    # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint 
     "${FOXX_PREFIX}foxx" install \
       --server "http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
       -u "${local_DATABASE_USER}" \
@@ -253,6 +255,7 @@ echo "$local_DATAFED_DATABASE_PASSWORD" > "${PATH_TO_PASSWD_FILE}"
       "${PROJECT_ROOT}/core/database/foxx/"
   else
     echo "DataFed Foxx Services have already been uploaded, replacing to ensure consisency"
+    # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint 
     "${FOXX_PREFIX}foxx" replace \
       --server "http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
       -u "${local_DATABASE_USER}" \
