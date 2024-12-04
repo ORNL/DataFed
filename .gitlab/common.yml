@@ -165,9 +165,11 @@
   echo "COMPONENT ${COMPONENT}"
   echo "branch ${BRANCH_LOWER}"
   echo "commit sha ${CI_COMMIT_SHA}"
+  echo "harbor repo ${DATAFED_HARBOR_REPOSITORY}"
   echo "Tagging: ${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest ${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
-    #  docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
-    #  docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+  docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
+
+#  docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
 
 #docker tag "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
 # Variables that need to be defined to use the anchor.
