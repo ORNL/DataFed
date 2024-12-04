@@ -99,7 +99,6 @@
 .verify_image_upload: &verify_image_upload |
   first_iteration="TRUE"
   artifact_count="0"
-  |
   while [ "$artifact_count" == "0" ]; do
     artifact_count=$( "${CI_PROJECT_DIR}/scripts/ci_harbor_artifact_count.sh" -r "${DATAFED_HARBOR_REPOSITORY}")
     error_code="$?"
