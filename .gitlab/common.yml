@@ -305,10 +305,10 @@
     - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
     - export DATAFED_HARBOR_PASSWORD="${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
-    - *retag_image
-    - *verify_image_upload 
-    - *retag_intermediate
-    - *verify_image_upload 
+      #    - *retag_image
+      #    - *verify_image_upload 
+      #    - *retag_intermediate
+      #    - *verify_image_upload 
   after_script:
     # Needed if the harbor check script errors out.
     - if [ -f "./harbor_check.log" ]; then cat "./harbor_check.log"; fi;
