@@ -264,7 +264,7 @@
     - export DATAFED_HARBOR_PASSWORD="${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
-    - !reference !reference [.build_image, script]
+    - !reference [.build_image, script]
       #- *build_image
       #    - *verify_image_upload
       #    - *build_intermediate
