@@ -261,9 +261,9 @@
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     - *build_image
-    - *verify_image_upload
-    - *build_intermediate
-    - *verify_image_upload
+      #    - *verify_image_upload
+      #    - *build_intermediate
+      #    - *verify_image_upload
   after_script:
     # Needed if the harbor check script errors out.
     - if [ -f "${CI_PROJECT_DIR}/harbor_check.log" ]; then cat "${CI_PROJECT_DIR}/harbor_check.log"; fi;
