@@ -34,4 +34,4 @@ build-gcs-base:
         docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
         sleep 5  # Optional: Add a sleep to avoid busy waiting 
       done
-    - cat "./harbor_check.log"
+    - cat "${CI_PROJECT_DIR}/harbor_check.log"

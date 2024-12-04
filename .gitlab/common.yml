@@ -101,12 +101,12 @@
   artifact_count="0"
   |
   while [ "$artifact_count" == "0" ]; do
-    artifact_count=$(./scripts/ci_harbor_artifact_count.sh -r "${DATAFED_HARBOR_REPOSITORY}")
+    artifact_count=$( "${CI_PROJECT_DIR}/scripts/ci_harbor_artifact_count.sh" -r "${DATAFED_HARBOR_REPOSITORY}")
     error_code="$?"
     if [ "$error_code" -ne 0 ]
     then
       echo "Error encountered in ci_harbor_artifact_count $error_code"
-      cat "./harbor_check.log"
+      cat "${CI_PROJECT_DIR}/harbor_check.log"
       exit 1
     fi;
     echo "Artifact missing from harbor..."
@@ -147,7 +147,7 @@
       #    - *verify_image_upload
   after_script:
     # Needed if the harbor check script errors out.
-    - if [ -f "./harbor_check.log" ]; then cat "./harbor_check.log"; fi;
+    - if [ -f "${CI_PROJECT_DIR}/harbor_check.log" ]; then cat "${CI_PROJECT_DIR}/harbor_check.log"; fi;
 
 # Variables that need to be defined to use the anchor.
 #
@@ -267,7 +267,7 @@
     - *verify_image_upload
   after_script:
     # Needed if the harbor check script errors out.
-    - if [ -f "./harbor_check.log" ]; then cat "./harbor_check.log"; fi;
+    - if [ -f "${CI_PROJECT_DIR}/harbor_check.log" ]; then cat "${CI_PROJECT_DIR}/harbor_check.log"; fi;
 
 .error_logs_client_end_to_end:
   stage: log
@@ -307,4 +307,4 @@
     - *verify_image_upload 
   after_script:
     # Needed if the harbor check script errors out.
-    - if [ -f "./harbor_check.log" ]; then cat "./harbor_check.log"; fi;
+    - if [ -f "${CI_PROJECT_DIR}/harbor_check.log" ]; then cat "${CI_PROJECT_DIR}/harbor_check.log"; fi;

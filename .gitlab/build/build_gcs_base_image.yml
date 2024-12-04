@@ -40,6 +40,7 @@ build-gcs-base:
     - export DATAFED_HARBOR_PASSWORD="${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     - docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
     - docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+    - cd "${CI_PROJECT_DIR}"
     - |
       while [ "$(${CI_PROJECT_DIR}/scripts/ci_harbor_artifact_count.sh -r ${DATAFED_HARBOR_REPOSITORY})" == "0" ]; do
         echo "Artifact missing from harbor..."
@@ -47,7 +48,7 @@ build-gcs-base:
         docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
         sleep 5  # Optional: Add a sleep to avoid busy waiting 
       done
-    - cat "./harbor_check.log"
+    - cat "${CI_PROJECT_DIR}/harbor_check.log"
 
 retag-image:
   extends: .docker_retag_image
