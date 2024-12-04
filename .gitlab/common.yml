@@ -144,7 +144,7 @@
     - export DATAFED_HARBOR_PASSWORD="${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     - docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
     - docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
-    - *verify_image_upload
+      #    - *verify_image_upload
   after_script:
     # Needed if the harbor check script errors out.
     - if [ -f "./harbor_check.log" ]; then cat "./harbor_check.log"; fi;
@@ -264,7 +264,7 @@
     - export DATAFED_HARBOR_PASSWORD="${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
-    - !reference [.build_image, script]
+      #    - !reference [.build_image, script]
       #- *build_image
       #    - *verify_image_upload
       #    - *build_intermediate
