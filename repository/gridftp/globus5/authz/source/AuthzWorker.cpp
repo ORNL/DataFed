@@ -181,7 +181,7 @@ namespace SDMS {
 	 * @endcode
 	 */
   bool AuthzWorker::isTestPath(const std::string & posix_path) const {
-    if (m_test_path_len > 0 &&
+    if (m_test_path.size() > 0 &&
         posix_path.compare(0, m_test_path.size(), m_test_path) == 0) {
       DL_INFO(m_log_context, "Allowing request within TEST PATH: "
           << m_config->test_path);
@@ -299,6 +299,19 @@ namespace SDMS {
       return false;
     }
 
+    // Make sure there are at least 8 characters
+    // i.e. ftp://b/
+    if ( local_path.length() < 8 ) {
+      DL_ERROR(m_log_context, "Provided ftp URL is invalid, URL must have host and trailing /");
+      return false;
+    }
+
+    // index of character after ftp:// index 6
+    size_t char_index = 6; 
+    if ( local_path.at(char_index) == '/' ) {
+      DL_ERROR(m_log_context, "Provided ftp URL is missing hostname");
+      return false;
+    }
     return true;
   } 
 
@@ -335,7 +348,7 @@ namespace SDMS {
 	 */
   std::string AuthzWorker::removeOrigin(char * full_ftp_url) const {
 
-    if (isURLValid(full_ftp_path) == false) {
+    if (isURLValid(full_ftp_url) == false) {
       EXCEPT(1, "Invalid formatted ftp url.");
     }
 
@@ -451,6 +464,7 @@ namespace SDMS {
       DL_WARNING(m_log_context, error_msg);
       EXCEPT(1, "Core service did not respond");
     } else if (response.error) {
+      // This will just log the output without throwing.
       DL_ERROR(m_log_context, "AuthWorker.cpp there was an error when "
                             "communicating with the core service: "
                                 << response.error_msg);
@@ -459,6 +473,8 @@ namespace SDMS {
       if (not response.message) {
         DL_ERROR(m_log_context, "No error was reported and no time out occured "
                               "but message is not defined.");
+        EXCEPT(1, "This exception indicates that something is very wrong.");
+          
       }
 
       auto payload =

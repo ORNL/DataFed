@@ -2,6 +2,9 @@
 #define AUTHZWORKER_HPP
 #pragma once
 
+// Private includes
+#include "Config.h"
+
 // Common public includes
 #include "common/DynaLog.hpp"
 #include "common/ICommunicator.hpp"
@@ -51,7 +54,6 @@ namespace SDMS {
 
       void initCommunicator();
       struct Config *m_config;
-      size_t m_test_path_len;
       std::string m_test_path;
       std::string m_local_globus_path_root;
       LogContext m_log_context;
