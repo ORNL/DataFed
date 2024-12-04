@@ -157,8 +157,8 @@
 # REGISTRY                - used for image tag and pushing to registry
 # PROJECT                 - used for image tag and pushing to registry
 .build_image: &build_image |
-  export DATAFED_HARBOR_REPOSITORY="${COMPONENT}-${BRANCH_LOWER}"
   BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+  export DATAFED_HARBOR_REPOSITORY="${COMPONENT}-${BRANCH_LOWER}"
   docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" -f "${DOCKER_FILE_PATH}" -t "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" .
   echo "Registry ${REGISTRY}"
   echo "PROJECT ${PROJECT}"
