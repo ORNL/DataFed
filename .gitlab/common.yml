@@ -70,6 +70,13 @@
       docker pull --quiet "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest"
       if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD="TRUE"; fi;
       set -e
+      if [ "${BUILD_INTERMEDIATE}" == "TRUE" ]
+      then
+        set +e
+        docker pull --quiet "${REGISTRY}/${PROJECT}/${COMPONENT}-${INTERMEDIATE_LAYER_NAME}-${BRANCH_LOWER}:latest"
+        if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD="TRUE"; fi;
+        set -e
+      fi
       if [ "$FORCE_BUILD" == "TRUE" ]
       then
         cp .gitlab/build/force_build_${COMPONENT}_image.yml ${COMPONENT}_image.yml
@@ -216,11 +223,15 @@
 .retag_intermediate: &retag_intermediate |
   if [ "${BUILD_INTERMEDIATE}" == "TRUE" ]
   then
+    echo "Branch lower"
     export BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    echo "Harbor repo"
     export DATAFED_HARBOR_REPOSITORY="${COMPONENT}-${INTERMEDIATE_LAYER_NAME}-${BRANCH_LOWER}"
+    echo "pull"
     docker pull "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
     echo "Tagging ${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest as ${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
     docker tag "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest" "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+    echo "push"
     docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
   fi
 
