@@ -238,6 +238,7 @@
 # BRANCH_LOWER              - lowercase name of the branch used for image tagging
 .retag_image: &retag_image |
   BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+  export DATAFED_HARBOR_REPOSITORY="${COMPONENT}-${BRANCH_LOWER}"
   docker pull "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
   echo "Tagging ${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest as ${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
   docker tag "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest" "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
