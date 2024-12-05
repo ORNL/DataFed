@@ -24,6 +24,8 @@ enum Protocol
 enum AccessTokenType {
     GENERIC = 1;
     GLOBUS = 2;
+    GLOBUS_AUTH = 3;
+    GLOBUS_TRANSFER = 4;
 }
 
 
