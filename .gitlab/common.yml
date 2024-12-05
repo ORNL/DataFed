@@ -192,7 +192,7 @@
   then
     BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     export DATAFED_HARBOR_REPOSITORY="${COMPONENT}-${INTERMEDIATE_LAYER_NAME}-${BRANCH_LOWER}"
-    docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" --target "${INTERMEDIATE_TARGET}" -f "${DOCKER_FILE_PATH}" -t "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest" .
+    docker build --build-arg DEPENDENCIES="${REGISTRY}/${PROJECT}/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/${PROJECT}/runtime-${BRANCH_LOWER}:latest" --target "${INTERMEDIATE_TARGET}" -f "${DOCKER_FILE_PATH}" -t "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest" .
     echo "Tagging ${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest ${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
     docker tag "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest" "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
     docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
@@ -216,7 +216,7 @@
 .retag_intermediate: &retag_intermediate |
   if [ "${BUILD_INTERMEDIATE}" == "TRUE" ]
   then
-    BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    export BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     export DATAFED_HARBOR_REPOSITORY="${COMPONENT}-${INTERMEDIATE_LAYER_NAME}-${BRANCH_LOWER}"
     docker pull "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
     echo "Tagging ${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest as ${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
@@ -237,7 +237,7 @@
 # DATAFED_HARBOR_REPOSITORY - the tag of the image excluding the registry and the project
 # BRANCH_LOWER              - lowercase name of the branch used for image tagging
 .retag_image: &retag_image |
-  BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+  export BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
   export DATAFED_HARBOR_REPOSITORY="${COMPONENT}-${BRANCH_LOWER}"
   docker pull "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
   echo "Tagging ${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest as ${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
