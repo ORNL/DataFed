@@ -143,7 +143,7 @@
     - export DATAFED_HARBOR_PASSWORD="${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     - docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
     - docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
-      #    - *verify_image_upload
+    - *verify_image_upload
   after_script:
     # Needed if the harbor check script errors out.
     - if [ -f "${CI_PROJECT_DIR}/harbor_check.log" ]; then cat "${CI_PROJECT_DIR}/harbor_check.log"; fi;
@@ -168,8 +168,7 @@
   echo "harbor repo ${DATAFED_HARBOR_REPOSITORY}"
   echo "Tagging: ${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest ${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
   docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
-
-#  docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+  docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
 
 #docker tag "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
 # Variables that need to be defined to use the anchor.
@@ -268,6 +267,9 @@
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     - *build_image
+    - *verify_image_upload
+    - *build_intermediate
+    - *verify_image_upload
   after_script:
     # Needed if the harbor check script errors out.
     - if [ -f "${CI_PROJECT_DIR}/harbor_check.log" ]; then cat "${CI_PROJECT_DIR}/harbor_check.log"; fi;
@@ -280,9 +282,6 @@
   rules:
     - when: always
 
-      #    - *verify_image_upload
-      #    - *build_intermediate
-      #    - *verify_image_upload
 # In the case that we are not needing to actually rebuild the image we want to
 # retag the image that already exists in harbor with the current commit, this
 # is so that when we are running tests that are dependent on the  container we
