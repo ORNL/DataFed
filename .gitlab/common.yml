@@ -163,6 +163,10 @@
 # DOCKER_FILE_PATH        - used to build the image
 # REGISTRY                - used for image tag and pushing to registry
 # PROJECT                 - used for image tag and pushing to registry
+#
+# Outputs
+#
+# DATAFED_HARBOR_REPOSITORY
 .build_image: &build_image |
   BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
   export DATAFED_HARBOR_REPOSITORY="${COMPONENT}-${BRANCH_LOWER}"
