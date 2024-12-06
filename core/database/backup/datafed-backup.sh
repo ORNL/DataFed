@@ -12,10 +12,10 @@ systemctl stop arangodb3.service
 backup_file=DataFed_DB_Backup_$(date +"%Y_%m_%d").tar.gz
 
 # Tar contents of arangodb directory without full path
-tar -C /var/lib/arangodb3 -cvzf ${backup_file} .
+tar -C /var/lib/arangodb3 -cvzf "${backup_file}" .
 
 # Move backup file to storage location
-mv ${backup_file} /data/backups
+mv "${backup_file}" /data/backups
 
 # Restart DataFed services
 systemctl start arangodb3.service

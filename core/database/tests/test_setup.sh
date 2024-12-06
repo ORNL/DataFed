@@ -6,8 +6,8 @@ set -f -o pipefail
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
-PROJECT_ROOT=$(realpath ${SOURCE}/../../../)
-source ${PROJECT_ROOT}/config/datafed.sh
+PROJECT_ROOT=$(realpath "${SOURCE}/../../../")
+source "${PROJECT_ROOT}/config/datafed.sh"
 
 Help()
 {
@@ -123,11 +123,11 @@ if [[ "$output" =~ .*"sdms".* ]]; then
 	echo "SDMS already exists do nothing"
 else
 	echo "Creating SDMS"
-  arangosh  --server.password ${local_DATAFED_DATABASE_PASSWORD} --server.username ${local_DATABASE_USER} --javascript.execute ${PROJECT_ROOT}/core/database/foxx/db_create.js
+  arangosh  --server.password "${local_DATAFED_DATABASE_PASSWORD}" --server.username "${local_DATABASE_USER}" --javascript.execute "${PROJECT_ROOT}/core/database/foxx/db_create.js"
   # Give time for the database to be created
   sleep 2
-  arangosh --server.password ${local_DATAFED_DATABASE_PASSWORD} --server.username ${local_DATABASE_USER} --javascript.execute-string 'db._useDatabase("sdms"); db.config.insert({"_key": "msg_daily", "msg" : "DataFed servers will be off-line for regular maintenance every Sunday night from 11:45 pm until 12:15 am EST Monday morning."}, {overwrite: true});'
-  arangosh  --server.password ${local_DATAFED_DATABASE_PASSWORD} --server.username ${local_DATABASE_USER} --javascript.execute-string "db._useDatabase(\"sdms\"); db.config.insert({ \"_key\": \"system\", \"_id\": \"config/system\", \"secret\": \"${local_DATAFED_ZEROMQ_SYSTEM_SECRET}\"}, {overwrite: true } );"
+  arangosh --server.password "${local_DATAFED_DATABASE_PASSWORD}" --server.username "${local_DATABASE_USER}" --javascript.execute-string 'db._useDatabase("sdms"); db.config.insert({"_key": "msg_daily", "msg" : "DataFed servers will be off-line for regular maintenance every Sunday night from 11:45 pm until 12:15 am EST Monday morning."}, {overwrite: true});'
+  arangosh --server.password "${local_DATAFED_DATABASE_PASSWORD}" --server.username "${local_DATABASE_USER}" --javascript.execute-string "db._useDatabase(\"sdms\"); db.config.insert({ \"_key\": \"system\", \"_id\": \"config/system\", \"secret\": \"${local_DATAFED_ZEROMQ_SYSTEM_SECRET}\"}, {overwrite: true } );"
 fi
 
 # There are apparently 3 different ways to deploy Foxx microservices,
@@ -151,16 +151,16 @@ NODE_VERSION="v14.21.3"
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
 
-nvm install $NODE_VERSION
-nvm use $NODE_VERSION
+nvm install "$NODE_VERSION"
+nvm use "$NODE_VERSION"
 
 PATH_TO_PASSWD_FILE=${SOURCE}/database_temp.password
 # Install foxx service node module
 $NVM_DIR/nvm-exec npm install --global foxx-cli
-echo "$local_DATAFED_DATABASE_PASSWORD" > ${PATH_TO_PASSWD_FILE}
+echo "$local_DATAFED_DATABASE_PASSWORD" > "${PATH_TO_PASSWD_FILE}"
 
 # Check if database foxx services have already been installed
-existing_services=$(foxx list -a -u $local_DATABASE_USER -p ${PATH_TO_PASSWD_FILE} --database $local_DATABASE_NAME)
+existing_services=$(foxx list -a -u "$local_DATABASE_USER" -p "${PATH_TO_PASSWD_FILE}" --database "$local_DATABASE_NAME")
 echo "existing services ${existing_services}"
 
 if [[ "$existing_services" =~ .*"DataFed".* ]]

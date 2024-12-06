@@ -1,4 +1,4 @@
-## @namespace datafed.CLI
+# @namespace datafed.CLI
 # @brief Provides a high-level client interface to the DataFed server
 #
 # The DataFed CLI module provides a high-level, text-based client
@@ -23,25 +23,18 @@ import shlex
 import getpass
 import os
 import sys
-import datetime
 import textwrap
 import shutil
+import json as jsonlib
 import click
 import click.decorators
-import re
-import json as jsonlib
-import time
-import pathlib
 import wget
 from google.protobuf.json_format import MessageToJson
-from google.protobuf.json_format import MessageToDict
 from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
-from prompt_toolkit.formatted_text import to_formatted_text
 
-from . import SDMS_Auth_pb2 as auth
-from . import SDMS_pb2 as sdms
+# from . import SDMS_Auth_pb2 as auth
 from . import Version_pb2
 from . import CommandLib
 from . import Config
@@ -107,9 +100,7 @@ _hdr_lev_char = ["-", "-", "^", ","]
 # command input and display human-readable output.
 #
 def run():
-    global _output_mode_sticky
     global _output_mode
-    global _verbosity_sticky
     global _verbosity
     global _interactive
 
@@ -127,10 +118,11 @@ def run():
         try:
             if _first:
                 _cli(standalone_mode=False)
-                # Will get here if a command was specified on command-line, assume user wants non-REPL
+                # Will get here if a command was specified on command-line,
+                # assume user wants non-REPL
                 _interactive = False
             else:
-                if session == None:
+                if session is None:
                     session = PromptSession(
                         history=FileHistory(os.path.expanduser("~/.datafed-hist"))
                     )
@@ -155,13 +147,14 @@ def run():
             if _first:
                 _interactive = False
 
-        except SystemExit as e:
-            # For subsequent interactive commands, hide top-level (start-up) options
+        except SystemExit:
+            # For subsequent interactive commands, hide top-level (start-up)
+            # options
             if _first and _interactive and _initialized:
                 for i in _cli.params:
                     i.hidden = True
 
-        except KeyboardInterrupt as e:
+        except KeyboardInterrupt:
             # Break out of main loop
             _interactive = False
             break
@@ -204,7 +197,7 @@ def run():
                 _interactive = False
 
         # If initialization failed or not in interactive mode, exit main loop
-        if not _initialized or _interactive == False:
+        if not _initialized or _interactive is False:
             break
 
         if _first:
@@ -314,7 +307,6 @@ def command(command):
         raise Exception("command() called before init().")
 
     global _return_val
-    global _devnull
     global _output_mode_sticky
     global _output_mode
 
@@ -329,7 +321,7 @@ def command(command):
     try:
         _args = shlex.split(command)
         _cli(prog_name="datafed", args=_args, standalone_mode=False)
-    except SystemExit as e:
+    except SystemExit:
         pass
     except click.ClickException as e:
         raise Exception(e.format_message())
@@ -345,6 +337,7 @@ def command(command):
 # =============================================================================
 
 # @cond
+
 
 # Aliases click commands
 class _AliasedGroup(click.Group):
@@ -367,7 +360,7 @@ class _AliasedGroup(click.Group):
 
     # This is to work-around a help bug in click production code
     def resolve_command(self, ctx, args):
-        cmd_name, cmd, args = super().resolve_command(ctx, args)
+        _, cmd, args = super().resolve_command(ctx, args)
         return cmd.name, cmd, args
 
 
@@ -416,7 +409,10 @@ __global_context_options = [
         "--context",
         required=False,
         type=str,
-        help="User or project ID for command alias context. See 'alias' command help for more information.",
+        help=(
+            "User or project ID for command alias context. See 'alias' "
+            "command help for more information."
+        ),
     )
 ]
 
@@ -437,10 +433,14 @@ __global_output_options = [
         expose_value=False,
         help="Verbosity level of output",
     ),
-    # click.option('-v', '--verbosity', required=False,type=click.Choice(['0', '1', '2']),callback=_set_verbosity_cb, help='Verbosity level of output'),
-    # click.option("-J", "--json", is_flag=True, help="Set _cli output format to JSON, when applicable."),
-    # click.option("-T", "--text", is_flag=True, help="Set _cli output format to human-friendly text.")
+    # click.option('-v', '--verbosity', required=False,type=click.Choice(['0', '1', '2']),
+    # callback=_set_verbosity_cb, help='Verbosity level of output'),
+    # click.option("-J", "--json", is_flag=True,
+    # help="Set _cli output format to JSON, when applicable."),
+    # click.option("-T", "--text", is_flag=True,
+    # help="Set _cli output format to human-friendly text.")
 ]
+
 
 # Decorator to add output options to click commands
 def _global_output_options(func):
@@ -464,7 +464,11 @@ def _global_output_options(func):
     is_flag=True,
     is_eager=True,
     callback=_set_script_cb,
-    help="Start in non-interactive scripting mode. Output is in JSON, all intermediate I/O is disabled, and certain client-side commands are unavailable.",
+    help=(
+        "Start in non-interactive scripting mode. Output is in JSON, all"
+        "intermediate I/O is disabled, and certain client-side commands are"
+        "unavailable."
+    ),
 )
 @click.option("--version", is_flag=True, help="Print version number and exit.")
 @click.pass_context
@@ -486,7 +490,7 @@ def _cli(ctx, *args, **kwargs):
         ctx.invoke(_genDoc)
         raise SystemExit()
 
-    if _capi == None:
+    if _capi is None:
         _initialize(ctx.params)
 
     if ctx.invoked_subcommand is None:
@@ -516,7 +520,6 @@ def _genDoc(ctx):
 
 
 def _genDocHeader(cmd, level):
-    global _hdr_lev_char
     ul = ""
     ul = ul.rjust(len(cmd), _hdr_lev_char[level])
 
@@ -527,7 +530,7 @@ def _genDocHeader(cmd, level):
 
 
 def _genDocCmd(cmd, ctx, level, parname=None, recurse=True):
-    if cmd == None:
+    if cmd is None:
         cname = "Datafed"
         cmd = _cli
     elif parname:
@@ -569,7 +572,10 @@ def _genDocCmd(cmd, ctx, level, parname=None, recurse=True):
     doc += "\n"
 
     if is_group:
-        doc += "Sub-Commands:\n\n===============  ============================================================\n"
+        doc += (
+            "Sub-Commands:\n\n================================="
+            "============================================\n"
+        )
         for c in cmd.list_commands(ctx):
             subcmd = cmd.get_command(cmd, c)
             if not subcmd.hidden:
@@ -619,8 +625,8 @@ def _wc(coll_id):
     global _cur_coll_title
     global _cur_coll_prefix
 
-    if coll_id == None:
-        if _cur_coll_title == None:
+    if coll_id is None:
+        if _cur_coll_title is None:
             _setWorkingCollectionTitle()
 
         if _output_mode == _OM_TEXT:
@@ -758,7 +764,10 @@ def _dataView(data_id, context):
     "--raw-data-file",
     type=str,
     required=False,
-    help="Globus path to raw data file (local or remote) to upload to new record. Default endpoint is used if none provided.",
+    help=(
+        "Globus path to raw data file (local or remote) to upload to new"
+        "record. Default endpoint is used if none provided."
+    ),
 )
 @click.option(
     "-x",
@@ -779,14 +788,20 @@ def _dataView(data_id, context):
     "--metadata",
     type=str,
     required=False,
-    help="Inline metadata in JSON format. JSON must define an object type. Cannot be specified with --metadata-file option.",
+    help=(
+        "Inline metadata in JSON format. JSON must define an object type."
+        " Cannot be specified with --metadata-file option."
+    ),
 )
 @click.option(
     "-f",
     "--metadata-file",
     type=str,
     required=False,
-    help="Path to local metadata file containing JSON. JSON must define an object type. Cannot be specified with --metadata option.",
+    help=(
+        "Path to local metadata file containing JSON. JSON must define an "
+        "object type. Cannot be specified with --metadata option."
+    ),
 )
 @click.option(
     "-s", "--schema", type=str, required=False, help="Set metadata schema id:version"
@@ -803,7 +818,10 @@ def _dataView(data_id, context):
     "--parent",
     type=str,
     required=False,
-    help="Parent collection ID, alias, or listing index. Default is the current working collection.",
+    help=(
+        "Parent collection ID, alias, or listing index. Default is the "
+        "current working collection."
+    ),
 )
 @click.option(
     "-R",
@@ -817,7 +835,13 @@ def _dataView(data_id, context):
     "--deps",
     multiple=True,
     type=click.Tuple([click.Choice(["der", "comp", "ver"]), str]),
-    help="Dependencies (provenance). Use one '--deps' option per dependency and specify with a string consisting of the type of relationship ('der', 'comp', 'ver') follwed by ID/alias of the referenced record. Relationship types are: 'der' for 'derived from', 'comp' for 'a component of', and 'ver' for 'a new version of'.",
+    help=(
+        "Dependencies (provenance). Use one '--deps' option per dependency "
+        "and specify with a string consisting of the type of relationship "
+        "('der', 'comp', 'ver') follwed by ID/alias of the referenced record."
+        " Relationship types are: 'der' for 'derived from', 'comp' for 'a "
+        "component of', and 'ver' for 'a new version of'."
+    ),
 )
 @_global_context_options
 @_global_output_options
@@ -905,7 +929,10 @@ def _dataCreate(
     "--raw-data-file",
     type=str,
     required=False,
-    help="Globus path to raw data file (local or remote) to upload with record. Default endpoint used if none provided.",
+    help=(
+        "Globus path to raw data file (local or remote) to upload with "
+        "record. Default endpoint used if none provided."
+    ),
 )
 @click.option(
     "-x",
@@ -946,14 +973,22 @@ def _dataCreate(
     "--deps-add",
     multiple=True,
     type=click.Tuple([click.Choice(["der", "comp", "ver"]), str]),
-    help="Specify dependencies to add by listing first the type of relationship ('der', 'comp', or 'ver') follwed by ID/alias of the target record. Can be specified multiple times.",
+    help=(
+        "Specify dependencies to add by listing first the type of "
+        "relationship ('der', 'comp', or 'ver') follwed by ID/alias of the "
+        "target record. Can be specified multiple times."
+    ),
 )
 @click.option(
     "-R",
     "--deps-rem",
     multiple=True,
     type=click.Tuple([click.Choice(["der", "comp", "ver"]), str]),
-    help="Specify dependencies to remove by listing first the type of relationship ('der', 'comp', or 'ver') followed by ID/alias of the target record. Can be specified multiple times.",
+    help=(
+        "Specify dependencies to remove by listing first the type of "
+        "relationship ('der', 'comp', or 'ver') followed by ID/alias "
+        "of the target record. Can be specified multiple times."
+    ),
 )
 @_global_context_options
 @_global_output_options
@@ -1227,9 +1262,7 @@ def _list(ctx, item_id, offset, count, context):
     authenticated user, regardless of context.
     """
 
-    global _cur_coll
-
-    if item_id == None:
+    if item_id is None:
         _id = _cur_coll
     else:
         _id = _resolve_coll_id(item_id)
@@ -1399,7 +1432,8 @@ def _collDelete(coll_id, force, context):
             raise Exception("Cannot confirm deletion while running non-interactively.")
 
         click.echo(
-            "Warning: this will delete all data records and collections contained in the specified collection(s)."
+            "Warning: this will delete all data records and collections "
+            "contained in the specified collection(s)."
         )
         if not click.confirm("Continue?"):
             return
@@ -1935,7 +1969,7 @@ def _taskList(time_from, to, since, status, offset, count):
     tasks history such that only up to 30 days of history are retained.
     """
 
-    if since != None and (time_from != None or to != None):
+    if since is not None and (time_from is not None or to is not None):
         raise Exception("Cannot specify 'since' and 'from'/'to' ranges.")
 
     reply = _capi.taskList(
@@ -2075,7 +2109,7 @@ def _epDefaultSet(current, endpoint):
             raise Exception("--current option not supported in non-interactive mode.")
 
         ep = _capi.endpointGet()
-        if ep == None:
+        if ep is None:
             raise Exception("No current endpoint set.")
 
         _capi.endpointDefaultSet(ep)
@@ -2113,21 +2147,21 @@ def _setup(ctx):
     pub_file = _capi.cfg.get("client_pub_key_file")
     priv_file = _capi.cfg.get("client_priv_key_file")
 
-    if cfg_dir == None and (pub_file == None or priv_file == None):
+    if cfg_dir is None and (pub_file is None or priv_file is None):
         raise Exception(
             "Client configuration directory and/or client key files not configured"
         )
 
     reply = _capi.generateCredentials()
 
-    if pub_file == None:
+    if pub_file is None:
         pub_file = os.path.join(cfg_dir, "datafed-user-key.pub")
 
     keyf = open(pub_file, "w")
     keyf.write(reply[0].pub_key)
     keyf.close()
 
-    if priv_file == None:
+    if priv_file is None:
         priv_file = os.path.join(cfg_dir, "datafed-user-key.priv")
 
     keyf = open(priv_file, "w")
@@ -2139,7 +2173,9 @@ def _setup(ctx):
 
 
 """
-@_cli.command(name='output',help="Set output mode. If MODE argument is 'json' or 'text', the current mode will be set accordingly. If no argument is provided, the current output mode will be displayed.")
+@_cli.command(name='output',help=("Set output mode. If MODE argument is 'json' "
+"or 'text', the current mode will be set accordingly. If no argument is "
+"provided, the current output mode will be displayed."))
 @click.argument("mode",metavar='MODE',required=False)
 @click.pass_context
 def _outputModeSet( ctx, mode ):
@@ -2177,10 +2213,10 @@ def _verbositySet(level):
         raise Exception("Command not supported in non-interactive modes.")
 
     global _verbosity_sticky
-    if level != None:
+    if level is not None:
         try:
             v = int(level)
-        except:
+        except BaseException:
             raise Exception("Invalid verbosity value.")
 
         if v < 0 or v > 2:
@@ -2244,7 +2280,9 @@ def _exit_cli():
 
 
 """
-@_cli.command(name='more',help="List the next set of data replies from the DataFed server. Optional argument determines number of data replies received (else the previous count will be used)")
+@_cli.command(name='more',help=("List the next set of data replies from the "
+"DataFed server. Optional argument determines number of data replies received "
+"(else the previous count will be used)"))
 @click.argument("count",type=int,required=False)
 def _more(count):
     if not _interactive:
@@ -2285,10 +2323,10 @@ _listing_requests = {
 # ------------------------------------------------------------- Print Functions
 # =============================================================================
 
+
 # Interactive and verbosity-aware print
 def _print_msg(level, message, err=False):
     global _verbosity
-    global _interactive
     if _interactive and level <= _verbosity:
         click.echo(message, err=err)
 
@@ -2368,7 +2406,7 @@ def _print_endpoints(message):
 
         try:
             _list_items.index(path)
-        except:
+        except BaseException:
             _list_items.append(path)
             click.echo("{:2}. {}".format(df_idx, path))
             df_idx += 1
@@ -2638,7 +2676,7 @@ def _print_proj(message):
             if len(proj.alloc) > 0:
                 first = True
                 for alloc in proj.alloc:
-                    if first == True:
+                    if first:
                         first = False
                         click.echo(
                             "{:<14} {}, {} total, {} used".format(
@@ -2701,7 +2739,7 @@ def _print_query(message):
     )
 
     if len(message.query.coll):
-        tags = _arrayToCSV(message.query.coll, 2)
+        _arrayToCSV(message.query.coll, 2)
         _wrap_text(_arrayToCSV(message.query.coll, 0), "  Selection:", 21)
     else:
         click.echo("  {:<18} {}".format("Selection: ", "All Data"))
@@ -2713,7 +2751,7 @@ def _print_query(message):
         _wrap_text(message.query.text, "  Text:", 21)
 
     if len(message.query.tags):
-        tags = _arrayToCSV(message.query.tags, 2)
+        _arrayToCSV(message.query.tags, 2)
         _wrap_text(_arrayToCSV(message.query.tags, 0), "  Tags:", 21)
 
     if message.query.HasField("owner"):
@@ -2756,7 +2794,7 @@ def _wrap_text(text, prefix, indent, compact=False):
     if len(text) == 0:
         click.echo("{0:<{1}}{2:<50}".format(prefix, indent, "(none)"))
 
-    w, h = shutil.get_terminal_size((80, 20))
+    w, _ = shutil.get_terminal_size((80, 20))
     if len(prefix) < indent:
         prefix = prefix + " " * (indent - len(prefix))
 
@@ -2772,7 +2810,7 @@ def _wrap_text(text, prefix, indent, compact=False):
 
         for p in para:
             click.echo(wrapper.fill(p))
-            if first == True:
+            if first:
                 wrapper.initial_indent = " " * indent
                 first = False
 
@@ -2785,7 +2823,6 @@ def _wrap_text(text, prefix, indent, compact=False):
 def _resolve_id(df_id):
     try:
         if len(df_id) <= 3:
-            global _list_items
             if df_id.endswith("."):
                 df_idx = int(df_id[:-1])
             else:
@@ -2860,7 +2897,7 @@ def _setWorkingCollectionTitle():
         _cur_coll_prefix = coll.alias
     else:
         _cur_coll_title = '"{}" [{}]'.format(coll.title, coll.id)
-        _cur_coll_prefix = coll.id
+        _cur_coll_prefix = coll.id  # noqa
 
 
 def _arrayToCSV(items, skip):
@@ -2894,18 +2931,18 @@ def _printJSON(json, cur_indent, indent):
     for k, v in json.items():
         print("" if last == 0 else ",\n", pref, end="", sep="")
         last = 1
-        if type(v) is dict:
+        if isinstance(v, dict):
             if v:
                 print(k, ": {")
                 _printJSON(v, cur_indent + indent, indent)
                 print("\n", pref, "}", sep="", end="")
             else:
                 print(k, ": {}", end="")
-        elif type(v) is list:
+        elif isinstance(v, list):
             # Test array for dict or list values
             cplx = False
             for a in v:
-                if type(a) is dict or type(a) is list:
+                if isinstance(a, dict) or isinstance(a, list):
                     cplx = True
                     break
             if cplx:
@@ -2914,7 +2951,7 @@ def _printJSON(json, cur_indent, indent):
                 print("\n", pref, "]", sep="", end="")
             else:
                 print(k, " : ", str(v), sep="", end="")
-        elif type(v) is str:
+        elif isinstance(v, str):
             print(k, ' : "', v, '"', sep="", end="")
         else:
             print(k, " : ", v, sep="", end="")
@@ -2924,7 +2961,7 @@ def _printJSON_List(json, cur_indent, indent):
     pref = " " * cur_indent
     last = 0
     for v in json:
-        if type(v) is dict:
+        if isinstance(v, dict):
             if v:
                 if last == 0:
                     print(pref, "{", sep="")
@@ -2948,11 +2985,11 @@ def _printJSON_List(json, cur_indent, indent):
             print(",\n" if last != 0 else "", pref, end="", sep="")
             last = 2
 
-            if type(v) is list:
+            if isinstance(v, list):
                 # Test array for dict or list values
                 cplx = False
                 for a in v:
-                    if type(a) is dict or type(a) is list:
+                    if isinstance(a, dict) or isinstance(a, list):
                         cplx = True
                         break
                 if cplx:
@@ -2961,7 +2998,7 @@ def _printJSON_List(json, cur_indent, indent):
                     print(pref, "]", sep="", end="")
                 else:
                     print(str(v), end="")
-            elif type(v) is str:
+            elif isinstance(v, str):
                 print('"', v, '"', end="", sep="")
             else:
                 print(v, end="")
@@ -2997,7 +3034,6 @@ def _bar_adaptive_human_readable(current, total, width=80):
     # render
     output = ""
     for field in selected:
-
         if field == "percent":
             # fixed size width for percentage
             output += ("%s%%" % (100 * current // total)).rjust(min_width["percent"])
@@ -3027,7 +3063,6 @@ def _initialize(opts):
     global _capi
     global _uid
     global _output_mode_sticky
-    global _output_mode
     global _verbosity_sticky
     global _verbosity
     global _interactive
@@ -3064,7 +3099,7 @@ def _initialize(opts):
                 )
             )
 
-        if man_auth or _capi.getAuthUser() == None:
+        if man_auth or _capi.getAuthUser() is None:
             if not man_auth:
                 if not _capi._mapi.keysLoaded():
                     if _output_mode == _OM_RETN:
@@ -3099,7 +3134,7 @@ def _initialize(opts):
                 raise Exception("Too many failed log-in attempts.")
 
         tmp = _capi.cfg.get("verbosity")
-        if tmp != None:
+        if tmp is not None:
             _verbosity_sticky = tmp
             _verbosity = tmp
 
@@ -3109,13 +3144,13 @@ def _initialize(opts):
         _cur_ctx = uid
         _cur_coll = "c/u_" + uid[2:] + "_root"
         _initialized = True
-    except Exception as e:
+    except Exception:
         _interactive = False
         raise
 
 
 def _addConfigOptions():
-    for k, v in Config._opt_info.items():
+    for _, v in Config._opt_info.items():
         if not v[3] & Config._OPT_NO_CL:
             if v[3] & Config._OPT_HIDE:
                 hide = True

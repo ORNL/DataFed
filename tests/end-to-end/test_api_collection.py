@@ -1,7 +1,8 @@
-#!/bin/python3
+#!/usr/bin/env python3
+# WARNING - to work with python environments we cannot use /bin/python3 or
+#           a hardcoded abs path.
 import json
 import os
-import subprocess
 import sys
 import time
 import unittest
@@ -30,7 +31,8 @@ class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
             from datafed.CommandLib import API
         except ImportError:
             print(
-                "datafed was not found, make sure you are running script with PYTHONPATH set to the location of the package in the datafed repo"
+                "datafed was not found, make sure you are running script with "
+                "PYTHONPATH set to the location of the package in the datafed repo"
             )
             sys.exit(1)
 
@@ -38,7 +40,13 @@ class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
 
         print(df_ver)
 
-        opts = {"server_host": "datafed-server-test.ornl.gov"}
+        datafed_domain = os.environ.get("DATAFED_DOMAIN")
+        opts = {"server_host": datafed_domain}
+
+        if datafed_domain is None:
+            print("DATAFED_DOMAIN must be set before the end-to-end tests can be run")
+            sys.exit(1)
+
         self._df_api = API(opts)
 
         self._username = "datafed89"
@@ -47,9 +55,9 @@ class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
         count = 0
         while True:
             try:
-                result = self._df_api.loginByPassword(self._username, password)
+                self._df_api.loginByPassword(self._username, password)
                 break
-            except:
+            except BaseException:
                 pass
             count += 1
             # Try three times to authenticate
@@ -61,12 +69,23 @@ class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
 
         if not path_to_repo_form.endswith(".json"):
             self.fail(
-                "repo create test requires that the repo form exist and be provided as a json file, the test uses the environment variable DATAFED_REPO_PATH to search for the repo form"
+                "repo create test requires that the repo form exist and be "
+                "provided as a json file, the test uses the environment "
+                "variable DATAFED_REPO_PATH to search for the repo form"
             )
 
         self._repo_form = {}
         with open(path_to_repo_form) as json_file:
             self._repo_form = json.load(json_file)
+
+        if len(self._repo_form["exp_path"]) == 0:
+            print(
+                "exp_path is empty, we will set it to / for the test. This is "
+                "cruft and should be removed anyway"
+            )
+            self._repo_form["exp_path"] = "/"
+
+        self._repo_form["admins"] = ["u/" + self._username]
 
         # Create the repositories
         print("Creating repo")
@@ -117,7 +136,9 @@ class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
             if count > 2:
                 print(task_result)
                 self.fail(
-                    "Something went wrong task was unable to complete, attempt to create an allocation after 3 seconds failed, make sure all services are running."
+                    "Something went wrong task was unable to complete, attempt"
+                    " to create an allocation after 3 seconds failed, make "
+                    "sure all services are running."
                 )
                 break
             time.sleep(1)
@@ -126,7 +147,6 @@ class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
             count = count + 1
 
     def test_collection_create_delete(self):
-
         # collectionItemsList in "root" of context
         list_response = self._df_api.collectionItemsList("root")
         self.assertEqual(list_response[0].total, 0)
@@ -195,7 +215,9 @@ class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
             if count > 2:
                 print(task_result)
                 self.fail(
-                    "Something went wrong task was unable to complete, attempt to delete a colleciton after 3 seconds failed, make sure all services are running."
+                    "Something went wrong task was unable to complete, "
+                    "attempt to delete a colleciton after 3 seconds failed, "
+                    "make sure all services are running."
                 )
                 break
             time.sleep(1)
@@ -224,7 +246,9 @@ class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
             if count > 2:
                 print(task_result)
                 self.fail(
-                    "Something went wrong task was unable to complete, attempt to delete an allocation after 3 seconds failed, make sure all services are running."
+                    "Something went wrong task was unable to complete, "
+                    "attempt to delete an allocation after 3 seconds failed,"
+                    " make sure all services are running."
                 )
                 break
             time.sleep(1)

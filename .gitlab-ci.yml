@@ -1,424 +1,52 @@
+# NOTE
+#
+# For the includes to be executed in the correct order when they 
+# have dependencies there must be one include statement. The 'needs'
+# keyword does not otherwise resolve a jobs in a different include 
+# file if it is in a different include block.
+# I.e. I cannot do this:
+#
+# include:
+#   - local: .gitlab/infrastructure.yml
+#
+# include:
+#   - local: .gitlab/stage_clear_cache.yml
+#
+# Particularly if stage_clear_cache.yml contains jobs with the needs 
+# keyword that names a job in infrastructure.yml
+include:
+  - local: .gitlab/stage_pipeline_serialize.yml
+  - local: .gitlab/infrastructure.yml
+  - local: .gitlab/stage_clear_cache.yml
+  - local: .gitlab/stage_build_base.yml
+  - local: .gitlab/stage_provision_client.yml
+  - local: .gitlab/stage_image_check.yml
+  - local: .gitlab/stage_build.yml
+  - local: .gitlab/end_to_end.yml
 
 stages:
-  - setup
-  - build-deploy-base
-  - build-unit-test-deploy
+  - pipeline-serialize
+  - ci-infrastructure-check
+  - trigger-infrastructure
+  - signal
+  - clear-docker-cache
+  - build-base
+  - provision-client
+  - image-check
+  - build
+  - end-to-end-setup-arango
   - end-to-end-setup
   - end-to-end-test
-  - end-to-end-teardown
+  - log
+  - deploy-pypi-package
 
-################################################################################
-# STAGE: setup
-################################################################################
-# Setup stage is designed to check that the infrastructure is up and running
-# before attempting to launch the CI pipelines
-setup-vms:
-  stage: setup
-  tags:
-    - datafed-infrastructure
-  script:
-    - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-arangodb"
-    - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-core"
-    - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-globus1"
-    - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-globus2"
-    - ./scripts/pipeline_setup.sh --compute-instance-name "ci-datafed-client"
-
-################################################################################
-# STAGE: build-deploy-base
-################################################################################
-# Building base containers the base containers should have all the required
-# dependencies it should not be necessary to build them every time. Ideally, we
-# would rarely need to rebuild the dependencies and we could just reuse the
-# container "golden base" images already stored in the registry.
+# WARNING
 #
-# NOTE GitLab is set to remove images after a month, so they will be forced to
-# rebuild at least once a month.
-build-ws-base:
-  stage: build-deploy-base
-  variables:
-    IMAGE_TAG: "dlsw/datafed/ws-base"
-    GIT_STRATEGY: clone
-  tags:
-    - ci-datafed-core
-    - docker
-  script:
-    - docker build -f web/docker/Dockerfile.web-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-    - docker push code.ornl.gov:4567/dlsw/datafed/ws-base
-
-build-core-base:
-  stage: build-deploy-base
-  variables:
-    IMAGE_TAG: "dlsw/datafed/core-base"
-    GIT_STRATEGY: clone
-  tags:
-    - ci-datafed-core
-    - docker
-  script:
-    - docker build -f core/docker/Dockerfile.core-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-    - docker push code.ornl.gov:4567/dlsw/datafed/core-base
-
-build-repo-base:
-  variables:
-    IMAGE_TAG: "dlsw/datafed/repo-base"
-    GIT_STRATEGY: clone
-  stage: build-deploy-base
-  tags:
-    - ci-datafed-repo
-    - docker
-  script:
-    - docker build -f repository/docker/Dockerfile.repo-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-    - docker push code.ornl.gov:4567/dlsw/datafed/repo-base
-
-
-build-gcs-base:
-  variables:
-    GIT_SUBMODULE_STRATEGY: recursive
-    DISTRO: "ubuntu:focal"
-    GCS_TAG: "code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
-    IMAGE_TAG2: "dlsw/datafed/gcs-authz-base"
-    IMAGE_TAG3: "dlsw/datafed/gcs-authz"
-  stage: build-deploy-base
-  tags:
-    - ci-datafed-globus
-    - docker
-  script:
-    - cd external/globus-connect-server-deploy/docker
-    - ./docker-build-gcs.sh "${DISTRO}"
-    - LATEST_IMAGE=$(docker images | grep ubuntu-focal | head -n1 | awk '{print $3}')
-    - docker tag "$LATEST_IMAGE" "$GCS_TAG" 
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-    - docker push "$GCS_TAG"
-    - docker build -f repository/docker/Dockerfile.gcs-authz-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG2} .
-    - docker push code.ornl.gov:4567/${IMAGE_TAG2}
-    - docker build -f repository/docker/Dockerfile.gcs-authz.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG3} .
-    - docker push code.ornl.gov:4567/${IMAGE_TAG3}
-# This build runs two builds, one to build the gcs image provided by Globus
-# The second to build on top of the gcs image and add the authz dependencies
-#build-gcs-authz-base:
-#  variables:
-#    IMAGE_TAG: "dlsw/datafed/gcs-base"
-#    IMAGE_TAG2: "dlsw/datafed/gcs-authz-base"
-#    IMAGE_TAG3: "dlsw/datafed/gcs-authz"
-#    GIT_STRATEGY: clone
-#  stage: build-deploy-base
-#  tags:
-#    - ci-datafed-globus
-#    - docker
-#  script:
-#    - docker build -f repository/docker/Dockerfile.gcs-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG} .
-#    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-#    - docker push code.ornl.gov:4567/${IMAGE_TAG}
-#    - docker build -f repository/docker/Dockerfile.gcs-authz-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG2} .
-#    - docker push code.ornl.gov:4567/${IMAGE_TAG2}
-#    - docker build -f repository/docker/Dockerfile.gcs-authz-base.ubuntu -t code.ornl.gov:4567/${IMAGE_TAG3} .
-#    - docker push code.ornl.gov:4567/${IMAGE_TAG3}
-
-################################################################################
-# STAGE: build
-################################################################################
-# Building containers for running services
-build-ws:
-  variables:
-    IMAGE_TAG: "dlsw/datafed/ws-"
-    GIT_STRATEGY: clone
-  stage: build-unit-test-deploy
-  tags:
-    - ci-datafed-core
-    - docker
-  rules:
-    - changes:
-        - dockerfiles/*
-        - scripts/*
-        - web/*
-        - common/proto/*
-        - .gitlab-ci.yml
-      when: always
-    - exists:
-        - deploy-ws-base
-      when: always
-  script:
-    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - echo "$BRANCH_LOWER"
-    - ./scripts/generate_datafed.sh
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-    - docker build -f web/docker/Dockerfile.web.ubuntu -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
-    - docker push "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
-
-build-core:
-  variables:
-    IMAGE_TAG: "dlsw/datafed/core-"
-    GIT_STRATEGY: clone
-  stage: build-unit-test-deploy
-  tags:
-    - ci-datafed-core
-    - docker
-  rules:
-    - changes:
-        - dockerfiles/*
-        - scripts/*
-        - common/*
-        - core/*
-        - .gitlab-ci.yml
-      when: always
-  script:
-    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - echo "$BRANCH_LOWER"
-    - env
-    - ./scripts/generate_datafed.sh
-    - cat ./config/datafed.sh
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-    - docker build -f core/docker/Dockerfile.core.ubuntu -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
-    - docker push "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
-
-build-foxx:
-  variables:
-    GIT_STRATEGY: clone
-    DATAFED_DATABASE_PASSWORD: "${CI_DATAFED_DATABASE_PASSWORD}"
-    DATAFED_ZEROMQ_SYSTEM_SECRET: "${CI_DATAFED_ZEROMQ_SYSTEM_SECRET}"
-  stage: build-unit-test-deploy
-  needs: ["setup-vms"]
-  tags:
-    - ci-datafed-arango
-  rules:
-    - changes:
-        - CMakeLists.txt
-        - scripts/*
-        - core/database/*
-        - .gitlab-ci.yml
-      when: always
-  script:
-    - arangod --version
-    - sudo systemctl status arangodb3
-    - ./scripts/generate_datafed.sh
-    - env
-    - cat ./config/datafed.sh
-    - >
-      cmake -S. -B build
-      -DENABLE_FOXX_TESTS=ON
-      -DBUILD_CORE_SERVER=OFF
-      -DBUILD_COMMON=OFF
-      -DBUILD_WEB_SERVER=OFF
-      -DBUILD_DOCS=OFF
-      -DBUILD_PYTHON_CLIENT=OFF
-      -DBUILD_TESTS=ON
-      -DINSTALL_FOXX=ON
-    - cmake --build build
-    - cmake --build build --target install
-    - cmake --build build --target test
-
-build-repo:
-  variables:
-    IMAGE_TAG: "dlsw/datafed/repo-"
-    GIT_STRATEGY: clone
-  stage: build-unit-test-deploy
-  tags:
-    - ci-datafed-repo
-    - docker
-  rules:
-    - changes:
-        - dockerfiles/*
-        - scripts/*
-        - common/*
-        - repository/*
-        - .gitlab-ci.yml
-      when: always
-  script:
-    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - echo "$BRANCH_LOWER"
-    - ./scripts/generate_datafed.sh
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-    - docker build -f repository/docker/Dockerfile.repo.ubuntu -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
-    - docker push "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
-
-build-gcs-authz:
-  variables:
-    IMAGE_TAG: "dlsw/datafed/gcs-authz-"
-    GIT_STRATEGY: clone
-  stage: build-unit-test-deploy
-  tags:
-    - ci-datafed-globus
-    - docker
-  script:
-    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - echo "$BRANCH_LOWER"
-    - ./scripts/generate_datafed.sh
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-    - docker build -f repository/docker/Dockerfile.gcs-authz.ubuntu -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" .
-    - docker push "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
-
-################################################################################
-# STAGE: Integration
-################################################################################
-
-end-to-end-ws-setup:
-  variables:
-    IMAGE_TAG: "dlsw/datafed/ws-"
-    GIT_STRATEGY: clone
-    HOST_LOG_FILE_PATH: "$CI_PROJECT_DIR/logs"
-    CONTAINER_LOG_FILE_PATH: "/datafed/logs"
-  stage: end-to-end-setup
-  tags:
-    - ci-datafed-core
-    - docker
-  script:
-    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - echo "$BRANCH_LOWER"
-    - mkdir -p "$HOST_LOG_FILE_PATH"
-    - chmod 777 "$HOST_LOG_FILE_PATH"
-    - ./scripts/generate_datafed.sh
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-    - CERT_FILE_NAME=$(basename "${CI_DATAFED_WEB_CERT_PATH}")
-    - KEY_FILE_NAME=$(basename "${CI_DATAFED_WEB_KEY_PATH}")
-    - ./scripts/container_stop.sh -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
-    - >
-      docker run -d
-      --name "ws-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}"
-      -e DATAFED_GLOBUS_APP_SECRET="GLOBUS_DATAFED_APP_SECRET"
-      -e DATAFED_GLOBUS_APP_ID="$GLOBUS_DATAFED_APP_ID"
-      -e DATAFED_ZEROMQ_SESSION_SECRET="$DATAFED_ZEROMQ_SESSION_SECRET"
-      -e DATAFED_ZEROMQ_SYSTEM_SECRET="$DATAFED_ZEROMQ_SYSTEM_SECRET"
-      -e DATAFED_DOMAIN="$CI_DATAFED_DOMAIN"
-      -e DATAFED_WEB_CERT_PATH="${CI_DATAFED_WEB_CERT_PATH}"
-      -e DATAFED_WEB_KEY_PATH="${CI_DATAFED_WEB_KEY_PATH}"
-      -e DATAFED_DEFAULT_LOG_PATH="$CONTAINER_LOG_FILE_PATH"
-      -p 443:443
-      -v "${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}"
-      -v "${CI_DATAFED_CORE_PUB_KEY}:/source/install/keys/datafed-core-key.pub"
-      -v "${CI_DATAFED_WEB_CERT_PATH}:/datafed/install/keys/${CERT_FILE_NAME}"
-      -v "${CI_DATAFED_WEB_KEY_PATH}:/datafed/install/keys/${KEY_FILE_NAME}"
-      -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
-    - ./scripts/container_run_test.sh -e -c "1" -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
-
-# Note here we use network=host to run the docker container this is
-# because we do not need it to communicate with an external port 
-end-to-end-core-setup:
-  variables:
-    IMAGE_TAG: "dlsw/datafed/core-"
-    GIT_STRATEGY: clone
-    HOST_LOG_FILE_PATH: "$CI_PROJECT_DIR/logs"
-    CONTAINER_LOG_FILE_PATH: "/datafed/logs"
-  stage: end-to-end-setup
-  tags:
-    - ci-datafed-core
-    - docker
-  script:
-    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - echo "$BRANCH_LOWER"
-    - ./scripts/generate_datafed.sh
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-    - ./scripts/container_stop.sh -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
-    - >
-      docker run -d
-      --name "core-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}"
-      -e DATAFED_GLOBUS_APP_SECRET="$CI_DATAFED_GLOBUS_APP_SECRET"
-      -e DATAFED_GLOBUS_APP_ID="$CI_DATAFED_GLOBUS_APP_ID"
-      -e DATAFED_ZEROMQ_SESSION_SECRET="$CI_DATAFED_ZEROMQ_SESSION_SECRET"
-      -e DATAFED_ZEROMQ_SYSTEM_SECRET="$CI_DATAFED_ZEROMQ_SYSTEM_SECRET"
-      -e DATAFED_DOMAIN="$CI_DATAFED_DOMAIN"
-      -e DATAFED_DATABASE_PASSWORD="$CI_DATAFED_DATABASE_PASSWORD"
-      -e DATAFED_DATABASE_IP_ADDRESS_PORT="$CI_DATAFED_DATABASE_IP_ADDRESS_PORT"
-      -e DATAFED_DEFAULT_LOG_PATH="$CONTAINER_LOG_FILE_PATH"
-      --network host
-      -v "${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}"
-      -v "$CI_DATAFED_CORE_PUB_KEY":/source/install/keys/datafed-core-key.pub
-      -v "$CI_DATAFED_CORE_PRIV_KEY":/source/install/keys/datafed-core-key.priv
-      -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
-    - ./scripts/container_run_test.sh -e -c "1" -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
-
-
-end-to-end-repo-setup:
-  variables:
-    IMAGE_TAG: "dlsw/datafed/repo-"
-    GIT_STRATEGY: clone
-    HOST_LOG_FILE_PATH: "/var/log/datafed/datafed-repo.log"
-  stage: end-to-end-setup
-  tags:
-    - ci-datafed-globus
-    - docker
-  script:
-    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - echo "$BRANCH_LOWER"
-    - ./scripts/generate_datafed.sh
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-    - ./scripts/container_stop.sh -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
-    - >
-      docker run -d
-      --name "repo-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}"
-      -e DATAFED_GLOBUS_APP_SECRET="$CI_DATAFED_GLOBUS_APP_SECRET"
-      -e DATAFED_GLOBUS_APP_ID="$CI_DATAFED_GLOBUS_APP_ID"
-      -e DATAFED_ZEROMQ_SESSION_SECRET="$CI_DATAFED_ZEROMQ_SESSION_SECRET"
-      -e DATAFED_ZEROMQ_SYSTEM_SECRET="$CI_DATAFED_ZEROMQ_SYSTEM_SECRET"
-      -e DATAFED_DOMAIN="$CI_DATAFED_DOMAIN"
-      -v "$HOST_LOG_FILE_PATH:/var/log/datafed/datafed-ws.log"
-      -v "$CI_DATAFED_REPO_PUB_KEY":/source/install/keys/datafed-repo-key.pub
-      -v "$CI_DATAFED_REPO_PRIV_KEY":/source/install/keys/datafed-repo-key.priv
-      -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
-    - ./scripts/container_run_test.sh -e -c "1" -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
-
-end-to-end-gcs-authz-setup:
-  variables:
-    IMAGE_TAG: "dlsw/datafed/gcs-authz-"
-    GIT_STRATEGY: clone
-  stage: end-to-end-setup
-  tags:
-    - ci-datafed-globus
-    - docker
-  script:
-    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - echo "$BRANCH_LOWER"
-    - ./scripts/generate_datafed.sh
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN code.ornl.gov:4567
-    - ./scripts/container_stop.sh -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}"
-    - >
-      docker run -d
-      --name "gcs-authz-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}"
-      -e DATAFED_GLOBUS_APP_SECRET="$CI_DATAFED_GLOBUS_APP_SECRET"
-      -e DATAFED_GLOBUS_APP_ID="$CI_DATAFED_GLOBUS_APP_ID"
-      -e DATAFED_ZEROMQ_SESSION_SECRET="$CI_DATAFED_ZEROMQ_SESSION_SECRET"
-      -e DATAFED_ZEROMQ_SYSTEM_SECRET="$CI_DATAFED_ZEROMQ_SYSTEM_SECRET"
-      -e DATAFED_DOMAIN="$CI_DATAFED_DOMAIN"
-      -v "$HOST_LOG_FILE_PATH:/var/log/datafed/datafed-ws.log"
-      -v "$CI_DATAFED_REPO_PUB_KEY":/source/install/keys/datafed-repo-key.pub
-      -v "$CI_DATAFED_REPO_PRIV_KEY":/source/install/keys/datafed-repo-key.priv
-      -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
-    - ./scripts/container_run_test.sh -e -c "1" -t "code.ornl.gov:4567/${IMAGE_TAG}${BRANCH_LOWER}" 
-
-end-to-end-arango-setup:
-  variables:
-    GIT_STRATEGY: clone
-  stage: end-to-end-setup
-  tags:
-    - ci-datafed-arango
-  script:
-    - arangod --version
-    - ./scripts/run_arango_service.sh
-
-
-end-to-end-client-test:
-  variables:
-    GIT_STRATEGY: clone
-  stage: end-to-end-test
-  tags:
-    - ci-datafed-client
-  script:
-    - ./scripts/generate_datafed.sh
-    - env
-    - cat ./config/datafed.sh
-    - >
-      cmake -S. -B build
-      -DENABLE_FOXX_TESTS=OFF
-      -DBUILD_CORE_SERVER=OFF
-      -DBUILD_COMMON=OFF
-      -DBUILD_WEB_SERVER=OFF
-      -DBUILD_DOCS=OFF
-      -DBUILD_PYTHON_CLIENT=ON
-      -DBUILD_TESTS=ON
-      -DENABLE_END_TO_END_TESTS=ON
-      -DINSTALL_FOXX=OFF
-    - cmake --build build
-    - cmake --build build --target install
-
-
+# Do not put if else statements without if and else, gitlab yaml does not like
+# this kind of scripting
+#
+# [ -f file_path ] && ok do this....
+variables:
+  HARBOR_USER: 'robot$$datafed+harbor_datafed_gitlab_ci_registry_2'
+  REGISTRY: 'camden.ornl.gov'
+  DATAFED_DEPENDENCIES_INSTALL_PATH: "/shared/install"

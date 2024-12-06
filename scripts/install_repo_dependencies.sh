@@ -7,28 +7,49 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/..)
 
+source "${PROJECT_ROOT}/scripts/utils.sh"
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
-# This script will install all of the dependencies needed by DataFed 1.0
-sudo apt-get update
-sudo dpkg --configure -a
-sudo apt-get install -y libtool wget build-essential g++ gcc libboost-all-dev \
-  pkg-config autoconf automake make unzip git python3-pkg-resources \
-  libssl-dev
-sudo apt-get install -y libzmq3-dev  python3-pip
+packages=("libtool" "wget" "build-essential" "g++" "gcc" "libboost-all-dev" "pkg-config" "autoconf" "automake" "make" "unzip" "git" "python3-pkg-resources" "python3-pip" "python3-venv")
+pip_packages=("setuptools")
+externals=("cmake" "protobuf" "libsodium" "libzmq")
 
-python3 -m pip install --upgrade pip
-python3 -m pip install setuptools
+local_UNIFY=false
 
-#install_cmake
-#cd ~
-#
-#install_protobuf
-#cd ~
-#
-#install_libsodium
-cd ~
+if [ $# -eq 1 ]; then
+  case "$1" in
+    -h|--help)
+      # If -h or --help is provided, print help
+      echo "Usage: $0 [-h|--help] [unify]"
+      ;;
+    unify)
+      # If 'unify' is provided, print the packages
+      # The extra space is necessary to not conflict with the other install scripts
+      echo -n "${packages[@]} " >> "$apt_file_path"
+      echo -n "${externals[@]} " >> "$ext_file_path"
+      echo -n "${pip_packages[@]} " >> "$pip_file_path"
+      local_UNIFY=true
+      ;;
+    *)
+      # If any other argument is provided, install the packages
+      echo "Invalid Argument"
+      ;;
+  esac
+fi
 
-install_libzmq
-cd ~
+sudo_command
 
+if [[ $local_UNIFY = false ]]; then
+  "$SUDO_CMD" apt-get update
+  "$SUDO_CMD" dpkg --configure -a
+  "$SUDO_CMD" apt-get install -y "${packages[@]}"
+
+  init_python
+  source "${DATAFED_PYTHON_ENV}/bin/activate"
+  python3 -m pip install --upgrade pip
+  python3 -m pip install "${pip_packages[@]}"
+
+  for ext in "${externals[@]}"; do
+    install_dep_by_name "$ext"
+  done
+fi

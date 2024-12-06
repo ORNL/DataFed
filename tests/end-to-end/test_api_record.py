@@ -1,7 +1,8 @@
-#!/bin/python3
+#!/usr/bin/env python3
+# WARNING - to work with python environments we cannot use /bin/python3 or
+#           a hardcoded abs path.
 import json
 import os
-import subprocess
 import sys
 import time
 import unittest
@@ -31,7 +32,8 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
             from datafed.CommandLib import API
         except ImportError:
             print(
-                "datafed was not found, make sure you are running script with PYTHONPATH set to the location of the package in the datafed repo"
+                "datafed was not found, make sure you are running script with "
+                "PYTHONPATH set to the location of the package in the datafed repo"
             )
             sys.exit(1)
 
@@ -39,7 +41,13 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
 
         print(df_ver)
 
-        opts = {"server_host": "datafed-server-test.ornl.gov"}
+        datafed_domain = os.environ.get("DATAFED_DOMAIN")
+        opts = {"server_host": datafed_domain}
+
+        if datafed_domain is None:
+            print("DATAFED_DOMAIN must be set before the end-to-end tests can be run")
+            sys.exit(1)
+
         self._df_api = API(opts)
 
         self._username = "datafed89"
@@ -48,28 +56,37 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
         count = 0
         while True:
             try:
-                result = self._df_api.loginByPassword(self._username, password)
+                self._df_api.loginByPassword(self._username, password)
                 break
-            except:
+            except BaseException:
                 pass
             count += 1
             # Try three times to authenticate
             assert count < 3
 
-        print("\nAttempt to login result\n")
-        print(result)
         path_to_repo_form = os.environ.get("DATAFED_REPO_FORM_PATH")
         if path_to_repo_form is None:
             self.fail("DATAFED_REPO_FORM_PATH env variable is not defined")
 
         if not path_to_repo_form.endswith(".json"):
             self.fail(
-                "repo create test requires that the repo form exist and be provided as a json file, the test uses the environment variable DATAFED_REPO_PATH to search for the repo form"
+                "repo create test requires that the repo form exist and be "
+                "provided as a json file, the test uses the environment "
+                "variable DATAFED_REPO_PATH to search for the repo form"
             )
 
         self._repo_form = {}
         with open(path_to_repo_form) as json_file:
             self._repo_form = json.load(json_file)
+
+        if len(self._repo_form["exp_path"]) == 0:
+            print(
+                "exp_path is empty, we will set it to / for the test. This is "
+                "cruft and should be removed anyway"
+            )
+            self._repo_form["exp_path"] = "/"
+
+        self._repo_form["admins"] = ["u/" + self._username]
 
         # Create the repositories
         result = self._df_api.repoCreate(
@@ -119,7 +136,9 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
             if count > 2:
                 print(task_result)
                 self.fail(
-                    "Something went wrong task was unable to complete, attempt to create an allocation after 3 seconds failed, make sure all services are running."
+                    "Something went wrong task was unable to complete, attempt "
+                    "to create an allocation after 3 seconds failed, make sure "
+                    "all services are running."
                 )
                 break
             time.sleep(1)
@@ -159,7 +178,6 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
 
         put_task = self._df_api.dataPut(new_alias, esnet_uuid + "/1M.dat")
 
-        data_put_esnet_pass = False
         task_id = put_task[0].task.id
 
         task_result = self._df_api.taskView(task_id)
@@ -168,16 +186,19 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
         status = task_result[0].task[0].status
         count = 0
         while status < 3:
-            if count > 10:
+            if count > 30:
                 break
-            time.sleep(1)
+            time.sleep(4)
             task_result = self._df_api.taskView(task_id)
+            print("task Result **************")
+            print(task_result)
             status = task_result[0].task[0].status
             count = count + 1
 
         # if status < 3:
         #    data_put_esnet_pass = True
 
+        print(f"Status is {status}")
         assert status == 3
         print(task_result)
         print(f"Status is {status}")
@@ -187,7 +208,7 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
         status = task_result[0].task[0].status
         count = 0
         while status < 3:
-            if count > 10:
+            if count > 20:
                 break
             time.sleep(1)
             task_result = self._df_api.taskView(task_id)
@@ -199,6 +220,7 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
         # Try data from a different location
 
     def tearDown(self):
+
         result = self._df_api.repoAllocationDelete(
             repo_id=self._repo_id, subject="datafed89"
         )
@@ -215,7 +237,9 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
             if count > 2:
                 print(task_result)
                 self.fail(
-                    "Something went wrong task was unable to complete, attempt to delete an allocation after 3 seconds failed, make sure all services are running."
+                    "Something went wrong task was unable to complete, attempt"
+                    " to delete an allocation after 3 seconds failed, make sure"
+                    " all services are running."
                 )
                 break
             time.sleep(1)

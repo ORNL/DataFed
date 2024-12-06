@@ -1,0 +1,36 @@
+ARG          DATAFED_DIR="/datafed"
+ARG DATAFED_INSTALL_PATH="/opt/datafed"
+ARG            GCS_IMAGE="code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
+ARG            BUILD_DIR="$DATAFED_DIR/source"
+ARG              LIB_DIR="/usr/local/lib"
+ARG           BASE_IMAGE="ubuntu:focal"
+
+FROM ${BASE_IMAGE} AS base
+
+SHELL ["/bin/bash", "-c"]
+ARG DATAFED_DIR
+ARG DATAFED_INSTALL_PATH
+ARG DATAFED_DEPENDENCIES_INSTALL_PATH
+ARG BUILD_DIR
+
+ENV BUILD_DIR="${BUILD_DIR}"
+ENV DATAFED_DIR="${DATAFED_DIR}"
+
+RUN echo $DATAFED_DIR
+
+# Create datafed user, prefer more secure login options than password
+# Recommended to mount ssh public key on run
+RUN adduser --disabled-password --gecos "" datafed
+
+COPY ./scripts/dependency_versions.sh  ${BUILD_DIR}/scripts/
+COPY ./scripts/copy_dependency.sh      ${BUILD_DIR}/scripts/
+RUN mkdir -p ${DATAFED_DIR}
+RUN mkdir -p /opt/datafed
+RUN mkdir -p /var/log/datafed
+RUN chown -R datafed:root /opt/datafed
+RUN chown -R datafed:root /var/log/datafed
+RUN chown -R datafed:root ${DATAFED_DIR}
+WORKDIR ${DATAFED_DIR}
+
+RUN apt update
+RUN apt install -y grep libcurl4 wget

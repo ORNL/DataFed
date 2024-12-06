@@ -1,0 +1,18 @@
+---
+stages:
+  - build
+
+include:
+  - local: .gitlab/common.yml
+
+build-repo:
+  extends: .docker_build_script
+  stage: build
+  variables:
+    IMAGE_TAG: "datafed/repo"
+    GIT_STRATEGY: clone
+    DOCKER_FILE_PATH: "repository/docker/Dockerfile"
+    DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
+  tags:
+    - ci-datafed-repo
+    - docker

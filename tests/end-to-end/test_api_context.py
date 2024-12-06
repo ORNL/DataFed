@@ -1,9 +1,10 @@
-#!/bin/python3
-import json
+#!/usr/bin/env python3
+# WARNING - to work with python environments we cannot use /bin/python3 or
+#           a hardcoded abs path.
 import os
-import subprocess
 import sys
 import unittest
+
 
 # Depends on the provided tests first passing
 # user_login
@@ -25,7 +26,8 @@ class TestDataFedPythonAPIContext(unittest.TestCase):
             from datafed.CommandLib import API
         except ImportError:
             print(
-                "datafed was not found, make sure you are running script with PYTHONPATH set to the location of the package in the datafed repo"
+                "datafed was not found, make sure you are running script with "
+                "PYTHONPATH set to the location of the package in the datafed repo"
             )
             sys.exit(1)
 
@@ -33,7 +35,13 @@ class TestDataFedPythonAPIContext(unittest.TestCase):
 
         print(df_ver)
 
-        opts = {"server_host": "datafed-server-test.ornl.gov"}
+        datafed_domain = os.environ.get("DATAFED_DOMAIN")
+        opts = {"server_host": datafed_domain}
+
+        if datafed_domain is None:
+            print("DATAFED_DOMAIN must be set before the end-to-end tests can be run")
+            sys.exit(1)
+
         self._df_api = API(opts)
 
         self._username = "datafed99"
@@ -42,17 +50,17 @@ class TestDataFedPythonAPIContext(unittest.TestCase):
         count = 0
         while True:
             try:
-                result = self._df_api.loginByPassword(self._username, password)
+                self._df_api.loginByPassword(self._username, password)
                 break
-            except:
+            except BaseException:
                 pass
             count += 1
             # Try three times to authenticate
             assert count < 3
 
     def test_context(self):
-
-        context = self._df_api.getContext()
+        print("Running getContext()")
+        self._df_api.getContext()
         self.assertEqual(self._df_api.getContext(), f"u/{self._username}")
 
 

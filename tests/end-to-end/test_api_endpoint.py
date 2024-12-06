@@ -1,7 +1,7 @@
-#!/bin/python3
-import json
+#!/usr/bin/env python3
+# WARNING - to work with python environments we cannot use /bin/python3 or
+#           a hardcoded abs path.
 import os
-import subprocess
 import sys
 import unittest
 
@@ -26,7 +26,8 @@ class TestDataFedPythonAPIEndpoint(unittest.TestCase):
             from datafed.CommandLib import API
         except ImportError:
             print(
-                "datafed was not found, make sure you are running script with PYTHONPATH set to the location of the package in the datafed repo"
+                "datafed was not found, make sure you are running script with "
+                "PYTHONPATH set to the location of the package in the datafed repo"
             )
             sys.exit(1)
 
@@ -34,7 +35,13 @@ class TestDataFedPythonAPIEndpoint(unittest.TestCase):
 
         print(df_ver)
 
-        opts = {"server_host": "datafed-server-test.ornl.gov"}
+        datafed_domain = os.environ.get("DATAFED_DOMAIN")
+        opts = {"server_host": datafed_domain}
+
+        if datafed_domain is None:
+            print("DATAFED_DOMAIN must be set before the end-to-end tests can be run")
+            sys.exit(1)
+
         self._df_api = API(opts)
 
         username = "datafed89"
@@ -43,20 +50,23 @@ class TestDataFedPythonAPIEndpoint(unittest.TestCase):
         count = 0
         while True:
             try:
-                result = self._df_api.loginByPassword(username, password)
+                self._df_api.loginByPassword(username, password)
                 break
-            except:
+            except BaseException:
                 pass
             count += 1
             # Try three times to authenticate
             assert count < 3
 
     def test_endpoint_set_and_default(self):
-
         endpoint = os.environ.get("DATAFED_USER89_GLOBUS_UUID")
         if endpoint is None:
             self.fail(
-                "Cannot run end-to-end tests with Python CLI requires setting env variable DATAFED_REPO_ENDPOINT_UUID so that we know what to set the default endpoint to. This should be the same endpoint that the users have an allocation on... users datafed89 and datafed99"
+                "Cannot run end-to-end tests with Python CLI requires setting "
+                " env variable DATAFED_REPO_ENDPOINT_UUID so that we know what to"
+                " set the default endpoint to. This should be the same endpoint"
+                " that the users have an allocation on... users datafed89 and"
+                " datafed99"
             )
 
         if not self._df_api.endpointDefaultGet():

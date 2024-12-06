@@ -29,7 +29,7 @@ BOOST_AUTO_TEST_SUITE(SocketFactoryTest)
 
 class DummyCredential : public ICredentials {
 public:
-  DummyCredential(const std::string &pub_key) : m_pub_key(pub_key){};
+  explicit DummyCredential(const std::string &pub_key) : m_pub_key(pub_key){};
 
 private:
   std::string m_pub_key = "";

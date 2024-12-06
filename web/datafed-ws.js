@@ -66,7 +66,8 @@ var g_host,
     g_ver_api_major,
     g_ver_api_minor,
     g_ver_api_patch,
-    g_tls;
+    g_tls,
+    g_google_analytics;
 
 const nullfr = Buffer.from([]);
 
@@ -294,19 +295,19 @@ app.get('/ui/welcome', (a_req, a_resp) => {
         const nonce = crypto.randomBytes(16).toString('base64');
         a_resp.locals.nonce = nonce;
         a_resp.setHeader('Content-Security-Policy', `script-src 'nonce-${nonce}'  auth.globus.org`);
-        a_resp.render('index',{nonce:a_resp.locals.nonce, theme:theme,version:g_version,test_mode:g_test});
+        a_resp.render('index',{nonce:a_resp.locals.nonce, theme:theme,version:g_version,test_mode:g_test,...g_google_analytics});
     }
 });
 
 app.get('/ui/main', (a_req, a_resp) => {
     if ( a_req.session.uid && a_req.session.reg ){
-        logger.info('/ui/main', getCurrentLineNumber(), "Access main (", a_req.session.uid, ") from", a_req.connection.remoteAddress );
+        logger.info('/ui/main', getCurrentLineNumber(), "Access main (" + a_req.session.uid + ") from " + a_req.connection.remoteAddress );
 
         var theme = a_req.cookies['datafed-theme'] || "light";
         const nonce = crypto.randomBytes(16).toString('base64');
         a_resp.locals.nonce = nonce;
         a_resp.setHeader('Content-Security-Policy', `script-src 'nonce-${nonce}'`);
-        a_resp.render('main',{nonce:a_resp.locals.nonce,user_uid:a_req.session.uid,theme:theme,version:g_version,test_mode:g_test});
+        a_resp.render('main',{nonce:a_resp.locals.nonce,user_uid:a_req.session.uid,theme:theme,version:g_version,test_mode:g_test,...g_google_analytics});
     }else{
         // datafed-user cookie not set, so clear datafed-id before redirect
         //a_resp.clearCookie( 'datafed-id' );
@@ -326,14 +327,14 @@ app.get('/ui/register', (a_req, a_resp) => {
         logger.info('/ui/register', getCurrentLineNumber(), " - already registered, go to /ui/main");
         a_resp.redirect( '/ui/main' );
     } else {
-        logger.info('/ui/register', getCurrentLineNumber(), " - registration access (", a_req.session.uid, ") from", a_req.connection.remoteAddress );
+        logger.info('/ui/register', getCurrentLineNumber(), " - registration access (" + a_req.session.uid + ") from " + a_req.connection.remoteAddress );
 
         var theme = a_req.cookies['datafed-theme'] || "light";
         const clean = sanitizeHtml( a_req.session.name );
         const nonce = crypto.randomBytes(16).toString('base64');
         a_resp.locals.nonce = nonce;
         a_resp.setHeader('Content-Security-Policy', `script-src 'nonce-${nonce}' auth.globus.org`);
-        a_resp.render('register', {nonce:a_resp.locals.nonce, uid: a_req.session.uid, uname: clean, theme: theme, version: g_version, test_mode: g_test });
+        a_resp.render('register', {nonce:a_resp.locals.nonce, uid: a_req.session.uid, uname: clean, theme: theme, version: g_version, test_mode: g_test, ...g_google_analytics });
     }
 });
 
@@ -345,7 +346,7 @@ app.get('/ui/login', (a_req, a_resp) => {
     if ( a_req.session.uid && a_req.session.reg ){
         a_resp.redirect( '/ui/main' );
     } else {
-        logger.info('/ui/login', getCurrentLineNumber(), "User (", a_req.session.uid, ") from", a_req.connection.remoteAddress, "log-in" );
+        logger.info('/ui/login', getCurrentLineNumber(), "User (" + a_req.session.uid + ") from " + a_req.connection.remoteAddress + "log-in" );
 
         var uri = g_globus_auth.code.getUri();
         a_resp.redirect(uri);
@@ -354,7 +355,7 @@ app.get('/ui/login', (a_req, a_resp) => {
 
 
 app.get('/ui/logout', (a_req, a_resp) => {
-    logger.info('/ui/logout', getCurrentLineNumber(), "User (", a_req.session.uid, ") from", a_req.connection.remoteAddress, "logout" );
+    logger.info('/ui/logout', getCurrentLineNumber(), "User (" + a_req.session.uid + ") from " + a_req.connection.remoteAddress + " logout" );
 
     //a_resp.clearCookie( 'datafed-id' );
     //a_resp.clearCookie( 'datafed-user', { path: "/ui" } );
@@ -368,7 +369,7 @@ app.get('/ui/error', (a_req, a_resp) => {
     const nonce = crypto.randomBytes(16).toString('base64');
     a_resp.locals.nonce = nonce;
     a_resp.setHeader('Content-Security-Policy', `script-src 'nonce-${nonce}'`);
-    a_resp.render('error',{nonce:a_resp.locals.nonce,theme:"light",version:g_version,test_mode:g_test});
+    a_resp.render('error',{nonce:a_resp.locals.nonce,theme:"light",version:g_version,test_mode:g_test,...g_google_analytics});
 });
 
 /* This is the OAuth redirect URL after a user authenticates with Globus
@@ -411,7 +412,7 @@ app.get('/ui/authn', ( a_req, a_resp ) => {
                     var userinfo = JSON.parse( data ),
                         uid = userinfo.username.substr( 0, userinfo.username.indexOf( "@" ));
 
-                    logger.info('/ui/authn', getCurrentLineNumber(), 'User', uid, 'authenticated, verifying DataFed account' );
+                    logger.info('/ui/authn', getCurrentLineNumber(), 'User: ' + uid + ' authenticated, verifying DataFed account' );
                     sendMessageDirect( "UserFindByUUIDsRequest", "datafed-ws", { uuid: userinfo.identities_set }, function( reply ) {
                         if ( !reply  ) {
                             logger.error('/ui/authn', getCurrentLineNumber(),  "Error - Find user call failed." );
@@ -1773,7 +1774,7 @@ g_core_sock.on('message', function( delim, header, route_count, delim2, correlat
     var f = g_ctx[ctx];
     if ( f ) {
         g_ctx[ctx] = null;
-        logger.info("g_core_sock.on", getCurrentLineNumber(),"freed ctx: " + ctx + " for msg: " + msg_class.name + " correlation_id: " + correlation_id);
+        logger.info("g_core_sock.on", getCurrentLineNumber(),"freed ctx: " + ctx + " for msg: " + msg_class.name, correlation_id);
         g_ctx_next = ctx;
         f( msg );
     } else {
@@ -1823,6 +1824,10 @@ function loadSettings(){
 
         if ( !g_extern_url ){
             g_extern_url = "http"+(g_tls?'s':'')+"://" + g_host + ":" + g_port;
+        }
+
+        if ( config.operations ){
+          g_google_analytics = { enableGoogleAnalytics: config.operations.google_analytics_tag !== '', googleAnalyticsTag: config.operations.google_analytics_tag };
         }
     }catch( e ){
         logger.error(loadSettings.name, getCurrentLineNumber(), "Could not open/parse configuration file: " + process.argv[2] );

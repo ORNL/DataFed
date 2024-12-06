@@ -29,7 +29,6 @@
 using namespace std;
 using namespace SDMS::Anon;
 using namespace SDMS::Auth;
-// using namespace SDMS::authz::version;
 
 namespace {
 std::string randomAlphaNumericCode() {
@@ -142,7 +141,6 @@ public:
     }
 
     auto sanitized_path = local_path.substr(prefix.length());
-
     std::unique_ptr<SDMS::ICredentials> m_sec_ctx;
 
     std::unordered_map<CredentialType, std::string> cred_options;
@@ -226,8 +224,11 @@ public:
                               << client->address());
 
     auto response = client->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
-    log_context.correlation_id = std::get<std::string>(
-        response.message->get(MessageAttribute::CORRELATION_ID));
+    if (response.message) { // Make sure the message exists before we try to
+                            // access it
+      log_context.correlation_id = std::get<std::string>(
+          response.message->get(MessageAttribute::CORRELATION_ID));
+    }
     if (response.time_out) {
       std::string error_msg =
           "AuthWorker.cpp Core service did not respond within timeout.";
@@ -250,6 +251,12 @@ public:
                             "communicating with the core service: "
                                 << response.error_msg);
     } else {
+
+      if (not response.message) {
+        DL_ERROR(log_context, "No error was reported and no time out occured "
+                              "but message is not defined.");
+      }
+
       auto payload =
           std::get<google::protobuf::Message *>(response.message->getPayload());
       Anon::NackReply *nack = dynamic_cast<Anon::NackReply *>(payload);
@@ -303,9 +310,21 @@ const char *getReleaseVersion() {
 // The same
 int checkAuthorization(char *client_id, char *object, char *action,
                        struct Config *config) {
+#if defined(DONT_USE_SYSLOG)
+  SDMS::global_logger.setSysLog(false);
+#else
   SDMS::global_logger.setSysLog(true);
-  SDMS::global_logger.setLevel(SDMS::LogLevel::TRACE);
+#endif
+  SDMS::global_logger.setLevel(SDMS::LogLevel::INFO);
   SDMS::global_logger.addStream(std::cerr);
+  auto log_path_authz = std::string(config->log_path);
+  if (log_path_authz.length() > 0) {
+    // Append to the existing path because we don't want the C++ and C code
+    // trying to write to the same file
+    log_path_authz.append("_authz");
+    std::ofstream log_file_worker(log_path_authz);
+    SDMS::global_logger.addStream(log_file_worker);
+  }
 
   SDMS::LogContext log_context;
   log_context.thread_name = "authz_check";
