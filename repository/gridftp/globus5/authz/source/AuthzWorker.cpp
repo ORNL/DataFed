@@ -50,8 +50,8 @@ namespace SDMS {
 
 class AuthzWorker {
 public:
-  AuthzWorker(struct Config *a_config, LogContext log_context)
-      : m_config(a_config), m_test_path_len(strlen(a_config->test_path)) {
+  AuthzWorker(struct Config a_config, LogContext log_context)
+      : m_config(a_config), m_test_path_len(strlen(a_config.test_path)) {
 
     m_log_context = log_context;
     m_log_context.thread_name += "-authz_worker";
@@ -63,12 +63,16 @@ public:
   AuthzWorker &operator=(const AuthzWorker &) = delete;
 
   int checkAuth(char *client_id, char *path, char *action) {
+
+    // Example
+    //
+    // path = ftp://ci-datafed-globus2/mnt/datafed/datafedci-home 
     DL_DEBUG(m_log_context, "Checking auth for client: " << client_id);
 
     if (m_test_path_len > 0 &&
-        strncmp(path, m_config->test_path, m_test_path_len) == 0) {
+        strncmp(path, m_config.test_path, m_test_path_len) == 0) {
       DL_INFO(m_log_context, "Allowing request within TEST PATH: "
-                                 << m_config->test_path
+                                 << m_config.test_path
                                  << " actual path: " << path);
       return 0;
     }
@@ -81,6 +85,8 @@ public:
 
     std::string scheme = "ftp://";
     // std::string local_globus_path_root = "ftp://";
+    //
+    // local_path = ftp://ci-datafed-globus2/mnt/datafed/datafedci-home
     std::string local_path = path;
     if (local_path.substr(0, scheme.length()).compare(scheme) != 0) {
       DL_ERROR(m_log_context, "Provided path is not properly formatted, should "
@@ -113,12 +119,16 @@ public:
       EXCEPT(1, "Format error detected in path");
     }
 
-    // extract the substring after the third occurrence of the character
+    // extract the substring after the third occurrence of the character will
+    // include the third occurence as well
     local_path = local_path.substr(index);
+    // local_path = /mnt/datafed/datafedci-home
 
+    // e.g.
+    //
+    // local_globus_path_root = /mnt
     std::string local_globus_path_root = std::string(
-        m_config
-            ->globus_collection_path); // +
+        m_config.globus_collection_path); // +
                                        // repo_id.substr(repo_prefix.length()-1);
     if (local_globus_path_root.length() > local_path.length()) {
       ;
@@ -144,9 +154,9 @@ public:
     std::unique_ptr<SDMS::ICredentials> m_sec_ctx;
 
     std::unordered_map<CredentialType, std::string> cred_options;
-    cred_options[CredentialType::PUBLIC_KEY] = m_config->pub_key;
-    cred_options[CredentialType::PRIVATE_KEY] = m_config->priv_key;
-    cred_options[CredentialType::SERVER_KEY] = m_config->server_key;
+    cred_options[CredentialType::PUBLIC_KEY] = m_config.pub_key;
+    cred_options[CredentialType::PRIVATE_KEY] = m_config.priv_key;
+    cred_options[CredentialType::SERVER_KEY] = m_config.server_key;
     CredentialFactory cred_factory;
     m_sec_ctx = cred_factory.create(ProtocolType::ZQTP, cred_options);
 
@@ -195,11 +205,11 @@ public:
       // socket we will actually be communicating with the server.
       return comm_factory.create(socket_options, credentials,
                                  timeout_on_receive, timeout_on_poll);
-    }(authz_thread_id, m_config->server_addr, *m_sec_ctx);
+    }(authz_thread_id, m_config.server_addr, *m_sec_ctx);
 
     auto auth_req = std::make_unique<Auth::RepoAuthzRequest>();
 
-    auth_req->set_repo(m_config->repo_id);
+    auth_req->set_repo(m_config.repo_id);
     auth_req->set_client(client_id);
     auth_req->set_file(sanitized_path);
     auth_req->set_action(action);
@@ -270,7 +280,7 @@ public:
   }
 
 private:
-  struct Config *m_config;
+  struct Config m_config;
   size_t m_test_path_len;
   LogContext m_log_context;
 };
@@ -309,15 +319,16 @@ const char *getReleaseVersion() {
 
 // The same
 int checkAuthorization(char *client_id, char *object, char *action,
-                       struct Config *config) {
+                       struct Config config) {
 #if defined(DONT_USE_SYSLOG)
   SDMS::global_logger.setSysLog(false);
 #else
   SDMS::global_logger.setSysLog(true);
 #endif
-  SDMS::global_logger.setLevel(SDMS::LogLevel::INFO);
+  SDMS::global_logger.setLevel(SDMS::LogLevel::DEBUG);
   SDMS::global_logger.addStream(std::cerr);
-  auto log_path_authz = std::string(config->log_path);
+
+  auto log_path_authz = std::string("/opt/datafed/logs/datafed-gsi-cpp.log");
   if (log_path_authz.length() > 0) {
     // Append to the existing path because we don't want the C++ and C code
     // trying to write to the same file
