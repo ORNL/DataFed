@@ -34,11 +34,8 @@ public:
   ~TestDatabaseAPI() {}
 
   static TestDatabaseAPI create() {
-    return TestDatabaseAPI(
-      "https://restful-booker.herokuapp.com/",
-      "user",
-      "password"
-    );
+    return TestDatabaseAPI("https://restful-booker.herokuapp.com/", "user",
+                           "password");
   }
 
   long dbGet(const char *a_url_path,
@@ -49,7 +46,8 @@ public:
                               a_log);
   }
 
-  bool dbGetRaw(const char *a_url_path,
+  bool
+  dbGetRaw(const char *a_url_path,
            const std::vector<std::pair<std::string, std::string>> &a_params,
            std::string &a_result) {
     return DatabaseAPI::dbGetRaw(a_url_path, a_params, a_result);
