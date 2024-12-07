@@ -6,6 +6,7 @@ build-dependencies:
   extends: .docker_base_build_script
   stage: build-base
   variables:
+    DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
     PROJECT: "datafed"
     COMPONENT: "dependencies"
     GIT_STRATEGY: clone
@@ -17,6 +18,7 @@ build-runtime:
   extends: .docker_base_build_script
   stage: build-base
   variables:
+    DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
     PROJECT: "datafed"
     COMPONENT: "runtime"
     GIT_STRATEGY: clone
