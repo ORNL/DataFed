@@ -16,6 +16,7 @@ if( NOT DEFINED GLOBUS_VERSION )
   set(GLOBUS_VERSION  5)
 endif()
 OPTION(BUILD_AUTHZ "Build DataFed Authz library" FALSE)
+OPTION(BUILD_AUTHZ_TESTS "Build DataFed Authz Tests" FALSE)
 OPTION(BUILD_AUTHZ_WITH_SYSLOG "Build Authz without syslog" TRUE)
 OPTION(BUILD_CORE_SERVER "Build DataFed Core Server" TRUE)
 OPTION(BUILD_COMMON "Build DataFed common library" TRUE)
@@ -123,6 +124,11 @@ if( BUILD_WEB_SERVER )
     set_tests_properties(unit_tests_web PROPERTIES WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/web)
   endif()
 
+endif()
+
+if( BUILD_AUTHZ_TESTS )
+  include(./cmake/GSSAPI.cmake)
+  include(./cmake/GlobusCommon.cmake)
 endif()
 
 if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON OR BUILD_PYTHON_CLIENT) 
@@ -285,5 +291,7 @@ message("             boost system Library: ${DATAFED_BOOST_SYSTEM_LIBRARY_PATH}
 message("         boost filesystem Library: ${DATAFED_BOOST_FILESYSTEM_LIBRARY_PATH}")
 message("    boost program_options Library: ${DATAFED_BOOST_PROGRAM_OPTIONS_LIBRARY_PATH}")
 message("                     zlib Library: ${DATAFED_ZLIB_LIBRARIES}")
+message("                   gssapi Library: ${DATAFED_GSSAPI_LIBRARIES}")
+message("            globus_common Library: ${DATAFED_GLOBUS_COMMON_LIBRARIES}")
 message("")
 
