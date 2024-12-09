@@ -9,6 +9,8 @@ check-ws-image:
   variables:
     PROJECT: "datafed"
     COMPONENT: "ws"
+    BUILD_INTERMEDIATE: "TRUE"
+    INTERMEDIATE_LAYER_NAME: "build"
 
 check-core-image:
   extends: .image_check
@@ -16,6 +18,7 @@ check-core-image:
   variables:
     PROJECT: "datafed"
     COMPONENT: "core"
+    BUILD_INTERMEDIATE: "FALSE"
 
 check-repo-image:
   extends: .image_check
@@ -23,6 +26,7 @@ check-repo-image:
   variables:
     PROJECT: "datafed"
     COMPONENT: "repo"
+    BUILD_INTERMEDIATE: "FALSE"
 
 check-gcs-base-image:
   extends: .image_check
@@ -30,6 +34,7 @@ check-gcs-base-image:
   variables:
     PROJECT: "datafed"
     COMPONENT: "gcs_base"
+    BUILD_INTERMEDIATE: "FALSE"
 
 check-gcs-image:
   extends: .image_check
@@ -37,6 +42,7 @@ check-gcs-image:
   variables:
     PROJECT: "datafed"
     COMPONENT: "gcs"
+    BUILD_INTERMEDIATE: "FALSE"
 
 check-foxx-image:
   extends: .image_check
@@ -44,3 +50,4 @@ check-foxx-image:
   variables:
     PROJECT: "datafed"
     COMPONENT: "foxx"
+    BUILD_INTERMEDIATE: "FALSE"
