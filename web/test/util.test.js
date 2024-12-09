@@ -95,10 +95,10 @@ describe('globusGetAuthorizeURL', () => {
   });
 
   it('should throw an error when client_id is not provided', () => {
-    expect(globusGetAuthorizeURL(null, redirect_uri)).to.throw(Error, "Missing required parameters, please provide client_id and redirect_uri");
+    expect(globusGetAuthorizeURL(null, redirect_uri)).to.throw("Missing required parameters, please provide client_id and redirect_uri");
   });
   it('should throw an error when redirect_uri is not provided', () => {
-    expect(globusGetAuthorizeURL(client_id, null)).to.throw(Error, "Missing required parameters, please provide client_id and redirect_uri");
+    expect(globusGetAuthorizeURL(client_id, null)).to.throw("Missing required parameters, please provide client_id and redirect_uri");
   });
 
   it('should provide default scopes when no scopes are provided', () => {
