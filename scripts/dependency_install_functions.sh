@@ -60,6 +60,17 @@ else
 fi
 
 init_python() {
+
+  if [[ ! -v DATAFED_PYTHON_DEPENDENCIES_DIR ]]; then
+    echo "DATAFED_PYTHON_DEPENDENCIES_DIR is not defined please make sure it is defined in the ${PROJECT_ROOT}/config/datafed.sh file."
+    exit 1
+  else
+    if [[ -z "$DATAFED_PYTHON_DEPENDENCIES_DIR" ]]; then
+      echo "DATAFED_PYTHON_DEPENDENCIES_DIR is defined but is empty please make sure it is defined in ${PROJECT_ROOT}/config/datafed.sh file."
+      exit 1
+    fi
+  fi
+
   if [ ! -e "$DATAFED_DEPENDENCIES_INSTALL_PATH" ] || [ ! -d "$DATAFED_PYTHON_DEPENDENCIES_DIR" ]; then
       mkdir -p "$DATAFED_PYTHON_DEPENDENCIES_DIR"
   fi
