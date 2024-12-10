@@ -729,7 +729,7 @@ function _schemaResolveRefs( a_props, a_refs ){
  */
 export function globusGetAuthorizeURL(client_id, redirect_uri, requested_scopes=[], state="_default", refresh_tokens=false, query_params={}) {
     if ( !client_id || !redirect_uri ) {
-        throw "Missing required parameters, please provide client_id and redirect_uri";
+        throw new Error("Missing required parameters, please provide client_id and redirect_uri");
     }
     if (!requested_scopes?.length) {
         requested_scopes = [
