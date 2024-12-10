@@ -320,7 +320,7 @@ public:
       LogContext);
   void metricsPurge(uint32_t a_timestamp, LogContext);
 
-private:
+protected:
   long dbGet(const char *a_url_path,
              const std::vector<std::pair<std::string, std::string>> &a_params,
              libjson::Value &a_result, LogContext, bool a_log = true);
@@ -332,6 +332,7 @@ private:
               const std::vector<std::pair<std::string, std::string>> &a_params,
               const std::string *a_body, libjson::Value &a_result, LogContext);
 
+private:
   void setAuthStatus(Anon::AuthStatusReply &a_reply,
                      const libjson::Value &a_result);
   void setUserData(Auth::UserDataReply &a_reply, const libjson::Value &a_result,
