@@ -6,7 +6,9 @@ build-dependencies:
   extends: .docker_base_build_script
   stage: build-base
   variables:
-    IMAGE_TAG: "datafed/dependencies"
+    DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
+    PROJECT: "datafed"
+    COMPONENT: "dependencies"
     GIT_STRATEGY: clone
     DOCKER_FILE_PATH: "docker/Dockerfile.dependencies"
   tags:
@@ -16,7 +18,9 @@ build-runtime:
   extends: .docker_base_build_script
   stage: build-base
   variables:
-    IMAGE_TAG: "datafed/runtime"
+    DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
+    PROJECT: "datafed"
+    COMPONENT: "runtime"
     GIT_STRATEGY: clone
     DOCKER_FILE_PATH: "docker/Dockerfile.runtime"
   tags:

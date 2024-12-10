@@ -4,6 +4,7 @@ cmake/sodium_version
 cmake/curl_version
 cmake/zlib_version
 common/proto/common/Version.proto
+compose/metadata/.build-args
 compose/**/.env
 compose/**/.env*
 compose/**/globus
@@ -62,3 +63,14 @@ web/package-lock.json
 web/static/datafed-core-key.pub
 *.swp
 *.swo
+
+# for web tests
+tests/end-to-end/web-UI/node_modules/
+tests/end-to-end/web-UI/test-results/
+tests/end-to-end/web-UI/playwright-report/
+tests/end-to-end/web-UI/blob-report/
+tests/end-to-end/web-UI/playwright/.cache/
+tests/end-to-end/web-UI/tests-examples
+tests/end-to-end/web-UI/.auth
+tests/end-to-end/web-UI/.env
+tests/end-to-end/web-UI/auth.setup.js

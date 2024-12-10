@@ -33,17 +33,28 @@ then
   # Check to see if foxx has previously been installed
   "${PROJECT_ROOT}/scripts/generate_datafed.sh"
 
-  "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" -S. -B build						\
-    -DBUILD_REPO_SERVER=False		\
-    -DBUILD_COMMON=False        \
-    -DBUILD_AUTHZ=False					\
-    -DBUILD_CORE_SERVER=False		\
-    -DBUILD_WEB_SERVER=False		\
-    -DBUILD_DOCS=False					\
-    -DBUILD_PYTHON_CLIENT=False	\
-    -DBUILD_FOXX=True           \
-    -DINSTALL_FOXX=True
+	# Define common CMake options
+	cmake_options=(
+		-S. -B build
+		-DBUILD_REPO_SERVER=False
+		-DBUILD_COMMON=False
+		-DBUILD_AUTHZ=False
+		-DBUILD_CORE_SERVER=False
+		-DBUILD_WEB_SERVER=False
+		-DBUILD_DOCS=False
+		-DBUILD_PYTHON_CLIENT=False
+		-DBUILD_FOXX=True
+		-DINSTALL_FOXX=True
+	)
 
+	# Add the ENABLE_FOXX_TESTS option if it's set to TRUE
+  # Should only run this if you are ok with making changes to the database
+	if [ "$ENABLE_FOXX_TESTS" == "TRUE" ]; then
+		cmake_options+=(-DENABLE_FOXX_TESTS=True)
+	fi
+
+	# Run the CMake command with the constructed options
+	"${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" "${cmake_options[@]}"
 
   "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" --build build
 
@@ -51,14 +62,25 @@ then
   # should be replaced with health check at some point
   sleep 5
   "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" --build build --target install
-  
+
+  if [ "$ENABLE_FOXX_TESTS" == "TRUE" ]
+  then
+    "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" \
+      --build build \
+      --target test
+    EXIT_CODE="$?"
+    if [ "$EXIT_CODE" != "0" ]; then exit "$EXIT_CODE"; fi
+  fi
+
+  # Create flag to indicate container has done its job  
   touch "$install_flag"
   chown -R "$UID":"$UID" "/tmp"
-
 else
-  echo "/tmp/.foxx_is_installed has been found skipping reinstall"
+  echo "$install_flag has been found skipping reinstall"
 fi
 
-echo "Sleeping"
-sleep 1000
-
+# Keep container alive for a little bit, the CI pipelines check that the
+# container actually runs. If the container runs to fast the pipeline check
+# might fail because it wasn't able to determine if the container actually
+# ran.
+sleep 60

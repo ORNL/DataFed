@@ -7,40 +7,47 @@ check-ws-image:
   extends: .image_check
   stage: image-check
   variables:
+    PROJECT: "datafed"
     COMPONENT: "ws"
-    IMAGE_TAG: "datafed/ws"
+    BUILD_INTERMEDIATE: "TRUE"
+    INTERMEDIATE_LAYER_NAME: "build"
 
 check-core-image:
   extends: .image_check
   stage: image-check
   variables:
+    PROJECT: "datafed"
     COMPONENT: "core"
-    IMAGE_TAG: "datafed/core"
+    BUILD_INTERMEDIATE: "FALSE"
 
 check-repo-image:
   extends: .image_check
   stage: image-check
   variables:
+    PROJECT: "datafed"
     COMPONENT: "repo"
-    IMAGE_TAG: "datafed/repo"
+    BUILD_INTERMEDIATE: "FALSE"
 
 check-gcs-base-image:
   extends: .image_check
   stage: image-check
   variables:
+    PROJECT: "datafed"
     COMPONENT: "gcs_base"
-    IMAGE_TAG: "datafed/gcs-base"
+    BUILD_INTERMEDIATE: "FALSE"
 
 check-gcs-image:
   extends: .image_check
   stage: image-check
   variables:
+    PROJECT: "datafed"
     COMPONENT: "gcs"
-    IMAGE_TAG: "datafed/gcs"
+    BUILD_INTERMEDIATE: "FALSE"
 
 check-foxx-image:
   extends: .image_check
   stage: image-check
   variables:
+    PROJECT: "datafed"
     COMPONENT: "foxx"
-    IMAGE_TAG: "datafed/foxx"
+    BUILD_INTERMEDIATE: "FALSE"

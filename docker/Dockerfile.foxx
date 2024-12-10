@@ -22,10 +22,15 @@ ARG BUILD_DIR
 ARG DATAFED_INSTALL_PATH
 ARG DATAFED_DEPENDENCIES_INSTALL_PATH
 
+# WARNING
+#
+# Do not overwrite PATH here, overwriting PATH could lead to inconsistencies in
+# your build. Docker will automatically pull from the host env if declared here.
+# If PATH is different on the host you could create a broken container.
+
 ENV                         BUILD_DIR="${BUILD_DIR}"
 ENV                       DATAFED_DIR="${DATAFED_DIR}"
 ENV DATAFED_DEPENDENCIES_INSTALL_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
-ENV                              PATH=${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin:${PATH}
 ENV              DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
 ENV          DATAFED_DEFAULT_LOG_PATH="$DATAFED_INSTALL_PATH/logs"
 

@@ -9,9 +9,12 @@ build-repo:
   extends: .docker_build_script
   stage: build
   variables:
-    IMAGE_TAG: "datafed/repo"
+    PROJECT: "datafed"
+    COMPONENT: "repo"
     GIT_STRATEGY: clone
     DOCKER_FILE_PATH: "repository/docker/Dockerfile"
+    DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
+    BUILD_INTERMEDIATE: "FALSE"
   tags:
     - ci-datafed-repo
     - docker
@@ -24,5 +27,24 @@ build-repo:
         - .gitlab-ci.yml
       when: on_success
 
-placeholder:
-  extends: .placeholder
+retag-image:
+  extends: .docker_retag_image
+  stage: build
+  variables:
+    PROJECT: "datafed"
+    COMPONENT: "repo"
+    GIT_STRATEGY: clone
+    DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
+    BUILD_INTERMEDIATE: "FALSE"
+  tags:
+    - docker
+  rules:
+    - changes:
+        - docker/**/*
+        - scripts/**/*
+        - web/**/*
+        - common/proto/**/*
+        - .gitlab-ci.yml
+      when: never
+    - when: on_success
+

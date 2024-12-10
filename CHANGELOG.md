@@ -3,8 +3,27 @@
 ## MAJOR Breaking changes
 
 ## MINOR Feature
+1. [987] - This implements serialized GitLab CI pipelines
+2. [918] - Add admin script for making a user an admin
+3. [1009] - Add collections to database for holding Globus tokens. 
+4. [1002] - Add backoff for task worker when database fails to prevent log overflow.
 
 ## PATCH Bug fixes/Technical Debt/Documentation
+1. [984] - Fixes {server_default} from showing up in path.
+2. [990] - Will stop running containers so that we can prune them.
+3. [988] - Removed non-working subscribe function.
+4. [958] - Addresses issues raised by static code analyzer.
+5. [962] - Adds script that will check that docker image is in registry
+6. [1015] - Uses abs path to ci pipeline script for gcs build jobs
+7. [1013] - add set +e and set -e around is active check for arango service
+8. [1011] - Add python script and ci job to clean up GCS node keys.
+9. [1023] - Address unbound variables in harbor ci script.
+10. [1027] - Fix clear_db.sh script by replacing console.log with print
+11. [1012] - Allow customized base build image for Docker dependencies and runtime Dockerfiles
+12. [986] - Design improvement to upload and download transfer box.
+13. [985] - Handles longer than needed timeouts on ui pages.
+14. [1053] - Set CMake to enable foxx tests when built in the CI.
+15. [1086] - Address XML-RPC bug from deprecated client
 
 # v2024.6.17.10.40
 
@@ -23,6 +42,9 @@
 8. [973] - Adds log output at the end of CI test pipeline
 9. [968] - Adds the ability to specify both base and root path when creating
    Globus collections.
+10. [1003] - Updated admin install documentation.
+11. [1005] - Consolidate Development Environment setup documentation.
+12. [970] - Adds Web UI testing to the CI pipeline.
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 
