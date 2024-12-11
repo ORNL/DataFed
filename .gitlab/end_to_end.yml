@@ -78,9 +78,9 @@ end-to-end-foxx-setup:
     -     fi
     -   fi 
     - done
-    - docker logs "foxx-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}";
     - ./scripts/ci_database_health_check.sh
   after_script:
+    - docker logs "foxx-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}";
     - rm -rf foxx_tmp
 
 ################################################################################
