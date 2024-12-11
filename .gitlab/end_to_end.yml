@@ -28,7 +28,8 @@ end-to-end-foxx-setup:
     - docker
   script:
     - sudo apt-get install jq -y
-    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    # Export is needed so the after_script section can use this
+    - export BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - mkdir -p "$HOST_LOG_FILE_PATH"
     - chmod o+w "${HOST_LOG_FILE_PATH}"
     - USER_ID=$(id -u)
@@ -41,7 +42,8 @@ end-to-end-foxx-setup:
     - if [ -f foxx_tmp/.foxx_is_installed ]; then rm foxx_tmp/.foxx_is_installed; fi
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     - ./scripts/container_stop.sh -n "foxx-" -p
-    - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
+    # Export is needed so the after_script section can use this
+    - export random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - CONTAINER_NAME="foxx-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}"
     - echo "#!/bin/bash" > "${RUN_FILE}"
     - echo "docker run -d \\" >> "${RUN_FILE}"
@@ -80,6 +82,8 @@ end-to-end-foxx-setup:
     - done
     - ./scripts/ci_database_health_check.sh
   after_script:
+    # This is needed so that if there is a failure in the container we know
+    # what caused it.
     - docker logs "foxx-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}";
     - rm -rf foxx_tmp
 
