@@ -28,8 +28,9 @@ end-to-end-foxx-setup:
     - docker
   script:
     - sudo apt-get install jq -y
-    # Export is needed so the after_script section can use this
-    - export BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    # Echo into GITLAB_ENV is needed so after_script has access
+    - echo "BRANCH_LOWER=${BRANCH_LOWER}" >> $GITLAB_ENV
     - mkdir -p "$HOST_LOG_FILE_PATH"
     - chmod o+w "${HOST_LOG_FILE_PATH}"
     - USER_ID=$(id -u)
@@ -43,7 +44,7 @@ end-to-end-foxx-setup:
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     - ./scripts/container_stop.sh -n "foxx-" -p
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
-    - # Echo into GITLAB_ENV is needed so after_script has access
+    # Echo into GITLAB_ENV is needed so after_script has access
     - echo "random_string=${random_string}" >> $GITLAB_ENV
     - CONTAINER_NAME="foxx-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}"
     - echo "#!/bin/bash" > "${RUN_FILE}"
