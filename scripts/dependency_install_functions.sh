@@ -91,7 +91,7 @@ install_cmake() {
     # Mark cmake as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.cmake_installed-${DATAFED_CMAKE_VERSION}"
   fi
-  export PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin:${PATH}"
+  export PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin:$PATH"
 }
 
 install_protobuf() {
