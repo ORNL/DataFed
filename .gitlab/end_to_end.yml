@@ -84,8 +84,6 @@ end-to-end-foxx-setup:
     - done
     - ./scripts/ci_database_health_check.sh
   after_script:
-    # This is needed so that if there is a failure in the container we know
-    # what caused it.
     - docker logs "foxx-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}";
     - rm -rf foxx_tmp
 
