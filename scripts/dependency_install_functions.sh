@@ -49,6 +49,11 @@ else
   fi
 fi
 
+# WARNING: overwriting PATH can be very dangerous
+#   In Docker builds this must follow the pattern:
+#     PATH="<desired addition to path>:$PATH"
+#     Curly braces around PATH, like ${PATH} may pull from the host's PATH
+# Please see StackOverflow answer: https://stackoverflow.com/a/38742545
 if [[ ! -v PATH ]]; then
   PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/bin"
 else
@@ -91,6 +96,11 @@ install_cmake() {
     # Mark cmake as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.cmake_installed-${DATAFED_CMAKE_VERSION}"
   fi
+  # WARNING: overwriting PATH can be very dangerous
+  #   In Docker builds this must follow the pattern:
+  #     PATH="<desired addition to path>:$PATH"
+  #     Curly braces around PATH, like ${PATH} may pull from the host's PATH
+  # Please see StackOverflow answer: https://stackoverflow.com/a/38742545
   export PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin:$PATH"
 }
 
