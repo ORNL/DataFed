@@ -74,3 +74,7 @@ tests/end-to-end/web-UI/tests-examples
 tests/end-to-end/web-UI/.auth
 tests/end-to-end/web-UI/.env
 tests/end-to-end/web-UI/auth.setup.js
+
+
+# for dev container
+compile_commands.json

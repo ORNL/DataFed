@@ -1,0 +1,95 @@
+#FROM ubuntu:latest
+#LABEL authors="ramirezat"
+
+# important commands
+## build the image
+## NOTE: this depends on the dependency container being built already
+## docker build -f Dockerfile --build-arg DEPENDENCIES="datafed-dependencies:latest" . -t dev-container:latest
+
+## run a container named datafed-devenv
+## docker run --detach --mount type=bind,src=.,dst=/DataFed/ --name datafed-devenv dev-container:latest
+
+## attach to running container by name
+## docker exec -it datafed-devenv /bin/bash
+
+## stop container
+## docker stop datafed-devenv
+
+## remove container
+## docker rm datafed-devenv
+
+ARG DEPENDENCIES="dependencies"
+ARG DATAFED_DIR="/datafed"
+ARG BUILD_DIR="$DATAFED_DIR/source"
+ARG DATAFED_DEPENDENCIES_INSTALL_PATH="/opt/datafed/dependencies"
+
+FROM ${DEPENDENCIES} AS dev-env
+
+# pull the whole project for now
+#COPY .  /DataFed/
+# we should instead mount it with
+# docker run --detach --mount type=bind,src=.,dst=/DataFed/ --name datafed-devenv dev-container:latest
+
+# get development dependencies
+RUN sudo apt-get update && sudo apt-get upgrade
+# node
+RUN sudo apt-get install -y curl
+RUN curl -fsSL https://deb.nodesource.com/setup_23.x -o nodesource_setup.sh
+RUN sudo -E bash nodesource_setup.sh
+RUN sudo apt-get install -y nodejs
+# optional dev deps
+RUN npm install tree-sitter-cli
+RUN sudo apt-get install -y ripgrep python3 bear software-properties-common clang
+# editor
+RUN curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz  \
+  && sudo rm -rf /opt/nvim \
+  && sudo tar -C /opt -xzf nvim-linux64.tar.gz
+RUN <<EOF cat >> ~/.bashrc
+export PATH="$PATH:/opt/nvim-linux64/bin"
+EOF
+RUN git clone https://github.com/AstroNvim/template.git ~/.config/nvim
+RUN rm -rf ~/.config/nvim/.git # remove git association
+RUN <<EOF cat > ~/.config/nvim/lua/community.lua
+---@type LazySpec
+return {
+ "AstroNvim/astrocommunity",
+ { import = "astrocommunity.pack.bash" },
+ { import = "astrocommunity.pack.cpp" },
+ { import = "astrocommunity.pack.cmake" },
+ { import = "astrocommunity.pack.python" },
+ { import = "astrocommunity.pack.json" },
+ { import = "astrocommunity.pack.typescript" }
+}:
+EOF
+
+WORKDIR /DataFed
+# get config for core
+RUN <<EOF cat > /opt/entrypoint.sh
+#!/bin/bash
+# create compile_commands.json via cmake export option
+/opt/datafed/dependencies/bin/cmake -S . -B build -DBUILD_REPO_SERVER=True -DBUILD_AUTHZ=False \
+  -DBUILD_CORE_SERVER=True -DBUILD_WEB_SERVER=True \
+  -DBUILD_DOCS=False -DBUILD_PYTHON_CLIENT=False \
+  -DBUILD_FOXX=False  \
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+# link compile commands to project root, NOTE: overwrite existing with "f" flag
+ln -sf build/compile_commands.json /DataFed
+
+# compile protobuf files into c++ code
+(cd common/proto/common && /opt/datafed/dependencies/bin/protoc-25.2.0 --cpp_out=. *.proto)
+
+# make compiled protobuf files available in appropriate include path
+mv common/proto/common/*.h common/include/common/
+mv common/proto/common/*.cc common/include/common/
+
+exec top -b
+EOF
+
+RUN chmod u+x /opt/entrypoint.sh
+
+# run by using nvim .
+
+ENTRYPOINT ["/opt/entrypoint.sh"]
+
+#ENTRYPOINT ["top", "-b"]
