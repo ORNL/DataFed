@@ -24,6 +24,7 @@
 13. [985] - Handles longer than needed timeouts on ui pages.
 14. [1053] - Set CMake to enable foxx tests when built in the CI.
 15. [1086] - Address XML-RPC bug from deprecated client
+16. [1149] - Docker container GCS Collection Mount Bug Fix
 
 # v2024.6.17.10.40
 
