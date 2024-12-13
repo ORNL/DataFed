@@ -1546,10 +1546,14 @@ app.get('/ui/theme/save', ( a_req, a_resp ) => {
 });
 
 
-function setAccessToken( a_uid, a_acc_tok, a_ref_tok, a_expires_sec ) {
-    logger.info(setAccessToken.name, getCurrentLineNumber(), "setAccessToken uid: " + a_uid + " expires in: " + a_expires_sec);
+function setAccessToken( a_uid, a_acc_tok, a_ref_tok, a_expires_sec, token_optional_params = {} ) {
+    logger.info(setAccessToken.name, getCurrentLineNumber(), "setAccessToken uid: " + a_uid + " expires in: " + a_expires_sec + "optional params" + token_optional_params.toString());
     // TODO: need to adjust this according to result of ticket #1106
-    sendMessageDirect( "UserSetAccessTokenRequest", a_uid, { access: a_acc_tok, refresh: a_ref_tok, expiresIn: a_expires_sec }, function( reply ){
+    let message_data = { access: a_acc_tok, refresh: a_ref_tok, expiresIn: a_expires_sec };
+    if (token_optional_params && Object.keys(token_optional_params).length > 0) {
+        message_data = {...token_optional_params, ...message_data};
+    }
+    sendMessageDirect( "UserSetAccessTokenRequest", a_uid, message_data, function( reply ){
         // Should be an AckReply
     });
 }
