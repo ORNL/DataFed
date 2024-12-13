@@ -2,7 +2,7 @@
 
 const chai = require('chai');
 const expect = chai.expect;
-const pathModule = require('./pathModule'); // Replace with the actual file name
+const pathModule = require('../api/posix_path'); // Replace with the actual file name
 
 describe('splitPOSIXPath', function () {
   it('should split a simple POSIX path into components', function () {

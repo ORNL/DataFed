@@ -16,16 +16,17 @@ module.exports = (function() {
   **/
   obj.splitPOSIXPath = function(a_posix_path) {
 
-		// Split the path into components
+    if (!a_posix_path || typeof a_posix_path !== 'string') {
+      throw new Error('Invalid POSIX path');
+    }
+    // Split the path into components
 		// components: ['', 'usr', 'local', 'bin', 'node']
 		// The empty '' is for root
-		const components = posixPath.split(path.posix.sep);
+		const components = a_posix_path.split(path.posix.sep);
 
 		// components: ['usr', 'local', 'bin', 'node']
-		const cleanComponents = components.filter(component => component !== '');
-
-
-		return components;
+		return components.filter(component => component !== '');
 	}
 
-});
+  return obj;
+})();
