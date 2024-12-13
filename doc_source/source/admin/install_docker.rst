@@ -48,12 +48,16 @@ To deploy DataFed, its containers must be built from source code hosted on `GitH
 Prior to building DataFed, Docker must be installed.
 The following examples are based on Debian.
 
-Downloading DataFed::
+Downloading DataFed:
+
+.. code-block:: bash
 
     git clone https://github.com/ORNL/DataFed.git
 
 If you are deploying in development mode, the next step is to enter configuration options that are listed in ./.env To
-generate a template for this file you will first need to run::
+generate a template for this file you will first need to run:
+
+.. code-block:: bash
 
     ./compose/all/generate_env.sh
 
@@ -82,7 +86,9 @@ automatically configure much of the setup.
 Building Containers
 ===================
 
-To build the containers you must simply run::
+To build the containers you must simply run:
+
+.. code-block:: bash
 
     ./compose/all/build_containers_for_compose.sh
 
@@ -92,8 +98,17 @@ This is due to dependency caching, since the first build is what builds and cach
 Running the Containers (Development)
 ====================================
 
+Note: Before running the containers, ensure that the necessary directories are created on the host machine with the
+correct permissions. You can create the directories by running the following script:
+
+.. code-block:: bash
+
+        ./scripts/globus/setup_collection_directory.sh all
+
 For convenience, development installations are fully supported utilizing docker compose.
-Once fully built and configured, the development instance can be started with the following commands::
+Once fully built and configured, the development instance can be started with the following commands:
+
+.. code-block:: bash
 
     ./compose/all/unset_env.sh
     docker compose -f ./compose/all/compose.yml up
@@ -106,7 +121,9 @@ Running the Containers (Production)
 Running the containers in production is a similar process to running them in development mode,
 except the Docker containers are run manually rather than being run by Docker compose.
 
-To begin, you will want to create a Docker network to attach the containers to so that they may communicate::
+To begin, you will want to create a Docker network to attach the containers to so that they may communicate:
+
+.. code-block:: bash
 
     docker network create datafed-network
 
@@ -115,7 +132,9 @@ Following are examples of docker run commands for each service
 Core Service
 ------------
 
-Here is an example for the core service::
+Here is an example for the core service:
+
+.. code-block:: bash
 
     docker run -d \
         --restart=always \
@@ -141,7 +160,9 @@ Here is an example for the core service::
 Web Service
 ------------
 
-Here is an example for the web service::
+Here is an example for the web service:
+
+.. code-block:: bash
 
     docker run -d \
         --restart=always \
@@ -169,7 +190,9 @@ Here is an example for the web service::
 Repository Service
 ------------
 
-Here is an example for the repository service::
+Here is an example for the repository service:
+
+.. code-block:: bash
 
     docker run -d \
         --restart=always \
@@ -197,7 +220,9 @@ Here is an example for the repository service::
 Globus Service
 ------------
 
-Here is an example for the Globus Connect Server service::
+Here is an example for the Globus Connect Server service:
+
+.. code-block:: bash
 
     docker run -d \
         --restart=always \
@@ -238,7 +263,9 @@ Nginx Service
 This service is not necessary for Datafed to function, however it is included here as a convenience,
 as it will allow you to setup temporary redirects for maintenance, rate limiting, better security using a standardized tool.
 
-Here is an example::
+Here is an example:
+
+.. code-block:: bash
 
     docker run -d \
         --restart=always \

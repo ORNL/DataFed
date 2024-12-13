@@ -166,8 +166,7 @@ echo "HTTP_CODE: ${HTTP_CODE}"
 FIRST_INT=${HTTP_CODE:0:1}
 if [ "${FIRST_INT}" -ne "2" ]
 then
-  response=$( curl --user "${basic_auth}" -X GET
-  "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed89&uuids=%5B\"${DATAFED_USER89_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER89_PASSWORD}&email=datafed89%40gmail.com&is_admin=true&secret=${DATAFED_ZEROMQ_SYSTEM_SECRET}" )
+  response=$( curl --user "${basic_auth}" -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed89&uuids=%5B\"${DATAFED_USER89_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER89_PASSWORD}&email=datafed89%40gmail.com&is_admin=true&secret=${DATAFED_ZEROMQ_SYSTEM_SECRET}" )
   CODE=$(echo $response | jq .code )
   ERROR_MSG=$(echo $response | jq .errorMessage )
   echo "$ERROR_MSG"

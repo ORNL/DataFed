@@ -49,6 +49,11 @@ else
   fi
 fi
 
+# WARNING: overwriting PATH can be very dangerous
+#   In Docker builds this must follow the pattern:
+#     PATH="<desired addition to path>:$PATH"
+#     Curly braces around PATH, like ${PATH} may pull from the host's PATH
+# Please see StackOverflow answer: https://stackoverflow.com/a/38742545
 if [[ ! -v PATH ]]; then
   PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/bin"
 else
@@ -60,6 +65,17 @@ else
 fi
 
 init_python() {
+
+  if [[ ! -v DATAFED_PYTHON_DEPENDENCIES_DIR ]]; then
+    echo "DATAFED_PYTHON_DEPENDENCIES_DIR is not defined please make sure it is defined in the ${PROJECT_ROOT}/config/datafed.sh file."
+    exit 1
+  else
+    if [[ -z "$DATAFED_PYTHON_DEPENDENCIES_DIR" ]]; then
+      echo "DATAFED_PYTHON_DEPENDENCIES_DIR is defined but is empty please make sure it is defined in ${PROJECT_ROOT}/config/datafed.sh file."
+      exit 1
+    fi
+  fi
+
   if [ ! -e "$DATAFED_DEPENDENCIES_INSTALL_PATH" ] || [ ! -d "$DATAFED_PYTHON_DEPENDENCIES_DIR" ]; then
       mkdir -p "$DATAFED_PYTHON_DEPENDENCIES_DIR"
   fi
@@ -80,7 +96,12 @@ install_cmake() {
     # Mark cmake as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.cmake_installed-${DATAFED_CMAKE_VERSION}"
   fi
-  export PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin:${PATH}"
+  # WARNING: overwriting PATH can be very dangerous
+  #   In Docker builds this must follow the pattern:
+  #     PATH="<desired addition to path>:$PATH"
+  #     Curly braces around PATH, like ${PATH} may pull from the host's PATH
+  # Please see StackOverflow answer: https://stackoverflow.com/a/38742545
+  export PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin:$PATH"
 }
 
 install_protobuf() {

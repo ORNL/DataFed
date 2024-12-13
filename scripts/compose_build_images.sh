@@ -92,6 +92,13 @@ then
     "${PROJECT_ROOT}/web/docker/Dockerfile" \
     --build-arg DEPENDENCIES="datafed-dependencies:latest" \
     --build-arg RUNTIME="datafed-runtime" \
+    --target ws-build \
+    "${PROJECT_ROOT}" \
+    -t datafed-web-build:latest
+  docker build -f \
+    "${PROJECT_ROOT}/web/docker/Dockerfile" \
+    --build-arg DEPENDENCIES="datafed-dependencies:latest" \
+    --build-arg RUNTIME="datafed-runtime" \
     "${PROJECT_ROOT}" \
     -t datafed-web:latest
   docker build -f \
