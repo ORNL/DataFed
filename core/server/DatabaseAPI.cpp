@@ -388,6 +388,16 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
   DL_TRACE(log_context, "token expires in: " << to_string(a_expires_in));
 }
 
+void DatabaseAPI::userSetAccessToken(const std::string &a_access_token,
+                                     uint32_t a_expires_in,
+                                     const std::string &a_refresh_token,
+                                     LogContext log_context) {
+  // TODO: check validity of other_token_data, perhaps use std::variant or
+  // std::optional
+  userSetAccessToken(a_access_token, a_expires_in, a_refresh_token, "",
+                     log_context);
+}
+
 void DatabaseAPI::userSetAccessToken(
     const Auth::UserSetAccessTokenRequest &a_request, Anon::AckReply &a_reply,
     LogContext log_context) {
