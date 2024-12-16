@@ -379,12 +379,14 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
                                      const std::string &other_token_data,
                                      LogContext log_context) {
   string result;
-  dbGetRaw("usr/token/set",
-           {{"access", a_acc_tok},
-            {"refresh", a_ref_tok},
-            {"expires_in", to_string(a_expires_in)},
-            {"other_token_data", other_token_data}},
-           result);
+  std::vector<pair<string, string>> params = {
+      {"access", a_acc_tok},
+      {"refresh", a_ref_tok},
+      {"expires_in", to_string(a_expires_in)}};
+  if (!other_token_data.empty()) {
+    params.push_back({"other_token_data", other_token_data});
+  }
+  dbGetRaw("usr/token/set", params, result);
   DL_TRACE(log_context, "token expires in: " << to_string(a_expires_in));
 }
 
