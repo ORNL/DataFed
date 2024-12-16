@@ -52,7 +52,9 @@ public:
                    LogContext log_context);
   void userClearKeys(LogContext log_context);
   void userSetAccessToken(const std::string &a_acc_tok, uint32_t a_expires_in,
-                          const std::string &a_ref_tok, LogContext log_context);
+                          const std::string &a_ref_tok,
+                          const std::string &other_token_data,
+                          LogContext log_context);
   void userGetAccessToken(std::string &a_acc_tok, std::string &a_ref_tok,
                           uint32_t &a_expires_in, LogContext log_context);
   void getExpiringAccessTokens(uint32_t a_expires_in,
