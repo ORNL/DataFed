@@ -484,7 +484,11 @@ app.get('/ui/authn', ( a_req, a_resp ) => {
             console.log("Session UID: ", a_req.session.uid);
             const uid = a_req.session.uid;
             logger.info('/ui/authn', getCurrentLineNumber(), 'User: ' + uid + ' verified, acc: ' + client_token.data.access_token + ", ref: " + client_token.data.refresh_token + ", exp:" + client_token.data.expires_in);
-            setAccessToken(uid, client_token.data.access_token, client_token.data.refresh_token, client_token.data.expires_in);
+            const optional_data = {
+                type: 4,                                        // hard code globus transfer for now    TODO: use session data to determine type
+                other: "5066556a-bcd6-4e00-8e3f-b45e0ec88b1a"   // hard code phony UUID for             TODO: use session data to find related collection ID
+            };
+            setAccessToken(uid, client_token.data.access_token, client_token.data.refresh_token, client_token.data.expires_in, optional_data);
             a_resp.redirect("/ui/main");
 
         }
@@ -1547,8 +1551,10 @@ app.get('/ui/theme/save', ( a_req, a_resp ) => {
 
 
 function setAccessToken( a_uid, a_acc_tok, a_ref_tok, a_expires_sec, token_optional_params = {} ) {
-    logger.info(setAccessToken.name, getCurrentLineNumber(), "setAccessToken uid: " + a_uid + " expires in: " + a_expires_sec + "optional params" + token_optional_params.toString());
-    // TODO: need to adjust this according to result of ticket #1106
+    logger.info(setAccessToken.name, getCurrentLineNumber(), "setAccessToken uid: " + a_uid + " expires in: " + a_expires_sec);
+    // TODO: remove
+    console.log("Made it to setAccessToken with uid: ", a_uid, " access token: ", a_acc_tok, " optional params: ", token_optional_params);
+    // end
     let message_data = { access: a_acc_tok, refresh: a_ref_tok, expiresIn: a_expires_sec };
     if (token_optional_params && Object.keys(token_optional_params).length > 0) {
         message_data = {...token_optional_params, ...message_data};

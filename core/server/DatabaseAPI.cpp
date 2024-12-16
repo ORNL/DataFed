@@ -376,12 +376,14 @@ void DatabaseAPI::userGetAccessToken(std::string &a_acc_tok,
 void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
                                      uint32_t a_expires_in,
                                      const std::string &a_ref_tok,
+                                     const std::string &other_token_data,
                                      LogContext log_context) {
   string result;
   dbGetRaw("usr/token/set",
            {{"access", a_acc_tok},
             {"refresh", a_ref_tok},
-            {"expires_in", to_string(a_expires_in)}},
+            {"expires_in", to_string(a_expires_in)},
+            {"other_token_data", other_token_data}},
            result);
   DL_TRACE(log_context, "token expires in: " << to_string(a_expires_in));
 }
@@ -391,7 +393,7 @@ void DatabaseAPI::userSetAccessToken(
     LogContext log_context) {
   (void)a_reply;
   userSetAccessToken(a_request.access(), a_request.expires_in(),
-                     a_request.refresh(), log_context);
+                     a_request.refresh(), a_request.other(), log_context);
 }
 
 void DatabaseAPI::getExpiringAccessTokens(
