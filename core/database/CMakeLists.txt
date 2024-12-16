@@ -15,6 +15,8 @@ if( ENABLE_FOXX_TESTS )
   add_test(NAME foxx_teardown COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_teardown.sh")
   add_test(NAME foxx_version COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_foxx.sh" -t "version")
   add_test(NAME foxx_support COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_foxx.sh" -t "support")
+  add_test(NAME foxx_record COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_foxx.sh" -t "record")
+  add_test(NAME foxx_path COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_foxx.sh" -t "path")
 
   set_tests_properties(foxx_setup PROPERTIES FIXTURES_SETUP Foxx)
   set_tests_properties(foxx_teardown PROPERTIES FIXTURES_CLEANUP Foxx)
