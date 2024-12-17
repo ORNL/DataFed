@@ -53,6 +53,7 @@ public:
   void userClearKeys(LogContext log_context);
   void userSetAccessToken(const std::string &a_acc_tok, uint32_t a_expires_in,
                           const std::string &a_ref_tok,
+                          const SDMS::AccessTokenType &token_type,
                           const std::string &other_token_data,
                           LogContext log_context);
   void userSetAccessToken(const std::string &a_access_token,
