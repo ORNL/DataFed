@@ -208,6 +208,14 @@ db-pass=$local_DATAFED_DATABASE_PASSWORD
 # with what is in the datafed-ws.cfg file
 client-id=$local_DATAFED_GLOBUS_APP_ID
 client-secret=$local_DATAFED_GLOBUS_APP_SECRET
+# Below sets the log level of the application
+# 0 - Critical
+# 1 - Error
+# 2 - Warning
+# 3 - Info  (Default)
+# 4 - Debug
+# 5 - Trace
+log-level=4
 EOF
 
 echo

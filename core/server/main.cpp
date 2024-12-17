@@ -46,6 +46,8 @@ int main(int a_argc, char **a_argv) {
     string cfg_file;
     bool gen_keys = false;
 
+    LogLevel cfg_log_level;
+
     po::options_description opts("Options");
 
     opts.add_options()("help,?", "Show help")(
@@ -80,7 +82,8 @@ int main(int a_argc, char **a_argv) {
         "Number of task worker threads")("cfg", po::value<string>(&cfg_file),
                                          "Use config file for options")(
         "gen-keys", po::bool_switch(&gen_keys),
-        "Generate new server keys then exit");
+        "Generate new server keys then exit")(
+        "log-level", po::value<LogLevel>(&cfg_log_level), "Set log level");
 
     try {
       po::variables_map opt_map;
