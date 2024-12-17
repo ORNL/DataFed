@@ -516,9 +516,27 @@ router.get('/token/set', function(req, res) {
                         refresh: req.queryParams.refresh,
                         expiration: Math.floor(Date.now() / 1000) + req.queryParams.expires_in
                     };
-                    g_db._update(user_id, obj, {
-                        keepNull: false
-                    });
+                    if (req.queryParams.other_token_data) {
+                        // TODO: update edge globus_token
+                        // will need _to and _from
+                        // these are defined in core/database/foxx/db_create.js
+                        // the globus_coll will be contained within other_token_data
+                        // we get the user ID above
+                        // https://docs.arangodb.com/3.13/develop/javascript-api/@arangodb/collection-object/#documents
+                        const updateObj = {
+                            _from: user_id, // the uid filed
+                            _to: "still need to look this guy up",
+                            type: req.queryParams.token_type,
+                            ...obj
+                        };
+                        // TODO: we may also need to update the edge on this
+                        console.log("writing to edge ", updateObj);
+                    }
+                    else {
+                        g_db._update(user_id, obj, {
+                            keepNull: false
+                        });
+                    }
                 }
             });
         } catch (e) {
