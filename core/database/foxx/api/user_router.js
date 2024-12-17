@@ -495,8 +495,8 @@ router.get('/token/set', function(req, res) {
         try {
             g_db._executeTransaction({
                 collections: {
-                    read: ["u", "uuid", "accn"],
-                    write: ["u"]
+                    read: ["u", "uuid", "accn", "globus_coll"],
+                    write: ["u", "globus_coll", "globus_token"]
                 },
                 action: function() {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
@@ -517,20 +517,32 @@ router.get('/token/set', function(req, res) {
                         expiration: Math.floor(Date.now() / 1000) + req.queryParams.expires_in
                     };
                     if (req.queryParams.other_token_data) {
+                        // find or insert collection
+                        const collection_search_key = req.queryParams.other_token_data;
+                        let globus_collection = g_db.globus_coll.exists({_key: collection_search_key});
+                        if (!globus_collection) {
+                            globus_collection = g_db.globus_coll.save({_key: collection_search_key, name: "some name we could look up"});
+                        }
+
+
                         // TODO: update edge globus_token
-                        // will need _to and _from
-                        // these are defined in core/database/foxx/db_create.js
-                        // the globus_coll will be contained within other_token_data
-                        // we get the user ID above
-                        // https://docs.arangodb.com/3.13/develop/javascript-api/@arangodb/collection-object/#documents
-                        const updateObj = {
-                            _from: user_id, // the uid filed
-                            _to: "still need to look this guy up",
-                            type: req.queryParams.token_type,
+                        const token_type = req.queryParams.token_type;
+                        const token_key = user_id + ":" + globus_collection._id + "::" + token_type;    // TODO: key formatting/convention
+                        const token_doc = {
+                            _key: token_key,
+                            _from: user_id, // the uid field
+                            _to: globus_collection._id,
+                            type: token_type,
                             ...obj
                         };
                         // TODO: we may also need to update the edge on this
-                        console.log("writing to edge ", updateObj);
+                        console.log("writing to edge ", token_doc);
+                        const token_doc_upsert = g_db.globus_token.insert(
+                            token_doc,
+                            {
+                                overwriteMode: "replace"    // TODO: perhaps use 'update' and specify values for true upsert
+                            }
+                        );
                     }
                     else {
                         g_db._update(user_id, obj, {
