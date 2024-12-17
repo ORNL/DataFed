@@ -524,10 +524,13 @@ router.get('/token/set', function(req, res) {
                             globus_collection = g_db.globus_coll.save({_key: collection_search_key, name: "some name we could look up"});
                         }
 
+                        // TODO: redundant exists call, try to reduce
+                        const user_doc = g_db.u.exists(user_id);
+
 
                         // TODO: update edge globus_token
                         const token_type = req.queryParams.token_type;
-                        const token_key = user_id + ":" + globus_collection._id + "::" + token_type;    // TODO: key formatting/convention
+                        const token_key = user_doc.key + "_" + globus_collection.key + "_" + token_type;    // TODO: key formatting/convention
                         const token_doc = {
                             _key: token_key,
                             _from: user_id, // the uid field
