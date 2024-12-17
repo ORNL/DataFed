@@ -408,7 +408,8 @@ void DatabaseAPI::userSetAccessToken(
     LogContext log_context) {
   (void)a_reply;
   userSetAccessToken(a_request.access(), a_request.expires_in(),
-                     a_request.refresh(), a_request.other(), log_context);
+                     a_request.refresh(), a_request.type(), a_request.other(),
+                     log_context);
 }
 
 void DatabaseAPI::getExpiringAccessTokens(
