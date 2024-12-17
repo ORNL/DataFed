@@ -46,7 +46,7 @@ int main(int a_argc, char **a_argv) {
     string cfg_file;
     bool gen_keys = false;
 
-    LogLevel cfg_log_level;
+    LogLevel cfg_log_level = LogLevel::INFO;
 
     po::options_description opts("Options");
 
@@ -149,6 +149,9 @@ int main(int a_argc, char **a_argv) {
         outf.close();
 
         return 0;
+      }
+      if (cfg_log_level != LogLevel::INFO) {
+        global_logger.setLevel(cfg_log_level);
       }
     } catch (po::unknown_option &e) {
       DL_ERROR(log_context, "Options error: " << e.what());
