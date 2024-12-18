@@ -47,7 +47,7 @@ module.exports = (function() {
     if (g_lib.hasAdminPermObject(a_client, data_id)) {
       return true;
     }
-    var data = g_db.d.document(data_id);
+    let data = g_db.d.document(data_id);
     // Grab the data item
     if (g_lib.hasPermissions(a_client, data, a_perm)) {
       return true;
