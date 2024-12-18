@@ -1,8 +1,17 @@
 #!/bin/bash
 
-# -e has been removed so that if an error occurs the PASSWORD File is deleted and not left lying around
-# -u has been removed because we have no guarantees that the env variables are defined
-set -f -o pipefail
+# History
+#
+# -e has been added back, password file deletion should be handled by another 
+# means such as the CI after script section. If the API fails to install, it 
+# could lead to improper testing the CI env. 
+#
+# -e has been removed so that if an error occurs the PASSWORD File is deleted
+# and not left lying around
+#
+# -u has been removed because we have no guarantees that the env variables are
+# defined
+set -ef -o pipefail
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
