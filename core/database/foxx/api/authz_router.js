@@ -36,9 +36,6 @@ router
       // }
       const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
 
-      const path_components = pathModule.splitPOSIXPath(req.queryParams.file);
-      const data_key = path_components.at(-1);
-      var record = new Record(data_key);
       // Will split a posix path into an array
       // E.g.
       // req.queryParams.file = "/usr/local/bin"
@@ -46,12 +43,15 @@ router
       //
       // Path components will be
       // ["usr", "local", "bin"]
+      const path_components = pathModule.splitPOSIXPath(req.queryParams.file);
+      const data_key = path_components.at(-1);
+      let record = new Record(data_key);
 
       // Special case - allow unknown client to read a publicly accessible record
       // if record exists and if it is a public record
       if (!client) {
         if (record.exists()) {
-          if (req.queryParams.act != "read" || !g_lib.hasPublicRead(data_id)) {
+          if (req.queryParams.act != "read" || !g_lib.hasPublicRead(record.id())) {
             console.log(
               "AUTHZ act: " + req.queryParams.act +
                 " client: " + client._id +
@@ -63,7 +63,7 @@ router
         }
       } else {
         // Actions: read, write, create, delete, chdir, lookup
-        var req_perm = 0;
+        let req_perm = 0;
         switch (req.queryParams.act) {
           case "read":
             req_perm = g_lib.PERM_RD_DATA;
