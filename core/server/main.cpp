@@ -180,6 +180,8 @@ int main(int a_argc, char **a_argv) {
             break;
           case LogLevel::LAST_SENTINEL:
             str_log_level = "INVALID"; // should never be reached
+            EXCEPT_PARAM(1, "Unexpected state when setting log level, " +
+                                to_string(cfg_log_level));
             break;
           }
           std::string log_message = "Setting log level to " + str_log_level;
