@@ -154,6 +154,32 @@ int main(int a_argc, char **a_argv) {
         // TODO: does this throw an error if the value is invalid?
         LogLevel cast_log_level = static_cast<LogLevel>(cfg_log_level);
         global_logger.setLevel(cast_log_level);
+        std::string str_log_level = "";
+        switch (cast_log_level) {
+        case LogLevel::CRITICAL:
+          str_log_level = "CRITICAL";
+          break;
+        case LogLevel::ERROR:
+          str_log_level = "ERROR";
+          break;
+        case LogLevel::WARNING:
+          str_log_level = "WARNING";
+          break;
+        case LogLevel::INFO:
+          str_log_level = "INFO";
+          break;
+        case LogLevel::DEBUG:
+          str_log_level = "DEBUG";
+          break;
+        case LogLevel::TRACE:
+          str_log_level = "TRACE";
+          break;
+        default:
+          str_log_level = "NOT SET";
+          break;
+        }
+        std::string log_message = "Setting log level to " + str_log_level;
+        DL_INFO(log_context, log_message);
       }
     } catch (po::unknown_option &e) {
       DL_ERROR(log_context, "Options error: " << e.what());
