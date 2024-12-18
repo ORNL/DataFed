@@ -86,6 +86,13 @@ else
   local_DATAFED_DATABASE_PASSWORD=$(printenv DATAFED_DATABASE_PASSWORD)
 fi
 
+if [ -z "${DATAFED_CORE_LOG_LEVEL}" ]
+then
+  local_DATAFED_CORE_LOG_LEVEL=3
+else
+  local_DATAFED_CORE_LOG_LEVEL=$(printenv DATAFED_CORE_LOG_LEVEL)
+fi
+
 VALID_ARGS=$(getopt -o ht:c:f:a:s:i:u:p --long 'help',threads-task:,cred-dir:,threads-client:,database-ip-address:,globus-secret:,globus-id:,database-user:,database-password: -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
@@ -215,7 +222,7 @@ client-secret=$local_DATAFED_GLOBUS_APP_SECRET
 # 3 - Info  (Default)
 # 4 - Debug
 # 5 - Trace
-log-level=4
+log-level=$local_DATAFED_CORE_LOG_LEVEL
 EOF
 
 echo
