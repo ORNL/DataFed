@@ -150,10 +150,8 @@ int main(int a_argc, char **a_argv) {
 
         return 0;
       }
-      if (cfg_log_level < 255) {
-        // TODO: does this throw an error if the value is invalid?
+      if (cfg_log_level < static_cast<unsigned int>(LogLevel::LAST_SENTINEL)) {
         LogLevel cast_log_level = static_cast<LogLevel>(cfg_log_level);
-        global_logger.setLevel(cast_log_level);
         std::string str_log_level = "";
         switch (cast_log_level) {
         case LogLevel::CRITICAL:
@@ -174,12 +172,13 @@ int main(int a_argc, char **a_argv) {
         case LogLevel::TRACE:
           str_log_level = "TRACE";
           break;
-        default:
-          str_log_level = "NOT SET";
+        case LogLevel::LAST_SENTINEL:
+          str_log_level = "INVALID"; // should never be reached
           break;
         }
         std::string log_message = "Setting log level to " + str_log_level;
         DL_INFO(log_context, log_message);
+        global_logger.setLevel(cast_log_level);
       }
     } catch (po::unknown_option &e) {
       DL_ERROR(log_context, "Options error: " << e.what());
