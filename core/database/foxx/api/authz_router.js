@@ -131,120 +131,118 @@ router
   .summary("Checks authorization")
   .description("Checks authorization");
 
-router
-  .get("/perm/check", function (req, res) {
-    try {
-      const client = g_lib.getUserFromClientID(req.queryParams.client);
-      var perms = req.queryParams.perms ? req.queryParams.perms : g_lib.PERM_ALL;
-      var obj,
-        result = true,
-        id = g_lib.resolveID(req.queryParams.id, client),
-        ty = id[0];
+router.get('/perm/check', function(req, res) {
+        try {
+            const client = g_lib.getUserFromClientID(req.queryParams.client);
+            var perms = req.queryParams.perms ? req.queryParams.perms : g_lib.PERM_ALL;
+            var obj, result = true,
+                id = g_lib.resolveID(req.queryParams.id, client),
+                ty = id[0];
 
-      if (id[1] != "/") {
-        throw [g_lib.ERR_INVALID_PARAM, "Invalid ID, " + req.queryParams.id];
-      }
+            if (id[1] != "/") {
+                throw [g_lib.ERR_INVALID_PARAM, "Invalid ID, " + req.queryParams.id];
+            }
 
-      if (ty == "p") {
-        var role = g_lib.getProjectRole(client._id, id);
-        if (role == g_lib.PROJ_NO_ROLE) {
-          // Non members have only VIEW permissions
-          if (perms != g_lib.PERM_RD_REC) result = false;
-        } else if (role == g_lib.PROJ_MEMBER) {
-          // Non members have only VIEW permissions
-          if ((perms & ~g_lib.PERM_MEMBER) != 0) result = false;
-        } else if (role == g_lib.PROJ_MANAGER) {
-          // Managers have all but UPDATE
-          if ((perms & ~g_lib.PERM_MANAGER) != 0) result = false;
+            if (ty == "p") {
+                var role = g_lib.getProjectRole(client._id, id);
+                if (role == g_lib.PROJ_NO_ROLE) { // Non members have only VIEW permissions
+                    if (perms != g_lib.PERM_RD_REC)
+                        result = false;
+                } else if (role == g_lib.PROJ_MEMBER) { // Non members have only VIEW permissions
+                    if ((perms & ~g_lib.PERM_MEMBER) != 0)
+                        result = false;
+                } else if (role == g_lib.PROJ_MANAGER) { // Managers have all but UPDATE
+                    if ((perms & ~g_lib.PERM_MANAGER) != 0)
+                        result = false;
+                }
+            } else if (ty == "d") {
+                if (!g_lib.hasAdminPermObject(client, id)) {
+                    obj = g_db.d.document(id);
+                    if (obj.locked)
+                        result = false;
+                    else
+                        result = g_lib.hasPermissions(client, obj, perms);
+                }
+            } else if (ty == "c") {
+                // If create perm is requested, ensure owner of collection has at least one allocation
+                if (perms & g_lib.PERM_CREATE) {
+                    var owner = g_db.owner.firstExample({
+                        _from: id
+                    });
+                    if (!g_db.alloc.firstExample({
+                            _from: owner._to
+                        })) {
+                        throw [g_lib.ERR_NO_ALLOCATION, "An allocation is required to create a collection."];
+                    }
+                }
+
+                if (!g_lib.hasAdminPermObject(client, id)) {
+                    obj = g_db.c.document(id);
+                    result = g_lib.hasPermissions(client, obj, perms);
+                }
+            } else {
+                throw [g_lib.ERR_INVALID_PARAM, "Invalid ID, " + req.queryParams.id];
+            }
+
+            res.send({
+                granted: result
+            });
+        } catch (e) {
+            g_lib.handleException(e, res);
         }
-      } else if (ty == "d") {
-        if (!g_lib.hasAdminPermObject(client, id)) {
-          obj = g_db.d.document(id);
-          if (obj.locked) result = false;
-          else result = g_lib.hasPermissions(client, obj, perms);
-        }
-      } else if (ty == "c") {
-        // If create perm is requested, ensure owner of collection has at least one allocation
-        if (perms & g_lib.PERM_CREATE) {
-          var owner = g_db.owner.firstExample({
-            _from: id
-          });
-          if (
-            !g_db.alloc.firstExample({
-              _from: owner._to
-            })
-          ) {
-            throw [g_lib.ERR_NO_ALLOCATION, "An allocation is required to create a collection."];
-          }
-        }
+    })
+    .queryParam('client', joi.string().required(), "Client ID")
+    .queryParam('id', joi.string().required(), "Object ID or alias")
+    .queryParam('perms', joi.number().required(), "Permission bit mask to check")
+    .summary('Checks client permissions for object')
+    .description('Checks client permissions for object (projects, data, collections');
 
-        if (!g_lib.hasAdminPermObject(client, id)) {
-          obj = g_db.c.document(id);
-          result = g_lib.hasPermissions(client, obj, perms);
+router.get('/perm/get', function(req, res) {
+        try {
+            const client = g_lib.getUserFromClientID(req.queryParams.client);
+            var result = req.queryParams.perms ? req.queryParams.perms : g_lib.PERM_ALL;
+            var obj, id = g_lib.resolveID(req.queryParams.id, client),
+                ty = id[0];
+
+            if (id[1] != "/")
+                throw [g_lib.ERR_INVALID_PARAM, "Invalid ID, " + req.queryParams.id];
+
+            if (ty == "p") {
+                var role = g_lib.getProjectRole(client._id, id);
+                if (role == g_lib.PROJ_NO_ROLE) { // Non members have only VIEW permissions
+                    result &= g_lib.PERM_RD_REC;
+                } else if (role == g_lib.PROJ_MEMBER) {
+                    result &= g_lib.PERM_MEMBER;
+                } else if (role == g_lib.PROJ_MANAGER) { // Managers have all but UPDATE
+                    result &= g_lib.PERM_MANAGER;
+                }
+            } else if (ty == "d") {
+                if (!g_lib.hasAdminPermObject(client, id)) {
+                    obj = g_db.d.document(id);
+                    if (obj.locked)
+                        result = 0;
+                    else
+                        result = g_lib.getPermissions(client, obj, result);
+                }
+            } else if (ty == "c") {
+                if (!g_lib.hasAdminPermObject(client, id)) {
+                    obj = g_db.c.document(id);
+                    result = g_lib.getPermissions(client, obj, result);
+                }
+            } else
+                throw [g_lib.ERR_INVALID_PARAM, "Invalid ID, " + req.queryParams.id];
+
+            res.send({
+                granted: result
+            });
+        } catch (e) {
+            g_lib.handleException(e, res);
         }
-      } else {
-        throw [g_lib.ERR_INVALID_PARAM, "Invalid ID, " + req.queryParams.id];
-      }
+    })
+    .queryParam('client', joi.string().required(), "Client ID")
+    .queryParam('id', joi.string().required(), "Object ID or alias")
+    .queryParam('perms', joi.number().optional(), "Permission bit mask to get (default = all)")
+    .summary('Gets client permissions for object')
+    .description('Gets client permissions for object (projects, data, collections. Note this is potentially slower than using "check" method.');
 
-      res.send({
-        granted: result
-      });
-    } catch (e) {
-      g_lib.handleException(e, res);
-    }
-  })
-  .queryParam("client", joi.string().required(), "Client ID")
-  .queryParam("id", joi.string().required(), "Object ID or alias")
-  .queryParam("perms", joi.number().required(), "Permission bit mask to check")
-  .summary("Checks client permissions for object")
-  .description("Checks client permissions for object (projects, data, collections");
 
-router
-  .get("/perm/get", function (req, res) {
-    try {
-      const client = g_lib.getUserFromClientID(req.queryParams.client);
-      var result = req.queryParams.perms ? req.queryParams.perms : g_lib.PERM_ALL;
-      var obj,
-        id = g_lib.resolveID(req.queryParams.id, client),
-        ty = id[0];
-
-      if (id[1] != "/") throw [g_lib.ERR_INVALID_PARAM, "Invalid ID, " + req.queryParams.id];
-
-      if (ty == "p") {
-        var role = g_lib.getProjectRole(client._id, id);
-        if (role == g_lib.PROJ_NO_ROLE) {
-          // Non members have only VIEW permissions
-          result &= g_lib.PERM_RD_REC;
-        } else if (role == g_lib.PROJ_MEMBER) {
-          result &= g_lib.PERM_MEMBER;
-        } else if (role == g_lib.PROJ_MANAGER) {
-          // Managers have all but UPDATE
-          result &= g_lib.PERM_MANAGER;
-        }
-      } else if (ty == "d") {
-        if (!g_lib.hasAdminPermObject(client, id)) {
-          obj = g_db.d.document(id);
-          if (obj.locked) result = 0;
-          else result = g_lib.getPermissions(client, obj, result);
-        }
-      } else if (ty == "c") {
-        if (!g_lib.hasAdminPermObject(client, id)) {
-          obj = g_db.c.document(id);
-          result = g_lib.getPermissions(client, obj, result);
-        }
-      } else throw [g_lib.ERR_INVALID_PARAM, "Invalid ID, " + req.queryParams.id];
-
-      res.send({
-        granted: result
-      });
-    } catch (e) {
-      g_lib.handleException(e, res);
-    }
-  })
-  .queryParam("client", joi.string().required(), "Client ID")
-  .queryParam("id", joi.string().required(), "Object ID or alias")
-  .queryParam("perms", joi.number().optional(), "Permission bit mask to get (default = all)")
-  .summary("Gets client permissions for object")
-  .description(
-    'Gets client permissions for object (projects, data, collections. Note this is potentially slower than using "check" method.'
-  );
