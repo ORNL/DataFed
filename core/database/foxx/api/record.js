@@ -94,6 +94,9 @@ class Record {
     return this.#key;
   }
 
+  id() {
+    return this.#data_id;
+  }
   /**
    * @brief Will return error code of last run method.
    *
@@ -165,7 +168,7 @@ class Record {
       // oweners id.
       // 2. Using the loc.uid parameter if not inflight to get the owner
       // id.
-      var new_alloc = g_db.alloc.firstExample({
+      let new_alloc = g_db.alloc.firstExample({
         _from: this.#loc.new_owner ? this.#loc.new_owner : this.#loc.uid,
         _to: this.#loc.new_repo,
       });
@@ -181,14 +184,14 @@ class Record {
         return false;
       }
 
-      var stored_path = this._pathToRecord(new_alloc.path);
+      let stored_path = this._pathToRecord(new_alloc.path);
 
-      if (!this._comparePaths(stored_path, a_path)) return false;
+      if (!this._comparePaths(stored_path, a_path)) { return false; }
     } else {
-      var stored_path = this._pathToRecord(this.#alloc.path);
+      let stored_path = this._pathToRecord(this.#alloc.path);
 
       // If there is no new repo check that the paths align
-      if (!this._comparePaths(stored_path, a_path)) return false;
+      if (!this._comparePaths(stored_path, a_path)) { return false; }
     }
     return true;
   }
