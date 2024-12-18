@@ -1,15 +1,14 @@
-'use strict';
+"use strict";
 
-const g_db = require('@arangodb').db;
-const g_lib = require('./support');
-const { errors } = require('@arangodb');
+const g_db = require("@arangodb").db;
+const g_lib = require("./support");
+const { errors } = require("@arangodb");
 
 /**
  * @class Record
  * @brief Represents a record in the database and provides methods to manage it.
  */
-class Record  {
-
+class Record {
   // ERROR code
   #error = null;
   // Error message should be a string if defined
@@ -17,10 +16,10 @@ class Record  {
   // Boolean value that determines if the record exists in the database
   #exists = false;
   // location object, determines what the allocation the data item is associated with
-  #loc = null
+  #loc = null;
   // Allocation object, determines what allocation data item is associated with
   #alloc = null;
-  // The data key 
+  // The data key
   #key = null;
   // The data id simply the key prepended with 'd/'
   #data_id = null;
@@ -31,29 +30,29 @@ class Record  {
    */
   constructor(a_key) {
     // Define the collection
-    const collection = g_db._collection('d');
+    const collection = g_db._collection("d");
 
-    // This function is designed to check if the provided key exists in the 
-    // database as a record. Searches are only made in the 'd' collection 
-    // 
+    // This function is designed to check if the provided key exists in the
+    // database as a record. Searches are only made in the 'd' collection
+    //
     // Will return true if it does and false if it does not.
     this.#key = a_key;
     this.#data_id = "d/" + a_key;
     if (a_key) {
       // Check if the document exists
       try {
-         if (collection.exists(this.#key)) {
-             this.#exists = true;
-	 } else {
-             this.#exists = false;
-             this.#error = g_lib.ERR_NOT_FOUND; 
-             this.#err_msg = "Invalid key: (" + a_key + "). No record found.";
-	 }
+        if (collection.exists(this.#key)) {
+          this.#exists = true;
+        } else {
+          this.#exists = false;
+          this.#error = g_lib.ERR_NOT_FOUND;
+          this.#err_msg = "Invalid key: (" + a_key + "). No record found.";
+        }
       } catch (e) {
-         this.#exists = false;
-         this.#error = g_lib.ERR_INTERNAL_FAULT; 
-         this.#err_msg = "Unknown error encountered.";
-         console.log(e);
+        this.#exists = false;
+        this.#error = g_lib.ERR_INTERNAL_FAULT;
+        this.#err_msg = "Unknown error encountered.";
+        console.log(e);
       }
     }
   }
@@ -62,7 +61,9 @@ class Record  {
    * @brief will create the path to key as it should appear on the repository.
    **/
   _pathToRecord(basePath) {
-    return basePath.endsWith('/') ? basePath + this.#key : basePath + '/' + this.#key;
+    return basePath.endsWith("/")
+      ? basePath + this.#key
+      : basePath + "/" + this.#key;
   }
 
   /**
@@ -71,7 +72,11 @@ class Record  {
   _comparePaths(storedPath, inputPath) {
     if (storedPath !== inputPath) {
       this.#error = g_lib.ERR_PERM_DENIED;
-      this.#err_msg = "Record path is not consistent with repo expected path is: " + storedPath + " attempted path is " + inputPath;
+      this.#err_msg =
+        "Record path is not consistent with repo expected path is: " +
+        storedPath +
+        " attempted path is " +
+        inputPath;
       return false;
     }
     return true;
@@ -95,7 +100,7 @@ class Record  {
    * If no error code, will return null
    **/
   error() {
-    return this.#error; 
+    return this.#error;
   }
 
   /**
@@ -117,17 +122,18 @@ class Record  {
     //    uid: owner_id
     //};
     this.#loc = g_db.loc.firstExample({
-      _from: this.#data_id
+      _from: this.#data_id,
     });
 
     if (!this.#loc) {
       this.#error = g_lib.ERR_PERM_DENIED;
-      this.#err_msg = "Permission denied data is not managed by DataFed. This can happen if you try to do a transfer directly from Globus.";
+      this.#err_msg =
+        "Permission denied data is not managed by DataFed. This can happen if you try to do a transfer directly from Globus.";
       return false;
     }
     this.#alloc = g_db.alloc.firstExample({
       _from: this.#loc.uid,
-      _to: this.#loc._to
+      _to: this.#loc._to,
     });
 
     // If alloc is null then will return false if not null will return true.
@@ -140,15 +146,14 @@ class Record  {
    * @return {boolean} True if consistent, otherwise false.
    */
   isPathConsistent(a_path) {
-
     // This function will populate the this.#loc member and the this.#alloc
     // member
-    if ( !this.isManaged() ) {
+    if (!this.isManaged()) {
       return false;
     }
 
     // If path is missing the starting "/" add it back in
-    if (!a_path.startsWith("/") && this.#alloc.path.startsWith("/") ) {
+    if (!a_path.startsWith("/") && this.#alloc.path.startsWith("/")) {
       a_path = "/" + a_path;
     }
 
@@ -162,30 +167,31 @@ class Record  {
       // id.
       var new_alloc = g_db.alloc.firstExample({
         _from: this.#loc.new_owner ? this.#loc.new_owner : this.#loc.uid,
-        _to: this.#loc.new_repo
+        _to: this.#loc.new_repo,
       });
 
       // If no allocation is found for the item thrown an error
       // if the paths do not align also thrown an error.
       if (!new_alloc) {
         this.#error = g_lib.ERR_PERM_DENIED;
-        this.#err_msg = "Permission denied, '"  + this.#key + "' is not part of an allocation '"
+        this.#err_msg =
+          "Permission denied, '" +
+          this.#key +
+          "' is not part of an allocation '";
         return false;
       }
 
       var stored_path = this._pathToRecord(new_alloc.path);
-     
-      if ( !this._comparePaths(stored_path, a_path) ) return false;
-      
-    }  else {
- 
+
+      if (!this._comparePaths(stored_path, a_path)) return false;
+    } else {
       var stored_path = this._pathToRecord(this.#alloc.path);
 
       // If there is no new repo check that the paths align
-      if ( !this._comparePaths(stored_path, a_path) ) return false;
+      if (!this._comparePaths(stored_path, a_path)) return false;
     }
     return true;
   }
-};
+}
 
-module.exports = Record
+module.exports = Record;
