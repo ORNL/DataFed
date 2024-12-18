@@ -46,7 +46,7 @@ int main(int a_argc, char **a_argv) {
     string cfg_file;
     bool gen_keys = false;
 
-    uint8_t cfg_log_level = 255;
+    unsigned int cfg_log_level = 255;
 
     po::options_description opts("Options");
 
@@ -83,7 +83,7 @@ int main(int a_argc, char **a_argv) {
                                          "Use config file for options")(
         "gen-keys", po::bool_switch(&gen_keys),
         "Generate new server keys then exit")(
-        "log-level", po::value<uint8_t>(&cfg_log_level), "Set log level");
+        "log-level", po::value<unsigned int>(&cfg_log_level), "Set log level");
 
     try {
       po::variables_map opt_map;
