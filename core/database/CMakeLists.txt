@@ -15,6 +15,7 @@ if( ENABLE_FOXX_TESTS )
   add_test(NAME foxx_teardown COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_teardown.sh")
   add_test(NAME foxx_version COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_foxx.sh" -t "version")
   add_test(NAME foxx_support COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_foxx.sh" -t "support")
+  add_test(NAME foxx_record COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_foxx.sh" -t "unit_authz")
   add_test(NAME foxx_record COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_foxx.sh" -t "unit_record")
   add_test(NAME foxx_path COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_foxx.sh" -t "path")
 
