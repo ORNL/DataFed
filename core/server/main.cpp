@@ -15,6 +15,7 @@
 
 // Standard includes
 #include "Config.hpp"
+#include <climits>
 #include <fstream>
 #include <iostream>
 #include <unistd.h>
@@ -46,7 +47,7 @@ int main(int a_argc, char **a_argv) {
     string cfg_file;
     bool gen_keys = false;
 
-    unsigned int cfg_log_level = 255;
+    unsigned int cfg_log_level = UINT_MAX;
 
     po::options_description opts("Options");
 
@@ -150,35 +151,41 @@ int main(int a_argc, char **a_argv) {
 
         return 0;
       }
-      if (cfg_log_level < static_cast<unsigned int>(LogLevel::LAST_SENTINEL)) {
-        LogLevel cast_log_level = static_cast<LogLevel>(cfg_log_level);
-        std::string str_log_level = "";
-        switch (cast_log_level) {
-        case LogLevel::CRITICAL:
-          str_log_level = "CRITICAL";
-          break;
-        case LogLevel::ERROR:
-          str_log_level = "ERROR";
-          break;
-        case LogLevel::WARNING:
-          str_log_level = "WARNING";
-          break;
-        case LogLevel::INFO:
-          str_log_level = "INFO";
-          break;
-        case LogLevel::DEBUG:
-          str_log_level = "DEBUG";
-          break;
-        case LogLevel::TRACE:
-          str_log_level = "TRACE";
-          break;
-        case LogLevel::LAST_SENTINEL:
-          str_log_level = "INVALID"; // should never be reached
-          break;
+      if (cfg_log_level != UINT_MAX) {
+        if (cfg_log_level >=
+            static_cast<unsigned int>(LogLevel::LAST_SENTINEL)) {
+          DL_ERROR(log_context,
+                   "Invalid log level provided, defaulting to INFO");
+        } else {
+          LogLevel cast_log_level = static_cast<LogLevel>(cfg_log_level);
+          std::string str_log_level = "";
+          switch (cast_log_level) {
+          case LogLevel::CRITICAL:
+            str_log_level = "CRITICAL";
+            break;
+          case LogLevel::ERROR:
+            str_log_level = "ERROR";
+            break;
+          case LogLevel::WARNING:
+            str_log_level = "WARNING";
+            break;
+          case LogLevel::INFO:
+            str_log_level = "INFO";
+            break;
+          case LogLevel::DEBUG:
+            str_log_level = "DEBUG";
+            break;
+          case LogLevel::TRACE:
+            str_log_level = "TRACE";
+            break;
+          case LogLevel::LAST_SENTINEL:
+            str_log_level = "INVALID"; // should never be reached
+            break;
+          }
+          std::string log_message = "Setting log level to " + str_log_level;
+          DL_INFO(log_context, log_message);
+          global_logger.setLevel(cast_log_level);
         }
-        std::string log_message = "Setting log level to " + str_log_level;
-        DL_INFO(log_context, log_message);
-        global_logger.setLevel(cast_log_level);
       }
     } catch (po::unknown_option &e) {
       DL_ERROR(log_context, "Options error: " << e.what());
