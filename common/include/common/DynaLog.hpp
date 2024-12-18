@@ -109,7 +109,7 @@ public:
 
 class LogLine {
 public:
-  LogLine(LogContext ctx, std::string msg) : context(ctx), message(msg) {};
+  LogLine(LogContext ctx, std::string msg) : context(ctx), message(msg){};
   LogContext context;
   std::string message = "";
 };
