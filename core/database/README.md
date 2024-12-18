@@ -1,8 +1,8 @@
 # WARNING - Adding Tests
 
-Note CMake is configured to run tests one at a time. The tests are specified in
+Note The granularity of CMake is dependent on how they are defined in the CMakeLists.txt file. The tests are specified in
 CMake by passing a string that is matched against the chai test cases in the
-"it()" sections of the chai unit tests..
+"it()" sections of the chai unit tests. Any test cases that match the pattern will run when that test is triggered.
 
 i.e.
 
@@ -28,7 +28,17 @@ describe('Record Class', () => {
      :
      :
   });
+
+  
+  it('unit_record: isPathConsistent a different test case.', () => {
+     :
+     :
+  });
 });
 ``` 
 
-Notice that 'unit_record' is explicitly mentioned in the test case.
+Notice that 'unit_record' is explicitly mentioned in the test cases. In the above exerpt, both tests will run. If ctest were to be explicitly called we could run all unit_record tests with the following.
+
+```
+ctest -R foxx_record
+```
