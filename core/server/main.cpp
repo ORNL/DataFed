@@ -46,7 +46,7 @@ int main(int a_argc, char **a_argv) {
     string cfg_file;
     bool gen_keys = false;
 
-    LogLevel cfg_log_level = LogLevel::INFO;
+    uint8_t cfg_log_level = 255;
 
     po::options_description opts("Options");
 
@@ -83,7 +83,7 @@ int main(int a_argc, char **a_argv) {
                                          "Use config file for options")(
         "gen-keys", po::bool_switch(&gen_keys),
         "Generate new server keys then exit")(
-        "log-level", po::value<LogLevel>(&cfg_log_level), "Set log level");
+        "log-level", po::value<uint8_t>(&cfg_log_level), "Set log level");
 
     try {
       po::variables_map opt_map;
@@ -150,8 +150,10 @@ int main(int a_argc, char **a_argv) {
 
         return 0;
       }
-      if (cfg_log_level != LogLevel::INFO) {
-        global_logger.setLevel(cfg_log_level);
+      if (cfg_log_level < 255) {
+        // TODO: does this throw an error if the value is invalid?
+        LogLevel cast_log_level = static_cast<LogLevel>(cfg_log_level);
+        global_logger.setLevel(cast_log_level);
       }
     } catch (po::unknown_option &e) {
       DL_ERROR(log_context, "Options error: " << e.what());
