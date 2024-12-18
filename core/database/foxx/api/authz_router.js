@@ -38,7 +38,7 @@ router
 
       const path_components = pathModule.splitPOSIXPath(req.queryParams.file);
       const data_key = path_components.at(-1);
-      var record = Record(data_key);
+      var record = new Record(data_key);
       // Will split a posix path into an array
       // E.g.
       // req.queryParams.file = "/usr/local/bin"
