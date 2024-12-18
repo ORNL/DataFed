@@ -5,17 +5,10 @@ const expect = chai.expect;
 const Record = require("../api/record");
 const g_db = require("@arangodb").db;
 const g_lib = require("../api/support");
-//const sinon = require('sinon');
-//const proxyquire = require('proxyquire');
 const arangodb = require("@arangodb");
 
 describe("Record Class", () => {
-  let count = 0;
-
   beforeEach(() => {
-    console.log("Clearing database collections.");
-    console.log("Count is " + count);
-    count = count + 1;
     g_db.d.truncate();
     g_db.alloc.truncate();
     g_db.loc.truncate();
