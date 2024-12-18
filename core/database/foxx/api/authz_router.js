@@ -87,7 +87,7 @@ router
         // This will tell us if the action on the record is authorized
         // we still do not know if the path is correct.
         if (record.exists()) {
-          if (authzModule.isRecordActionAuthorized(client, data_key, req_perm)) {
+          if (!authzModule.isRecordActionAuthorized(client, data_key, req_perm)) {
             console.log(
               "AUTHZ act: " + req.queryParams.act +
                 " client: " + client._id +
