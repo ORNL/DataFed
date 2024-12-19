@@ -191,6 +191,7 @@ Example datafed-core.cfg file::
     cred-dir = /opt/datafed/keys
     client-id = <Globus App ID>
     client-secret = <Globus App Secret>
+    log-level = 4
 
 To run the service::
 

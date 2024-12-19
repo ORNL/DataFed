@@ -48,6 +48,7 @@ services:
       DATAFED_DATABASE_PASSWORD: "${DATAFED_DATABASE_PASSWORD}"
       DATAFED_DATABASE_IP_ADDRESS: "${DATAFED_DATABASE_IP_ADDRESS}"
       DATAFED_DATABASE_IP_ADDRESS_PORT: "${DATAFED_DATABASE_IP_ADDRESS}:${DATAFED_DATABASE_PORT}"
+      DATAFED_CORE_LOG_LEVEL: "${DATAFED_CORE_LOG_LEVEL}"
     ports:
       - 7513 # Communication web server
       - 7512:7512 # Secure core server communication must be exposed outside of the container

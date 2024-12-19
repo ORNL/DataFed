@@ -86,6 +86,13 @@ else
   local_DATAFED_DATABASE_PASSWORD=$(printenv DATAFED_DATABASE_PASSWORD)
 fi
 
+if [ -z "${DATAFED_CORE_LOG_LEVEL}" ]
+then
+  local_DATAFED_CORE_LOG_LEVEL=3
+else
+  local_DATAFED_CORE_LOG_LEVEL=$(printenv DATAFED_CORE_LOG_LEVEL)
+fi
+
 VALID_ARGS=$(getopt -o ht:c:f:a:s:i:u:p --long 'help',threads-task:,cred-dir:,threads-client:,database-ip-address:,globus-secret:,globus-id:,database-user:,database-password: -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
@@ -208,6 +215,14 @@ db-pass=$local_DATAFED_DATABASE_PASSWORD
 # with what is in the datafed-ws.cfg file
 client-id=$local_DATAFED_GLOBUS_APP_ID
 client-secret=$local_DATAFED_GLOBUS_APP_SECRET
+# Below sets the log level of the application
+# 0 - Critical
+# 1 - Error
+# 2 - Warning
+# 3 - Info  (Default)
+# 4 - Debug
+# 5 - Trace
+log-level=$local_DATAFED_CORE_LOG_LEVEL
 EOF
 
 echo

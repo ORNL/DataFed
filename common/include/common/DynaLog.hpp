@@ -90,7 +90,11 @@ enum class LogLevel : unsigned int {
   WARNING,
   INFO,
   DEBUG,
-  TRACE
+  TRACE,
+
+  LAST_SENTINEL // Used to check that unsigned int conversions fall in valid
+                // range E.g.
+                // value < static_cast<unsigned int>(LogLevel::LAST_SENTINEL)
 };
 
 std::string toString(const LogLevel level);
