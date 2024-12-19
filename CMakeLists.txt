@@ -219,7 +219,16 @@ if( INSTALL_WEB_SERVER )
 endif()
 
 if( INSTALL_FOXX ) 
-  install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_foxx.sh )")
+  # RESULT_VARIABLE will either be an exit code or an error message, if it is not 0 an error has occurred
+  install(CODE [[
+    execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_foxx.sh
+                     RESULT_VARIABLE result
+		     )
+
+    if(NOT result EQUAL 0)
+        message(FATAL_ERROR "Install foxx script failed: ${result}")
+    endif()
+]])
 endif()
 
 if (ENABLE_END_TO_END_TESTS)
