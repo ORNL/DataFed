@@ -219,7 +219,7 @@ if( INSTALL_WEB_SERVER )
 endif()
 
 if( INSTALL_FOXX ) 
-  install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_foxx.sh )")
+  install( CODE "execute_process(COMMAND ${DataFed_SOURCE_DIR}/scripts/install_foxx.sh )")
 endif()
 
 if (ENABLE_END_TO_END_TESTS)
