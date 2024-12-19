@@ -149,6 +149,7 @@ end-to-end-core-setup:
     - echo "-e DATAFED_DATABASE_IP_ADDRESS_PORT=\"$CI_DATAFED_DATABASE_IP_ADDRESS_PORT\" \\" >> run_core.sh
     - echo "-e DATAFED_DEFAULT_LOG_PATH=\"$CONTAINER_LOG_FILE_PATH\" \\" >> run_core.sh
     - echo "-e UID=\"$USER_ID\" \\" >> run_core.sh
+    - echo "-e DATEFED_CORE_LOG_LEVEL=\"$DATEFED_CORE_LOG_LEVEL" \\" >> run_core.sh
     - echo "-p 7513:7513 \\" >> run_core.sh
     - echo "-p 7512:7512 \\" >> run_core.sh
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_core.sh
@@ -339,7 +340,6 @@ end-to-end-gcs-authz-setup:
     - echo "-e DATAFED_REPO_ID_AND_DIR=\"${CI_DATAFED_REPO_ID_AND_DIR}\" \\" >> run_globus.sh
     - echo "-e DATAFED_GCS_IP=\"${CI_DATAFED_GCS_IP}\" \\" >> run_globus.sh
     - echo "-e DATAFED_REPO_DOMAIN=\"${CI_DATAFED_REPO_DOMAIN}\" \\" >> run_globus.sh
-    - echo "-e DATEFED_CORE_LOG_LEVEL=\"${DATEFED_CORE_LOG_LEVEL}\" \\" >> run_globus.sh
     - echo "-v \"${DATAFED_GLOBUS_DIR}:/opt/datafed/globus\" \\" >> run_globus.sh
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_globus.sh
     - echo "-v \"${DATAFED_HOST_COLLECTION_MOUNT}:/mnt/datafed\" \\" >> run_globus.sh
