@@ -149,7 +149,7 @@ end-to-end-core-setup:
     - echo "-e DATAFED_DATABASE_IP_ADDRESS_PORT=\"$CI_DATAFED_DATABASE_IP_ADDRESS_PORT\" \\" >> run_core.sh
     - echo "-e DATAFED_DEFAULT_LOG_PATH=\"$CONTAINER_LOG_FILE_PATH\" \\" >> run_core.sh
     - echo "-e UID=\"$USER_ID\" \\" >> run_core.sh
-    - echo "-e DATEFED_CORE_LOG_LEVEL=\"$DATEFED_CORE_LOG_LEVEL\" \\" >> run_core.sh
+    - echo "-e DATAFED_CORE_LOG_LEVEL=\"DATAFED_CORE_LOG_LEVEL\" \\" >> run_core.sh
     - echo "-p 7513:7513 \\" >> run_core.sh
     - echo "-p 7512:7512 \\" >> run_core.sh
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_core.sh
