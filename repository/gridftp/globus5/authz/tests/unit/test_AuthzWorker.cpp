@@ -22,7 +22,7 @@ extern "C" {
 class ConfigFixture {
 public:
   // Setup: create the object before each test case
-  // The below settings are simply for testing and are not 
+  // The below settings are simply for testing and are not
   // used in anyway in a production environment.
   ConfigFixture() {
     std::string repo_id = "datafed-one-repo-to-rule-them-all";
