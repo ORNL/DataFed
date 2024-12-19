@@ -58,7 +58,7 @@ private:
 
 BOOST_FIXTURE_TEST_SUITE(AuthzTest, ConfigFixture)
 
-BOOST_AUTO_TEST_CASE(test_authz) {
+BOOST_AUTO_TEST_CASE(test_authz_worker_construction) {
   SDMS::LogContext log_context;
   SDMS::AuthzWorker worker(&config, log_context);
   std::cout << std::string(config.repo_id) << std::endl;
@@ -373,7 +373,6 @@ BOOST_AUTO_TEST_CASE(ProcessResponseWithValidMessage) {
   SDMS::AuthzWorker worker(&config, log_context);
 
   BOOST_CHECK_EQUAL(worker.processResponse(response), 0);
-  // Verify that DL_DEBUG was called with "Received NACK reply" for NACK case
 }
 
 BOOST_AUTO_TEST_CASE(ProcessResponseWithNackReply) {
@@ -402,6 +401,7 @@ BOOST_AUTO_TEST_CASE(ProcessResponseWithNackReply) {
 
   SDMS::LogContext log_context;
   SDMS::AuthzWorker worker(&config, log_context);
+  // Verify that DL_DEBUG was called with "Received NACK reply" for NACK case
   BOOST_CHECK_EQUAL(worker.processResponse(response), 1);
   // Verify error occurs
 }
