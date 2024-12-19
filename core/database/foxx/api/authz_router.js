@@ -5,9 +5,9 @@ const router = createRouter();
 const joi = require("joi");
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
-const pathModule = require("./posix_path"); // Replace with the actual file name
-const Record = require("./record"); // Replace with the actual file name
-const authzModule = require("./authz"); // Replace with the actual file name
+const pathModule = require("./posix_path");
+const Record = require("./record");
+const authzModule = require("./authz");
 
 module.exports = router;
 
