@@ -47,6 +47,8 @@ int main(int a_argc, char **a_argv) {
     string cfg_file;
     bool gen_keys = false;
 
+    // Note: we may want to dynamically choose type at compile time
+    // based on underlying type of LogLevel enum
     unsigned int cfg_log_level = UINT_MAX;
 
     po::options_description opts("Options");
