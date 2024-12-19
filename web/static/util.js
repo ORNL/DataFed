@@ -714,3 +714,56 @@ function _schemaResolveRefs( a_props, a_refs ){
     }
 }
 */
+
+/**
+ * Basic implementation of get_authorize_url from Globus SDK
+ *  @param {UUID} client_id The UUID of the Globus authentication client
+ *  @param {string} redirect_uri The URI safe application-wide Globus Auth redirect URI.
+ *  @param {Array<string>}requested_scopes The scopes on the token(s) being requested
+ *      In the case of accessing a mapped collection, this should include the mapped collection's UUID
+ *      like so: https://auth.globus.org/scopes/YOUR-UUID-HERE/data_access
+ *  @param {string} state Allows the application to pass information back to itself
+ *  @param {boolean} refresh_tokens Request refresh tokens in addition to access tokens
+ *  @param {object} query_params Additional params
+ *  @returns {string} The URL a user can follow to provide authorization and consent via Globus
+ */
+export function globusGetAuthorizeURL(client_id, redirect_uri, requested_scopes=[], state="_default", refresh_tokens=false, query_params={}) {
+    if ( !client_id || !redirect_uri ) {
+        throw new Error("Missing required parameters, please provide client_id and redirect_uri");
+    }
+    if (!requested_scopes?.length) {
+        requested_scopes = [
+            "openid", "profile", "email",
+            "urn:globus:auth:scope:transfer.api.globus.org:all"
+        ];
+    }
+    // TODO: stubbed client object to provide base url, we should extract if possible
+    const auth_client = {
+        base_url: "https://auth.globus.org",
+    };
+    const authorize_base_url = auth_client.base_url + "/v2/oauth2/authorize";
+    let required_scopes = [...requested_scopes];
+    if (refresh_tokens) {
+        required_scopes = [...requested_scopes, "offline_access"];
+    }
+    /*
+        NOTE: using URLSearchParams changes encoding of  " " to "+" which Globus accepts, despite saying otherwise
+        https://docs.globus.org/api/auth/developer-guide/#obtaining-authorization
+    */
+    // TODO: consider moving back to custom encoding in anticipation that Globus will no longer accept a different encoding scheme
+    let params = new URLSearchParams({
+        "client_id": client_id,
+        "redirect_uri": redirect_uri,
+        "scope": required_scopes.join(" "),    // Scopes need to be separated by a space
+        "state": state,
+        "response_type": "code",
+        "access_type": refresh_tokens ? "offline" : "online",
+        "prompt": "login",
+    });
+    Object.entries(query_params).forEach(([key, value]) => {
+       if (!!value && !params.has(key)) { // short-circuit on empty param values or if param already defined, TODO: are there cases where we may want empty params?
+           params.set(key, value);
+       }
+    });
+    return authorize_base_url + "?" + params.toString();
+}
