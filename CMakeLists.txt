@@ -219,16 +219,13 @@ if( INSTALL_WEB_SERVER )
 endif()
 
 if( INSTALL_FOXX ) 
-  # RESULT_VARIABLE will either be an exit code or an error message, if it is not 0 an error has occurred
-  install(CODE [[
-    execute_process(COMMAND ${DataFed_SOURCE_DIR}/scripts/install_foxx.sh
-                     RESULT_VARIABLE result
-		     )
-
-    if(NOT result EQUAL 0)
-        message(FATAL_ERROR "Install foxx script failed: ${result}")
-    endif()
-]])
+  install(CODE "execute_process(COMMAND ${DataFed_SOURCE_DIR}/scripts/install_foxx.sh
+                                OUTPUT_VARIABLE _out
+                                ERROR_VARIABLE _err
+                                RESULT_VARIABLE _res)
+                If (NOT \${_res} EQUAL \"0\")
+                    message( FATAL_ERROR \"out: \${_out} install_foxx failed: \${_err}\")
+                endif()")
 endif()
 
 if (ENABLE_END_TO_END_TESTS)
