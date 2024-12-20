@@ -225,7 +225,8 @@ if( INSTALL_FOXX )
                                 RESULT_VARIABLE _res)
                 If (NOT \${_res} EQUAL \"0\")
                     message( FATAL_ERROR \"out: \${_out} install_foxx failed: \${_err}\")
-                endif()")
+                endif()"
+         )
 endif()
 
 if (ENABLE_END_TO_END_TESTS)
