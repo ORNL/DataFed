@@ -24,13 +24,13 @@ const pathModule = require("./posix_path");
  * REPO_BASE_PATH = /mnt/science
  * REPO_ROOT_PATH = /mnt/science/datafed
  **/
-class PathType {
-PROJECT_PATH: "PROJECT_PATH",
-                USER_PATH: "USER_PATH",
-                RECORD_PATH: "RECORD_PATH",
-                REPO_BASE_PATH: "REPO_BASE_PATH",
-                REPO_ROOT_PATH: "REPO_PATH",
-                UNKNOWN: "UNKNOWN"
+const PathType = {
+  PROJECT_PATH: "PROJECT_PATH",
+  USER_PATH: "USER_PATH",
+  RECORD_PATH: "RECORD_PATH",
+  REPO_BASE_PATH: "REPO_BASE_PATH",
+  REPO_ROOT_PATH: "REPO_PATH",
+  UNKNOWN: "UNKNOWN"
 }
 
 class Repo {
@@ -129,16 +129,16 @@ class Repo {
       // Should throw an error because the repo is not valid
       throw [g_lib.ERR_PERM_DENIED, "Record does not exist " + this.#repo_id]
     }
-    let repo = db._document(this.#repo_id);
+    let repo = g_db._document(this.#repo_id);
 
     let repo_root_path = repo.path;
     if ( repo_root_path.endsWith("/")) {
-      repo_root_path.slice(0, -1);
+      repo_root_path = repo_root_path.slice(0, -1);
     }
 
     let sanitized_path = a_path;
     if( sanitized_path.endsWith("/")) {
-      sanitized_path.slice(0, -1);
+      sanitized_path = sanitized_path.slice(0, -1);
     }
 
     // Make sure that the provided path begins with the repo root path
@@ -151,20 +151,20 @@ class Repo {
       } else {
         return PathType.REPO_PATH;
       }
-    } else if( ! sanitized_path.beginsWith(repo_root_path + "/")) {
+    } else if( ! sanitized_path.startsWith(repo_root_path + "/")) {
       return PathType.UNKNOWN;
     }
 
     const relative_path = sanitized_path.substr(repo_root_path.length); 
 
-    const relative_path_components = pathModule.splitPOSIXPath(relative_path_components);
+    const relative_path_components = pathModule.splitPOSIXPath(relative_path);
 
     // Check if is valid project
     if ( relative_path_components[0] === "project" ) {
       if (relative_path_components.length === 1) {
         // REPO_PATH , PROJECT_PATH is reserved to project/<project_name>/<id>
         return PathType.REPO_PATH;
-      }else (relative_path_components.length > 1) {
+      }else if (relative_path_components.length > 1) {
         return PathType.PROJECT_PATH;
       }
     } else if( relative_path_components[0] === "user" ) {
@@ -172,7 +172,7 @@ class Repo {
       if (relative_path_components.length === 1) {
         // REPO_PATH , PROJECT_PATH is reserved to project/<project_name>/<id>
         return PathType.REPO_PATH;
-      }else (relative_path_components.length > 1) {
+      }else if (relative_path_components.length > 1) {
         return PathType.USER_PATH;
       }
     }
