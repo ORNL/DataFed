@@ -502,7 +502,7 @@ router.get('/token/set', function(req, res) {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
                     var user_id;
 
-                    const token_type = req.queryParams.token_type;
+                    const token_type = req.queryParams.type;
                     const other_token_data = req.queryParams.other_token_data;
 
                     if (req.queryParams.subject) {
@@ -571,7 +571,7 @@ router.get('/token/set', function(req, res) {
     .queryParam('access', joi.string().required(), "User access token")
     .queryParam('refresh', joi.string().required(), "User refresh token")
     .queryParam('expires_in', joi.number().integer().required(), "Access token expiration timestamp")
-    .queryParam('access_token_type', joi.number().optional(), "Type of token being stored")    // TODO: currently represented as underlying integer from SDMS::AccessTokenType, do we want strings?
+    .queryParam('type', joi.number().optional(), "Type of token being stored")    // TODO: currently represented as underlying integer from SDMS::AccessTokenType, do we want strings?
     .queryParam('other_token_data', joi.string().optional(), "Other data associated with token, currently only supported as Globus Collection UUID e.g. other_token_data=1cbaaee5-b938-4a4e-87a8-f1ec4d5d92f9")
     .summary('Set user tokens')
     .description('Set user tokens');
