@@ -128,6 +128,14 @@ if ! command -v foxx > /dev/null 2>&1; then
 fi
 
 PATH_TO_PASSWD_FILE=${SOURCE}/database_temp.password
+
+# set up test fixtures, this script should be idempotent, this script is described in the manifest
+"${FOXX_PREFIX}foxx" script -u "${local_DATABASE_USER}" \
+   --server "tcp://${DATAFED_DATABASE_HOST}:8529" \
+    -p "${PATH_TO_PASSWD_FILE}" \
+    --database "${local_DATABASE_NAME}" \
+    "/api/${local_FOXX_MAJOR_API_VERSION}" user-fixture
+
 if [ "$TEST_TO_RUN" == "all" ]
 then
   # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint 
