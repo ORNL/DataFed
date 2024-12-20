@@ -242,6 +242,12 @@ class TransferDialog {
          `;
   }
 
+  handleSelectionChange() {
+    const selectedNodes = this.recordTree.getSelectedNodes();
+    this.state.selectionOk = selectedNodes.length > 0;
+    this.updateButtonStates();
+  }
+
   getSelectedIds() {
     if (this.model.records.length === 1) {
       return [this.model.records[0].id];
@@ -264,6 +270,12 @@ class TransferDialog {
     this.initializeTransferOptions();
     this.initializeBrowseButton()
     this.updateButtonStates();
+    
+    // Add activation button handling
+    $("#activate", this.state.frame).on('click', () => {
+      window.open(`https://app.globus.org/file-manager?origin_id=${
+        encodeURIComponent(this.state.currentEndpoint.id)}`, '');
+    });
   }
 
   initializeBrowseButton() {
@@ -443,9 +455,10 @@ class TransferDialog {
 
   handleTransferResponse(ok, data) {
     if (ok) {
+      clearTimeout(this.inputTimer);
+      this.closeDialog();
       util.setStatusText(`Task '${data.task.id}' created for data transfer.`);
       this.callback?.();
-      this.closeDialog();
     } else {
       dialogs.dlgAlert("Transfer Error", data);
     }
@@ -477,55 +490,6 @@ class TransferDialog {
   showDialog() {
     const options = this.getDialogOptions();
     this.state.frame.dialog(options);
-  }
-
-  /**
-   * ------------RECORDS------------
-   */
-
-  processRecordsInfo() {
-    let totalSize = 0;
-    let skipped = 0;
-    const records = [];
-
-    this.ids.forEach(item => {
-      const info = this.getRecordInfo(item);
-      if (info.selectable) {
-        totalSize += parseInt(item.size);
-        records.push(this.createRecordEntry(item, info.info, true));
-      } else {
-        skipped++;
-        records.push(this.createRecordEntry(item, info.info, false));
-      }
-    });
-
-    return {
-      summary: `${this.ids.length} records, ${skipped} skipped, total size: ${util.sizeToString(totalSize)}`,
-      records
-    };
-  }
-
-  getRecordInfo(item) {
-    if (item.size === 0) {
-      return {info: "(empty)", selectable: false};
-    }
-    if (item.locked) {
-      return {info: "(locked)", selectable: false};
-    }
-    return {info: util.sizeToString(item.size), selectable: true};
-  }
-
-  createRecordEntry(item, info, selectable) {
-    const title = selectable
-      ? `${item.id}&nbsp&nbsp&nbsp<span style='display:inline-block;width:9ch'>${info}</span>&nbsp${item.title}`
-      : `<span style='color:#808080'>${item.id}&nbsp&nbsp&nbsp<span style='display:inline-block;width:9ch'>${info}</span>&nbsp${item.title}</span>`;
-
-    return {
-      title,
-      selected: selectable,
-      unselectable: !selectable,
-      key: item.id
-    };
   }
 
   /**
@@ -565,7 +529,21 @@ class TransferDialog {
     browseBtn.button(this.state.endpointOk ? "enable" : "disable");
     activateBtn.button(endpoint.expires_in === -1 ? "disable" : "enable");
 
-    this.updateEncryptionOptions(endpoint);
+    if (endpoint.force_encryption) {
+      $("#encrypt_none").checkboxradio("option", "disabled", true);
+      $("#encrypt_avail").checkboxradio("option", "disabled", true);
+      $("#encrypt_req").prop('checked', true).checkboxradio("option", "disabled", false);
+    } else if (!endpoint.DATA[0].scheme || endpoint.DATA[0].scheme === "gsiftp") {
+      $("#encrypt_none").checkboxradio("option", "disabled", false);
+      $("#encrypt_avail").checkboxradio("option", "disabled", false);
+      $("#encrypt_req").checkboxradio("option", "disabled", false);
+    } else {
+      $("#encrypt_none").prop('checked', true).checkboxradio("option", "disabled", false);
+      $("#encrypt_avail").checkboxradio("option", "disabled", true);
+      $("#encrypt_req").checkboxradio("option", "disabled", true);
+    }
+
+    $(":radio").button("refresh");
     this.updateButtonStates();
   }
 
