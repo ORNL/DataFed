@@ -17,6 +17,7 @@ if( ENABLE_FOXX_TESTS )
   add_test(NAME foxx_support COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_foxx.sh" -t "support")
   add_test(NAME foxx_record COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_foxx.sh" -t "unit_authz")
   add_test(NAME foxx_record COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_foxx.sh" -t "unit_record")
+  add_test(NAME foxx_record COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_foxx.sh" -t "unit_repo")
   add_test(NAME foxx_path COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_foxx.sh" -t "unit_path")
 
   set_tests_properties(foxx_setup PROPERTIES FIXTURES_SETUP Foxx)
