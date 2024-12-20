@@ -124,6 +124,7 @@ RUN ${BUILD_DIR}/scripts/generate_gsi-authz_config.sh
 RUN ${BUILD_DIR}/scripts/generate_authz_config.sh &&  \
   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake -S. -B build  \
     -DBUILD_REPO_SERVER=False         \
+    -DBUILD_AUTHZ_TESTS=True          \
     -DBUILD_AUTHZ=True                \
     -DBUILD_AUTHZ_WITH_SYSLOG=False   \
     -DBUILD_CORE_SERVER=False         \
