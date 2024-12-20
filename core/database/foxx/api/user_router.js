@@ -502,6 +502,9 @@ router.get('/token/set', function(req, res) {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
                     var user_id;
 
+                    const token_type = req.queryParams.token_type;
+                    const other_token_data = req.queryParams.other_token_data;
+
                     if (req.queryParams.subject) {
                         user_id = req.queryParams.subject;
                         if (!g_db.u.exists(user_id))
@@ -516,20 +519,25 @@ router.get('/token/set', function(req, res) {
                         refresh: req.queryParams.refresh,
                         expiration: Math.floor(Date.now() / 1000) + req.queryParams.expires_in
                     };
-                    if (req.queryParams.other_token_data) {
+                    if (token_type && other_token_data) {
+
+                        // NOTE: the edge is only defined for the `u` collection and the `globus_coll` collection.
+                        //  The getUserFromClientID method shows that the user account can also be stored in a UUID collection
+                        //  and in the future support domain accounts. For now, we must ensure that the edge is u to globus_coll
+                        const user_doc = g_db.u.exists(user_id);    // TODO: user doc only necessary for edge key, user_doc._key must not have invalid character '/'
+                                                                    //  which should be kicked out by arango
+                        if (!user_doc) {
+                            throw [g_lib.ERR_INVALID_PARAM, "Error writing to globus_token. No such user in u collection '" + user_id + "'"];
+                        }
+
                         // find or insert collection
-                        const collection_search_key = req.queryParams.other_token_data;
+                        const collection_search_key = other_token_data;
                         let globus_collection = g_db.globus_coll.exists({_key: collection_search_key});
                         if (!globus_collection) {
+                            // TODO: what other information should live on the globus_coll document?
                             globus_collection = g_db.globus_coll.save({_key: collection_search_key, name: "some name we could look up"});
                         }
 
-                        // TODO: redundant exists call, try to reduce
-                        const user_doc = g_db.u.exists(user_id);
-
-
-                        // TODO: update edge globus_token
-                        const token_type = req.queryParams.token_type;
                         const token_key = user_doc._key + "_" + globus_collection._key + "_" + token_type;    // TODO: key formatting/convention
                         const token_doc = {
                             _key: token_key,
@@ -538,7 +546,7 @@ router.get('/token/set', function(req, res) {
                             type: token_type,
                             ...obj
                         };
-                        // TODO: we may also need to update the edge on this
+
                         console.log("writing to edge ", token_doc);
                         const token_doc_upsert = g_db.globus_token.insert(
                             token_doc,
@@ -563,6 +571,8 @@ router.get('/token/set', function(req, res) {
     .queryParam('access', joi.string().required(), "User access token")
     .queryParam('refresh', joi.string().required(), "User refresh token")
     .queryParam('expires_in', joi.number().integer().required(), "Access token expiration timestamp")
+    .queryParam('access_token_type', joi.number().optional(), "Type of token being stored")    // TODO: currently represented as underlying integer from SDMS::AccessTokenType, do we want strings?
+    .queryParam('other_token_data', joi.string().optional(), "Other data associated with token, currently only supported as Globus Collection UUID e.g. other_token_data=1cbaaee5-b938-4a4e-87a8-f1ec4d5d92f9")
     .summary('Set user tokens')
     .description('Set user tokens');
 
