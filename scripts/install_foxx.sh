@@ -158,7 +158,7 @@ fi
 url2="http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_api/database"
 # We are now going to initialize the DataFed database in Arango, but only if sdms database does
 # not exist
-output=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl -s -i  --user "$basic_auth" "$url2")
+output=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl -s -i --user "$basic_auth" "$url2")
 
 echo "Output: $output"
 
