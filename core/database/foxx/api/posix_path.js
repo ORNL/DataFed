@@ -3,7 +3,7 @@
 const path = require('path');
 
 module.exports = (function() {
-  var obj = {}
+  let obj = {}
 
 	/**
    * \brief will split a path string into components

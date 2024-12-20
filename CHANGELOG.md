@@ -25,6 +25,7 @@
 14. [1053] - Set CMake to enable foxx tests when built in the CI.
 15. [1086] - Address XML-RPC bug from deprecated client
 16. [1149] - Docker container GCS Collection Mount Bug Fix
+17. [1168] - Add authz unit testing to the CI
 
 # v2024.6.17.10.40
 
