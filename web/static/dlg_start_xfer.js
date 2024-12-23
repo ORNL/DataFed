@@ -860,22 +860,17 @@ class TransferDialog {
    * ------------MISC------------
    */
 
-  async handleEndpointSearch(searchToken, endpoint) {
-    if (searchToken !== this.state.currentSearchToken) return;
-
+  async handleEndpointSearch(searchValue) {
     try {
-      const data = await this.searchEndpoint(endpoint);
-
-      if (data.isValid) {
-        this.updateEndpoint(data);
-      } else {
-        const matches = await this.searchEndpoint(endpoint);
-        if (searchToken !== this.state.currentSearchToken) return;
-
-        this.updateEndpoint(matches);
+      const endpoint = searchValue.split('/')[0];
+      if (!this.state.currentEndpoint || endpoint !== this.state.currentEndpoint.name) {
+        this.state.endpointOk = false;
+        this.updateButtonStates();
+        const result = await this.searchEndpoint(endpoint);
+        this.handleEndpointResult(result);
       }
     } catch (error) {
-      dialogs.dlgAlert("Globus Error", error);
+      throw new TransferError("Endpoint search failed", "ENDPOINT_SEARCH_ERROR");
     }
   }
 
