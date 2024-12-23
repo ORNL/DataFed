@@ -5,56 +5,8 @@ import * as api from "./api.js";
 import * as dialogs from "./dialogs.js";
 import * as dlgEpBrowse from "./dlg_ep_browse.js";
 
-
 /**
- * Custom error class for transfer-related errors
- */
-class TransferError extends Error {
-  constructor(message, code) {
-    super(message);
-    this.name = 'TransferError';
-    this.code = code;
-  }
-}
-
-/**
- * Manages dialog state
- */
-class TransferState {
-  constructor() {
-    this.frame = null;
-    this.currentEndpoint = null;
-    this.endpointList = null;
-    this.searchCounter = 0;
-    this.currentSearchToken = null;
-    this.inputTimer = null;
-    this.selectionOk = true;
-    this.endpointOk = false;
-  }
-
-  updateEndpoint(endpoint) {
-    this.currentEndpoint = endpoint;
-    this.endpointOk = endpoint.activated || endpoint.expires_in === -1;
-  }
-
-  resetSearch() {
-    this.currentSearchToken = ++this.searchCounter;
-    clearTimeout(this.inputTimer);
-  }
-
-  isValidSearchToken(token) {
-    return token === this.currentSearchToken;
-  }
-
-  reset() {
-    this.currentEndpoint = null;
-    this.endpointOk = false;
-    this.selectionOk = true;
-  }
-}
-
-/**
- * Model class for transfer dialog data and validation
+ * Model class for transfer dialog data and state
  */
 class TransferModel {
   /**
@@ -66,46 +18,17 @@ class TransferModel {
     this.records = records || [];
     this.selectedIds = new Set();
     this.endpoint = null;
-    this.transferConfig = this.initializeConfig(records);
-    this.stats = this.calculateStats();
-    
-    if (records) {
-      this.processRecords();
-    }
-  }
-
-  initializeConfig(records) {
-    return {
-      path: records?.[0]?.source || '',
+    this.transferConfig = {
+      path: records?.[0]?.source || '',  // Initialize with source if available
       encrypt: 1,
       extension: '',
       origFilename: false
     };
-  }
 
-  /**
-   * Validates transfer configuration
-   * @throws {TransferError} If validation fails
-   */
-  validateConfig(config) {
-    const validations = [
-      { condition: !config?.path?.trim(), error: "Path cannot be empty", code: "INVALID_PATH" },
-      { condition: config.encrypt === undefined, error: "Encryption mode must be specified", code: "INVALID_ENCRYPT" },
-      { 
-        condition: this.mode === model.TT_DATA_PUT && 
-                   config.extension && 
-                   !config.extension.match(/^[a-zA-Z0-9._-]*$/),
-        error: "Invalid file extension format",
-        code: "INVALID_EXTENSION"
-      }
-    ];
-
-    const failed = validations.find(v => v.condition);
-    if (failed) {
-      throw new TransferError(failed.error, failed.code);
+    if (records) {
+      this.stats = this.calculateStats();
+      this.processRecords();
     }
-    
-    return true;
   }
 
   calculateStats() {
@@ -130,7 +53,7 @@ class TransferModel {
         this.totalSize += parseInt(record.size);
         this.selectedIds.add(record.id);
       } else {
-        this.skippedCount++;
+        this.stats.skippedCount++;
       }
     });
   }
@@ -196,15 +119,6 @@ class TransferModel {
     return info.selectable ? titleText : `<span style='color:#808080'>${titleText}</span>`;
   }
 
-  setEndpointList(endpoints) {
-    this.endpointList = endpoints;
-  }
-
-  clearEndpoint() {
-    this.endpoint = null;
-    this.endpointOk = false;
-  }
-
   /**
    * Get default path for endpoint
    * @param {Object} endpoint Endpoint data
@@ -215,99 +129,6 @@ class TransferModel {
     const path = this.endpoint.name +
       (this.endpoint.default_directory || "/");
     return path.replace("{server_default}/", '');
-    ;
-  }
-}
-
-/**
- * Handles all event bindings and callbacks
- */
-class EventHandler {
-  constructor(dialog) {
-    this.dialog = dialog;
-    this.handlers = this.initializeHandlers();
-  }
-
-  initializeHandlers() {
-    return {
-      pathInput: debounce(this.handlePathInput.bind(this), 250),
-      matchesChange: this.handleMatchesChange.bind(this),
-      transfer: this.handleTransfer.bind(this),
-      selectionChange: this.handleSelectionChange.bind(this)
-    };
-  }
-
-  attachEvents() {
-    const frame = this.dialog.state.frame;
-    const bindings = {
-      '#path': { event: 'input', handler: this.handlers.pathInput },
-      '#matches': { event: 'change', handler: this.handlers.matchesChange },
-      '#records': { event: 'select', handler: this.handlers.selectionChange },
-      '#browse': { event: 'click', handler: () => this.dialog.handleBrowse() }
-    };
-
-    Object.entries(bindings).forEach(([selector, {event, handler}]) => {
-      $(selector, frame).on(event, handler);
-    });
-  }
-
-  /**
-   * Attaches transfer-specific handlers
-   */
-  attachTransferHandlers() {
-    const frame = this.dialog.state.frame;
-    $("#browse", frame).on('click', () => this.dialog.handleBrowse());
-    $("#activate", frame).on('click', () => {
-      if (this.dialog.state.currentEndpoint) {
-        window.open(`https://app.globus.org/file-manager?origin_id=${
-          encodeURIComponent(this.dialog.state.currentEndpoint.id)}`, '');
-      }
-    });
-  }
-
-  /**
-   * Handles path input changes
-   * @param {Event} event Input event
-   */
-  handlePathInput(event) {
-    clearTimeout(this.dialog.state.inputTimer);
-    this.dialog.state.currentSearchToken = ++this.dialog.state.searchCounter;
-    const value = $(event.target).val().trim();
-    this.dialog.state.inputTimer = setTimeout(() =>
-      this.dialog.handleEndpointSearch(value), 250);
-  }
-
-  /**
-   * Handles matches selection changes
-   * @param {Event} event Change event
-   */
-  handleMatchesChange(event) {
-    this.dialog.handleMatchesChange(event);
-  }
-
-  /**
-   * Handles transfer button click
-   */
-  async handleTransfer() {
-    try {
-      const config = this.dialog.getTransferConfig();
-      this.dialog.model.validateConfig(config);
-      await this.dialog.startTransfer(config);
-    } catch (error) {
-      if (error instanceof TransferError) {
-        dialogs.dlgAlert("Transfer Error", error.message);
-      } else {
-        console.error("Unexpected error:", error);
-        dialogs.dlgAlert("Error", "An unexpected error occurred");
-      }
-    }
-  }
-
-  /**
-   * Handles selection changes
-   */
-  handleSelectionChange() {
-    this.dialog.handleSelectionChange();
   }
 }
 
@@ -321,10 +142,25 @@ class TransferDialog {
    * @param {Function} callback - Completion callback
    */
   constructor(mode, ids, callback) {
+    // Initialize the model first
     this.model = new TransferModel(mode, ids);
-    this.state = new TransferState();
-    this.eventHandler = new EventHandler(this);
+
+    // Core properties
+    this.mode = mode;
+    this.ids = ids;
     this.callback = callback;
+    this.state = {
+      frame: null,
+      currentEndpoint: null,
+      endpointList: null,
+      searchCounter: 0,
+      currentSearchToken: null,
+      inputTimer: null,
+      selectionOk: true,
+      endpointOk: false
+    };
+
+    this.bindMethods();
   }
 
   bindMethods() {
@@ -336,25 +172,9 @@ class TransferDialog {
 
   show() {
     this.state.frame = this.createDialog();
-    this.initialize();
-    this.eventHandler.attachEvents();
-    this.showDialog();
-  }
-
-  initialize() {
     this.initializeComponents();
-    this.initializeUIState();
-  }
-
-  initializeComponents() {
-    const components = [
-      this.initializeRecordDisplay.bind(this),
-      this.initializeEndpointInput.bind(this),
-      this.initializeTransferOptions.bind(this),
-      this.updateButtonStates.bind(this)
-    ];
-
-    components.forEach(init => init());
+    this.attachEventHandlers();
+    this.showDialog();
   }
 
   safeUIOperation(operation) {
@@ -386,7 +206,7 @@ class TransferDialog {
   }
 
   getDialogLabels() {
-    const isGet = this.model.mode === model.TT_DATA_GET;
+    const isGet = this.mode === model.TT_DATA_GET;
     return {
       endpoint: isGet ? "Destination" : "Source",
       record: isGet ? "Source" : "Destination",
@@ -484,6 +304,24 @@ class TransferDialog {
     });
   }
 
+  initializeUIComponents() {
+    // Initialize all buttons
+    $(".btn", this.state.frame).button();
+
+    // Initialize radio buttons
+    $(":radio", this.state.frame).checkboxradio();
+
+    // Initialize checkboxes if needed
+    if (this.model.mode === model.TT_DATA_GET) {
+      $("#orig_fname", this.state.frame).checkboxradio();
+    }
+
+    // Initialize the go button
+    $("#go_btn").button().button("disable");
+
+    // Initialize browse button
+    $("#browse", this.state.frame).button().button("disable");
+  }
 
   initializeBrowseButton() {
     $("#browse", this.state.frame).on('click', () => {
@@ -510,8 +348,9 @@ class TransferDialog {
     pathInput.on('input', () => {
       clearTimeout(this.state.inputTimer);
       this.state.currentSearchToken = ++this.state.searchCounter;
-      this.state.inputTimer = setTimeout(() =>
-        this.handleEndpointSearch(pathInput.val().trim()), 250);
+      this.state.inputTimer = setTimeout(() => {
+        this.handlePathInput(this.state.currentSearchToken);
+      }, 250);
     });
 
     if (settings.ep_recent.length) {
@@ -519,9 +358,13 @@ class TransferDialog {
       pathInput.select();
       pathInput.autocomplete({
         source: settings.ep_recent,
-        select: () => this.handlePathInput(pathInput.val().trim())
+        select: () => {
+          this.state.currentSearchToken = ++this.state.searchCounter;
+          this.handlePathInput(this.state.currentSearchToken);
+          return true;
+        }
       });
-      this.handlePathInput(pathInput.val().trim());
+      this.handlePathInput(this.state.currentSearchToken);
     }
   }
 
@@ -585,39 +428,18 @@ class TransferDialog {
     };
   }
 
-  async startTransfer(config) {
-    try {
-      this.model.validateConfig(config);
-      const selectedIds = this.getSelectedIds();
-      
-      return new Promise((resolve, reject) => {
-        api.xfrStart(
-          selectedIds,
-          this.model.mode,
-          config.path,
-          config.extension,
-          config.encrypt,
-          config.origFilename,
-          (ok, data) => {
-            if (ok) {
-              this.handleTransferSuccess(data);
-              resolve(data);
-            } else {
-              reject(new TransferError(data, "TRANSFER_FAILED"));
-            }
-          }
-        );
-      });
-    } catch (error) {
-      throw error;
-    }
-  }
+  startTransfer(config) {
+    const ids = this.getSelectedIds();
 
-  handleTransferSuccess(data) {
-    clearTimeout(this.state.inputTimer);
-    this.closeDialog();
-    util.setStatusText(`Task '${data.task.id}' created for data transfer.`);
-    this.callback?.();
+    api.xfrStart(
+      ids,
+      this.mode,
+      config.path,
+      config.extension,
+      config.encrypt,
+      config.origFilename,
+      (ok, data) => this.handleTransferResponse(ok, data)
+    );
   }
 
   getTransferOptionsTemplate() {
@@ -682,7 +504,7 @@ class TransferDialog {
 
   handleTransferResponse(ok, data) {
     if (ok) {
-      clearTimeout(this.inputTimer);
+      clearTimeout(this.state.inputTimer);
       this.closeDialog();
       util.setStatusText(`Task '${data.task.id}' created for data transfer.`);
       this.callback?.();
@@ -692,12 +514,14 @@ class TransferDialog {
   }
 
   handlePathInput(searchToken) {
-    if (searchToken !== this.currentSearchToken) return;
+    if (searchToken !== this.state.currentSearchToken) return;
 
     const path = $("#path", this.state.frame).val().trim();
     if (!path.length) {
+      this.state.endpointOk = false;
       this.endpointList = null;
       this.updateMatchesList();
+      this.updateButtonStates();
       return;
     }
 
@@ -705,12 +529,18 @@ class TransferDialog {
     if (!this.state.currentEndpoint || endpoint !== this.state.currentEndpoint.name) {
       this.state.endpointOk = false;
       this.updateButtonStates();
-      this.searchEndpoint(endpoint);
+      this.searchEndpoint(endpoint).then(result => {
+        if (result.isValid) {
+          this.updateEndpoint(result);
+          this.state.endpointOk = true;
+          this.updateButtonStates();
+        }
+      });
     }
   }
 
   closeDialog() {
-    clearTimeout(this.inputTimer);
+    clearTimeout(this.state.inputTimer);
     this.state.frame.dialog('close');
   }
 
@@ -735,48 +565,17 @@ class TransferDialog {
    * ------------UPDATE------------
    */
 
-  /**
-   * Initializes the UI state including buttons and controls
-   */
-  initializeUIState() {
-    // Initialize all standard buttons
-    $(".btn", this.state.frame).button();
-
-    // Initialize radio buttons
-    $(":radio", this.state.frame).checkboxradio();
-
-    // Initialize checkboxes for GET mode
-    if (this.model.mode === model.TT_DATA_GET) {
-      $("#orig_fname", this.state.frame).checkboxradio();
-    }
-
-    // Initialize main action button (disabled by default)
-    $("#go_btn").button().button("disable");
-
-    // Initialize browse button (disabled by default) 
-    $("#browse", this.state.frame).button().button("disable");
-
-    // Set initial button states based on current state
-    this.updateButtonStates();
-  }
-
-  /**
-   * Updates the enabled/disabled state of all buttons based on current state
-   */
   updateButtonStates() {
-    const buttonsEnabled = this.state.selectionOk && this.state.endpointOk;
-    
-    // Update main action button
-    this.setButtonState("#go_btn", buttonsEnabled);
-    
-    // Update browse button
-    this.setButtonState("#browse", this.state.endpointOk);
-    
-    // Update activate button if endpoint exists
-    if (this.state.currentEndpoint) {
-      this.setButtonState("#activate", 
-        this.state.currentEndpoint.expires_in !== -1);
-    }
+    this.safeUIOperation(() => {
+      const buttonsEnabled = this.state.selectionOk && this.state.endpointOk;
+      console.log('Button states:', {
+        selectionOk: this.state.selectionOk,
+        endpointOk: this.state.endpointOk,
+        enabled: buttonsEnabled
+      });
+      this.setButtonState("#go_btn", buttonsEnabled);
+      this.setButtonState("#browse", this.state.endpointOk);
+    });
   }
 
   updateEndpointOptions(endpoint) {
@@ -855,14 +654,6 @@ class TransferDialog {
     return html.join('');
   }
 
-  formatEndpointOption(endpoint) {
-    const name = endpoint.display_name || endpoint.name;
-    const status = this.getEndpointStatus(endpoint);
-
-    return `<option title="${util.escapeHTML(endpoint.description || '(no info)')}">${
-      util.escapeHTML(name)} (${status})</option>`;
-  }
-
   getEndpointStatus(endpoint) {
     if (!endpoint.activated && endpoint.expires_in === -1) return 'active';
     if (endpoint.activated) return `${Math.floor(endpoint.expires_in / 3600)} hrs`;
@@ -873,17 +664,22 @@ class TransferDialog {
    * ------------MISC------------
    */
 
-  async handleEndpointSearch(searchValue) {
+  async handleEndpointSearch(searchToken, endpoint) {
+    if (searchToken !== this.state.currentSearchToken) return;
+
     try {
-      const endpoint = searchValue.split('/')[0];
-      if (!this.state.currentEndpoint || endpoint !== this.state.currentEndpoint.name) {
-        this.state.endpointOk = false;
-        this.updateButtonStates();
-        const result = await this.searchEndpoint(endpoint);
-        this.handleEndpointResult(result);
+      const data = await this.searchEndpoint(endpoint);
+
+      if (data.isValid) {
+        this.updateEndpoint(data);
+      } else {
+        const matches = await this.searchEndpoint(endpoint);
+        if (searchToken !== this.state.currentSearchToken) return;
+
+        this.updateEndpoint(matches);
       }
     } catch (error) {
-      throw new TransferError("Endpoint search failed", "ENDPOINT_SEARCH_ERROR");
+      dialogs.dlgAlert("Globus Error", error);
     }
   }
 
