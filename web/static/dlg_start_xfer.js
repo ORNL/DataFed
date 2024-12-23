@@ -6,7 +6,43 @@ import * as dialogs from "./dialogs.js";
 import * as dlgEpBrowse from "./dlg_ep_browse.js";
 
 /**
+ * Custom error class for transfer-related errors
+ */
+class TransferError extends Error {
+  constructor(message, code) {
+    super(message);
+    this.name = 'TransferError';
+    this.code = code;
+  }
+}
+
+/**
+ * Manages dialog state
+ */
+class TransferState {
+  constructor() {
+    this.frame = null;
+    this.currentEndpoint = null;
+    this.endpointList = null;
+    this.searchCounter = 0;
+    this.currentSearchToken = null;
+    this.inputTimer = null;
+    this.selectionOk = true;
+    this.endpointOk = false;
+  }
+
+  reset() {
+    this.currentEndpoint = null;
+    this.endpointOk = false;
+    this.selectionOk = true;
+  }
+}
+
+/**
  * Model class for transfer dialog data and state
+ */
+/**
+ * Model class for transfer dialog data and validation
  */
 class TransferModel {
   /**
@@ -29,6 +65,23 @@ class TransferModel {
       this.stats = this.calculateStats();
       this.processRecords();
     }
+  }
+
+  /**
+   * Validates transfer configuration
+   * @throws {TransferError} If validation fails
+   */
+  validateConfig(config) {
+    if (!config?.path?.trim()) {
+      throw new TransferError("Path cannot be empty", "INVALID_PATH");
+    }
+    if (config.encrypt === undefined) {
+      throw new TransferError("Encryption mode must be specified", "INVALID_ENCRYPT");
+    }
+    if (this.mode === model.TT_DATA_PUT && config.extension && !config.extension.match(/^[a-zA-Z0-9._-]*$/)) {
+      throw new TransferError("Invalid file extension format", "INVALID_EXTENSION");
+    }
+    return true;
   }
 
   calculateStats() {
@@ -145,6 +198,9 @@ class TransferModel {
 /**
  * TransferDialog class manages the UI and logic for data transfers
  */
+/**
+ * TransferDialog class manages the UI and logic for data transfers
+ */
 class TransferDialog {
   /**
    * @param {number} mode - Transfer mode (GET/PUT)
@@ -152,33 +208,98 @@ class TransferDialog {
    * @param {Function} callback - Completion callback
    */
   constructor(mode, ids, callback) {
-    // Initialize the model first
     this.model = new TransferModel(mode, ids);
-
-    // Core properties
     this.mode = mode;
     this.ids = ids;
     this.callback = callback;
-    this.state = {
-      frame: null,
-      currentEndpoint: null,
-      endpointList: null,
-      searchCounter: 0,
-      currentSearchToken: null,
-      inputTimer: null,
-      selectionOk: true,
-      endpointOk: false
+    this.state = new TransferState();
+    this.eventHandler = new EventHandler(this);
+  }
+
+/**
+ * Handles all event bindings and callbacks
+ */
+class EventHandler {
+  constructor(dialog) {
+    this.dialog = dialog;
+    this.boundHandlers = {
+      pathInput: this.handlePathInput.bind(this),
+      matchesChange: this.handleMatchesChange.bind(this),
+      transfer: this.handleTransfer.bind(this),
+      selectionChange: this.handleSelectionChange.bind(this)
     };
-
-    this.bindMethods();
   }
 
-  bindMethods() {
-    this.handleMatchesChange = this.handleMatchesChange.bind(this);
-    this.handleTransfer = this.handleTransfer.bind(this);
-    this.handlePathInput = this.handlePathInput.bind(this);
-    this.handleSelectionChange = this.handleSelectionChange.bind(this);
+  /**
+   * Attaches all event handlers
+   */
+  attachEvents() {
+    const frame = this.dialog.state.frame;
+    $("#path", frame).on('input', this.boundHandlers.pathInput);
+    $("#matches", frame).on('change', this.boundHandlers.matchesChange);
+    $("#records", frame).on('select', this.boundHandlers.selectionChange);
+    this.attachTransferHandlers();
   }
+
+  /**
+   * Attaches transfer-specific handlers
+   */
+  attachTransferHandlers() {
+    const frame = this.dialog.state.frame;
+    $("#browse", frame).on('click', () => this.dialog.handleBrowse());
+    $("#activate", frame).on('click', () => {
+      if (this.dialog.state.currentEndpoint) {
+        window.open(`https://app.globus.org/file-manager?origin_id=${
+          encodeURIComponent(this.dialog.state.currentEndpoint.id)}`, '');
+      }
+    });
+  }
+
+  /**
+   * Handles path input changes
+   * @param {Event} event Input event
+   */
+  handlePathInput(event) {
+    clearTimeout(this.dialog.state.inputTimer);
+    this.dialog.state.currentSearchToken = ++this.dialog.state.searchCounter;
+    const value = $(event.target).val().trim();
+    this.dialog.state.inputTimer = setTimeout(() => 
+      this.dialog.handleEndpointSearch(value), 250);
+  }
+
+  /**
+   * Handles matches selection changes
+   * @param {Event} event Change event
+   */
+  handleMatchesChange(event) {
+    this.dialog.handleMatchesChange(event);
+  }
+
+  /**
+   * Handles transfer button click
+   */
+  async handleTransfer() {
+    try {
+      const config = this.dialog.getTransferConfig();
+      this.dialog.model.validateConfig(config);
+      await this.dialog.startTransfer(config);
+    } catch (error) {
+      if (error instanceof TransferError) {
+        dialogs.dlgAlert("Transfer Error", error.message);
+      } else {
+        console.error("Unexpected error:", error);
+        dialogs.dlgAlert("Error", "An unexpected error occurred");
+      }
+    }
+  }
+
+  /**
+   * Handles selection changes
+   */
+  handleSelectionChange() {
+    this.dialog.handleSelectionChange();
+  }
+}
 
   show() {
     this.state.frame = this.createDialog();
@@ -696,12 +817,22 @@ class TransferDialog {
   }
 }
 
+/**
+ * Shows the transfer dialog
+ * @param {number} mode Transfer mode
+ * @param {Array<Object>} records Records to transfer
+ * @param {Function} callback Completion callback
+ */
 export function show(mode, records, callback) {
   try {
     const dialog = new TransferDialog(mode, records, callback);
     dialog.show();
   } catch (error) {
     console.error("Error showing transfer dialog:", error);
-    dialogs.dlgAlert("Error", "Failed to open transfer dialog");
+    if (error instanceof TransferError) {
+      dialogs.dlgAlert("Transfer Error", error.message);
+    } else {
+      dialogs.dlgAlert("Error", "Failed to open transfer dialog");
+    }
   }
 }
