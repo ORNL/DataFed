@@ -520,15 +520,8 @@ router.get('/token/set', function(req, res) {
                         expiration: Math.floor(Date.now() / 1000) + req.queryParams.expires_in
                     };
                     if (token_type && other_token_data) {
-
-                        // NOTE: the edge is only defined for the `u` collection and the `globus_coll` collection.
-                        //  The getUserFromClientID method shows that the user account can also be stored in a UUID collection
-                        //  and in the future support domain accounts. For now, we must ensure that the edge is u to globus_coll
-                        const user_doc = g_db.u.exists(user_id);    // TODO: user doc only necessary for edge key, user_doc._key must not have invalid character '/'
-                                                                    //  which should be kicked out by arango
-                        if (!user_doc) {
-                            throw [g_lib.ERR_INVALID_PARAM, "Error writing to globus_token. No such user in u collection '" + user_id + "'"];
-                        }
+                        // We need the '_key' from the user document, which is not necessarily a part of the above checks.
+                        const user_doc = g_db.u.document(user_id);
 
                         // find or insert collection
                         const collection_search_key = other_token_data;
