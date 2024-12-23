@@ -53,7 +53,7 @@ describe("user_router: the Foxx microservice user_router token/set endpoint", ()
         const response = request.get(request_string);
 
         // assert
-        assert(response.status).to.equal(204);
+        expect(response.status).to.equal(204);
 
         const user_token_data = db.u.document({_key: query_params._key});
         expect(user_token_data).to.include(test_params);    // TODO: this data should be the same from the first test, we should find a way to ensure it has been updated
@@ -75,7 +75,7 @@ describe("user_router: the Foxx microservice user_router token/set endpoint", ()
         const response = request.get(request_string);
 
         // assert
-        assert(response.status).to.equal(204);
+        expect(response.status).to.equal(204);
 
         const user_token_data = db.u.document({_key: query_params._key});
         expect(user_token_data).to.include(test_params);    // TODO: this data should be the same from the first test, we should find a way to ensure it has been updated
