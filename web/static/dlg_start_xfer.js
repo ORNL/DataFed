@@ -386,7 +386,7 @@ class TransferDialog {
   }
 
   getDialogLabels() {
-    const isGet = this.mode === model.TT_DATA_GET;
+    const isGet = this.model.mode === model.TT_DATA_GET;
     return {
       endpoint: isGet ? "Destination" : "Source",
       record: isGet ? "Source" : "Destination",
