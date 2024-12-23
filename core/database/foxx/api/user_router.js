@@ -528,15 +528,29 @@ router.get('/token/set', function(req, res) {
                         let globus_collection = g_db.globus_coll.exists({_key: collection_search_key});
                         if (!globus_collection) {
                             // TODO: what other information should live on the globus_coll document?
-                            globus_collection = g_db.globus_coll.save({_key: collection_search_key, name: "some name we could look up"});
+                            globus_collection = g_db.globus_coll.save({
+                                _key: collection_search_key,
+                                // TODO: get relevant data
+                                name: "Newly Inserted Collection",
+                                description: "The collection description",
+                                dependent_scopes: [],
+                                owner: "",
+                                created_at: Math.floor(Date.now() / 1000),
+                                updated_at: Math.floor(Date.now() / 1000),
+                            });
                         }
 
-                        const token_key = user_doc._key + "_" + globus_collection._key + "_" + token_type;    // TODO: key formatting/convention
+                        const token_key = globus_collection._key + "_" + token_type + "_" + user_doc._key;
                         const token_doc = {
                             _key: token_key,
                             _from: user_id, // the uid field
                             _to: globus_collection._id,
                             type: token_type,
+                            dependent_scopes: globus_collection.dependent_scopes,
+                            collection_display_name: globus_collection.name,
+                            request_time: Math.floor(Date.now() / 1000),
+                            last_used: Math.floor(Date.now() / 1000),
+                            status: "active",   // TODO: are there other checks we should have right away?
                             ...obj
                         };
 

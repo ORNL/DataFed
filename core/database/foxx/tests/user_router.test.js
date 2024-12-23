@@ -98,7 +98,7 @@ describe("user_router: the Foxx microservice user_router token/set endpoint", ()
             ...test_edge_params,
         };
 
-        const expected_doc_key = query_params.user_key + "_" + query_params.other_token_data + "_" + query_params.type;
+        const expected_doc_key =  query_params.other_token_data + "_" + query_params.type + "_" + query_params.user_key;
         const expected = {
             ...query_params,
             _key: expected_doc_key,
