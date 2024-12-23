@@ -15,16 +15,32 @@ class TransferModel {
    */
   constructor(mode, records) {
     this.mode = mode;
-    this.records = records;
-    this.endpoint = null;
-    this.endpointList = null;
+    this.records = records || [];
     this.selectedIds = new Set();
-    this.totalSize = 0;
-    this.skippedCount = 0;
+    this.endpoint = null;
+    this.transferConfig = {
+      path: records?.[0]?.source || '',  // Initialize with source if available
+      encrypt: 1,
+      extension: '',
+      origFilename: false
+    };
 
     if (records) {
+      this.stats = this.calculateStats();
       this.processRecords();
     }
+  }
+
+  calculateStats() {
+    return this.records.reduce((stats, record) => {
+      if (this.isRecordValid(record)) {
+        stats.totalSize += parseInt(record.size);
+        this.selectedIds.add(record.id);
+      } else {
+        stats.skippedCount++;
+      }
+      return stats;
+    }, {totalSize: 0, skippedCount: 0});
   }
 
   /**
@@ -83,10 +99,10 @@ class TransferModel {
    */
   getRecordInfo(item) {
     if (item.size === 0) {
-      return { info: "(empty)", selectable: false };
+      return {info: "(empty)", selectable: false};
     }
     if (item.locked) {
-      return { info: "(locked)", selectable: false };
+      return {info: "(locked)", selectable: false};
     }
     return {
       info: util.sizeToString(item.size),
@@ -103,15 +119,26 @@ class TransferModel {
     return info.selectable ? titleText : `<span style='color:#808080'>${titleText}</span>`;
   }
 
+  setEndpointList(endpoints) {
+    this.endpointList = endpoints;
+  }
+
+  clearEndpoint() {
+    this.endpoint = null;
+    this.endpointOk = false;
+  }
+
   /**
    * Get default path for endpoint
    * @param {Object} endpoint Endpoint data
    * @returns {string} Default path
    */
   getDefaultPath(endpoint) {
-    const path = endpoint.name +
-      (endpoint.default_directory || "/");
+    if (!this.endpoint) return '';
+    const path = this.endpoint.name +
+      (this.endpoint.default_directory || "/");
     return path.replace("{server_default}/", '');
+    ;
   }
 }
 
@@ -158,6 +185,15 @@ class TransferDialog {
     this.initializeComponents();
     this.attachEventHandlers();
     this.showDialog();
+  }
+
+  safeUIOperation(operation) {
+    try {
+      operation();
+    } catch (error) {
+      console.error("UI Operation failed:", error);
+      this.initializeUIComponents();
+    }
   }
 
   /**
@@ -270,12 +306,31 @@ class TransferDialog {
     this.initializeTransferOptions();
     this.initializeBrowseButton()
     this.updateButtonStates();
-    
+
     // Add activation button handling
     $("#activate", this.state.frame).on('click', () => {
       window.open(`https://app.globus.org/file-manager?origin_id=${
         encodeURIComponent(this.state.currentEndpoint.id)}`, '');
     });
+  }
+
+  initializeUIComponents() {
+    // Initialize all buttons
+    $(".btn", this.state.frame).button();
+
+    // Initialize radio buttons
+    $(":radio", this.state.frame).checkboxradio();
+
+    // Initialize checkboxes if needed
+    if (this.model.mode === model.TT_DATA_GET) {
+      $("#orig_fname", this.state.frame).checkboxradio();
+    }
+
+    // Initialize the go button
+    $("#go_btn").button().button("disable");
+
+    // Initialize browse button
+    $("#browse", this.state.frame).button().button("disable");
   }
 
   initializeBrowseButton() {
@@ -301,21 +356,20 @@ class TransferDialog {
     util.inputTheme(pathInput);
 
     pathInput.on('input', () => {
-      this.currentSearchToken = ++this.state.searchCounter;
-      clearTimeout(this.inputTimer);
-      this.inputTimer = setTimeout(() =>
-        this.handlePathInput(this.currentSearchToken), 250);
+      clearTimeout(this.state.inputTimer);
+      this.state.currentSearchToken = ++this.state.searchCounter;
+      this.state.inputTimer = setTimeout(() =>
+        this.handleEndpointSearch(pathInput.val().trim()), 250);
     });
 
-    // Initialize with recent endpoint if available
     if (settings.ep_recent.length) {
       pathInput.val(settings.ep_recent[0]);
       pathInput.select();
       pathInput.autocomplete({
         source: settings.ep_recent,
-        select: () => this.handlePathInput(++this.state.searchCounter)
+        select: () => this.handlePathInput(pathInput.val().trim())
       });
-      this.handlePathInput(++this.state.searchCounter);
+      this.handlePathInput(pathInput.val().trim());
     }
   }
 
@@ -488,37 +542,32 @@ class TransferDialog {
   }
 
   showDialog() {
-    const options = this.getDialogOptions();
-    this.state.frame.dialog(options);
+    this.state.frame.dialog(this.getDialogOptions());
+  }
+
+  ensureButtonInitialized(buttonSelector) {
+    const $button = $(buttonSelector, this.state.frame);
+    if (!$button.hasClass("ui-button")) {
+      $button.button();
+    }
+    return $button;
+  }
+
+  setButtonState(buttonSelector, enable) {
+    const $button = this.ensureButtonInitialized(buttonSelector);
+    $button.button(enable ? "enable" : "disable");
   }
 
   /**
    * ------------UPDATE------------
    */
 
-  updateEncryptionOptions(endpoint) {
-    if (endpoint.force_encryption) {
-      $("#encrypt_none").checkboxradio("option", "disabled", true);
-      $("#encrypt_avail").checkboxradio("option", "disabled", true);
-      $("#encrypt_req").prop('checked', true).checkboxradio("option", "disabled", false);
-    } else if (!endpoint.DATA[0].scheme || endpoint.DATA[0].scheme === "gsiftp") {
-      $("#encrypt_none").checkboxradio("option", "disabled", false);
-      $("#encrypt_avail").checkboxradio("option", "disabled", false);
-      $("#encrypt_req").checkboxradio("option", "disabled", false);
-    } else {
-      $("#encrypt_none").prop('checked', true).checkboxradio("option", "disabled", false);
-      $("#encrypt_avail").checkboxradio("option", "disabled", true);
-      $("#encrypt_req").checkboxradio("option", "disabled", true);
-    }
-
-    $(":radio").button("refresh");
-  }
-
   updateButtonStates() {
-    const buttonsEnabled = this.state.selectionOk && this.state.endpointOk;
-
-    $("#go_btn").button(buttonsEnabled ? "enable" : "disable");
-    $("#browse", this.state.frame).button(this.state.endpointOk ? "enable" : "disable");
+    this.safeUIOperation(() => {
+      const buttonsEnabled = this.state.selectionOk && this.state.endpointOk;
+      this.setButtonState("#go_btn", buttonsEnabled);
+      this.setButtonState("#browse", this.state.endpointOk);
+    });
   }
 
   updateEndpointOptions(endpoint) {
@@ -578,22 +627,23 @@ class TransferDialog {
 
   updateMatchesList() {
     const matches = $("#matches", this.state.frame);
-
-    if (!this.endpointList || !this.endpointList.length) {
-      matches.html("<option disabled selected>No Matches</option>");
-      matches.prop("disabled", true);
-      return;
-    }
-
-    let html = `<option disabled selected>${this.endpointList.length} match` +
-      `${this.endpointList.length > 1 ? "es" : ""}</option>`;
-
-    this.endpointList.forEach(ep => {
-      html += this.formatEndpointOption(ep);
-    });
-
+    const html = this.generateMatchesHtml(endpoints);
     matches.html(html);
     matches.prop("disabled", false);
+  }
+
+  generateMatchesHtml(endpoints) {
+    const html = [`<option disabled selected>${endpoints.length} match${endpoints.length > 1 ? 'es' : ''}</option>`];
+
+    endpoints.forEach(ep => {
+      const status = this.getEndpointStatus(ep);
+      html.push(`                                                                                                                                                                                                                       
+         <option title="${util.escapeHTML(ep.description || '(no info)')}">${
+        util.escapeHTML(ep.display_name || ep.name)} (${status})</option>                                                                                                                                                             
+       `);
+    });
+
+    return html.join('');
   }
 
   formatEndpointOption(endpoint) {
@@ -605,13 +655,9 @@ class TransferDialog {
   }
 
   getEndpointStatus(endpoint) {
-    if (!endpoint.activated && endpoint.expires_in === -1) {
-      return "active";
-    }
-    if (endpoint.activated) {
-      return `${Math.floor(endpoint.expires_in / 3600)} hrs`;
-    }
-    return "inactive";
+    if (!endpoint.activated && endpoint.expires_in === -1) return 'active';
+    if (endpoint.activated) return `${Math.floor(endpoint.expires_in / 3600)} hrs`;
+    return 'inactive';
   }
 
   /**
@@ -619,9 +665,10 @@ class TransferDialog {
    */
 
   async handleEndpointSearch(searchToken, endpoint) {
+    if (searchToken !== this.state.currentSearchToken) return;
+
     try {
       const data = await this.searchEndpoint(endpoint);
-      if (searchToken !== this.state.currentSearchToken) return;
 
       if (data.isValid) {
         this.updateEndpoint(data);
@@ -640,9 +687,9 @@ class TransferDialog {
     return new Promise((resolve, _) => {
       api.epView(endpoint, (ok, data) => {
         if (ok && !data.code) {
-          resolve({ isValid: true, ...data });
+          resolve({isValid: true, ...data});
         } else {
-          resolve({ isValid: false, error: data });
+          resolve({isValid: false, error: data});
         }
       });
     });
@@ -650,6 +697,11 @@ class TransferDialog {
 }
 
 export function show(mode, records, callback) {
-  const dialog = new TransferDialog(mode, records, callback);
-  dialog.show();
+  try {
+    const dialog = new TransferDialog(mode, records, callback);
+    dialog.show();
+  } catch (error) {
+    console.error("Error showing transfer dialog:", error);
+    dialogs.dlgAlert("Error", "Failed to open transfer dialog");
+  }
 }
