@@ -32,6 +32,20 @@ class TransferState {
     this.endpointOk = false;
   }
 
+  updateEndpoint(endpoint) {
+    this.currentEndpoint = endpoint;
+    this.endpointOk = endpoint.activated || endpoint.expires_in === -1;
+  }
+
+  resetSearch() {
+    this.currentSearchToken = ++this.searchCounter;
+    clearTimeout(this.inputTimer);
+  }
+
+  isValidSearchToken(token) {
+    return token === this.currentSearchToken;
+  }
+
   reset() {
     this.currentEndpoint = null;
     this.endpointOk = false;
@@ -52,17 +66,21 @@ class TransferModel {
     this.records = records || [];
     this.selectedIds = new Set();
     this.endpoint = null;
-    this.transferConfig = {
-      path: records?.[0]?.source || '',  // Initialize with source if available
+    this.transferConfig = this.initializeConfig(records);
+    this.stats = this.calculateStats();
+    
+    if (records) {
+      this.processRecords();
+    }
+  }
+
+  initializeConfig(records) {
+    return {
+      path: records?.[0]?.source || '',
       encrypt: 1,
       extension: '',
       origFilename: false
     };
-
-    if (records) {
-      this.stats = this.calculateStats();
-      this.processRecords();
-    }
   }
 
   /**
@@ -70,15 +88,23 @@ class TransferModel {
    * @throws {TransferError} If validation fails
    */
   validateConfig(config) {
-    if (!config?.path?.trim()) {
-      throw new TransferError("Path cannot be empty", "INVALID_PATH");
+    const validations = [
+      { condition: !config?.path?.trim(), error: "Path cannot be empty", code: "INVALID_PATH" },
+      { condition: config.encrypt === undefined, error: "Encryption mode must be specified", code: "INVALID_ENCRYPT" },
+      { 
+        condition: this.mode === model.TT_DATA_PUT && 
+                   config.extension && 
+                   !config.extension.match(/^[a-zA-Z0-9._-]*$/),
+        error: "Invalid file extension format",
+        code: "INVALID_EXTENSION"
+      }
+    ];
+
+    const failed = validations.find(v => v.condition);
+    if (failed) {
+      throw new TransferError(failed.error, failed.code);
     }
-    if (config.encrypt === undefined) {
-      throw new TransferError("Encryption mode must be specified", "INVALID_ENCRYPT");
-    }
-    if (this.mode === model.TT_DATA_PUT && config.extension && !config.extension.match(/^[a-zA-Z0-9._-]*$/)) {
-      throw new TransferError("Invalid file extension format", "INVALID_EXTENSION");
-    }
+    
     return true;
   }
 
@@ -199,23 +225,30 @@ class TransferModel {
 class EventHandler {
   constructor(dialog) {
     this.dialog = dialog;
-    this.boundHandlers = {
-      pathInput: this.handlePathInput.bind(this),
+    this.handlers = this.initializeHandlers();
+  }
+
+  initializeHandlers() {
+    return {
+      pathInput: debounce(this.handlePathInput.bind(this), 250),
       matchesChange: this.handleMatchesChange.bind(this),
       transfer: this.handleTransfer.bind(this),
       selectionChange: this.handleSelectionChange.bind(this)
     };
   }
 
-  /**
-   * Attaches all event handlers
-   */
   attachEvents() {
     const frame = this.dialog.state.frame;
-    $("#path", frame).on('input', this.boundHandlers.pathInput);
-    $("#matches", frame).on('change', this.boundHandlers.matchesChange);
-    $("#records", frame).on('select', this.boundHandlers.selectionChange);
-    this.attachTransferHandlers();
+    const bindings = {
+      '#path': { event: 'input', handler: this.handlers.pathInput },
+      '#matches': { event: 'change', handler: this.handlers.matchesChange },
+      '#records': { event: 'select', handler: this.handlers.selectionChange },
+      '#browse': { event: 'click', handler: () => this.dialog.handleBrowse() }
+    };
+
+    Object.entries(bindings).forEach(([selector, {event, handler}]) => {
+      $(selector, frame).on(event, handler);
+    });
   }
 
   /**
@@ -288,25 +321,10 @@ class TransferDialog {
    * @param {Function} callback - Completion callback
    */
   constructor(mode, ids, callback) {
-    // Initialize the model first
     this.model = new TransferModel(mode, ids);
-
-    // Core properties
-    this.mode = mode;
-    this.ids = ids;
+    this.state = new TransferState();
+    this.eventHandler = new EventHandler(this);
     this.callback = callback;
-    this.state = {
-      frame: null,
-      currentEndpoint: null,
-      endpointList: null,
-      searchCounter: 0,
-      currentSearchToken: null,
-      inputTimer: null,
-      selectionOk: true,
-      endpointOk: false
-    };
-
-    this.bindMethods();
   }
 
   bindMethods() {
@@ -318,9 +336,25 @@ class TransferDialog {
 
   show() {
     this.state.frame = this.createDialog();
-    this.initializeComponents();
-    this.attachEventHandlers();
+    this.initialize();
+    this.eventHandler.attachEvents();
     this.showDialog();
+  }
+
+  initialize() {
+    this.initializeComponents();
+    this.initializeUIState();
+  }
+
+  initializeComponents() {
+    const components = [
+      this.initializeRecordDisplay.bind(this),
+      this.initializeEndpointInput.bind(this),
+      this.initializeTransferOptions.bind(this),
+      this.updateButtonStates.bind(this)
+    ];
+
+    components.forEach(init => init());
   }
 
   safeUIOperation(operation) {
@@ -569,18 +603,39 @@ class TransferDialog {
     };
   }
 
-  startTransfer(config) {
-    const ids = this.getSelectedIds();
+  async startTransfer(config) {
+    try {
+      this.model.validateConfig(config);
+      const selectedIds = this.getSelectedIds();
+      
+      return new Promise((resolve, reject) => {
+        api.xfrStart(
+          selectedIds,
+          this.model.mode,
+          config.path,
+          config.extension,
+          config.encrypt,
+          config.origFilename,
+          (ok, data) => {
+            if (ok) {
+              this.handleTransferSuccess(data);
+              resolve(data);
+            } else {
+              reject(new TransferError(data, "TRANSFER_FAILED"));
+            }
+          }
+        );
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
 
-    api.xfrStart(
-      ids,
-      this.mode,
-      config.path,
-      config.extension,
-      config.encrypt,
-      config.origFilename,
-      (ok, data) => this.handleTransferResponse(ok, data)
-    );
+  handleTransferSuccess(data) {
+    clearTimeout(this.state.inputTimer);
+    this.closeDialog();
+    util.setStatusText(`Task '${data.task.id}' created for data transfer.`);
+    this.callback?.();
   }
 
   getTransferOptionsTemplate() {
@@ -698,12 +753,17 @@ class TransferDialog {
    * ------------UPDATE------------
    */
 
-  updateButtonStates() {
-    this.safeUIOperation(() => {
-      const buttonsEnabled = this.state.selectionOk && this.state.endpointOk;
-      this.setButtonState("#go_btn", buttonsEnabled);
-      this.setButtonState("#browse", this.state.endpointOk);
-    });
+  updateUIState() {
+    const buttonsEnabled = this.state.selectionOk && this.state.endpointOk;
+    this.updateButton("#go_btn", buttonsEnabled);
+    this.updateButton("#browse", this.state.endpointOk);
+  }
+
+  updateButton(selector, enabled) {
+    const button = $(selector, this.state.frame);
+    if (button.length) {
+      button.button(enabled ? "enable" : "disable");
+    }
   }
 
   updateEndpointOptions(endpoint) {
