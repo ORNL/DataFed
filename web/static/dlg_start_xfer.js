@@ -5,6 +5,7 @@ import * as api from "./api.js";
 import * as dialogs from "./dialogs.js";
 import * as dlgEpBrowse from "./dlg_ep_browse.js";
 
+
 /**
  * Model class for transfer dialog data and state
  */
@@ -351,7 +352,7 @@ class TransferDialog {
       clearTimeout(this.state.inputTimer);
       this.state.currentSearchToken = ++this.state.searchCounter;
       console.log('New search token:', this.state.currentSearchToken);
-      
+
       this.state.inputTimer = setTimeout(() => {
         console.log('Timer expired - handling path input');
         this.handlePathInput(this.state.currentSearchToken);
@@ -494,10 +495,22 @@ class TransferDialog {
   }
 
   handleMatchesChange(event) {
-    if (!this.endpointList) return;
+    if (!this.endpointList || !this.endpointList.length) {
+      console.log('No endpoint list available');
+      return;
+    }
 
     const selectedIndex = $(event.target).prop('selectedIndex') - 1;
+    if (selectedIndex < 0 || selectedIndex >= this.endpointList.length) {
+      console.log('Invalid selection index:', selectedIndex);
+      return;
+    }
+
     const endpoint = this.endpointList[selectedIndex].id;
+    if (!endpoint || !endpoint.id) {
+      console.log('Invalid endpoint data:', endpoint);
+      return;
+    }
 
     api.epView(endpoint, (ok, data) => {
       if (ok && !data.code) {
@@ -521,7 +534,7 @@ class TransferDialog {
 
   handlePathInput(searchToken) {
     console.log('handlePathInput called with token:', searchToken, 'current token:', this.state.currentSearchToken);
-    
+
     if (searchToken !== this.state.currentSearchToken) {
       console.log('Token mismatch - ignoring stale request');
       return;
@@ -547,7 +560,7 @@ class TransferDialog {
       console.log('Endpoint changed or not set - searching for new endpoint');
       this.state.endpointOk = false;
       this.updateButtonStates();
-      this.searchEndpoint(endpoint, searchToken);
+      this.searchEndpoint(endpoint, searchToken).then(r => console.log('Search complete:', r));
     }
   }
 
@@ -582,7 +595,7 @@ class TransferDialog {
       selectionOk: this.state.selectionOk,
       endpointOk: this.state.endpointOk
     });
-    
+
     this.safeUIOperation(() => {
       const buttonsEnabled = this.state.selectionOk && this.state.endpointOk;
       console.log('Button states calculated:', {
@@ -601,6 +614,11 @@ class TransferDialog {
   }
 
   updateEndpointOptions(endpoint) {
+    if (!endpoint) {
+      console.log('No endpoint provided to updateEndpointOptions');
+      return;
+    }
+
     const browseBtn = $("#browse", this.state.frame);
     const activateBtn = $("#activate", this.state.frame);
 
@@ -608,11 +626,14 @@ class TransferDialog {
     browseBtn.button(this.state.endpointOk ? "enable" : "disable");
     activateBtn.button(endpoint.expires_in === -1 ? "disable" : "enable");
 
+    // Safety check for scheme
+    const scheme = endpoint.DATA && endpoint.DATA[0] ? endpoint.DATA[0].scheme : null;
+
     if (endpoint.force_encryption) {
       $("#encrypt_none").checkboxradio("option", "disabled", true);
       $("#encrypt_avail").checkboxradio("option", "disabled", true);
       $("#encrypt_req").prop('checked', true).checkboxradio("option", "disabled", false);
-    } else if (!endpoint.DATA[0].scheme || endpoint.DATA[0].scheme === "gsiftp") {
+    } else if (!scheme || scheme === "gsiftp") {
       $("#encrypt_none").checkboxradio("option", "disabled", false);
       $("#encrypt_avail").checkboxradio("option", "disabled", false);
       $("#encrypt_req").checkboxradio("option", "disabled", false);
@@ -751,52 +772,6 @@ class TransferDialog {
       }
     });
   }
-
-  // searchEndpoint(endpoint) {
-  //   console.log('Searching for endpoint:', endpoint);
-  //   return new Promise((resolve, _) => {
-  //     api.epView(endpoint, (ok, data) => {
-  //       console.log('epView response:', {ok, data});
-  //       if (ok && !data.code) {
-  //         this.updateEndpoint(data);
-  //         this.state.endpointOk = true;
-  //         this.updateButtonStates();
-  //         resolve({isValid: true, ...data});
-  //       } else {
-  //         api.epAutocomplete(endpoint, (ok, data) => {
-  //           if (ok && data.DATA && data.DATA.length) {
-  //             this.endpointList = data.DATA;
-  //             let html = `<option disabled selected>${data.DATA.length} match${data.DATA.length > 1 ? 'es' : ''}</option>`;
-  //
-  //             for (let ep of data.DATA) {
-  //               ep.name = ep.canonical_name || ep.id;
-  //               html += `<option title='${util.escapeHTML(ep.description)}'>${
-  //                 util.escapeHTML(ep.display_name || ep.name)} (${
-  //                 !ep.activated && ep.expires_in === -1 ?
-  //                   "active" :
-  //                   (ep.activated ? Math.floor(ep.expires_in / 3600) + " hrs" : "inactive")
-  //               })</option>`;
-  //             }
-  //
-  //             const matches = $("#matches", this.state.frame);
-  //             matches.html(html);
-  //             matches.prop("disabled", false);
-  //           } else {
-  //             this.endpointList = null;
-  //             const matches = $("#matches", this.state.frame);
-  //             matches.html("<option disabled selected>No Matches</option>");
-  //             matches.prop("disabled", true);
-  //
-  //             if (data.code) {
-  //               dialogs.dlgAlert("Globus Error", data.code);
-  //             }
-  //           }
-  //         });
-  //         resolve({isValid: false, error: data});
-  //       }
-  //     });
-  //   });
-  // }
 }
 
 export function show(mode, records, callback) {
