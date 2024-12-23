@@ -529,11 +529,12 @@ class TransferDialog {
 
     const path = $("#path", this.state.frame).val().trim();
     console.log('Processing path:', path);
+
     if (!path.length) {
       console.log('Empty path - disabling endpoint');
       this.state.endpointOk = false;
       this.endpointList = null;
-      this.updateMatchesList();
+      this.updateMatchesList([]);
       this.updateButtonStates();
       return;
     }
@@ -541,19 +542,12 @@ class TransferDialog {
     const endpoint = path.split('/')[0];
     console.log('Extracted endpoint:', endpoint, 'Current endpoint:', this.state.currentEndpoint?.name);
 
+
     if (!this.state.currentEndpoint || endpoint !== this.state.currentEndpoint.name) {
       console.log('Endpoint changed or not set - searching for new endpoint');
       this.state.endpointOk = false;
       this.updateButtonStates();
-      this.searchEndpoint(endpoint).then(result => {
-        console.log('Search endpoint result:', result);
-        if (result.isValid) {
-          console.log('Valid endpoint found - updating');
-          this.updateEndpoint(result);
-          this.state.endpointOk = true;
-          this.updateButtonStates();
-        }
-      });
+      this.searchEndpoint(endpoint, searchToken);
     }
   }
 
@@ -665,8 +659,14 @@ class TransferDialog {
     this.updateEndpointOptions(this.state.currentEndpoint);
   }
 
-  updateMatchesList() {
+  updateMatchesList(endpoints = []) {
     const matches = $("#matches", this.state.frame);
+    if (!endpoints.length) {
+      matches.html("<option disabled selected>No Matches</option>");
+      matches.prop("disabled", true);
+      return;
+    }
+
     const html = this.generateMatchesHtml(endpoints);
     matches.html(html);
     matches.prop("disabled", false);
@@ -696,38 +696,107 @@ class TransferDialog {
    * ------------MISC------------
    */
 
-  async handleEndpointSearch(searchToken, endpoint) {
-    if (searchToken !== this.state.currentSearchToken) return;
+  async searchEndpoint(endpoint, searchToken) {
+    console.log('Searching for endpoint:', endpoint);
 
     try {
-      const data = await this.searchEndpoint(endpoint);
+      return api.epView(endpoint, (ok, data) => {
+        // Only proceed if this is still the current search
+        if (searchToken !== this.state.currentSearchToken) {
+          console.log('Ignoring stale epView response');
+          return;
+        }
 
-      if (data.isValid) {
-        this.updateEndpoint(data);
-      } else {
-        const matches = await this.searchEndpoint(endpoint);
-        if (searchToken !== this.state.currentSearchToken) return;
-
-        this.updateEndpoint(matches);
-      }
+        if (ok && !data.code) {
+          console.log('Direct endpoint match found:', data);
+          this.updateEndpoint(data);
+          this.state.endpointOk = true;
+          this.updateButtonStates();
+        } else {
+          // No exact match found, try autocomplete
+          console.log('No direct match, trying autocomplete');
+          this.searchEndpointAutocomplete(endpoint, searchToken);
+        }
+      });
     } catch (error) {
       dialogs.dlgAlert("Globus Error", error);
     }
+
   }
 
-  searchEndpoint(endpoint) {
-    console.log('Searching for endpoint:', endpoint);
-    return new Promise((resolve, _) => {
-      api.epView(endpoint, (ok, data) => {
-        console.log('epView response:', {ok, data});
-        if (ok && !data.code) {
-          resolve({isValid: true, ...data});
-        } else {
-          resolve({isValid: false, error: data});
+  searchEndpointAutocomplete(endpoint, searchToken) {
+    api.epAutocomplete(endpoint, (ok, data) => {
+      // Only proceed if this is still the current search
+      if (searchToken !== this.state.currentSearchToken) {
+        console.log('Ignoring stale autocomplete response');
+        return;
+      }
+
+      if (ok && data.DATA && data.DATA.length) {
+        console.log('Autocomplete matches found:', data.DATA.length);
+        this.endpointList = data.DATA;
+        // Process endpoints and update UI
+        data.DATA.forEach(ep => {
+          ep.name = ep.canonical_name || ep.id;
+        });
+        this.updateMatchesList(data.DATA);
+      } else {
+        console.log('No matches found');
+        this.endpointList = null;
+        this.updateMatchesList([]);
+        if (data.code) {
+          console.error('Autocomplete error:', data);
+          dialogs.dlgAlert("Globus Error", data.code);
         }
-      });
+      }
     });
   }
+
+  // searchEndpoint(endpoint) {
+  //   console.log('Searching for endpoint:', endpoint);
+  //   return new Promise((resolve, _) => {
+  //     api.epView(endpoint, (ok, data) => {
+  //       console.log('epView response:', {ok, data});
+  //       if (ok && !data.code) {
+  //         this.updateEndpoint(data);
+  //         this.state.endpointOk = true;
+  //         this.updateButtonStates();
+  //         resolve({isValid: true, ...data});
+  //       } else {
+  //         api.epAutocomplete(endpoint, (ok, data) => {
+  //           if (ok && data.DATA && data.DATA.length) {
+  //             this.endpointList = data.DATA;
+  //             let html = `<option disabled selected>${data.DATA.length} match${data.DATA.length > 1 ? 'es' : ''}</option>`;
+  //
+  //             for (let ep of data.DATA) {
+  //               ep.name = ep.canonical_name || ep.id;
+  //               html += `<option title='${util.escapeHTML(ep.description)}'>${
+  //                 util.escapeHTML(ep.display_name || ep.name)} (${
+  //                 !ep.activated && ep.expires_in === -1 ?
+  //                   "active" :
+  //                   (ep.activated ? Math.floor(ep.expires_in / 3600) + " hrs" : "inactive")
+  //               })</option>`;
+  //             }
+  //
+  //             const matches = $("#matches", this.state.frame);
+  //             matches.html(html);
+  //             matches.prop("disabled", false);
+  //           } else {
+  //             this.endpointList = null;
+  //             const matches = $("#matches", this.state.frame);
+  //             matches.html("<option disabled selected>No Matches</option>");
+  //             matches.prop("disabled", true);
+  //
+  //             if (data.code) {
+  //               dialogs.dlgAlert("Globus Error", data.code);
+  //             }
+  //           }
+  //         });
+  //         resolve({isValid: false, error: data});
+  //       }
+  //     });
+  //   });
+  // }
 }
 
 export function show(mode, records, callback) {
