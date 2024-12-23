@@ -342,18 +342,24 @@ class TransferDialog {
   }
 
   initializeEndpointInput() {
+    console.log('Initializing endpoint input');
     const pathInput = $("#path", this.state.frame);
     util.inputTheme(pathInput);
 
     pathInput.on('input', () => {
+      console.log('Input event triggered');
       clearTimeout(this.state.inputTimer);
       this.state.currentSearchToken = ++this.state.searchCounter;
+      console.log('New search token:', this.state.currentSearchToken);
+      
       this.state.inputTimer = setTimeout(() => {
+        console.log('Timer expired - handling path input');
         this.handlePathInput(this.state.currentSearchToken);
       }, 250);
     });
 
     if (settings.ep_recent.length) {
+      console.log('Recent endpoints found:', settings.ep_recent);
       pathInput.val(settings.ep_recent[0]);
       pathInput.select();
       pathInput.autocomplete({
@@ -514,10 +520,17 @@ class TransferDialog {
   }
 
   handlePathInput(searchToken) {
-    if (searchToken !== this.state.currentSearchToken) return;
+    console.log('handlePathInput called with token:', searchToken, 'current token:', this.state.currentSearchToken);
+    
+    if (searchToken !== this.state.currentSearchToken) {
+      console.log('Token mismatch - ignoring stale request');
+      return;
+    }
 
     const path = $("#path", this.state.frame).val().trim();
+    console.log('Processing path:', path);
     if (!path.length) {
+      console.log('Empty path - disabling endpoint');
       this.state.endpointOk = false;
       this.endpointList = null;
       this.updateMatchesList();
@@ -526,11 +539,16 @@ class TransferDialog {
     }
 
     const endpoint = path.split('/')[0];
+    console.log('Extracted endpoint:', endpoint, 'Current endpoint:', this.state.currentEndpoint?.name);
+
     if (!this.state.currentEndpoint || endpoint !== this.state.currentEndpoint.name) {
+      console.log('Endpoint changed or not set - searching for new endpoint');
       this.state.endpointOk = false;
       this.updateButtonStates();
       this.searchEndpoint(endpoint).then(result => {
+        console.log('Search endpoint result:', result);
         if (result.isValid) {
+          console.log('Valid endpoint found - updating');
           this.updateEndpoint(result);
           this.state.endpointOk = true;
           this.updateButtonStates();
@@ -566,8 +584,18 @@ class TransferDialog {
    */
 
   updateButtonStates() {
+    console.log('Updating button states:', {
+      selectionOk: this.state.selectionOk,
+      endpointOk: this.state.endpointOk
+    });
+    
     this.safeUIOperation(() => {
       const buttonsEnabled = this.state.selectionOk && this.state.endpointOk;
+      console.log('Button states calculated:', {
+        selectionOk: this.state.selectionOk,
+        endpointOk: this.state.endpointOk,
+        enabled: buttonsEnabled
+      });
       console.log('Button states:', {
         selectionOk: this.state.selectionOk,
         endpointOk: this.state.endpointOk,
@@ -605,13 +633,17 @@ class TransferDialog {
   }
 
   updateEndpoint(data) {
+    console.log('Updating endpoint with data:', data);
     this.state.currentEndpoint = {
       ...data,
       name: data.canonical_name || data.id
     };
+    console.log('Updated current endpoint:', this.state.currentEndpoint);
 
     const pathInput = $("#path", this.state.frame);
-    pathInput.val(this.model.getDefaultPath(this.state.currentEndpoint));
+    const newPath = this.model.getDefaultPath(this.state.currentEndpoint);
+    console.log('Setting new path:', newPath);
+    pathInput.val(newPath);
 
     let html = `<option title="${util.escapeHTML(this.state.currentEndpoint.description || '(no info)')}">${
       util.escapeHTML(this.state.currentEndpoint.display_name || this.state.currentEndpoint.name)} (`;
@@ -684,8 +716,10 @@ class TransferDialog {
   }
 
   searchEndpoint(endpoint) {
+    console.log('Searching for endpoint:', endpoint);
     return new Promise((resolve, _) => {
       api.epView(endpoint, (ok, data) => {
+        console.log('epView response:', {ok, data});
         if (ok && !data.code) {
           resolve({isValid: true, ...data});
         } else {
