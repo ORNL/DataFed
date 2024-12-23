@@ -201,6 +201,94 @@ class TransferModel {
 /**
  * TransferDialog class manages the UI and logic for data transfers
  */
+/**
+ * Handles all event bindings and callbacks
+ */
+class EventHandler {
+  constructor(dialog) {
+    this.dialog = dialog;
+    this.boundHandlers = {
+      pathInput: this.handlePathInput.bind(this),
+      matchesChange: this.handleMatchesChange.bind(this),
+      transfer: this.handleTransfer.bind(this),
+      selectionChange: this.handleSelectionChange.bind(this)
+    };
+  }
+
+  /**
+   * Attaches all event handlers
+   */
+  attachEvents() {
+    const frame = this.dialog.state.frame;
+    $("#path", frame).on('input', this.boundHandlers.pathInput);
+    $("#matches", frame).on('change', this.boundHandlers.matchesChange);
+    $("#records", frame).on('select', this.boundHandlers.selectionChange);
+    this.attachTransferHandlers();
+  }
+
+  /**
+   * Attaches transfer-specific handlers
+   */
+  attachTransferHandlers() {
+    const frame = this.dialog.state.frame;
+    $("#browse", frame).on('click', () => this.dialog.handleBrowse());
+    $("#activate", frame).on('click', () => {
+      if (this.dialog.state.currentEndpoint) {
+        window.open(`https://app.globus.org/file-manager?origin_id=${
+          encodeURIComponent(this.dialog.state.currentEndpoint.id)}`, '');
+      }
+    });
+  }
+
+  /**
+   * Handles path input changes
+   * @param {Event} event Input event
+   */
+  handlePathInput(event) {
+    clearTimeout(this.dialog.state.inputTimer);
+    this.dialog.state.currentSearchToken = ++this.dialog.state.searchCounter;
+    const value = $(event.target).val().trim();
+    this.dialog.state.inputTimer = setTimeout(() => 
+      this.dialog.handleEndpointSearch(value), 250);
+  }
+
+  /**
+   * Handles matches selection changes
+   * @param {Event} event Change event
+   */
+  handleMatchesChange(event) {
+    this.dialog.handleMatchesChange(event);
+  }
+
+  /**
+   * Handles transfer button click
+   */
+  async handleTransfer() {
+    try {
+      const config = this.dialog.getTransferConfig();
+      this.dialog.model.validateConfig(config);
+      await this.dialog.startTransfer(config);
+    } catch (error) {
+      if (error instanceof TransferError) {
+        dialogs.dlgAlert("Transfer Error", error.message);
+      } else {
+        console.error("Unexpected error:", error);
+        dialogs.dlgAlert("Error", "An unexpected error occurred");
+      }
+    }
+  }
+
+  /**
+   * Handles selection changes
+   */
+  handleSelectionChange() {
+    this.dialog.handleSelectionChange();
+  }
+}
+
+/**
+ * TransferDialog class manages the UI and logic for data transfers
+ */
 class TransferDialog {
   /**
    * @param {number} mode - Transfer mode (GET/PUT)
@@ -215,11 +303,6 @@ class TransferDialog {
     this.state = new TransferState();
     this.eventHandler = new EventHandler(this);
   }
-
-/**
- * Handles all event bindings and callbacks
- */
-class EventHandler {
   constructor(dialog) {
     this.dialog = dialog;
     this.boundHandlers = {
@@ -630,7 +713,7 @@ class EventHandler {
 
   handleTransferResponse(ok, data) {
     if (ok) {
-      clearTimeout(this.inputTimer);
+      clearTimeout(this.state.inputTimer);
       this.closeDialog();
       util.setStatusText(`Task '${data.task.id}' created for data transfer.`);
       this.callback?.();
@@ -746,7 +829,7 @@ class EventHandler {
     this.updateEndpointOptions(this.state.currentEndpoint);
   }
 
-  updateMatchesList() {
+  updateMatchesList(endpoints) {
     const matches = $("#matches", this.state.frame);
     const html = this.generateMatchesHtml(endpoints);
     matches.html(html);
