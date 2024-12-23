@@ -484,24 +484,6 @@ class TransferDialog {
     });
   }
 
-  initializeUIComponents() {
-    // Initialize all buttons
-    $(".btn", this.state.frame).button();
-
-    // Initialize radio buttons
-    $(":radio", this.state.frame).checkboxradio();
-
-    // Initialize checkboxes if needed
-    if (this.model.mode === model.TT_DATA_GET) {
-      $("#orig_fname", this.state.frame).checkboxradio();
-    }
-
-    // Initialize the go button
-    $("#go_btn").button().button("disable");
-
-    // Initialize browse button
-    $("#browse", this.state.frame).button().button("disable");
-  }
 
   initializeBrowseButton() {
     $("#browse", this.state.frame).on('click', () => {
@@ -753,16 +735,47 @@ class TransferDialog {
    * ------------UPDATE------------
    */
 
-  updateUIState() {
-    const buttonsEnabled = this.state.selectionOk && this.state.endpointOk;
-    this.updateButton("#go_btn", buttonsEnabled);
-    this.updateButton("#browse", this.state.endpointOk);
+  /**
+   * Initializes the UI state including buttons and controls
+   */
+  initializeUIState() {
+    // Initialize all standard buttons
+    $(".btn", this.state.frame).button();
+
+    // Initialize radio buttons
+    $(":radio", this.state.frame).checkboxradio();
+
+    // Initialize checkboxes for GET mode
+    if (this.model.mode === model.TT_DATA_GET) {
+      $("#orig_fname", this.state.frame).checkboxradio();
+    }
+
+    // Initialize main action button (disabled by default)
+    $("#go_btn").button().button("disable");
+
+    // Initialize browse button (disabled by default) 
+    $("#browse", this.state.frame).button().button("disable");
+
+    // Set initial button states based on current state
+    this.updateButtonStates();
   }
 
-  updateButton(selector, enabled) {
-    const button = $(selector, this.state.frame);
-    if (button.length) {
-      button.button(enabled ? "enable" : "disable");
+  /**
+   * Updates the enabled/disabled state of all buttons based on current state
+   */
+  updateButtonStates() {
+    const buttonsEnabled = this.state.selectionOk && this.state.endpointOk;
+    
+    // Update main action button
+    this.setButtonState("#go_btn", buttonsEnabled);
+    
+    // Update browse button
+    this.setButtonState("#browse", this.state.endpointOk);
+    
+    // Update activate button if endpoint exists
+    if (this.state.currentEndpoint) {
+      this.setButtonState("#activate", 
+        this.state.currentEndpoint.expires_in !== -1);
     }
   }
 
