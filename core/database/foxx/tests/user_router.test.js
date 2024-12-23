@@ -12,12 +12,14 @@ const usr_base_url = `${baseUrl}/usr`
 
 // NOTE: describe block strings are compared against test specification during test call, not file name
 describe("user_router: the Foxx microservice user_router token/set endpoint", () => {
-    const test_params = {
-        _key: "testUser0",  // TODO: use module export from user_fixture.js
-        access: "asdf",
-        refresh: "jkl",
-    };
-
+    const test_param_indexes = [0,1,2,3,4];
+    const test_params = test_param_indexes.map((param_index) => {
+        return {
+            _key: "testUser" + param_index,
+            access: "access_token" + param_index,
+            refresh: "refresh_token" + param_index,
+        }
+    });
     const test_edge_params = {
         type: 4,  // transfer token
         other_token_data: "1cbaaee5-b938-4a4e-87a8-f1ec4d5d92f9",   // fake UUID
@@ -26,7 +28,7 @@ describe("user_router: the Foxx microservice user_router token/set endpoint", ()
     it("should accept a valid user's token and execute an update", () => {
         // arrange
         // NOTE: the get request has query params instead of a body
-        const query_params = test_params;
+        const query_params = test_params[0];
         // TODO: make encoded query params less hard coded
         const request_string = `${usr_base_url}/token/set?client=${query_params._key}&access=${query_params.access}&refresh=${query_params.refresh}&expires_in=500000`;
 
@@ -37,13 +39,14 @@ describe("user_router: the Foxx microservice user_router token/set endpoint", ()
         expect(response.status).to.equal(204);
 
         const user_token_data = db.u.document({_key: query_params._key});
-        expect(user_token_data).to.include(test_params);
+        expect(user_token_data).to.include(query_params);
     });
 
     it("should update only a valid user's token when additionally provided type", () => {
         // arrange
+        const local_test_params = test_params[1];
         const query_params = {
-          ...test_params,
+          ...local_test_params,
           type: 4,
         };
         // TODO: make encoded query params less hard coded
@@ -56,16 +59,17 @@ describe("user_router: the Foxx microservice user_router token/set endpoint", ()
         expect(response.status).to.equal(204);
 
         const user_token_data = db.u.document({_key: query_params._key});
-        expect(user_token_data).to.include(test_params);    // TODO: this data should be the same from the first test, we should find a way to ensure it has been updated
+        expect(user_token_data).to.include(local_test_params);
 
         const user_token_edge = db.globus_token.outEdges(user_token_data._id);
-        expect(user_token_edge).to.be.empty;    // TODO: this depends on run order and must run before the test inserting to edge
+        expect(user_token_edge).to.be.empty;
     });
 
     it("should update only a valid user's token when additionally provided other token data", () => {
         // arrange
+        const lcoal_test_params = test_params[2];
         const query_params = {
-            ...test_params,
+            ...lcoal_test_params,
             other_token_data: "1cbaaee5-b938-4a4e-87a8-f1ec4d5d92f9",
         };
         // TODO: make encoded query params less hard coded
@@ -78,18 +82,19 @@ describe("user_router: the Foxx microservice user_router token/set endpoint", ()
         expect(response.status).to.equal(204);
 
         const user_token_data = db.u.document({_key: query_params._key});
-        expect(user_token_data).to.include(test_params);    // TODO: this data should be the same from the first test, we should find a way to ensure it has been updated
+        expect(user_token_data).to.include(lcoal_test_params);
 
         const user_token_edge = db.globus_token.outEdges(user_token_data._id);
-        expect(user_token_edge).to.be.empty;    // TODO: this depends on run order and must run before the test inserting to edge
+        expect(user_token_edge).to.be.empty;
     });
 
     it("should accept a valid user's token with additional type and globus collection data and add it to globus_token edge", () => {
         // arrange
+        const local_test_params = test_params[3];
         const query_params = {
-            user_key: test_params._key,
-            access: test_params.refresh,
-            refresh: test_params.access,
+            user_key: local_test_params._key,
+            access: local_test_params.access,
+            refresh: local_test_params.refresh,
             ...test_edge_params,
         };
 
