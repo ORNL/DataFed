@@ -4,7 +4,6 @@
 
 // Local public includes
 #include "common/DynaLog.hpp"
-#include "common/SDMS.pb.h"
 #include "common/TraceException.hpp"
 #include "common/Util.hpp"
 
@@ -182,10 +181,10 @@ bool DatabaseAPI::dbGetRaw(std::string url, string &a_result) {
     return false;
 }
 
-long DatabaseAPI::dbPost(
-    const char *a_url_path,
-    const std::vector<std::pair<std::string, std::string>> &a_params,
-    const string *a_body, Value &a_result, LogContext log_context) {
+long DatabaseAPI::dbPost(const char *a_url_path,
+                         const vector<pair<string, string>> &a_params,
+                         const string *a_body, Value &a_result,
+                         LogContext log_context) {
   static const char *empty_body = "";
 
   a_result.clear();
@@ -380,12 +379,9 @@ void DatabaseAPI::userSetAccessToken(
     const Auth::UserSetAccessTokenRequest &a_request, Anon::AckReply &a_reply,
     LogContext log_context) {
   (void)a_reply;
-  userSetAccessToken(
-      a_request.access(), a_request.expires_in(), a_request.refresh(),
-      a_request.type(), // TODO: `type` field may be defaulted to something
-                        // nonsensical, should specify default or conditionally
-                        // add based on value
-      a_request.other(), log_context);
+  userSetAccessToken(a_request.access(), a_request.expires_in(),
+                     a_request.refresh(), a_request.type(), a_request.other(),
+                     log_context);
 }
 
 void DatabaseAPI::getExpiringAccessTokens(
