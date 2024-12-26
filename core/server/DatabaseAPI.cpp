@@ -76,6 +76,34 @@ void DatabaseAPI::setClient(const std::string &a_client) {
   m_client = curl_easy_escape(m_curl, a_client.c_str(), 0);
 }
 
+std::string DatabaseAPI::buildSearchParamURL(
+    const char *endpoint_path,
+    const std::vector<std::pair<std::string, std::string>> &param_vec) {
+  string url;
+
+  url.reserve(512);
+
+  // TODO Get URL base from ctor
+  url.append(m_db_url);
+  url.append(endpoint_path);
+  url.append("?client=");
+  url.append(m_client);
+
+  char *esc_txt;
+
+  for (vector<pair<string, string>>::const_iterator iparam = param_vec.begin();
+       iparam != param_vec.end(); ++iparam) {
+    url.append("&");
+    url.append(iparam->first.c_str());
+    url.append("=");
+    esc_txt = curl_easy_escape(m_curl, iparam->second.c_str(), 0);
+    url.append(esc_txt);
+    curl_free(esc_txt);
+  }
+
+  return url;
+}
+
 long DatabaseAPI::dbGet(const char *a_url_path,
                         const vector<pair<string, string>> &a_params,
                         libjson::Value &a_result, LogContext log_context,
@@ -84,31 +112,12 @@ long DatabaseAPI::dbGet(const char *a_url_path,
 
   a_result.clear();
 
-  string url;
   string res_json;
   char error[CURL_ERROR_SIZE];
 
   error[0] = 0;
 
-  url.reserve(512);
-
-  // TODO Get URL base from ctor
-  url.append(m_db_url);
-  url.append(a_url_path);
-  url.append("?client=");
-  url.append(m_client);
-
-  char *esc_txt;
-
-  for (vector<pair<string, string>>::const_iterator iparam = a_params.begin();
-       iparam != a_params.end(); ++iparam) {
-    url.append("&");
-    url.append(iparam->first.c_str());
-    url.append("=");
-    esc_txt = curl_easy_escape(m_curl, iparam->second.c_str(), 0);
-    url.append(esc_txt);
-    curl_free(esc_txt);
-  }
+  string url = buildSearchParamURL(a_url_path, a_params);
 
   DL_DEBUG(log_context, "get url: " << url);
   curl_easy_setopt(m_curl, CURLOPT_URL, url.c_str());
@@ -149,34 +158,6 @@ long DatabaseAPI::dbGet(const char *a_url_path,
   }
 }
 
-std::string DatabaseAPI::buildSearchParamURL(
-    const char *endpoint_path,
-    const std::vector<std::pair<std::string, std::string>> &param_vec) {
-  string url;
-
-  url.reserve(512);
-
-  // TODO Get URL base from ctor
-  url.append(m_db_url);
-  url.append(endpoint_path);
-  url.append("?client=");
-  url.append(m_client);
-
-  char *esc_txt;
-
-  for (vector<pair<string, string>>::const_iterator iparam = param_vec.begin();
-       iparam != param_vec.end(); ++iparam) {
-    url.append("&");
-    url.append(iparam->first.c_str());
-    url.append("=");
-    esc_txt = curl_easy_escape(m_curl, iparam->second.c_str(), 0);
-    url.append(esc_txt);
-    curl_free(esc_txt);
-  }
-
-  return url;
-}
-
 bool DatabaseAPI::dbGetRaw(std::string url, string &a_result) {
   a_result.clear();
 
@@ -206,14 +187,14 @@ long DatabaseAPI::dbPost(
     const string *a_body, Value &a_result, LogContext log_context) {
   static const char *empty_body = "";
 
-  string url = buildSearchParamURL(a_url_path, a_params);
-
   a_result.clear();
 
   string res_json;
   char error[CURL_ERROR_SIZE];
 
   error[0] = 0;
+
+  string url = buildSearchParamURL(a_url_path, a_params);
 
   curl_easy_setopt(m_curl, CURLOPT_URL, url.c_str());
   curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, &res_json);
