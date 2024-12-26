@@ -149,29 +149,23 @@ long DatabaseAPI::dbGet(const char *a_url_path,
   }
 }
 
-bool DatabaseAPI::dbGetRaw(const char *a_url_path,
-                           const vector<pair<string, string>> &a_params,
-                           string &a_result) {
-  a_result.clear();
-
+std::string DatabaseAPI::buildSearchParamURL(
+    const char *endpoint_path,
+    const std::vector<std::pair<std::string, std::string>> &param_vec) {
   string url;
-  char error[CURL_ERROR_SIZE];
-
-  a_result.clear();
-  error[0] = 0;
 
   url.reserve(512);
 
   // TODO Get URL base from ctor
   url.append(m_db_url);
-  url.append(a_url_path);
+  url.append(endpoint_path);
   url.append("?client=");
   url.append(m_client);
 
   char *esc_txt;
 
-  for (vector<pair<string, string>>::const_iterator iparam = a_params.begin();
-       iparam != a_params.end(); ++iparam) {
+  for (vector<pair<string, string>>::const_iterator iparam = param_vec.begin();
+       iparam != param_vec.end(); ++iparam) {
     url.append("&");
     url.append(iparam->first.c_str());
     url.append("=");
@@ -179,6 +173,17 @@ bool DatabaseAPI::dbGetRaw(const char *a_url_path,
     url.append(esc_txt);
     curl_free(esc_txt);
   }
+
+  return url;
+}
+
+bool DatabaseAPI::dbGetRaw(std::string url, string &a_result) {
+  a_result.clear();
+
+  char error[CURL_ERROR_SIZE];
+
+  a_result.clear();
+  error[0] = 0;
 
   curl_easy_setopt(m_curl, CURLOPT_URL, url.c_str());
   curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, &a_result);
@@ -195,39 +200,20 @@ bool DatabaseAPI::dbGetRaw(const char *a_url_path,
     return false;
 }
 
-long DatabaseAPI::dbPost(const char *a_url_path,
-                         const vector<pair<string, string>> &a_params,
-                         const string *a_body, Value &a_result,
-                         LogContext log_context) {
+long DatabaseAPI::dbPost(
+    const char *a_url_path,
+    const std::vector<std::pair<std::string, std::string>> &a_params,
+    const string *a_body, Value &a_result, LogContext log_context) {
   static const char *empty_body = "";
+
+  string url = buildSearchParamURL(a_url_path, a_params);
 
   a_result.clear();
 
-  string url;
   string res_json;
   char error[CURL_ERROR_SIZE];
 
   error[0] = 0;
-
-  url.reserve(512);
-
-  // TODO Get URL base from ctor
-  url.append(m_db_url);
-  url.append(a_url_path);
-  url.append("?client=");
-  url.append(m_client);
-
-  char *esc_txt;
-
-  for (vector<pair<string, string>>::const_iterator iparam = a_params.begin();
-       iparam != a_params.end(); ++iparam) {
-    url.append("&");
-    url.append(iparam->first.c_str());
-    url.append("=");
-    esc_txt = curl_easy_escape(m_curl, iparam->second.c_str(), 0);
-    url.append(esc_txt);
-    curl_free(esc_txt);
-  }
 
   curl_easy_setopt(m_curl, CURLOPT_URL, url.c_str());
   curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, &res_json);
@@ -316,7 +302,9 @@ void DatabaseAPI::clientLinkIdentity(const std::string &a_identity,
 
 bool DatabaseAPI::uidByPubKey(const std::string &a_pub_key,
                               std::string &a_uid) {
-  bool found = dbGetRaw("usr/find/by_pub_key", {{"pub_key", a_pub_key}}, a_uid);
+  string url =
+      buildSearchParamURL("usr/find/by_pub_key", {{"pub_key", a_pub_key}});
+  bool found = dbGetRaw(url, a_uid);
   return found;
 }
 
@@ -389,7 +377,9 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
   if (!other_token_data.empty()) {
     params.push_back({"other_token_data", other_token_data});
   }
-  dbGetRaw("usr/token/set", params, result);
+  string url = buildSearchParamURL("usr/token/set", params);
+  DL_DEBUG(log_context, "Built URL is " + url);
+  dbGetRaw(url, result);
   DL_TRACE(log_context, "token expires in: " << to_string(a_expires_in));
 }
 
@@ -444,7 +434,8 @@ void DatabaseAPI::getExpiringAccessTokens(
 
 void DatabaseAPI::purgeTransferRecords(size_t age) {
   string result;
-  dbGetRaw("xfr/purge", {{"age", to_string(age)}}, result);
+  string url = buildSearchParamURL("xfr/purge", {{"age", to_string(age)}});
+  dbGetRaw(url, result);
 }
 
 void DatabaseAPI::userCreate(const Auth::UserCreateRequest &a_request,

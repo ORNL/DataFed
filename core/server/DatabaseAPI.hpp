@@ -331,10 +331,7 @@ private:
   long dbGet(const char *a_url_path,
              const std::vector<std::pair<std::string, std::string>> &a_params,
              libjson::Value &a_result, LogContext, bool a_log = true);
-  bool
-  dbGetRaw(const char *a_url_path,
-           const std::vector<std::pair<std::string, std::string>> &a_params,
-           std::string &a_result);
+  bool dbGetRaw(std::string url, std::string &a_result);
   long dbPost(const char *a_url_path,
               const std::vector<std::pair<std::string, std::string>> &a_params,
               const std::string *a_body, libjson::Value &a_result, LogContext);
@@ -412,6 +409,10 @@ private:
                                   const std::string &a_iter = "i");
   std::string parseSearchIdAlias(const std::string &a_query,
                                  const std::string &a_iter);
+
+  std::string buildSearchParamURL(
+      const char *endpoint_path,
+      const std::vector<std::pair<std::string, std::string>> &param_vec);
 
   CURL *m_curl;
   char *m_client;
