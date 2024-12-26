@@ -117,6 +117,7 @@ long DatabaseAPI::dbGet(const char *a_url_path,
 
   error[0] = 0;
 
+  // TODO: construct URL outside of function
   string url = buildSearchParamURL(a_url_path, a_params);
 
   DL_DEBUG(log_context, "get url: " << url);
@@ -194,6 +195,7 @@ long DatabaseAPI::dbPost(
 
   error[0] = 0;
 
+  // TODO: construct URL outside of function
   string url = buildSearchParamURL(a_url_path, a_params);
 
   curl_easy_setopt(m_curl, CURLOPT_URL, url.c_str());
@@ -359,7 +361,9 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
     params.push_back({"other_token_data", other_token_data});
   }
   string url = buildSearchParamURL("usr/token/set", params);
-  DL_DEBUG(log_context, "Built URL is " + url);
+  DL_DEBUG(log_context,
+           "Built URL is " +
+               url); // TODO: remove logging of potentially sensitive data
   dbGetRaw(url, result);
   DL_TRACE(log_context, "token expires in: " << to_string(a_expires_in));
 }
@@ -368,8 +372,6 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_access_token,
                                      uint32_t a_expires_in,
                                      const std::string &a_refresh_token,
                                      LogContext log_context) {
-  // TODO: check validity of other_token_data, perhaps use std::variant or
-  // std::optional
   userSetAccessToken(a_access_token, a_expires_in, a_refresh_token,
                      SDMS::AccessTokenType::GLOBUS, "", log_context);
 }
@@ -378,9 +380,12 @@ void DatabaseAPI::userSetAccessToken(
     const Auth::UserSetAccessTokenRequest &a_request, Anon::AckReply &a_reply,
     LogContext log_context) {
   (void)a_reply;
-  userSetAccessToken(a_request.access(), a_request.expires_in(),
-                     a_request.refresh(), a_request.type(), a_request.other(),
-                     log_context);
+  userSetAccessToken(
+      a_request.access(), a_request.expires_in(), a_request.refresh(),
+      a_request.type(), // TODO: `type` field may be defaulted to something
+                        // nonsensical, should specify default or conditionally
+                        // add based on value
+      a_request.other(), log_context);
 }
 
 void DatabaseAPI::getExpiringAccessTokens(
