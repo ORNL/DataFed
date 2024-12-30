@@ -7,7 +7,7 @@ const g_lib = require('./support');
 const { Repo, PathType } = require("./repo");
 
 module.exports = (function() {
-  var obj = {}
+  let obj = {}
 
   /**
    * @brief Will check to see if a client has the required permissions on a 
