@@ -84,28 +84,26 @@ module.exports = (function() {
     // Special case - allow unknown client to read a publicly accessible record
     // if record exists and if it is a public record
     if (!client) {
-      if (!g_lib.hasPublicRead(record.id())) {
-        console.log(
-            "AUTHZ act: read" +
-            " client: " + client._id +
-            " path " + path +
-            " FAILED"
-            );
-        throw g_lib.ERR_PERM_DENIED;
-      }
-    } else {
-      // This will tell us if the action on the record is authorized
-      // we still do not know if the path is correct.
-      if (! obj.isRecordActionAuthorized(client, data_key, permission)) {
-        console.log(
-            "AUTHZ act: read" +
-            " client: " + client._id +
-            " path " + path +
-            " FAILED"
-            );
-        throw g_lib.ERR_PERM_DENIED;
-      }
-    }
+          if (!g_lib.hasPublicRead(record.id())) {
+            console.log(
+                "AUTHZ act: read" +
+                " client: " + client._id +
+                " path " + path +
+                " FAILED"
+                );
+            throw g_lib.ERR_PERM_DENIED;
+          }
+        }
+    else if (! obj.isRecordActionAuthorized(client, data_key, permission)) {
+            console.log(
+                "AUTHZ act: read" +
+                " client: " + client._id +
+                " path " + path +
+                " FAILED"
+                );
+            throw g_lib.ERR_PERM_DENIED;
+          }
+
 
     if (!record.isPathConsistent(path)) {
       console.log(
