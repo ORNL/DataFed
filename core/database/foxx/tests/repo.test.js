@@ -1,7 +1,7 @@
 "use strict";
 
 const chai = require("chai");
-const expect = chai.expect;
+const {expect} = chai;
 const { Repo, PathType } = require("../api/repo");
 const g_db = require("@arangodb").db;
 const g_lib = require("../api/support");
