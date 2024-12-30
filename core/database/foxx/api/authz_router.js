@@ -8,128 +8,75 @@ const g_lib = require("./support");
 const pathModule = require("./posix_path");
 const Record = require("./record");
 const authzModule = require("./authz");
+const { Repo, PathType } = require("./repo");
 
 module.exports = router;
 
-router
-  .get("/gridftp", function (req, res) {
+
+
+router.get("/gridftp", function (req, res) {
     try {
-      console.log("/gridftp start authz client", req.queryParams.client,
+    console.log("/gridftp start authz client", req.queryParams.client,
         "repo", req.queryParams.repo,
         "file", req.queryParams.file,
         "act", req.queryParams.act
-      );
-
-      // Client will contain the following information
-      // {
-      //   "_key" : "bob",
-      //   "_id" : "u/bob",
-      //   "name" : "bob junior ",
-      //   "name_first" : "bob",
-      //   "name_last" : "jones",
-      //   "is_admin" : true,
-      //   "max_coll" : 50,
-      //   "max_proj" : 10,
-      //   "max_sav_qry" : 20,
-      //   :
-      //   "email" : "bobjones@gmail.com"
-      // }
-      const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
-
-      // Will split a posix path into an array
-      // E.g.
-      // req.queryParams.file = "/usr/local/bin"
-      // const path_components = pathModule.splitPOSIXPath(req.queryParams.file);
-      //
-      // Path components will be
-      // ["usr", "local", "bin"]
-      const path_components = pathModule.splitPOSIXPath(req.queryParams.file);
-      const data_key = path_components.at(-1);
-      let record = new Record(data_key);
-
-      // Special case - allow unknown client to read a publicly accessible record
-      // if record exists and if it is a public record
-      if (!client) {
-        if (record.exists()) {
-          if (req.queryParams.act != "read" || !g_lib.hasPublicRead(record.id())) {
-            console.log(
-              "AUTHZ act: " + req.queryParams.act +
-                " client: " + client._id +
-                " path " + req.queryParams.file +
-                " FAILED"
-            );
-            throw g_lib.ERR_PERM_DENIED;
-          }
-        }
-      } else {
-        // Actions: read, write, create, delete, chdir, lookup
-        let req_perm = 0;
-        switch (req.queryParams.act) {
-          case "read":
-            req_perm = g_lib.PERM_RD_DATA;
-            break;
-          case "write":
-            break;
-          case "create":
-            req_perm = g_lib.PERM_WR_DATA;
-            break;
-          case "delete":
-            throw g_lib.ERR_PERM_DENIED;
-          case "chdir":
-            break;
-          case "lookup":
-            // For TESTING, allow these actions
-            return;
-          default:
-            throw [g_lib.ERR_INVALID_PARAM, "Invalid gridFTP action: ", req.queryParams.act];
-        }
-
-        // This will tell us if the action on the record is authorized
-        // we still do not know if the path is correct.
-        if (record.exists()) {
-          if (!authzModule.isRecordActionAuthorized(client, data_key, req_perm)) {
-            console.log(
-              "AUTHZ act: " + req.queryParams.act +
-                " client: " + client._id +
-                " path " + req.queryParams.file +
-                " FAILED"
-            );
-            throw g_lib.ERR_PERM_DENIED;
-          }
-        }
-      }
-
-      if (record.exists()) {
-        if (!record.isPathConsistent(req.queryParams.file)) {
-          console.log(
-            "AUTHZ act: " + req.queryParams.act + " client: " + client._id + " path " + req.queryParams.file + " FAILED"
-          );
-          throw [record.error(), record.errorMessage()];
-        }
-      } else {
-        // If the record does not exist then the path would noe be consistent.
-        console.log(
-          "AUTHZ act: " + req.queryParams.act + " client: " + client._id + " path " + req.queryParams.file + " FAILED"
         );
-        throw [g_lib.ERR_PERM_DENIED, "Invalid record specified: " + req.queryParams.file];
-      }
+
+    // Client will contain the following information
+    // {
+    //   "_key" : "bob",
+    //   "_id" : "u/bob",
+    //   "name" : "bob junior ",
+    //   "name_first" : "bob",
+    //   "name_last" : "jones",
+    //   "is_admin" : true,
+    //   "max_coll" : 50,
+    //   "max_proj" : 10,
+    //   "max_sav_qry" : 20,
+    //   :
+    //   "email" : "bobjones@gmail.com"
+    // }
+    const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
+
+    let repo = new Repo(req.queryParams.repo);
+    let path_type = repo.pathType(req.queryParams.file);
+
+    // If the provided path is not within the repo throw an error 
+    if ( path_type === PathType.UNKNOWN ) {
       console.log(
+          "AUTHZ act: " + req.queryParams.act +
+          " client: " + client._id +
+          " path " + req.queryParams.file +
+          " FAILED"
+          );
+      throw [g_lib.ERR_PERM_DENIED, "Unknown path: " + req.queryParams.file];
+    }
+
+    // Determine permissions associated with path provided
+    // Actions: read, write, create, delete, chdir, lookup 
+    if ( authzModule.permission_strategy.keys.includes(req.queryParams.act) ){
+      authz_strategy[req.queryParams.act][path_type](req.queryParams.file);
+    } else {
+      throw [g_lib.ERR_INVALID_PARAM, "Invalid gridFTP action: ", req.queryParams.act];
+    }
+
+    console.log(
         "AUTHZ act: " + req.queryParams.act + " client: " + client._id + " path " + req.queryParams.file + " SUCCESS"
-      );
+        );
     } catch (e) {
       g_lib.handleException(e, res);
     }
-  })
-  .queryParam("client", joi.string().required(), "Client ID")
-  .queryParam(
+})
+.queryParam("client", joi.string().required(), "Client ID")
+.queryParam(
     "repo",
     joi.string().required(),
     "Originating repo ID, where the DataFed managed GridFTP server is running."
-  )
-  .queryParam("file", joi.string().required(), "Data file name")
-  .queryParam("act", joi.string().required(), "GridFTP action: 'lookup', 'chdir', 'read', 'write', 'create', 'delete'")
-  .summary("Checks authorization")
-  .description("Checks authorization");
+    )
+.queryParam("file", joi.string().required(), "Data file name")
+.queryParam("act", joi.string().required(), "GridFTP action: 'lookup', 'chdir', 'read', 'write', 'create', 'delete'")
+.summary("Checks authorization")
+.description("Checks authorization");
 
 router.get('/perm/check', function(req, res) {
         try {

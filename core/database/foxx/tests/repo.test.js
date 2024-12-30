@@ -23,7 +23,7 @@ describe("Testing Repo class", () => {
     expect(repo.error()).to.equal(g_lib.ERR_NOT_FOUND);
   });
 
-  it("unit_repo: should return REPO_PATH for exact match with repo root", () => {
+  it("unit_repo: should return REPO_ROOT_PATH for exact match with repo root", () => {
     const path = "/repo_root";
     g_db.repo.save({
        _id: "repo/foo",
@@ -31,7 +31,7 @@ describe("Testing Repo class", () => {
        path: path
     })
     const repo = new Repo("foo");
-    expect(repo.pathType(path)).to.equal(PathType.REPO_PATH);
+    expect(repo.pathType(path)).to.equal(PathType.REPO_ROOT_PATH);
   });
 
   it("unit_repo: should return UNKNOWN for invalid path not matching repo root", () => {
@@ -97,7 +97,7 @@ describe("Testing Repo class", () => {
        path: path
     })
     const repo = new Repo("foo");
-    expect(repo.pathType("/repo_root/")).to.equal(PathType.REPO_PATH);
+    expect(repo.pathType("/repo_root/")).to.equal(PathType.REPO_ROOT_PATH);
   });
 
   it("unit_repo: should handle an unknown path that begins with project", () => {
@@ -108,6 +108,117 @@ describe("Testing Repo class", () => {
        path: path
     })
     const repo = new Repo("foo");
-    expect(repo.pathType("/randome_string/project_bam")).to.equal(PathType.UNKNOWN);
+    expect(repo.pathType("/random_string/project_bam")).to.equal(PathType.UNKNOWN);
   });
+
+  it("unit_repo: should handle an repo base path", () => {
+    const path = "/mnt/repo_root";
+    g_db.repo.save({
+       _id: "repo/foo",
+       _key: "foo",
+       path: path
+    })
+    const repo = new Repo("foo");
+    expect(repo.pathType("/mnt")).to.equal(PathType.REPO_BASE_PATH);
+  });
+
+  it("unit_repo: should handle an repo base path with ending /", () => {
+    const path = "/mnt/repo_root";
+    g_db.repo.save({
+       _id: "repo/foo",
+       _key: "foo",
+       path: path
+    })
+    const repo = new Repo("foo");
+    expect(repo.pathType("/mnt/")).to.equal(PathType.REPO_BASE_PATH);
+  });
+
+  it("unit_repo: should handle an repo base path containing only /", () => {
+    const path = "/mnt/repo_root";
+    g_db.repo.save({
+       _id: "repo/foo",
+       _key: "foo",
+       path: path
+    })
+    const repo = new Repo("foo");
+    expect(repo.pathType("/")).to.equal(PathType.REPO_BASE_PATH);
+  });
+
+  it("unit_repo: should handle an repo base path and repo root path are the same and only containing only /", () => {
+    const path = "/";
+    g_db.repo.save({
+       _id: "repo/foo",
+       _key: "foo",
+       path: path
+    })
+    const repo = new Repo("foo");
+    expect(repo.pathType("/")).to.equal(PathType.REPO_ROOT_PATH);
+  });
+
+  it("unit_repo: should handle an repo base path containing only part of base.", () => {
+    const path = "/mnt/repo_root";
+    g_db.repo.save({
+       _id: "repo/foo",
+       _key: "foo",
+       path: path
+    })
+    const repo = new Repo("foo");
+    expect(repo.pathType("/m")).to.equal(PathType.UNKNOWN);
+  });
+
+  it("unit_repo: should handle an repo root path containing only part of root.", () => {
+    const path = "/mnt/repo_root";
+    g_db.repo.save({
+       _id: "repo/foo",
+       _key: "foo",
+       path: path
+    })
+    const repo = new Repo("foo");
+    expect(repo.pathType("/mnt/re")).to.equal(PathType.UNKNOWN);
+  });
+
+  it("unit_repo: should handle an repo path containing only part of project.", () => {
+    const path = "/mnt/repo_root";
+    g_db.repo.save({
+       _id: "repo/foo",
+       _key: "foo",
+       path: path
+    })
+    const repo = new Repo("foo");
+    expect(repo.pathType("/mnt/repo_root/pro")).to.equal(PathType.UNKNOWN);
+  });
+
+  it("unit_repo: should handle an repo path containing only part of user.", () => {
+    const path = "/mnt/repo_root";
+    g_db.repo.save({
+       _id: "repo/foo",
+       _key: "foo",
+       path: path
+    })
+    const repo = new Repo("foo");
+    expect(repo.pathType("/mnt/repo_root/us")).to.equal(PathType.UNKNOWN);
+  });
+
+  it("unit_repo: should handle a project record path.", () => {
+    const path = "/mnt/repo_root";
+    g_db.repo.save({
+       _id: "repo/foo",
+       _key: "foo",
+       path: path
+    })
+    const repo = new Repo("foo");
+    expect(repo.pathType("/mnt/repo_root/project/bam/4243")).to.equal(PathType.PROJECT_RECORD_PATH);
+  });
+
+  it("unit_repo: should handle a user record path.", () => {
+    const path = "/mnt/repo_root";
+    g_db.repo.save({
+       _id: "repo/foo",
+       _key: "foo",
+       path: path
+    })
+    const repo = new Repo("foo");
+    expect(repo.pathType("/mnt/repo_root/user/jane/4243")).to.equal(PathType.USER_RECORD_PATH);
+  });
+
 });

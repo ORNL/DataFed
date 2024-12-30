@@ -14,22 +14,26 @@ const pathModule = require("./posix_path");
  *
  * In these cases 
  *
- * PROJECT_PATH = /mnt/science/datafed/project
- * USER_PATH = /mnt/science/datafed/user
+ * PROJECT_PATH = /mnt/science/datafed/project/foo
+ * USER_PATH = /mnt/science/datafed/user/bob
  *
- * RECORD_PATH = /mnt/science/datafed/user/bob/352632
+ * USER_RECORD_PATH = /mnt/science/datafed/user/bob/352632
  * and 
- * RECORD_PATH = /mnt/science/datafed/project/foo/904u42
+ * PROJECT_RECORD_PATH = /mnt/science/datafed/project/foo/904u42
  *
  * REPO_BASE_PATH = /mnt/science
  * REPO_ROOT_PATH = /mnt/science/datafed
+ * REPO_PATH = /mnt/science/datafed/project
+ * REPO_PATH = /mnt/science/datafed/user
  **/
 const PathType = {
-  PROJECT_PATH: "PROJECT_PATH",
   USER_PATH: "USER_PATH",
-  RECORD_PATH: "RECORD_PATH",
+  USER_RECORD_PATH: "USER_RECORD_PATH",
+  PROJECT_PATH: "PROJECT_PATH",
+  PROJECT_RECORD_PATH: "PROJECT_RECORD_PATH",
   REPO_BASE_PATH: "REPO_BASE_PATH",
-  REPO_ROOT_PATH: "REPO_PATH",
+  REPO_ROOT_PATH: "REPO_ROOT_PATH",
+  REPO_PATH: "REPO_PATH",
   UNKNOWN: "UNKNOWN"
 }
 
@@ -149,7 +153,13 @@ class Repo {
       if( sanitized_path !== repo_root_path) {
         return PathType.UNKNOWN;
       } else {
-        return PathType.REPO_PATH;
+        return PathType.REPO_ROOT_PATH;
+      }
+    } else if ( sanitized_path.length < repo_root_path.length ) {
+      if ( repo_root_path.startsWith( sanitized_path + "/" )) {
+         return PathType.REPO_BASE_PATH;
+      } else {
+         return PathType.UNKNOWN;
       }
     } else if( ! sanitized_path.startsWith(repo_root_path + "/")) {
       return PathType.UNKNOWN;
@@ -164,17 +174,21 @@ class Repo {
       if (relative_path_components.length === 1) {
         // REPO_PATH , PROJECT_PATH is reserved to project/<project_name>/<id>
         return PathType.REPO_PATH;
-      }else if (relative_path_components.length > 1) {
+      }else if (relative_path_components.length === 2) {
         return PathType.PROJECT_PATH;
+      } else if (relative_path_components.length === 3) {
+        return PathType.PROJECT_RECORD_PATH;
       }
     } else if( relative_path_components[0] === "user" ) {
       // Check if valid user
       if (relative_path_components.length === 1) {
         // REPO_PATH , PROJECT_PATH is reserved to project/<project_name>/<id>
         return PathType.REPO_PATH;
-      }else if (relative_path_components.length > 1) {
+      }else if (relative_path_components.length === 2) {
         return PathType.USER_PATH;
-      }
+      }else if (relative_path_components.length === 3) {
+        return PathType.USER_RECORD_PATH;
+      } 
     }
 
     return PathType.UNKNOWN;
