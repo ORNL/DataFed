@@ -506,13 +506,13 @@ class TransferDialog {
       return;
     }
 
-    const endpoint = this.endpointList[selectedIndex].id;
+    const endpoint = this.endpointList[selectedIndex];
     if (!endpoint || !endpoint.id) {
       console.log('Invalid endpoint data:', endpoint);
       return;
     }
 
-    api.epView(endpoint, (ok, data) => {
+    api.epView(endpoint.id, (ok, data) => {
       if (ok && !data.code) {
         this.updateEndpoint(data);
       } else {
@@ -560,7 +560,7 @@ class TransferDialog {
       console.log('Endpoint changed or not set - searching for new endpoint');
       this.state.endpointOk = false;
       this.updateButtonStates();
-      this.searchEndpoint(endpoint, searchToken).then(r => console.log('Search complete:', r));
+      this.searchEndpoint(endpoint, searchToken);
     }
   }
 
@@ -717,7 +717,7 @@ class TransferDialog {
    * ------------MISC------------
    */
 
-  async searchEndpoint(endpoint, searchToken) {
+  searchEndpoint(endpoint, searchToken) {
     console.log('Searching for endpoint:', endpoint);
 
     try {
