@@ -148,26 +148,24 @@ module.exports = (function() {
     }
 
     if (!client) {
-      console.log(
-          "AUTHZ act: create" +
-          " client: " + client._id +
-          " path " + path +
-          " FAILED"
-          );
-      throw g_lib.ERR_PERM_DENIED;
-    } else {
-      // This will tell us if the object has been registered with the database
-      // not if the folder structure has been correctly created
-      if (! obj.isRecordActionAuthorized(client, data_key, permission)) {
-        console.log(
-            "AUTHZ act: create" +
-            " client: " + client._id +
-            " path " + path +
-            " FAILED"
-            );
-        throw g_lib.ERR_PERM_DENIED;
-      }
-    }
+          console.log(
+              "AUTHZ act: create" +
+              " client: " + client._id +
+              " path " + path +
+              " FAILED"
+              );
+          throw g_lib.ERR_PERM_DENIED;
+        }
+    else if (! obj.isRecordActionAuthorized(client, data_key, permission)) {
+            console.log(
+                "AUTHZ act: create" +
+                " client: " + client._id +
+                " path " + path +
+                " FAILED"
+                );
+            throw g_lib.ERR_PERM_DENIED;
+          }
+
 
     // This will tell us if the proposed path is consistent with what we expect
     // GridFTP will fail if the posix file path does not exist.
