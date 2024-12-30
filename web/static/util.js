@@ -2,7 +2,7 @@ import * as settings from "./settings.js";
 import * as model from "./model.js";
 import * as api from "./api.js";
 import * as dialogs from "./dialogs.js";
-import * as dlgStartXfer from "./dlg_start_xfer.js";
+import { show as dlgStartXfer } from 'components/transfer/index.js'
 
 var status_timer;
 
