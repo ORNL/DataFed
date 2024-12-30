@@ -26,6 +26,7 @@
 15. [1086] - Address XML-RPC bug from deprecated client
 16. [1149] - Docker container GCS Collection Mount Bug Fix
 17. [1168] - Add authz unit testing to the CI
+18. [1180] - Refactor of authz foxx module, split into objects and added unit tests
 
 # v2024.6.17.10.40
 
