@@ -54,8 +54,8 @@ router.get("/gridftp", function (req, res) {
 
     // Determine permissions associated with path provided
     // Actions: read, write, create, delete, chdir, lookup 
-    if ( authzModule.permission_strategy.keys.includes(req.queryParams.act) ){
-      authz_strategy[req.queryParams.act][path_type](req.queryParams.file);
+    if ( authzModule.authz_strategy.keys.includes(req.queryParams.act) ){
+      authzModule.authz_strategy[req.queryParams.act][path_type](req.queryParams.file);
     } else {
       throw [g_lib.ERR_INVALID_PARAM, "Invalid gridFTP action: ", req.queryParams.act];
     }
