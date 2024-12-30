@@ -5,7 +5,7 @@ const path = require('path');
 const g_lib = require('./support');
 
 module.exports = (function() {
-  var obj = {}
+  let obj = {}
 
   /**
    * @brief Will check to see if a client has the required permissions on a 
