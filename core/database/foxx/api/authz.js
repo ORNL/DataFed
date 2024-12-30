@@ -228,9 +228,9 @@ module.exports = (function() {
           [PathType.REPO_PATH]:           obj.none,
        },
     "lookup": {
-          [PathType.USER_PATH]:           obj. none,
-          [PathType.USER_RECORD_PATH]:    obj. none,
-          [PathType.PROJECT_PATH]:        obj. none,
+          [PathType.USER_PATH]:           obj.none,
+          [PathType.USER_RECORD_PATH]:    obj.none,
+          [PathType.PROJECT_PATH]:        obj.none,
           [PathType.PROJECT_RECORD_PATH]: obj. none,
           [PathType.REPO_BASE_PATH]:      obj. none,
           [PathType.REPO_ROOT_PATH]:      obj. none,
