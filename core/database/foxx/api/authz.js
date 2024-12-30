@@ -87,11 +87,11 @@ module.exports = (function() {
           if (!g_lib.hasPublicRead(record.id())) {
             console.log(
                 "AUTHZ act: read" +
-                " client: " + client._id +
+                " unknown client " +
                 " path " + path +
                 " FAILED"
                 );
-            throw g_lib.ERR_PERM_DENIED;
+            throw [g_lib.ERR_PERM_DENIED, "Unknown client does not have read permissions on " + path];
           }
         }
     else if (! obj.isRecordActionAuthorized(client, data_key, permission)) {
@@ -101,7 +101,7 @@ module.exports = (function() {
                 " path " + path +
                 " FAILED"
                 );
-            throw g_lib.ERR_PERM_DENIED;
+            throw [g_lib.ERR_PERM_DENIED, "Client " + client._id + " does not have read permissions on " + path];
           }
 
 
@@ -154,7 +154,7 @@ module.exports = (function() {
               " path " + path +
               " FAILED"
               );
-          throw g_lib.ERR_PERM_DENIED;
+          throw [g_lib.ERR_PERM_DENIED, "Unknown client does not have create permissions on " + path];
         }
     else if (! obj.isRecordActionAuthorized(client, data_key, permission)) {
             console.log(
@@ -163,7 +163,7 @@ module.exports = (function() {
                 " path " + path +
                 " FAILED"
                 );
-            throw g_lib.ERR_PERM_DENIED;
+            throw [g_lib.ERR_PERM_DENIED, "Client " + client._id + " does not have create permissions on " + path];
           }
 
 
