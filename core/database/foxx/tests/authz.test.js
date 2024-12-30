@@ -321,7 +321,7 @@ it("unit_authz: should return true for authorized project admin", () => {
     let req_perm = g_lib.PERM_READ;
 
     // Creator should always have permission
-    expect(() => authzModule.isRecordActionAuthorized(tim, data_key, req_perm)).to.throw();
+    expect(() => authzModule.isRecordActionAuthorized(tim, data_key, req_perm)).to.throw()
             .that.is.an("array")
             .with.property(0, g_lib.ERR_NOT_FOUND);
   });
