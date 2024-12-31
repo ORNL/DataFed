@@ -1,9 +1,9 @@
-import * as model from "../../model";
-import * as dialogs from "../../dialogs";
-import * as util from "../../util";
-import * as settings from "../../settings";
-import * as dlgEpBrowse from "../../dlg_ep_browse";
-import * as api from "../../api";
+import * as model from "../../model.js";
+import * as dialogs from "../../dialogs.js";
+import * as util from "../../util.js";
+import * as settings from "../../settings.js";
+import * as dlgEpBrowse from "../../dlg_ep_browse.js";
+import * as api from "../../api.js";
 
 export class TransferUIManager {
   constructor(dialog) {
@@ -111,7 +111,7 @@ export class TransferUIManager {
         }
       ],
       open: () => this.showDialog(),
-      close: (ev, ui) => {
+      close: function(ev, ui) {
         $(this).dialog("destroy").remove();
       }
     };
@@ -261,12 +261,12 @@ export class TransferUIManager {
     pathInput.on('input', () => {
       console.log('Input event triggered');
       clearTimeout(this.inputTimer);
-      const searchToken = ++this.controller.endpointManager.searchCounter;
-      console.log('New search token:', searchToken);
+      this.controller.endpointManager.currentSearchToken = ++this.controller.endpointManager.searchCounter;
+      console.log('New search token:', this.controller.endpointManager.currentSearchToken);
 
       this.inputTimer = setTimeout(() => {
         console.log('Timer expired - handling path input');
-        this.controller.endpointManager.handlePathInput(searchToken);
+        this.controller.endpointManager.handlePathInput(this.controller.endpointManager.currentSearchToken);
       }, 250);
     });
 
@@ -277,7 +277,8 @@ export class TransferUIManager {
       pathInput.autocomplete({
         source: settings.ep_recent,
         select: () => {
-          this.controller.endpointManager.handlePathInput(++this.controller.endpointManager.searchCounter);
+          this.controller.endpointManager.currentSearchToken = ++this.controller.endpointManager.searchCounter;
+          this.controller.endpointManager.handlePathInput(this.controller.endpointManager.currentSearchToken);
           return true;
         }
       });
@@ -425,7 +426,7 @@ export class TransferUIManager {
     };
     console.log('Updated current endpoint:', this.controller.endpointManager.currentEndpoint);
 
-    const pathInput = $("#path", this.state.frame);
+    const pathInput = $("#path", this.frame);
     const newPath = this.controller.model.getDefaultPath(this.controller.endpointManager.currentEndpoint);
     console.log('Setting new path:', newPath);
     pathInput.val(newPath);
@@ -443,7 +444,7 @@ export class TransferUIManager {
 
     html += ")</option>";
 
-    const matches = $("#matches", this.state.frame);
+    const matches = $("#matches", this.frame);
     matches.html(html);
     matches.prop("disabled", false);
 
@@ -482,26 +483,13 @@ export class TransferUIManager {
     }
   }
 
-  updateMatchesList(endpoints = []) {
-    const matches = $("#matches", this.frame);
-    if (!endpoints.length) {
-      matches.html("<option disabled selected>No Matches</option>");
-      matches.prop("disabled", true);
-      return;
-    }
-
-    const html = this.createMatchesHtml(endpoints);
-    matches.html(html);
-    matches.prop("disabled", false);
-  }
-
   /**
    * ------------HANDLERS------------
    */
 
   attachMatchesHandler() {
     $("#matches", this.frame).on('change', (ev) => {
-      this.controller.endpointManager.handleMatchesChange(ev);
+      this.handleMatchesChange(ev);
     });
   }
 

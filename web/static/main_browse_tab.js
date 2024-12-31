@@ -12,7 +12,7 @@ import * as dlgRepoEdit from "./dlg_repo_edit.js";
 import * as dlgSetACLs from "./dlg_set_acls.js";
 import * as dlgRepoManage from "./dlg_repo_manage.js";
 import * as dlgOwnerChangeConfirm from "./dlg_owner_chg_confirm.js";
-import { show as dlgStartXfer } from 'components/transfer/index.js'
+import { show as dlgStartXfer } from './components/transfer/index.js'
 import * as dlgSettings from "./dlg_settings.js";
 import * as dlgCollNewEdit from "./dlg_coll_new_edit.js";
 import * as dlgProjNewEdit from "./dlg_proj_new_edit.js";

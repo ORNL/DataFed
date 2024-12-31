@@ -1,5 +1,5 @@
-import * as api from "../../api";
-import * as dialogs from "../../dialogs";
+import * as api from "../../api.js";
+import * as dialogs from "../../dialogs.js";
 
 export class TransferEndpointManager {
   constructor(dialog) {
@@ -9,7 +9,6 @@ export class TransferEndpointManager {
     this.endpointManagerList = null;
     this.searchCounter = 0;
     this.currentSearchToken = null;
-    this.updateMatchesList = [];
   }
 
   /**
@@ -76,6 +75,23 @@ export class TransferEndpointManager {
       dialogs.dlgAlert("Globus Error", error);
     }
 
+  }
+
+  /**
+   * ------------UPDATE------------
+   */
+
+  updateMatchesList(endpoints = []) {
+    const matches = $("#matches", this.controller.uiManager.frame);
+    if (!endpoints.length) {
+      matches.html("<option disabled selected>No Matches</option>");
+      matches.prop("disabled", true);
+      return;
+    }
+
+    const html = this.controller.uiManager.createMatchesHtml(endpoints);
+    matches.html(html);
+    matches.prop("disabled", false);
   }
 
   /**

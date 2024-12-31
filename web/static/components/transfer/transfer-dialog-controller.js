@@ -1,7 +1,7 @@
 import * as dialogs from "../../dialogs.js";
-import { TransferEndpointManager } from "./transfer-endpoint-manager";
+import { TransferEndpointManager } from "./transfer-endpoint-manager.js";
 import { TransferModel } from "../../models/transfer-model.js";
-import { TransferUIManager } from "./transfer-ui-manager";
+import { TransferUIManager } from "./transfer-ui-manager.js";
 
 /**
  * TransferDialogController class manages the UI and logic for data transfers

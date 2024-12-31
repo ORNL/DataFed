@@ -1,5 +1,5 @@
 import * as dialogs from "../../dialogs.js";
-import { TransferDialogController } from "./transfer-dialog-controller";
+import { TransferDialogController } from "./transfer-dialog-controller.js";
 
 export function show(mode, records, callback) {
   try {
