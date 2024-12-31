@@ -20,7 +20,6 @@ export class TransferDialogController {
     this.callback = callback;
   }
 
-
   show() {
     try {
       this.uiManager.createDialog(this.uiManager.getDialogLabels());

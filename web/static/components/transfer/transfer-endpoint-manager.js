@@ -24,13 +24,9 @@ export class TransferEndpointManager {
   searchEndpointAutocomplete(endpoint, searchToken) {
     api.epAutocomplete(endpoint, (ok, data) => {
       // Only proceed if this is still the current search
-      if (searchToken !== this.currentSearchToken) {
-        console.log('Ignoring stale autocomplete response');
-        return;
-      }
+      if (searchToken !== this.currentSearchToken) { return;}
 
       if (ok && data.DATA && data.DATA.length) {
-        console.log('Autocomplete matches found:', data.DATA.length);
         this.endpointManagerList = data.DATA;
         // Process endpoints and update UI
         data.DATA.forEach(ep => {
@@ -38,7 +34,7 @@ export class TransferEndpointManager {
         });
         this.updateMatchesList(data.DATA);
       } else {
-        console.log('No matches found');
+        console.warn('No matches found');
         this.endpointManagerList = null;
         this.updateMatchesList([]);
         if (data.code) {
@@ -54,9 +50,8 @@ export class TransferEndpointManager {
 
     try {
       return api.epView(endpoint, (ok, data) => {
-        // Only proceed if this is still the current search
         if (searchToken !== this.currentSearchToken) {
-          console.log('Ignoring stale epView response');
+          console.warn('Ignoring stale epView response');
           return;
         }
 
@@ -66,8 +61,7 @@ export class TransferEndpointManager {
           this.controller.uiManager.state.endpointOk = true;
           this.controller.uiManager.updateButtonStates();
         } else {
-          // No exact match found, try autocomplete
-          console.log('No direct match, trying autocomplete');
+          console.warn('No direct match, trying autocomplete');
           this.searchEndpointAutocomplete(endpoint, searchToken);
         }
       });
@@ -100,12 +94,10 @@ export class TransferEndpointManager {
 
   handlePathInput(searchToken) {
     if (!this.initialized) {
-      console.log('Dialog not yet initialized - delaying path input handling');
+      console.warn('Dialog not yet initialized - delaying path input handling');
       setTimeout(() => this.handlePathInput(searchToken), 100);
       return;
     }
-
-    console.log('handlePathInput called with token:', searchToken, 'current token:', this.currentSearchToken);
 
     if (searchToken !== this.currentSearchToken) {
       console.log('Token mismatch - ignoring stale request');

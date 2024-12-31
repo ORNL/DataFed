@@ -165,12 +165,35 @@ export class TransferUIManager {
   }
 
   getSelectedIds() {
-    if (this.controller.model.records.length === 1) {
-      return [this.controller.model.records[0].id];
+    if (!this.controller.model.records?.length) {
+      console.warn('No records available');
+      return [];
     }
 
-    return this.recordTree.getSelectedNodes()
-      .map(node => node.key);
+    if (this.controller.model.records.length === 1) {
+      const id = this.controller.model.records[0].id;
+      if (!id) {
+        console.warn('Invalid record ID');
+        return [];
+      }
+      return [id];
+    }
+
+    if (!this.recordTree) {
+      console.warn('Record tree not initialized');
+      return [];
+    }
+
+    const selectedNodes = this.recordTree.getSelectedNodes();
+    const ids = selectedNodes
+      .map(node => node.key)
+      .filter(id => id);
+
+    if (!ids.length) {
+      console.warn('No valid IDs selected');
+    }
+
+    return ids;
   }
 
   getTransferConfig() {
@@ -247,31 +270,25 @@ export class TransferUIManager {
       select: () => this.handleSelectionChange()
     };
 
-    $("#records", this.frame).show()
-      .fancytree(treeConfig);
+    $("#records", this.frame).show().fancytree(treeConfig);
 
     this.recordTree = $.ui.fancytree.getTree("#records");
   }
 
   initializeEndpointInput() {
-    console.log('Initializing endpoint input');
     const pathInput = $("#path", this.frame);
     util.inputTheme(pathInput);
 
     pathInput.on('input', () => {
-      console.log('Input event triggered');
       clearTimeout(this.inputTimer);
       this.controller.endpointManager.currentSearchToken = ++this.controller.endpointManager.searchCounter;
-      console.log('New search token:', this.controller.endpointManager.currentSearchToken);
 
       this.inputTimer = setTimeout(() => {
-        console.log('Timer expired - handling path input');
         this.controller.endpointManager.handlePathInput(this.controller.endpointManager.currentSearchToken);
       }, 250);
     });
 
     if (settings.ep_recent.length) {
-      console.log('Recent endpoints found:', settings.ep_recent);
       pathInput.val(settings.ep_recent[0]);
       pathInput.select();
       pathInput.autocomplete({
@@ -328,21 +345,10 @@ export class TransferUIManager {
   }
 
   reInitializeUIComponents() {
-    // Initialize all buttons
     $(".btn", this.frame).button();
-
-    // Initialize radio buttons
     $(":radio", this.frame).checkboxradio();
-
-    // Initialize checkboxes if needed
-    if (this.controller.model.mode === model.TT_DATA_GET) {
-      $("#orig_fname", this.frame).checkboxradio();
-    }
-
-    // Initialize the go button
+    if (this.controller.model.mode === model.TT_DATA_GET) { $("#orig_fname", this.frame).checkboxradio(); }
     $("#go_btn").button().button("disable");
-
-    // Initialize browse button
     $("#browse", this.frame).button().button("disable");
   }
 
@@ -375,23 +381,8 @@ export class TransferUIManager {
    */
 
   updateButtonStates() {
-    console.log('Updating button states:', {
-      selectionOk: this.state.selectionOk,
-      endpointOk: this.state.endpointOk
-    });
-
     this.safeUIOperation(() => {
       const buttonsEnabled = this.state.selectionOk && this.state.endpointOk;
-      console.log('Button states calculated:', {
-        selectionOk: this.state.selectionOk,
-        endpointOk: this.state.endpointOk,
-        enabled: buttonsEnabled
-      });
-      console.log('Button states:', {
-        selectionOk: this.state.selectionOk,
-        endpointOk: this.state.endpointOk,
-        enabled: buttonsEnabled
-      });
       this.setButtonState("#go_btn", buttonsEnabled);
       this.setButtonState("#browse", this.state.endpointOk);
     });
@@ -419,16 +410,13 @@ export class TransferUIManager {
   }
 
   updateEndpoint(data) {
-    console.log('Updating endpoint with data:', data);
     this.controller.endpointManager.currentEndpoint = {
       ...data,
       name: data.canonical_name || data.id
     };
-    console.log('Updated current endpoint:', this.controller.endpointManager.currentEndpoint);
 
     const pathInput = $("#path", this.frame);
     const newPath = this.controller.model.getDefaultPath(this.controller.endpointManager.currentEndpoint);
-    console.log('Setting new path:', newPath);
     pathInput.val(newPath);
 
     let html = `<option title="${util.escapeHTML(this.controller.endpointManager.currentEndpoint.description || '(no info)')}">${
@@ -453,28 +441,20 @@ export class TransferUIManager {
 
   updateEndpointOptions(endpoint) {
     if (!endpoint || !this.controller.endpointManager.initialized || !this.encryptRadios) {
-      console.log('Cannot update endpoint options - not ready');
+      console.warn('Cannot update endpoint options - not ready');
       return;
     }
 
     try {
-      // Update browse and activate buttons
       const browseBtn = $("#browse", this.frame);
       const activateBtn = $("#activate", this.frame);
 
       this.state.endpointOk = endpoint.activated || endpoint.expires_in === -1;
 
-      if (browseBtn.length) {
-        browseBtn.button(this.state.endpointOk ? "enable" : "disable");
-      }
-      if (activateBtn.length) {
-        activateBtn.button(endpoint.expires_in === -1 ? "disable" : "enable");
-      }
+      if (browseBtn.length) { browseBtn.button(this.state.endpointOk ? "enable" : "disable"); }
+      if (activateBtn.length) { activateBtn.button(endpoint.expires_in === -1 ? "disable" : "enable"); }
 
-      // Check endpoint scheme
       const scheme = endpoint.DATA?.[0]?.scheme;
-
-      // Update encryption options based on endpoint configuration
       this.updateEncryptionOptions(endpoint, scheme);
 
       this.updateButtonStates();
@@ -504,13 +484,13 @@ export class TransferUIManager {
 
   handleMatchesChange(event) {
     if (!this.controller.endpointManager.endpointManagerList || !this.controller.endpointManager.endpointManagerList.length) {
-      console.log('No endpoint list available');
+      console.warn('No endpoint list available');
       return;
     }
 
     const selectedIndex = $(event.target).prop('selectedIndex') - 1;
     if (selectedIndex < 0 || selectedIndex >= this.controller.endpointManager.endpointManagerList.length) {
-      console.log('Invalid selection index:', selectedIndex);
+      console.error('Invalid selection index:', selectedIndex);
       return;
     }
 
