@@ -1,5 +1,4 @@
 "use strict";
-
 const chai = require("chai");
 const expect = chai.expect;
 const authzModule = require("../api/authz"); // Replace with the actual file name
@@ -169,7 +168,7 @@ it("unit_authz: should return true for authorized project admin", () => {
       _key: data_key,
       _id: data_id,
       creator: "u/george"
-    });
+    }, { waitForSync: true });
 
     let bob = {
       _key: "bob",
@@ -183,20 +182,20 @@ it("unit_authz: should return true for authorized project admin", () => {
       is_admin: false
     };
 
-    g_db.u.save(bob);
-    g_db.u.save(george);
+    g_db.u.save(bob, { waitForSync: true });
+    g_db.u.save(george, { waitForSync: true });
 
     g_db.owner.save({
       _from: data_id,
       _to: "u/george"
-    });
+    }, { waitForSync: true });
 
     let req_perm = g_lib.PERM_CREATE;
 
-    expect(() => authzModule.isRecordActionAuthorized(bob, data_key, req_perm)).to.throw();
+    expect(authzModule.isRecordActionAuthorized(bob, data_key, req_perm)).to.be.false;
   });
 
- it("unit_authz: throw with NOT FOUND for project admin of a different project, that does not have access", () => {
+ it("unit_authz: should return false for project admin of a different project, that does not have access", () => {
     // Jack is the creator of the documnet
     // Amy is the project owner where the documnet is located, which is the fruity project
     // Mandy is a different project owner to the condiments project
@@ -209,7 +208,7 @@ it("unit_authz: should return true for authorized project admin", () => {
       _key: data_key,
       _id: data_id,
       creator: "u/jack"
-    });
+    }, { waitForSync: true });
 
     let jack = {
       _key: "jack",
@@ -217,21 +216,21 @@ it("unit_authz: should return true for authorized project admin", () => {
       is_admin: false
     };
 
-    g_db.u.save(jack);
+    g_db.u.save(jack, { waitForSync: true });
 
     let fruity_project_id = "p/fruity";
     g_db.p.save({
       _key: "fruity",
       _id: fruity_project_id,
       name: "Project Fruity"
-    });
+    }, { waitForSync: true });
 
     let condiments_project_id = "p/condiments";
     g_db.p.save({
       _key: "condiments",
       _id: condiments_project_id,
       name: "Project Condiments"
-    });
+    }, { waitForSync: true });
 
     let mandy_admin_id = "u/mandy";
     let mandy = {
@@ -239,39 +238,37 @@ it("unit_authz: should return true for authorized project admin", () => {
       _id: mandy_admin_id,
       is_admin: false
     };
-    g_db.u.save(mandy);
+    g_db.u.save(mandy, { waitForSync: true });
 
     let amy_admin_id = "u/amy";
     g_db.u.save({
       _key: "amy",
       _id: amy_admin_id,
       is_admin: false
-    });
+    }, { waitForSync: true });
 
     g_db.owner.save({
       _from: data_id,
       _to: fruity_project_id
-    });
+    }, { waitForSync: true });
 
     g_db.admin.save({
       _from: fruity_project_id,
       _to: amy_admin_id
-    });
+    }, { waitForSync: true });
 
     g_db.admin.save({
       _from: condiments_project_id,
       _to: mandy_admin_id
-    });
+    }, { waitForSync: true });
 
     let req_perm = g_lib.PERM_CREATE;
 
     // Non-project admin should not have permission
-    expect(() => authzModule.isRecordActionAuthorized(mandy, data_key, req_perm)).to.throw()
-            .that.is.an("array")
-            .with.property(0, g_lib.ERR_NOT_FOUND);
+    expect(authzModule.isRecordActionAuthorized(mandy, data_key, req_perm)).to.be.false;
   });
 
-  it("unit_authz: read should throw with not found error, for record creator, if owned by project that creator does not have read permission too.", () => {
+  it("unit_authz: read should return false, for record creator, if owned by project that creator does not have read permission too.", () => {
 
     let data_key = "cherry";
     let data_id = "d/" + data_key;
@@ -280,7 +277,7 @@ it("unit_authz: should return true for authorized project admin", () => {
       _key: data_key,
       _id: data_id,
       creator: "tim"
-    });
+    }, { waitForSync: true });
 
     let tim = {
       _key: "tim",
@@ -294,7 +291,7 @@ it("unit_authz: should return true for authorized project admin", () => {
       _key: "red_fruit",
       _id: project_id,
       name: "Project Red Fruit"
-    });
+    }, { waitForSync: true });
 
     let bob_id = "u/bob";
 
@@ -304,26 +301,23 @@ it("unit_authz: should return true for authorized project admin", () => {
       is_admin: false
     }
 
-    g_db.u.save(bob);
+    g_db.u.save(bob, { waitForSync: true });
 
     g_db.owner.save({
       _from: data_id,
       _to: project_id
-    });
+    }, { waitForSync: true });
 
     g_db.admin.save({
       _from: project_id,
       _to: bob_id
-    });
+    }, { waitForSync: true });
 
-    g_db.u.save(tim);
+    g_db.u.save(tim, { waitForSync: true });
 
     let req_perm = g_lib.PERM_READ;
 
-    // Creator should always have permission
-    expect(() => authzModule.isRecordActionAuthorized(tim, data_key, req_perm)).to.throw()
-            .that.is.an("array")
-            .with.property(0, g_lib.ERR_NOT_FOUND);
+    expect(authzModule.isRecordActionAuthorized(tim, data_key, req_perm)).to.be.false;
   });
 
 
