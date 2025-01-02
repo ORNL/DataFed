@@ -24,7 +24,6 @@ Help()
   echo "                                  provided via the command line it can also be set"
   echo "                                  using the enviromental variable"
   echo "                                  DATAFED_DATABASE_PASSWORD."
-  echo "-y, --system-secret               ZeroMQ system secret"
   echo
   echo "NOTE: Do not run this script with sudo!"
 }
@@ -44,13 +43,6 @@ then
   local_DATAFED_DATABASE_PASSWORD=""
 else
   local_DATAFED_DATABASE_PASSWORD=$(printenv DATAFED_DATABASE_PASSWORD)
-fi
-
-if [ -z "${DATAFED_ZEROMQ_SYSTEM_SECRET:-}" ]
-then
-  local_DATAFED_ZEROMQ_SYSTEM_SECRET=""
-else
-  local_DATAFED_ZEROMQ_SYSTEM_SECRET=$(printenv DATAFED_ZEROMQ_SYSTEM_SECRET)
 fi
 
 if [ -z "${FOXX_MAJOR_API_VERSION:-}" ]
@@ -87,11 +79,6 @@ while [ : ]; do
         local_FOXX_MAJOR_API_VERSION=$2
         shift 2
         ;;
-    -y | --zeromq-system-secret)
-        echo "Processing 'DataFed ZeroMQ system secret' option. Input argument is '$2'"
-        local_DATAFED_ZEROMQ_SYSTEM_SECRET=$2
-        shift 2
-        ;;
     --) shift;
         break
         ;;
@@ -107,14 +94,6 @@ then
   echo "Error DATAFED_DATABASE_PASSWORD is not defined, this is a required argument"
   echo "      This variable can be set using the command line option -p, --database-password"
   echo "      or with the environment variable DATAFED_DATABASE_PASSWORD."
-  ERROR_DETECTED=1
-fi
-
-if [ -z "$local_DATAFED_ZEROMQ_SYSTEM_SECRET" ]
-then
-  echo "Error DATAFED_ZEROMQ_SYSTEM_SECRET is not defined, this is a required argument"
-  echo "      This variable can be set using the command line option -y, --zeromq-session-secret"
-  echo "      or with the environment variable DATAFED_ZEROMQ_SYSTEM_SECRET."
   ERROR_DETECTED=1
 fi
 
