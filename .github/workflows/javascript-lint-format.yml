@@ -20,15 +20,19 @@ jobs:
         run: |
           npm install -g prettier eslint
 
-      # Step 4: Run Prettier to format code
+      # Step 4: Check what would be changed
+      - name: Show differences with Prettier
+        run: prettier --list-different "**/*.js"
+
+      # Step 5: Run Prettier to format code
       - name: Run Prettier
         run: prettier --check "**/*.js"
 
-      # Step 5: Run ESLint to lint code
+      # Step 6: Run ESLint to lint code
       - name: Run ESLint
         run: eslint "**/*.js"
 
-      # Step 6: Report status
+      # Step 7: Report status
       - name: Complete
         run: echo "Formatting and linting completed successfully!"
 
