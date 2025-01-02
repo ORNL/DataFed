@@ -16,9 +16,9 @@ jobs:
           node-version: '14' # Specify your Node.js version
 
       # Step 3: Install Prettier and ESLint globally
-      - name: Install Prettier and ESLint
+      - name: Install Prettier
         run: |
-          npm install -g prettier eslint
+          npm install -g prettier
 
       # Step 4: Run Prettier to format code
       - name: Run prettier
@@ -36,11 +36,7 @@ jobs:
       - name: Run Check should fail if formatting is not up to spec
         run: prettier --check "**/*.js" 
 
-      # Step 8: Run ESLint to lint code
-      - name: Run ESLint
-        run: eslint "**/*.js"
-
       # Step 9: Report status
       - name: Complete
-        run: echo "Formatting and linting completed successfully!"
+        run: echo "Formatting completed successfully!"
 

@@ -1,0 +1,30 @@
+name: JavaScript Linter and Formatter
+on: push
+jobs:
+  format-lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Node.js environment
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14' # Specify your Node.js version
+
+      # Step 3: Instal ESLint globally
+      - name: Install ESLint
+        run: |
+          npm install -g eslint
+
+      # Step 4: Run ESLint to lint code
+      - name: Run ESLint
+        run: eslint "**/*.js"
+
+      # Step 5: Report status
+      - name: Complete
+        run: echo "Linting completed successfully!"
+
