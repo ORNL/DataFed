@@ -20,13 +20,21 @@ jobs:
         run: |
           npm install -g prettier eslint
 
-      # Step 4: Check what would be changed
-      - name: Show differences with Prettier
-        run: prettier --list-different "**/*.js"
+      # Step 5: Run Prettier to format code
+      - name: Run Prettier
+        run: prettier "**/*.js" --write
 
       # Step 5: Run Prettier to format code
       - name: Run Prettier
-        run: prettier --check "**/*.js"
+        run: git diff
+
+      # Step 5: Run Prettier to format code
+      - name: Run Prettier
+        run: git reset --hard
+
+      # Step 5: Run Prettier to format code
+      - name: Run Prettier
+        run: prettier check "**/*.js" 
 
       # Step 6: Run ESLint to lint code
       - name: Run ESLint
