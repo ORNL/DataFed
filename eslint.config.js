@@ -1,14 +1,16 @@
-const { defineConfig } = require('eslint-define-config');
 
-module.exports = defineConfig({
-  env: {
-    browser: false,
-    node: true,
-    es2021: true,
-  },
-  extends: ['eslint:recommended'],
-  rules: {
-    'no-console': 'warn',
-  },
-});
+const globals = require("globals");
 
+const customGlobals = {
+  TomSelect: "readable",
+};
+
+module.exports = [{
+  languageOptions: {
+    globals: {
+      ...customGlobals,
+      ...globals.jquery,
+      ...globals.node,
+    },
+  },
+}];
