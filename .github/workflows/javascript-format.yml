@@ -22,21 +22,14 @@ jobs:
 
       # Step 4: Run Prettier to format code
       - name: Run prettier
-        run: prettier "**/*.js" --write
+        run: |
+          prettier "**/*.js" --write
+          git diff
+          git reset --hard
+          prettier --check "**/*.js" 
+          
 
-      # Step 5: Run Prettier to format code
-      - name: Run git diff to see the changes that would be made
-        run: git diff
-
-      # Step 6: Run Prettier to format code
-      - name: Reset git files
-        run: git reset --hard
-
-      # Step 7: Run Prettier to format code
-      - name: Run Check should fail if formatting is not up to spec
-        run: prettier --check "**/*.js" 
-
-      # Step 9: Report status
+      # Step 5: Report status
       - name: Complete
         run: echo "Formatting completed successfully!"
 
