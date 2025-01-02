@@ -5,6 +5,7 @@ const path = require('path');
 const pathModule = require("./posix_path");
 const g_lib = require('./support');
 const { Repo, PathType } = require("./repo");
+const { Project } = require("./project");
 
 module.exports = (function() {
   let obj = {}
@@ -58,6 +59,57 @@ module.exports = (function() {
   };
 
 
+  /****************************************************************************
+   * Strategy Methods
+   ***************************************************************************
+   * Description
+   * -----------
+   * 
+   * The following section contains authorization stategy methods, that are
+   * used to determine if a GridFTP action is authorized by a given client.
+   *
+   * Authorization is granted based on the action that is being run on 
+   * a particial file path. The strategy methods are triggered based on
+   * the categorization of the file path. The types of categorization
+   * of a file path is shown below. 
+   * 
+   * DataFed Repo Project Path Categorization
+   * ----------------------------------------
+   *
+   * As an example consider the following path is the root of the datafed repo project
+   * 
+   * /mnt/large/data/
+   * 
+   * And it contains the following subfolders with folders for users and projects in 
+   * each respectively
+   *
+   * /mnt/large/data/project
+   * /mnt/large/data/user
+   *
+   * /mnt                                    - REPO_BASE_PATH 
+   * /mnt/large                              - REPO_BASE_PATH 
+   * /mnt/large/data                         - REPO_ROOT_PATH
+   * /mnt/large/data/project                 - REPO_PATH
+   * /mnt/large/data/user                    - REPO_PATH
+   * /mnt/large/data/project/physics         - PROJECT_PATH
+   * /mnt/large/data/user/tim                - USER_PATH
+   * /mnt/large/data/project/physics/849384  - PROJECT_RECORD_PATH
+   * /mnt/large/data/user/tim/598035         - USER_RECORD_PATH
+   */
+
+  /* \brief Checks if a Client has read access to a Record
+   *
+   * This method assumes that the categorization is either 
+   * - USER_RECORD_PATH
+   * - PROJECT_RECORD_PATH
+   * 
+   * From the examples shown in the top description this would be have a form
+   * similar to:
+   * 
+   * /mnt/large/data/project/physics/849384  - PROJECT_RECORD_PATH
+   * /mnt/large/data/user/tim/598035         - USER_RECORD_PATH
+   *
+   **/
   obj.readRecord = function(client, path) {
 
     const permission = g_lib.PERM_RD_DATA;
@@ -75,7 +127,7 @@ module.exports = (function() {
     let record = new Record(data_key);
 
     if (!record.exists()) {
-      // If the record does not exist then the path would noe be consistent.
+      // If the record does not exist then the path would not be consistent.
       console.log(
           "AUTHZ act: read client: " + client._id + " path " + path + " FAILED"
           );
@@ -113,14 +165,34 @@ module.exports = (function() {
     }
   }
 
+  /* \brief Placeholder strategy method 
+   *
+   * This method grants authorization and does not do anything.
+   * 
+   **/
   obj.none = function(client, path) {
     const permission = g_lib.PERM_NONE;
   }
 
+  /* \brief This method denies access to a GridFTP action
+   *
+   **/
   obj.denied = function(client, path) {
-    throw g_lib.ERR_PERM_DENIED;
+    throw [g_lib.ERR_PERM_DENIED, "Permissions denied for client " + client._id + " on path: " + path];
   }
 
+  /**
+   * \brief This method will check if a user has write permissions
+   *
+   * This strategy method applies to paths of the type:
+   * - USER_RECORD_PATH
+   * - PROJECT_RECORD_PATH
+   * 
+   * Example:
+   *
+   * /mnt/large/data/project/physics/849384  - PROJECT_RECORD_PATH
+   * /mnt/large/data/user/tim/598035         - USER_RECORD_PATH
+   */
   obj.createRecord = function(client, path) {
     const permission = g_lib.PERM_WR_DATA;
 
@@ -176,6 +248,215 @@ module.exports = (function() {
       throw [record.error(), record.errorMessage()];
     }
   }
+
+  /**
+   * \brief This method will check if a user has lookup ability on a Record
+   * 
+   * This strategy method applies to paths of the type:
+   * - USER_RECORD_PATH
+   * - PROJECT_RECORD_PATH
+   * 
+   * Example:
+   *
+   * /mnt/large/data/project/physics/849384  - PROJECT_RECORD_PATH
+   * /mnt/large/data/user/tim/598035         - USER_RECORD_PATH
+   *
+   * NOTE: Lookup grants a user the ability to see the path content from the
+   * Globus service.
+   */
+  obj.lookupRecord = function(client, path) {
+
+    const path_components = pathModule.splitPOSIXPath(path);
+    const data_key = path_components.at(-1);
+    let record = new Record(data_key);
+    if (!record.exists()) {
+      // If the record does not exist then the path would not be consistent.
+      console.log(
+          "AUTHZ act: lookup client: " + client._id + " path " + path + " FAILED"
+          );
+      throw [g_lib.ERR_PERM_DENIED, "Invalid record specified: " + path];
+    }
+    // Special case - allow unknown client to lookup a publicly accessible record
+    // if record exists and if it is a public record
+    if (!client) {
+      if (!g_lib.hasPublicRead(record.id())) {
+        console.log(
+            "AUTHZ act: lookup" +
+            " unknown client " +
+            " path " + path +
+            " FAILED"
+            );
+        throw [g_lib.ERR_PERM_DENIED, "Unknown client does not have lookup permissions on " + path];
+      }
+    } else if (! obj.isRecordActionAuthorized(client, data_key, permission)) {
+      console.log(
+          "AUTHZ act: lookup" +
+          " client: " + client._id +
+          " path " + path +
+          " FAILED"
+          );
+      throw [g_lib.ERR_PERM_DENIED, "Client " + client._id + " does not have lookup permissions on " + path];
+    }
+
+    if (!record.isPathConsistent(path)) {
+      console.log(
+          "AUTHZ act: lookup client: " + client._id + " path " + path + " FAILED"
+          );
+      throw [record.error(), record.errorMessage()];
+    }
+  } 
+
+  /**
+   * \brief This method will check if a user has lookup ability on a Project
+   * 
+   * This strategy method applies to paths of the type:
+   * - PROJECT_PATH
+   *
+   * Example:
+   *
+   * /mnt/large/data/project/physics         - PROJECT_PATH
+   *
+   * NOTE: Lookup grants a user the ability to see the path content from the
+   * Globus service.
+   */
+  obj.lookupProject = function(client, path) {
+
+    const path_components = pathModule.splitPOSIXPath(path);
+    const project_id = "p/" + path_components.at(-1);
+    const repo_id = "repo/" + path_components[path_components.length -3 ];
+    const project = new Project(project_id); 
+    const repo = new Repo(repo_id); 
+    if ( ! repo.exists() ) {
+      // Repo does not exist
+      console.log("AUTHZ act: lookup client: " + client._id + " path " + path + " DENIED");
+      throw [g_lib.ERR_PERM_DENIED, "Client " + client._id + " does not have lookup permissions on " + path];
+    } else if ( ! project.exists() ) {
+      // Project does not exist
+      console.log("AUTHZ act: lookup client: " + client._id + " path " + path + " DENIED");
+      throw [g_lib.ERR_PERM_DENIED, "Client " + client._id + " does not have lookup permissions on " + path];
+    }
+
+    // Project does not exist on repo, i.e. no allocation on repo
+    const repo_ids = project.getRepoIds();
+    if( ! repo_ids.has(repo.id())) {
+      console.log(
+          "AUTHZ act: lookup client: " + client._id + " path " + path + " DENIED"
+          );
+      throw [g_lib.ERR_PERM_DENIED, "Client " + client._id + " does not have lookup permissions on " + path];
+    }
+
+    // Client does not have access to the project
+    if( ! project.hasAccess(client._id) ) {
+      console.log(
+          "AUTHZ act: lookup client: " + client._id + " path " + path + " DENIED"
+          );
+      throw [g_lib.ERR_PERM_DENIED, "Client " + client._id + " does not have lookup permissions on " + path];
+    } 
+  }
+
+  /**
+   * \brief This method will check if a user has lookup ability on a user folder
+   * 
+   * This strategy method applies to paths of the type:
+   * - USER_PATH
+   * 
+   * Example:
+   *
+   * /mnt/large/data/user/tim                - USER_PATH
+   *
+   * NOTE: Lookup grants a user the ability to see the path content from the
+   * Globus service.
+   */
+  obj.lookupUser = function(client, path) {
+
+    const path_components = pathModule.splitPOSIXPath(path);
+    const username = path_components.at(-1);
+
+    if (client._key !== username) {
+      throw [g_lib.ERR_PERM_DENIED, "Client " + client._id + " does not have lookup permissions on " + path];
+    }
+  }
+
+
+  /**
+   * \brief This method will check if a user has lookup ability on the Repo folder
+   * 
+   * This lookup is a little expensive because only users with accounts on the 
+   * repo should be approved to see anything in it we need to know what users 
+   * are approved for the repo.
+   * 
+   * This strategy method applies to paths of the type:
+   * - REPO_ROOT_PATH
+   *
+   * Example:
+   *
+   * /mnt/large/data                         - REPO_ROOT_PATH
+   */
+  obj.lookupRepoRoot = function(client, path) {
+  }
+
+  /**
+   * \brief This method will check if a user has lookup ability on the Repo 
+   * project and user folders
+   * 
+   * This lookup is a little expensive because only users with accounts on the 
+   * repo should be approved to see anything in it we need to know what users 
+   * are approved for the repo.
+   * 
+   * This strategy method applies to paths of the type:
+   * - REPO_PATH
+   *
+   * Example:
+   *
+   * /mnt/large/data/project                 - REPO_PATH
+   * /mnt/large/data/user                    - REPO_PATH
+   */
+  obj.lookupRepo = function(client, path) {
+
+    const path_components = pathModule.splitPOSIXPath(path);
+    // Get second last item in path should be the repo name
+    const repo = new Repo(path_components[path_components.length - 2]);
+
+    // Verify that the repo exists
+    if( !repo.exists() ) {
+       throw [g_lib.ERR_NOT_FOUND, "Repo not found for path: " + path];
+    }
+
+    // Check if user is a repo admin
+    if( repo.isAdmin(client._id) ) {
+       return;
+    }
+
+    // Check if user has an allocation on the repo
+    if( repo.hasAllocation(client._id) ) {
+      return;
+    }
+    throw [obj.ERR_NO_ALLOCATION, "Client " + client._id + " has no allocation on repo."];
+  }
+
+  /**
+   * \brief This method will check if a user has lookup ability on the Repo 
+   * base path 
+   * 
+   * This lookup is a little expensive because only users with accounts on the 
+   * repo should be approved to see anything in it we need to know what users 
+   * are approved for the repo.
+   * 
+   * This strategy method applies to paths of the type:
+   * - REPO_BASE_PATH
+   *
+   * Example:
+   *
+   * /mnt                                    - REPO_BASE_PATH 
+   * /mnt/large                              - REPO_BASE_PATH 
+   */
+  obj.lookupRepoBase = function(client, path) {
+
+  }
+
+  /****************************************************************************
+   * End of Strategy Methods
+   ***************************************************************************/
 
   obj.authz_strategy = {
     "read": {
