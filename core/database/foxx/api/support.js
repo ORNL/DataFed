@@ -2845,7 +2845,7 @@ module.exports = (function() {
         }
     };
 
-    obj.parseOtherTokenData = (token_type, other_token_data) => {
+    obj.parseOtherTokenData = (token_type, other_token_data) => { // TODO: type enforcement of passed data
         let return_data = {};
         // TODO: other token types
         if (token_type === obj.AccessTokenType.GLOBUS_TRANSFER) {
@@ -2854,10 +2854,19 @@ module.exports = (function() {
             if (parsed_data.length !== 2) {
                 throw [obj.ERR_INVALID_PARAM, "Unexpected count of additional token data provided"];
             }
+
+            const parsed_uuid = parsed_data[0];
+            if (!obj.isUUID(parsed_uuid)) {
+                throw [obj.ERR_INVALID_PARAM, "Provided other_token_data does not follow format of '<UUID>|<scopes>'"];
+            }
+            const parsed_scopes = parsed_data[1];
+            if (!parsed_scopes.includes("transfer.api.globus.org")) {   // TODO: does this need validation, and is this validation sufficient?
+                throw [obj.ERR_INVALID_PARAM, "Scopes included in other_token_data do not refer to transfer resource, but transfer resource was specified"];
+            }
             return_data = {
                 ...return_data,
-                uuid: parsed_data[0],
-                scopes: parsed_data[1],
+                uuid: parsed_uuid,
+                scopes: parsed_scopes,
             };
         }
         return return_data;
