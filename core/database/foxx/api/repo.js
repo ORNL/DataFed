@@ -61,7 +61,7 @@ class Repo {
     const collection = g_db._collection("repo");
 
     // This function is designed to check if the provided key exists in the
-    // database as a record. Searches are only made in the 'd' collection
+    // database. Searches are only made in the 'repo' collection
     //
     // Will return true if it does and false if it does not.
     if (a_key && a_key !== "repo/" ) {
@@ -193,6 +193,55 @@ class Repo {
 
     return PathType.UNKNOWN;
   }
+
+  /**
+   * \brief Determine if client is an admin of a repository.
+   **/
+  isAdmin(a_client_id) {
+    if( ! g_db.u.exists(a_client_id) ) {
+       return false;
+    }
+    const a_client = g_db.u.document(a_client_id);
+    return g_lib.hasAdminPermRepo(a_client, this.#repo_id);
+  }
+
+  /**
+   * \brief Determine if a client has an allocation on the repo
+   *
+   * This could be either a user allocation on a project allocation that the user is a part of
+   **/
+   hasAllocation(a_client_id) {
+
+        if (a_client_id[0] !== 'u') {
+            throw [g_lib.ERR_INVALID_PARAM, "hasAllocation accepts user ids only."];
+        }
+        // Verify that this is a user id.
+        if (!g_lib.db._exists(a_client_id)) {
+            throw [g_lib.ERR_INVALID_PARAM, "Unknown user id provided " + a_client_id ];
+        }
+
+        let alloc = g_db.alloc.firstExample({
+            _from: a_client_id,
+            _to: this.#repo_id
+        });
+
+        if( alloc ) {
+          return true;
+        }
+
+        const qry = "FOR i IN p SORT i._id DESC RETURN "
+        return false;
+   }
+
+  /**
+   * \brief Get list of projects associated with the repository
+   */
+  getProjects() {
+    const qry = "for edge IN alloc FILTER edge._to == @repo_id RETURN edge._from"
+    // This should not exceed the memory
+    const cursor = g_db._query(qry, { repo_id: this.#repo_id });
+    return cursor.toArray();
+   }
 
 }
 
