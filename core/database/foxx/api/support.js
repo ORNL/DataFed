@@ -304,6 +304,14 @@ module.exports = (function() {
     obj.GLOB_MAX_XFR_SIZE = 10000000000; // ~10GB
     //obj.GLOB_MAX_XFR_SIZE = 2000000;
 
+    // TODO: this will need to be updated every time the AccessTokenType enum is updated in SDMS.proto
+    obj.AccessTokenType = {
+        GENERIC: 1,
+        GLOBUS: 2,
+        GLOBUS_AUTH: 3,
+        GLOBUS_TRANSFER: 4,
+    };
+
     obj.procInputParam = function(a_in, a_field, a_update, a_out) {
         var val, spec = obj.field_reqs[a_field];
 
@@ -2835,6 +2843,24 @@ module.exports = (function() {
                 }
             }
         }
+    };
+
+    obj.parseOtherTokenData = (token_type, other_token_data) => {
+        let return_data = {};
+        // TODO: other token types
+        if (token_type === obj.AccessTokenType.GLOBUS_TRANSFER) {
+            // expect the data to be in the format of "<UUID>|<scopes>"
+            const parsed_data = other_token_data.split("|");
+            if (parsed_data.length !== 2) {
+                throw [obj.ERR_INVALID_PARAM, "Unexpected count of additional token data provided"];
+            }
+            return_data = {
+                ...return_data,
+                uuid: parsed_data[0],
+                scopes: parsed_data[1],
+            };
+        }
+        return return_data;
     };
 
     return obj;

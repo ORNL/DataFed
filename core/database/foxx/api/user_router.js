@@ -501,17 +501,20 @@ router.get('/token/set', function(req, res) {
                 action: function() {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
                     var user_id;
+                    let user_doc;
 
-                    const token_type = req.queryParams.type;
-                    const other_token_data = req.queryParams.other_token_data;
+                    const { type: token_type, other_token_data } = req.queryParams;
+                    const edge_update = Boolean(token_type && other_token_data);
 
                     if (req.queryParams.subject) {
                         user_id = req.queryParams.subject;
                         if (!g_db.u.exists(user_id))
                             throw [g_lib.ERR_INVALID_PARAM, "No such user '" + user_id + "'"];
                         g_lib.ensureAdminPermUser(client, user_id);
+                        user_doc = g_db.u.document(user_id);
                     } else {
                         user_id = client._id;
+                        user_doc = client;
                     }
                     console.log("updating tokens for", user_id, "acc:", req.queryParams.access, "exp:", req.queryParams.expires_in);
                     var obj = {
@@ -519,24 +522,24 @@ router.get('/token/set', function(req, res) {
                         refresh: req.queryParams.refresh,
                         expiration: Math.floor(Date.now() / 1000) + req.queryParams.expires_in
                     };
-                    if (token_type && other_token_data) {
-                        // We need the '_key' from the user document, which is not necessarily a part of the above checks.
-                        const user_doc = g_db.u.document(user_id);
-
+                    if (token_type || other_token_data && !edge_update) {
+                        throw [g_lib.ERR_INVALID_PARAM, "Invalid parameters passed, type and other_token_data depend on one another."];
+                    }
+                    else if (edge_update && token_type === g_lib.AccessTokenType.GLOBUS_TRANSFER) {
                         // find or insert collection
-                        const collection_search_key = other_token_data;
+                        const { uuid: collection_search_key, scopes } = g_lib.parseOtherTokenData(g_lib.AccessTokenType.GLOBUS_TRANSFER, other_token_data);
                         let globus_collection = g_db.globus_coll.exists({_key: collection_search_key});
                         if (!globus_collection) {
-                            // TODO: what other information should live on the globus_coll document?
                             globus_collection = g_db.globus_coll.save({
                                 _key: collection_search_key,
-                                // TODO: get relevant data
                                 name: "Newly Inserted Collection",
                                 description: "The collection description",
-                                dependent_scopes: [],
-                                owner: "",
-                                created_at: Math.floor(Date.now() / 1000),
-                                updated_at: Math.floor(Date.now() / 1000),
+                                required_scopes: scopes,    // Is this always the minimum required set?
+                                owner: "",  // Should this be looked up on Globus?
+                                ct: Math.floor(Date.now() / 1000),
+                                ut: Math.floor(Date.now() / 1000),
+                                type: "mapped/guest", // How do we determine this from here? Should it be passed as part of the params?
+                                ha_enabled: false, // boolean - How do we determine this from here? Should it be passed as part of the params?
                             });
                         }
 
@@ -546,7 +549,7 @@ router.get('/token/set', function(req, res) {
                             _from: user_id, // the uid field
                             _to: globus_collection._id,
                             type: token_type,
-                            dependent_scopes: globus_collection.dependent_scopes,
+                            dependent_scopes: scopes,
                             collection_display_name: globus_collection.name,
                             request_time: Math.floor(Date.now() / 1000),
                             last_used: Math.floor(Date.now() / 1000),
@@ -578,7 +581,7 @@ router.get('/token/set', function(req, res) {
     .queryParam('access', joi.string().required(), "User access token")
     .queryParam('refresh', joi.string().required(), "User refresh token")
     .queryParam('expires_in', joi.number().integer().required(), "Access token expiration timestamp")
-    .queryParam('type', joi.number().optional(), "Type of token being stored")    // TODO: currently represented as underlying integer from SDMS::AccessTokenType, do we want strings?
+    .queryParam('type', joi.number().valid(...Object.values(g_lib.AccessTokenType)).optional(), "Type of token being stored")
     .queryParam('other_token_data', joi.string().optional(), "Other data associated with token, currently only supported as Globus Collection UUID e.g. other_token_data=1cbaaee5-b938-4a4e-87a8-f1ec4d5d92f9")
     .summary('Set user tokens')
     .description('Set user tokens');
