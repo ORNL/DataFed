@@ -2,8 +2,8 @@
 
 const g_db = require('@arangodb').db;
 const path = require('path');
-const pathModule = require("./posix_path");
-const g_lib = require('./support');
+const pathModule = require("./../utils/posix_path");
+const g_lib = require('../support');
 const { Repo, PathType } = require("./repo");
 const { Project } = require("./project");
 

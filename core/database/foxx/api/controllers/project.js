@@ -1,7 +1,7 @@
 "use strict";
 
 const g_db = require("@arangodb").db;
-const g_lib = require("./support");
+const g_lib = require("../support");
 
 class Project {
   // ERROR code

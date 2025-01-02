@@ -1,9 +1,9 @@
 "use strict";
 
 const g_db = require("@arangodb").db;
-const g_lib = require("./support");
+const g_lib = require("../support");
 const { errors } = require("@arangodb");
-const pathModule = require("./posix_path");
+const pathModule = require("./../utils/posix_path");
 
 /**
  * All DataFed repositories have the following path structure on a POSIX file system
