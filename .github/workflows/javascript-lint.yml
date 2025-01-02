@@ -18,7 +18,7 @@ jobs:
       # Step 3: Instal ESLint globally
       - name: Install ESLint
         run: |
-          npm install -g eslint@latest @babel/eslint-parser@latest eslint-define-config
+          npm install -g eslint@latest @babel/eslint-parser@latest eslint-define-config globals
 
       # Step 4: Run ESLint to lint code
       - name: Run ESLint
