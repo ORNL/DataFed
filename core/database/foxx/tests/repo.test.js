@@ -11,9 +11,11 @@ describe("Testing Repo class", () => {
 
   beforeEach(() => {
     g_db.d.truncate();
+    g_db.u.truncate();
     g_db.alloc.truncate();
     g_db.loc.truncate();
     g_db.repo.truncate();
+    g_db.admin.truncate();
   });
 
   it("unit_repo: should throw an error if the repo does not exist", () => {
@@ -219,6 +221,74 @@ describe("Testing Repo class", () => {
     })
     const repo = new Repo("foo");
     expect(repo.pathType("/mnt/repo_root/user/jane/4243")).to.equal(PathType.USER_RECORD_PATH);
+  });
+
+  it("unit_repo: testing isAdmin, for a user, with system admin access", () => {
+    const path = "/mnt/repo_root";
+    const repo_id = "repo/boom" 
+    g_db.repo.save({
+       _id: repo_id,
+       _key: "boom",
+       path: path
+    })
+
+    const user_id = "u/jim";
+    g_db.u.save({
+       _id: user_id,
+       _key: "jim",
+       is_admin: true
+    });
+
+    const repo = new Repo(repo_id);
+    expect(repo.isAdmin(user_id)).to.be.true;
+  });
+
+  it("unit_repo: testing isAdmin, for a user, with repo admin access", () => {
+    const path = "/mnt/repo_root";
+    const repo_id = "repo/bam" 
+    g_db.repo.save({
+       _id: repo_id,
+       _key: "bam",
+       path: path
+    }, { waitForSync: true })
+
+    const user_id = "u/hone";
+    g_db.u.save({
+       _id: user_id,
+       _key: "hone",
+       is_admin: false
+    }, { waitForSync: true });
+
+    g_db.admin.save({
+       _from: repo_id,
+       _to: user_id
+    }, { waitForSync: true });
+
+    const repo = new Repo(repo_id);
+
+    expect(repo.isAdmin(user_id)).to.be.true;
+  });
+
+
+  it("unit_repo: testing isAdmin, for a user, with no privileges", () => {
+    const path = "/mnt/repo_root";
+    const repo_id = "repo/bam" 
+    g_db.repo.save({
+       _id: repo_id,
+       _key: "bam",
+       path: path
+    }, { waitForSync: true })
+
+    const user_id = "u/hone";
+    g_db.u.save({
+       _id: user_id,
+       _key: "hone",
+       is_admin: false
+    }, { waitForSync: true });
+
+    const repo = new Repo(repo_id);
+
+    expect(repo.isAdmin(user_id)).to.be.false;
   });
 
 });
