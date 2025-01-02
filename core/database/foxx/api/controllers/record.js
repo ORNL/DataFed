@@ -168,7 +168,7 @@ class Record {
       // oweners id.
       // 2. Using the loc.uid parameter if not inflight to get the owner
       // id.
-      let new_alloc = g_db.alloc.firstExample({
+      const new_alloc = g_db.alloc.firstExample({
         _from: this.#loc.new_owner ? this.#loc.new_owner : this.#loc.uid,
         _to: this.#loc.new_repo,
       });
