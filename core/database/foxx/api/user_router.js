@@ -522,7 +522,7 @@ router.get('/token/set', function(req, res) {
                         refresh: req.queryParams.refresh,
                         expiration: Math.floor(Date.now() / 1000) + req.queryParams.expires_in
                     };
-                    if (token_type || other_token_data && !edge_update) {
+                    if ((token_type || other_token_data) && !edge_update) {
                         throw [g_lib.ERR_INVALID_PARAM, "Invalid parameters passed, type and other_token_data depend on one another."];
                     }
                     else if (edge_update && token_type === g_lib.AccessTokenType.GLOBUS_TRANSFER) {
