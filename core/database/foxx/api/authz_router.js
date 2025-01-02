@@ -66,7 +66,6 @@ router
             } else {
                 throw [g_lib.ERR_INVALID_PARAM, "Invalid gridFTP action: ", req.queryParams.act];
             }
-
             console.log(
                 "AUTHZ act: " +
                     req.queryParams.act +
