@@ -13,7 +13,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '14' # Specify your Node.js version
+          node-version: '18' # MOre up to date version needed for linter
 
       # Step 3: Instal ESLint globally
       - name: Install ESLint
