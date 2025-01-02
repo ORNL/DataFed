@@ -20,27 +20,27 @@ jobs:
         run: |
           npm install -g prettier eslint
 
-      # Step 5: Run Prettier to format code
-      - name: Run Prettier
+      # Step 4: Run Prettier to format code
+      - name: Run prettier
         run: prettier "**/*.js" --write
 
       # Step 5: Run Prettier to format code
-      - name: Run Prettier
+      - name: Run git diff to see the changes that would be made
         run: git diff
 
-      # Step 5: Run Prettier to format code
-      - name: Run Prettier
+      # Step 6: Run Prettier to format code
+      - name: Reset git files
         run: git reset --hard
 
-      # Step 5: Run Prettier to format code
-      - name: Run Prettier
-        run: prettier check "**/*.js" 
+      # Step 7: Run Prettier to format code
+      - name: Run Check should fail if formatting is not up to spec
+        run: prettier --check "**/*.js" 
 
-      # Step 6: Run ESLint to lint code
+      # Step 8: Run ESLint to lint code
       - name: Run ESLint
         run: eslint "**/*.js"
 
-      # Step 7: Report status
+      # Step 9: Report status
       - name: Complete
         run: echo "Formatting and linting completed successfully!"
 
