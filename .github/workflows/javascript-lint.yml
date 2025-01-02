@@ -20,7 +20,7 @@ jobs:
         run: |
           npm init -y
           npm install eslint@latest @babel/eslint-parser@latest eslint-define-config globals --save
-          eslint "**/*.js"
+          npx eslint "**/*.js"
 
       # Step 5: Report status
       - name: Complete
