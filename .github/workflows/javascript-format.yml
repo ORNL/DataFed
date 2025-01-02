@@ -3,7 +3,6 @@ on: push
 jobs:
   format-javascript:
     runs-on: ubuntu-latest
-    continue-on-error: true  # Allow this job to fail without failing the entire workflow
 
     steps:
       # Step 1: Checkout the repository
@@ -23,6 +22,7 @@ jobs:
 
       # Step 4: Run Prettier to format code
       - name: Run prettier
+        continue-on-error: true  # Allow this job to fail without failing the entire workflow
         run: |
           prettier "**/*.js" --write
           git diff
