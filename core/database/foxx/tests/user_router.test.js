@@ -1,6 +1,9 @@
 "use strict"
 // NOTE: completion of tests requires successful run of user_fixture.js script
 
+// Need to pull enum from support
+const g_lib = require("../api/support");
+
 // Integration test of API
 const { expect } = require("chai");
 const request = require("@arangodb/request");
@@ -21,8 +24,8 @@ describe("user_router: the Foxx microservice user_router token/set endpoint", ()
         }
     });
     const test_edge_params = {
-        type: 4,  // transfer token
-        other_token_data: "1cbaaee5-b938-4a4e-87a8-f1ec4d5d92f9",   // fake UUID
+        type: g_lib.AccessTokenType.GLOBUS_TRANSFER,
+        other_token_data: "1cbaaee5-b938-4a4e-87a8-f1ec4d5d92f9|urn::globus::transfer::all",   // fake UUID
     };
 
     it("should accept a valid user's token and execute an update", () => {
@@ -42,12 +45,12 @@ describe("user_router: the Foxx microservice user_router token/set endpoint", ()
         expect(user_token_data).to.include(query_params);
     });
 
-    it("should update only a valid user's token when additionally provided type", () => {
+    it("should error when only additionally provided type", () => {
         // arrange
         const local_test_params = test_params[1];
         const query_params = {
           ...local_test_params,
-          type: 4,
+          type: test_edge_params.type,
         };
         // TODO: make encoded query params less hard coded
         const request_string = `${usr_base_url}/token/set?client=${query_params._key}&access=${query_params.access}&refresh=${query_params.refresh}&expires_in=500000&type=${query_params.type}`;
@@ -56,21 +59,20 @@ describe("user_router: the Foxx microservice user_router token/set endpoint", ()
         const response = request.get(request_string);
 
         // assert
-        expect(response.status).to.equal(204);
+        expect(response.status).to.equal(400);
+        expect(response.body).to.include("type and other_token_data depend on one another");
 
         const user_token_data = db.u.document({_key: query_params._key});
-        expect(user_token_data).to.include(local_test_params);
-
         const user_token_edge = db.globus_token.outEdges(user_token_data._id);
         expect(user_token_edge).to.be.empty;
     });
 
     it("should update only a valid user's token when additionally provided other token data", () => {
         // arrange
-        const lcoal_test_params = test_params[2];
+        const local_test_params = test_params[2];
         const query_params = {
-            ...lcoal_test_params,
-            other_token_data: "1cbaaee5-b938-4a4e-87a8-f1ec4d5d92f9",
+            ...local_test_params,
+            other_token_data: test_edge_params.other_token_data,
         };
         // TODO: make encoded query params less hard coded
         const request_string = `${usr_base_url}/token/set?client=${query_params._key}&access=${query_params.access}&refresh=${query_params.refresh}&expires_in=500000&other_token_data=${query_params.other_token_data}`;
@@ -79,11 +81,10 @@ describe("user_router: the Foxx microservice user_router token/set endpoint", ()
         const response = request.get(request_string);
 
         // assert
-        expect(response.status).to.equal(204);
+        expect(response.status).to.equal(400);
+        expect(response.body).to.include("type and other_token_data depend on one another");
 
         const user_token_data = db.u.document({_key: query_params._key});
-        expect(user_token_data).to.include(lcoal_test_params);
-
         const user_token_edge = db.globus_token.outEdges(user_token_data._id);
         expect(user_token_edge).to.be.empty;
     });
@@ -127,4 +128,6 @@ describe("user_router: the Foxx microservice user_router token/set endpoint", ()
         const user_data = db.u.document({_key: query_params.user_key});
         expect(user_data.access).to.not.equal(query_params.access); // should not update user doc
     });
+
+    // TODO: test for valid/invalid other_token_data
 });
