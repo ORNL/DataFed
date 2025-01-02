@@ -1621,17 +1621,15 @@ function handleQueryResults(data) {
     // Find results node in data tree
     var results_node = data_tree.getNodeByKey("search_results");
     if (!results_node) {
-        results_node = data_tree
-            .getRootNode()
-            .addChildren({
-                title: "Search Results",
-                checkbox: false,
-                folder: true,
-                icon: "ui-icon ui-icon-zoom",
-                nodrag: true,
-                key: "search_results",
-                children: [],
-            });
+        results_node = data_tree.getRootNode().addChildren({
+            title: "Search Results",
+            checkbox: false,
+            folder: true,
+            icon: "ui-icon ui-icon-zoom",
+            nodrag: true,
+            key: "search_results",
+            children: [],
+        });
     }
 
     var i,
