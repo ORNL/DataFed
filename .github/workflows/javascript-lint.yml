@@ -15,14 +15,14 @@ jobs:
         with:
           node-version: '18' # MOre up to date version needed for linter
 
-      # Step 3: Instal ESLint globally and run
+      # Step 3: Instal ESLint and run
       - name: Install ESLint
         run: |
           npm init -y
           npm install eslint@latest @babel/eslint-parser@latest eslint-define-config globals --save
           npx eslint "**/*.js"
 
-      # Step 5: Report status
+      # Step 4: Report status
       - name: Complete
         run: echo "Linting completed successfully!"
 

@@ -29,7 +29,6 @@ jobs:
           git reset --hard
           prettier --check "**/*.js" 
           
-
       # Step 5: Report status
       - name: Complete
         run: echo "Formatting completed successfully!"
