@@ -206,11 +206,12 @@ class Repo {
   }
 
   /**
-   * \brief Determine if a client has an allocation on the repo
+   * \brief Determine if a client has access to the repo
    *
-   * This could be either a user allocation on a project allocation that the user is a part of
+   * This could be either a user allocation on a project allocation that the user is a part of,
+   * or the user could be an admin.
    **/
-   hasAllocation(a_client_id) {
+   hasAccess(a_client_id) {
 
         if (a_client_id[0] !== 'u') {
             throw [g_lib.ERR_INVALID_PARAM, "hasAllocation accepts user ids only."];
@@ -229,15 +230,24 @@ class Repo {
           return true;
         }
 
-        const qry = "FOR i IN p SORT i._id DESC RETURN "
+        // The maximum number of edges connecting a user to a repo is 3 
+        // user <- g -> p -> repo
+        // We only need to verify one path exists
+        let qry = "FOR v, e, p IN 1..3 ANY @user_id admin, member, owner, alloc";
+        qry += " OPTIONS { bfs: true, uniqueEdges: 'path' }";
+        qry += " FILTER v._id == @repo_id LIMIT 1";
+        qry += " RETURN p.edges";
+        const cursor = g_db._query(qry, { repo_id: this.#repo_id, user_id: a_client_id });
+
+        if (cursor.toArray().length === 1 ) { return true; }
         return false;
    }
 
   /**
    * \brief Get list of projects associated with the repository
    */
-  getProjects() {
-    const qry = "for edge IN alloc FILTER edge._to == @repo_id RETURN edge._from"
+  getProjectIds() {
+    const qry = "WITH p, repo FOR v, e IN INBOUND @repo_id alloc FILTER PARSE_IDENTIFIER(e._from).collection == 'p' RETURN e._from"
     // This should not exceed the memory
     const cursor = g_db._query(qry, { repo_id: this.#repo_id });
     return cursor.toArray();

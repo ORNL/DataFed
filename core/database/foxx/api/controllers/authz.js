@@ -110,7 +110,7 @@ module.exports = (function() {
    * /mnt/large/data/user/tim/598035         - USER_RECORD_PATH
    *
    **/
-  obj.readRecord = function(client, path) {
+  obj.readRecord = function(client, path, a_repo) {
 
     const permission = g_lib.PERM_RD_DATA;
     // Will split a posix path into an array
@@ -170,14 +170,14 @@ module.exports = (function() {
    * This method grants authorization and does not do anything.
    * 
    **/
-  obj.none = function(client, path) {
+  obj.none = function(client, path, a_repo) {
     const permission = g_lib.PERM_NONE;
   }
 
   /* \brief This method denies access to a GridFTP action
    *
    **/
-  obj.denied = function(client, path) {
+  obj.denied = function(client, path, a_repo) {
     throw [g_lib.ERR_PERM_DENIED, "Permissions denied for client " + client._id + " on path: " + path];
   }
 
@@ -193,7 +193,7 @@ module.exports = (function() {
    * /mnt/large/data/project/physics/849384  - PROJECT_RECORD_PATH
    * /mnt/large/data/user/tim/598035         - USER_RECORD_PATH
    */
-  obj.createRecord = function(client, path) {
+  obj.createRecord = function(client, path, a_repo) {
     const permission = g_lib.PERM_WR_DATA;
 
     // Will split a posix path into an array
@@ -264,7 +264,7 @@ module.exports = (function() {
    * NOTE: Lookup grants a user the ability to see the path content from the
    * Globus service.
    */
-  obj.lookupRecord = function(client, path) {
+  obj.lookupRecord = function(client, path, a_repo) {
 
     const path_components = pathModule.splitPOSIXPath(path);
     const data_key = path_components.at(-1);
@@ -319,14 +319,12 @@ module.exports = (function() {
    * NOTE: Lookup grants a user the ability to see the path content from the
    * Globus service.
    */
-  obj.lookupProject = function(client, path) {
+  obj.lookupProject = function(client, path, a_repo) {
 
     const path_components = pathModule.splitPOSIXPath(path);
     const project_id = "p/" + path_components.at(-1);
-    const repo_id = "repo/" + path_components[path_components.length -3 ];
     const project = new Project(project_id); 
-    const repo = new Repo(repo_id); 
-    if ( ! repo.exists() ) {
+    if ( ! a_repo.exists() ) {
       // Repo does not exist
       console.log("AUTHZ act: lookup client: " + client._id + " path " + path + " DENIED");
       throw [g_lib.ERR_PERM_DENIED, "Client " + client._id + " does not have lookup permissions on " + path];
@@ -367,7 +365,7 @@ module.exports = (function() {
    * NOTE: Lookup grants a user the ability to see the path content from the
    * Globus service.
    */
-  obj.lookupUser = function(client, path) {
+  obj.lookupUser = function(client, path, a_repo) {
 
     const path_components = pathModule.splitPOSIXPath(path);
     const username = path_components.at(-1);
@@ -392,7 +390,11 @@ module.exports = (function() {
    *
    * /mnt/large/data                         - REPO_ROOT_PATH
    */
-  obj.lookupRepoRoot = function(client, path) {
+  obj.lookupRepoRoot = function(client, path, a_repo) {
+
+    if( a_repo.hasAccess(client._id)) { return; }
+
+    throw [obj.ERR_NO_ALLOCATION, "Client " + client._id + " has no allocation on repo."];
   }
 
   /**
@@ -411,26 +413,10 @@ module.exports = (function() {
    * /mnt/large/data/project                 - REPO_PATH
    * /mnt/large/data/user                    - REPO_PATH
    */
-  obj.lookupRepo = function(client, path) {
+  obj.lookupRepo = function(client, path, a_repo) {
 
-    const path_components = pathModule.splitPOSIXPath(path);
-    // Get second last item in path should be the repo name
-    const repo = new Repo(path_components[path_components.length - 2]);
+    if( a_repo.hasAccess(client._id)) { return; }
 
-    // Verify that the repo exists
-    if( !repo.exists() ) {
-       throw [g_lib.ERR_NOT_FOUND, "Repo not found for path: " + path];
-    }
-
-    // Check if user is a repo admin
-    if( repo.isAdmin(client._id) ) {
-       return;
-    }
-
-    // Check if user has an allocation on the repo
-    if( repo.hasAllocation(client._id) ) {
-      return;
-    }
     throw [obj.ERR_NO_ALLOCATION, "Client " + client._id + " has no allocation on repo."];
   }
 
@@ -450,8 +436,11 @@ module.exports = (function() {
    * /mnt                                    - REPO_BASE_PATH 
    * /mnt/large                              - REPO_BASE_PATH 
    */
-  obj.lookupRepoBase = function(client, path) {
+  obj.lookupRepoBase = function(client, path, a_repo) {
 
+    if( a_repo.hasAccess(client._id)) { return; }
+
+    throw [obj.ERR_NO_ALLOCATION, "Client " + client._id + " has no allocation on repo."];
   }
 
   /****************************************************************************
@@ -505,13 +494,13 @@ module.exports = (function() {
           [PathType.REPO_PATH]:           obj.none,
        },
     "lookup": {
-          [PathType.USER_PATH]:           obj.none,
-          [PathType.USER_RECORD_PATH]:    obj.none,
-          [PathType.PROJECT_PATH]:        obj.none,
-          [PathType.PROJECT_RECORD_PATH]: obj.none,
-          [PathType.REPO_BASE_PATH]:      obj.none,
-          [PathType.REPO_ROOT_PATH]:      obj.none,
-          [PathType.REPO_PATH]:           obj.none,
+          [PathType.USER_PATH]:           obj.lookupUser,
+          [PathType.USER_RECORD_PATH]:    obj.lookupRecord,
+          [PathType.PROJECT_PATH]:        obj.lookupProject,
+          [PathType.PROJECT_RECORD_PATH]: obj.lookupRecord,
+          [PathType.REPO_BASE_PATH]:      obj.lookupRepoBase,
+          [PathType.REPO_ROOT_PATH]:      obj.lookupRepoRoot,
+          [PathType.REPO_PATH]:           obj.lookupRepo,
         }
   };
 

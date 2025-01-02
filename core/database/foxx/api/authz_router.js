@@ -55,7 +55,7 @@ router.get("/gridftp", function (req, res) {
     // Determine permissions associated with path provided
     // Actions: read, write, create, delete, chdir, lookup 
     if ( Object.keys(authzModule.authz_strategy).includes(req.queryParams.act) ){
-      if(authzModule.authz_strategy[req.queryParams.act][path_type](req.queryParams.file)) {
+      if(authzModule.authz_strategy[req.queryParams.act][path_type](client, req.queryParams.file, repo)) {
         console.log(
             "AUTHZ act: " + req.queryParams.act + " client: " + client._id + " path " + req.queryParams.file + " SUCCESS"
             );
