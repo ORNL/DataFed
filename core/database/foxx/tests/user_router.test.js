@@ -25,7 +25,7 @@ describe("user_router: the Foxx microservice user_router token/set endpoint", ()
     });
     const test_edge_params = {
         type: g_lib.AccessTokenType.GLOBUS_TRANSFER,
-        other_token_data: "1cbaaee5-b938-4a4e-87a8-f1ec4d5d92f9|urn:globus:auth:scope:transfer.api.globus.org:all",   // fake UUID
+        other_token_data: "1cbaaee5-b938-4a4e-87a8-f1ec4d5d92f9%7Curn:globus:auth:scope:transfer.api.globus.org:all",   // fake UUID, URL encoded | character
     };
 
     it("should accept a valid user's token and execute an update", () => {

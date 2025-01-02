@@ -42,22 +42,29 @@ describe("the Foxx microservice support module evaluating parseOtherTokenData.",
 
     it("should error for GLOBUS_TRANSFER token if given UUID and scopes with incorrect separator.", () => {
         const test_str = test_uuid + "!" + test_scopes;
-        expect(g_lib.parseOtherTokenData(g_lib.AccessTokenType.GLOBUS_TRANSFER, test_str)).to.throw("Unexpected count of additional token data provided");
+        const err_fn = () => g_lib.parseOtherTokenData(g_lib.AccessTokenType.GLOBUS_TRANSFER, test_str);
+
+        expect(err_fn).to.throw("Unexpected count of additional token data provided");
     });
 
     it("should error for GLOBUS_TRANSFER token if given UUID but no scopes.", () => {
-        expect(g_lib.parseOtherTokenData(g_lib.AccessTokenType.GLOBUS_TRANSFER, test_uuid)).to.throw("Unexpected count of additional token data provided");
+        const err_fn = () => g_lib.parseOtherTokenData(g_lib.AccessTokenType.GLOBUS_TRANSFER, test_uuid);
+
+        expect(err_fn).to.throw("Unexpected count of additional token data provided");
     });
 
     it("should error for GLOBUS_TRANSFER token if given scopes but no UUID.", () => {
-       expect(g_lib.parseOtherTokenData(g_lib.AccessTokenType.GLOBUS_TRANSFER, test_scopes)).to.throw("Unexpected count of additional token data provided");
+        const err_fn = () => g_lib.parseOtherTokenData(g_lib.AccessTokenType.GLOBUS_TRANSFER, test_scopes);
+
+        expect(err_fn).to.throw("Unexpected count of additional token data provided");
     });
 
     it("should error for GLOBUS_TRANSFER token if given UUID and scopes in incorrect order.", () => {
         // arrange
         const test_str = test_scopes + "|" + test_uuid;
+        const err_fn = () => g_lib.parseOtherTokenData(g_lib.AccessTokenType.GLOBUS_TRANSFER, test_str);
 
-        expect(g_lib.parseOtherTokenData(g_lib.AccessTokenType.GLOBUS_TRANSFER, test_str)).to.throw("Provided other_token_data does not follow format");
+        expect(err_fn).to.throw("Provided other_token_data does not follow format");
     });
 
     it("should do nothing and return an empty object for unspecified token_type values", () => {
