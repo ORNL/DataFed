@@ -1,0 +1,18 @@
+name: JavaScript Linter and Formatter
+on: push
+jobs:
+  build:
+    # uses a Ubuntu Docker image (like a virtual machine)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "14"
+          cache: "npm"
+      # install dependencies
+      - run: npm ci
+      # run ESLint & Prettier
+      - run: npm run lint
+      - run: npm run prettier
