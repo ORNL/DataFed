@@ -1,4 +1,4 @@
-db._useDatabase('sdms');
+db._useDatabase("sdms");
 db._truncate("u");
 db._truncate("accn");
 db._truncate("uuid");
