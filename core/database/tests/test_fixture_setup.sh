@@ -123,21 +123,6 @@ then
   exit 1
 fi
 
-# We are now going to initialize the DataFed database in Arango, but only if sdms database does
-# not exist
-output=$(curl --user $local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD http://${local_DATAFED_DATABASE_HOST}:8529/_api/database/user)
-
-if [[ "$output" =~ .*"sdms".* ]]; then
-	echo "SDMS already exists do nothing"
-else
-	echo "Creating SDMS"
-  arangosh  --server.endpoint "tcp://${local_DATAFED_DATABASE_HOST}:8529"   --server.password "${local_DATAFED_DATABASE_PASSWORD}" --server.username "${local_DATABASE_USER}" --javascript.execute "${PROJECT_ROOT}/core/database/foxx/db_create.js"
-  # Give time for the database to be created
-  sleep 2
-  arangosh  --server.endpoint "tcp://${local_DATAFED_DATABASE_HOST}:8529" --server.password "${local_DATAFED_DATABASE_PASSWORD}" --server.username "${local_DATABASE_USER}" --javascript.execute-string 'db._useDatabase("sdms"); db.config.insert({"_key": "msg_daily", "msg" : "DataFed servers will be off-line for regular maintenance every Sunday night from 11:45 pm until 12:15 am EST Monday morning."}, {overwrite: true});'
-  arangosh  --server.endpoint "tcp://${local_DATAFED_DATABASE_HOST}:8529" --server.password "${local_DATAFED_DATABASE_PASSWORD}" --server.username "${local_DATABASE_USER}" --javascript.execute-string "db._useDatabase(\"sdms\"); db.config.insert({ \"_key\": \"system\", \"_id\": \"config/system\", \"secret\": \"${local_DATAFED_ZEROMQ_SYSTEM_SECRET}\"}, {overwrite: true } );"
-fi
-
 # There are apparently 3 different ways to deploy Foxx microservices,
 # Using curl with http requests
 # Using the Arango web ui
@@ -151,16 +136,12 @@ fi
 install_nvm
 install_node
 
-# Install foxx service node module
-$NVM_DIR/nvm-exec npm install --global foxx-cli
-
 FOXX_PREFIX=""
 if ! command -v foxx > /dev/null 2>&1; then
     FOXX_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/bin/"
 fi
 
 PATH_TO_PASSWD_FILE=${SOURCE}/database_temp.password
-echo "$local_DATAFED_DATABASE_PASSWORD" > "${PATH_TO_PASSWD_FILE}"
 
 # set up test user fixtures, this script should be idempotent, this script is described in the manifest
 "${FOXX_PREFIX}foxx" script -u "${local_DATABASE_USER}" \
