@@ -26,6 +26,7 @@
 15. [1086] - Address XML-RPC bug from deprecated client
 16. [1149] - Docker container GCS Collection Mount Bug Fix
 17. [1168] - Add authz unit testing to the CI
+18. [1200] - Add JavaScript linter (eslint) and (prettier) formatter for JavaScript
 
 # v2024.6.17.10.40
 
