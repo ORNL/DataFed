@@ -22,7 +22,6 @@ jobs:
 
       # Step 4: Run Prettier to format code
       - name: Run prettier
-        continue-on-error: true  # Allow this job to fail without failing the entire workflow
         run: |
           prettier "**/*.js" --write
           git diff
