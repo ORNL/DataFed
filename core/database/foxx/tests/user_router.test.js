@@ -69,7 +69,7 @@ describe("user_router: the Foxx microservice user_router token/set endpoint", ()
         expect(user_token_edge).to.be.empty;
     });
 
-    it("should update only a valid user's token when additionally provided other token data", () => {
+    it("should error when only additionally provided other token data", () => {
         // arrange
         const local_test_params = test_params[2];
         const query_params = {
@@ -84,7 +84,30 @@ describe("user_router: the Foxx microservice user_router token/set endpoint", ()
 
         // assert
         expect(response.status).to.equal(400);
-        expect(response.body).to.include("type and other_token_data depend on one another");
+        expect(response.body).to.include("the default action cannot process other_token_data");
+
+        const user_token_data = db.u.document({_key: query_params._key});
+        const user_token_edge = db.globus_token.outEdges(user_token_data._id);
+        expect(user_token_edge).to.be.empty;
+    });
+
+    it("should error when additionally provided the default type and other token data", () => {
+        // arrange
+        const local_test_params = test_params[2];
+        const query_params = {
+            ...local_test_params,
+            type: g_lib.AccessTokenType.GLOBUS_DEFAULT,
+            other_token_data: test_edge_params.other_token_data,
+        };
+        // TODO: make encoded query params less hard coded
+        const request_string = `${usr_base_url}/token/set?client=${query_params._key}&access=${query_params.access}&refresh=${query_params.refresh}&expires_in=500000&type=${query_params.type}&other_token_data=${query_params.other_token_data}`;
+
+        // act
+        const response = request.get(request_string);
+
+        // assert
+        expect(response.status).to.equal(400);
+        expect(response.body).to.include("the default action cannot process other_token_data");
 
         const user_token_data = db.u.document({_key: query_params._key});
         const user_token_edge = db.globus_token.outEdges(user_token_data._id);
