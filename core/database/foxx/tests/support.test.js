@@ -25,7 +25,7 @@ describe("the Foxx microservice support module evaluating isUUIDList.", () => {
     });
 });
 
-describe("the Foxx microservice support module evaluating parseOtherTokenData.", () => {
+describe("unit_support: the Foxx microservice support module evaluating parseOtherTokenData.", () => {
     const test_uuid = "1cbaaee5-b938-4a4e-87a8-f1ec4d5d92f9"; // fake UUID
     const test_scopes = "urn:globus:auth:scope:transfer.api.globus.org:all+email";
     it("should yield parsed data for a GLOBUS_TRANSFER token when provided a UUID and scopes in order", () => {
