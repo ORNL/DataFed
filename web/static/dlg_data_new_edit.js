@@ -3,7 +3,7 @@ import * as model from "./model.js";
 import * as util from "./util.js";
 import * as settings from "./settings.js";
 import * as dialogs from "./dialogs.js";
-import { transferDialog } from './components/transfer/index.js'
+import { transferDialog } from "./components/transfer/index.js";
 import * as dlgSchList from "./dlg_schema_list.js";
 
 export var DLG_DATA_MODE_NEW = 0;
