@@ -550,7 +550,6 @@ router.get('/token/set', function(req, res) {
                             _to: globus_collection._id,
                             type: token_type,
                             dependent_scopes: scopes,
-                            collection_display_name: globus_collection.name,
                             request_time: Math.floor(Date.now() / 1000),
                             last_used: Math.floor(Date.now() / 1000),
                             status: "active",   // TODO: are there other checks we should have right away?

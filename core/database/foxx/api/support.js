@@ -2845,7 +2845,23 @@ module.exports = (function() {
         }
     };
 
-    obj.parseOtherTokenData = (token_type, other_token_data) => { // TODO: type enforcement of passed data
+    /**
+     *
+     * @param token_type {obj.AccessTokenType} Type to determine parse logic.
+     * @param other_token_data {string}
+     * String of additional token data, delimited by the '|' character.
+     * The format is determined by the token type.
+     * Currently expecting the following formats:
+     *
+     * GLOBUS_TRANSFER: "<UUID>|<scopes>"
+     * @returns {{}} Object containing the parsed key/values of the input other_token_data string.
+     * @throws obj.ERR_INVALAD_PARAM
+     *
+     * @example
+     * // returns { uuid: "1cbaaee5-b938-4a4e-87a8-f1ec4d5d92f9", scopes: "urn:globus:auth:scope:transfer.api.globus.org:all+email" }
+     * parseOtherTokenData(AccessTokenType.GLOBUS_TRANSFER, "1cbaaee5-b938-4a4e-87a8-f1ec4d5d92f9|urn:globus:auth:scope:transfer.api.globus.org:all+email");
+     */
+    obj.parseOtherTokenData = (token_type, other_token_data) => {
         let return_data = {};
         // TODO: other token types
         if (token_type === obj.AccessTokenType.GLOBUS_TRANSFER) {
