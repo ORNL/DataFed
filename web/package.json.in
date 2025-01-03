@@ -37,7 +37,6 @@
   "homepage": "https://github.com/ORNL/DataFed#readme",
   "devDependencies": {
     "chai": "^4",
-    "sinon": "^15.2.0"
     "esm": "^3.2.25",
     "mocha": "^10.8.2",
     "pug": "^3.0.3"
