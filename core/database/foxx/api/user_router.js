@@ -504,6 +504,13 @@ router.get('/token/set', function(req, res) {
                     let user_doc;
 
                     const { type: token_type, other_token_data } = req.queryParams;
+                    // validate optional query params
+                    if (Boolean(other_token_data) && token_type === g_lib.AccessTokenType.GLOBUS_DEFAULT) {
+                        throw [g_lib.ERR_INVALID_PARAM, "Invalid parameters passed, the default action cannot process other_token_data."];
+                    }
+                    else if (!other_token_data && token_type !== g_lib.AccessTokenType.GLOBUS_DEFAULT) {
+                        throw [g_lib.ERR_INVALID_PARAM, "Invalid parameters passed, type and other_token_data depend on one another."];
+                    }
 
                     if (req.queryParams.subject) {
                         user_id = req.queryParams.subject;
@@ -522,69 +529,62 @@ router.get('/token/set', function(req, res) {
                         expiration: Math.floor(Date.now() / 1000) + req.queryParams.expires_in
                     };
 
-                    if (Boolean(other_token_data) && token_type === g_lib.AccessTokenType.GLOBUS_DEFAULT) {
-                        throw [g_lib.ERR_INVALID_PARAM, "Invalid parameters passed, the default action cannot process other_token_data."];
-                    }
-                    else if (!other_token_data && token_type !== g_lib.AccessTokenType.GLOBUS_DEFAULT) {
-                        throw [g_lib.ERR_INVALID_PARAM, "Invalid parameters passed, type and other_token_data depend on one another."];
-                    }
-                    else {
-                        switch (token_type) {
-                            case g_lib.AccessTokenType.GENERIC: {
-                                break;
-                            }
-                            case g_lib.AccessTokenType.GLOBUS: {
-                                break;
-                            }
-                            case g_lib.AccessTokenType.GLOBUS_AUTH: {
-                                break;
-                            }
-                            case g_lib.AccessTokenType.GLOBUS_TRANSFER: {
-                                // find or insert collection
-                                const { uuid: collection_search_key, scopes } = g_lib.parseOtherTokenData(g_lib.AccessTokenType.GLOBUS_TRANSFER, other_token_data);
-                                let globus_collection = g_db.globus_coll.exists({_key: collection_search_key});
-                                if (!globus_collection) {
-                                    globus_collection = g_db.globus_coll.save({
-                                        _key: collection_search_key,
-                                        name: "Newly Inserted Collection",
-                                        description: "The collection description",
-                                        required_scopes: scopes,    // Is this always the minimum required set?
-                                        owner: "",  // Should this be looked up on Globus?
-                                        ct: Math.floor(Date.now() / 1000),
-                                        ut: Math.floor(Date.now() / 1000),
-                                        type: "mapped/guest", // How do we determine this from here? Should it be passed as part of the params?
-                                        ha_enabled: false, // boolean - How do we determine this from here? Should it be passed as part of the params?
-                                    });
-                                }
-
-                                const token_key = globus_collection._key + "_" + token_type + "_" + user_doc._key;
-                                const token_doc = {
-                                    _key: token_key,
-                                    _from: user_id, // the uid field
-                                    _to: globus_collection._id,
-                                    type: token_type,
-                                    dependent_scopes: scopes,
-                                    request_time: Math.floor(Date.now() / 1000),
-                                    last_used: Math.floor(Date.now() / 1000),
-                                    status: "active",   // TODO: are there other checks we should have right away?
-                                    ...obj
-                                };
-
-                                console.log("writing to edge ", token_doc);
-                                const token_doc_upsert = g_db.globus_token.insert(
-                                    token_doc,
-                                    {
-                                        overwriteMode: "replace"    // TODO: perhaps use 'update' and specify values for true upsert
-                                    }
-                                );
-                                break;
-                            }
-                            case g_lib.AccessTokenType.GLOBUS_DEFAULT: {
-                                // Existing logic, default actions
-                                g_db._update(user_id, obj, {
-                                    keepNull: false
+                    switch (token_type) {
+                        case g_lib.AccessTokenType.GENERIC: {
+                            break;
+                        }
+                        case g_lib.AccessTokenType.GLOBUS: {
+                            break;
+                        }
+                        case g_lib.AccessTokenType.GLOBUS_AUTH: {
+                            break;
+                        }
+                        case g_lib.AccessTokenType.GLOBUS_TRANSFER: {
+                            // find or insert collection
+                            const { uuid: collection_search_key, scopes } = g_lib.parseOtherTokenData(g_lib.AccessTokenType.GLOBUS_TRANSFER, other_token_data);
+                            let globus_collection = g_db.globus_coll.exists({_key: collection_search_key});
+                            if (!globus_collection) {
+                                globus_collection = g_db.globus_coll.save({
+                                    _key: collection_search_key,
+                                    name: "Newly Inserted Collection",
+                                    description: "The collection description",
+                                    required_scopes: scopes,    // string - Is this always the minimum required set?
+                                    owner: "",  // Should this be looked up on Globus?
+                                    ct: Math.floor(Date.now() / 1000),
+                                    ut: Math.floor(Date.now() / 1000),
+                                    type: "mapped/guest", // How do we determine this from here? Should it be passed as part of the params?
+                                    ha_enabled: false, // boolean - How do we determine this from here? Should it be passed as part of the params?
                                 });
                             }
+
+                            const token_key = globus_collection._key + "_" + token_type + "_" + user_doc._key;
+                            const token_doc = {
+                                _key: token_key,
+                                _from: user_id, // the uid field
+                                _to: globus_collection._id,
+                                type: token_type,
+                                dependent_scopes: scopes,
+                                request_time: Math.floor(Date.now() / 1000),
+                                last_used: Math.floor(Date.now() / 1000),
+                                status: "active",   // TODO: are there other checks we should have right away?
+                                ...obj
+                            };
+
+                            console.log("writing to edge ", token_doc);
+                            const token_doc_upsert = g_db.globus_token.insert(
+                                token_doc,
+                                {
+                                    overwriteMode: "replace"    // TODO: perhaps use 'update' and specify values for true upsert
+                                }
+                            );
+                            break;
+                        }
+                        case g_lib.AccessTokenType.GLOBUS_DEFAULT: {
+                            // Existing logic, default actions
+                            g_db._update(user_id, obj, {
+                                keepNull: false
+                            });
+                            break;
                         }
                     }
                 }
