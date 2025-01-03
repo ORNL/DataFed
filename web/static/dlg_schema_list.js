@@ -8,33 +8,31 @@ import * as dlgSchema from "./dlg_schema.js";
 
 var tree, dlg_inst, frame;
 
-window.schemaPageLoad = function( key, offset ){
-    var node = tree.getNodeByKey( key );
-    if ( node ){
+window.schemaPageLoad = function (key, offset) {
+    var node = tree.getNodeByKey(key);
+    if (node) {
         node.data.offset = offset;
-        setTimeout(function(){
+        setTimeout(function () {
             node.load(true);
-        },0);
+        }, 0);
     }
 };
 
-function loadSchemas(){
-    var tmp, par = {};
+function loadSchemas() {
+    var tmp,
+        par = {};
 
-    tmp = $("#srch_id",frame).val().trim();
-    if ( tmp )
-        par.id = tmp;
+    tmp = $("#srch_id", frame).val().trim();
+    if (tmp) par.id = tmp;
 
-    tmp = $("#srch_txt",frame).val().trim();
-    if ( tmp )
-        par.text = tmp;
+    tmp = $("#srch_txt", frame).val().trim();
+    if (tmp) par.text = tmp;
 
-    tmp = $("#srch_owner",frame).val().trim();
-    if ( tmp )
-        par.owner = tmp;
+    tmp = $("#srch_owner", frame).val().trim();
+    if (tmp) par.owner = tmp;
 
-    par.sort = $("#srch_sort",frame).val();
-    if ( par.sort < 0 ){
+    par.sort = $("#srch_sort", frame).val();
+    if (par.sort < 0) {
         par.sortRev = true;
         par.sort = -par.sort;
     }
@@ -42,45 +40,58 @@ function loadSchemas(){
 
     //console.log("search",par);
 
-    api.schemaSearch(par, function(ok,data){
-        if ( ok ){
+    api.schemaSearch(par, function (ok, data) {
+        if (ok) {
             //console.log( "sch res: ", data );
             var src = [];
-            if ( data.schema ){
+            if (data.schema) {
                 var sch;
-                for ( var i in data.schema ){
+                for (var i in data.schema) {
                     sch = data.schema[i];
                     //src.push({ title: sch.id + (sch.ver?"-"+sch.ver:"") + (sch.cnt?" (" + sch.cnt + ")":"") + (sch.ownNm?" " + sch.ownNm:"") + (sch.ownId?" (" + sch.ownId +")":""), key: sch.id + ":" + sch.ver });
-                    src.push({ title: sch.id + ":" + sch.ver + (sch.cnt?" (" + sch.cnt + ")":"") + (sch.ref?" (R)":""), own_nm: util.escapeHTML(sch.ownNm), own_id: sch.ownId.substr(2), id: sch.id, ver: sch.ver, cnt: sch.cnt, ref: sch.ref, key: sch.id + ":" + sch.ver });
+                    src.push({
+                        title:
+                            sch.id +
+                            ":" +
+                            sch.ver +
+                            (sch.cnt ? " (" + sch.cnt + ")" : "") +
+                            (sch.ref ? " (R)" : ""),
+                        own_nm: util.escapeHTML(sch.ownNm),
+                        own_id: sch.ownId.substr(2),
+                        id: sch.id,
+                        ver: sch.ver,
+                        cnt: sch.cnt,
+                        ref: sch.ref,
+                        key: sch.id + ":" + sch.ver,
+                    });
                 }
-            }else{
+            } else {
                 src.push({ title: "(no matches)" });
             }
-            tree.reload( src );
-        }else{
-            dialogs.dlgAlert( "Schema Search Error", data );
+            tree.reload(src);
+        } else {
+            dialogs.dlgAlert("Schema Search Error", data);
         }
     });
-};
+}
 
-function getSelSchema( a_cb, a_resolve ){
+function getSelSchema(a_cb, a_resolve) {
     var data = tree.getSelectedNodes()[0].data;
-    api.schemaView( data.id + ":" + data.ver, a_resolve, function( ok, reply ){
+    api.schemaView(data.id + ":" + data.ver, a_resolve, function (ok, reply) {
         //console.log("schema",reply);
-        if ( ok && reply.schema ){
-            a_cb( reply.schema[0] );
-        }else{
-            dialogs.dlgAlert( "Schema Load Error", reply );
+        if (ok && reply.schema) {
+            a_cb(reply.schema[0]);
+        } else {
+            dialogs.dlgAlert("Schema Load Error", reply);
         }
     });
-};
+}
 
-
-export function show( a_select, a_resolve, a_cb ){
-    var ele = document.createElement('div');
+export function show(a_select, a_resolve, a_cb) {
+    var ele = document.createElement("div");
     ele.id = "dlg_schema_list";
 
-    frame = $( ele );
+    frame = $(ele);
 
     frame.html(
         "<div class='col-flex' style='height:100%'>\
@@ -107,11 +118,21 @@ export function show( a_select, a_resolve, a_cb ){
                     <tr>\
                         <td>Sort&nbsp;By:</td><td colspan='2' style='width:100%'>\
                             <select id='srch_sort'>\
-                                <option value='" + (model.SORT_ID + 1) + "' selected>ID</option>\
-                                <option value='-"+ (model.SORT_ID + 1) +"'>ID (reverse)</option>\
-                                <option value='"+ (model.SORT_OWNER + 1) +"'>Owner</option>\
-                                <option value='-"+ (model.SORT_OWNER + 1) +"'>Owner (reverse)</option>\
-                                <option value='"+ (model.SORT_RELEVANCE + 1) +"'>Relevance</option>\
+                                <option value='" +
+            (model.SORT_ID + 1) +
+            "' selected>ID</option>\
+                                <option value='-" +
+            (model.SORT_ID + 1) +
+            "'>ID (reverse)</option>\
+                                <option value='" +
+            (model.SORT_OWNER + 1) +
+            "'>Owner</option>\
+                                <option value='-" +
+            (model.SORT_OWNER + 1) +
+            "'>Owner (reverse)</option>\
+                                <option value='" +
+            (model.SORT_RELEVANCE + 1) +
+            "'>Relevance</option>\
                             </select>\
                         </td>\
                         <td>\
@@ -123,63 +144,64 @@ export function show( a_select, a_resolve, a_cb ){
                     </tr>\
                 </table>\
             </div>\
-        </div>" );
+        </div>",
+    );
 
     var dlg_opts = {
-        title: (a_select?"Select Schema":"Manage Schemas"),
+        title: a_select ? "Select Schema" : "Manage Schemas",
         modal: false,
         width: 600,
         height: 500,
         resizable: true,
-        buttons:[],
-        open: function(event,ui){
+        buttons: [],
+        open: function (event, ui) {
             dlg_inst = $(this);
 
-            $(".btn",frame).button();
-            if ( a_select ){
+            $(".btn", frame).button();
+            if (a_select) {
                 $("#dlg_sch_list_ok_btn").button("disable");
             }
-            $("#srch_sort",frame).selectmenu();
+            $("#srch_sort", frame).selectmenu();
         },
-        close: function( ev, ui ) {
+        close: function (ev, ui) {
             dlg_inst.dialog("destroy").remove();
-        }
+        },
     };
 
-    if ( a_select ){
+    if (a_select) {
         dlg_opts.buttons.push({
             text: "Cancel",
-            click: function() {
-                dlg_inst.dialog('close');
-            }
+            click: function () {
+                dlg_inst.dialog("close");
+            },
         });
     }
 
     dlg_opts.buttons.push({
-        id:"dlg_sch_list_ok_btn",
-        text: (a_select?"Select":"Close"),
-        click: function() {
-            if ( a_select && a_cb ){
-                getSelSchema( function( schema ){
-                    a_cb( schema );
-                    dlg_inst.dialog('close');
-                }, a_resolve );
-            }else{
-                dlg_inst.dialog('close');
+        id: "dlg_sch_list_ok_btn",
+        text: a_select ? "Select" : "Close",
+        click: function () {
+            if (a_select && a_cb) {
+                getSelSchema(function (schema) {
+                    a_cb(schema);
+                    dlg_inst.dialog("close");
+                }, a_resolve);
+            } else {
+                dlg_inst.dialog("close");
             }
-        }
+        },
     });
 
-    util.inputTheme( $('input:text', frame ));
+    util.inputTheme($("input:text", frame));
     //var search_input = $("#search_input",frame);
 
-    var src = [{title:"Loading...",icon:false,folder:false}];
+    var src = [{ title: "Loading...", icon: false, folder: false }];
 
-    $("#sch_tree",frame).fancytree({
-        extensions: ["themeroller","table"],
+    $("#sch_tree", frame).fancytree({
+        extensions: ["themeroller", "table"],
         themeroller: {
             activeClass: "my-fancytree-active",
-            hoverClass: ""
+            hoverClass: "",
         },
         table: {
             nodeColumnIdx: 0,
@@ -189,121 +211,120 @@ export function show( a_select, a_resolve, a_cb ){
         selectMode: 1,
         icon: false,
         checkbox: false,
-        activate: function( ev, data ){
-            data.node.setSelected( true );
-            $(".btn-any",frame).button("enable");
-            if ( data.node.data.own_id == settings.user.uid ){
-                $(".btn-own",frame).button("enable");
-                $(".btn-own-unused",frame).button( data.node.data.cnt == 0 && !data.node.data.ref?"enable":"disable");
-            }else{
-                $(".btn-own,.btn-own-unused",frame).button("disable");
+        activate: function (ev, data) {
+            data.node.setSelected(true);
+            $(".btn-any", frame).button("enable");
+            if (data.node.data.own_id == settings.user.uid) {
+                $(".btn-own", frame).button("enable");
+                $(".btn-own-unused", frame).button(
+                    data.node.data.cnt == 0 && !data.node.data.ref ? "enable" : "disable",
+                );
+            } else {
+                $(".btn-own,.btn-own-unused", frame).button("disable");
             }
 
-            if ( a_select ){
+            if (a_select) {
                 $("#dlg_sch_list_ok_btn").button("enable");
             }
         },
-        renderColumns: function( ev, data ) {
-            var node = data.node, $tdList = $(node.tr).find(">td");
+        renderColumns: function (ev, data) {
+            var node = data.node,
+                $tdList = $(node.tr).find(">td");
 
             //$tdList.eq(1).text(node.data.own_nm);
-            if ( node.data.own_nm ){
-                $tdList.eq(1).html("<span title='"+node.data.own_id+"'>"+node.data.own_nm+"</span>");
+            if (node.data.own_nm) {
+                $tdList
+                    .eq(1)
+                    .html("<span title='" + node.data.own_id + "'>" + node.data.own_nm + "</span>");
             }
             //$tdList.eq(2).text(node.data.own_id?"("+node.data.own_id+")":"");
-
         },
     });
 
-    tree = $.ui.fancytree.getTree($("#sch_tree",frame));
+    tree = $.ui.fancytree.getTree($("#sch_tree", frame));
 
-    $("#srch_owner",frame).val( "u/" + settings.user.uid );
+    $("#srch_owner", frame).val("u/" + settings.user.uid);
 
     loadSchemas();
 
-    $("#pick_user",frame).click(function(){
-        dlgPickUser.show( "u/"+settings.user.uid, [], true, function( users ){
-            $("#srch_owner",frame).val( users );
+    $("#pick_user", frame).click(function () {
+        dlgPickUser.show("u/" + settings.user.uid, [], true, function (users) {
+            $("#srch_owner", frame).val(users);
             loadSchemas();
         });
     });
 
-    $("#sch_view",frame).on("click",function(){
-        getSelSchema( function( schema ){
-            if ( util.checkDlgOpen( "dlg_schema_" + schema.id + "_" + schema.ver ))
-                return;
+    $("#sch_view", frame).on("click", function () {
+        getSelSchema(function (schema) {
+            if (util.checkDlgOpen("dlg_schema_" + schema.id + "_" + schema.ver)) return;
 
-            dlgSchema.show( dlgSchema.mode_view, schema );
+            dlgSchema.show(dlgSchema.mode_view, schema);
         });
     });
 
-    $("#sch_edit",frame).on("click",function(){
-        getSelSchema( function( schema ){
-            if ( util.checkDlgOpen( "dlg_schema_" + schema.id + "_" + schema.ver ))
-                return;
+    $("#sch_edit", frame).on("click", function () {
+        getSelSchema(function (schema) {
+            if (util.checkDlgOpen("dlg_schema_" + schema.id + "_" + schema.ver)) return;
 
-            dlgSchema.show( dlgSchema.mode_edit, schema, function(){
-                setTimeout( function(){
+            dlgSchema.show(dlgSchema.mode_edit, schema, function () {
+                setTimeout(function () {
                     loadSchemas();
-                }, 1000 );
+                }, 1000);
             });
         });
     });
 
-    $("#sch_new",frame).on("click",function(){
-        if ( util.checkDlgOpen( "dlg_schema_new" ))
-            return;
+    $("#sch_new", frame).on("click", function () {
+        if (util.checkDlgOpen("dlg_schema_new")) return;
 
-        dlgSchema.show( dlgSchema.mode_new, null, function(){
-            setTimeout( function(){
+        dlgSchema.show(dlgSchema.mode_new, null, function () {
+            setTimeout(function () {
                 loadSchemas();
-            }, 1000 );
+            }, 1000);
         });
     });
 
-    $("#sch_rev",frame).on("click",function(){
-        getSelSchema( function( schema ){
-            if ( util.checkDlgOpen( "dlg_schema_" + schema.id + "_" + schema.ver ))
-                return;
+    $("#sch_rev", frame).on("click", function () {
+        getSelSchema(function (schema) {
+            if (util.checkDlgOpen("dlg_schema_" + schema.id + "_" + schema.ver)) return;
 
-            dlgSchema.show( dlgSchema.mode_rev, schema, function(){
-                setTimeout( function(){
+            dlgSchema.show(dlgSchema.mode_rev, schema, function () {
+                setTimeout(function () {
                     loadSchemas();
-                }, 1000 );
+                }, 1000);
             });
         });
     });
 
-    $("#sch_del",frame).on("click",function(){
-        getSelSchema( function( schema ){
-            if ( util.checkDlgOpen( "dlg_schema_" + schema.id + "_" + schema.ver ))
-                return;
+    $("#sch_del", frame).on("click", function () {
+        getSelSchema(function (schema) {
+            if (util.checkDlgOpen("dlg_schema_" + schema.id + "_" + schema.ver)) return;
 
-            api.schemaDelete( schema.id + ":" + schema.ver, function( ok, reply ){
-                if ( ok ){
+            api.schemaDelete(schema.id + ":" + schema.ver, function (ok, reply) {
+                if (ok) {
                     loadSchemas();
-                }else{
-                    dialogs.dlgAlert("Schema Delete Error", reply );
+                } else {
+                    dialogs.dlgAlert("Schema Delete Error", reply);
                 }
             });
         });
     });
 
-    $("#reset_btn",frame).on("click",function(){
-        $("#srch_txt,#srch_id,#srch_owner",frame).val( "" );
+    $("#reset_btn", frame).on("click", function () {
+        $("#srch_txt,#srch_id,#srch_owner", frame).val("");
         loadSchemas();
     });
 
-    $("#srch_btn",frame).on("click",function(){
+    $("#srch_btn", frame).on("click", function () {
         loadSchemas();
     });
 
-    $("#srch_txt,#srch_id,#srch_owner",frame).on('keypress', function (e) {
-        if (e.keyCode == 13){
+    $("#srch_txt,#srch_id,#srch_owner", frame).on("keypress", function (e) {
+        if (e.keyCode == 13) {
             loadSchemas();
         }
     });
-    
+
     //var in_timer;
 
     /*search_input.on( "input", function(e) {
@@ -316,6 +337,5 @@ export function show( a_select, a_resolve, a_cb ){
         }, 500 );
     });*/
 
-    frame.dialog( dlg_opts );
+    frame.dialog(dlg_opts);
 }
-
