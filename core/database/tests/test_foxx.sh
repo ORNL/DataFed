@@ -128,7 +128,6 @@ if ! command -v foxx > /dev/null 2>&1; then
 fi
 
 PATH_TO_PASSWD_FILE=${SOURCE}/database_temp.password
-
 if [ "$TEST_TO_RUN" == "all" ]
 then
   # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint 

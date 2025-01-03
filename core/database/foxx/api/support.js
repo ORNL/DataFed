@@ -2866,7 +2866,8 @@ module.exports = (function() {
         let return_data = {};
         // TODO: other token types
         if (token_type === obj.AccessTokenType.GLOBUS_TRANSFER) {
-            // expect the data to be in the format of "<UUID>|<scopes>"
+            // TODO: callers and jsdocs will need to be updated if changes are made to assumed data
+            // GLOBUS_TRANSFER parse currently assumes uuid and scopes exist, but this may change
             const parsed_data = other_token_data.split("|");
             if (parsed_data.length !== 2) {
                 throw [obj.ERR_INVALID_PARAM, "Unexpected count of additional token data provided"];

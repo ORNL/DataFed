@@ -530,6 +530,7 @@ router.get('/token/set', function(req, res) {
                     };
 
                     switch (token_type) {
+                        // TODO: update logic for various AccessTokenType instances as they are defined.
                         case g_lib.AccessTokenType.GENERIC: {
                             break;
                         }
@@ -541,7 +542,8 @@ router.get('/token/set', function(req, res) {
                         }
                         case g_lib.AccessTokenType.GLOBUS_TRANSFER: {
                             // find or insert collection
-                            const { uuid: collection_search_key, scopes } = g_lib.parseOtherTokenData(g_lib.AccessTokenType.GLOBUS_TRANSFER, other_token_data);
+                            const { uuid: collection_search_key, scopes } = g_lib.parseOtherTokenData(g_lib.AccessTokenType.GLOBUS_TRANSFER, other_token_data); // TODO: the call site and function and docs will need to be updated if changes are made to assumed data
+                                                                                                                                                                // GLOBUS_TRANSFER parse currently assumes uuid and scopes exist
                             let globus_collection = g_db.globus_coll.exists({_key: collection_search_key});
                             if (!globus_collection) {
                                 globus_collection = g_db.globus_coll.save({
