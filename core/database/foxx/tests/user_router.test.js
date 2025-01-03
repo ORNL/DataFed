@@ -23,9 +23,11 @@ describe("user_router: the Foxx microservice user_router token/set endpoint", ()
             refresh: "refresh_token" + param_index,
         }
     });
+    const test_uuid = "1cbaaee5-b938-4a4e-87a8-f1ec4d5d92f9";    // fake UUID
+    const test_scope = "urn:globus:auth:scope:transfer.api.globus.org:all";
     const test_edge_params = {
         type: g_lib.AccessTokenType.GLOBUS_TRANSFER,
-        other_token_data: "1cbaaee5-b938-4a4e-87a8-f1ec4d5d92f9%7Curn:globus:auth:scope:transfer.api.globus.org:all",   // fake UUID, URL encoded | character
+        other_token_data: test_uuid + "%7C" + test_scope,    // URL encoded | character
     };
 
     it("should accept a valid user's token and execute an update", () => {
@@ -49,8 +51,8 @@ describe("user_router: the Foxx microservice user_router token/set endpoint", ()
         // arrange
         const local_test_params = test_params[1];
         const query_params = {
-          ...local_test_params,
-          type: test_edge_params.type,
+            ...local_test_params,
+            type: test_edge_params.type,
         };
         // TODO: make encoded query params less hard coded
         const request_string = `${usr_base_url}/token/set?client=${query_params._key}&access=${query_params.access}&refresh=${query_params.refresh}&expires_in=500000&type=${query_params.type}`;
@@ -99,12 +101,12 @@ describe("user_router: the Foxx microservice user_router token/set endpoint", ()
             ...test_edge_params,
         };
 
-        const expected_doc_key =  query_params.other_token_data + "_" + query_params.type + "_" + query_params.user_key;
+        const expected_doc_key =  test_uuid + "_" + query_params.type + "_" + query_params.user_key;
         const expected = {
             ...query_params,
             _key: expected_doc_key,
             _from: "u/" + query_params.user_key,
-            _to: "globus_coll/" + query_params.other_token_data,
+            _to: "globus_coll/" + test_uuid,
         };
         delete expected.other_token_data;   // unwanted data
         delete expected.user_key;
@@ -119,7 +121,7 @@ describe("user_router: the Foxx microservice user_router token/set endpoint", ()
         expect(response.status).to.equal(204);
 
         // TODO: better data expectation when doc is defined
-        const globus_collection_data = db.globus_coll.exists({_key: query_params.other_token_data});
+        const globus_collection_data = db.globus_coll.exists({_key: test_uuid});
         expect(globus_collection_data).to.exist;
 
         const globus_token_data = db.globus_token.document({_key: expected_doc_key});
