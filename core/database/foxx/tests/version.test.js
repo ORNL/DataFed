@@ -8,7 +8,7 @@ const request = require("@arangodb/request");
 const { baseUrl } = module.context;
 
 describe("the Foxx microservice version route.", () => {
-    it("should return version information about the release and the foxx service and api versions.", () => {
+    it("unit_version: should return version information about the release and the foxx service and api versions.", () => {
         const response = request.get(`${baseUrl}/version`);
         expect(response.status).to.equal(200);
         var object = JSON.parse(response.body);
