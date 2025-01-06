@@ -14,17 +14,17 @@ describe("TransferUIManager", () => {
             model: {
                 mode: model.TT_DATA_GET,
                 records: [],
-                getRecordInfo: sinon.stub()
+                getRecordInfo: sinon.stub(),
             },
             endpointManager: {
                 currentEndpoint: {
                     id: "test-endpoint",
                     name: "test-endpoint",
-                    default_directory: "/default"
+                    default_directory: "/default",
                 },
                 currentSearchToken: "test-token",
-                searchCounter: 0
-            }
+                searchCounter: 0,
+            },
         };
 
         // Create a real DOM element
@@ -41,7 +41,7 @@ describe("TransferUIManager", () => {
             on: sinon.stub(),
             show: sinon.stub(),
             checkboxradio: sinon.stub(),
-            hasClass: sinon.stub().returns(false)
+            hasClass: sinon.stub().returns(false),
         });
 
         uiManager = new TransferUIManager(mockDialog);
@@ -196,7 +196,7 @@ describe("TransferUIManager", () => {
 
         it("should get selected IDs correctly", () => {
             uiManager.recordTree = {
-                getSelectedNodes: () => [{ key: "id1" }, { key: "id2" }]
+                getSelectedNodes: () => [{ key: "id1" }, { key: "id2" }],
             };
             const selectedIds = uiManager.getSelectedIds();
             expect(selectedIds).to.deep.equal(["id1", "id2"]);

@@ -18,7 +18,7 @@
     "sanitize-html": "^2.11.0"
   },
   "scripts": {
-    "test": "mocha"
+    "test": "mocha --config .mocharc.cjs",
   },
   "repository": {
     "type": "git",
@@ -37,10 +37,14 @@
   "homepage": "https://github.com/ORNL/DataFed#readme",
   "devDependencies": {
     "chai": "^4",
-    "sinon": "^15.2.0",
     "esm": "^3.2.25",
+    "jsdom": "^25.0.1",
+    "jsdom-global": "^3.0.2",
     "mocha": "^10.8.2",
-    "pug": "^3.0.3"
+    "mock-import": "^4.2.0",
+    "prettier": "3.4.2",
+    "pug": "^3.0.3",
+    "sinon": "^15.2.0"
   },
   "type": "module"
 }
