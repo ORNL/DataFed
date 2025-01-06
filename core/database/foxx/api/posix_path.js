@@ -15,8 +15,10 @@ module.exports = (function () {
      *
      **/
     obj.splitPOSIXPath = function (a_posix_path) {
-        if (!a_posix_path || typeof a_posix_path !== "string") {
+        if (!a_posix_path) {
             throw new Error("Invalid POSIX path");
+        } else if (typeof a_posix_path !== "string") {
+            throw new Error("Invalid POSIX path type: ", typeof a_posix_path, " path content: ", a_posix_path);
         }
         // Split the path into components
         // components: ['', 'usr', 'local', 'bin', 'node']
