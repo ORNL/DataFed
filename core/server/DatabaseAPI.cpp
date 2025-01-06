@@ -4,6 +4,7 @@
 
 // Local public includes
 #include "common/DynaLog.hpp"
+#include "common/SDMS.pb.h"
 #include "common/TraceException.hpp"
 #include "common/Util.hpp"
 
@@ -354,8 +355,10 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
   std::vector<pair<string, string>> params = {
       {"access", a_acc_tok},
       {"refresh", a_ref_tok},
-      {"expires_in", to_string(a_expires_in)},
-      {"token_type", to_string(token_type)}};
+      {"expires_in", to_string(a_expires_in)}};
+  if (token_type != SDMS::AccessTokenType::ACCESS_SENTINEL) {
+    params.push_back({"token_type", to_string(token_type)});
+  }
   if (!other_token_data.empty()) {
     params.push_back({"other_token_data", other_token_data});
   }
@@ -372,7 +375,7 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_access_token,
                                      const std::string &a_refresh_token,
                                      LogContext log_context) {
   userSetAccessToken(a_access_token, a_expires_in, a_refresh_token,
-                     SDMS::AccessTokenType::GLOBUS, "", log_context);
+                     SDMS::AccessTokenType::GLOBUS_DEFAULT, "", log_context);
 }
 
 void DatabaseAPI::userSetAccessToken(
