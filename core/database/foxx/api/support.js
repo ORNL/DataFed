@@ -3148,7 +3148,8 @@ module.exports = (function () {
     obj.parseOtherTokenData = (token_type, other_token_data) => {
         let return_data = {};
         // TODO: other token types
-        if (token_type === obj.AccessTokenType.GLOBUS_TRANSFER) {   // TODO: add support for additional type of collection and HA fields
+        if (token_type === obj.AccessTokenType.GLOBUS_TRANSFER) {
+            // TODO: add support for additional type of collection and HA fields
             // TODO: callers and jsdocs will need to be updated if changes are made to assumed data
             // GLOBUS_TRANSFER parse currently assumes uuid and scopes exist, but this may change
             const parsed_data = other_token_data.split("|");
