@@ -626,8 +626,8 @@ router
                                     owner: "", // Should this be looked up on Globus?
                                     ct: Math.floor(Date.now() / 1000),
                                     ut: Math.floor(Date.now() / 1000),
-                                    type: "mapped/guest", // How do we determine this from here? Should it be passed as part of the params?
-                                    ha_enabled: false, // boolean - How do we determine this from here? Should it be passed as part of the params?
+                                    type: "mapped", // mapped/guest TODO: to be pulled from token data on follow-up ticket
+                                    ha_enabled: false, // boolean - TODO: to be pulled from token data on follow-up ticket
                                 });
                             }
 

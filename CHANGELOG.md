@@ -7,6 +7,7 @@
 2. [918] - Add admin script for making a user an admin
 3. [1009] - Add collections to database for holding Globus tokens. 
 4. [1002] - Add backoff for task worker when database fails to prevent log overflow.
+5. [1109] - Add support for Globus token association to Globus collection and user.
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 1. [984] - Fixes {server_default} from showing up in path.
