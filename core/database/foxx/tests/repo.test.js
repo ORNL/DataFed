@@ -216,7 +216,6 @@ describe("Testing Repo class", () => {
             PathType.PROJECT_RECORD_PATH,
         );
     });
-
     it("unit_repo: should handle a user record path.", () => {
         const path = "/mnt/repo_root";
         g_db.repo.save({
