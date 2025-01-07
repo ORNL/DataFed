@@ -1,4 +1,5 @@
 const globals = require("globals");
+const jsdocPlugin = require("eslint-plugin-jsdoc");
 
 module.exports = [
     {
