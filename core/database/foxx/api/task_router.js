@@ -210,15 +210,15 @@ router
 /**
  * @function
  * @description Cleans up a task by removing it from the task dependency graph.
- * It removes dependency locks and patches the task dependency graph both upstream and downstream. 
+ * It removes dependency locks and patches the task dependency graph both upstream and downstream.
  * It returns a list of new runnable tasks if available.
  *
  * @param {object} req - The request object containing the task ID in the query parameters and other relevant data in the body.
  * @param {object} res - The response object used to send the result or an error message.
  * @returns {void} Sends a list of new runnable tasks to the response.
- * 
+ *
  * @throws {Error} Throws an error if the task does not exist or if there's an issue processing the transaction.
- * 
+ *
  * @example
  * // Sample usage:
  * router.post("/abort", function(req, res) { ... });

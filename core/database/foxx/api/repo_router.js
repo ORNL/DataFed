@@ -365,7 +365,7 @@ router
 /**
  * @function
  * @description Calculates the total, per-repo size of selected items.
- * Recursively analyzes collections but only counts each data record once regardless of how many places it is linked. 
+ * Recursively analyzes collections but only counts each data record once regardless of how many places it is linked.
  * This function is used for pre-processing data move operations (e.g., changing allocation or owner).
  *
  * @param {object} req - The request object, containing the query parameters.

@@ -12,9 +12,9 @@ module.exports = (function () {
      *
      * This function examines the specified data and collections for the appropriate permissions
      * based on the given mode and recursively processes items (data/collections) in included collections.
-     * It does not resolve IDs. On success, it returns lists of data records for Globus and external data, 
+     * It does not resolve IDs. On success, it returns lists of data records for Globus and external data,
      * as well as records without data. Additionally, it returns a flat list of all collections.
-     * 
+     *
      * In delete mode, only data that is not linked elsewhere will be returned for data records within collections.
      *
      * @param {object} a_client - The client object containing the client ID and admin status.
@@ -42,7 +42,7 @@ module.exports = (function () {
      * - `visited`: A record of visited items during recursion.
      *
      * @throws {Error} g_lib.ERR_INVALID_MODE - If an invalid mode is passed.
-     * 
+     *
      * @example
      * const result = obj.preprocessItems(client, newOwnerId, dataIds, g_lib.TT_DATA_GET);
      * console.log(result.glob_data);
@@ -145,18 +145,18 @@ module.exports = (function () {
 
     /**
      * Recursively preprocesses data and collections for data operations.
-     * 
+     *
      * This function performs a depth-first analysis of collections, verifying permissions.
-     * It ensures that if the required permission is satisfied via inherited ACLs, no further 
-     * permission checks are needed below that point. The function segregates collections and 
-     * data into two categories: those with Globus data (regardless of data size) and those 
+     * It ensures that if the required permission is satisfied via inherited ACLs, no further
+     * permission checks are needed below that point. The function segregates collections and
+     * data into two categories: those with Globus data (regardless of data size) and those
      * with external data. The final result is a flat list of collections and data.
-     * 
+     *
      * @param {object} a_ctxt - The recursion context object, containing relevant state such as permissions and mode.
      * @param {Array} a_ids - The current list of data/collection IDs to process.
      * @param {number} [a_data_perm] - The inherited data permission (undefined initially).
      * @param {number} [a_coll_perm] - The inherited collection permission (undefined initially).
-     * 
+     *
      * @throws {Array} Throws error with permission or parameter issues.
      */
     obj._preprocessItemsRecursive = function (a_ctxt, a_ids, a_data_perm, a_coll_perm) {

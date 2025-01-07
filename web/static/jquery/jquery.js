@@ -948,7 +948,7 @@
             /**
              * Supports testing using a provided element.
              * This function creates a `fieldset` element, passes it to the provided test function,
-             * and returns a boolean result based on the outcome of that test. 
+             * and returns a boolean result based on the outcome of that test.
              * The element is removed from the DOM after the test is executed.
              *
              * @param {Function} fn The test function to apply to the created element.
@@ -975,7 +975,7 @@
 
             /**
              * Adds the same handler for all of the specified attributes.
-             * This function splits a pipe-separated list of attributes and applies the given handler function 
+             * This function splits a pipe-separated list of attributes and applies the given handler function
              * to each attribute in the list.
              *
              * @param {string} attrs A pipe-separated list of attributes to which the handler should be applied.
@@ -1030,7 +1030,7 @@
              * The returned function will check if an element is an `input` element of the specified type.
              *
              * @param {string} type The input type to match (e.g., "text", "password", etc.).
-             * @returns {Function} A function that takes an element as an argument and returns `true` if the 
+             * @returns {Function} A function that takes an element as an argument and returns `true` if the
              * element is an `input` of the specified type, `false` otherwise.
              */
             function createInputPseudo(type) {
@@ -1045,7 +1045,7 @@
              * The returned function will check if an element is a `button` or an `input` of the specified type.
              *
              * @param {string} type The button or input type to match (e.g., "button", "submit", etc.).
-             * @returns {Function} A function that takes an element as an argument and returns `true` if the 
+             * @returns {Function} A function that takes an element as an argument and returns `true` if the
              * element is a `button` or an `input` of the specified type, `false` otherwise.
              */
             function createButtonPseudo(type) {

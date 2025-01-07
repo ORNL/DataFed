@@ -2088,9 +2088,9 @@ function treeSelectRange(a_tree, a_node) {
  *
  * @param {object} dest_node - The candidate destination node where the paste operation is being attempted.
  * @param {object} src_node - The node being dragged or copied to the destination.
- * 
+ *
  * @returns {string|boolean} Returns "over" if the paste is allowed, otherwise returns `false`.
- * 
+ *
  * There is additional source information in the pasteSourceParent and pasteCollections variables.
  */
 function pasteAllowed(dest_node, src_node) {

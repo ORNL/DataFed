@@ -1500,14 +1500,14 @@ var tasks_func = (function () {
 
     /**
      * Deletes one or more projects and associated data. If a project has no allocations, it can
-     * be deleted immediately. If a project has allocations and raw data, a task must be initialized 
-     * to delete the allocations. Deletion is exclusive—if any other tasks are using the project or 
+     * be deleted immediately. If a project has allocations and raw data, a task must be initialized
+     * to delete the allocations. Deletion is exclusive—if any other tasks are using the project or
      * associated data, the operation will be denied.
      *
      * @param {object} a_client - The client object that contains user details and permissions.
      * @param {Array<string>} a_proj_ids - An array of project IDs to be deleted.
      * @returns {object} An object containing the task to delete the projects and allocations.
-     * @throws {Array} Throws an error array containing a code and message if the project does 
+     * @throws {Array} Throws an error array containing a code and message if the project does
      * not exist or the client lacks permissions.
      *
      * @example
@@ -2384,14 +2384,14 @@ var tasks_func = (function () {
 
     /**
      * Deletes a project and all associated graph objects immediately.
-     * 
-     * This function deletes allocations, owned records (e.g., data, collections, groups), 
+     *
+     * This function deletes allocations, owned records (e.g., data, collections, groups),
      * and the project itself. It performs a direct deletion of the project and its related
      * items, and should **NOT** be used on projects containing raw data.
      *
      * @param {string} a_proj_id - The ID of the project to delete.
      * @throws {Error} Throws an error if the project or associated items cannot be deleted.
-     * 
+     *
      * Use this function with caution, as it will permanently delete allocations, data,
      * collections, groups, and the project. It should not be used for projects that
      * contain raw data.

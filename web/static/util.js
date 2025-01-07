@@ -771,23 +771,23 @@ export function dataGet(a_ids, a_cb) {
 
 /**
  * Basic implementation of `get_authorize_url` from the Globus SDK.
- * 
- * This function generates the authorization URL that a user can follow to provide 
+ *
+ * This function generates the authorization URL that a user can follow to provide
  * authorization and consent via Globus Auth.
  *
  * @param {UUID} client_id - The UUID of the Globus authentication client.
  * @param {string} redirect_uri - The URI-safe application-wide Globus Auth redirect URI.
- * @param {Array<string>} [requested_scopes=[]] - The scopes on the token(s) being requested. 
- * In the case of accessing a mapped collection, this should include the mapped 
+ * @param {Array<string>} [requested_scopes=[]] - The scopes on the token(s) being requested.
+ * In the case of accessing a mapped collection, this should include the mapped
  * collection's UUID, such as: `https://auth.globus.org/scopes/YOUR-UUID-HERE/data_access`.
  * @param {string} [state="_default"] - Allows the application to pass information back to itself.
  * @param {boolean} [refresh_tokens=false] - Request refresh tokens in addition to access tokens.
  * @param {object} [query_params={}] - Additional parameters to be included in the authorization URL.
- * 
+ *
  * @returns {string} The URL a user can follow to provide authorization and consent via Globus.
- * 
+ *
  * @throws {Error} If either `client_id` or `redirect_uri` are not provided.
- * 
+ *
  * @example
  * const url = globusGetAuthorizeURL(
  *   'your-client-id',
