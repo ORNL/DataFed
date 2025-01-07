@@ -10,7 +10,7 @@ module.exports = (function () {
      * @function
      * Pre-processes data and collection IDs for permissions and required data.
      *
-     * @description This function examines the specified data and collections for the appropriate permissions
+     * This function examines the specified data and collections for the appropriate permissions
      * based on the given mode and recursively processes items (data/collections) in included collections.
      * It does not resolve IDs. On success, it returns lists of data records for Globus and external data, 
      * as well as records without data. Additionally, it returns a flat list of all collections.

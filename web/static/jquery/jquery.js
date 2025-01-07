@@ -952,7 +952,7 @@
              * The element is removed from the DOM after the test is executed.
              *
              * @param {Function} fn The test function to apply to the created element.
-             *        The function receives the created element as an argument and should return a boolean result.
+             * The function receives the created element as an argument and should return a boolean result.
              * @returns {boolean} Returns `true` if the test function returns a truthy value, `false` otherwise.
              */
             function assert(fn) {
@@ -980,7 +980,7 @@
              *
              * @param {string} attrs A pipe-separated list of attributes to which the handler should be applied.
              * @param {Function} handler The handler function to apply to each attribute.
-             *        This function will be assigned to `Expr.attrHandle` for each attribute.
+             * This function will be assigned to `Expr.attrHandle` for each attribute.
              */
             function addHandle(attrs, handler) {
                 var arr = attrs.split("|"),
@@ -992,10 +992,13 @@
             }
 
             /**
-             * Checks document order of two siblings
-             * @param {Element} a
-             * @param {Element} b
-             * @returns {Number} Returns less than 0 if a precedes b, greater than 0 if a follows b
+             * Compares the document order of two sibling elements.
+             * Returns a value indicating their relative position in the DOM.
+             *
+             * @param {Element} a The first element to compare.
+             * @param {Element} b The second element to compare.
+             * @returns {number} A negative number if `a` precedes `b`, a positive number if `a` follows `b`.
+             * Returns 0 if the elements are identical.
              */
             function siblingCheck(a, b) {
                 var cur = b && a,
@@ -1135,8 +1138,8 @@
 
             /**
              * Checks a node for validity as a Sizzle context
-             * @param {Element|Object=} context
-             * @returns {Element|Object|Boolean} The input node if acceptable, otherwise a falsy value
+             * @param {Element|object=} context
+             * @returns {Element|object|boolean} The input node if acceptable, otherwise a falsy value
              */
             function testContext(context) {
                 return context && typeof context.getElementsByTagName !== "undefined" && context;
@@ -1147,8 +1150,8 @@
 
             /**
              * Detects XML nodes
-             * @param {Element|Object} elem An element or a document
-             * @returns {Boolean} True iff elem is a non-HTML XML node
+             * @param {Element|object} elem An element or a document
+             * @returns {boolean} True iff elem is a non-HTML XML node
              */
             isXML = Sizzle.isXML = function (elem) {
                 var namespace = elem && elem.namespaceURI,
@@ -1162,8 +1165,8 @@
 
             /**
              * Sets document-related variables once based on the current document
-             * @param {Element|Object} [doc] An element or document object to use to set the document
-             * @returns {Object} Returns the current document
+             * @param {Element|object} [doc] An element or document object to use to set the document
+             * @returns {object} Returns the current document
              */
             setDocument = Sizzle.setDocument = function (node) {
                 var hasCompare,
