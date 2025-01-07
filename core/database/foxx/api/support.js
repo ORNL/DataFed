@@ -636,6 +636,39 @@ module.exports = (function () {
         return first_uuid;
     };
 
+    /**
+     * Retrieves user information based on the provided client ID.
+     *
+     * The return value should be a client containing the following information:
+     * {
+     *   "_key" : "bob",
+     *   "_id" : "u/bob",
+     *   "name" : "bob junior",
+     *   "name_first" : "bob",
+     *   "name_last" : "jones",
+     *   "is_admin" : true,
+     *   "max_coll" : 50,
+     *   "max_proj" : 10,
+     *   "max_sav_qry" : 20,
+     *   "email" : "bobjones@gmail.com"
+     * }
+     *
+     * The client ID can be in the following formats:
+     * - SDMS uname (e.g., "xxxxx...")
+     * - UUID (e.g., "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx")
+     * - Account (e.g., "domain.uname")
+     *
+     * UUIDs are defined by length and format, accounts have a "." (and known domains),
+     * and SDMS unames have no "." or "-" characters.
+     *
+     * @param {string} a_client_id - The client ID, which can be in various formats (SDMS uname, UUID, or Account).
+     * @throws {Array} Throws an error if the user does not exist, or the client ID is invalid.
+     * @returns {Object} The user record containing details such as name, admin status, and email.
+     *
+     * @example
+     * const user = obj.getUserFromClientID('u/bob');
+     * console.log(user.name); // "bob junior"
+     */
     obj.getUserFromClientID = function (a_client_id) {
         // Client ID can be an SDMS uname (xxxxx...), a UUID (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx), or an account (domain.uname)
         // UUID are defined by length and format, accounts have a "." (and known domains), SDMS unames have no "." or "-" characters
@@ -1010,6 +1043,31 @@ module.exports = (function () {
         return false;
     };
 
+    /**
+     * @breif checks to make sure the client has admin permissions on an object
+     *
+     * @param a_client - this is a user document i.e.
+     *
+     * {
+     *   "_key" : "bob",
+     *   "_id" : "u/bob",
+     *   "name" : "bob junior ",
+     *   "name_first" : "bob",
+     *   "name_last" : "jones",
+     *   "is_admin" : true,
+     *   "max_coll" : 50,
+     *   "max_proj" : 10,
+     *   "max_sav_qry" : 20,
+     *   :
+     *   "email" : "bobjones@gmail.com"
+     * }
+     *
+     * @param a_object_id - the identity of a record or collection or project
+     *
+     * "d/fdakjfla"
+     * "p/big_thing"
+     * "c/my_collection"
+     **/
     obj.hasAdminPermObject = function (a_client, a_object_id) {
         if (a_client.is_admin) return true;
 
