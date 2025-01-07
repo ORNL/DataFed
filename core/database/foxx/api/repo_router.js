@@ -368,8 +368,8 @@ router
  * Recursively analyzes collections but only counts each data record once regardless of how many places it is linked. 
  * This function is used for pre-processing data move operations (e.g., changing allocation or owner).
  *
- * @param {Object} req - The request object, containing the query parameters.
- * @param {Object} res - The response object used to send the results.
+ * @param {object} req - The request object, containing the query parameters.
+ * @param {object} res - The response object used to send the results.
  * @returns {void} Sends an array of repository size statistics to the response.
  *
  * @example
