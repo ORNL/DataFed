@@ -1464,8 +1464,26 @@ router
     .summary("Toggle data record lock")
     .description("Toggle data record lock");
 
-/** @brief Get raw data path for local direct access, if possible from specified domain
+/**
+ * @function
+ * @description Gets the raw data path for local direct access from the specified domain, 
+ * if available, for a given data ID and client.
+ * 
+ * The method checks the client's permissions for the data ID and returns the path to the data 
+ * if the client has the required permissions and the data exists in the specified domain.
  *
+ * @param {Object} req - The request object, containing the query parameters.
+ * @param {Object} req.queryParams - The query parameters provided in the request.
+ * @param {string} req.queryParams.client - The client ID for the request.
+ * @param {string} req.queryParams.id - The data ID (not alias) associated with the data.
+ * @param {string} req.queryParams.domain - The domain from which the data is being requested.
+ * @param {Object} res - The response object, used to send the raw data path or error.
+ * 
+ * @throws {Error} g_lib.ERR_PERM_DENIED - If the client does not have permission to read the data.
+ * @throws {Error} g_lib.ERR_NO_RAW_DATA - If the raw data is not found.
+ * @throws {Error} g_lib.ERR_INVALID_PARAM - If the data belongs to a different domain than specified.
+ * 
+ * @returns {void} - Returns the raw data path in the response if the request is successful.
  */
 router
     .get("/path", function (req, res) {
