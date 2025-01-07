@@ -362,11 +362,19 @@ router
     .summary("Delete repo server record")
     .description("Delete repo server record");
 
-/** @brief Calculate the total, per-repo size of selected items
+/**
+ * @function
+ * @description Calculates the total, per-repo size of selected items.
+ * Recursively analyzes collections but only counts each data record once regardless of how many places it is linked. 
+ * This function is used for pre-processing data move operations (e.g., changing allocation or owner).
  *
- * Recursively analyzes collections but only counts each data record once
- * regardless of how many places it is linked. Used for pre-processing
- * data move operations (change alloc or owner).
+ * @param {Object} req - The request object, containing the query parameters.
+ * @param {Object} res - The response object used to send the results.
+ * @returns {void} Sends an array of repository size statistics to the response.
+ *
+ * @example
+ * // Sample usage:
+ * router.get("/calc_size", function(req, res) { ... });
  */
 router
     .get("/calc_size", function (req, res) {
