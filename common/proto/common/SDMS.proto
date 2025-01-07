@@ -8,166 +8,180 @@
 // change.
 
 // ALERT: Any LARGE INTEGER fields in messages are currently defined as DOUBLE
-// instead of INT64 - This is because Javascript does not support 64 bit
-// integers and uses doubles for both integer and floats. As long as an integer
-// does not exceed 53 bits, this approach works.
+// instead of INT64 - This is because Javascript does not support 64 bit integers
+// and uses doubles for both integer and floats. As long as an integer does not
+// exceed 53 bits, this approach works.
 
 syntax = "proto2";
 
 package SDMS;
 
+
 // ============================ Enums
 
 // Used to return error categories. Likely to be deprecated.
-enum ErrorCode {
-  ID_BAD_REQUEST = 1;
-  ID_INTERNAL_ERROR = 2;
-  ID_CLIENT_ERROR = 3;
-  ID_SERVICE_ERROR = 4;
-  ID_AUTHN_REQUIRED = 5;
-  ID_AUTHN_ERROR = 6;
-  ID_DEST_PATH_ERROR = 7;
-  ID_DEST_FILE_ERROR = 8;
+enum ErrorCode
+{
+    ID_BAD_REQUEST              = 1;
+    ID_INTERNAL_ERROR           = 2;
+    ID_CLIENT_ERROR             = 3;
+    ID_SERVICE_ERROR            = 4;
+    ID_AUTHN_REQUIRED           = 5;
+    ID_AUTHN_ERROR              = 6;
+    ID_DEST_PATH_ERROR          = 7;
+    ID_DEST_FILE_ERROR          = 8;
 }
 
 // Used to return status of backend services. Likely to be deprecated.
-enum ServiceStatus {
-  SS_NORMAL = 0;
-  SS_DEGRADED = 1;
-  SS_FAILED = 2;
-  SS_OFFLINE = 3;
+enum ServiceStatus
+{
+    SS_NORMAL       = 0;
+    SS_DEGRADED     = 1;
+    SS_FAILED       = 2;
+    SS_OFFLINE      = 3;
 }
 
 // Used to specify data or collection search mode in queries
-enum SearchMode {
-  SM_DATA = 0;
-  SM_COLLECTION = 1;
+enum SearchMode
+{
+    SM_DATA         = 0;
+    SM_COLLECTION   = 1;
 }
 
-// Used to specify dependency relatioships. Likely to be deprecated and replaced
-// with expandable system.
-enum DependencyType {
-  DEP_IS_DERIVED_FROM = 0;
-  DEP_IS_COMPONENT_OF = 1;
-  DEP_IS_NEW_VERSION_OF = 2;
-  DEP_TYPE_COUNT = 3;
+// Used to specify dependency relatioships. Likely to be deprecated and replaced with expandable system.
+enum DependencyType
+{
+    DEP_IS_DERIVED_FROM         = 0;
+    DEP_IS_COMPONENT_OF         = 1;
+    DEP_IS_NEW_VERSION_OF       = 2;
+    DEP_TYPE_COUNT              = 3;
 }
 
 // Used to indicate dependency direction (IN = offspring, OUT = ancestor)
 // Note that records only store outgoing dependencies to ancestors
-enum DependencyDir {
-  DEP_IN = 0;
-  DEP_OUT = 1;
+enum DependencyDir
+{
+    DEP_IN                      = 0;
+    DEP_OUT                     = 1;
 }
 
 // General record/colelction sorting options
-enum SortOption {
-  SORT_ID = 0;
-  SORT_TITLE = 1;
-  SORT_OWNER = 2;
-  SORT_TIME_CREATE = 3;
-  SORT_TIME_UPDATE = 4;
-  SORT_RELEVANCE = 5;
+enum SortOption
+{
+    SORT_ID                     = 0;
+    SORT_TITLE                  = 1;
+    SORT_OWNER                  = 2;
+    SORT_TIME_CREATE            = 3;
+    SORT_TIME_UPDATE            = 4;
+    SORT_RELEVANCE              = 5;
 }
 
 // Defines a users role in a project
 // Note that project owners are treated as project admins
-enum ProjectRole {
-  PROJ_NO_ROLE = 0;
-  PROJ_MEMBER = 1;
-  PROJ_MANAGER = 2;
-  PROJ_ADMIN = 3;
+enum ProjectRole
+{
+    PROJ_NO_ROLE    = 0;
+    PROJ_MEMBER     = 1;
+    PROJ_MANAGER    = 2;
+    PROJ_ADMIN      = 3;
 }
 
 // Used to specify type of access token contained within message
 enum AccessTokenType {
-  GENERIC = 1;
-  GLOBUS = 2;
-  GLOBUS_AUTH = 3;
-  GLOBUS_TRANSFER = 4;
-  GLOBUS_DEFAULT = 5;
-  ACCESS_SENTINEL = 127;
+    GENERIC = 1;
+    GLOBUS = 2;
+    GLOBUS_AUTH = 3;
+    GLOBUS_TRANSFER = 4;
+    GLOBUS_DEFAULT = 5;
+    ACCESS_SENTINEL = 127;
 }
 
 // ============================ Data Structures
 
 // Allocation-specific statistics data
-message AllocStatsData {
-  required string repo = 1;
-  required uint32 rec_count = 2;
-  required uint32 file_count = 3;
-  required uint64 data_size = 4;
-  repeated uint32 histogram = 5;
+message AllocStatsData
+{
+    required string             repo        = 1;
+    required uint32             rec_count   = 2;
+    required uint32             file_count  = 3;
+    required uint64             data_size   = 4;
+    repeated uint32             histogram   = 5;
 }
 
-message AllocData {
-  required string repo = 1;
-  required uint64 data_limit = 2;
-  required uint64 data_size = 3;
-  required uint32 rec_limit = 4;
-  required uint32 rec_count = 5;
-  required string path = 6;
-  optional string id = 7;
-  optional bool is_def = 8;
-  optional AllocStatsData stats = 9;
+message AllocData
+{
+    required string             repo        = 1;
+    required uint64             data_limit  = 2;
+    required uint64             data_size   = 3;
+    required uint32             rec_limit   = 4;
+    required uint32             rec_count   = 5;
+    required string             path        = 6;
+    optional string             id          = 7;
+    optional bool               is_def      = 8;
+    optional AllocStatsData     stats       = 9;
 }
 
 // For viewing dependencies
-message DependencyData {
-  required string id = 1;
-  optional string alias = 2;
-  optional uint32 notes = 3;
-  required DependencyType type = 4;
-  required DependencyDir dir = 5;
+message DependencyData
+{
+    required string             id          = 1;
+    optional string             alias       = 2;
+    optional uint32             notes       = 3;
+    required DependencyType     type        = 4;
+    required DependencyDir      dir         = 5;
 }
 
 // For specifying dependencies
-message DependencySpecData {
-  required string id = 1;
-  required DependencyType type = 2;
+message DependencySpecData
+{
+    required string             id          = 1;
+    required DependencyType     type        = 2;
 }
 
-message UserData {
-  required string uid = 1;
-  required string name_last = 2;
-  required string name_first = 3;
-  optional string email = 4;
-  optional string options = 5;
-  optional bool is_admin = 6;
-  optional bool is_repo_admin = 7;
-  repeated string ident = 8;
-  repeated AllocData alloc = 9;
+message UserData
+{
+    required string             uid             = 1;
+    required string             name_last       = 2;
+    required string             name_first      = 3;
+    optional string             email           = 4;
+    optional string             options         = 5;
+    optional bool               is_admin        = 6;
+    optional bool               is_repo_admin   = 7;
+    repeated string             ident           = 8;
+    repeated AllocData          alloc           = 9;
 }
 
-message ProjectData {
-  required string id = 1;
-  required string title = 2;
-  optional string desc = 3;
-  optional string owner = 4;
-  optional uint32 ct = 5;
-  optional uint32 ut = 6;
-  repeated string admin = 7;
-  repeated string member = 8;
-  repeated AllocData alloc = 9;
+message ProjectData
+{
+    required string             id          = 1;
+    required string             title       = 2;
+    optional string             desc        = 3;
+    optional string             owner       = 4;
+    optional uint32             ct          = 5;
+    optional uint32             ut          = 6;
+    repeated string             admin       = 7;
+    repeated string             member      = 8;
+    repeated AllocData          alloc       = 9;
 }
 
-message ListingData {
-  required string id = 1;
-  required string title = 2;
-  optional string alias = 3;
-  optional bool locked = 4;
-  optional string owner = 5;
-  optional string creator = 6;
-  optional double size = 7;
-  optional bool external = 8;
-  optional uint32 notes = 9;
-  // Needed for provenance graphing
-  optional int32 gen = 10;
-  optional bool deps_avail = 11;
-  repeated DependencyData dep = 12;
-  // Needed for catalog view
-  optional string owner_name = 13;
-  optional string desc = 14;
+message ListingData
+{
+    required string             id          = 1;
+    required string             title       = 2;
+    optional string             alias       = 3;
+    optional bool               locked      = 4;
+    optional string             owner       = 5;
+    optional string             creator     = 6;
+    optional double             size        = 7;
+    optional bool               external    = 8;
+    optional uint32             notes       = 9;
+    // Needed for provenance graphing
+    optional int32              gen         = 10;
+    optional bool               deps_avail  = 11;
+    repeated DependencyData     dep         = 12;
+    // Needed for catalog view
+    optional string             owner_name  = 13;
+    optional string             desc        = 14;
 }
 
 /*
@@ -184,221 +198,244 @@ message CatItemInfoData
 }
 */
 
-message TagData {
-  required string name = 1;
-  required uint64 count = 2;
+message TagData
+{
+    required string             name        = 1;
+    required uint64             count       = 2;
 }
 
-message PathData { repeated ListingData item = 1; }
+message PathData
+{
+    repeated ListingData        item        = 1;
+}
 
-message RecordData {
-  required string id = 1;
-  required string title = 2;
-  optional string alias = 3;
-  optional string desc = 4;
-  repeated string tags = 5;
-  optional string metadata = 6;
-  optional bool external = 7;
-  optional string source = 8;
-  optional string repo_id = 9;
-  optional double size = 10;
-  optional string ext = 11;
-  optional bool ext_auto = 12;
-  optional uint32 ct = 13;
-  optional uint32 ut = 14;
-  optional uint32 dt = 15;
-  optional string owner = 16;
-  optional string creator = 17;
-  optional bool locked = 18;
-  optional string parent_id = 19;
-  repeated DependencyData deps = 20;
-  optional uint32 notes = 21;
-  optional string md_err_msg = 22;
-  optional string sch_id = 23;
-  optional uint32 sch_ver = 24;
+message RecordData
+{
+    required string             id          = 1;
+    required string             title       = 2;
+    optional string             alias       = 3;
+    optional string             desc        = 4;
+    repeated string             tags        = 5;
+    optional string             metadata    = 6;
+    optional bool               external    = 7;
+    optional string             source      = 8;
+    optional string             repo_id     = 9;
+    optional double             size        = 10;
+    optional string             ext         = 11;
+    optional bool               ext_auto    = 12;
+    optional uint32             ct          = 13;
+    optional uint32             ut          = 14;
+    optional uint32             dt          = 15;
+    optional string             owner       = 16;
+    optional string             creator     = 17;
+    optional bool               locked      = 18;
+    optional string             parent_id   = 19;
+    repeated DependencyData     deps        = 20;
+    optional uint32             notes       = 21;
+    optional string             md_err_msg  = 22;
+    optional string             sch_id      = 23;
+    optional uint32             sch_ver     = 24;
 }
 
 // Fields required for a data repo to locate raw data
 // TODO Path will be removed and replaced with owner ID
-message RecordDataLocation {
-  required string id = 1;
-  required string path = 2;
+message RecordDataLocation
+{
+    required string             id          = 1;
+    required string             path        = 2;
 }
 
 // A list of data locations associated with a specific repo
-message RepoRecordDataLocations {
-  required string repo_id = 1;
-  repeated RecordDataLocation loc = 2;
+message RepoRecordDataLocations
+{
+    required string             repo_id     = 1;
+    repeated RecordDataLocation loc         = 2;
 }
 
-message RecordDataSize {
-  required string id = 1;
-  required double size = 2;
+message RecordDataSize
+{
+    required string             id          = 1;
+    required double             size        = 2;
 }
 
-message CollData {
-  required string id = 1;
-  required string title = 2;
-  optional string alias = 3;
-  optional string desc = 4;
-  repeated string tags = 5;
-  optional string topic = 6;
-  optional string owner = 7;
-  optional string creator = 8;
-  optional uint32 ct = 9;
-  optional uint32 ut = 10;
-  optional string parent_id = 11;
-  optional uint32 notes = 12;
+message CollData
+{
+    required string             id          = 1;
+    required string             title       = 2;
+    optional string             alias       = 3;
+    optional string             desc        = 4;
+    repeated string             tags        = 5;
+    optional string             topic       = 6;
+    optional string             owner       = 7;
+    optional string             creator     = 8;
+    optional uint32             ct          = 9;
+    optional uint32             ut          = 10;
+    optional string             parent_id   = 11;
+    optional uint32             notes       = 12;
 }
 
-message GroupData {
-  required string uid = 1;
-  required string gid = 2;
-  optional string title = 3;
-  optional string desc = 4;
-  repeated string member = 5;
+message GroupData
+{
+    required string             uid         = 1;
+    required string             gid         = 2;
+    optional string             title       = 3;
+    optional string             desc        = 4;
+    repeated string             member      = 5;
 }
 
-message ACLRule {
-  required string id = 1;
-  optional uint32 grant = 2;
-  optional uint32 inhgrant = 3;
+message ACLRule
+{
+    required string             id          = 1;
+    optional uint32             grant       = 2;
+    optional uint32             inhgrant    = 3;
 }
 
-message TopicData {
-  required string id = 1;
-  required string title = 2;
-  repeated TopicData path = 3;
-  optional string desc = 4;
-  optional string creator = 5;
-  optional bool admin = 6;
-  required uint32 coll_cnt = 7;
+message TopicData
+{
+    required string             id          = 1;
+    required string             title       = 2;
+    repeated TopicData          path        = 3;
+    optional string             desc        = 4;
+    optional string             creator     = 5;
+    optional bool               admin       = 6;
+    required uint32             coll_cnt    = 7;
 
-  // repeated TagMetrics         tags        = 7;
-  // repeated UserMetrics        users       = 8;
-  // repeated DateMetrics        date        = 9;
+    //repeated TagMetrics         tags        = 7;
+    //repeated UserMetrics        users       = 8;
+    //repeated DateMetrics        date        = 9;
 }
 
-message RepoData {
-  required string id = 1;
-  optional string title = 2;
-  optional string desc = 3;
-  optional uint64 capacity = 4;
-  optional string pub_key = 5;
-  optional string address = 6;
-  optional string endpoint = 7;
-  optional string path = 8;
-  optional string domain = 9;
-  optional string exp_path = 10;
-  repeated string admin = 11;
+message RepoData
+{
+    required string             id          = 1;
+    optional string             title       = 2;
+    optional string             desc        = 3;
+    optional uint64             capacity    = 4;
+    optional string             pub_key     = 5;
+    optional string             address     = 6;
+    optional string             endpoint    = 7;
+    optional string             path        = 8;
+    optional string             domain      = 9;
+    optional string             exp_path    = 10;
+    repeated string             admin       = 11;
 }
+
 
 // -------------------------------------------- ANNOTATION DEFINES
 
 // Defines annotation types
-enum NoteType {
-  NOTE_QUESTION = 0;
-  NOTE_INFO = 1;
-  NOTE_WARN = 2;
-  NOTE_ERROR = 3;
+enum NoteType
+{
+    NOTE_QUESTION   = 0;
+    NOTE_INFO       = 1;
+    NOTE_WARN       = 2;
+    NOTE_ERROR      = 3;
 }
 
 // Defines annotation state
-enum NoteState {
-  NOTE_CLOSED = 0;
-  NOTE_OPEN = 1;
-  NOTE_ACTIVE = 2;
+enum NoteState
+{
+    NOTE_CLOSED     = 0;
+    NOTE_OPEN       = 1;
+    NOTE_ACTIVE     = 2;
 }
 
 // Defines annotation user comment data structure
-message NoteComment {
-  required string user = 1;     // User ID of comment author
-  required uint32 time = 2;     // Timestamp comment was created
-  required string comment = 3;  // Text content of comment
-  optional NoteType type = 4;   // Note type change
-  optional NoteState state = 5; // Note state change
+message NoteComment
+{
+    required string             user    = 1; // User ID of comment author
+    required uint32             time    = 2; // Timestamp comment was created
+    required string             comment = 3; // Text content of comment
+    optional NoteType           type    = 4; // Note type change
+    optional NoteState          state   = 5; // Note state change
 }
 
 // Defines annotation data structure
-message NoteData {
-  required string id = 1;           // Note ID
-  required NoteType type = 2;       // Current note type
-  required NoteState state = 3;     // Current note state
-  required string subject_id = 4;   // Subject data record or collection ID
-  required string title = 5;        // Title
-  repeated NoteComment comment = 6; // User comments in chronological order
-  required uint32 ct = 7;           // Note create timestamp
-  required uint32 ut = 8;           // Note update timestamp
-  optional string parent_id = 9;    // Parent note ID (only if inherited)
-  optional bool has_child =
-      10; // Flag indicating presences of dependent note(s)
+message NoteData
+{
+    required string             id          = 1; // Note ID
+    required NoteType           type        = 2; // Current note type
+    required NoteState          state       = 3; // Current note state
+    required string             subject_id  = 4; // Subject data record or collection ID
+    required string             title       = 5; // Title
+    repeated NoteComment        comment     = 6; // User comments in chronological order
+    required uint32             ct          = 7; // Note create timestamp
+    required uint32             ut          = 8; // Note update timestamp
+    optional string             parent_id   = 9; // Parent note ID (only if inherited)
+    optional bool               has_child   = 10; // Flag indicating presences of dependent note(s)
 }
 
 // -------------------------------------------------- TASK DEFINES
 
-enum TaskType {
-  TT_DATA_GET = 0;
-  TT_DATA_PUT = 1;
-  TT_DATA_DEL = 2;
-  TT_REC_CHG_ALLOC = 3;
-  TT_REC_CHG_OWNER = 4;
-  TT_REC_DEL = 5;
-  TT_ALLOC_CREATE = 6;
-  TT_ALLOC_DEL = 7;
-  TT_USER_DEL = 8;
-  TT_PROJ_DEL = 9;
+enum TaskType
+{
+    TT_DATA_GET         = 0;
+    TT_DATA_PUT         = 1;
+    TT_DATA_DEL         = 2;
+    TT_REC_CHG_ALLOC    = 3;
+    TT_REC_CHG_OWNER    = 4;
+    TT_REC_DEL          = 5;
+    TT_ALLOC_CREATE     = 6;
+    TT_ALLOC_DEL        = 7;
+    TT_USER_DEL         = 8;
+    TT_PROJ_DEL         = 9;
 }
 
-enum TaskStatus {
-  TS_BLOCKED = 0;
-  TS_READY = 1;
-  TS_RUNNING = 2;
-  TS_SUCCEEDED = 3;
-  TS_FAILED = 4;
+enum TaskStatus
+{
+    TS_BLOCKED      = 0;
+    TS_READY        = 1;
+    TS_RUNNING      = 2;
+    TS_SUCCEEDED    = 3;
+    TS_FAILED       = 4;
 }
 
-enum TaskCommand {
-  TC_STOP = 0;
-  TC_RAW_DATA_TRANSFER = 1;
-  TC_RAW_DATA_DELETE = 2;
-  TC_RAW_DATA_UPDATE_SIZE = 3;
-  TC_ALLOC_CREATE = 4;
-  TC_ALLOC_DELETE = 5;
+enum TaskCommand
+{
+    TC_STOP                 = 0;
+    TC_RAW_DATA_TRANSFER    = 1;
+    TC_RAW_DATA_DELETE      = 2;
+    TC_RAW_DATA_UPDATE_SIZE = 3;
+    TC_ALLOC_CREATE         = 4;
+    TC_ALLOC_DELETE         = 5;
 }
 
-enum Encryption {
-  ENCRYPT_NONE = 0;
-  ENCRYPT_AVAIL = 1;
-  ENCRYPT_FORCE = 2;
+enum Encryption
+{
+    ENCRYPT_NONE    = 0;
+    ENCRYPT_AVAIL   = 1;
+    ENCRYPT_FORCE   = 2;
 }
 
-message TaskData {
-  required string id = 1;
-  required TaskType type = 2;
-  required TaskStatus status = 3;
-  required string client = 4;
-  required uint32 step = 5;
-  required uint32 steps = 6;
-  required string msg = 7;
-  required uint32 ct = 8;
-  required uint32 ut = 9;
-  optional string source = 10;
-  optional string dest = 11;
+message TaskData
+{
+    required string                 id          = 1;
+    required TaskType               type        = 2;
+    required TaskStatus             status      = 3;
+    required string                 client      = 4;
+    required uint32                 step        = 5;
+    required uint32                 steps       = 6;
+    required string                 msg         = 7;
+    required uint32                 ct          = 8;
+    required uint32                 ut          = 9;
+    optional string                 source      = 10;
+    optional string                 dest        = 11;
 }
 
 // -------------------------------------------------- TASK DEFINES
 
-message SchemaData {
-  required string id = 1;
-  required uint32 ver = 2;
-  optional bool depr = 3;
-  optional uint32 cnt = 4;
-  optional bool ref = 5;
-  optional string own_id = 6;
-  optional string own_nm = 7;
-  optional string desc = 8;
-  optional bool pub = 9;
-  optional string def = 10;
-  repeated SchemaData uses = 11;
-  repeated SchemaData used_by = 12;
+message SchemaData
+{
+    required string             id          = 1;
+    required uint32             ver         = 2;
+    optional bool               depr        = 3;
+    optional uint32             cnt         = 4;
+    optional bool               ref         = 5;
+    optional string             own_id      = 6;
+    optional string             own_nm      = 7;
+    optional string             desc        = 8;
+    optional bool               pub         = 9;
+    optional string             def         = 10;
+    repeated SchemaData         uses        = 11;
+    repeated SchemaData         used_by     = 12;
 }
