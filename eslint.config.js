@@ -20,7 +20,6 @@ module.exports = [
             'jsdoc/check-param-names': 'error',
             'jsdoc/check-tag-names': 'error',
             'jsdoc/check-types': 'error',
-            'jsdoc/newline-after-description': 'error',
             'jsdoc/require-description': 'error',
             'jsdoc/require-param': 'error',
             'jsdoc/require-param-name': 'error',
