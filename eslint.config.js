@@ -3,14 +3,14 @@ const jsdocPlugin = require("eslint-plugin-jsdoc");
 
 module.exports = [
     {
-        ignores: ['docs/_static/*'],
+        ignores: ['docs/_static/**/*'],
         languageOptions: {
             globals: {
                 ...globals.jquery,
                 ...globals.node,
             },
         },
-        files: ['**/*.js', '**/*.ts'], // Adjust file patterns as needed
+        files: ['web/**/*.js', 'web/**/*.ts', 'core/**/*.js'], // Adjust file patterns as needed
         plugins: {
             jsdoc: jsdocPlugin,
         },
