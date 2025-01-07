@@ -3,7 +3,7 @@ const jsdocPlugin = require("eslint-plugin-jsdoc");
 
 module.exports = [
     {
-        ignorePatterns: ['docs/_static'],
+        ignores: ['docs/_static'],
         languageOptions: {
             globals: {
                 ...globals.jquery,
