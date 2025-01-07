@@ -357,7 +357,7 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
       {"refresh", a_ref_tok},
       {"expires_in", to_string(a_expires_in)}};
   if (token_type != SDMS::AccessTokenType::ACCESS_SENTINEL) {
-    params.push_back({"token_type", to_string(token_type)});
+    params.push_back({"type", to_string(token_type)});
   }
   if (!other_token_data.empty()) {
     params.push_back({"other_token_data", other_token_data});
