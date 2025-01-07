@@ -1508,7 +1508,7 @@ var tasks_func = (function () {
      * @param {Array<string>} a_proj_ids - An array of project IDs to be deleted.
      * @returns {object} An object containing the task to delete the projects and allocations.
      * @throws {Array} Throws an error array containing a code and message if the project does 
-     *                 not exist or the client lacks permissions.
+     * not exist or the client lacks permissions.
      *
      * @example
      * const result = obj.taskInitProjDelete(client, ['proj_id_1', 'proj_id_2']);
@@ -2234,8 +2234,8 @@ var tasks_func = (function () {
      * @param {string} a_id - The ID of the data record to delete.
      * @throws {Error} Throws an error if the data record or associated graph objects cannot be deleted.
      *
-     * @note This function will delete aliases, notes, tags, and update schema counts and allocations.
-     * @note It will not delete raw data, but it will adjust the allocation associated with the data record.
+     * This function will delete aliases, notes, tags, and update schema counts and allocations.
+     * It will not delete raw data, but it will adjust the allocation associated with the data record.
      */
     obj._deleteDataRecord = function (a_id) {
         //console.log( "delete rec", a_id );
