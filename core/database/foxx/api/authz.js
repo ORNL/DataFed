@@ -23,10 +23,9 @@ module.exports = (function () {
     *                            - `max_proj` (number): Maximum projects allowed.
     *                            - `max_sav_qry` (number): Maximum saved queries allowed.
     *                            - `email` (string): The client's email address.
-    * @param {string} a_perm - The permission type to check, e.g.:
-    *                          - `PERM_CREATE`
-    *                          - `PERM_WR_DATA`
-    *                          - `PERM_RD_DATA`
+    * @param {string} a_perm - The permission type to check
+    * 
+    * @see support#obj - for permission options i.e.PERM_CREATE, PERM_WR_DATA, PERM_RD_DATA`
     */
    
     obj.isRecordActionAuthorized = function (a_client, a_data_key, a_perm) {
