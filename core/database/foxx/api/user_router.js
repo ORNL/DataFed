@@ -647,7 +647,7 @@ router
 
                             console.log("writing to edge ", token_doc);
                             const token_doc_upsert = g_db.globus_token.insert(token_doc, {
-                                overwriteMode: "replace", // TODO: perhaps use 'update' and specify values for true upsert
+                                overwriteMode: "replace", // TODO: perhaps use 'update' and specify values for true upsert.
                             });
                             break;
                         }
