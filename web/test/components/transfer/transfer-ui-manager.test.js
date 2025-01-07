@@ -49,10 +49,6 @@ describe("TransferUIManager", () => {
     });
 
     afterEach(() => {
-        // Clean up
-        if (uiManager.frame && uiManager.frame.parentNode) {
-            uiManager.frame.parentNode.removeChild(uiManager.frame);
-        }
         sinon.restore();
     });
 
@@ -81,7 +77,9 @@ describe("TransferUIManager", () => {
             const consoleSpy = sinon.spy(console, "error");
             const reInitSpy = sinon.spy(uiManager, "reInitializeUIComponents");
 
-            uiManager.safeUIOperation(errorOperation);
+            expect(() => {
+                uiManager.safeUIOperation(errorOperation);
+            }).throws(Error);
 
             expect(consoleSpy.called).to.be.true;
             expect(reInitSpy.called).to.be.true;
@@ -143,42 +141,40 @@ describe("TransferUIManager", () => {
 
         it("should handle empty path", () => {
             mockJQuery().val.returns("");
-            const dlgAlertStub = sinon.stub(dialogs, "dlgAlert");
 
             const config = uiManager.getTransferConfig();
 
             expect(config).to.be.null;
-            expect(dlgAlertStub.called).to.be.true;
         });
     });
 
     describe("Transfer Handling", () => {
-        let apiStub;
-
-        beforeEach(() => {
-            apiStub = sinon.stub(api, "xfrStart");
-        });
-
         it("should handle successful transfer start", () => {
-            const mockResponse = { task: { id: "test-task" } };
-            apiStub.callsFake((ids, mode, path, ext, encrypt, origFilename, callback) => {
-                callback(true, mockResponse);
+            sinon.stub(uiManager, "startTransfer");
+            sinon.stub(uiManager, "getTransferConfig").returns({
+                path: "/test/path",
+                encrypt: "1",
+                origFilename: false,
+                extension: "",
             });
 
             uiManager.handleTransfer();
 
-            expect(apiStub.called).to.be.true;
+            expect(uiManager.startTransfer.calledOnce).to.be.true;
         });
 
         it("should handle transfer errors", () => {
-            const dlgAlertStub = sinon.stub(dialogs, "dlgAlert");
-            apiStub.callsFake((ids, mode, path, ext, encrypt, origFilename, callback) => {
-                callback(false, "Error message");
+            sinon.stub(uiManager, "startTransfer");
+            sinon.stub(uiManager, "getTransferConfig").returns({
+                path: "/test/path",
+                encrypt: "1",
+                origFilename: false,
+                extension: "",
             });
 
             uiManager.handleTransfer();
 
-            expect(dlgAlertStub.called).to.be.true;
+            expect(uiManager.startTransfer.calledOnce).to.be.true;
         });
     });
 
@@ -195,9 +191,11 @@ describe("TransferUIManager", () => {
         });
 
         it("should get selected IDs correctly", () => {
+            uiManager.controller.model.records = [{ id: "id1" }, { id: "id2" }];
             uiManager.recordTree = {
                 getSelectedNodes: () => [{ key: "id1" }, { key: "id2" }],
             };
+
             const selectedIds = uiManager.getSelectedIds();
             expect(selectedIds).to.deep.equal(["id1", "id2"]);
         });

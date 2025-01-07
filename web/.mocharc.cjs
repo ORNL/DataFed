@@ -20,7 +20,6 @@ module.exports = {
     diff: true,
     recursive: true,
     exit: true,
-    loader: "mock-import/register",
     extension: ["js"],
     package: "./package.json",
     reporter: "spec",

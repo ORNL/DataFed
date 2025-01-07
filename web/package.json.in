@@ -41,7 +41,6 @@
     "jsdom": "^25.0.1",
     "jsdom-global": "^3.0.2",
     "mocha": "^10.8.2",
-    "mock-import": "^4.2.0",
     "prettier": "3.4.2",
     "pug": "^3.0.3",
     "sinon": "^15.2.0"

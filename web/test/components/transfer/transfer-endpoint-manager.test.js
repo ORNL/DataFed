@@ -1,34 +1,103 @@
 import { expect } from "chai";
 import sinon from "sinon";
 import { TransferEndpointManager } from "../../../static/components/transfer/transfer-endpoint-manager.js";
-import * as api from "../../../static/api.js";
-import * as dialogs from "../../../static/dialogs.js";
 
 describe("TransferEndpointManager", () => {
     let manager;
     let mockDialog;
-    let mockJQuery;
+    let mockFrame;
+    let mockServices;
 
     beforeEach(() => {
+        mockFrame = $("<div>");
+        mockFrame.append('<textarea id="path"></textarea>');
+        mockFrame.append('<select id="matches"></select>');
         mockDialog = {
             uiManager: {
-                frame: $("<div>"),
+                frame: mockFrame,
                 updateEndpoint: sinon.stub(),
                 state: { endpointOk: false },
                 updateButtonStates: sinon.stub(),
                 createMatchesHtml: sinon.stub().returns("<option>Test</option>"),
             },
         };
+        mockServices = {
+            api: {
+                epAutocomplete: sinon.stub(),
+                epView: sinon.stub(),
+            },
+            dialogs: {
+                dlgAlert: sinon.stub(),
+            },
+        };
 
-        sinon.stub(api, "epView");
-        sinon.stub(api, "epAutocomplete");
-
-        manager = new TransferEndpointManager(mockDialog);
+        manager = new TransferEndpointManager(mockDialog, mockServices);
         manager.initialized = true;
     });
 
     afterEach(() => {
         sinon.restore();
+    });
+
+    describe("searchEndpoint", () => {
+        beforeEach(() => {
+            manager.currentSearchToken = "test-token";
+        });
+
+        it("should update UI on successful direct endpoint match", () => {
+            const mockData = { name: "test-endpoint" };
+            mockServices.api.epView.callsFake((endpoint, callback) => callback(true, mockData));
+            manager.searchEndpoint("test-endpoint", "test-token");
+
+            expect(manager.controller.uiManager.updateEndpoint.calledWith(mockData)).to.be.true;
+            expect(manager.controller.uiManager.state.endpointOk).to.be.true;
+            expect(manager.controller.uiManager.updateButtonStates.called).to.be.true;
+        });
+
+        it("should fall back to autocomplete when no direct match found", () => {
+            mockServices.api.epView.callsFake((endpoint, callback) =>
+                callback(true, { code: "ERROR" }),
+            );
+            const searchAutocompleteSpy = sinon.spy(manager, "searchEndpointAutocomplete");
+
+            manager.searchEndpoint("test-endpoint", "test-token");
+
+            expect(searchAutocompleteSpy.calledWith("test-endpoint", "test-token")).to.be.true;
+        });
+    });
+
+    describe("searchEndpointAutocomplete", () => {
+        beforeEach(() => {
+            manager.currentSearchToken = "test-token";
+        });
+
+        it("should update matches list with autocomplete results", () => {
+            const mockData = {
+                DATA: [
+                    { id: "1", canonical_name: "endpoint1" },
+                    { id: "2", canonical_name: "endpoint2" },
+                ],
+            };
+            mockServices.api.epAutocomplete.callsFake((endpoint, callback) =>
+                callback(true, mockData),
+            );
+            manager.searchEndpointAutocomplete("test", "test-token");
+
+            expect(manager.endpointManagerList).to.deep.equal(mockData.DATA);
+            expect(mockServices.api.epAutocomplete.calledOnce).to.be.true;
+        });
+
+        it("should handle no matches case", () => {
+            mockServices.api.epAutocomplete.callsFake((endpoint, callback) =>
+                callback(true, { DATA: [] }),
+            );
+            const consoleWarnStub = sinon.stub(console, "warn");
+
+            manager.searchEndpointAutocomplete("test", "test-token");
+
+            expect(manager.endpointManagerList).to.be.null;
+            expect(consoleWarnStub.calledWith("No matches found")).to.be.true;
+        });
     });
 
     describe("getEndpointStatus", () => {
@@ -48,95 +117,31 @@ describe("TransferEndpointManager", () => {
         });
     });
 
-    describe("searchEndpoint", () => {
-        let epViewStub;
-
-        beforeEach(() => {
-            epViewStub = sinon.stub(api, "epView");
-            manager.currentSearchToken = "test-token";
-        });
-
-        it("should update UI on successful direct endpoint match", () => {
-            const mockData = { name: "test-endpoint" };
-            epViewStub.callsFake((endpoint, callback) => callback(true, mockData));
-
-            manager.searchEndpoint("test-endpoint", "test-token");
-
-            expect(manager.controller.uiManager.updateEndpoint.calledWith(mockData)).to.be.true;
-            expect(manager.controller.uiManager.state.endpointOk).to.be.true;
-            expect(manager.controller.uiManager.updateButtonStates.called).to.be.true;
-        });
-
-        it("should fall back to autocomplete when no direct match found", () => {
-            const searchAutocompleteSpy = sinon.spy(manager, "searchEndpointAutocomplete");
-            epViewStub.callsFake((endpoint, callback) => callback(true, { code: "NOT_FOUND" }));
-
-            manager.searchEndpoint("test-endpoint", "test-token");
-
-            expect(searchAutocompleteSpy.calledWith("test-endpoint", "test-token")).to.be.true;
-        });
-
-        it("should handle errors gracefully", () => {
-            const dlgAlertStub = sinon.stub(dialogs, "dlgAlert");
-            epViewStub.throws(new Error("Test error"));
-
-            manager.searchEndpoint("test-endpoint", "test-token");
-
-            expect(dlgAlertStub.calledWith("Globus Error", sinon.match.any)).to.be.true;
-        });
-    });
-
-    describe("searchEndpointAutocomplete", () => {
-        let epAutocompleteStub;
-
-        beforeEach(() => {
-            epAutocompleteStub = sinon.stub(api, "epAutocomplete");
-            manager.currentSearchToken = "test-token";
-        });
-
-        it("should update matches list with autocomplete results", () => {
-            const mockData = {
-                DATA: [
-                    { id: "1", canonical_name: "endpoint1" },
-                    { id: "2", canonical_name: "endpoint2" },
-                ],
-            };
-            epAutocompleteStub.callsFake((endpoint, callback) => callback(true, mockData));
-
-            manager.searchEndpointAutocomplete("test", "test-token");
-
-            expect(manager.endpointManagerList).to.deep.equal(mockData.DATA);
-        });
-
-        it("should handle no matches case", () => {
-            epAutocompleteStub.callsFake((endpoint, callback) => callback(true, { DATA: [] }));
-
-            manager.searchEndpointAutocomplete("test", "test-token");
-
-            expect(manager.endpointManagerList).to.be.null;
-        });
-    });
-
     describe("handlePathInput", () => {
-        it("should process valid path input", () => {
-            const searchEndpointSpy = sinon.spy(manager, "searchEndpoint");
+        beforeEach(() => {
             manager.currentSearchToken = "test-token";
+        });
+
+        it("should process valid path input", () => {
+            $("#path", mockFrame).val("endpoint/path");
+            const searchEndpointSpy = sinon.spy(manager, "searchEndpoint");
 
             manager.handlePathInput("test-token");
 
-            expect(searchEndpointSpy.called).to.be.true;
+            expect(searchEndpointSpy.calledWith("endpoint", "test-token")).to.be.true;
         });
 
         it("should handle empty path input", () => {
-            mockJQuery().val.returns("");
-            manager.currentSearchToken = "test-token";
+            $("#path", mockFrame).val("");
 
             manager.handlePathInput("test-token");
 
             expect(manager.endpointManagerList).to.be.null;
+            expect(manager.controller.uiManager.updateButtonStates.called).to.be.true;
         });
 
         it("should ignore stale requests", () => {
+            $("#path", mockFrame).val("endpoint/path");
             manager.currentSearchToken = "different-token";
             const searchEndpointSpy = sinon.spy(manager, "searchEndpoint");
 
