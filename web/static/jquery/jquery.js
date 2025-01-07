@@ -933,8 +933,12 @@
             }
 
             /**
-             * Mark a function for special use by Sizzle
-             * @param {Function} fn The function to mark
+             * Marks a function for special use by Sizzle.
+             * This function adds a special `expando` property to the provided function,
+             * indicating that it should be treated as a special function by Sizzle.
+             *
+             * @param {Function} fn The function to mark.
+             * @returns {Function} The marked function with the `expando` property set to `true`.
              */
             function markFunction(fn) {
                 fn[expando] = true;
@@ -942,8 +946,14 @@
             }
 
             /**
-             * Support testing using an element
-             * @param {Function} fn Passed the created element and returns a boolean result
+             * Supports testing using a provided element.
+             * This function creates a `fieldset` element, passes it to the provided test function,
+             * and returns a boolean result based on the outcome of that test.
+             * The element is removed from the DOM after the test is executed.
+             *
+             * @param {Function} fn The test function to apply to the created element.
+             * The function receives the created element as an argument and should return a boolean result.
+             * @returns {boolean} Returns `true` if the test function returns a truthy value, `false` otherwise.
              */
             function assert(fn) {
                 var el = document.createElement("fieldset");
@@ -964,9 +974,13 @@
             }
 
             /**
-             * Adds the same handler for all of the specified attrs
-             * @param {String} attrs Pipe-separated list of attributes
-             * @param {Function} handler The method that will be applied
+             * Adds the same handler for all of the specified attributes.
+             * This function splits a pipe-separated list of attributes and applies the given handler function
+             * to each attribute in the list.
+             *
+             * @param {string} attrs A pipe-separated list of attributes to which the handler should be applied.
+             * @param {Function} handler The handler function to apply to each attribute.
+             * This function will be assigned to `Expr.attrHandle` for each attribute.
              */
             function addHandle(attrs, handler) {
                 var arr = attrs.split("|"),
@@ -978,10 +992,13 @@
             }
 
             /**
-             * Checks document order of two siblings
-             * @param {Element} a
-             * @param {Element} b
-             * @returns {Number} Returns less than 0 if a precedes b, greater than 0 if a follows b
+             * Compares the document order of two sibling elements.
+             * Returns a value indicating their relative position in the DOM.
+             *
+             * @param {Element} a The first element to compare.
+             * @param {Element} b The second element to compare.
+             * @returns {number} A negative number if `a` precedes `b`, a positive number if `a` follows `b`.
+             * Returns 0 if the elements are identical.
              */
             function siblingCheck(a, b) {
                 var cur = b && a,
@@ -1009,8 +1026,12 @@
             }
 
             /**
-             * Returns a function to use in pseudos for input types
-             * @param {String} type
+             * Returns a function that can be used in pseudos for input types.
+             * The returned function will check if an element is an `input` element of the specified type.
+             *
+             * @param {string} type The input type to match (e.g., "text", "password", etc.).
+             * @returns {Function} A function that takes an element as an argument and returns `true` if the
+             * element is an `input` of the specified type, `false` otherwise.
              */
             function createInputPseudo(type) {
                 return function (elem) {
@@ -1020,8 +1041,12 @@
             }
 
             /**
-             * Returns a function to use in pseudos for buttons
-             * @param {String} type
+             * Returns a function that can be used in pseudos for buttons.
+             * The returned function will check if an element is a `button` or an `input` of the specified type.
+             *
+             * @param {string} type The button or input type to match (e.g., "button", "submit", etc.).
+             * @returns {Function} A function that takes an element as an argument and returns `true` if the
+             * element is a `button` or an `input` of the specified type, `false` otherwise.
              */
             function createButtonPseudo(type) {
                 return function (elem) {
@@ -1031,8 +1056,11 @@
             }
 
             /**
-             * Returns a function to use in pseudos for :enabled/:disabled
-             * @param {Boolean} disabled true for :disabled; false for :enabled
+             * Returns a function that can be used in pseudos for `:enabled` or `:disabled`.
+             * The returned function will check if an element is in the `:enabled` or `:disabled` state based on the value of `disabled`.
+             *
+             * @param {boolean} disabled `true` for `:disabled`; `false` for `:enabled`.
+             * @returns {Function} A function that takes an element as an argument and returns `true` if the element matches the `:disabled` or `:enabled` state, `false` otherwise.
              */
             function createDisabledPseudo(disabled) {
                 // Known :disabled false positives: fieldset[disabled] > legend:nth-of-type(n+2) :can-disable
@@ -1084,8 +1112,11 @@
             }
 
             /**
-             * Returns a function to use in pseudos for positionals
-             * @param {Function} fn
+             * Returns a function to use in pseudos for positionals.
+             * The returned function marks elements found at the specified indexes as matches.
+             *
+             * @param {Function} fn A function that returns an array of match indexes.
+             * @returns {Function} A function that processes the elements at the specified positions.
              */
             function createPositionalPseudo(fn) {
                 return markFunction(function (argument) {
@@ -1107,8 +1138,8 @@
 
             /**
              * Checks a node for validity as a Sizzle context
-             * @param {Element|Object=} context
-             * @returns {Element|Object|Boolean} The input node if acceptable, otherwise a falsy value
+             * @param {Element|object=} context
+             * @returns {Element|object|boolean} The input node if acceptable, otherwise a falsy value
              */
             function testContext(context) {
                 return context && typeof context.getElementsByTagName !== "undefined" && context;
@@ -1119,8 +1150,8 @@
 
             /**
              * Detects XML nodes
-             * @param {Element|Object} elem An element or a document
-             * @returns {Boolean} True iff elem is a non-HTML XML node
+             * @param {Element|object} elem An element or a document
+             * @returns {boolean} True iff elem is a non-HTML XML node
              */
             isXML = Sizzle.isXML = function (elem) {
                 var namespace = elem && elem.namespaceURI,
@@ -1134,8 +1165,8 @@
 
             /**
              * Sets document-related variables once based on the current document
-             * @param {Element|Object} [doc] An element or document object to use to set the document
-             * @returns {Object} Returns the current document
+             * @param {Element|object} [doc] An element or document object to use to set the document
+             * @returns {object} Returns the current document
              */
             setDocument = Sizzle.setDocument = function (node) {
                 var hasCompare,
