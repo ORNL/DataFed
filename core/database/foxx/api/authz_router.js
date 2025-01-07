@@ -128,7 +128,7 @@ router
                     throw [record.error(), record.errorMessage()];
                 }
             } else {
-                // If the record does not exist then the path would noe be consistent.
+                // If the record does not exist then the path would not be consistent.
                 console.log(
                     "AUTHZ act: " +
                         req.queryParams.act +
