@@ -2082,7 +2082,7 @@ function treeSelectRange(a_tree, a_node) {
  * @function
  * Check if pasting is allowed to the specified node.
  *
- * This function checks whether a paste operation is allowed based on various conditions,
+ * @description This function checks whether a paste operation is allowed based on various conditions,
  * such as whether the destination node is valid, whether the source and destination nodes
  * belong to the same scope, and other restrictions like node types and parent-child relationships.
  *
