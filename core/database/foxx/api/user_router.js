@@ -641,7 +641,10 @@ router
                                 dependent_scopes: scopes,
                                 request_time: Math.floor(Date.now() / 1000),
                                 last_used: Math.floor(Date.now() / 1000),
-                                status: obj.expiration > Math.floor(Date.now() / 1000) ? "active" : "inactive",
+                                status:
+                                    obj.expiration > Math.floor(Date.now() / 1000)
+                                        ? "active"
+                                        : "inactive",
                                 ...obj,
                             };
 
