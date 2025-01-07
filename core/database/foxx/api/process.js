@@ -6,15 +6,46 @@ const g_lib = require("./support");
 module.exports = (function () {
     var obj = {};
 
-    /** @brief Pre-process data/collection IDs for permissions and required data
-     *
-     * Examine data and collections for proper permissions for the given mode and
-     * recursively process items (data/collections) in included collections. Does
-     * not resolve IDs. On success, returns lists of data records for globus and
-     * external data, as well as records without data. Also returns a flat list of
-     * all collections. In delete mode, for data records in collections, only data
-     * that isn't linked elsewhere are returned.
-     */
+	/**
+	 * @function
+	 * @description Pre-processes data and collection IDs for permissions and required data.
+	 * This function examines the specified data and collections for the appropriate permissions
+	 * based on the given mode and recursively processes items (data/collections) in included collections.
+	 * It does not resolve IDs. On success, it returns lists of data records for Globus and external data, 
+	 * as well as records without data. Additionally, it returns a flat list of all collections.
+	 * 
+	 * In delete mode, only data that is not linked elsewhere will be returned for data records within collections.
+	 *
+	 * @param {Object} a_client - The client object containing the client ID and admin status.
+	 * @param {string} a_client._id - The unique identifier of the client.
+	 * @param {boolean} a_client.is_admin - A flag indicating if the client is an administrator.
+	 * @param {string} a_new_owner_id - The ID of the new owner to assign.
+	 * @param {Array} a_ids - An array of data and collection IDs to process.
+	 * @param {string} a_mode - The mode in which the operation is being performed. It can be one of the following:
+	 *  - `g_lib.TT_DATA_GET`: Read data permissions.
+	 *  - `g_lib.TT_DATA_PUT`: Write data permissions.
+	 *  - `g_lib.TT_REC_ALLOC_CHG`: Allocate/change record permissions.
+	 *  - `g_lib.TT_REC_OWNER_CHG`: Change record owner permissions.
+	 *  - `g_lib.TT_REC_DEL`: Delete record permissions.
+	 *  - `g_lib.TT_DATA_EXPORT`: Export data permissions.
+	 *
+	 * @returns {Object} ctxt - An object containing the following properties:
+	 *  - `client`: The client information.
+	 *  - `new_owner`: The ID of the new owner.
+	 *  - `mode`: The mode for the operation.
+	 *  - `coll_perm`: The collection permission level.
+	 *  - `data_perm`: The data permission level.
+	 *  - `coll`: A list of collections.
+	 *  - `glob_data`: A list of Globus data records.
+	 *  - `ext_data`: A list of external data records.
+	 *  - `visited`: A record of visited items during recursion.
+	 *
+	 * @throws {Error} g_lib.ERR_INVALID_MODE - If an invalid mode is passed.
+	 * 
+	 * @example
+	 * const result = obj.preprocessItems(client, newOwnerId, dataIds, g_lib.TT_DATA_GET);
+	 * console.log(result.glob_data);
+	 */
     obj.preprocessItems = function (a_client, a_new_owner_id, a_ids, a_mode) {
         //console.log( "preprocessItems start" );
         var ctxt = {
@@ -112,17 +143,20 @@ module.exports = (function () {
     };
 
     /**
-     * @brief Recursive preprocessing of data/collections for data operations
-     * @param a_ctxt - Recursion context object
-     * @param a_ids - Current list of data/collection IDs to process
-     * @param a_perm - Inherited permission (undefined initially)
-     *
-     * This function pre-processes with optimized permission verification by
-     * using a depth-first analysis of collections. If the required permission
-     * is satisfied via inherited ACLs, then no further permission checks are
-     * required below that point. The end result is a flat list of collections
-     * and data segregated into those with Globus data (regardless of data
-     * size) and those with external data.
+     * Recursively preprocesses data and collections for data operations.
+     * 
+     * This function performs a depth-first analysis of collections, verifying permissions.
+     * It ensures that if the required permission is satisfied via inherited ACLs, no further 
+     * permission checks are needed below that point. The function segregates collections and 
+     * data into two categories: those with Globus data (regardless of data size) and those 
+     * with external data. The final result is a flat list of collections and data.
+     * 
+     * @param {Object} a_ctxt - The recursion context object, containing relevant state such as permissions and mode.
+     * @param {Array} a_ids - The current list of data/collection IDs to process.
+     * @param {number} [a_data_perm] - The inherited data permission (undefined initially).
+     * @param {number} [a_coll_perm] - The inherited collection permission (undefined initially).
+     * 
+     * @throws {Array} Throws error with permission or parameter issues.
      */
     obj._preprocessItemsRecursive = function (a_ctxt, a_ids, a_data_perm, a_coll_perm) {
         var i, id, ids, is_coll, doc, perm, ok, data_perm, coll_perm;
