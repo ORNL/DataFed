@@ -22,6 +22,7 @@ include:
   - local: .gitlab/stage_provision_client.yml
   - local: .gitlab/stage_image_check.yml
   - local: .gitlab/stage_build.yml
+  - local: .gitlab/stage_test.yml
   - local: .gitlab/stage_unit.yml
   - local: .gitlab/end_to_end.yml
 
@@ -53,3 +54,4 @@ variables:
   HARBOR_USER: 'robot$$datafed+harbor_datafed_gitlab_ci_registry_2'
   REGISTRY: 'camden.ornl.gov'
   DATAFED_DEPENDENCIES_INSTALL_PATH: "/shared/install"
+  DOCKER_TLS_CERTDIR: "" # Required for running docker in docker
