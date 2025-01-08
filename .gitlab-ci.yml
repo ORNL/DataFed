@@ -35,6 +35,7 @@ stages:
   - provision-client
   - image-check
   - build
+  - test # Required for gitlab sast templates
   - unit
   - end-to-end-setup-arango
   - end-to-end-setup
