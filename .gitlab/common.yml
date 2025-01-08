@@ -287,7 +287,15 @@
   stage: log
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - docker logs $(docker ps -a --filter "ancestor=${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}" --format "{{.Names}}")
+    - echo "Lower branch is $BRANCH_LOWER"
+    - export FULL_IMAGE_NAME="${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}"
+    - echo "Image name is $FULL_IMAGE_NAME"
+    - export ANCESTORS=$(docker ps -a --filter "ancestor=${FULL_IMAGE_NAME}" --format "{{.Names}}")
+    - echo "Ancestor output"
+    - echo "$ANCESTORS"
+    - echo "docker ps output"
+    - docker ps
+    - docker logs $(docker ps -a --filter "ancestor=${FULL_IMAGE_NAME}" --format "{{.Names}}")
   rules:
     - when: always
 
