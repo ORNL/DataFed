@@ -9,27 +9,27 @@ const { Repo, PathType } = require("./repo");
 module.exports = (function () {
     let obj = {};
 
-   /**
-    * Checks if a client has the required permissions on a record.
-    *
-    * @param {string} a_data_key - A DataFed key associated with a record (not prepended with 'd/').
-    * @param {Object} a_client - A user document representing the client whose permissions are being verified.
-    *                            The client document contains the following properties:
-    *                            - `_key` (string): The client's unique key.
-    *                            - `_id` (string): The client's unique identifier.
-    *                            - `name` (string): The full name of the client.
-    *                            - `name_first` (string): The first name of the client.
-    *                            - `name_last` (string): The last name of the client.
-    *                            - `is_admin` (boolean): Indicates if the client has admin privileges.
-    *                            - `max_coll` (number): Maximum collections allowed.
-    *                            - `max_proj` (number): Maximum projects allowed.
-    *                            - `max_sav_qry` (number): Maximum saved queries allowed.
-    *                            - `email` (string): The client's email address.
-    * @param {string} a_perm - The permission type to check
-    * 
-    * @see support#obj - for permission options i.e.PERM_CREATE, PERM_WR_DATA, PERM_RD_DATA`
-    */
-   
+    /**
+     * Checks if a client has the required permissions on a record.
+     *
+     * @param {string} a_data_key - A DataFed key associated with a record (not prepended with 'd/').
+     * @param {Object} a_client - A user document representing the client whose permissions are being verified.
+     *                            The client document contains the following properties:
+     *                            - `_key` (string): The client's unique key.
+     *                            - `_id` (string): The client's unique identifier.
+     *                            - `name` (string): The full name of the client.
+     *                            - `name_first` (string): The first name of the client.
+     *                            - `name_last` (string): The last name of the client.
+     *                            - `is_admin` (boolean): Indicates if the client has admin privileges.
+     *                            - `max_coll` (number): Maximum collections allowed.
+     *                            - `max_proj` (number): Maximum projects allowed.
+     *                            - `max_sav_qry` (number): Maximum saved queries allowed.
+     *                            - `email` (string): The client's email address.
+     * @param {string} a_perm - The permission type to check
+     *
+     * @see support#obj - for permission options i.e.PERM_CREATE, PERM_WR_DATA, PERM_RD_DATA`
+     */
+
     obj.isRecordActionAuthorized = function (a_client, a_data_key, a_perm) {
         const data_id = "d/" + a_data_key;
         // If the user is not an admin of the object we will need

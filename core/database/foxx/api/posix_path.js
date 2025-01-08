@@ -18,7 +18,12 @@ module.exports = (function () {
         if (!a_posix_path) {
             throw new Error("Invalid POSIX path");
         } else if (typeof a_posix_path !== "string") {
-            throw new Error("Invalid POSIX path type: ", typeof a_posix_path, " path content: ", a_posix_path);
+            throw new Error(
+                "Invalid POSIX path type: ",
+                typeof a_posix_path,
+                " path content: ",
+                a_posix_path,
+            );
         }
         // Split the path into components
         // components: ['', 'usr', 'local', 'bin', 'node']
