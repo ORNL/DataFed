@@ -153,6 +153,7 @@ secret_detection:
     - if: $CI_PIPELINE_SOURCE == "push"
 
 gemnasium-dependency_scanning:
+  stage: unit
   tags:
     - docker-exec 
   rules:
