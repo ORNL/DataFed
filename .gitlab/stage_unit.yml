@@ -151,15 +151,15 @@ secret_detection:
   rules:
     - if: $CI_PIPELINE_SOURCE == "push"
 
-#gemnasium-dependency_scanning:
-#  stage: unit
-#  tags:
-#    - docker-exec 
-#  rules:
-#    - if: $CI_PIPELINE_SOURCE == "push"
+gemnasium-dependency_scanning:
+  stage: test
+  tags:
+    - docker-exec 
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
 
 include:
 - template: Security/Secret-Detection.gitlab-ci.yml
 - template: Security/SAST.gitlab-ci.yml
-#- template: Security/Dependency-Scanning.gitlab-ci.yml
+- template: Security/Dependency-Scanning.gitlab-ci.yml
 #- template: Jobs/Container-Scanning.gitlab-ci.yml
