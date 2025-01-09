@@ -283,30 +283,28 @@
     # Needed if the harbor check script errors out.
     - if [ -f "${CI_PROJECT_DIR}/harbor_check.log" ]; then cat "${CI_PROJECT_DIR}/harbor_check.log"; fi;
 
-# It is possible to return more than one container with the same ancestor
-# for instance if two different branches have the exact same build but
-# different names. Or one image was built on top of another and share the
-# same base.
 .error_logs_client_end_to_end:
   stage: log
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - echo "Lower branch is $BRANCH_LOWER"
     - export FULL_IMAGE_NAME="${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}"
-    - echo "Image name is $FULL_IMAGE_NAME"
+    - echo "Full image name is $FULL_IMAGE_NAME"
     - export ANCESTORS=$(docker ps -a --filter "ancestor=${FULL_IMAGE_NAME}" --format "{{.Names}}")
-    - echo "Ancestor output"
+    - echo "Found Ancestors"
     - echo "$ANCESTORS"
-    - echo "docker ps output"
-    - docker ps
     - export ANCESTOR_CONTAINERS=$(docker ps -a --filter "ancestor=${FULL_IMAGE_NAME}" --format "{{.Names}}") 
-    - echo "ANCESTORS ${ANCESTOR_CONTAINERS}"
-    - echo "Matching against ${COMPONENT}-${BRANCH_LOWER}"
+    - echo "${ANCESTOR_CONTAINERS}"
+      # It is possible to return more than one container with the same ancestor
+      # for instance if two different branches have the exact same build but
+      # different names. Or one image was built on top of another and share the
+      # same base.
     - export MATCHING_CONTAINERS=$( echo "$ANCESTOR_CONTAINERS" | grep "${COMPONENT}-${BRANCH_LOWER}" || echo "")
-    - echo "Matching containers are $MATCHING_CONTAINERS" 
     - if [ -z "$MATCHING_CONTAINERS" ]; then
         echo "No matching containers found for image ${FULL_IMAGE_NAME} and component ${COMPONENT}-${BRANCH_LOWER}";
       else
+        echo "Getting log output for the following."
+        echo "$MATCHING_CONTAINERS"
         docker logs $MATCHING_CONTAINERS;
       fi
   rules:
