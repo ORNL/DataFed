@@ -302,7 +302,7 @@
     - CONTAINERS=$(docker ps -a --filter "ancestor=${FULL_IMAGE_NAME}" --format "{{.Names}}") 
     - echo "Containers are: $CONTAINERS"
     - echo "Matching against: ${COMPONENT}-${BRANCH_LOWER}"
-    - MATCHING_CONTAINERS=( echo "$CONTAINERS" | grep "${COMPONENT}-${BRANCH_LOWER}" || echo "")
+    - MATCHING_CONTAINERS=$( echo "$CONTAINERS" | grep "${COMPONENT}-${BRANCH_LOWER}" || echo "")
     - echo "Matching containers are: $MATCHING_CONTAINERS" 
     - if [ -z "$MATCHING_CONTAINERS" ]; then
         echo "No matching containers found for image ${FULL_IMAGE_NAME} and component ${COMPONENT}-${BRANCH_LOWER}";
