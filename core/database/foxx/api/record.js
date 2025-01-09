@@ -5,8 +5,9 @@ const g_lib = require("./support");
 const { errors } = require("@arangodb");
 
 /**
- * @class Record
- * @brief Represents a record in the database and provides methods to manage it.
+ * Represents a record in the database and provides methods to manage it.
+ * 
+ * @class
  */
 class Record {
     // ERROR code
@@ -25,8 +26,10 @@ class Record {
     #data_id = null;
 
     /**
-     * @brief Constructs a Record object and checks if the key exists in the database.
-     * @param {string} a_key - The unique identifier for the record.
+     * Constructs a Record object and checks if the key exists in the database.
+     * 
+     * @class
+     * @param {string} a_key - The unique identifier for the record. Must be a valid key in the database.
      */
     constructor(a_key) {
         // Define the collection
@@ -58,14 +61,19 @@ class Record {
     }
 
     /**
-     * @brief will create the path to key as it should appear on the repository.
-     **/
+     * Generates the full path to the record as it should appear in the repository.
+     * 
+     * @param {string} basePath - The base path where the record is stored.
+     * @returns {string} - The full path to the record.
+     */
     _pathToRecord(basePath) {
         return basePath.endsWith("/") ? basePath + this.#key : basePath + "/" + this.#key;
     }
 
     /**
-     * @brief Compares two paths and if an error is detected will save the error code and message.
+     * Compares two paths and if an error is detected will save the error code and message.
+     * 
+     * @returns {boolean} - true if paths are equal false otherwise
      **/
     _comparePaths(storedPath, inputPath) {
         if (storedPath !== inputPath) {
@@ -81,7 +89,8 @@ class Record {
     }
 
     /**
-     * @brief Checks if the record exists in the database.
+     * Checks if the record exists in the database.
+     *
      * @return {boolean} True if the record exists, otherwise false.
      */
     exists() {
@@ -96,16 +105,15 @@ class Record {
         return this.#data_id;
     }
     /**
-     * @brief Will return error code of last run method.
-     *
-     * If no error code, will return null
+     * Will return error code of last run method.
      **/
     error() {
         return this.#error;
     }
 
     /**
-     * @brief Retrieves the error code of the last run method.
+     * Retrieves the error code of the last run method.
+     *
      * @return {string|null} Error code or null if no error.
      */
     errorMessage() {
@@ -113,7 +121,8 @@ class Record {
     }
 
     /**
-     * @brief Checks if the record is managed by DataFed.
+     * Checks if the record is managed by DataFed.
+     *
      * @return {boolean} True if managed, otherwise false.
      */
     isManaged() {
@@ -142,7 +151,8 @@ class Record {
     }
 
     /**
-     * @brief Validates if the provided record path is consistent with the database.
+     * Validates if the provided record path is consistent with the database.
+     *
      * @param {string} a_path - The path to validate.
      * @return {boolean} True if consistent, otherwise false.
      */
