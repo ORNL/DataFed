@@ -287,12 +287,8 @@
   stage: log
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - echo "Lower branch is $BRANCH_LOWER"
     - export FULL_IMAGE_NAME="${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}"
     - echo "Full image name is $FULL_IMAGE_NAME"
-    - export ANCESTORS=$(docker ps -a --filter "ancestor=${FULL_IMAGE_NAME}" --format "{{.Names}}")
-    - echo "Found Ancestors"
-    - echo "$ANCESTORS"
     - export ANCESTOR_CONTAINERS=$(docker ps -a --filter "ancestor=${FULL_IMAGE_NAME}" --format "{{.Names}}") 
     - echo "${ANCESTOR_CONTAINERS}"
       # It is possible to return more than one container with the same ancestor
