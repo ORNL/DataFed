@@ -5,6 +5,9 @@ const router = createRouter();
 const joi = require("joi");
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
+const pathModule = require("./posix_path"); // Replace with the actual file name
+const Record = require("./record"); // Replace with the actual file name
+const authzModule = require("./authz"); // Replace with the actual file name
 
 module.exports = router;
 
@@ -22,44 +25,67 @@ router
                 req.queryParams.act,
             );
 
+            // Client will contain the following information
+            // {
+            //   "_key" : "bob",
+            //   "_id" : "u/bob",
+            //   "name" : "bob junior ",
+            //   "name_first" : "bob",
+            //   "name_last" : "jones",
+            //   "is_admin" : true,
+            //   "max_coll" : 50,
+            //   "max_proj" : 10,
+            //   "max_sav_qry" : 20,
+            //   :
+            //   "email" : "bobjones@gmail.com"
+            // }
             const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
 
-            var idx = req.queryParams.file.lastIndexOf("/");
-            var data_key = req.queryParams.file.substr(idx + 1);
-            var data_id = "d/" + data_key;
+            // Will split a posix path into an array
+            // E.g.
+            // req.queryParams.file = "/usr/local/bin"
+            // const path_components = pathModule.splitPOSIXPath(req.queryParams.file);
+            //
+            // Path components will be
+            // ["usr", "local", "bin"]
+            const path_components = pathModule.splitPOSIXPath(req.queryParams.file);
+            const data_key = path_components.at(-1);
+            let record = new Record(data_key);
 
             // Special case - allow unknown client to read a publicly accessible record
+            // if record exists and if it is a public record
             if (!client) {
-                if (req.queryParams.act != "read" || !g_lib.hasPublicRead(data_id)) {
-                    console.log("Permission to read denied!");
-                    throw g_lib.ERR_PERM_DENIED;
+                if (record.exists()) {
+                    if (req.queryParams.act != "read" || !g_lib.hasPublicRead(record.id())) {
+                        console.log(
+                            "AUTHZ act: " +
+                                req.queryParams.act +
+                                " client: " +
+                                client._id +
+                                " path " +
+                                req.queryParams.file +
+                                " FAILED",
+                        );
+                        throw g_lib.ERR_PERM_DENIED;
+                    }
                 }
-                console.log("allow anon read of public record");
             } else {
-                console.log("client:", client);
-
                 // Actions: read, write, create, delete, chdir, lookup
-                var req_perm = 0;
+                let req_perm = 0;
                 switch (req.queryParams.act) {
                     case "read":
-                        console.log("Client: ", client, " read permissions?");
                         req_perm = g_lib.PERM_RD_DATA;
                         break;
                     case "write":
-                        console.log("Client: ", client, " write permissions?");
                         break;
                     case "create":
-                        console.log("Client: ", client, " create permissions?");
                         req_perm = g_lib.PERM_WR_DATA;
                         break;
                     case "delete":
-                        console.log("Client: ", client, " delete permissions?");
                         throw g_lib.ERR_PERM_DENIED;
                     case "chdir":
-                        console.log("Client: ", client, " chdir permissions?");
                         break;
                     case "lookup":
-                        console.log("Client: ", client, " lookup permissions?");
                         // For TESTING, allow these actions
                         return;
                     default:
@@ -70,85 +96,75 @@ router
                         ];
                 }
 
-                console.log("client: ", client, " data_id: ", data_id);
-                if (!g_lib.hasAdminPermObject(client, data_id)) {
-                    var data = g_db.d.document(data_id);
-                    if (!g_lib.hasPermissions(client, data, req_perm)) {
-                        console.log("Client: ", client, " does not have permission!");
+                // This will tell us if the action on the record is authorized
+                // we still do not know if the path is correct.
+                if (record.exists()) {
+                    if (!authzModule.isRecordActionAuthorized(client, data_key, req_perm)) {
+                        console.log(
+                            "AUTHZ act: " +
+                                req.queryParams.act +
+                                " client: " +
+                                client._id +
+                                " path " +
+                                req.queryParams.file +
+                                " FAILED",
+                        );
                         throw g_lib.ERR_PERM_DENIED;
                     }
                 }
             }
 
-            // Verify repo and path are correct for record
-            // Note: only managed records have an allocations and this gridftp auth call is only made for managed records
-            //var path = req.queryParams.file.substr( req.queryParams.file.indexOf("/",8));
-            var path = req.queryParams.file;
-            console.log("data_id is, ", data_id);
-            var loc = g_db.loc.firstExample({
-                _from: data_id,
-            });
-            console.log("Loc is:");
-            console.log(loc);
-            if (!loc) {
+            if (record.exists()) {
+                if (!record.isPathConsistent(req.queryParams.file)) {
+                    console.log(
+                        "AUTHZ act: " +
+                            req.queryParams.act +
+                            " client: " +
+                            client._id +
+                            " path " +
+                            req.queryParams.file +
+                            " FAILED",
+                    );
+                    throw [record.error(), record.errorMessage()];
+                }
+            } else {
+                // If the record does not exist then the path would noe be consistent.
                 console.log(
-                    "Permission denied data is not managed by DataFed. This can happen if you try to do a transfer directly from Globus.",
+                    "AUTHZ act: " +
+                        req.queryParams.act +
+                        " client: " +
+                        client._id +
+                        " path " +
+                        req.queryParams.file +
+                        " FAILED",
                 );
-                throw g_lib.ERR_PERM_DENIED;
+                throw [g_lib.ERR_PERM_DENIED, "Invalid record specified: " + req.queryParams.file];
             }
-            var alloc = g_db.alloc.firstExample({
-                _from: loc.uid,
-                _to: loc._to,
-            });
-            console.log("path:", path, " alloc path:", alloc.path + data_key, " loc: ", loc);
-            if (!alloc) {
-                throw g_lib.ERR_PERM_DENIED;
-            }
-
-            // If path is missing the starting "/" add it back in
-            if (!path.startsWith("/") && alloc.path.startsWith("/")) {
-                path = "/" + path;
-            }
-
-            console.log("path:", path, " alloc path:", alloc.path + data_key, " loc: ", loc);
-            if (alloc.path + data_key != path) {
-                // This may be due to an alloc/owner change
-                // Allow If new path matches
-                console.log("authz loc info:", loc);
-
-                if (!loc.new_repo) {
-                    console.log("Throw a permission denied error");
-                    throw g_lib.ERR_PERM_DENIED;
-                }
-
-                console.log("Creating alloc");
-                alloc = g_db.alloc.firstExample({
-                    _from: loc.new_owner ? loc.new_owner : loc.uid,
-                    _to: loc.new_repo,
-                });
-
-                console.log("alloc is ");
-                console.log(alloc);
-                if (!alloc || alloc.path + data_key != path) {
-                    throw [
-                        obj.ERR_PERM_DENIED,
-                        "Permission denied, DataFed registered path is '" +
-                            alloc.path +
-                            data_key +
-                            "' Globus path is '" +
-                            path +
-                            "'",
-                    ];
-                }
-            }
+            console.log(
+                "AUTHZ act: " +
+                    req.queryParams.act +
+                    " client: " +
+                    client._id +
+                    " path " +
+                    req.queryParams.file +
+                    " SUCCESS",
+            );
         } catch (e) {
             g_lib.handleException(e, res);
         }
     })
     .queryParam("client", joi.string().required(), "Client ID")
-    .queryParam("repo", joi.string().required(), "Originating repo ID")
+    .queryParam(
+        "repo",
+        joi.string().required(),
+        "Originating repo ID, where the DataFed managed GridFTP server is running.",
+    )
     .queryParam("file", joi.string().required(), "Data file name")
-    .queryParam("act", joi.string().required(), "Action")
+    .queryParam(
+        "act",
+        joi.string().required(),
+        "GridFTP action: 'lookup', 'chdir', 'read', 'write', 'create', 'delete'",
+    )
     .summary("Checks authorization")
     .description("Checks authorization");
 

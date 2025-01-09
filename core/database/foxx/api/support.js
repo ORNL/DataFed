@@ -302,6 +302,15 @@ module.exports = (function () {
     obj.GLOB_MAX_XFR_SIZE = 10000000000; // ~10GB
     //obj.GLOB_MAX_XFR_SIZE = 2000000;
 
+    // TODO: this will need to be updated every time the AccessTokenType enum is updated in SDMS.proto
+    obj.AccessTokenType = {
+        GENERIC: 1,
+        GLOBUS: 2,
+        GLOBUS_AUTH: 3,
+        GLOBUS_TRANSFER: 4,
+        GLOBUS_DEFAULT: 5,
+    };
+
     obj.procInputParam = function (a_in, a_field, a_update, a_out) {
         var val,
             spec = obj.field_reqs[a_field];
@@ -627,6 +636,39 @@ module.exports = (function () {
         return first_uuid;
     };
 
+    /**
+     * Retrieves user information based on the provided client ID.
+     *
+     * The return value should be a client containing the following information:
+     * {
+     *   "_key" : "bob",
+     *   "_id" : "u/bob",
+     *   "name" : "bob junior",
+     *   "name_first" : "bob",
+     *   "name_last" : "jones",
+     *   "is_admin" : true,
+     *   "max_coll" : 50,
+     *   "max_proj" : 10,
+     *   "max_sav_qry" : 20,
+     *   "email" : "bobjones@gmail.com"
+     * }
+     *
+     * The client ID can be in the following formats:
+     * - SDMS uname (e.g., "xxxxx...")
+     * - UUID (e.g., "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx")
+     * - Account (e.g., "domain.uname")
+     *
+     * UUIDs are defined by length and format, accounts have a "." (and known domains),
+     * and SDMS unames have no "." or "-" characters.
+     *
+     * @param {string} a_client_id - The client ID, which can be in various formats (SDMS uname, UUID, or Account).
+     * @throws {Array} Throws an error if the user does not exist, or the client ID is invalid.
+     * @returns {Object} The user record containing details such as name, admin status, and email.
+     *
+     * @example
+     * const user = obj.getUserFromClientID('u/bob');
+     * console.log(user.name); // "bob junior"
+     */
     obj.getUserFromClientID = function (a_client_id) {
         // Client ID can be an SDMS uname (xxxxx...), a UUID (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx), or an account (domain.uname)
         // UUID are defined by length and format, accounts have a "." (and known domains), SDMS unames have no "." or "-" characters
@@ -1001,6 +1043,31 @@ module.exports = (function () {
         return false;
     };
 
+    /**
+     * @breif checks to make sure the client has admin permissions on an object
+     *
+     * @param a_client - this is a user document i.e.
+     *
+     * {
+     *   "_key" : "bob",
+     *   "_id" : "u/bob",
+     *   "name" : "bob junior ",
+     *   "name_first" : "bob",
+     *   "name_last" : "jones",
+     *   "is_admin" : true,
+     *   "max_coll" : 50,
+     *   "max_proj" : 10,
+     *   "max_sav_qry" : 20,
+     *   :
+     *   "email" : "bobjones@gmail.com"
+     * }
+     *
+     * @param a_object_id - the identity of a record or collection or project
+     *
+     * "d/fdakjfla"
+     * "p/big_thing"
+     * "c/my_collection"
+     **/
     obj.hasAdminPermObject = function (a_client, a_object_id) {
         if (a_client.is_admin) return true;
 
@@ -3118,6 +3185,58 @@ module.exports = (function () {
                 }
             }
         }
+    };
+
+    /**
+     *
+     * @param token_type {obj.AccessTokenType} Type to determine parse logic.
+     * @param other_token_data {string}
+     * String of additional token data, delimited by the '|' character.
+     * The format is determined by the token type.
+     * Currently expecting the following formats:
+     *
+     * GLOBUS_TRANSFER: "<UUID>|<scopes>"
+     * @returns {{}} Object containing the parsed key/values of the input other_token_data string.
+     * @throws obj.ERR_INVALAD_PARAM
+     *
+     * @example
+     * // returns { uuid: "1cbaaee5-b938-4a4e-87a8-f1ec4d5d92f9", scopes: "urn:globus:auth:scope:transfer.api.globus.org:all+email" }
+     * parseOtherTokenData(AccessTokenType.GLOBUS_TRANSFER, "1cbaaee5-b938-4a4e-87a8-f1ec4d5d92f9|urn:globus:auth:scope:transfer.api.globus.org:all+email");
+     */
+    obj.parseOtherTokenData = (token_type, other_token_data) => {
+        let return_data = {};
+        // TODO: other token types
+        if (token_type === obj.AccessTokenType.GLOBUS_TRANSFER) {
+            // TODO: add support for additional type of collection and HA fields
+            // TODO: callers and jsdocs will need to be updated if changes are made to assumed data
+            // GLOBUS_TRANSFER parse currently assumes uuid and scopes exist, but this may change
+            const parsed_data = other_token_data.split("|");
+            if (parsed_data.length !== 2) {
+                throw [obj.ERR_INVALID_PARAM, "Unexpected count of additional token data provided"];
+            }
+
+            const parsed_uuid = parsed_data[0];
+            if (!obj.isUUID(parsed_uuid)) {
+                throw [
+                    obj.ERR_INVALID_PARAM,
+                    "Provided other_token_data does not follow format of '<UUID>|<scopes>'",
+                ];
+            }
+            const parsed_scopes = parsed_data[1];
+            if (!parsed_scopes.includes("transfer.api.globus.org")) {
+                // TODO: does this need validation, and is this validation sufficient?
+                throw [
+                    obj.ERR_INVALID_PARAM,
+                    "Scopes included in other_token_data do not refer to transfer resource, but transfer resource was specified",
+                ];
+            }
+            return_data = {
+                ...return_data,
+                uuid: parsed_uuid,
+                scopes: parsed_scopes,
+            };
+        }
+        return return_data;
     };
 
     return obj;
