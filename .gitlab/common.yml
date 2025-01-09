@@ -295,7 +295,11 @@
     - echo "$ANCESTORS"
     - echo "docker ps output"
     - docker ps
-    - docker logs $(docker ps -a --filter "ancestor=${FULL_IMAGE_NAME}" --format "{{.Names}}")
+      # It is possible to return more than one container with the same ancestor
+      # for instance if two different branches have the exact same build but
+      # different names. Or one image was built on top of another and share the
+      # same base.
+    - docker logs $(docker ps -a --filter "ancestor=${FULL_IMAGE_NAME}" --format "{{.Names}}" | grep "${COMPONENT}-${BRANCH_LOWER}" )
   rules:
     - when: always
 
