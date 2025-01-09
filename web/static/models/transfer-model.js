@@ -1,26 +1,48 @@
 import * as util from "../util.js";
+import { TT_DATA_GET, TT_DATA_PUT } from "../model.js";
+
+export const TransferMode = Object.freeze({
+    TT_DATA_GET,
+    TT_DATA_PUT,
+});
 
 /**
  * Model class for transfer dialog data and state
  */
 export class TransferModel {
+    #mode;
+    #records;
+    #selectedIds;
+    #transferConfig;
+    #stats;
+
     /**
-     * @param {number} mode - Transfer mode (GET/PUT)
+     * @param {TransferMode[keyof TransferMode]} mode - Transfer mode
      * @param {Array<Object>} records - Data records
+     * @throws {Error} If invalid mode provided
      */
     constructor(mode, records) {
-        this.mode = mode;
-        this.records = records || [];
-        this.selectedIds = new Set();
-        this.endpointManager = null;
-        this.transferConfig = this.initializeConfig(records);
+        this.#validateMode(mode);
+        this.#mode = mode;
+        this.#records = records || [];
+        this.#selectedIds = new Set(); // Allows for O(1) lookups + ids are unique
+        this.#transferConfig = this.#initializeConfig(records);
 
         if (records) {
-            this.stats = this.calculateStats();
+            this.#stats = this.#calculateStats();
         }
     }
 
-    initializeConfig(records) {
+    #validateMode(mode) {
+        const validModes = Object.values(TransferMode);
+        if (!validModes.includes(mode)) {
+            throw new Error(
+                `Invalid transfer mode: ${mode}. Must be one of: ${validModes.join(", ")}`,
+            );
+        }
+    }
+
+    #initializeConfig(records) {
         return {
             path: records?.[0]?.source || "",
             encrypt: 1,
@@ -29,12 +51,12 @@ export class TransferModel {
         };
     }
 
-    calculateStats() {
-        return this.records.reduce(
+    #calculateStats() {
+        return this.#records.reduce(
             (stats, record) => {
                 if (this.isRecordValid(record)) {
                     stats.totalSize += parseInt(record.size);
-                    this.selectedIds.add(record.id);
+                    this.#selectedIds.add(record.id);
                 } else {
                     stats.skippedCount++;
                 }
@@ -44,6 +66,18 @@ export class TransferModel {
         );
     }
 
+    get mode() {
+        return this.#mode;
+    }
+
+    get records() {
+        return [...this.#records];
+    }
+
+    get stats() {
+        return { ...this.#stats };
+    }
+
     /**
      * Check if record is valid for transfer
      * @param {Object} record - Data record
@@ -51,14 +85,6 @@ export class TransferModel {
      */
     isRecordValid(record) {
         return record.size > 0 && !record.locked;
-    }
-
-    /**
-     * Get selected record IDs
-     * @returns {Array<string>}
-     */
-    getSelectedIds() {
-        return Array.from(this.selectedIds);
     }
 
     /**
@@ -74,16 +100,5 @@ export class TransferModel {
             info: util.sizeToString(item.size),
             selectable: true,
         };
-    }
-
-    /**
-     * Get default path for endpoint
-     * @param {Object} endpoint Endpoint data
-     * @returns {string} Default path
-     */
-    getDefaultPath(endpoint) {
-        if (!this.endpointManager) return "";
-        const path = this.endpointManager.name + (this.endpointManager.default_directory || "/");
-        return path.replace("{server_default}/", "");
     }
 }

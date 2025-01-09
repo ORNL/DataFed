@@ -1,17 +1,23 @@
-import * as model from "../../model.js";
 import * as dialogs from "../../dialogs.js";
 import * as util from "../../util.js";
 import * as settings from "../../settings.js";
 import * as dlgEpBrowse from "../../dlg_ep_browse.js";
 import * as api from "../../api.js";
+import { TransferMode } from "../../models/transfer-model.js";
 
 export class TransferUIManager {
-    constructor(dialog) {
-        this.controller = dialog;
-        this.frame = null;
+    #controller;
+    #frame;
+    #state;
+
+    constructor(dialog, services = { api, dialogs }) {
+        this.#controller = dialog;
+        this.api = services.api; // dependency injection
+        this.dialogs = services.dialogs; // dependency injection
+        this.#frame = null;
         this.encryptRadios = null;
         this.inputTimer = null;
-        this.state = {
+        this.#state = {
             selectionOk: true,
             endpointOk: false,
         };
@@ -26,12 +32,23 @@ export class TransferUIManager {
         }
     }
 
+    cleanup() {
+        if (this.recordTree) {
+            try {
+                this.recordTree.destroy();
+            } catch (error) {
+                console.warn("Error cleaning up record tree:", error);
+            }
+            this.recordTree = null;
+        }
+    }
+
     /**
      * ------------BUTTON------------
      */
 
     ensureButtonInitialized(buttonSelector) {
-        const $button = $(buttonSelector, this.frame);
+        const $button = $(buttonSelector, this.#frame);
         if (!$button.hasClass("ui-button")) {
             $button.button();
         }
@@ -47,16 +64,41 @@ export class TransferUIManager {
      * ------------GET------------
      */
 
+    /**
+     * Get default path for endpoint
+     * @param {Object} endpoint Endpoint data
+     * @returns {string} Default path
+     */
+    getDefaultPath(endpoint) {
+        if (!endpoint) return "";
+
+        const defaultDir = endpoint.default_directory || "/";
+        const normalizedDir = defaultDir
+            .replace("{server_default}/", "") // Remove API {server_default} prefix
+            .replace(/\/+/g, "/"); // Remove multiple consecutive slashes
+
+        // Ensure path starts with endpoint name and has proper formatting
+        return `${endpoint.name}${normalizedDir.startsWith("/") ? "" : "/"}${normalizedDir}`;
+    }
+
+    /**
+     * Get browse path from current path
+     * @param currentPath
+     * @returns {string}
+     */
     getBrowsePath(currentPath) {
+        const defaultedPath = this.getDefaultPath(this.#controller.endpointManager.currentEndpoint);
         const delimiter = currentPath.indexOf("/");
-        if (delimiter === -1)
-            return this.controller.endpointManager.currentEndpoint.default_directory || "/";
-        let path = currentPath.substr(delimiter);
-        return path.endsWith("/") ? path : path.substr(0, path.lastIndexOf("/") + 1);
+
+        // If no delimiter, return default path based on current endpoint
+        if (delimiter === -1) return defaultedPath;
+
+        let path = currentPath.prototype.substring(delimiter);
+        return path.endsWith("/") ? path : path.prototype.substring(0, path.lastIndexOf("/") + 1);
     }
 
     getDialogLabels() {
-        const isGet = this.controller.model.mode === model.TT_DATA_GET;
+        const isGet = this.#controller.model.mode === TransferMode.TT_DATA_GET;
         return {
             endpoint: isGet ? "Destination" : "Source",
             record: isGet ? "Source" : "Destination",
@@ -113,6 +155,7 @@ export class TransferUIManager {
             ],
             open: () => this.showDialog(),
             close: function (ev, ui) {
+                this.cleanup();
                 $(this).dialog("destroy").remove();
             },
         };
@@ -145,8 +188,8 @@ export class TransferUIManager {
      * @returns {Array<Object>} Tree node data
      */
     getRecordTreeData() {
-        return this.controller.model.records.map((item) => {
-            const info = this.controller.model.getRecordInfo(item);
+        return this.#controller.model.records.map((item) => {
+            const info = this.#controller.model.RecordInfo(item);
             return {
                 title: this.formatRecordTitle(item, info),
                 selected: info.selectable,
@@ -161,52 +204,47 @@ export class TransferUIManager {
      * @private
      */
     formatRecordTitle(item, info) {
-        const titleText = `${item.id}&nbsp&nbsp&nbsp<span style='display:inline-block;width:9ch'>${info.info}</span>&nbsp${item.title}`;
+        const titleText = util.escapeHTML(
+            `${item.id}&nbsp&nbsp&nbsp<span style='display:inline-block;width:9ch'>${info.info}</span>&nbsp${item.title}`,
+        );
         return info.selectable ? titleText : `<span style='color:#808080'>${titleText}</span>`;
     }
 
     getSelectedIds() {
-        if (!this.controller.model.records?.length) {
-            console.warn("No records available");
-            return [];
-        }
-
-        if (this.controller.model.records.length === 1) {
-            const id = this.controller.model.records[0].id;
-            if (!id) {
-                console.warn("Invalid record ID");
-                return [];
-            }
-            return [id];
-        }
-
         if (!this.recordTree) {
             console.warn("Record tree not initialized");
             return [];
         }
-
-        const selectedNodes = this.recordTree.getSelectedNodes();
-        const ids = selectedNodes.map((node) => node.key).filter((id) => id);
-
-        if (!ids.length) {
-            console.warn("No valid IDs selected");
+        // Check the model for records
+        if (!this.#controller.model.records?.length) {
+            console.warn("No records available");
+            return [];
         }
 
-        return ids;
+        // If there's only 1 id, return it or an empty array if it's falsy
+        if (this.#controller.model.records.length === 1) {
+            const id = this.#controller.model.records[0].id;
+            return id ? [id] : [];
+        }
+
+        return this.recordTree
+            .getSelectedNodes()
+            .map((node) => node.key)
+            .filter(Boolean);
     }
 
     getTransferConfig() {
-        const path = $("#path", this.frame).val().trim();
+        const path = $("#path", this.#frame).val().trim();
         if (!path) {
-            dialogs.dlgAlert("Input Error", "Path cannot be empty.");
+            this.dialogs.dlgAlert("Input Error", "Path cannot be empty.");
             return null;
         }
 
         return {
             path,
-            encrypt: $("input[name='encrypt_mode']:checked", this.frame).val(),
-            origFilename: $("#orig_fname", this.frame).prop("checked"),
-            extension: $("#ext", this.frame).val()?.trim(),
+            encrypt: $("input[name='encrypt_mode']:checked", this.#frame).val(),
+            origFilename: $("#orig_fname", this.#frame).prop("checked"),
+            extension: $("#ext", this.#frame).val()?.trim(),
         };
     }
 
@@ -222,7 +260,7 @@ export class TransferUIManager {
          `;
 
         const modeSpecificOptions =
-            this.controller.model.mode === model.TT_DATA_PUT
+            this.#controller.model.mode === TransferMode.TT_DATA_GET
                 ? `<br>File extension override: <input id='ext' type='text'><br>`
                 : `<br><label for='orig_fname'>Download to original filename(s)</label><input id='orig_fname' type='checkbox'>`;
 
@@ -241,10 +279,10 @@ export class TransferUIManager {
         this.updateButtonStates();
 
         // Add activation button handling
-        $("#activate", this.frame).on("click", () => {
+        $("#activate", this.#frame).on("click", () => {
             window.open(
                 `https://app.globus.org/file-manager?origin_id=${encodeURIComponent(
-                    this.controller.endpointManager.currentEndpoint.id,
+                    this.#controller.endpointManager.currentEndpoint.id,
                 )}`,
                 "",
             );
@@ -252,8 +290,8 @@ export class TransferUIManager {
     }
 
     initializeRecordDisplay() {
-        if (!this.controller.ids?.length) {
-            $("#title", this.frame).html("(new record)");
+        if (!this.#controller.ids?.length) {
+            $("#title", this.#frame).html("(new record)");
             return;
         }
 
@@ -274,23 +312,30 @@ export class TransferUIManager {
             select: () => this.handleSelectionChange(),
         };
 
-        $("#records", this.frame).show().fancytree(treeConfig);
+        $("#records", this.#frame).show().fancytree(treeConfig);
+        const recordsElement = $("#records", this.#frame);
+        if (!recordsElement.length) {
+            console.error("Records element not found");
+            return;
+        }
+
+        recordsElement.show().fancytree(treeConfig);
 
         this.recordTree = $.ui.fancytree.getTree("#records");
     }
 
     initializeEndpointInput() {
-        const pathInput = $("#path", this.frame);
+        const pathInput = $("#path", this.#frame);
         util.inputTheme(pathInput);
 
         pathInput.on("input", () => {
             clearTimeout(this.inputTimer);
-            this.controller.endpointManager.currentSearchToken = ++this.controller.endpointManager
+            this.#controller.endpointManager.currentSearchToken = ++this.#controller.endpointManager
                 .searchCounter;
 
             this.inputTimer = setTimeout(() => {
-                this.controller.endpointManager.handlePathInput(
-                    this.controller.endpointManager.currentSearchToken,
+                this.#controller.endpointManager.handlePathInput(
+                    this.#controller.endpointManager.currentSearchToken,
                 );
             }, 250);
         });
@@ -301,34 +346,34 @@ export class TransferUIManager {
             pathInput.autocomplete({
                 source: settings.ep_recent,
                 select: () => {
-                    this.controller.endpointManager.currentSearchToken = ++this.controller
+                    this.#controller.endpointManager.currentSearchToken = ++this.#controller
                         .endpointManager.searchCounter;
-                    this.controller.endpointManager.handlePathInput(
-                        this.controller.endpointManager.currentSearchToken,
+                    this.#controller.endpointManager.handlePathInput(
+                        this.#controller.endpointManager.currentSearchToken,
                     );
                     return true;
                 },
             });
-            this.controller.endpointManager.handlePathInput(
-                ++this.controller.endpointManager.searchCounter,
+            this.#controller.endpointManager.handlePathInput(
+                ++this.#controller.endpointManager.searchCounter,
             );
         }
     }
 
     initializeBrowseButton() {
-        $("#browse", this.frame).on("click", () => {
-            if (!this.controller.endpointManager.currentEndpoint) return;
+        $("#browse", this.#frame).on("click", () => {
+            if (!this.#controller.endpointManager.currentEndpoint) return;
 
-            const pathInput = $("#path", this.frame);
+            const pathInput = $("#path", this.#frame);
             let browsePath = this.getBrowsePath(pathInput.val());
 
             dlgEpBrowse.show(
-                this.controller.endpointManager.currentEndpoint,
+                this.#controller.endpointManager.currentEndpoint,
                 browsePath,
-                this.controller.model.mode === model.TT_DATA_GET ? "dir" : "file",
+                this.#controller.model.mode === TransferMode.TT_DATA_GET ? "dir" : "file",
                 (selectedPath) => {
                     pathInput.val(
-                        this.controller.endpointManager.currentEndpoint.name + selectedPath,
+                        this.#controller.endpointManager.currentEndpoint.name + selectedPath,
                     );
                 },
             );
@@ -336,36 +381,36 @@ export class TransferUIManager {
     }
 
     initializeTransferOptions() {
-        const radioButtons = $(":radio", this.frame);
+        const radioButtons = $(":radio", this.#frame);
         if (radioButtons.length) {
             radioButtons.checkboxradio();
         }
 
         // Initialize checkbox for GET mode
-        if (this.controller.model.mode === model.TT_DATA_GET) {
-            const origFname = $("#orig_fname", this.frame);
+        if (this.#controller.model.mode === TransferMode.TT_DATA_GET) {
+            const origFname = $("#orig_fname", this.#frame);
             if (origFname.length) {
                 origFname.checkboxradio();
             }
         }
 
         this.encryptRadios = {
-            none: $("#encrypt_none", this.frame),
-            available: $("#encrypt_avail", this.frame),
-            required: $("#encrypt_req", this.frame),
+            none: $("#encrypt_none", this.#frame),
+            available: $("#encrypt_avail", this.#frame),
+            required: $("#encrypt_req", this.#frame),
         };
 
-        util.inputTheme($("#ext", this.frame));
+        util.inputTheme($("#ext", this.#frame));
     }
 
     reInitializeUIComponents() {
-        $(".btn", this.frame).button();
-        $(":radio", this.frame).checkboxradio();
-        if (this.controller.model.mode === model.TT_DATA_GET) {
-            $("#orig_fname", this.frame).checkboxradio();
+        $(".btn", this.#frame).button();
+        $(":radio", this.#frame).checkboxradio();
+        if (this.#controller.model.mode === TransferMode.TT_DATA_GET) {
+            $("#orig_fname", this.#frame).checkboxradio();
         }
         $("#go_btn").button().button("disable");
-        $("#browse", this.frame).button().button("disable");
+        $("#browse", this.#frame).button().button("disable");
     }
 
     /**
@@ -373,9 +418,9 @@ export class TransferUIManager {
      */
 
     createDialog(labels) {
-        this.frame = $(document.createElement("div"));
-        this.frame.html(this.getDialogTemplate(labels));
-        return this.frame;
+        this.#frame = $(document.createElement("div"));
+        this.#frame.html(this.getDialogTemplate(labels));
+        return this.#frame;
     }
 
     createMatchesHtml(endpoints) {
@@ -384,7 +429,7 @@ export class TransferUIManager {
         ];
 
         endpoints.forEach((ep) => {
-            const status = this.controller.endpointManager.getEndpointStatus(ep);
+            const status = this.#controller.endpointManager.getEndpointStatus(ep);
             html.push(`                                                                                                                                                                                                                       
          <option title="${util.escapeHTML(ep.description || "(no info)")}">${util.escapeHTML(
              ep.display_name || ep.name,
@@ -401,9 +446,9 @@ export class TransferUIManager {
 
     updateButtonStates() {
         this.safeUIOperation(() => {
-            const buttonsEnabled = this.state.selectionOk && this.state.endpointOk;
+            const buttonsEnabled = this.#state.selectionOk && this.#state.endpointOk;
             this.setButtonState("#go_btn", buttonsEnabled);
-            this.setButtonState("#browse", this.state.endpointOk);
+            this.setButtonState("#browse", this.#state.endpointOk);
         });
     }
 
@@ -429,25 +474,29 @@ export class TransferUIManager {
     }
 
     updateEndpoint(data) {
-        this.controller.endpointManager.currentEndpoint = {
+        this.#controller.endpointManager.currentEndpoint = {
             ...data,
             name: data.canonical_name || data.id,
         };
 
-        const pathInput = $("#path", this.frame);
-        const newPath = this.controller.model.getDefaultPath(
-            this.controller.endpointManager.currentEndpoint,
-        );
-        pathInput.val(newPath);
+        const pathInput = $("#path", this.#frame);
+        const currentPath = pathInput.val();
+        if (
+            !currentPath ||
+            !currentPath.startsWith(this.#controller.endpointManager.currentEndpoint.name)
+        ) {
+            const newPath = this.getDefaultPath(this.#controller.endpointManager.currentEndpoint);
+            pathInput.val(newPath);
+        }
 
-        let html = `<option title="${util.escapeHTML(this.controller.endpointManager.currentEndpoint.description || "(no info)")}">${util.escapeHTML(
-            this.controller.endpointManager.currentEndpoint.display_name ||
-                this.controller.endpointManager.currentEndpoint.name,
+        let html = `<option title="${util.escapeHTML(this.#controller.endpointManager.currentEndpoint.description || "(no info)")}">${util.escapeHTML(
+            this.#controller.endpointManager.currentEndpoint.display_name ||
+                this.#controller.endpointManager.currentEndpoint.name,
         )} (`;
 
-        if (this.controller.endpointManager.currentEndpoint.activated) {
-            html += `${Math.floor(this.controller.endpointManager.currentEndpoint.expires_in / 3600)} hrs`;
-        } else if (this.controller.endpointManager.currentEndpoint.expires_in === -1) {
+        if (this.#controller.endpointManager.currentEndpoint.activated) {
+            html += `${Math.floor(this.#controller.endpointManager.currentEndpoint.expires_in / 3600)} hrs`;
+        } else if (this.#controller.endpointManager.currentEndpoint.expires_in === -1) {
             html += "active";
         } else {
             html += "inactive";
@@ -455,27 +504,27 @@ export class TransferUIManager {
 
         html += ")</option>";
 
-        const matches = $("#matches", this.frame);
+        const matches = $("#matches", this.#frame);
         matches.html(html);
         matches.prop("disabled", false);
 
-        this.updateEndpointOptions(this.controller.endpointManager.currentEndpoint);
+        this.updateEndpointOptions(this.#controller.endpointManager.currentEndpoint);
     }
 
     updateEndpointOptions(endpoint) {
-        if (!endpoint || !this.controller.endpointManager.initialized || !this.encryptRadios) {
+        if (!endpoint || !this.#controller.endpointManager.initialized || !this.encryptRadios) {
             console.warn("Cannot update endpoint options - not ready");
             return;
         }
 
         try {
-            const browseBtn = $("#browse", this.frame);
-            const activateBtn = $("#activate", this.frame);
+            const browseBtn = $("#browse", this.#frame);
+            const activateBtn = $("#activate", this.#frame);
 
-            this.state.endpointOk = endpoint.activated || endpoint.expires_in === -1;
+            this.#state.endpointOk = endpoint.activated || endpoint.expires_in === -1;
 
             if (browseBtn.length) {
-                browseBtn.button(this.state.endpointOk ? "enable" : "disable");
+                browseBtn.button(this.#state.endpointOk ? "enable" : "disable");
             }
             if (activateBtn.length) {
                 activateBtn.button(endpoint.expires_in === -1 ? "disable" : "enable");
@@ -495,24 +544,24 @@ export class TransferUIManager {
      */
 
     attachMatchesHandler() {
-        $("#matches", this.frame).on("change", (ev) => {
+        $("#matches", this.#frame).on("change", (ev) => {
             this.handleMatchesChange(ev);
         });
     }
 
     closeDialog() {
         clearTimeout(this.inputTimer);
-        this.frame.dialog("close");
+        this.#frame.dialog("close");
     }
 
     showDialog() {
-        this.frame.dialog(this.getDialogOptions());
+        this.#frame.dialog(this.getDialogOptions());
     }
 
     handleMatchesChange(event) {
         if (
-            !this.controller.endpointManager.endpointManagerList ||
-            !this.controller.endpointManager.endpointManagerList.length
+            !this.#controller.endpointManager.endpointManagerList ||
+            !this.#controller.endpointManager.endpointManagerList.length
         ) {
             console.warn("No endpoint list available");
             return;
@@ -521,30 +570,30 @@ export class TransferUIManager {
         const selectedIndex = $(event.target).prop("selectedIndex") - 1;
         if (
             selectedIndex < 0 ||
-            selectedIndex >= this.controller.endpointManager.endpointManagerList.length
+            selectedIndex >= this.#controller.endpointManager.endpointManagerList.length
         ) {
             console.error("Invalid selection index:", selectedIndex);
             return;
         }
 
-        const endpoint = this.controller.endpointManager.endpointManagerList[selectedIndex];
+        const endpoint = this.#controller.endpointManager.endpointManagerList[selectedIndex];
         if (!endpoint || !endpoint.id) {
             console.log("Invalid endpoint data:", endpoint);
             return;
         }
 
-        api.epView(endpoint.id, (ok, data) => {
+        this.api.epView(endpoint.id, (ok, data) => {
             if (ok && !data.code) {
                 this.updateEndpoint(data);
             } else {
-                dialogs.dlgAlert("Globus Error", data);
+                this.dialogs.dlgAlert("Globus Error", data);
             }
         });
     }
 
     handleSelectionChange() {
         const selectedNodes = this.recordTree.getSelectedNodes();
-        this.state.selectionOk = selectedNodes.length > 0;
+        this.#state.selectionOk = selectedNodes.length > 0;
         this.updateButtonStates();
     }
 
@@ -553,12 +602,12 @@ export class TransferUIManager {
         if (!config) return;
 
         if (
-            this.controller.model.mode === model.TT_DATA_GET ||
-            this.controller.model.mode === model.TT_DATA_PUT
+            this.#controller.model.mode === TransferMode.TT_DATA_GET ||
+            this.#controller.model.mode === TransferMode.TT_DATA_GET
         ) {
-            this.controller.startTransfer(config);
+            this.startTransfer(config);
         } else {
-            this.controller.callback(config.path, config.encrypt);
+            this.#controller.callback(config.path, config.encrypt);
             this.closeDialog();
         }
     }
@@ -568,18 +617,18 @@ export class TransferUIManager {
             clearTimeout(this.inputTimer);
             this.closeDialog();
             util.setStatusText(`Task '${data.task.id}' created for data transfer.`);
-            this.controller.callback?.();
+            this.#controller.callback?.();
         } else {
-            dialogs.dlgAlert("Transfer Error", data);
+            this.dialogs.dlgAlert("Transfer Error", data);
         }
     }
 
     startTransfer(config) {
         const ids = this.getSelectedIds();
 
-        api.xfrStart(
+        this.api.xfrStart(
             ids,
-            this.controller.model.mode,
+            this.#controller.model.mode,
             config.path,
             config.extension,
             config.encrypt,
