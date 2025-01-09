@@ -362,9 +362,6 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
     params.push_back({"other_token_data", other_token_data});
   }
   const string url = buildSearchParamURL("usr/token/set", params);
-  DL_DEBUG(log_context,
-           "Built URL is " +
-               url); // TODO: remove logging of potentially sensitive data
   dbGetRaw(url, result);
   DL_TRACE(log_context, "token expires in: " << to_string(a_expires_in));
 }
