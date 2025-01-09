@@ -218,10 +218,6 @@ router
  * @returns {void} Sends a list of new runnable tasks to the response.
  *
  * @throws {Error} Throws an error if the task does not exist or if there's an issue processing the transaction.
- *
- * @example
- * // Sample usage:
- * router.post("/abort", function(req, res) { ... });
  */
 router
     .post("/abort", function (req, res) {
