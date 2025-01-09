@@ -371,10 +371,6 @@ router
  * @param {object} req - The request object, containing the query parameters.
  * @param {object} res - The response object used to send the results.
  * @returns {void} Sends an array of repository size statistics to the response.
- *
- * @example
- * // Sample usage:
- * router.get("/calc_size", function(req, res) { ... });
  */
 router
     .get("/calc_size", function (req, res) {
