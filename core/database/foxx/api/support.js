@@ -1061,12 +1061,13 @@ module.exports = (function () {
      * :
      * "email" : "bobjones@gmail.com"
      *
-     *
      * @param {string} a_object_id - the identity of a record or collection or project
      *
      * "d/fdakjfla"
      * "p/big_thing"
      * "c/my_collection"
+     *
+     * @returns {boolean} - if client has admin rights on the object.
      **/
     obj.hasAdminPermObject = function (a_client, a_object_id) {
         if (a_client.is_admin) return true;
@@ -3188,9 +3189,10 @@ module.exports = (function () {
     };
 
     /**
-     *
-     * @param token_type {object.AccessTokenType} Type to determine parse logic.
+     * @param token_type {integer} - Type to determine parse logic.
+     *  
      * @param other_token_data {string}
+     *
      * String of additional token data, delimited by the '|' character.
      * The format is determined by the token type.
      * Currently expecting the following formats:

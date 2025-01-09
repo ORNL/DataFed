@@ -73,6 +73,8 @@ class Record {
     /**
      * Compares two paths and if an error is detected will save the error code and message.
      * 
+     * @param {string} storedPath - the path stored in the database
+     * @param {string} inputPath - the path being checked
      * @returns {boolean} - true if paths are equal false otherwise
      **/
     _comparePaths(storedPath, inputPath) {
@@ -91,7 +93,7 @@ class Record {
     /**
      * Checks if the record exists in the database.
      *
-     * @return {boolean} True if the record exists, otherwise false.
+     * @returns {boolean} - True if the record exists, otherwise false.
      */
     exists() {
         return this.#exists;
@@ -114,7 +116,7 @@ class Record {
     /**
      * Retrieves the error code of the last run method.
      *
-     * @return {string|null} Error code or null if no error.
+     * @returns {string|null} Error code or null if no error.
      */
     errorMessage() {
         return this.#err_msg;
@@ -123,7 +125,7 @@ class Record {
     /**
      * Checks if the record is managed by DataFed.
      *
-     * @return {boolean} True if managed, otherwise false.
+     * @returns {boolean} True if managed, otherwise false.
      */
     isManaged() {
         //{
@@ -154,7 +156,7 @@ class Record {
      * Validates if the provided record path is consistent with the database.
      *
      * @param {string} a_path - The path to validate.
-     * @return {boolean} True if consistent, otherwise false.
+     * @returns {boolean} True if consistent, otherwise false.
      */
     isPathConsistent(a_path) {
         // This function will populate the this.#loc member and the this.#alloc

@@ -10,8 +10,8 @@ module.exports = (function () {
 		/**
 		 * Checks if a client has the required permissions on a record.
 		 *
-		 * @param {string} a_data_key - A DataFed key associated with a record (not prepended with 'd/').
 		 * @param {object} a_client - A user document representing the client being verified.
+		 * @param {string} a_data_key - A DataFed key associated with a record (not prepended with 'd/').
 		 * The client object should have the following structure:
 		 * {
 		 *   "_key": "bob",
