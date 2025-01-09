@@ -301,10 +301,10 @@
     - docker ps
     - export ANCESTOR_CONTAINERS=$(docker ps -a --filter "ancestor=${FULL_IMAGE_NAME}" --format "{{.Names}}") 
     - VAR="Test"
-    - echo "This is failing: ${VAR}"
-    - echo "Matching against: ${COMPONENT}-${BRANCH_LOWER}"
+    - echo "This is failing ${VAR}"
+    - echo "Matching against ${COMPONENT}-${BRANCH_LOWER}"
     - export MATCHING_CONTAINERS=$( echo "$ANCESTOR_CONTAINERS" | grep "${COMPONENT}-${BRANCH_LOWER}" || echo "")
-    - echo "Matching containers are: $MATCHING_CONTAINERS" 
+    - echo "Matching containers are $MATCHING_CONTAINERS" 
     - if [ -z "$MATCHING_CONTAINERS" ]; then
         echo "No matching containers found for image ${FULL_IMAGE_NAME} and component ${COMPONENT}-${BRANCH_LOWER}";
       else
