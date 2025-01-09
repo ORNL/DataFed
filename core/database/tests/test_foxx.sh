@@ -128,6 +128,7 @@ if ! command -v foxx > /dev/null 2>&1; then
 fi
 
 PATH_TO_PASSWD_FILE=${SOURCE}/database_temp.password
+echo "$local_DATAFED_DATABASE_PASSWORD" > "${PATH_TO_PASSWD_FILE}"
 if [ "$TEST_TO_RUN" == "all" ]
 then
   # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint 
@@ -142,5 +143,5 @@ else
   --server "tcp://${DATAFED_DATABASE_HOST}:8529" \
     -p "${PATH_TO_PASSWD_FILE}" \
     --database "${local_DATABASE_NAME}" \
-    "/api/${local_FOXX_MAJOR_API_VERSION}" "$TEST_TO_RUN" --reporter spec
+    "/api/${local_FOXX_MAJOR_API_VERSION}" "$TEST_TO_RUN" --reporter spec --verbose
 fi
