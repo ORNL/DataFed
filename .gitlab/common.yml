@@ -299,7 +299,12 @@
       # for instance if two different branches have the exact same build but
       # different names. Or one image was built on top of another and share the
       # same base.
-    - docker logs $(docker ps -a --filter "ancestor=${FULL_IMAGE_NAME}" --format "{{.Names}}" | grep "${COMPONENT}-${BRANCH_LOWER}" )
+    - MATCHING_CONTAINERS=$(docker ps -a --filter "ancestor=${FULL_IMAGE_NAME}" --format "{{.Names}}" | grep "${COMPONENT}-${BRANCH_LOWER}" || echo "")
+    - if [ -z "$MATCHING_CONTAINERS" ]; then
+        echo "No matching containers found for image ${FULL_IMAGE_NAME} and component ${COMPONENT}-${BRANCH_LOWER}";
+      else
+        docker logs $MATCHING_CONTAINERS;
+      fi
   rules:
     - when: always
 
