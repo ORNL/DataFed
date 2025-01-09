@@ -108,6 +108,8 @@ class Record {
     }
     /**
      * Will return error code of last run method.
+     *
+     * @returns {integer} - error code
      **/
     error() {
         return this.#error;

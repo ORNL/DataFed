@@ -13,18 +13,18 @@ module.exports = (function () {
 		 * @param {object} a_client - A user document representing the client being verified.
 		 * @param {string} a_data_key - A DataFed key associated with a record (not prepended with 'd/').
 		 * The client object should have the following structure:
-		 * {
-		 *   "_key": "bob",
-		 *   "_id": "u/bob",
-		 *   "name": "bob junior",
-		 *   "name_first": "bob",
-		 *   "name_last": "jones",
-		 *   "is_admin": true,
-		 *   "max_coll": 50,
-		 *   "max_proj": 10,
-		 *   "max_sav_qry": 20,
-		 *   "email": "bobjones@gmail.com"
-		 * }
+		 *
+		 * "_key": "bob",
+		 * "_id": "u/bob",
+		 * "name": "bob junior",
+		 * "name_first": "bob",
+		 * "name_last": "jones",
+		 * "is_admin": true,
+		 * "max_coll": 50,
+		 * "max_proj": 10,
+		 * "max_sav_qry": 20,
+		 * "email": "bobjones@gmail.com"
+		 *
 		 * @param {string} a_perm - The permission type to check (e.g., `PERM_CREATE`, `PERM_WR_DATA`, `PERM_RD_DATA`).
 		 * 
 		 * @returns {boolean} True if the client has the required permissions, otherwise false.

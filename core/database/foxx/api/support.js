@@ -3189,8 +3189,10 @@ module.exports = (function () {
     };
 
     /**
+     * Parses other_token_data string field and breaks it into pieces
+     *
      * @param token_type {integer} - Type to determine parse logic.
-     *  
+     *
      * @param other_token_data {string}
      *
      * String of additional token data, delimited by the '|' character.
