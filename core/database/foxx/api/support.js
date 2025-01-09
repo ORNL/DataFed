@@ -640,7 +640,7 @@ module.exports = (function () {
      * Retrieves user information based on the provided client ID.
      *
      * The return value should be a client containing the following information:
-     * 
+     *
      * "_key" : "bob",
      * "_id" : "u/bob",
      * "name" : "bob junior",
@@ -651,7 +651,7 @@ module.exports = (function () {
      * "max_proj" : 10,
      * "max_sav_qry" : 20,
      * "email" : "bobjones@gmail.com"
-     * 
+     *
      *
      * The client ID can be in the following formats:
      * - SDMS uname (e.g., "xxxxx...")
@@ -1048,7 +1048,7 @@ module.exports = (function () {
      *
      * @param {object} a_client - this is a user document i.e.
      *
-     * 
+     *
      * "_key" : "bob",
      * "_id" : "u/bob",
      * "name" : "bob junior ",

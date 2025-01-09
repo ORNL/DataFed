@@ -6,7 +6,7 @@ const { errors } = require("@arangodb");
 
 /**
  * Represents a record in the database and provides methods to manage it.
- * 
+ *
  * @class
  */
 class Record {
@@ -27,7 +27,7 @@ class Record {
 
     /**
      * Constructs a Record object and checks if the key exists in the database.
-     * 
+     *
      * @class
      * @param {string} a_key - The unique identifier for the record. Must be a valid key in the database.
      */
@@ -62,7 +62,7 @@ class Record {
 
     /**
      * Generates the full path to the record as it should appear in the repository.
-     * 
+     *
      * @param {string} basePath - The base path where the record is stored.
      * @returns {string} - The full path to the record.
      */
@@ -72,7 +72,7 @@ class Record {
 
     /**
      * Compares two paths and if an error is detected will save the error code and message.
-     * 
+     *
      * @param {string} storedPath - the path stored in the database
      * @param {string} inputPath - the path being checked
      * @returns {boolean} - true if paths are equal false otherwise
