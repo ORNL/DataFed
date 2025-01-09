@@ -1473,10 +1473,6 @@ router
  * if the client has the required permissions and the data exists in the specified domain.
  *
  * @param {object} req - The request object, containing the query parameters.
- * @param {object} req.queryParams - The query parameters provided in the request.
- * @param {string} req.queryParams.client - The client ID for the request.
- * @param {string} req.queryParams.id - The data ID (not alias) associated with the data.
- * @param {string} req.queryParams.domain - The domain from which the data is being requested.
  * @param {object} res - The response object, used to send the raw data path or error.
  *
  * @throws {Error} g_lib.ERR_PERM_DENIED - If the client does not have permission to read the data.
