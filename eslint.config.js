@@ -15,7 +15,6 @@ module.exports = [
             jsdoc: jsdocPlugin,
         },
         rules: {
-            // Enforce proper alignment and formatting of JSDoc
             "jsdoc/check-alignment": "error",
             "jsdoc/check-indentation": "error",
             "jsdoc/check-param-names": "error",
