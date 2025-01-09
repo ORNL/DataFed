@@ -76,7 +76,7 @@ void DatabaseAPI::setClient(const std::string &a_client) {
   m_client = curl_easy_escape(m_curl, a_client.c_str(), 0);
 }
 
-std::string DatabaseAPI::buildSearchParamURL(
+const std::string DatabaseAPI::buildSearchParamURL(
     const char *endpoint_path,
     const std::vector<std::pair<std::string, std::string>> &param_vec) {
   string url;
@@ -118,7 +118,7 @@ long DatabaseAPI::dbGet(const char *a_url_path,
   error[0] = 0;
 
   // TODO: construct URL outside of function
-  string url = buildSearchParamURL(a_url_path, a_params);
+  const string url = buildSearchParamURL(a_url_path, a_params);
 
   DL_DEBUG(log_context, "get url: " << url);
   curl_easy_setopt(m_curl, CURLOPT_URL, url.c_str());
@@ -159,7 +159,7 @@ long DatabaseAPI::dbGet(const char *a_url_path,
   }
 }
 
-bool DatabaseAPI::dbGetRaw(std::string url, string &a_result) {
+bool DatabaseAPI::dbGetRaw(const std::string url, string &a_result) {
   a_result.clear();
 
   char error[CURL_ERROR_SIZE];
@@ -196,7 +196,7 @@ long DatabaseAPI::dbPost(const char *a_url_path,
   error[0] = 0;
 
   // TODO: construct URL outside of function
-  string url = buildSearchParamURL(a_url_path, a_params);
+  const string url = buildSearchParamURL(a_url_path, a_params);
 
   curl_easy_setopt(m_curl, CURLOPT_URL, url.c_str());
   curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, &res_json);
@@ -285,10 +285,9 @@ void DatabaseAPI::clientLinkIdentity(const std::string &a_identity,
 
 bool DatabaseAPI::uidByPubKey(const std::string &a_pub_key,
                               std::string &a_uid) {
-  string url =
+  const string url =
       buildSearchParamURL("usr/find/by_pub_key", {{"pub_key", a_pub_key}});
-  bool found = dbGetRaw(url, a_uid);
-  return found;
+  return dbGetRaw(url, a_uid);
 }
 
 bool DatabaseAPI::userGetKeys(std::string &a_pub_key, std::string &a_priv_key,
@@ -346,7 +345,7 @@ void DatabaseAPI::userGetAccessToken(std::string &a_acc_tok,
 }
 
 void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
-                                     uint32_t a_expires_in,
+                                     const uint32_t a_expires_in,
                                      const std::string &a_ref_tok,
                                      const SDMS::AccessTokenType &token_type,
                                      const std::string &other_token_data,
@@ -362,7 +361,7 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
   if (!other_token_data.empty()) {
     params.push_back({"other_token_data", other_token_data});
   }
-  string url = buildSearchParamURL("usr/token/set", params);
+  const string url = buildSearchParamURL("usr/token/set", params);
   DL_DEBUG(log_context,
            "Built URL is " +
                url); // TODO: remove logging of potentially sensitive data
@@ -371,7 +370,7 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
 }
 
 void DatabaseAPI::userSetAccessToken(const std::string &a_access_token,
-                                     uint32_t a_expires_in,
+                                     const uint32_t a_expires_in,
                                      const std::string &a_refresh_token,
                                      LogContext log_context) {
   userSetAccessToken(a_access_token, a_expires_in, a_refresh_token,
@@ -419,7 +418,8 @@ void DatabaseAPI::getExpiringAccessTokens(
 
 void DatabaseAPI::purgeTransferRecords(size_t age) {
   string result;
-  string url = buildSearchParamURL("xfr/purge", {{"age", to_string(age)}});
+  const string url =
+      buildSearchParamURL("xfr/purge", {{"age", to_string(age)}});
   dbGetRaw(url, result);
 }
 

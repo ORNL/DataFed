@@ -51,13 +51,14 @@ public:
   void userSetKeys(const std::string &a_pub_key, const std::string &a_priv_key,
                    LogContext log_context);
   void userClearKeys(LogContext log_context);
-  void userSetAccessToken(const std::string &a_acc_tok, uint32_t a_expires_in,
+  void userSetAccessToken(const std::string &a_acc_tok,
+                          const uint32_t a_expires_in,
                           const std::string &a_ref_tok,
                           const SDMS::AccessTokenType &token_type,
                           const std::string &other_token_data,
                           LogContext log_context);
   void userSetAccessToken(const std::string &a_access_token,
-                          uint32_t a_expires_in,
+                          const uint32_t a_expires_in,
                           const std::string &a_refresh_token,
                           LogContext log_context);
   void userGetAccessToken(std::string &a_acc_tok, std::string &a_ref_tok,
@@ -331,7 +332,7 @@ private:
   long dbGet(const char *a_url_path,
              const std::vector<std::pair<std::string, std::string>> &a_params,
              libjson::Value &a_result, LogContext, bool a_log = true);
-  bool dbGetRaw(std::string url, std::string &a_result);
+  bool dbGetRaw(const std::string url, std::string &a_result);
   long dbPost(const char *a_url_path,
               const std::vector<std::pair<std::string, std::string>> &a_params,
               const std::string *a_body, libjson::Value &a_result, LogContext);
@@ -410,7 +411,7 @@ private:
   std::string parseSearchIdAlias(const std::string &a_query,
                                  const std::string &a_iter);
 
-  std::string buildSearchParamURL(
+  const std::string buildSearchParamURL(
       const char *endpoint_path,
       const std::vector<std::pair<std::string, std::string>> &param_vec);
 
