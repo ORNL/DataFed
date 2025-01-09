@@ -5,13 +5,24 @@ import * as dlgEpBrowse from "../../dlg_ep_browse.js";
 import * as api from "../../api.js";
 import { TransferMode } from "../../models/transfer-model.js";
 
+/**
+ * @class TransferUIManager
+ * @classDesc Manages the UI components and interactions for file transfer operations
+ */
 export class TransferUIManager {
     #controller;
     #frame;
     #state;
 
-    constructor(dialog, services = { api, dialogs }) {
-        this.#controller = dialog;
+    /**
+     * Creates a new TransferUIManager instance
+     * @param {Object} controller - The dialog controller instance
+     * @param {Object} services - Service dependencies
+     * @param {Object} services.api - API service for backend communication
+     * @param {Object} services.dialogs - Dialog service for UI notifications
+     */
+    constructor(controller, services = { api, dialogs }) {
+        this.#controller = controller;
         this.api = services.api; // dependency injection
         this.dialogs = services.dialogs; // dependency injection
         this.#frame = null;
@@ -23,6 +34,10 @@ export class TransferUIManager {
         };
     }
 
+    /**
+     * Safely executes a UI operation with error handling
+     * @param {Function} operation - The UI operation to execute
+     */
     safeUIOperation(operation) {
         try {
             operation();
@@ -32,21 +47,15 @@ export class TransferUIManager {
         }
     }
 
-    cleanup() {
-        if (this.recordTree) {
-            try {
-                this.recordTree.destroy();
-            } catch (error) {
-                console.warn("Error cleaning up record tree:", error);
-            }
-            this.recordTree = null;
-        }
-    }
-
     /**
      * ------------BUTTON------------
      */
 
+    /**
+     * Initializes and configures a button element
+     * @param {string} buttonSelector - jQuery selector for the button element
+     * @returns {jQuery} The initialized button jQuery object
+     */
     ensureButtonInitialized(buttonSelector) {
         const $button = $(buttonSelector, this.#frame);
         if (!$button.hasClass("ui-button")) {
@@ -55,6 +64,11 @@ export class TransferUIManager {
         return $button;
     }
 
+    /**
+     * Sets the enabled/disabled state of a button
+     * @param {string} buttonSelector - jQuery selector for the button element
+     * @param {boolean} enable - Whether to enable or disable the button
+     */
     setButtonState(buttonSelector, enable) {
         const $button = this.ensureButtonInitialized(buttonSelector);
         $button.button(enable ? "enable" : "disable");
@@ -65,9 +79,11 @@ export class TransferUIManager {
      */
 
     /**
-     * Get default path for endpoint
-     * @param {Object} endpoint Endpoint data
-     * @returns {string} Default path
+     * Gets the default path for a given endpoint
+     * @param {Object} endpoint - The endpoint configuration object
+     * @param {string} endpoint.name - The name of the endpoint
+     * @param {string} [endpoint.default_directory] - The default directory path
+     * @returns {string} The formatted default path
      */
     getDefaultPath(endpoint) {
         if (!endpoint) return "";
@@ -82,9 +98,9 @@ export class TransferUIManager {
     }
 
     /**
-     * Get browse path from current path
-     * @param currentPath
-     * @returns {string}
+     * Gets the browse path from the current path
+     * @param {string} currentPath - The current path
+     * @returns {string} The formatted browse path
      */
     getBrowsePath(currentPath) {
         const defaultedPath = this.getDefaultPath(this.#controller.endpointManager.currentEndpoint);
@@ -97,6 +113,10 @@ export class TransferUIManager {
         return path.endsWith("/") ? path : path.prototype.substring(0, path.lastIndexOf("/") + 1);
     }
 
+    /**
+     * Gets the dialog labels based on transfer mode
+     * @returns {Object} Object containing endpoint, record, and dialogTitle labels
+     */
     getDialogLabels() {
         const isGet = this.#controller.model.mode === TransferMode.TT_DATA_GET;
         return {
@@ -106,6 +126,13 @@ export class TransferUIManager {
         };
     }
 
+    /**
+     * Gets the dialog template HTML
+     * @param {Object} labels - The labels for dialog elements
+     * @param {string} labels.record - Record label text
+     * @param {string} labels.endpoint - Endpoint label text
+     * @returns {string} The dialog template HTML
+     */
     getDialogTemplate(labels) {
         return `
              <div class='ui-widget' style='height:95%'>
@@ -135,6 +162,10 @@ export class TransferUIManager {
          `;
     }
 
+    /**
+     * Gets the dialog configuration options
+     * @returns {Object} Dialog configuration object
+     */
     getDialogOptions() {
         return {
             title: this.getDialogLabels().dialogTitle,
@@ -161,6 +192,12 @@ export class TransferUIManager {
         };
     }
 
+    /**
+     * Gets encryption options based on endpoint and scheme
+     * @param {Object} endpoint - The endpoint configuration
+     * @param {string} scheme - The transfer scheme
+     * @returns {Object} Encryption options configuration
+     */
     getEncryptionOptions(endpoint, scheme) {
         if (endpoint.force_encryption) {
             return {
@@ -184,8 +221,8 @@ export class TransferUIManager {
     }
 
     /**
-     * Get record tree data for display
-     * @returns {Array<Object>} Tree node data
+     * Gets the record tree data for display
+     * @returns {Array<Object>} Array of tree node data objects
      */
     getRecordTreeData() {
         return this.#controller.model.records.map((item) => {
@@ -200,7 +237,10 @@ export class TransferUIManager {
     }
 
     /**
-     * Format record title for display
+     * Formats a record title for display
+     * @param {Object} item - The record item
+     * @param {Object} info - Record information
+     * @returns {string} Formatted HTML string for record title
      * @private
      */
     formatRecordTitle(item, info) {
@@ -210,6 +250,10 @@ export class TransferUIManager {
         return info.selectable ? titleText : `<span style='color:#808080'>${titleText}</span>`;
     }
 
+    /**
+     * Gets the selected record IDs from the tree
+     * @returns {Array<string>} Array of selected record IDs
+     */
     getSelectedIds() {
         if (!this.recordTree) {
             console.warn("Record tree not initialized");
@@ -233,6 +277,14 @@ export class TransferUIManager {
             .filter(Boolean);
     }
 
+    /**
+     * Gets the current transfer configuration
+     * @returns {Object|null} Transfer configuration object or null if validation fails
+     * @property {string} path - The transfer path
+     * @property {string} encrypt - The encryption mode
+     * @property {boolean} origFilename - Whether to use original filename
+     * @property {string} extension - The file extension override
+     */
     getTransferConfig() {
         const path = $("#path", this.#frame).val().trim();
         if (!path) {
@@ -248,6 +300,10 @@ export class TransferUIManager {
         };
     }
 
+    /**
+     * Gets the transfer options template HTML
+     * @returns {string} Transfer options template HTML
+     */
     getTransferOptionsTemplate() {
         const encryptionOptions = `
              <br>Transfer Encryption:&nbsp
@@ -331,7 +387,7 @@ export class TransferUIManager {
         pathInput.on("input", () => {
             clearTimeout(this.inputTimer);
             this.#controller.endpointManager.currentSearchToken = ++this.#controller.endpointManager
-                .searchCounter;
+                .searchTokenIterator;
 
             this.inputTimer = setTimeout(() => {
                 this.#controller.endpointManager.handlePathInput(
@@ -347,7 +403,7 @@ export class TransferUIManager {
                 source: settings.ep_recent,
                 select: () => {
                     this.#controller.endpointManager.currentSearchToken = ++this.#controller
-                        .endpointManager.searchCounter;
+                        .endpointManager.searchTokenIterator;
                     this.#controller.endpointManager.handlePathInput(
                         this.#controller.endpointManager.currentSearchToken,
                     );
@@ -355,7 +411,7 @@ export class TransferUIManager {
                 },
             });
             this.#controller.endpointManager.handlePathInput(
-                ++this.#controller.endpointManager.searchCounter,
+                ++this.#controller.endpointManager.searchTokenIterator,
             );
         }
     }
@@ -417,12 +473,22 @@ export class TransferUIManager {
      * ------------CREATE------------
      */
 
+    /**
+     * Creates the main dialog element
+     * @param {Object} labels - Dialog labels
+     * @returns {jQuery} Created dialog jQuery object
+     */
     createDialog(labels) {
         this.#frame = $(document.createElement("div"));
         this.#frame.html(this.getDialogTemplate(labels));
         return this.#frame;
     }
 
+    /**
+     * Creates HTML for endpoint matches
+     * @param {Array<Object>} endpoints - List of endpoint objects
+     * @returns {string} Generated HTML for matches
+     */
     createMatchesHtml(endpoints) {
         const html = [
             `<option disabled selected>${endpoints.length} match${endpoints.length > 1 ? "es" : ""}</option>`,
@@ -452,6 +518,11 @@ export class TransferUIManager {
         });
     }
 
+    /**
+     * Updates encryption options based on endpoint and scheme
+     * @param {Object} endpoint - The endpoint configuration
+     * @param {string} scheme - The transfer scheme
+     */
     updateEncryptionOptions(endpoint, scheme) {
         if (!this.encryptRadios) return;
 
@@ -473,6 +544,12 @@ export class TransferUIManager {
         });
     }
 
+    /**
+     * Updates the endpoint configuration and UI
+     * @param {Object} data - The endpoint data
+     * @param {string} data.canonical_name - The canonical endpoint name
+     * @param {string} data.id - The endpoint ID
+     */
     updateEndpoint(data) {
         this.#controller.endpointManager.currentEndpoint = {
             ...data,
@@ -558,6 +635,10 @@ export class TransferUIManager {
         this.#frame.dialog(this.getDialogOptions());
     }
 
+    /**
+     * Handles changes in endpoint matches selection
+     * @param {Event} event - The change event object
+     */
     handleMatchesChange(event) {
         if (
             !this.#controller.endpointManager.endpointManagerList ||
@@ -597,6 +678,10 @@ export class TransferUIManager {
         this.updateButtonStates();
     }
 
+    /**
+     * Handles the transfer operation
+     * @private
+     */
     handleTransfer() {
         const config = this.getTransferConfig();
         if (!config) return;
@@ -612,6 +697,11 @@ export class TransferUIManager {
         }
     }
 
+    /**
+     * Handles transfer response from the server
+     * @param {boolean} ok - Whether the transfer was successful
+     * @param {Object} data - Response data from server
+     */
     handleTransferResponse(ok, data) {
         if (ok) {
             clearTimeout(this.inputTimer);
@@ -623,6 +713,14 @@ export class TransferUIManager {
         }
     }
 
+    /**
+     * Initiates the transfer operation
+     * @param {Object} config - Transfer configuration
+     * @param {string} config.path - Transfer path
+     * @param {string} config.extension - File extension
+     * @param {string} config.encrypt - Encryption mode
+     * @param {boolean} config.origFilename - Use original filename flag
+     */
     startTransfer(config) {
         const ids = this.getSelectedIds();
 

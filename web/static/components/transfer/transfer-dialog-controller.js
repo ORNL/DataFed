@@ -4,7 +4,8 @@ import { TransferModel } from "../../models/transfer-model.js";
 import { TransferUIManager } from "./transfer-ui-manager.js";
 
 /**
- * TransferDialogController class manages the UI and logic for data transfers
+ * @class TransferDialogController
+ * @classDesc Manages the UI and logic for data transfers
  */
 export class TransferDialogController {
     /**
