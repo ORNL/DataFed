@@ -4,6 +4,7 @@ import { TT_DATA_GET, TT_DATA_PUT } from "../model.js";
 export const TransferMode = Object.freeze({
     TT_DATA_GET,
     TT_DATA_PUT,
+    NULL: null,
 });
 
 /**
@@ -34,7 +35,7 @@ export class TransferModel {
     }
 
     #validateMode(mode) {
-        const validModes = Object.values(TransferMode);
+        const validModes = [...Object.values(TransferMode), null];
         if (!validModes.includes(mode)) {
             throw new Error(
                 `Invalid transfer mode: ${mode}. Must be one of: ${validModes.join(", ")}`,
@@ -89,7 +90,6 @@ export class TransferModel {
 
     /**
      * Get record information
-     * @private
      * @param {Object} item Record item
      * @returns {Object} Record info
      */
