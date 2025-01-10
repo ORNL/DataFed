@@ -1,4 +1,4 @@
-import * as dialogs from "../../dialogs.js";
+import { dlgAlert } from "../../dialogs.js";
 import { TransferDialogController } from "./transfer-dialog-controller.js";
 
 export class TransferDialog {
@@ -18,7 +18,7 @@ export class TransferDialog {
             this.currentDialog.show();
         } catch (error) {
             console.error("Error showing transfer dialog:", error);
-            dialogs.dlgAlert("Error", "Failed to open transfer dialog");
+            dlgAlert("Error", "Failed to open transfer dialog");
         }
     }
 }

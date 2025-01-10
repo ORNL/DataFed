@@ -1,5 +1,6 @@
 import * as api from "../../api.js";
-import * as dialogs from "../../dialogs.js";
+import { dlgAlert } from "../../dialogs.js";
+import { createMatchesHtml } from "./transfer-templates.js";
 
 /**
  * @classDesc Manages endpoint operations and state for file transfers
@@ -74,7 +75,7 @@ export class TransferEndpointManager {
                 this.updateMatchesList([]);
                 if (data.code) {
                     console.error("Autocomplete error:", data);
-                    dialogs.dlgAlert("Globus Error", data.code);
+                    dlgAlert("Globus Error", data.code);
                 }
             }
         });
@@ -107,7 +108,7 @@ export class TransferEndpointManager {
                 }
             });
         } catch (error) {
-            dialogs.dlgAlert("Globus Error", error);
+            dlgAlert("Globus Error", error);
         }
     }
 
@@ -120,14 +121,14 @@ export class TransferEndpointManager {
      * @param {Array<Object>} [endpoints=[]] - Array of endpoint objects
      */
     updateMatchesList(endpoints = []) {
-        const matches = $("#matches", this.#controller.uiManager.frame);
+        const matches = $("#matches", this.#controller.uiManager.state.frame);
         if (!endpoints.length) {
             matches.html("<option disabled selected>No Matches</option>");
             matches.prop("disabled", true);
             return;
         }
 
-        const html = this.#controller.uiManager.createMatchesHtml(endpoints);
+        const html = createMatchesHtml(endpoints);
         matches.html(html);
         matches.prop("disabled", false);
     }
@@ -154,7 +155,7 @@ export class TransferEndpointManager {
             return;
         }
 
-        const path = $("#path", this.#controller.uiManager.frame).val().trim();
+        const path = $("#path", this.#controller.uiManager.state.frame).val().trim();
         console.log("Processing path:", path);
 
         if (!path.length) {

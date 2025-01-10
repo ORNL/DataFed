@@ -1,7 +1,7 @@
-import * as dialogs from "../../dialogs.js";
 import { TransferEndpointManager } from "./transfer-endpoint-manager.js";
 import { TransferModel } from "../../models/transfer-model.js";
 import { TransferUIManager } from "./transfer-ui-manager.js";
+import { dlgAlert } from "../../dialogs.js";
 
 /**
  * @class TransferDialogController
@@ -23,14 +23,13 @@ export class TransferDialogController {
 
     show() {
         try {
-            this.uiManager.createDialog(this.uiManager.getDialogLabels());
             this.uiManager.initializeComponents();
             this.uiManager.attachMatchesHandler();
             this.endpointManager.initialized = true;
             this.uiManager.showDialog();
         } catch (error) {
             console.error("Failed to show transfer dialog:", error);
-            dialogs.dlgAlert("Error", "Failed to open transfer dialog");
+            dlgAlert("Error", "Failed to open transfer dialog");
         }
     }
 }
