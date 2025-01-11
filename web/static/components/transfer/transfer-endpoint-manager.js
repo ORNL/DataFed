@@ -1,4 +1,4 @@
-import * as api from "../../api.js";
+import { epView, epAutocomplete } from "../../api.js";
 import { dlgAlert } from "../../dialogs.js";
 import { createMatchesHtml } from "./transfer-templates.js";
 
@@ -32,29 +32,12 @@ export class TransferEndpointManager {
     }
 
     /**
-     * ------------GET------------
-     */
-
-    /**
-     * Gets the status of an endpoint
-     * @param {Object} endpoint - The endpoint object
-     * @param {boolean} endpoint.activated - Whether the endpoint is activated
-     * @param {number} endpoint.expires_in - Time until expiration in seconds
-     * @returns {string} Status string indicating endpoint state
-     */
-    getEndpointStatus(endpoint) {
-        if (!endpoint.activated && endpoint.expires_in === -1) return "active";
-        if (endpoint.activated) return `${Math.floor(endpoint.expires_in / 3600)} hrs`;
-        return "inactive";
-    }
-
-    /**
      * Performs autocomplete search for endpoints
      * @param {string} endpoint - The endpoint search term
      * @param {string} searchToken - Token to track current search request
      */
     searchEndpointAutocomplete(endpoint, searchToken) {
-        api.epAutocomplete(endpoint, (ok, data) => {
+        epAutocomplete(endpoint, (ok, data) => {
             // Prevent race conditions by ignoring responses from outdated searches
             // Without this check, rapid typing could cause UI flickering and incorrect results
             // as slower API responses return after newer searches
@@ -91,7 +74,7 @@ export class TransferEndpointManager {
         console.log("Searching for endpoint:", endpoint);
 
         try {
-            return api.epView(endpoint, (ok, data) => {
+            return epView(endpoint, (ok, data) => {
                 if (searchToken !== this.currentSearchToken) {
                     console.warn("Ignoring stale epView response");
                     return;
@@ -155,8 +138,8 @@ export class TransferEndpointManager {
             return;
         }
 
-        const path = $("#path", this.#controller.uiManager.state.frame).val().trim();
-        console.log("Processing path:", path);
+        const pathElement = $("#path", this.#controller.uiManager.state.frame);
+        const path = pathElement?.val()?.trim() || "";
 
         if (!path.length) {
             console.log("Empty path - disabling endpoint");
