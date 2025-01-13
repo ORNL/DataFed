@@ -93,7 +93,7 @@ enum AccessTokenType {
     GLOBUS_AUTH = 3;
     GLOBUS_TRANSFER = 4;
     GLOBUS_DEFAULT = 5;
-    ACCESS_SENTINEL = 127;
+    ACCESS_SENTINEL = 255;
 }
 
 // ============================ Data Structures
