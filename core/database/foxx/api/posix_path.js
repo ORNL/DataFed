@@ -18,6 +18,10 @@ module.exports = (function () {
      * // Input:
      * const posixPath = '/usr/local/bin/node';
      *
+     * // Execution:
+     * const splitPath = splitPOSIXPath(posixPath);
+     * console.log(splitPath);
+     *
      * // Output:
      * ['usr', 'local', 'bin', 'node']
      */
