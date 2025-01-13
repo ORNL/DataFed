@@ -5,7 +5,6 @@ const router = createRouter();
 const joi = require("joi");
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
-const pathModule = require("./posix_path");
 const Record = require("./record");
 const authzModule = require("./authz");
 const { Repo, PathType } = require("./repo");
@@ -62,7 +61,7 @@ router
             // Determine permissions associated with path provided
             // Actions: read, write, create, delete, chdir, lookup
             if (Object.keys(authzModule.authz_strategy).includes(req.queryParams.act)) {
-                authzModule.authz_strategy[req.queryParams.act][path_type](req.queryParams.file);
+                authzModule.authz_strategy[req.queryParams.act][path_type](client, req.queryParams.file);
             } else {
                 throw [g_lib.ERR_INVALID_PARAM, "Invalid gridFTP action: ", req.queryParams.act];
             }
