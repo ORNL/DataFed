@@ -219,7 +219,14 @@ if( INSTALL_WEB_SERVER )
 endif()
 
 if( INSTALL_FOXX ) 
-  install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_foxx.sh )")
+  install(CODE "execute_process(COMMAND ${DataFed_SOURCE_DIR}/scripts/install_foxx.sh
+                                OUTPUT_VARIABLE _out
+                                ERROR_VARIABLE _err
+                                RESULT_VARIABLE _res)
+                If (NOT \${_res} EQUAL \"0\")
+                    message( FATAL_ERROR \"out: \${_out} install_foxx failed: \${_err}\")
+                endif()"
+         )
 endif()
 
 if (ENABLE_END_TO_END_TESTS)

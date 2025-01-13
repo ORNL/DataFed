@@ -1,7 +1,7 @@
 // Creates SDMS database schema for ArangoDB
 
-db._createDatabase('sdms');
-db._useDatabase('sdms');
+db._createDatabase("sdms");
+db._useDatabase("sdms");
 
 var graph_module = require("@arangodb/general-graph");
 var graph = graph_module._create("sdmsg");
@@ -78,7 +78,6 @@ graph._extendEdgeDefinitions(sch_dep);
 var sch_ver = graph_module._relation("sch_ver", ["sch"], ["sch"]);
 graph._extendEdgeDefinitions(sch_ver);
 
-
 //db._query("for doc in userview2 search analyzer(doc.name in tokens('Joe Samson','na2'), 'na2') let s = BM25(doc) filter s > 2 sort s desc return {id: doc._id,name:doc.name,score:s}");
 //db._query("for doc in userview search analyzer(doc.name in tokens('x st','user_name'), 'user_name') let s = BM25(doc,1.2,.5) sort s desc return {id:doc._id,name:doc.name,score:s}");
 
@@ -87,229 +86,261 @@ var analyzers = require("@arangodb/analyzers");
 
 // ---------- User name indexing (view) ----------
 
-var user_name = analyzers.save("user_name", "ngram", {
-    "min": 3,
-    "max": 5,
-    "streamType": "utf8",
-    "preserveOriginal": true
-}, ["frequency", "norm", "position"]);
+var user_name = analyzers.save(
+    "user_name",
+    "ngram",
+    {
+        min: 3,
+        max: 5,
+        streamType: "utf8",
+        preserveOriginal: true,
+    },
+    ["frequency", "norm", "position"],
+);
 
-userview.properties({
-    links: {
-        "u": {
-            fields: {
-                "name": {
-                    analyzers: ["user_name"]
-                }
+userview.properties(
+    {
+        links: {
+            u: {
+                fields: {
+                    name: {
+                        analyzers: ["user_name"],
+                    },
+                },
+                includeAllFields: false,
             },
-            includeAllFields: false
-        }
-    }
-}, true);
+        },
+    },
+    true,
+);
 
 // ---------- Tag name indexing (view) ----------
 
-var tag_name = analyzers.save("tag_name", "ngram", {
-    "min": 3,
-    "max": 5,
-    "streamType": "utf8",
-    "preserveOriginal": true
-}, ["frequency", "norm", "position"]);
+var tag_name = analyzers.save(
+    "tag_name",
+    "ngram",
+    {
+        min: 3,
+        max: 5,
+        streamType: "utf8",
+        preserveOriginal: true,
+    },
+    ["frequency", "norm", "position"],
+);
 
 var tagview = db._createView("tagview", "arangosearch", {});
 
-tagview.properties({
-    links: {
-        "tag": {
-            fields: {
-                "_key": {
-                    analyzers: ["tag_name"]
-                }
+tagview.properties(
+    {
+        links: {
+            tag: {
+                fields: {
+                    _key: {
+                        analyzers: ["tag_name"],
+                    },
+                },
+                includeAllFields: false,
             },
-            includeAllFields: false
-        }
-    }
-}, true);
+        },
+    },
+    true,
+);
 
 // ---------- Schema indexing (view) ----------
 
-var sch_id = analyzers.save("sch_id", "ngram", {
-    "min": 3,
-    "max": 5,
-    "streamType": "utf8",
-    "preserveOriginal": true
-}, ["frequency", "norm", "position"]);
+var sch_id = analyzers.save(
+    "sch_id",
+    "ngram",
+    {
+        min: 3,
+        max: 5,
+        streamType: "utf8",
+        preserveOriginal: true,
+    },
+    ["frequency", "norm", "position"],
+);
 
 var schemaview = db._createView("schemaview", "arangosearch", {});
 
-schemaview.properties({
-    links: {
-        "sch": {
-            fields: {
-                "pub": {
-                    analyzers: ["identity"]
+schemaview.properties(
+    {
+        links: {
+            sch: {
+                fields: {
+                    pub: {
+                        analyzers: ["identity"],
+                    },
+                    id: {
+                        analyzers: ["sch_id", "identity"],
+                    },
+                    desc: {
+                        analyzers: ["text_en"],
+                    },
+                    own_id: {
+                        analyzers: ["identity"],
+                    },
+                    own_nm: {
+                        analyzers: ["user_name", "identity"],
+                    },
                 },
-                "id": {
-                    analyzers: ["sch_id", "identity"]
-                },
-                "desc": {
-                    analyzers: ["text_en"]
-                },
-                "own_id": {
-                    analyzers: ["identity"]
-                },
-                "own_nm": {
-                    analyzers: ["user_name", "identity"]
-                }
+                includeAllFields: false,
             },
-            includeAllFields: false
-        }
-    }
-}, true);
+        },
+    },
+    true,
+);
 
 // ---------- Data indexing (view) ----------
 
 var view = db._createView("dataview", "arangosearch", {});
 
-view.properties({
+view.properties(
+    {
         links: {
-            "d": {
+            d: {
                 fields: {
-                    "public": {
-                        analyzers: ["identity"]
+                    public: {
+                        analyzers: ["identity"],
                     },
-                    "cat_tags": {
-                        analyzers: ["identity"]
+                    cat_tags: {
+                        analyzers: ["identity"],
                     },
-                    "tags": {
-                        analyzers: ["identity"]
+                    tags: {
+                        analyzers: ["identity"],
                     },
-                    "title": {
-                        analyzers: ["text_en"]
+                    title: {
+                        analyzers: ["text_en"],
                     },
-                    "desc": {
-                        analyzers: ["text_en"]
+                    desc: {
+                        analyzers: ["text_en"],
                     },
-                    "sch_id": {
-                        analyzers: ["identity"]
+                    sch_id: {
+                        analyzers: ["identity"],
                     },
-                    "md_err": {
-                        analyzers: ["identity"]
+                    md_err: {
+                        analyzers: ["identity"],
                     },
-                    "owner": {
-                        analyzers: ["identity"]
+                    owner: {
+                        analyzers: ["identity"],
                     },
-                    "creator": {
-                        analyzers: ["identity"]
+                    creator: {
+                        analyzers: ["identity"],
                     },
-                    "ut": {
-                        analyzers: ["identity"]
+                    ut: {
+                        analyzers: ["identity"],
                     },
-                    "alias": {
-                        analyzers: ["identity"]
+                    alias: {
+                        analyzers: ["identity"],
                     },
-                    "_id": {
-                        analyzers: ["identity"]
-                    }
+                    _id: {
+                        analyzers: ["identity"],
+                    },
                 },
-                includeAllFields: false
-            }
+                includeAllFields: false,
+            },
         },
-        primarySort: [{
-            field: "title",
-            direction: "asc"
-        }]
+        primarySort: [
+            {
+                field: "title",
+                direction: "asc",
+            },
+        ],
     },
-    true
+    true,
 );
 
 // ---------- Collection indexing (view) ----------
 
 view = db._createView("collview", "arangosearch", {});
 
-view.properties({
+view.properties(
+    {
         links: {
-            "c": {
+            c: {
                 fields: {
-                    "public": {
-                        analyzers: ["identity"]
+                    public: {
+                        analyzers: ["identity"],
                     },
-                    "cat_tags": {
-                        analyzers: ["identity"]
+                    cat_tags: {
+                        analyzers: ["identity"],
                     },
-                    "tags": {
-                        analyzers: ["identity"]
+                    tags: {
+                        analyzers: ["identity"],
                     },
-                    "title": {
-                        analyzers: ["text_en"]
+                    title: {
+                        analyzers: ["text_en"],
                     },
-                    "desc": {
-                        analyzers: ["text_en"]
+                    desc: {
+                        analyzers: ["text_en"],
                     },
-                    "owner": {
-                        analyzers: ["identity"]
+                    owner: {
+                        analyzers: ["identity"],
                     },
-                    "creator": {
-                        analyzers: ["identity"]
+                    creator: {
+                        analyzers: ["identity"],
                     },
-                    "ut": {
-                        analyzers: ["identity"]
+                    ut: {
+                        analyzers: ["identity"],
                     },
-                    "alias": {
-                        analyzers: ["identity"]
+                    alias: {
+                        analyzers: ["identity"],
                     },
-                    "_id": {
-                        analyzers: ["identity"]
-                    }
+                    _id: {
+                        analyzers: ["identity"],
+                    },
                 },
-                includeAllFields: false
-            }
+                includeAllFields: false,
+            },
         },
-        primarySort: [{
-            field: "title",
-            direction: "asc"
-        }]
+        primarySort: [
+            {
+                field: "title",
+                direction: "asc",
+            },
+        ],
     },
-    true
+    true,
 );
 
 // ---------- Project indexing (view) ----------
 
 view = db._createView("projview", "arangosearch", {});
 
-view.properties({
+view.properties(
+    {
         links: {
-            "p": {
+            p: {
                 fields: {
-                    "title": {
-                        analyzers: ["text_en"]
+                    title: {
+                        analyzers: ["text_en"],
                     },
-                    "desc": {
-                        analyzers: ["text_en"]
-                    }
+                    desc: {
+                        analyzers: ["text_en"],
+                    },
                 },
-                includeAllFields: false
-            }
-        }
+                includeAllFields: false,
+            },
+        },
     },
-    true
+    true,
 );
 
 view = db._createView("topicview", "arangosearch", {});
 
-view.properties({
+view.properties(
+    {
         links: {
-            "t": {
+            t: {
                 fields: {
-                    "title": {
-                        analyzers: ["text_en"]
-                    }
+                    title: {
+                        analyzers: ["text_en"],
+                    },
                 },
-                includeAllFields: false
-            }
-        }
+                includeAllFields: false,
+            },
+        },
     },
-    true
+    true,
 );
 
 // ---------- Individual field indexing ----------
@@ -321,19 +352,19 @@ db.task.ensureIndex({
     type: "hash",
     unique: false,
     fields: ["client"],
-    sparse: true
+    sparse: true,
 });
 db.task.ensureIndex({
     type: "skiplist",
     unique: false,
     fields: ["status"],
-    sparse: true
+    sparse: true,
 });
 db.task.ensureIndex({
     type: "hash",
     unique: false,
     fields: ["servers[*]"],
-    sparse: true
+    sparse: true,
 });
 
 /*db.d.ensureIndex({ type: "hash", unique: false, fields: [ "public" ], sparse: true });*/
@@ -341,68 +372,68 @@ db.d.ensureIndex({
     type: "hash",
     unique: false,
     fields: ["doi"],
-    sparse: true
+    sparse: true,
 });
 db.d.ensureIndex({
     type: "persistent",
     unique: false,
-    fields: ["tags[*]"]
+    fields: ["tags[*]"],
 });
 
 db.c.ensureIndex({
     type: "persistent",
     unique: false,
     fields: ["public"],
-    sparse: true
+    sparse: true,
 });
 db.c.ensureIndex({
     type: "persistent",
     unique: false,
-    fields: ["tags[*]"]
+    fields: ["tags[*]"],
 });
 
 db.u.ensureIndex({
     type: "hash",
     unique: true,
     fields: ["pub_key"],
-    sparse: true
+    sparse: true,
 });
 db.u.ensureIndex({
     type: "hash",
     unique: true,
     fields: ["access"],
-    sparse: true
+    sparse: true,
 });
 db.g.ensureIndex({
     type: "hash",
     unique: true,
-    fields: ["uid", "gid"]
+    fields: ["uid", "gid"],
 });
 db.loc.ensureIndex({
     type: "hash",
     unique: false,
     fields: ["uid"],
-    sparse: true
+    sparse: true,
 });
 db.dep.ensureIndex({
     type: "hash",
     unique: false,
     fields: ["type"],
-    sparse: true
+    sparse: true,
 });
 
 db.tag.ensureIndex({
     type: "persistent",
     unique: false,
     fields: ["count"],
-    sparse: true
+    sparse: true,
 });
 
 db.t.ensureIndex({
     type: "persistent",
     unique: false,
     fields: ["top"],
-    sparse: true
+    sparse: true,
 });
 
 //db.sch.ensureIndex({ type: "hash", unique: true, fields: [ "id" ], sparse: false });
@@ -410,12 +441,12 @@ db.sch.ensureIndex({
     type: "hash",
     unique: true,
     fields: ["id", "ver"],
-    sparse: false
+    sparse: false,
 });
 
 db.metrics.ensureIndex({
     type: "persistent",
     unique: false,
     fields: ["timestamp", "type", "uid"],
-    sparse: true
+    sparse: true,
 });

@@ -149,6 +149,7 @@ end-to-end-core-setup:
     - echo "-e DATAFED_DATABASE_IP_ADDRESS_PORT=\"$CI_DATAFED_DATABASE_IP_ADDRESS_PORT\" \\" >> run_core.sh
     - echo "-e DATAFED_DEFAULT_LOG_PATH=\"$CONTAINER_LOG_FILE_PATH\" \\" >> run_core.sh
     - echo "-e UID=\"$USER_ID\" \\" >> run_core.sh
+    - echo "-e DATAFED_CORE_LOG_LEVEL=\"$DATAFED_CORE_LOG_LEVEL\" \\" >> run_core.sh
     - echo "-p 7513:7513 \\" >> run_core.sh
     - echo "-p 7512:7512 \\" >> run_core.sh
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_core.sh
@@ -279,7 +280,7 @@ end-to-end-repo-setup:
 
 # Requires setting up Globus Connect Server, requires firewall exceptions on
 # the machine running this.
-# Note we need the certificates to be available on the gcs-authz container
+# Note we need the certificates to be available on the gcs container
 # if it is meant to be run on the same machine as the metadata services
 # because the Apache web server can then route traffic appropriately, if 
 # run separate from the metadata services it should not be needed.
@@ -311,13 +312,13 @@ end-to-end-gcs-authz-setup:
     - chown gitlab-runner "$HOST_LOG_FILE_PATH"
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
-    - ./scripts/container_stop.sh -n "gcs-authz" -p
+    - ./scripts/container_stop.sh -n "${COMPONENT}" -p
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
     - cat $CI_DATAFED_CORE_PUB_KEY > /shared/datafed-repo-key.pub
     - cat $CI_DATAFED_CORE_PRIV_KEY > /shared/datafed-repo-key.priv
     - echo "#!/bin/bash" > run_globus.sh
     - echo "docker run -d \\" >> run_globus.sh
-    - echo "--name \"gcs-authz-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_globus.sh
+    - echo "--name \"${COMPONENT}-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_globus.sh
     - echo "--network host \\" >> run_globus.sh
     - echo "-e DATAFED_GLOBUS_APP_SECRET=\"$CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_globus.sh
     - echo "-e DATAFED_GLOBUS_APP_ID=\"$CI_DATAFED_GLOBUS_APP_ID\" \\" >> run_globus.sh

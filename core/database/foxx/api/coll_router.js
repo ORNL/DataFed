@@ -1,32 +1,31 @@
-'use strict';
+"use strict";
 
-const createRouter = require('@arangodb/foxx/router');
+const createRouter = require("@arangodb/foxx/router");
 const router = createRouter();
-const joi = require('joi');
+const joi = require("joi");
 
-const g_db = require('@arangodb').db;
-const g_graph = require('@arangodb/general-graph')._graph('sdmsg');
-const g_lib = require('./support');
+const g_db = require("@arangodb").db;
+const g_graph = require("@arangodb/general-graph")._graph("sdmsg");
+const g_lib = require("./support");
 
 module.exports = router;
 
-
 //===== COLLECTION API FUNCTIONS =====
 
-router.post('/create', function(req, res) {
+router
+    .post("/create", function (req, res) {
         var retry = 10;
 
         for (;;) {
-
             try {
                 var result = [];
 
                 g_db._executeTransaction({
                     collections: {
                         read: ["u", "uuid", "accn", "alloc"],
-                        write: ["c", "a", "alias", "owner", "item", "t", "top", "tag"]
+                        write: ["c", "a", "alias", "owner", "item", "t", "top", "tag"],
                     },
-                    action: function() {
+                    action: function () {
                         const client = g_lib.getUserFromClientID(req.queryParams.client);
                         var owner = client,
                             parent_id;
@@ -35,13 +34,19 @@ router.post('/create', function(req, res) {
                             parent_id = g_lib.resolveCollID(req.body.parent, client);
 
                             var owner_id = g_db.owner.firstExample({
-                                _from: parent_id
+                                _from: parent_id,
                             })._to;
                             if (owner_id != client._id) {
                                 if (!g_lib.hasManagerPermProj(client, owner_id)) {
                                     var parent_coll = g_db.c.document(parent_id);
 
-                                    if (!g_lib.hasPermissions(client, parent_coll, g_lib.PERM_CREATE))
+                                    if (
+                                        !g_lib.hasPermissions(
+                                            client,
+                                            parent_coll,
+                                            g_lib.PERM_CREATE,
+                                        )
+                                    )
                                         throw g_lib.ERR_PERM_DENIED;
                                 }
                                 owner = g_db._document(owner_id);
@@ -51,19 +56,34 @@ router.post('/create', function(req, res) {
                         }
 
                         // Ensure owner of collection has at least one allocation
-                        if (!g_db.alloc.firstExample({
-                                _from: owner_id
-                            })) {
-                            throw [g_lib.ERR_NO_ALLOCATION, "An allocation is required to create a collection."];
+                        if (
+                            !g_db.alloc.firstExample({
+                                _from: owner_id,
+                            })
+                        ) {
+                            throw [
+                                g_lib.ERR_NO_ALLOCATION,
+                                "An allocation is required to create a collection.",
+                            ];
                         }
 
                         // Enforce collection limit if set
                         if (owner.max_coll >= 0) {
-                            var count = g_db._query("return length(FOR i IN owner FILTER i._to == @id and is_same_collection('c',i._from) RETURN 1)", {
-                                id: owner_id
-                            }).next();
+                            var count = g_db
+                                ._query(
+                                    "return length(FOR i IN owner FILTER i._to == @id and is_same_collection('c',i._from) RETURN 1)",
+                                    {
+                                        id: owner_id,
+                                    },
+                                )
+                                .next();
                             if (count >= owner.max_coll)
-                                throw [g_lib.ERR_ALLOCATION_EXCEEDED, "Collection limit reached (" + owner.max_coll + "). Contact system administrator to increase limit."];
+                                throw [
+                                    g_lib.ERR_ALLOCATION_EXCEEDED,
+                                    "Collection limit reached (" +
+                                        owner.max_coll +
+                                        "). Contact system administrator to increase limit.",
+                                ];
                         }
 
                         var time = Math.floor(Date.now() / 1000);
@@ -71,7 +91,7 @@ router.post('/create', function(req, res) {
                             owner: owner._id,
                             creator: client._id,
                             ct: time,
-                            ut: time
+                            ut: time,
                         };
 
                         g_lib.procInputParam(req.body, "title", false, obj);
@@ -84,11 +104,11 @@ router.post('/create', function(req, res) {
                             obj.public = true;
                             obj.cat_tags = [];
 
-                            var tag, tags = req.body.topic.split(".");
+                            var tag,
+                                tags = req.body.topic.split(".");
                             for (var i in tags) {
                                 tag = tags[i];
-                                if (tag)
-                                    obj.cat_tags.push(tag);
+                                if (tag) obj.cat_tags.push(tag);
                             }
 
                             //g_lib.addTags( obj.cat_tags );
@@ -100,33 +120,34 @@ router.post('/create', function(req, res) {
                         }
 
                         var coll = g_db.c.save(obj, {
-                            returnNew: true
+                            returnNew: true,
                         });
                         g_db.owner.save({
                             _from: coll._id,
-                            _to: owner._id
+                            _to: owner._id,
                         });
 
                         g_lib.makeTitleUnique(parent_id, coll.new);
 
                         g_graph.item.save({
                             _from: parent_id,
-                            _to: coll._id
+                            _to: coll._id,
                         });
 
                         if (obj.alias) {
-                            var alias_key = owner._id[0] + ":" + owner._id.substr(2) + ":" + obj.alias;
+                            var alias_key =
+                                owner._id[0] + ":" + owner._id.substr(2) + ":" + obj.alias;
 
                             g_db.a.save({
-                                _key: alias_key
+                                _key: alias_key,
                             });
                             g_db.alias.save({
                                 _from: coll._id,
-                                _to: "a/" + alias_key
+                                _to: "a/" + alias_key,
                             });
                             g_db.owner.save({
                                 _from: "a/" + alias_key,
-                                _to: owner._id
+                                _to: owner._id,
                             });
                         }
 
@@ -142,11 +163,11 @@ router.post('/create', function(req, res) {
                         delete coll._rev;
 
                         result.push(coll);
-                    }
+                    },
                 });
 
                 res.send({
-                    results: result
+                    results: result,
                 });
                 break;
             } catch (e) {
@@ -154,38 +175,42 @@ router.post('/create', function(req, res) {
                     g_lib.handleException(e, res);
                 }
             }
-
         }
     })
-    .queryParam('client', joi.string().required(), "Client ID")
-    .body(joi.object({
-        title: joi.string().allow('').optional(),
-        desc: joi.string().allow('').optional(),
-        alias: joi.string().allow('').optional(),
-        topic: joi.string().allow('').optional(),
-        parent: joi.string().allow('').optional(),
-        tags: joi.array().items(joi.string()).optional()
-    }).required(), 'Collection fields')
-    .summary('Create a new data collection')
-    .description('Create a new data collection from JSON body');
+    .queryParam("client", joi.string().required(), "Client ID")
+    .body(
+        joi
+            .object({
+                title: joi.string().allow("").optional(),
+                desc: joi.string().allow("").optional(),
+                alias: joi.string().allow("").optional(),
+                topic: joi.string().allow("").optional(),
+                parent: joi.string().allow("").optional(),
+                tags: joi.array().items(joi.string()).optional(),
+            })
+            .required(),
+        "Collection fields",
+    )
+    .summary("Create a new data collection")
+    .description("Create a new data collection from JSON body");
 
-router.post('/update', function(req, res) {
+router
+    .post("/update", function (req, res) {
         var retry = 10;
 
         for (;;) {
-
             try {
                 var result = {
                     results: [],
-                    updates: []
+                    updates: [],
                 };
 
                 g_db._executeTransaction({
                     collections: {
                         read: ["u", "uuid", "accn"],
-                        write: ["c", "a", "d", "owner", "alias", "t", "top", "tag"]
+                        write: ["c", "a", "d", "owner", "alias", "t", "top", "tag"],
                     },
-                    action: function() {
+                    action: function () {
                         const client = g_lib.getUserFromClientID(req.queryParams.client);
                         var coll_id = g_lib.resolveCollID(req.body.id, client);
                         var coll = g_db.c.document(coll_id);
@@ -194,9 +219,11 @@ router.post('/update', function(req, res) {
 
                         var time = Math.floor(Date.now() / 1000),
                             obj = {
-                                ut: time
+                                ut: time,
                             },
-                            i, tags, tag; //, idx;
+                            i,
+                            tags,
+                            tag; //, idx;
 
                         g_lib.procInputParam(req.body, "title", true, obj);
                         g_lib.procInputParam(req.body, "desc", true, obj);
@@ -208,11 +235,14 @@ router.post('/update', function(req, res) {
                         if (!g_lib.hasAdminPermObject(client, coll_id)) {
                             var perms = 0;
 
-                            if (obj.title !== undefined || obj.alias !== undefined || obj.desc !== undefined)
+                            if (
+                                obj.title !== undefined ||
+                                obj.alias !== undefined ||
+                                obj.desc !== undefined
+                            )
                                 perms |= g_lib.PERM_WR_REC;
 
-                            if (obj.topic !== undefined)
-                                perms |= g_lib.PERM_SHARE;
+                            if (obj.topic !== undefined) perms |= g_lib.PERM_SHARE;
 
                             if (!g_lib.hasPermissions(client, coll, perms))
                                 throw g_lib.ERR_PERM_DENIED;
@@ -306,7 +336,7 @@ router.post('/update', function(req, res) {
 
                         coll = g_db._update(coll_id, obj, {
                             keepNull: false,
-                            returnNew: true
+                            returnNew: true,
                         });
                         coll = coll.new;
 
@@ -317,29 +347,30 @@ router.post('/update', function(req, res) {
 
                         if (obj.alias !== undefined) {
                             var old_alias = g_db.alias.firstExample({
-                                _from: coll_id
+                                _from: coll_id,
                             });
                             if (old_alias) {
-                                const graph = require('@arangodb/general-graph')._graph('sdmsg');
+                                const graph = require("@arangodb/general-graph")._graph("sdmsg");
                                 graph.a.remove(old_alias._to);
                             }
 
                             if (obj.alias) {
                                 var owner_id = g_db.owner.firstExample({
-                                    _from: coll_id
+                                    _from: coll_id,
                                 })._to;
-                                var alias_key = owner_id[0] + ":" + owner_id.substr(2) + ":" + obj.alias;
+                                var alias_key =
+                                    owner_id[0] + ":" + owner_id.substr(2) + ":" + obj.alias;
 
                                 g_db.a.save({
-                                    _key: alias_key
+                                    _key: alias_key,
                                 });
                                 g_db.alias.save({
                                     _from: coll_id,
-                                    _to: "a/" + alias_key
+                                    _to: "a/" + alias_key,
                                 });
                                 g_db.owner.save({
                                     _from: "a/" + alias_key,
-                                    _to: owner_id
+                                    _to: owner_id,
                                 });
                             }
                         }
@@ -351,7 +382,7 @@ router.post('/update', function(req, res) {
 
                         result.results.push(coll);
                         result.updates.push(coll);
-                    }
+                    },
                 });
 
                 res.send(result);
@@ -361,24 +392,28 @@ router.post('/update', function(req, res) {
                     g_lib.handleException(e, res);
                 }
             }
-
         }
     })
-    .queryParam('client', joi.string().required(), "Client ID")
-    .body(joi.object({
-        id: joi.string().required(),
-        title: joi.string().allow('').optional(),
-        desc: joi.string().allow('').optional(),
-        alias: joi.string().allow('').optional(),
-        topic: joi.string().allow('').optional(),
-        tags: joi.array().items(joi.string()).optional(),
-        tags_clear: joi.boolean().optional()
-    }).required(), 'Collection fields')
-    .summary('Update an existing collection')
-    .description('Update an existing collection from JSON body');
+    .queryParam("client", joi.string().required(), "Client ID")
+    .body(
+        joi
+            .object({
+                id: joi.string().required(),
+                title: joi.string().allow("").optional(),
+                desc: joi.string().allow("").optional(),
+                alias: joi.string().allow("").optional(),
+                topic: joi.string().allow("").optional(),
+                tags: joi.array().items(joi.string()).optional(),
+                tags_clear: joi.boolean().optional(),
+            })
+            .required(),
+        "Collection fields",
+    )
+    .summary("Update an existing collection")
+    .description("Update an existing collection from JSON body");
 
-
-router.get('/view', function(req, res) {
+router
+    .get("/view", function (req, res) {
         try {
             const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
 
@@ -407,19 +442,19 @@ router.get('/view', function(req, res) {
             delete coll._rev;
 
             res.send({
-                results: [coll]
+                results: [coll],
             });
         } catch (e) {
             g_lib.handleException(e, res);
         }
     })
-    .queryParam('client', joi.string().required(), "Client ID")
-    .queryParam('id', joi.string().required(), "Collection ID or alias")
-    .summary('View collection information by ID or alias')
-    .description('View collection information by ID or alias');
+    .queryParam("client", joi.string().required(), "Client ID")
+    .queryParam("id", joi.string().required(), "Collection ID or alias")
+    .summary("View collection information by ID or alias")
+    .description("View collection information by ID or alias");
 
-
-router.get('/read', function(req, res) {
+router
+    .get("/read", function (req, res) {
         try {
             const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
 
@@ -438,29 +473,38 @@ router.get('/read', function(req, res) {
                 throw g_lib.ERR_PERM_DENIED;
             }
 
-            var qry = "for v in 1..1 outbound @coll item sort is_same_collection('c',v) DESC, v.title",
-                result, params = {
-                    coll: coll_id
+            var qry =
+                    "for v in 1..1 outbound @coll item sort is_same_collection('c',v) DESC, v.title",
+                result,
+                params = {
+                    coll: coll_id,
                 },
                 item;
 
             if (req.queryParams.offset != undefined && req.queryParams.count != undefined) {
                 qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
-                qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, size: v.size, external: v.external, md_err: v.md_err, locked: v.locked }";
-                result = g_db._query(qry, params, {}, {
-                    fullCount: true
-                });
+                qry +=
+                    " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, size: v.size, external: v.external, md_err: v.md_err, locked: v.locked }";
+                result = g_db._query(
+                    qry,
+                    params,
+                    {},
+                    {
+                        fullCount: true,
+                    },
+                );
                 var tot = result.getExtra().stats.fullCount;
                 result = result.toArray();
                 result.push({
                     paging: {
                         off: req.queryParams.offset,
                         cnt: req.queryParams.count,
-                        tot: tot
-                    }
+                        tot: tot,
+                    },
                 });
             } else {
-                qry += " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, size: v.size, external: v.external, md_err: v.md_err, locked: v.locked }";
+                qry +=
+                    " return { id: v._id, title: v.title, alias: v.alias, owner: v.owner, creator: v.creator, size: v.size, external: v.external, md_err: v.md_err, locked: v.locked }";
                 result = g_db._query(qry, params).toArray();
             }
 
@@ -476,32 +520,35 @@ router.get('/read', function(req, res) {
             g_lib.handleException(e, res);
         }
     })
-    .queryParam('client', joi.string().required(), "Client ID")
-    .queryParam('id', joi.string().required(), "Collection ID or alias to list")
-    .queryParam('offset', joi.number().integer().min(0).optional(), "Offset")
-    .queryParam('count', joi.number().integer().min(1).optional(), "Count")
-    .summary('Read contents of a collection by ID or alias')
-    .description('Read contents of a collection by ID or alias');
+    .queryParam("client", joi.string().required(), "Client ID")
+    .queryParam("id", joi.string().required(), "Collection ID or alias to list")
+    .queryParam("offset", joi.number().integer().min(0).optional(), "Offset")
+    .queryParam("count", joi.number().integer().min(1).optional(), "Count")
+    .summary("Read contents of a collection by ID or alias")
+    .description("Read contents of a collection by ID or alias");
 
-
-router.get('/write', function(req, res) {
+router
+    .get("/write", function (req, res) {
         try {
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "c", "uuid", "accn"],
-                    write: ["item", "d"]
+                    write: ["item", "d"],
                 },
-                action: function() {
+                action: function () {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
 
                     if (req.queryParams.add && req.queryParams.remove) {
-                        throw [g_lib.ERR_INVALID_PARAM, "Cannot add and remove collection items at the same time."];
+                        throw [
+                            g_lib.ERR_INVALID_PARAM,
+                            "Cannot add and remove collection items at the same time.",
+                        ];
                     }
 
                     var coll_id = g_lib.resolveCollID(req.queryParams.id, client);
                     var coll = g_db.c.document(coll_id);
                     var owner_id = g_db.owner.firstExample({
-                        _from: coll_id
+                        _from: coll_id,
                     })._to;
                     var chk_perm = false;
 
@@ -510,13 +557,19 @@ router.get('/write', function(req, res) {
                         //if ( req.queryParams.remove && req.queryParams.remove.length )
                         //    req_perm |= g_lib.PERM_SHARE;
                         if (!g_lib.hasPermissions(client, coll, req_perm, true))
-                            throw [g_lib.ERR_PERM_DENIED, "Permission denied - requires LINK on collection."];
+                            throw [
+                                g_lib.ERR_PERM_DENIED,
+                                "Permission denied - requires LINK on collection.",
+                            ];
 
                         chk_perm = true;
                     }
 
-                    var i, obj, cres,
-                        loose, have_loose = false,
+                    var i,
+                        obj,
+                        cres,
+                        loose,
+                        have_loose = false,
                         visited = {},
                         coll_ctx = g_lib.catalogCalcParCtxt(coll, visited);
 
@@ -535,31 +588,41 @@ router.get('/write', function(req, res) {
                         for (i in req.queryParams.remove) {
                             obj = g_lib.getObject(req.queryParams.remove[i], client);
 
-                            if (!g_db.item.firstExample({
+                            if (
+                                !g_db.item.firstExample({
                                     _from: coll_id,
-                                    _to: obj._id
-                                }))
-                                throw [g_lib.ERR_UNLINK, obj._id + " is not in collection " + coll_id];
+                                    _to: obj._id,
+                                })
+                            )
+                                throw [
+                                    g_lib.ERR_UNLINK,
+                                    obj._id + " is not in collection " + coll_id,
+                                ];
 
                             if (chk_perm && obj.creator != client._id) {
                                 // Check if another instance exists in same scope, if not deny permission
                                 if (!g_lib.hasAnyCommonAccessScope(obj._id, coll_id)) {
-                                    throw [g_lib.ERR_PERM_DENIED, "Cannot unlink items owned by other users."];
+                                    throw [
+                                        g_lib.ERR_PERM_DENIED,
+                                        "Cannot unlink items owned by other users.",
+                                    ];
                                 }
                             }
 
                             g_db.item.removeByExample({
                                 _from: coll_id,
-                                _to: obj._id
+                                _to: obj._id,
                             });
 
-                            if (!g_db.item.firstExample({
-                                    _to: obj._id
-                                })) {
+                            if (
+                                !g_db.item.firstExample({
+                                    _to: obj._id,
+                                })
+                            ) {
                                 loose[obj._id] = obj;
                                 have_loose = true;
                             } else if (coll_ctx.pub) {
-                                if (obj._id.charAt(0) == 'c') {
+                                if (obj._id.charAt(0) == "c") {
                                     // Must update all records in this collection
                                     g_lib.catalogUpdateColl(obj, null, visited);
                                 } else {
@@ -573,54 +636,73 @@ router.get('/write', function(req, res) {
                     if (req.queryParams.add) {
                         // Limit number of items in collection
                         cres = g_db._query("for v in 1..1 outbound @coll item return v._id", {
-                            coll: coll_id
+                            coll: coll_id,
                         });
                         //console.log("coll item count:",cres.count());
                         if (cres.count() + req.queryParams.add.length > g_lib.MAX_COLL_ITEMS)
-                            throw [g_lib.ERR_INPUT_TOO_LONG, "Collection item limit exceeded (" + g_lib.MAX_COLL_ITEMS + " items)"];
+                            throw [
+                                g_lib.ERR_INPUT_TOO_LONG,
+                                "Collection item limit exceeded (" +
+                                    g_lib.MAX_COLL_ITEMS +
+                                    " items)",
+                            ];
 
                         cres.dispose();
 
                         for (i in req.queryParams.add) {
-
                             obj = g_lib.getObject(req.queryParams.add[i], client);
 
                             // Check if item is already in this collection
-                            if (g_db.item.firstExample({
+                            if (
+                                g_db.item.firstExample({
                                     _from: coll_id,
-                                    _to: obj._id
-                                }))
+                                    _to: obj._id,
+                                })
+                            )
                                 throw [g_lib.ERR_LINK, obj._id + " already linked to " + coll_id];
 
                             // Check if item is a root collection
-                            if (obj.is_root)
-                                throw [g_lib.ERR_LINK, "Cannot link root collection"];
+                            if (obj.is_root) throw [g_lib.ERR_LINK, "Cannot link root collection"];
 
                             // Check if item has same owner as this collection
-                            if (g_db.owner.firstExample({
-                                    _from: obj._id
-                                })._to != owner_id)
-                                throw [g_lib.ERR_LINK, obj._id + " and " + coll_id + " have different owners"];
+                            if (
+                                g_db.owner.firstExample({
+                                    _from: obj._id,
+                                })._to != owner_id
+                            )
+                                throw [
+                                    g_lib.ERR_LINK,
+                                    obj._id + " and " + coll_id + " have different owners",
+                                ];
 
                             if (chk_perm && obj.creator != client._id) {
                                 // TODO check if another instance exists in same scope, if not deny
                                 if (!g_lib.hasAnyCommonAccessScope(obj._id, coll_id)) {
-                                    throw [g_lib.ERR_PERM_DENIED, "Cannot link items from other access-control scopes."];
+                                    throw [
+                                        g_lib.ERR_PERM_DENIED,
+                                        "Cannot link items from other access-control scopes.",
+                                    ];
                                 }
                             }
 
                             if (obj._id.charAt(0) == "c") {
                                 // Check for circular dependency
                                 if (obj._id == coll_id || g_lib.isSrcParentOfDest(obj._id, coll_id))
-                                    throw [g_lib.ERR_LINK, "Cannot link ancestor, " + obj._id + ", to descendant, " + coll_id];
+                                    throw [
+                                        g_lib.ERR_LINK,
+                                        "Cannot link ancestor, " +
+                                            obj._id +
+                                            ", to descendant, " +
+                                            coll_id,
+                                    ];
 
                                 // Collections can only be linked to one parent
                                 g_db.item.removeByExample({
-                                    _to: obj._id
+                                    _to: obj._id,
                                 });
                                 g_db.item.save({
                                     _from: coll_id,
-                                    _to: obj._id
+                                    _to: obj._id,
                                 });
 
                                 if (coll_ctx.pub) {
@@ -632,7 +714,7 @@ router.get('/write', function(req, res) {
                             } else {
                                 g_db.item.save({
                                     _from: coll_id,
-                                    _to: obj._id
+                                    _to: obj._id,
                                 });
 
                                 if (coll_ctx.pub) {
@@ -652,18 +734,26 @@ router.get('/write', function(req, res) {
                             loose_res = [];
 
                         cres = g_db._query("for v in 1..1 outbound @coll item return v._id", {
-                            coll: root_id
+                            coll: root_id,
                         });
 
-                        if (cres.count() + (req.queryParams.add ? req.queryParams.add.length : 0) > g_lib.MAX_COLL_ITEMS)
-                            throw [g_lib.ERR_INPUT_TOO_LONG, "Root collection item limit exceeded (" + g_lib.MAX_COLL_ITEMS + " items)"];
+                        if (
+                            cres.count() + (req.queryParams.add ? req.queryParams.add.length : 0) >
+                            g_lib.MAX_COLL_ITEMS
+                        )
+                            throw [
+                                g_lib.ERR_INPUT_TOO_LONG,
+                                "Root collection item limit exceeded (" +
+                                    g_lib.MAX_COLL_ITEMS +
+                                    " items)",
+                            ];
 
                         cres.dispose();
 
                         if (coll_ctx.pub) {
                             rctxt = {
                                 pub: false,
-                                tag: new Set()
+                                tag: new Set(),
                             };
                         }
 
@@ -671,26 +761,30 @@ router.get('/write', function(req, res) {
                             obj = loose[i];
                             g_db.item.save({
                                 _from: root_id,
-                                _to: obj._id
+                                _to: obj._id,
                             });
 
                             loose_res.push({
                                 id: obj._id,
-                                title: obj.title
+                                title: obj.title,
                             });
 
                             if (coll_ctx.pub) {
-                                if (obj._id.charAt(0) == 'c') {
+                                if (obj._id.charAt(0) == "c") {
                                     // Must update all records in this collection
                                     g_lib.catalogUpdateColl(obj, rctxt, visited);
                                 } else {
                                     // Update this record
-                                    g_db._update(obj._id, {
-                                        public: false,
-                                        cat_tags: null
-                                    }, {
-                                        keepNull: false
-                                    });
+                                    g_db._update(
+                                        obj._id,
+                                        {
+                                            public: false,
+                                            cat_tags: null,
+                                        },
+                                        {
+                                            keepNull: false,
+                                        },
+                                    );
                                 }
                             }
 
@@ -699,27 +793,28 @@ router.get('/write', function(req, res) {
                     } else {
                         res.send([]);
                     }
-                }
+                },
             });
         } catch (e) {
             g_lib.handleException(e, res);
         }
     })
-    .queryParam('client', joi.string().required(), "Client ID")
-    .queryParam('id', joi.string().required(), "Collection ID or alias to modify")
-    .queryParam('add', joi.array().items(joi.string()).optional(), "Array of item IDs to add")
-    .queryParam('remove', joi.array().items(joi.string()).optional(), "Array of item IDs to remove")
-    .summary('Add/remove items in a collection')
-    .description('Add/remove items in a collection');
+    .queryParam("client", joi.string().required(), "Client ID")
+    .queryParam("id", joi.string().required(), "Collection ID or alias to modify")
+    .queryParam("add", joi.array().items(joi.string()).optional(), "Array of item IDs to add")
+    .queryParam("remove", joi.array().items(joi.string()).optional(), "Array of item IDs to remove")
+    .summary("Add/remove items in a collection")
+    .description("Add/remove items in a collection");
 
-router.get('/move', function(req, res) {
+router
+    .get("/move", function (req, res) {
         try {
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "c", "uuid", "accn"],
-                    write: ["item", "d"]
+                    write: ["item", "d"],
                 },
-                action: function() {
+                action: function () {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
                     var src_id = g_lib.resolveCollID(req.queryParams.source, client),
                         src = g_db.c.document(src_id),
@@ -731,7 +826,13 @@ router.get('/move', function(req, res) {
                         is_pub = src_ctx.pub | dst_ctx.pub;
 
                     if (src.owner != dst.owner)
-                        throw [g_lib.ERR_LINK, req.queryParams.source + " and " + req.queryParams.dest + " have different owners"];
+                        throw [
+                            g_lib.ERR_LINK,
+                            req.queryParams.source +
+                                " and " +
+                                req.queryParams.dest +
+                                " have different owners",
+                        ];
 
                     var chk_perm = false,
                         src_perms = 0,
@@ -740,15 +841,26 @@ router.get('/move', function(req, res) {
                     if (!g_lib.hasAdminPermObject(client, src_id)) {
                         src_perms = g_lib.getPermissions(client, src, g_lib.PERM_LINK, true);
                         if ((src_perms & g_lib.PERM_LINK) == 0)
-                            throw [g_lib.ERR_PERM_DENIED, "Permission denied - requires LINK on source collection."];
+                            throw [
+                                g_lib.ERR_PERM_DENIED,
+                                "Permission denied - requires LINK on source collection.",
+                            ];
 
                         chk_perm = true;
                     }
 
                     if (!g_lib.hasAdminPermObject(client, dst_id)) {
-                        dst_perms = g_lib.getPermissions(client, dst, g_lib.PERM_LINK /*| g_lib.PERM_SHARE*/ , true);
+                        dst_perms = g_lib.getPermissions(
+                            client,
+                            dst,
+                            g_lib.PERM_LINK /*| g_lib.PERM_SHARE*/,
+                            true,
+                        );
                         if ((dst_perms & g_lib.PERM_LINK) == 0)
-                            throw [g_lib.ERR_PERM_DENIED, "Permission denied - requires LINK on destination collection."];
+                            throw [
+                                g_lib.ERR_PERM_DENIED,
+                                "Permission denied - requires LINK on destination collection.",
+                            ];
 
                         chk_perm = true;
                     }
@@ -759,45 +871,60 @@ router.get('/move', function(req, res) {
                         // TODO - should aliases be resolved with client or owner ID?
                         item = g_lib.getObject(req.queryParams.items[i], client);
 
-                        if (item.is_root)
-                            throw [g_lib.ERR_LINK, "Cannot link root collection"];
+                        if (item.is_root) throw [g_lib.ERR_LINK, "Cannot link root collection"];
 
-                        if (chk_perm && item.creator != client._id /*&& !has_share*/ ) {
+                        if (chk_perm && item.creator != client._id /*&& !has_share*/) {
                             if (!g_lib.hasCommonAccessScope(src_id, dst_id)) {
-                                throw [g_lib.ERR_PERM_DENIED, "Cannot move items across access-control scopes."];
+                                throw [
+                                    g_lib.ERR_PERM_DENIED,
+                                    "Cannot move items across access-control scopes.",
+                                ];
                             }
                         }
 
-                        if (!g_db.item.firstExample({
+                        if (
+                            !g_db.item.firstExample({
                                 _from: src_id,
-                                _to: item._id
-                            }))
+                                _to: item._id,
+                            })
+                        )
                             throw [g_lib.ERR_UNLINK, item._id + " is not in collection " + src_id];
 
-                        if (g_db.item.firstExample({
+                        if (
+                            g_db.item.firstExample({
                                 _from: dst_id,
-                                _to: item._id
-                            }))
-                            throw [g_lib.ERR_LINK, item._id + " is already in collection " + dst_id];
+                                _to: item._id,
+                            })
+                        )
+                            throw [
+                                g_lib.ERR_LINK,
+                                item._id + " is already in collection " + dst_id,
+                            ];
 
                         if (item._id[0] == "c") {
                             // Check for circular dependency
                             if (item._id == dst_id || g_lib.isSrcParentOfDest(item._id, dst_id))
-                                throw [g_lib.ERR_LINK, "Cannot link ancestor, " + item._id + ", to descendant, " + dst_id];
+                                throw [
+                                    g_lib.ERR_LINK,
+                                    "Cannot link ancestor, " +
+                                        item._id +
+                                        ", to descendant, " +
+                                        dst_id,
+                                ];
                         }
 
                         g_db.item.removeByExample({
                             _from: src_id,
-                            _to: item._id
+                            _to: item._id,
                         });
                         g_db.item.save({
                             _from: dst_id,
-                            _to: item._id
+                            _to: item._id,
                         });
 
                         // Update public flag & cat tags for published items
                         if (is_pub) {
-                            if (item._id.charAt(0) == 'c') {
+                            if (item._id.charAt(0) == "c") {
                                 // Must update all records in this collection
                                 g_lib.catalogUpdateColl(item, dst_ctx, visited);
                             } else {
@@ -808,29 +935,33 @@ router.get('/move', function(req, res) {
                     }
 
                     var cres = g_db._query("for v in 1..1 outbound @coll item return v._id", {
-                        coll: dst_id
+                        coll: dst_id,
                     });
 
                     if (cres.count() > g_lib.MAX_COLL_ITEMS)
-                        throw [g_lib.ERR_INPUT_TOO_LONG, "Collection item limit exceeded (" + g_lib.MAX_COLL_ITEMS + " items)"];
+                        throw [
+                            g_lib.ERR_INPUT_TOO_LONG,
+                            "Collection item limit exceeded (" + g_lib.MAX_COLL_ITEMS + " items)",
+                        ];
 
                     cres.dispose();
 
                     res.send({});
-                }
+                },
             });
         } catch (e) {
             g_lib.handleException(e, res);
         }
     })
-    .queryParam('client', joi.string().required(), "Client ID")
-    .queryParam('items', joi.array().items(joi.string()).optional(), "Items IDs/aliases to move")
-    .queryParam('source', joi.string().required(), "Source collection ID/alias")
-    .queryParam('dest', joi.string().required(), "Destination collection ID/alias")
-    .summary('Move items from source collection to destination collection')
-    .description('Move items from source collection to destination collection');
+    .queryParam("client", joi.string().required(), "Client ID")
+    .queryParam("items", joi.array().items(joi.string()).optional(), "Items IDs/aliases to move")
+    .queryParam("source", joi.string().required(), "Source collection ID/alias")
+    .queryParam("dest", joi.string().required(), "Destination collection ID/alias")
+    .summary("Move items from source collection to destination collection")
+    .description("Move items from source collection to destination collection");
 
-router.get('/get_parents', function(req, res) {
+router
+    .get("/get_parents", function (req, res) {
         try {
             const client = g_lib.getUserFromClientID(req.queryParams.client);
             var item_id = g_lib.resolveID(req.queryParams.id, client);
@@ -841,15 +972,13 @@ router.get('/get_parents', function(req, res) {
             var results = g_lib.getParents(item_id);
             if (req.queryParams.inclusive) {
                 var item;
-                if (item_id[0] == 'c')
-                    item = g_db.c.document(item_id);
-                else
-                    item = g_db.d.document(item_id);
+                if (item_id[0] == "c") item = g_db.c.document(item_id);
+                else item = g_db.d.document(item_id);
 
                 item = {
                     id: item._id,
                     title: item.title,
-                    alias: item.alias
+                    alias: item.alias,
                 };
                 for (var i in results) {
                     results[i].unshift(item);
@@ -860,19 +989,20 @@ router.get('/get_parents', function(req, res) {
             g_lib.handleException(e, res);
         }
     })
-    .queryParam('client', joi.string().required(), "Client ID")
-    .queryParam('id', joi.string().required(), "ID or alias of child item")
-    .queryParam('inclusive', joi.boolean().optional(), "Include child item in result")
-    .summary('Get parent collection(s) (path) of item')
-    .description('Get parent collection(s) (path) of item');
+    .queryParam("client", joi.string().required(), "Client ID")
+    .queryParam("id", joi.string().required(), "ID or alias of child item")
+    .queryParam("inclusive", joi.boolean().optional(), "Include child item in result")
+    .summary("Get parent collection(s) (path) of item")
+    .description("Get parent collection(s) (path) of item");
 
-router.get('/get_offset', function(req, res) {
+router
+    .get("/get_offset", function (req, res) {
         try {
             const client = g_lib.getUserFromClientID(req.queryParams.client);
             var coll_id = g_lib.resolveID(req.queryParams.id, client);
             var item_id = g_lib.resolveID(req.queryParams.item, client);
 
-            if (coll_id.charAt(0) != 'c')
+            if (coll_id.charAt(0) != "c")
                 throw [g_lib.ERR_INVALID_PARAM, "ID is not a collection."];
 
             /*if ( !g_lib.hasAdminPermObject( client, coll_id )) {
@@ -882,39 +1012,49 @@ router.get('/get_offset', function(req, res) {
             }*/
 
             var qry = "for v in 1..1 outbound @coll item ";
-            if (item_id.charAt(0) == 'c')
+            if (item_id.charAt(0) == "c")
                 qry += "filter is_same_collection('c',v) sort v.title return v._id";
-            else
-                qry += "sort is_same_collection('c',v) DESC, v.title return v._id";
+            else qry += "sort is_same_collection('c',v) DESC, v.title return v._id";
 
-            var ids = g_db._query(qry, {
-                coll: coll_id
-            }).toArray();
+            var ids = g_db
+                ._query(qry, {
+                    coll: coll_id,
+                })
+                .toArray();
             if (ids.length < req.queryParams.page_sz)
                 res.send({
-                    offset: 0
+                    offset: 0,
                 });
             else {
                 var idx = ids.indexOf(item_id);
                 if (idx < 0)
-                    throw [g_lib.ERR_NOT_FOUND, "Item " + req.queryParams.item + " was not found in collection " + req.queryParams.id];
+                    throw [
+                        g_lib.ERR_NOT_FOUND,
+                        "Item " +
+                            req.queryParams.item +
+                            " was not found in collection " +
+                            req.queryParams.id,
+                    ];
 
                 res.send({
-                    offset: req.queryParams.page_sz * Math.floor(idx / req.queryParams.page_sz)
+                    offset: req.queryParams.page_sz * Math.floor(idx / req.queryParams.page_sz),
                 });
             }
         } catch (e) {
             g_lib.handleException(e, res);
         }
     })
-    .queryParam('client', joi.string().required(), "Client ID")
-    .queryParam('id', joi.string().required(), "ID or alias of collection")
-    .queryParam('item', joi.string().required(), "ID or alias of child item")
-    .queryParam('page_sz', joi.number().required(), "Page size")
-    .summary('Get offset to item in collection')
-    .description('Get offset to item in collection. Offset will be aligned to specified page size.');
+    .queryParam("client", joi.string().required(), "Client ID")
+    .queryParam("id", joi.string().required(), "ID or alias of collection")
+    .queryParam("item", joi.string().required(), "ID or alias of child item")
+    .queryParam("page_sz", joi.number().required(), "Page size")
+    .summary("Get offset to item in collection")
+    .description(
+        "Get offset to item in collection. Offset will be aligned to specified page size.",
+    );
 
-router.get('/published/list', function(req, res) {
+router
+    .get("/published/list", function (req, res) {
         try {
             const client = g_lib.getUserFromClientID(req.queryParams.client);
             var owner_id;
@@ -925,30 +1065,36 @@ router.get('/published/list', function(req, res) {
                 owner_id = client._id;
             }
 
-            var qry = "for v in 1..1 inbound @user owner filter is_same_collection('c',v) && v.public sort v.title";
+            var qry =
+                "for v in 1..1 inbound @user owner filter is_same_collection('c',v) && v.public sort v.title";
             var result;
 
             if (req.queryParams.offset != undefined && req.queryParams.count != undefined) {
                 qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
                 qry += " return { id: v._id, title: v.title, alias: v.alias }";
-                result = g_db._query(qry, {
-                    user: owner_id
-                }, {}, {
-                    fullCount: true
-                });
+                result = g_db._query(
+                    qry,
+                    {
+                        user: owner_id,
+                    },
+                    {},
+                    {
+                        fullCount: true,
+                    },
+                );
                 var tot = result.getExtra().stats.fullCount;
                 result = result.toArray();
                 result.push({
                     paging: {
                         off: req.queryParams.offset,
                         cnt: req.queryParams.count,
-                        tot: tot
-                    }
+                        tot: tot,
+                    },
                 });
             } else {
                 qry += " return { id: v._id, title: v.title, alias: v.alias }";
                 result = g_db._query(qry, {
-                    user: owner_id
+                    user: owner_id,
                 });
             }
 
@@ -957,9 +1103,9 @@ router.get('/published/list', function(req, res) {
             g_lib.handleException(e, res);
         }
     })
-    .queryParam('client', joi.string().required(), "Client ID")
-    .queryParam('subject', joi.string().optional(), "UID of subject user (optional)")
-    .queryParam('offset', joi.number().optional(), "Offset")
-    .queryParam('count', joi.number().optional(), "Count")
-    .summary('Get list of clients published collections.')
-    .description('Get list of clients published collections.');
+    .queryParam("client", joi.string().required(), "Client ID")
+    .queryParam("subject", joi.string().optional(), "UID of subject user (optional)")
+    .queryParam("offset", joi.number().optional(), "Offset")
+    .queryParam("count", joi.number().optional(), "Count")
+    .summary("Get list of clients published collections.")
+    .description("Get list of clients published collections.");
