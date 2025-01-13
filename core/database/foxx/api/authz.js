@@ -47,15 +47,6 @@ module.exports = (function () {
 
     obj.readRecord = function (client, path) {
         const permission = g_lib.PERM_RD_DATA;
-        // Will split a posix path into an array
-        // E.g.
-        // Will split a posix path into an array
-        // E.g.
-        // path = "/usr/local/bin"
-        // const path_components = pathModule.splitPOSIXPath(path);
-        //
-        // Path components will be
-        // ["usr", "local", "bin"]
         const path_components = pathModule.splitPOSIXPath(path);
         const data_key = path_components.at(-1);
         let record = new Record(data_key);
@@ -64,7 +55,7 @@ module.exports = (function () {
             console.log("AUTHZ act: read client: " + client._id + " path " + path + " NOT_FOUND");
             throw [g_lib.ERR_NOT_FOUND, "Record not found: " + path];
         }
-        
+
         // Special case - allow unknown client to read a publicly accessible record
         // if record exists and if it is a public record
         if (!client) {
@@ -99,16 +90,6 @@ module.exports = (function () {
 
     obj.createRecord = function (client, path) {
         const permission = g_lib.PERM_WR_DATA;
-
-        // Will split a posix path into an array
-        // E.g.
-        // Will split a posix path into an array
-        // E.g.
-        // path = "/usr/local/bin"
-        // const path_components = pathModule.splitPOSIXPath(path);
-        //
-        // Path components will be
-        // ["usr", "local", "bin"]
         const path_components = pathModule.splitPOSIXPath(path);
         const data_key = path_components.at(-1);
         let record = new Record(data_key);
