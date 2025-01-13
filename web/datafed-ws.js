@@ -498,163 +498,185 @@ app.get("/ui/authn", (a_req, a_resp) => {
                 console.log("First other token: ", client_token.data.other_tokens[0]);
             }
 
-            if (client_token.data.resource_server === "auth.globus.org") {
-                var xfr_token = client_token.data.other_tokens[0];
+            // if (client_token.data.resource_server === "auth.globus.org") {
+            const is_auth_token = client_token.data.resource_server === "auth.globus.org";  // Auth tokens will come with an additional transfer token, but transfer tokens (which come with consent collections) will come alone (for now)
+            let xfr_token = is_auth_token ? client_token.data.other_tokens[0] : client_token.data;
 
-                const opts = {
-                    hostname: "auth.globus.org",
-                    method: "POST",
-                    path: "/v2/oauth2/token/introspect",
-                    rejectUnauthorized: true,
-                    auth: g_oauth_credentials.clientId + ":" + g_oauth_credentials.clientSecret,
-                    headers: {
-                        "Content-Type": "application/x-www-form-urlencoded",
-                        Accept: "application/json",
-                    },
-                };
+            const opts = {
+                hostname: "auth.globus.org",
+                method: "POST",
+                path: "/v2/oauth2/token/introspect",
+                rejectUnauthorized: true,
+                auth: g_oauth_credentials.clientId + ":" + g_oauth_credentials.clientSecret,
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    Accept: "application/json",
+                },
+            };
 
-                // Request user info from token
-                const req = https.request(opts, (res) => {
-                    var data = "";
+            // Request user info from token
+            const req = https.request(opts, (res) => {
+                var data = "";
 
-                    res.on("data", (chunk) => {
-                        data += chunk;
-                    });
+                res.on("data", (chunk) => {
+                    data += chunk;
+                });
 
-                    res.on("end", () => {
-                        if (res.statusCode >= 200 && res.statusCode < 300) {
-                            var userinfo = JSON.parse(data),
-                                uid = userinfo.username.substr(0, userinfo.username.indexOf("@"));
+                res.on("end", () => {
+                    if (res.statusCode >= 200 && res.statusCode < 300) {
+                        var userinfo = JSON.parse(data),
+                            uid = userinfo.username.substr(0, userinfo.username.indexOf("@"));
 
-                            logger.info(
-                                "/ui/authn",
-                                getCurrentLineNumber(),
-                                "User: " + uid + " authenticated, verifying DataFed account",
-                            );
-                            sendMessageDirect(
-                                "UserFindByUUIDsRequest",
-                                "datafed-ws",
-                                { uuid: userinfo.identities_set },
-                                function (reply) {
-                                    if (!reply) {
-                                        logger.error(
-                                            "/ui/authn",
-                                            getCurrentLineNumber(),
-                                            "Error - Find user call failed.",
-                                        );
+                        logger.info(
+                            "/ui/authn",
+                            getCurrentLineNumber(),
+                            "User: " + uid + " authenticated, verifying DataFed account",
+                        );
+                        sendMessageDirect(
+                            "UserFindByUUIDsRequest",
+                            "datafed-ws",
+                            { uuid: userinfo.identities_set },
+                            function (reply) {
+                                if (!reply) {
+                                    logger.error(
+                                        "/ui/authn",
+                                        getCurrentLineNumber(),
+                                        "Error - Find user call failed.",
+                                    );
+                                    a_resp.redirect("/ui/error");
+                                } else if (!reply.user || !reply.user.length) {
+                                    // Not registered
+                                    logger.info(
+                                        "/ui/authn",
+                                        getCurrentLineNumber(),
+                                        "User: " + uid + "not registered",
+                                    );
+
+                                    if (!is_auth_token) {
+                                        throw new Error("Transfer token received for non-existent user.")
                                         a_resp.redirect("/ui/error");
-                                    } else if (!reply.user || !reply.user.length) {
-                                        // Not registered
-                                        logger.info(
-                                            "/ui/authn",
-                                            getCurrentLineNumber(),
-                                            "User: " + uid + "not registered",
-                                        );
-
-                                        // Store all data need for registration in session (temporarily)
-                                        a_req.session.uid = uid;
-                                        a_req.session.name = userinfo.name;
-                                        a_req.session.email = userinfo.email;
-                                        a_req.session.uuids = userinfo.identities_set;
-                                        a_req.session.acc_tok = xfr_token.access_token;
-                                        a_req.session.acc_tok_ttl = xfr_token.expires_in;
-                                        a_req.session.ref_tok = xfr_token.refresh_token;
-
-                                        a_resp.redirect("/ui/register");
-                                    } else {
-                                        logger.info(
-                                            "/ui/authn",
-                                            getCurrentLineNumber(),
-                                            "User: " +
-                                                uid +
-                                                " verified, acc:" +
-                                                xfr_token.access_token +
-                                                ", ref: " +
-                                                xfr_token.refresh_token +
-                                                ", exp:" +
-                                                xfr_token.expires_in,
-                                        );
-
-                                        // Store only data needed for active session
-                                        a_req.session.uid = uid;
-                                        a_req.session.reg = true;
-
-                                        // Refresh Globus access & refresh tokens to Core/DB
-                                        setAccessToken(
-                                            uid,
-                                            xfr_token.access_token,
-                                            xfr_token.refresh_token,
-                                            xfr_token.expires_in,
-                                        );
-
-                                        // TODO Account may be disable from SDMS (active = false)
-                                        a_resp.redirect("/ui/main");
                                     }
-                                },
-                            );
-                        } else {
-                            // TODO - Not sure this is required - req.on('error'...) should catch this?
-                            logger.error(
-                                "ui/authn",
-                                getCurrentLineNumber(),
-                                "Error: Globus introspection failed. User token:",
-                                xfr_token,
-                            );
-                            a_resp.redirect("/ui/error");
-                        }
-                    });
+
+                                    // Store all data need for registration in session (temporarily)
+                                    a_req.session.uid = uid;
+                                    a_req.session.name = userinfo.name;
+                                    a_req.session.email = userinfo.email;
+                                    a_req.session.uuids = userinfo.identities_set;
+                                    a_req.session.acc_tok = xfr_token.access_token;
+                                    a_req.session.acc_tok_ttl = xfr_token.expires_in;
+                                    a_req.session.ref_tok = xfr_token.refresh_token;
+
+                                    a_resp.redirect("/ui/register");
+                                } else {
+                                    logger.info(
+                                        "/ui/authn",
+                                        getCurrentLineNumber(),
+                                        "User: " +
+                                            uid +
+                                            " verified, acc:" +
+                                            xfr_token.access_token +
+                                            ", ref: " +
+                                            xfr_token.refresh_token +
+                                            ", exp:" +
+                                            xfr_token.expires_in,
+                                    );
+
+                                    // Store only data needed for active session
+                                    a_req.session.uid = uid;    // NOTE: this may overwrite some important data that could be used by non-auth tokens
+                                    a_req.session.reg = true;
+
+                                    // TODO: remove, set elsewhere, do not hard code
+                                    a_req.session.collection_id = "5066556a-bcd6-4e00-8e3f-b45e0ec88b1a";
+
+                                    let optional_data = {
+                                        type: 5, // GLOBUS_DEFAULT TODO: extract to enum
+                                    };
+                                    if (!is_auth_token) {
+                                        const token_type = client_token.data.resource_server === "transfer.globus.org" ? 4 : 5; // GLOBUS_TRANSFER : GLOBUS_DEFAULT TODO: extract to enum, cover all types
+                                        optional_data.type = token_type;
+                                        optional_data.other = a_req.session.collection_id + "|" + xfr_token.scopes; // TODO: extract into formatting method
+
+                                        // TODO: remove
+                                        console.log("Dump of reply data: ", reply);
+                                    }
+
+                                    // Refresh Globus access & refresh tokens to Core/DB
+                                    setAccessToken(
+                                        uid,
+                                        xfr_token.access_token,
+                                        xfr_token.refresh_token,
+                                        xfr_token.expires_in,
+                                        optional_data
+                                    );
+
+                                    // TODO Account may be disable from SDMS (active = false)
+                                    a_resp.redirect("/ui/main");
+                                }
+                            },
+                        );
+                    } else {
+                        // TODO - Not sure this is required - req.on('error'...) should catch this?
+                        logger.error(
+                            "ui/authn",
+                            getCurrentLineNumber(),
+                            "Error: Globus introspection failed. User token:",
+                            xfr_token,
+                        );
+                        a_resp.redirect("/ui/error");
+                    }
                 });
+            });
 
-                req.on("error", (e) => {
-                    logger.error(
-                        "ui/authn",
-                        getCurrentLineNumber(),
-                        "Error: Globus introspection failed. User token:",
-                        xfr_token,
-                    );
-                    a_resp.redirect("/ui/error");
-                });
-
-                req.write("token=" + client_token.accessToken + "&include=identities_set");
-                req.end();
-            } else {
-                // We got another resource!
-                const loggable_data = {
-                    ...client_token.data,
-                    access_token: null,
-                    refresh_token: null,
-                };
-                console.log("Resource loggable data: ", loggable_data);
-                // a_resp.redirect("/ui/main");
-
-                // TODO: verify UID always set when fetching
-                console.log("Session UID: ", a_req.session.uid);
-                const uid = a_req.session.uid;
-                logger.info(
-                    "/ui/authn",
+            req.on("error", (e) => {
+                logger.error(
+                    "ui/authn",
                     getCurrentLineNumber(),
-                    "User: " +
-                        uid +
-                        " verified, acc: " +
-                        client_token.data.access_token +
-                        ", ref: " +
-                        client_token.data.refresh_token +
-                        ", exp:" +
-                        client_token.data.expires_in,
+                    "Error: Globus introspection failed. User token:",
+                    xfr_token,
                 );
-                const optional_data = {
-                    type: 4, // hard code globus transfer for now    TODO: use session data to determine type
-                    other: "5066556a-bcd6-4e00-8e3f-b45e0ec88b1a", // hard code phony UUID for             TODO: use session data to find related collection ID
-                };
-                setAccessToken(
-                    uid,
-                    client_token.data.access_token,
-                    client_token.data.refresh_token,
-                    client_token.data.expires_in,
-                    optional_data,
-                );
-                a_resp.redirect("/ui/main");
-            }
+                a_resp.redirect("/ui/error");
+            });
+
+            req.write("token=" + client_token.accessToken + "&include=identities_set");
+            req.end();
+        // } else {
+            // We got another resource!
+            // const loggable_data = {
+            //     ...client_token.data,
+            //     access_token: null,
+            //     refresh_token: null,
+            // };
+            // console.log("Resource loggable data: ", loggable_data);
+            // // a_resp.redirect("/ui/main");
+            //
+            // // TODO: verify UID always set when fetching
+            // console.log("Session UID: ", a_req.session.uid);
+            // const uid = a_req.session.uid;
+            // logger.info(
+            //     "/ui/authn",
+            //     getCurrentLineNumber(),
+            //     "User: " +
+            //         uid +
+            //         " verified, acc: " +
+            //         client_token.data.access_token +
+            //         ", ref: " +
+            //         client_token.data.refresh_token +
+            //         ", exp:" +
+            //         client_token.data.expires_in,
+            // );
+            // const optional_data = {
+            //     type: 4, // hard code globus transfer for now    TODO: use session data to determine type
+            //     other: "5066556a-bcd6-4e00-8e3f-b45e0ec88b1a", // hard code phony UUID for             TODO: use session data to find related collection ID
+            // };
+            // setAccessToken(
+            //     uid,
+            //     client_token.data.access_token,
+            //     client_token.data.refresh_token,
+            //     client_token.data.expires_in,
+            //     optional_data,
+            // );
+            // a_resp.redirect("/ui/main");
+        // }
         },
         function (reason) {
             logger.error(
