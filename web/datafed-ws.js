@@ -598,6 +598,7 @@ app.get("/ui/authn", (a_req, a_resp) => {
 
                                         // TODO: remove
                                         console.log("Dump of reply data: ", reply);
+                                        console.log("Dump of reply ident data: ", reply.user[0].ident);
                                     }
 
                                     // Refresh Globus access & refresh tokens to Core/DB
