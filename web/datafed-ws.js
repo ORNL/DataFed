@@ -594,7 +594,7 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                     if (!is_auth_token) {
                                         const token_type = client_token.data.resource_server === "transfer.globus.org" ? 4 : 5; // GLOBUS_TRANSFER : GLOBUS_DEFAULT TODO: extract to enum, cover all types
                                         optional_data.type = token_type;
-                                        optional_data.other = a_req.session.collection_id + "|" + xfr_token.scopes; // TODO: extract into formatting method
+                                        optional_data.other = a_req.session.collection_id + "|" + xfr_token.scope; // TODO: extract into formatting method
 
                                         // TODO: remove
                                         console.log("Dump of reply data: ", reply);
