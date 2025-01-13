@@ -7,6 +7,7 @@
 2. [918] - Add admin script for making a user an admin
 3. [1009] - Add collections to database for holding Globus tokens. 
 4. [1002] - Add backoff for task worker when database fails to prevent log overflow.
+5. [1109] - Add support for Globus token association to Globus collection and user.
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 1. [984] - Fixes {server_default} from showing up in path.
@@ -27,6 +28,7 @@
 16. [1149] - Docker container GCS Collection Mount Bug Fix
 17. [1168] - Add authz unit testing to the CI
 18. [1200] - Add JavaScript linter (eslint) and (prettier) formatter for JavaScript
+19. [1180] - Refactor of authz foxx module, split into objects and added unit tests
 
 # v2024.6.17.10.40
 

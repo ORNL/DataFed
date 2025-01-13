@@ -22,6 +22,7 @@ build-foxx:
         - docker/**/*
         - scripts/**/*
         - core/database/**/*
+        - core/CMakeLists.txt
         - common/proto/**/*
         - .gitlab-ci.yml
         - CMakeLists.txt
@@ -43,6 +44,7 @@ retag-image:
         - docker/**/*
         - scripts/**/*
         - core/database/**/*
+        - core/CMakeLists.txt
         - common/proto/**/*
         - .gitlab-ci.yml
         - CMakeLists.txt
