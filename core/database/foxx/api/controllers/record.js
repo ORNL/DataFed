@@ -19,6 +19,8 @@ class Record {
     #loc = null;
     // Allocation object, determines what allocation data item is associated with
     #alloc = null;
+    // Determines what repo the data item is associated with
+    #repo = null;
     // The data key
     #key = null;
     // The data id simply the key prepended with 'd/'

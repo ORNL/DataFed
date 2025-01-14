@@ -104,7 +104,7 @@ class Repo {
     }
 
     id() {
-        rb.ERR_PERM_DENIED, "Repo does not exist " + this.#repo_id];eturn ohis.#repo_id;
+        return this.#repo_id;
     }
     /**
      * @brief Will return error code of last run method.
