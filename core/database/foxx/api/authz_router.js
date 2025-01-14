@@ -25,22 +25,19 @@ router
             );
 
             // Client will contain the following information
-            // {
-            //   "_key" : "bob",
-            //   "_id" : "u/bob",
-            //   "name" : "bob junior ",
-            //   "name_first" : "bob",
-            //   "name_last" : "jones",
-            //   "is_admin" : true,
-            //   "max_coll" : 50,
-            //   "max_proj" : 10,
-            //   "max_sav_qry" : 20,
-            //   :
-            //   "email" : "bobjones@gmail.com"
-            // }
+            //
+            // "_key" : "bob",
+            // "_id" : "u/bob",
+            // "name" : "bob junior ",
+            // "name_first" : "bob",
+            // "name_last" : "jones",
+            // "is_admin" : true,
+            // "max_coll" : 50,
+            // "max_proj" : 10,
+            // "max_sav_qry" : 20,
+            // :
+            // "email" : "bobjones@gmail.com"
             const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
-            console.log("Client is");
-            console.log(client);
             if ( ! client ) {
                 console.log(
                     "AUTHZ act: " +
@@ -56,7 +53,7 @@ router
             }
             let repo = new Repo(req.queryParams.repo);
             let path_type = repo.pathType(req.queryParams.file);
-            console.log("12");
+
             // If the provided path is not within the repo throw an error
             if (path_type === PathType.UNKNOWN) {
                 console.log(
@@ -74,7 +71,6 @@ router
             // Determine permissions associated with path provided
             // Actions: read, write, create, delete, chdir, lookup
             if (Object.keys(authzModule.authz_strategy).includes(req.queryParams.act)) {
-                console.log("Calling strategy function.");
                 authzModule.authz_strategy[req.queryParams.act][path_type](
                     client,
                     req.queryParams.file,

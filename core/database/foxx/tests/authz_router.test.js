@@ -7,10 +7,12 @@ const { baseUrl } = module.context;
 const g_db = require("@arangodb").db;
 const g_lib = require("../api/support");
 
+// Constants used throughout test file
+// The base URL for the authz foxx route
 const authz_base_url = `${baseUrl}/authz`;
-
-// NOTE: describe block strings are compared against test specification during test call, not file name
+// Current time used for updating documents in the database
 const current_time = Math.floor(Date.now() / 1000);
+// Test user information
 const james_uuid = "XXXXYYYY-XXXX-YYYY-XXXX-YYYYXXXXYYYY";
 const james_uuid_id = "uuid/" + james_uuid;
 const james_key = "jamesw";
@@ -27,19 +29,29 @@ const base_user_data = {
     ct: current_time,
     ut: current_time,
 };
-const valid_key = "1120";
-const key_id = "d/" + valid_key;
 
+// Test record information
+const valid_key = "1120";
+const record_id = "d/" + valid_key;
+
+// Test repo information
 const repo_key = "datafed-at-hot-potato";
 const repo_id = "repo/" + repo_key;
 const repo_path = "/mnt/repo_name";
 const file_path = repo_path + "/user/" + james_key + "/" + valid_key;
-const record_id = "d/" + valid_key;
 
+// Test Project information
 const project_key = "physics";
 const project_id = "p/" + project_key;
 const project_file_path = repo_path + "/project/" + project_key + "/" + valid_key;
 
+/**
+ * This method sets up the database with the documents for a user with a data record
+ *
+ * Creates a user, creates a repository and adds an allocation that connects the user
+ * to the repository. A record is also created and is connected to the repository 
+ * via a location connection.
+ **/
 function defaultWorkingSetup() {
 
     g_db.uuid.save({
@@ -70,7 +82,7 @@ function defaultWorkingSetup() {
 
     // Create edges
     g_db.loc.save({
-        _from: key_id,
+        _from: record_id,
         _to: repo_id,
         uid: james_id,
         new_repo: null
@@ -83,8 +95,31 @@ function defaultWorkingSetup() {
 
 }
 
+/**
+ * This method sets up the database with the documents for a project owned data record
+ *
+ * The following items are needed for this.
+ * A user
+ * A record
+ * A project
+ * A group
+ * A collection
+ * A owner
+ * A repo
+ * 
+ * These different documents are connected through edges.
+ * record <-> item <-> collection
+ * record <-> owner <-> project
+ * record <-> loc <-> repo
+ * uuid <-> ident <-> user 
+ * group <-> acl <-> collection
+ * user <-> member <-> group
+ * project <-> alloc <-> repo
+ * project <-> owner <-> group
+ **/
 function defaultWorkingSetupProject() {
 
+    // Create nodes
     g_db.uuid.save({
         _id: james_uuid_id
     });
@@ -115,9 +150,6 @@ function defaultWorkingSetupProject() {
         },
     );
 
-     // Create nodes
-    //recordRepoAndUserSetup(valid_key, base_user_data, repo_data);
-
     g_db.d.save({
         _key: valid_key,
         owner: project_id
@@ -131,12 +163,10 @@ function defaultWorkingSetupProject() {
             { waitForSync: true }
     );
 
-
     // Create edges
-
      g_db.item.save({
         _from: root._id,
-        _to: key_id,
+        _to: record_id,
     });
 
     g_db.acl.save({
@@ -146,9 +176,8 @@ function defaultWorkingSetupProject() {
         inhgrant: g_lib.PERM_MEMBER,
     });
 
-
     g_db.loc.save({
-        _from: key_id,
+        _from: record_id,
         _to: repo_id,
         uid: project_id,
         new_repo: null
@@ -158,38 +187,25 @@ function defaultWorkingSetupProject() {
         _from: project_id,
         _to: repo_id,
     });
+
    g_db.member.save({
         _from: mem_grp._id,
         _to: james_id,
     });
+
     g_db.ident.save({
         _from: james_id,
         _to: james_uuid_id
     });
+
     g_db.owner.save({
-        _from: key_id,
+        _from: record_id,
         _to: project_id
     });
-   
-    console.log("Create project owner edges");
-    console.log(g_db.owner.toArray());
 }
 
-describe("authz_router: the Foxx microservice authz_router", () => {
-    //const test_param_indexes = [0, 1, 2, 3, 4];
-    //const test_params = test_param_indexes.map((param_index) => {
-    //    return {
-    //        _key: "testUser" + param_index,
-    //        access: "access_token" + param_index,
-    //        refresh: "refresh_token" + param_index,
-    //    };
-    //});
-    //const test_uuid = "1cbaaee5-b938-4a4e-87a8-f1ec4d5d92f9"; // fake UUID
-    //const test_scope = "urn:globus:auth:scope:transfer.api.globus.org:all";
-    //const test_edge_params = {
-    //    type: g_lib.AccessTokenType.GLOBUS_TRANSFER,
-    //    other_token_data: test_uuid + "%7C" + test_scope, // URL encoded | character
-    //};
+// NOTE: describe block strings are compared against test specification during test call, not file name
+describe("unit_authz_router: the Foxx microservice authz_router", () => {
 
     beforeEach(() => {
         g_db.u.truncate();
@@ -209,12 +225,7 @@ describe("authz_router: the Foxx microservice authz_router", () => {
 
     });
 
-    it("authz_router_unit: gridftp create action with user record and valid file path.", () => {
-        // arrange
-        // NOTE: the get request has query params instead of a body
-        //const query_params = test_params[0];
-        // TODO: make encoded query params less hard coded
-        //const request_string = `${authz_base_url}/gridftp?client=23c9067f-60e8-4741-9af1-482280faced3%2C56071064-8a08-4a5a-ad8d-5af84282f70d&repo=repo%2Fdatafedci-home&file=%2Fdatafed%2Fdatafedci-home%2Fuser%2Fdatafed89%2F829229&act=create`
+    it("unit_authz_router: gridftp create action with user record and valid file path.", () => {
         defaultWorkingSetup();
         const request_string = `${authz_base_url}/gridftp?client=` + james_uuid + `&repo=` + encodeURIComponent(repo_id) + `&file=` + encodeURIComponent(file_path) + `&act=create`
 
@@ -226,13 +237,10 @@ describe("authz_router: the Foxx microservice authz_router", () => {
 
     });
 
-    it("authz_router_unit: gridftp create action with user record and invalid file path.", () => {
-        // arrange
-        // NOTE: the get request has query params instead of a body
-        //const query_params = test_params[0];
-        // TODO: make encoded query params less hard coded
-        //const request_string = `${authz_base_url}/gridftp?client=23c9067f-60e8-4741-9af1-482280faced3%2C56071064-8a08-4a5a-ad8d-5af84282f70d&repo=repo%2Fdatafedci-home&file=%2Fdatafed%2Fdatafedci-home%2Fuser%2Fdatafed89%2F829229&act=create`
+    it("unit_authz_router: gridftp create action with user record and invalid file path.", () => {
         defaultWorkingSetup();
+        
+        // This is invalid because bobby does not exist as a user and the record "valid_key" they are not the owner of or have a membership too.
         const bad_file_path = repo_path + "/user/bobby/" + valid_key;
         const request_string = `${authz_base_url}/gridftp?client=` + james_uuid + `&repo=` + encodeURIComponent(repo_id) + `&file=` + encodeURIComponent(bad_file_path) + `&act=create`
 
@@ -244,12 +252,7 @@ describe("authz_router: the Foxx microservice authz_router", () => {
 
     });
 
-    it("authz_router_unit: gridftp create action with invalid repo and valid file path.", () => {
-        // arrange
-        // NOTE: the get request has query params instead of a body
-        //const query_params = test_params[0];
-        // TODO: make encoded query params less hard coded
-        //const request_string = `${authz_base_url}/gridftp?client=23c9067f-60e8-4741-9af1-482280faced3%2C56071064-8a08-4a5a-ad8d-5af84282f70d&repo=repo%2Fdatafedci-home&file=%2Fdatafed%2Fdatafedci-home%2Fuser%2Fdatafed89%2F829229&act=create`
+    it("unit_authz_router: gridftp create action with invalid repo and valid file path.", () => {
         defaultWorkingSetup();
         const bad_repo_id = "repo/not_exist"
         const request_string = `${authz_base_url}/gridftp?client=` + james_uuid + `&repo=` + encodeURIComponent(bad_repo_id) + `&file=` + encodeURIComponent(file_path) + `&act=create`
@@ -262,8 +265,10 @@ describe("authz_router: the Foxx microservice authz_router", () => {
 
     });
 
-    it("authz_router_unit: gridftp create action with invalid client and valid file path.", () => {
+    it("unit_authz_router: gridftp create action with invalid client and valid file path.", () => {
 
+        // Here we are creating a valid user but they simply do not have access to the provided file
+        // path.
         const bad_user_data = {
             _key: "george",
             _id: "u/george",
@@ -271,7 +276,6 @@ describe("authz_router: the Foxx microservice authz_router", () => {
             name_last: "Brown",
             is_admin: false,
         };
-
         const george_uuid = "ZZZZYYYY-ZZZZ-ZZZZ-ZZZZ-ZZZZTTTTZZZZ";
         const george_uuid_id = "uuid/" + george_uuid;
         g_db.u.save(bad_user_data);
@@ -285,12 +289,6 @@ describe("authz_router: the Foxx microservice authz_router", () => {
             _to: george_uuid_id
         });
 
-
-        // arrange
-        // NOTE: the get request has query params instead of a body
-        //const query_params = test_params[0];
-        // TODO: make encoded query params less hard coded
-        //const request_string = `${authz_base_url}/gridftp?client=23c9067f-60e8-4741-9af1-482280faced3%2C56071064-8a08-4a5a-ad8d-5af84282f70d&repo=repo%2Fdatafedci-home&file=%2Fdatafed%2Fdatafedci-home%2Fuser%2Fdatafed89%2F829229&act=create`
         defaultWorkingSetup();
         const bad_repo_id = "repo/not_exist"
         const request_string = `${authz_base_url}/gridftp?client=` + george_uuid + `&repo=` + encodeURIComponent(repo_id) + `&file=` + encodeURIComponent(file_path) + `&act=create`
@@ -304,12 +302,7 @@ describe("authz_router: the Foxx microservice authz_router", () => {
     });
 
 
-    it("authz_router_unit: gridftp create action with valid repo and valid file path in project.", () => {
-        // arrange
-        // NOTE: the get request has query params instead of a body
-        //const query_params = test_params[0];
-        // TODO: make encoded query params less hard coded
-        //const request_string = `${authz_base_url}/gridftp?client=23c9067f-60e8-4741-9af1-482280faced3%2C56071064-8a08-4a5a-ad8d-5af84282f70d&repo=repo%2Fdatafedci-home&file=%2Fdatafed%2Fdatafedci-home%2Fuser%2Fdatafed89%2F829229&act=create`
+    it("unit_authz_router: gridftp create action with valid repo and valid file path in project.", () => {
         defaultWorkingSetupProject();
         const bad_repo_id = "repo/not_exist"
         const request_string = `${authz_base_url}/gridftp?client=` + james_uuid + `&repo=` + encodeURIComponent(repo_id) + `&file=` + encodeURIComponent(project_file_path) + `&act=create`

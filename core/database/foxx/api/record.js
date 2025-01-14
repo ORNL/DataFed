@@ -32,7 +32,6 @@ class Record {
      */
     constructor(a_key) {
         // Define the collection
-        console.log("Getting collection.");
         const collection = g_db._collection("d");
 
         // This function is designed to check if the provided key exists in the
@@ -41,15 +40,12 @@ class Record {
         // Will return true if it does and false if it does not.
         this.#key = a_key;
         this.#data_id = "d/" + a_key;
-        console.log("Creating record a_key: " + a_key);
         if (a_key) {
             // Check if the document exists
             try {
                 if (collection.exists(this.#key)) {
-                    console.log("Key exists");
                     this.#exists = true;
                 } else {
-                    console.log("Key does not exists");
                     this.#exists = false;
                     this.#error = g_lib.ERR_NOT_FOUND;
                     this.#err_msg = "Invalid key: (" + a_key + "). No record found.";
@@ -172,9 +168,6 @@ class Record {
             return false;
         }
 
-        console.log("is path consisstent");
-  
-        console.log("31");
         // If there is a new repo we need to check the path there and use that
         if (this.#loc.hasOwnProperty("new_repo") && this.#loc.new_repo) {
             // Below we get the allocation associated with data item by
@@ -183,13 +176,11 @@ class Record {
             // oweners id.
             // 2. Using the loc.uid parameter if not inflight to get the owner
             // id.
-        console.log("32");
             const new_alloc = g_db.alloc.firstExample({
                 _from: this.#loc.new_owner ? this.#loc.new_owner : this.#loc.uid,
                 _to: this.#loc.new_repo,
             });
 
-        console.log("33");
             // If no allocation is found for the item throw an error
             // if the paths do not align also throw an error.
             if (!new_alloc) {
@@ -199,7 +190,6 @@ class Record {
                 return false;
             }
 
-        console.log("34");
             this.#repo = g_db._document(this.#loc.new_repo);
 
             if ( ! this.#repo ) {
@@ -216,7 +206,6 @@ class Record {
 
             let stored_path = this._pathToRecord(this.#loc, this.#repo.path);
 
-        console.log("35");
             if (!this._comparePaths(stored_path, a_path)) {
                 return false;
             }
@@ -228,7 +217,6 @@ class Record {
             }
             let stored_path = this._pathToRecord(this.#loc, this.#repo.path);
 
-        console.log("36");
             // If there is no new repo check that the paths align
             if (!this._comparePaths(stored_path, a_path)) {
                 return false;

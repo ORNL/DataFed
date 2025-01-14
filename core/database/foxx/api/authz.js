@@ -14,7 +14,7 @@ module.exports = (function () {
      * Checks if a client has the required permissions on a record.
      *
      * @param {string} a_data_key - A DataFed key associated with a record (not prepended with 'd/').
-     * @param {Object} a_client - A user document representing the client whose permissions are being verified.
+     * @param {object} a_client - A user document representing the client whose permissions are being verified.
      *                            The client document contains the following properties:
      *                            - `_key` (string): The client's unique key.
      *                            - `_id` (string): The client's unique identifier.
@@ -30,7 +30,6 @@ module.exports = (function () {
      *
      * @see support#obj - for permission options i.e.PERM_CREATE, PERM_WR_DATA, PERM_RD_DATA`
      */
-
     obj.isRecordActionAuthorized = function (a_client, a_data_key, a_perm) {
         const data_id = "d/" + a_data_key;
         // If the user is not an admin of the object we will need
@@ -94,18 +93,14 @@ module.exports = (function () {
         const path_components = pathModule.splitPOSIXPath(path);
         const data_key = path_components.at(-1);
 
-        console.log("Calling createRecord with data_key: " + data_key);
         let record = new Record(data_key);
-        console.log("Success");
         // This does not mean the record exsts in the repo it checks if an entry
         // exists in the database.
-        console.log("21");
         if (!record.exists()) {
             // If the record does not exist then the path would noe be consistent.
             console.log("AUTHZ act: create client: " + client._id + " path " + path + " FAILED");
             throw [g_lib.ERR_PERM_DENIED, "Invalid record specified: " + path];
         }
-        console.log("22");
 
         if (!client) {
             console.log(
@@ -125,7 +120,6 @@ module.exports = (function () {
             ];
         }
 
-        console.log("23");
         // This will tell us if the proposed path is consistent with what we expect
         // GridFTP will fail if the posix file path does not exist.
         if (!record.isPathConsistent(path)) {
