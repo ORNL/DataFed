@@ -589,7 +589,7 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                     a_req.session.collection_id = "5066556a-bcd6-4e00-8e3f-b45e0ec88b1a";
 
                                     let optional_data = {
-                                        type: 5, // GLOBUS_DEFAULT TODO: extract to enum
+                                        type: AccessTokenType.GLOBUS_DEFAULT,
                                     };
                                     if (!is_auth_token) {   // TODO: assuming transfer resource, may want to be explicit
                                         const user_collection_id = a_req.session.collection_id;
@@ -597,7 +597,7 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                             throw new Error("Transfer token received without collection context");
                                             a_resp.redirect("/ui/error");
                                         }
-                                        const token_type = client_token.data.resource_server === "transfer.globus.org" ? 4 : 5; // GLOBUS_TRANSFER : GLOBUS_DEFAULT TODO: extract to enum, cover all types
+                                        const token_type = client_token.data.resource_server === "transfer.globus.org" ? AccessTokenType.GLOBUS_TRANSFER : AccessTokenType.GLOBUS_DEFAULT;  // TODO: cover all types
                                         optional_data.type = token_type;
                                         optional_data.other = a_req.session.collection_id + "|" + xfr_token.scope; // TODO: extract into formatting method
 
@@ -645,44 +645,6 @@ app.get("/ui/authn", (a_req, a_resp) => {
 
             req.write("token=" + client_token.accessToken + "&include=identities_set");
             req.end();
-        // } else {
-            // We got another resource!
-            // const loggable_data = {
-            //     ...client_token.data,
-            //     access_token: null,
-            //     refresh_token: null,
-            // };
-            // console.log("Resource loggable data: ", loggable_data);
-            // // a_resp.redirect("/ui/main");
-            //
-            // // TODO: verify UID always set when fetching
-            // console.log("Session UID: ", a_req.session.uid);
-            // const uid = a_req.session.uid;
-            // logger.info(
-            //     "/ui/authn",
-            //     getCurrentLineNumber(),
-            //     "User: " +
-            //         uid +
-            //         " verified, acc: " +
-            //         client_token.data.access_token +
-            //         ", ref: " +
-            //         client_token.data.refresh_token +
-            //         ", exp:" +
-            //         client_token.data.expires_in,
-            // );
-            // const optional_data = {
-            //     type: 4, // hard code globus transfer for now    TODO: use session data to determine type
-            //     other: "5066556a-bcd6-4e00-8e3f-b45e0ec88b1a", // hard code phony UUID for             TODO: use session data to find related collection ID
-            // };
-            // setAccessToken(
-            //     uid,
-            //     client_token.data.access_token,
-            //     client_token.data.refresh_token,
-            //     client_token.data.expires_in,
-            //     optional_data,
-            // );
-            // a_resp.redirect("/ui/main");
-        // }
         },
         function (reason) {
             logger.error(
@@ -2239,6 +2201,16 @@ protobuf.load("SDMS_Auth.proto", function (err, root) {
 
     processProtoFile(msg);
     if (--g_ready_start == 0) startServer();
+});
+
+// TODO: convert to protobufjs read of enum
+const AccessTokenType = Object.freeze({
+    GENERIC: 1,
+    GLOBUS: 2,
+    GLOBUS_AUTH: 3,
+    GLOBUS_TRANSFER: 4,
+    GLOBUS_DEFAULT: 5,
+    ACCESS_SENTINEL: 255,
 });
 
 process.on("unhandledRejection", (reason, p) => {
