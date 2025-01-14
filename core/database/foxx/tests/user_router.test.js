@@ -13,7 +13,7 @@ const { db } = require("@arangodb");
 const usr_base_url = `${baseUrl}/usr`;
 
 // NOTE: describe block strings are compared against test specification during test call, not file name
-describe("user_router: the Foxx microservice user_router token/set endpoint", () => {
+describe("unit_user_router: the Foxx microservice user_router token/set endpoint", () => {
     const test_param_indexes = [0, 1, 2, 3, 4];
     const test_params = test_param_indexes.map((param_index) => {
         return {

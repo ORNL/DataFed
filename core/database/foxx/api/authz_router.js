@@ -5,7 +5,6 @@ const router = createRouter();
 const joi = require("joi");
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
-const Record = require("./controllers/record");
 const authzModule = require("./controllers/authz");
 const { Repo, PathType } = require("./controllers/repo");
 
@@ -26,21 +25,31 @@ router
             );
 
             // Client will contain the following information
-            // {
-            //   "_key" : "bob",
-            //   "_id" : "u/bob",
-            //   "name" : "bob junior ",
-            //   "name_first" : "bob",
-            //   "name_last" : "jones",
-            //   "is_admin" : true,
-            //   "max_coll" : 50,
-            //   "max_proj" : 10,
-            //   "max_sav_qry" : 20,
-            //   :
-            //   "email" : "bobjones@gmail.com"
-            // }
+            //
+            // "_key" : "bob",
+            // "_id" : "u/bob",
+            // "name" : "bob junior ",
+            // "name_first" : "bob",
+            // "name_last" : "jones",
+            // "is_admin" : true,
+            // "max_coll" : 50,
+            // "max_proj" : 10,
+            // "max_sav_qry" : 20,
+            // :
+            // "email" : "bobjones@gmail.com"
             const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
-
+            if (!client) {
+                console.log(
+                    "AUTHZ act: " +
+                        req.queryParams.act +
+                        " client: " +
+                        +req.queryParams.client +
+                        " path " +
+                        req.queryParams.file +
+                        " FAILED",
+                );
+                throw [g_lib.ERR_PERM_DENIED, "Unknown client: " + req.queryParams.client];
+            }
             let repo = new Repo(req.queryParams.repo);
             let path_type = repo.pathType(req.queryParams.file);
 
@@ -55,7 +64,11 @@ router
                         req.queryParams.file +
                         " FAILED",
                 );
-                throw [g_lib.ERR_PERM_DENIED, "Unknown path: " + req.queryParams.file];
+                throw [
+                    g_lib.ERR_PERM_DENIED,
+                    "Unknown path, or path is not consistent with supported repository folder hierarchy: " +
+                        req.queryParams.file,
+                ];
             }
 
             // Determine permissions associated with path provided

@@ -172,11 +172,6 @@ class Record {
             return false;
         }
 
-        // If path is missing the starting "/" add it back in
-        if (!a_path.startsWith("/") && this.#alloc.path.startsWith("/")) {
-            a_path = "/" + a_path;
-        }
-
         // If there is a new repo we need to check the path there and use that
         if (this.#loc.hasOwnProperty("new_repo") && this.#loc.new_repo) {
             // Below we get the allocation associated with data item by
@@ -190,8 +185,8 @@ class Record {
                 _to: this.#loc.new_repo,
             });
 
-            // If no allocation is found for the item thrown an error
-            // if the paths do not align also thrown an error.
+            // If no allocation is found for the item throw an error
+            // if the paths do not align also throw an error.
             if (!new_alloc) {
                 this.#error = g_lib.ERR_PERM_DENIED;
                 this.#err_msg =
@@ -222,7 +217,10 @@ class Record {
                 return false;
             }
         } else {
+<<<<<<< HEAD:core/database/foxx/api/controllers/record.js
 
+=======
+>>>>>>> 1180-refactor-authz:core/database/foxx/api/record.js
             this.#repo = g_db._document(this.#loc._to);
 
             if (!a_path.startsWith("/") && this.#repo.path.startsWith("/")) {
