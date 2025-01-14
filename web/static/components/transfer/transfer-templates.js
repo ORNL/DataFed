@@ -1,4 +1,5 @@
 import { escapeHTML } from "../../util.js";
+import { TransferMode } from "../../models/transfer-model.js";
 
 /**
  * @module TransferTemplates
@@ -7,21 +8,27 @@ import { escapeHTML } from "../../util.js";
 
 /**
  * Gets mode-specific options template HTML
- * @param {boolean} isGetMode - Whether in GET transfer mode
+ * @param {TransferMode[keyof TransferMode]} mode - The transfer mode
  * @returns {string} Mode-specific options template HTML
  */
-export function getModeSpecificOptionsTemplate(isGetMode) {
-    return isGetMode
-        ? `<br>File extension override: <input id='ext' type='text'><br>`
-        : `<br><label for='orig_fname'>Download to original filename(s)</label>
+export function getModeSpecificOptionsTemplate(mode) {
+    let responseHTML = "";
+    if (mode === TransferMode.TT_DATA_GET) {
+        responseHTML = `<br>File extension override: <input id='ext' type='text'><br>`;
+    } else if (mode === TransferMode.TT_DATA_PUT) {
+        responseHTML = `<br><label for='orig_fname'>Download to original filename(s)</label>
            <input id='orig_fname' type='checkbox'>`;
+    }
+
+    return responseHTML;
 }
 
 /**
  * Gets the transfer options template HTML
+ * @param {TransferMode[keyof TransferMode]} mode - The transfer mode
  * @returns {string} Transfer options template HTML
  */
-export function getTransferOptionsTemplate() {
+export function getTransferOptionsTemplate(mode) {
     return `
         <br>Transfer Encryption:&nbsp
         <input type='radio' id='encrypt_none' name='encrypt_mode' value='0'>
@@ -30,18 +37,19 @@ export function getTransferOptionsTemplate() {
         <label for='encrypt_avail'>If Available</label>&nbsp
         <input type='radio' id='encrypt_req' name='encrypt_mode' value='2'/>
         <label for='encrypt_req'>Required</label><br>
-        ${getModeSpecificOptionsTemplate()}
+        ${getModeSpecificOptionsTemplate(mode)}
     `;
 }
 
 /**
  * Gets the dialog template HTML
  * @param {Object} labels - The labels for dialog elements
+ * @param {TransferMode[keyof TransferMode]} mode - The transfer mode
  * @param {string} labels.record - Record label text
  * @param {string} labels.endpoint - Endpoint label text
  * @returns {string} The dialog template HTML
  */
-export function getDialogTemplate(labels) {
+export function getDialogTemplate(labels, mode) {
     return `
         <div class='ui-widget' style='height:95%'>
             ${labels.record}: <span id='title'></span><br>
@@ -63,7 +71,7 @@ export function getDialogTemplate(labels) {
                             size='7' style='width: 100%;' disabled>
                         <option disabled selected>No Matches</option>
                     </select>
-                    ${getTransferOptionsTemplate()}
+                    ${getTransferOptionsTemplate(mode)}
                 </div>
             </div>
         </div>
@@ -86,7 +94,7 @@ export function createMatchesHtml(endpoints) {
         html.push(`
             <option title="${escapeHTML(ep.description || "(no info)")}">${escapeHTML(
                 ep.display_name || ep.name,
-            )} (${ep.status})</option>
+            )}</option>
         `);
     });
 

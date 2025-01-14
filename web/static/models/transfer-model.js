@@ -94,11 +94,15 @@ export class TransferModel {
      * @returns {Object} Record info
      */
     getRecordInfo(item) {
-        if (item.size === 0) return { info: "(empty)", selectable: false };
-        if (item.locked) return { info: "(locked)", selectable: false };
-        return {
-            info: util.sizeToString(item.size),
-            selectable: true,
-        };
+        if (item.size === 0) {
+            return { info: "(empty)", selectable: false };
+        } else if (item.locked) {
+            return { info: "(locked)", selectable: false };
+        } else {
+            return {
+                info: util.sizeToString(item.size),
+                selectable: true,
+            };
+        }
     }
 }
