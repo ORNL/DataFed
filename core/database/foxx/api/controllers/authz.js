@@ -35,13 +35,11 @@ module.exports = (function () {
         const data_id = "d/" + a_data_key;
         // If the user is not an admin of the object we will need
         // to check if the user has the write authorization
-        console.log("checking client is admin");
         if (g_lib.hasAdminPermObject(a_client, data_id)) {
             return true;
         }
         let data = g_db.d.document(data_id);
         // Grab the data item
-        console.log("checking client has permissions");
         if (g_lib.hasPermissions(a_client, data, a_perm)) {
             return true;
         }
