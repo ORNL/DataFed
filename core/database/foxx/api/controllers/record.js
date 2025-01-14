@@ -217,10 +217,6 @@ class Record {
                 return false;
             }
         } else {
-<<<<<<< HEAD:core/database/foxx/api/controllers/record.js
-
-=======
->>>>>>> 1180-refactor-authz:core/database/foxx/api/record.js
             this.#repo = g_db._document(this.#loc._to);
 
             if (!a_path.startsWith("/") && this.#repo.path.startsWith("/")) {
