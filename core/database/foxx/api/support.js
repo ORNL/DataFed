@@ -1071,6 +1071,7 @@ module.exports = (function () {
     obj.hasAdminPermObject = function (a_client, a_object_id) {
         if (a_client.is_admin) return true;
 
+        console.log(obj.db.owner.toArray());
         var first_owner = obj.db.owner.firstExample({
             _from: a_object_id,
         });

@@ -2,6 +2,7 @@
 
 const g_db = require("@arangodb").db;
 const path = require("path");
+const Record = require("./record");
 const pathModule = require("./posix_path");
 const g_lib = require("./support");
 const { Repo, PathType } = require("./repo");
@@ -92,15 +93,19 @@ module.exports = (function () {
         const permission = g_lib.PERM_WR_DATA;
         const path_components = pathModule.splitPOSIXPath(path);
         const data_key = path_components.at(-1);
-        let record = new Record(data_key);
 
+        console.log("Calling createRecord with data_key: " + data_key);
+        let record = new Record(data_key);
+        console.log("Success");
         // This does not mean the record exsts in the repo it checks if an entry
         // exists in the database.
+        console.log("21");
         if (!record.exists()) {
             // If the record does not exist then the path would noe be consistent.
             console.log("AUTHZ act: create client: " + client._id + " path " + path + " FAILED");
             throw [g_lib.ERR_PERM_DENIED, "Invalid record specified: " + path];
         }
+        console.log("22");
 
         if (!client) {
             console.log(
@@ -120,6 +125,7 @@ module.exports = (function () {
             ];
         }
 
+        console.log("23");
         // This will tell us if the proposed path is consistent with what we expect
         // GridFTP will fail if the posix file path does not exist.
         if (!record.isPathConsistent(path)) {

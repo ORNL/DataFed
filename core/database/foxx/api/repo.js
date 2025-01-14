@@ -65,6 +65,7 @@ class Repo {
         //
         // Will return true if it does and false if it does not.
         if (a_key && a_key !== "repo/") {
+            console.log("Repo a_key is: " + a_key);
             if (a_key.startsWith("repo/")) {
                 this.#repo_id = a_key;
                 this.#repo_key = a_key.slice("repo/".length);
@@ -75,6 +76,9 @@ class Repo {
 
             // Check if the repo document exists
             try {
+                console.log("Checking if repo exists with key " + this.#repo_key);
+                console.log("All repos");
+                console.log(collection.toArray());
                 if (collection.exists(this.#repo_key)) {
                     this.#exists = true;
                 } else {
@@ -88,6 +92,7 @@ class Repo {
                 this.#err_msg = "Unknown error encountered.";
                 console.log(e);
             }
+            console.log("exists: " + this.#exists);
         }
     }
 
@@ -127,28 +132,39 @@ class Repo {
      * @brief Detect what kind of POSIX path has been provided
      **/
     pathType(a_path) {
+        console.log("Checking path with repo if exists: " + this.#exists);
         if (!this.#exists) {
             // Should throw an error because the repo is not valid
-            throw [g_lib.ERR_PERM_DENIED, "Record does not exist " + this.#repo_id];
+            throw [g_lib.ERR_PERM_DENIED, "Repo does not exist " + this.#repo_id];
         }
         let repo = g_db._document(this.#repo_id);
+        console.log("repo is");
+        console.log(repo);
 
+        if ( Object.hasOwn(repo, "path") === false ) {
+            throw [g_lib.ERR_INTERNAL_FAULT, "Repo document is missing path, something is very wrong: " + this.#repo_id];
+        }
+        console.log("1");
         let repo_root_path = repo.path;
         if (repo_root_path.endsWith("/")) {
             repo_root_path = repo_root_path.slice(0, -1);
         }
 
+        console.log("2");
         let sanitized_path = a_path;
         if (sanitized_path.endsWith("/")) {
             sanitized_path = sanitized_path.slice(0, -1);
         }
 
+        console.log("3");
         // Make sure that the provided path begins with the repo root path
         // path/repo_root       Valid
         // path/repo_root/foo   Valid
         // path/repo_root_bar   Invalid
+        console.log("4");
         if (sanitized_path.length === repo_root_path.length) {
             if (sanitized_path !== repo_root_path) {
+        console.log("5");
                 return PathType.UNKNOWN;
             } else {
                 return PathType.REPO_ROOT_PATH;
@@ -163,21 +179,26 @@ class Repo {
             return PathType.UNKNOWN;
         }
 
+        console.log("6");
         const relative_path = sanitized_path.substr(repo_root_path.length);
 
         const relative_path_components = pathModule.splitPOSIXPath(relative_path);
 
+        console.log("7");
         // Check if is valid project
         if (relative_path_components[0] === "project") {
             if (relative_path_components.length === 1) {
                 // REPO_PATH , PROJECT_PATH is reserved to project/<project_name>/<id>
+        console.log("8");
                 return PathType.REPO_PATH;
             } else if (relative_path_components.length === 2) {
+        console.log("9");
                 return PathType.PROJECT_PATH;
             } else if (relative_path_components.length === 3) {
                 return PathType.PROJECT_RECORD_PATH;
             }
         } else if (relative_path_components[0] === "user") {
+        console.log("10");
             // Check if valid user
             if (relative_path_components.length === 1) {
                 // REPO_PATH , PROJECT_PATH is reserved to project/<project_name>/<id>
@@ -189,6 +210,7 @@ class Repo {
             }
         }
 
+        console.log("11");
         return PathType.UNKNOWN;
     }
 }

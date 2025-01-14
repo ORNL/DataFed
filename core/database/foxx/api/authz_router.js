@@ -5,7 +5,6 @@ const router = createRouter();
 const joi = require("joi");
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
-const Record = require("./record");
 const authzModule = require("./authz");
 const { Repo, PathType } = require("./repo");
 
@@ -40,10 +39,24 @@ router
             //   "email" : "bobjones@gmail.com"
             // }
             const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
+            console.log("Client is");
+            console.log(client);
+            if ( ! client ) {
+                console.log(
+                    "AUTHZ act: " +
+                        req.queryParams.act +
+                        " client: " +
+                         + req.queryParams.client +
+                        " path " +
+                        req.queryParams.file +
+                        " FAILED",
+                );
+                throw [g_lib.ERR_PERM_DENIED, "Unknown client: " + req.queryParams.client];
 
+            }
             let repo = new Repo(req.queryParams.repo);
             let path_type = repo.pathType(req.queryParams.file);
-
+            console.log("12");
             // If the provided path is not within the repo throw an error
             if (path_type === PathType.UNKNOWN) {
                 console.log(
@@ -55,12 +68,13 @@ router
                         req.queryParams.file +
                         " FAILED",
                 );
-                throw [g_lib.ERR_PERM_DENIED, "Unknown path: " + req.queryParams.file];
+                throw [g_lib.ERR_PERM_DENIED, "Unknown path, or path is not consistent with supported repository folder hierarchy: " + req.queryParams.file];
             }
 
             // Determine permissions associated with path provided
             // Actions: read, write, create, delete, chdir, lookup
             if (Object.keys(authzModule.authz_strategy).includes(req.queryParams.act)) {
+                console.log("Calling strategy function.");
                 authzModule.authz_strategy[req.queryParams.act][path_type](
                     client,
                     req.queryParams.file,
