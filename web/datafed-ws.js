@@ -524,8 +524,8 @@ app.get("/ui/authn", (a_req, a_resp) => {
 
                 res.on("end", () => {
                     if (res.statusCode >= 200 && res.statusCode < 300) {
-                        var userinfo = JSON.parse(data),
-                            uid = userinfo.username.substr(0, userinfo.username.indexOf("@"));
+                        const userinfo = JSON.parse(data);
+                        const uid = userinfo.username.substr(0, userinfo.username.indexOf("@"));
 
                         logger.info(
                             "/ui/authn",
@@ -552,7 +552,7 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                         "User: " + uid + "not registered",
                                     );
 
-                                    if (!is_auth_token) {
+                                    if (!is_auth_token) {   // Error and do not register user in case of non-auth token
                                         throw new Error("Transfer token received for non-existent user.")
                                         a_resp.redirect("/ui/error");
                                     }
@@ -582,7 +582,7 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                     );
 
                                     // Store only data needed for active session
-                                    a_req.session.uid = uid;    // NOTE: this may overwrite some important data that could be used by non-auth tokens
+                                    a_req.session.uid = uid;
                                     a_req.session.reg = true;
 
                                     // TODO: remove, set elsewhere, do not hard code
@@ -591,7 +591,12 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                     let optional_data = {
                                         type: 5, // GLOBUS_DEFAULT TODO: extract to enum
                                     };
-                                    if (!is_auth_token) {
+                                    if (!is_auth_token) {   // TODO: assuming transfer resource, may want to be explicit
+                                        const user_collection_id = a_req.session.collection_id;
+                                        if (!user_collection_id) {
+                                            throw new Error("Transfer token received without collection context");
+                                            a_resp.redirect("/ui/error");
+                                        }
                                         const token_type = client_token.data.resource_server === "transfer.globus.org" ? 4 : 5; // GLOBUS_TRANSFER : GLOBUS_DEFAULT TODO: extract to enum, cover all types
                                         optional_data.type = token_type;
                                         optional_data.other = a_req.session.collection_id + "|" + xfr_token.scope; // TODO: extract into formatting method
