@@ -2,7 +2,7 @@ import * as settings from "./settings.js";
 import * as model from "./model.js";
 import * as api from "./api.js";
 import * as dialogs from "./dialogs.js";
-import { transferDialog } from "./components/transfer/index.js";
+import * as dlgStartXfer from "./dlg_start_xfer.js";
 
 var status_timer;
 
@@ -750,7 +750,7 @@ export function dataGet(a_ids, a_cb) {
                 }
             }
 
-            transferDialog.show(model.TT_DATA_GET, data.item, a_cb);
+            dlgStartXfer.show(model.TT_DATA_GET, data.item, a_cb);
 
             /* unused http xfr
                 for ( i in data.item ){
