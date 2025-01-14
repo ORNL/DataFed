@@ -566,58 +566,60 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                     a_req.session.ref_tok = xfr_token.refresh_token;
 
                                     a_resp.redirect("/ui/register");
+                                } else {
+                                    logger.info(
+                                        "/ui/authn",
+                                        getCurrentLineNumber(),
+                                        "User: " +
+                                        uid +
+                                        " verified, acc:" +
+                                        xfr_token.access_token +
+                                        ", ref: " +
+                                        xfr_token.refresh_token +
+                                        ", exp:" +
+                                        xfr_token.expires_in,
+                                    );
+
+                                    // Store only data needed for active session
+                                    a_req.session.uid = uid;
+                                    a_req.session.reg = true;
+
+                                    // TODO: remove, set elsewhere, do not hard code
+                                    a_req.session.collection_id = "5066556a-bcd6-4e00-8e3f-b45e0ec88b1a";
+
+                                    if (token_type === AccessTokenType.GLOBUS_AUTH) {   // TODO: something better
+                                        token_type = AccessTokenType.GLOBUS_DEFAULT;
+                                    }
+
+                                    // TODO: is this the best way to allow for arbitrary inputs?
+                                    const token_context = { // passed values are mutable
+                                        resource_server: client_token.data.resource_sever,
+                                        collection_id: a_req.session.collection_id,
+                                        scope: xfr_token.scope,
+                                    }
+                                    try {
+                                        const optional_data = constructOptionalData(token_type, token_context);
+
+                                        // Refresh Globus access & refresh tokens to Core/DB
+                                        setAccessToken(
+                                            a_req.session.uid,
+                                            xfr_token.access_token,
+                                            xfr_token.refresh_token,
+                                            xfr_token.expires_in,
+                                            optional_data
+                                        );
+                                    }
+                                    catch (err) {
+                                        a_resp.redirect("ui/error");
+                                        throw err;
+                                    }
+
+                                    // TODO Account may be disable from SDMS (active = false)
+                                    a_resp.redirect("/ui/main");
                                 }
                             },
                         );
-                        logger.info(
-                            "/ui/authn",
-                            getCurrentLineNumber(),
-                            "User: " +
-                            uid +
-                            " verified, acc:" +
-                            xfr_token.access_token +
-                            ", ref: " +
-                            xfr_token.refresh_token +
-                            ", exp:" +
-                            xfr_token.expires_in,
-                        );
 
-                        // Store only data needed for active session
-                        a_req.session.uid = uid;
-                        a_req.session.reg = true;
-
-                        // TODO: remove, set elsewhere, do not hard code
-                        a_req.session.collection_id = "5066556a-bcd6-4e00-8e3f-b45e0ec88b1a";
-
-                        if (token_type === AccessTokenType.GLOBUS_AUTH) {   // TODO: something better
-                            token_type = AccessTokenType.GLOBUS_DEFAULT;
-                        }
-
-                        // TODO: is this the best way to allow for arbitrary inputs?
-                        const token_context = { // passed values are mutable
-                            resource_server: client_token.data.resource_sever,
-                            collection_id: a_req.session.collection_id,
-                            scope: xfr_token.scope,
-                        }
-                        try {
-                            const optional_data = constructOptionalData(token_type, token_context);
-
-                            // Refresh Globus access & refresh tokens to Core/DB
-                            setAccessToken(
-                                a_req.session.uid,
-                                xfr_token.access_token,
-                                xfr_token.refresh_token,
-                                xfr_token.expires_in,
-                                optional_data
-                            );
-                        }
-                        catch (err) {
-                            a_resp.redirect("ui/error");
-                            throw err;
-                        }
-
-                        // TODO Account may be disable from SDMS (active = false)
-                        a_resp.redirect("/ui/main");
                     } else {
                         // TODO - Not sure this is required - req.on('error'...) should catch this?
                         logger.error(
