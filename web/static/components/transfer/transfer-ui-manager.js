@@ -1,8 +1,6 @@
 import { ep_recent } from "../../settings.js";
 import { TransferMode } from "../../models/transfer-model.js";
 import { show } from "../../dlg_ep_browse.js";
-import { dlgAlert } from "../../dialogs.js";
-import { epView, xfrStart } from "../../api.js";
 import { inputTheme, setStatusText } from "../../util.js";
 import { createMatchesHtml, formatRecordTitle, getDialogTemplate } from "./transfer-templates.js";
 
@@ -16,9 +14,17 @@ export class TransferUIManager {
     /**
      * Creates a new TransferUIManager instance
      * @param {Object} controller - The dialog controller instance
+     * @param services - The service objects to use for API and dialog operations
+     * @param {Object} services.dialogs - Dialog service
+     * @param {Function} services.dialogs.dlgAlert - Alert dialog function
+     * @param {Object} services.api - API service
+     * @param {Function} services.api.epView - Endpoint view API function
+     * @param {Function} services.api.xfrStart - Transfer start API function
      */
-    constructor(controller) {
+    constructor(controller, services) {
         this.#controller = controller;
+        this.api = services.api; // Dependency injection
+        this.dialogs = services.dialogs; // Dependency injection
 
         this.inputTimer = null;
         this.state = {
@@ -65,7 +71,12 @@ export class TransferUIManager {
             },
             "#activate": {
                 disabled: true,
-                click: () => this.handleActivateClick(),
+                click: () =>
+                    window.open(
+                        `https://app.globus.org/file-manager?origin_id=${encodeURIComponent(
+                            this.#controller.endpointManager.currentEndpoint.id,
+                        )}`,
+                    ),
             },
             "#go_btn": {
                 disabled: true,
@@ -465,7 +476,7 @@ export class TransferUIManager {
     getTransferConfig() {
         const path = $("#path", this.state.frame).val().trim();
         if (!path) {
-            dlgAlert("Input Error", "Path cannot be empty.");
+            this.dialogs.dlgAlert("Input Error", "Path cannot be empty.");
             return null;
         }
 
@@ -545,11 +556,11 @@ export class TransferUIManager {
             return;
         }
 
-        epView(endpoint.id, (ok, data) => {
+        this.api.epView(endpoint.id, (ok, data) => {
             if (ok && !data.code) {
                 this.updateEndpoint(data);
             } else {
-                dlgAlert("Globus Error", data);
+                this.dialogs.dlgAlert("Globus Error", data);
             }
         });
     }
@@ -601,7 +612,7 @@ export class TransferUIManager {
             setStatusText(`Task '${data.task.id}' created for data transfer.`);
             this.#controller.callback?.();
         } else {
-            dlgAlert("Transfer Error", data);
+            this.dialogs.dlgAlert("Transfer Error", data);
         }
     }
 
@@ -616,7 +627,7 @@ export class TransferUIManager {
     startTransfer(config) {
         const ids = this.getSelectedIds();
 
-        xfrStart(
+        this.api.xfrStart(
             ids,
             this.#controller.model.mode,
             config.path,

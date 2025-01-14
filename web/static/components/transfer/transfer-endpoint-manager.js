@@ -1,5 +1,3 @@
-import { epView, epAutocomplete } from "../../api.js";
-import { dlgAlert } from "../../dialogs.js";
 import { createMatchesHtml } from "./transfer-templates.js";
 
 /**
@@ -12,10 +10,19 @@ export class TransferEndpointManager {
     /**
      * Creates a new TransferEndpointManager instance
      * @param {Object} controller - The transfer controller instance
+     * @param services - The service objects to use for API and dialog operations
+     * @param {Object} services.dialogs - Dialog service
+     * @param {Function} services.dialogs.dlgAlert - Alert dialog function
+     * @param {Object} services.api - API service
+     * @param {Function} services.api.epView - Endpoint view API function
+     * @param {Function} services.api.epAutocomplete - Endpoint autocomplete API function
      */
-    constructor(controller) {
+    constructor(controller, services) {
         this.initialized = false;
         this.#controller = controller;
+        this.api = services.api; // Dependency injection
+        this.dialogs = services.dialogs; // Dependency injection
+
         this.currentEndpoint = null;
         this.endpointManagerList = null;
         // Search tracking mechanism to prevent race conditions:
@@ -37,7 +44,7 @@ export class TransferEndpointManager {
      * @param {string} searchToken - Token to track current search request
      */
     searchEndpointAutocomplete(endpoint, searchToken) {
-        epAutocomplete(endpoint, (ok, data) => {
+        this.api.epAutocomplete(endpoint, (ok, data) => {
             // Prevent race conditions by ignoring responses from outdated searches
             // Without this check, rapid typing could cause UI flickering and incorrect results
             // as slower API responses return after newer searches
@@ -58,7 +65,7 @@ export class TransferEndpointManager {
                 this.updateMatchesList([]);
                 if (data.code) {
                     console.error("Autocomplete error:", data);
-                    dlgAlert("Globus Error", data.code);
+                    this.dialogs.dlgAlert("Globus Error", data.code);
                 }
             }
         });
@@ -74,7 +81,7 @@ export class TransferEndpointManager {
         console.log("Searching for endpoint:", endpoint);
 
         try {
-            return epView(endpoint, (ok, data) => {
+            return this.api.epView(endpoint, (ok, data) => {
                 if (searchToken !== this.currentSearchToken) {
                     console.warn("Ignoring stale epView response");
                     return;
@@ -91,7 +98,7 @@ export class TransferEndpointManager {
                 }
             });
         } catch (error) {
-            dlgAlert("Globus Error", error);
+            this.dialogs.dlgAlert("Globus Error", error);
         }
     }
 
@@ -134,7 +141,7 @@ export class TransferEndpointManager {
         // Validate that we're processing the most recent search request
         // This prevents wasted API calls and UI updates for abandoned searches
         if (searchToken !== this.currentSearchToken) {
-            console.log("Token mismatch - ignoring stale request");
+            console.info("Token mismatch - ignoring stale request");
             return;
         }
 
@@ -142,7 +149,7 @@ export class TransferEndpointManager {
         const path = pathElement?.val()?.trim() || "";
 
         if (!path.length) {
-            console.log("Empty path - disabling endpoint");
+            console.info("Empty path - disabling endpoint");
             this.endpointManagerList = null;
             this.updateMatchesList([]);
             this.#controller.uiManager.updateButtonStates();
@@ -150,7 +157,7 @@ export class TransferEndpointManager {
         }
 
         const endpoint = path.split("/")[0];
-        console.log(
+        console.info(
             "Extracted endpoint:",
             endpoint,
             "Current endpoint:",

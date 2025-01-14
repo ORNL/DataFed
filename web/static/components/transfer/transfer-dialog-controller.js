@@ -1,7 +1,8 @@
 import { TransferEndpointManager } from "./transfer-endpoint-manager.js";
 import { TransferModel } from "../../models/transfer-model.js";
 import { TransferUIManager } from "./transfer-ui-manager.js";
-import { dlgAlert } from "../../dialogs.js";
+import * as dialogs from "../../dialogs.js";
+import * as api from "../../api.js";
 
 /**
  * @class TransferDialogController
@@ -12,13 +13,18 @@ export class TransferDialogController {
      * @param {number} mode - Transfer mode (GET/PUT)
      * @param {Array<Object>} ids - Records to transfer
      * @param {Function} callback - Completion callback
+     * @param services - The service objects to use for API and dialog operations
+     * @param {Object} services.dialogs - Dialog service
+     * @param {Function} services.dialogs.dlgAlert - Alert dialog function
+     * @param {Object} services.api - API service
      */
-    constructor(mode, ids, callback) {
+    constructor(mode, ids, callback, services = { dialogs, api }) {
         this.model = new TransferModel(mode, ids);
-        this.endpointManager = new TransferEndpointManager(this);
-        this.uiManager = new TransferUIManager(this);
+        this.endpointManager = new TransferEndpointManager(this, services);
+        this.uiManager = new TransferUIManager(this, services);
         this.ids = ids;
         this.callback = callback;
+        this.services = services;
     }
 
     show() {
@@ -29,7 +35,7 @@ export class TransferDialogController {
             this.uiManager.showDialog();
         } catch (error) {
             console.error("Failed to show transfer dialog:", error);
-            dlgAlert("Error", "Failed to open transfer dialog");
+            this.services.dialogs.dlgAlert("Error", "Failed to open transfer dialog");
         }
     }
 }
