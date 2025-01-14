@@ -604,7 +604,7 @@ app.get("/ui/authn", (a_req, a_resp) => {
 
                             // Refresh Globus access & refresh tokens to Core/DB
                             setAccessToken(
-                                request_session.uid,
+                                a_req.session.uid,
                                 xfr_token.access_token,
                                 xfr_token.refresh_token,
                                 xfr_token.expires_in,
