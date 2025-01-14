@@ -78,7 +78,7 @@ export class TransferEndpointManager {
      * @returns {Promise|undefined} API response promise if available
      */
     searchEndpoint(endpoint, searchToken) {
-        console.log("Searching for endpoint:", endpoint);
+        console.info("Searching for endpoint:", endpoint);
 
         try {
             return this.api.epView(endpoint, (ok, data) => {
@@ -88,7 +88,7 @@ export class TransferEndpointManager {
                 }
 
                 if (ok && !data.code) {
-                    console.log("Direct endpoint match found:", data);
+                    console.info("Direct endpoint match found:", data);
                     this.#controller.uiManager.updateEndpoint(data);
                     this.#controller.uiManager.state.endpointOk = true;
                     this.#controller.uiManager.updateButtonStates();
@@ -165,7 +165,7 @@ export class TransferEndpointManager {
         );
 
         if (!this.currentEndpoint || endpoint !== this.currentEndpoint.name) {
-            console.log("Endpoint changed or not set - searching for new endpoint");
+            console.info("Endpoint changed or not set - searching for new endpoint");
             this.#controller.uiManager.updateButtonStates();
             this.searchEndpoint(endpoint, searchToken);
         }

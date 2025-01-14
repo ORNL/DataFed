@@ -151,7 +151,9 @@ export class TransferUIManager {
 
     initializeBrowseButton() {
         $("#browse", this.state.frame).on("click", () => {
-            if (!this.#controller.endpointManager.currentEndpoint) return;
+            if (!this.#controller.endpointManager.currentEndpoint) {
+                return;
+            }
 
             const pathInput = $("#path", this.state.frame);
             let browsePath = this.getBrowsePath(pathInput.val());
@@ -245,7 +247,9 @@ export class TransferUIManager {
      * @param {string} scheme - The transfer scheme
      */
     updateEncryptionOptions(endpoint, scheme) {
-        if (!this.state.encryptRadios) return;
+        if (!this.state.encryptRadios) {
+            return;
+        }
 
         const options = this.getEncryptionOptions(endpoint, scheme);
         Object.entries(options).forEach(([key, settings]) => {
@@ -354,7 +358,9 @@ export class TransferUIManager {
      * @returns {string} The formatted default path
      */
     getDefaultPath(endpoint) {
-        if (!endpoint) return "";
+        if (!endpoint) {
+            return "";
+        }
 
         const defaultDir = endpoint.default_directory || "/";
         const normalizedDir = defaultDir
@@ -375,7 +381,9 @@ export class TransferUIManager {
         const delimiter = currentPath.indexOf("/");
 
         // If no delimiter, return default path based on current endpoint
-        if (delimiter === -1) return defaultedPath;
+        if (delimiter === -1) {
+            return defaultedPath;
+        }
 
         let path = currentPath.substring(delimiter);
         return path.endsWith("/") ? path : path.substring(0, path.lastIndexOf("/") + 1);
@@ -552,7 +560,7 @@ export class TransferUIManager {
 
         const endpoint = this.#controller.endpointManager.endpointManagerList[selectedIndex];
         if (!endpoint || !endpoint.id) {
-            console.log("Invalid endpoint data:", endpoint);
+            console.warn("Invalid endpoint data:", endpoint);
             return;
         }
 
@@ -586,9 +594,10 @@ export class TransferUIManager {
      */
     handleTransfer() {
         const config = this.getTransferConfig();
-        console.log("config", config);
-        if (!config) return;
-        console.log("this.#controller.model.mode", this.#controller.model.mode);
+        if (!config) {
+            return;
+        }
+
         if (
             this.#controller.model.mode === TransferMode.TT_DATA_GET ||
             this.#controller.model.mode === TransferMode.TT_DATA_PUT
