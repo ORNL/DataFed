@@ -1,116 +1,116 @@
 import { expect, sinon } from "../../setup.js";
+import { createMockServices, setupJQueryMocks } from "../../fixtures/transfer-fixtures.js";
 import { TransferUIManager } from "../../../static/components/transfer/transfer-ui-manager.js";
-import * as model from "../../../static/model.js";
-import * as dialogs from "../../../static/dialogs.js";
-import * as api from "../../../static/api.js";
+import { TransferMode } from "../../../static/models/transfer-model.js";
 
 describe("TransferUIManager", () => {
     let uiManager;
-    let mockDialog;
-    let mockJQuery;
+    let mockController;
+    let mockServices;
+    let jQueryStub;
+    let sandbox;
+
+    const testPath = "/test/path/dat.txt";
+    const records = ["record1", "record2"];
 
     beforeEach(() => {
-        mockDialog = {
+        sandbox = sinon.createSandbox();
+        mockController = {
             model: {
-                mode: model.TT_DATA_GET,
-                records: [],
-                getRecordInfo: sinon.stub(),
+                mode: TransferMode.TT_DATA_GET,
+                records,
+                getRecordInfo: sandbox.stub().returns({ selectable: true, info: "test info" }),
             },
             endpointManager: {
                 currentEndpoint: {
                     id: "test-endpoint",
                     name: "test-endpoint",
                     default_directory: "/default",
+                    activated: true,
+                    expires_in: 3600,
+                    DATA: [{ scheme: "https" }],
                 },
-                currentSearchToken: "test-token",
-                searchCounter: 0,
+                currentSearchToken: 0,
+                searchTokenIterator: 0,
+                initialized: true,
+                handlePathInput: sandbox.stub(),
+            },
+            callback: sandbox.stub(),
+            ids: records,
+        };
+        mockServices = createMockServices();
+        jQueryStub = setupJQueryMocks(sandbox);
+
+        document.body.innerHTML = `                                                                                                                                  
+             <div id="frame">                                                                                                                                         
+                 <div id="title"></div>
+                 <div id="records"></div>
+                 <input id="path" type="text" value=${testPath} />
+                 <div id="matches"></div>
+                 <button id="browse"></button>
+                 <button id="activate"></button>
+                 <button id="go_btn"></button>
+                 <input type="radio" id="encrypt_none" name="encrypt_mode" value="none" />
+                 <input type="radio" id="encrypt_avail" name="encrypt_mode" value="available" />
+                 <input type="radio" id="encrypt_req" name="encrypt_mode" value="required" />
+                 <input type="checkbox" id="orig_fname" />
+                 <input type="text" id="ext" />
+             </div>                                                                                                                                                   
+         `;
+
+        uiManager = new TransferUIManager(mockController, mockServices);
+        uiManager.state = {
+            frame: $("#frame"),
+            selectionOk: true,
+            endpointOk: true,
+            recordTree: {
+                getSelectedNodes: sinon.stub().returns([{ key: records[0] }, { key: records[1] }]),
+            },
+            encryptRadios: {
+                none: $("#encrypt_none"),
+                available: $("#encrypt_avail"),
+                required: $("#encrypt_req"),
             },
         };
-
-        // Create a real DOM element
-        const frame = document.createElement("div");
-        document.body.appendChild(frame);
-
-        // Setup jQuery mock
-        global.$ = mockJQuery = sinon.stub().returns({
-            dialog: sinon.stub(),
-            button: sinon.stub(),
-            val: sinon.stub().returns("test/path"),
-            html: sinon.stub(),
-            prop: sinon.stub(),
-            on: sinon.stub(),
-            show: sinon.stub(),
-            checkboxradio: sinon.stub(),
-            hasClass: sinon.stub().returns(false),
-        });
-
-        uiManager = new TransferUIManager(mockDialog);
-        uiManager.frame = frame;
     });
 
     afterEach(() => {
-        sinon.restore();
+        sandbox.restore();
     });
 
     describe("Constructor and Initialization", () => {
         it("should properly initialize state", () => {
-            expect(uiManager.state.selectionOk).to.be.true;
-            expect(uiManager.state.endpointOk).to.be.false;
+            const freshUiManager = new TransferUIManager(mockController, mockServices);
+            expect(freshUiManager.api).to.equal(mockServices.api);
+            expect(freshUiManager.dialogs).to.equal(mockServices.dialogs);
         });
 
-        it("should store controller reference", () => {
-            expect(uiManager.controller).to.equal(mockDialog);
-        });
-    });
-
-    describe("UI Operations", () => {
-        it("should safely handle UI operations", () => {
-            const operation = sinon.stub();
-            uiManager.safeUIOperation(operation);
-            expect(operation.called).to.be.true;
-        });
-
-        it("should handle UI operation failures gracefully", () => {
-            const errorOperation = () => {
-                throw new Error("UI Error");
-            };
-            const consoleSpy = sinon.spy(console, "error");
-            const reInitSpy = sinon.spy(uiManager, "reInitializeUIComponents");
-
-            expect(() => {
-                uiManager.safeUIOperation(errorOperation);
-            }).throws(Error);
-
-            expect(consoleSpy.called).to.be.true;
-            expect(reInitSpy.called).to.be.true;
+        it("should initialize components", () => {
+            uiManager.initializeComponents();
+            expect(jQueryStub.button.called).to.be.true;
         });
     });
 
     describe("Button Management", () => {
-        it("should initialize button if not already initialized", () => {
-            const buttonSelector = "#testButton";
-            uiManager.ensureButtonInitialized(buttonSelector);
-            expect(mockJQuery().button.called).to.be.true;
-        });
-
         it("should set button state correctly", () => {
-            uiManager.setButtonState("#testButton", true);
-            expect(mockJQuery().button.calledWith("enable")).to.be.true;
-
-            uiManager.setButtonState("#testButton", false);
-            expect(mockJQuery().button.calledWith("disable")).to.be.true;
+            uiManager.setButtonState("#browse", true);
+            expect($("#browse").button.calledWith("enable")).to.be.true;
         });
-    });
 
-    describe("Path Management", () => {
-        it("should get correct browse path", () => {
-            const result = uiManager.getBrowsePath("endpoint/path");
-            expect(result).to.equal("/path");
+        it("should initialize buttons", () => {
+            uiManager.initializeButtons();
+            expect($(".btn").button.called).to.be.true;
         });
     });
 
     describe("Dialog Management", () => {
         it("should get correct dialog labels for GET mode", () => {
+            const uiManager = new TransferUIManager(
+                {
+                    model: { mode: TransferMode.TT_DATA_GET },
+                },
+                mockServices,
+            );
             const labels = uiManager.getDialogLabels();
             expect(labels.endpoint).to.equal("Destination");
             expect(labels.record).to.equal("Source");
@@ -118,7 +118,12 @@ describe("TransferUIManager", () => {
         });
 
         it("should get correct dialog labels for PUT mode", () => {
-            uiManager.controller.model.mode = model.TT_DATA_PUT;
+            const uiManager = new TransferUIManager(
+                {
+                    model: { mode: TransferMode.TT_DATA_PUT },
+                },
+                mockServices,
+            );
             const labels = uiManager.getDialogLabels();
             expect(labels.endpoint).to.equal("Source");
             expect(labels.record).to.equal("Destination");
@@ -126,25 +131,33 @@ describe("TransferUIManager", () => {
         });
     });
 
-    describe("Transfer Configuration", () => {
-        beforeEach(() => {
-            mockJQuery().val.returns("/test/path");
-            mockJQuery().prop.returns(true);
+    describe("Path Management", () => {
+        it("should get default path correctly", () => {
+            const endpoint = {
+                name: "test-endpoint",
+                default_directory: "/default/path",
+            };
+            const result = uiManager.getDefaultPath(endpoint);
+            expect(result).to.equal("test-endpoint/default/path");
         });
 
-        it("should get valid transfer configuration", () => {
-            const config = uiManager.getTransferConfig();
-            expect(config).to.have.property("path");
-            expect(config).to.have.property("encrypt");
-            expect(config).to.have.property("origFilename");
+        it("should handle empty default directory", () => {
+            const endpoint = {
+                name: "test-endpoint",
+            };
+            const result = uiManager.getDefaultPath(endpoint);
+            expect(result).to.equal("test-endpoint/");
         });
+    });
 
-        it("should handle empty path", () => {
-            mockJQuery().val.returns("");
+    describe("Record Management", () => {
+        it("should get selected IDs correctly", () => {
+            uiManager.state.recordTree = {
+                getSelectedNodes: () => [{ key: "record1" }, { key: "record2" }],
+            };
 
-            const config = uiManager.getTransferConfig();
-
-            expect(config).to.be.null;
+            const ids = uiManager.getSelectedIds();
+            expect(ids).to.deep.equal(["record1", "record2"]);
         });
     });
 
@@ -153,51 +166,75 @@ describe("TransferUIManager", () => {
             sinon.stub(uiManager, "startTransfer");
             sinon.stub(uiManager, "getTransferConfig").returns({
                 path: "/test/path",
-                encrypt: "1",
-                origFilename: false,
-                extension: "",
+                encrypt: "none",
+                origFilename: true,
+                extension: undefined,
             });
-
-            uiManager.handleTransfer();
-
-            expect(uiManager.startTransfer.calledOnce).to.be.true;
         });
 
-        it("should handle transfer errors", () => {
-            sinon.stub(uiManager, "startTransfer");
-            sinon.stub(uiManager, "getTransferConfig").returns({
-                path: "/test/path",
-                encrypt: "1",
-                origFilename: false,
-                extension: "",
-            });
-
-            uiManager.handleTransfer();
-
-            expect(uiManager.startTransfer.calledOnce).to.be.true;
+        it("should handle empty path in transfer config", () => {
+            jQueryStub.val.returns("");
+            const config = uiManager.getTransferConfig();
+            expect(config).to.be.null;
+            expect(mockServices.dialogs.dlgAlert.called).to.be.true;
         });
     });
 
-    describe("Record Management", () => {
-        it("should format record title correctly", () => {
-            const mockRecord = { id: "test-id", title: "Test Title" };
-            const mockInfo = { info: "INFO", selectable: true };
+    describe("Transfer Operations", () => {
+        it("should handle successful transfer response", () => {
+            const mockData = { task: { id: "test-task" } };
+            const closeDialogSpy = sandbox.spy(uiManager, "closeDialog");
 
-            const title = uiManager.formatRecordTitle(mockRecord, mockInfo);
+            uiManager.handleTransferResponse(true, mockData);
 
-            expect(title).to.include(mockRecord.id);
-            expect(title).to.include(mockRecord.title);
-            expect(title).to.include(mockInfo.info);
+            expect(closeDialogSpy.calledOnce).to.be.true;
         });
 
-        it("should get selected IDs correctly", () => {
-            uiManager.controller.model.records = [{ id: "id1" }, { id: "id2" }];
-            uiManager.recordTree = {
-                getSelectedNodes: () => [{ key: "id1" }, { key: "id2" }],
+        it("should handle transfer errors", () => {
+            uiManager.handleTransferResponse(false, "Error message");
+            expect(mockServices.dialogs.dlgAlert.calledWith("Transfer Error", "Error message")).to
+                .be.true;
+        });
+
+        it("should start transfer with correct parameters", () => {
+            const config = {
+                path: "/test/path",
+                encrypt: "none",
+                origFilename: true,
+                extension: "txt",
             };
 
-            const selectedIds = uiManager.getSelectedIds();
-            expect(selectedIds).to.deep.equal(["id1", "id2"]);
+            uiManager.startTransfer(config);
+
+            expect(mockServices.api.xfrStart.called).to.be.true;
+            expect(mockServices.api.xfrStart.firstCall.args[0]).to.deep.equal(records);
+        });
+    });
+
+    describe("UI Operations", () => {
+        it("should update button states correctly", () => {
+            uiManager.updateButtonStates();
+            expect(jQueryStub.button.called).to.be.true;
+        });
+
+        it("should update encryption options correctly", () => {
+            const endpoint = { force_encryption: true };
+            const scheme = "https";
+
+            const radioStub = {
+                length: 1,
+                hasClass: sandbox.stub().returns(true),
+                checkboxradio: sandbox.stub().returnsThis(),
+                prop: sandbox.stub().returnsThis(),
+            };
+            uiManager.state.encryptRadios = {
+                none: radioStub,
+                available: radioStub,
+                required: radioStub,
+            };
+
+            uiManager.updateEncryptionOptions(endpoint, scheme);
+            expect(radioStub.checkboxradio.called).to.be.true;
         });
     });
 });

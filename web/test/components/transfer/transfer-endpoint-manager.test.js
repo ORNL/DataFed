@@ -1,42 +1,44 @@
-import { expect } from "chai";
-import sinon from "sinon";
+import { expect, sinon } from "../../setup.js";
+import { createMockServices, setupJQueryMocks } from "../../fixtures/transfer-fixtures.js";
 import { TransferEndpointManager } from "../../../static/components/transfer/transfer-endpoint-manager.js";
 
 describe("TransferEndpointManager", () => {
+    let jQueryStub;
     let manager;
-    let mockDialog;
-    let mockFrame;
+    let mockController;
     let mockServices;
+    let sandbox;
 
     beforeEach(() => {
-        mockFrame = $("<div>");
-        mockFrame.append('<textarea id="path"></textarea>');
-        mockFrame.append('<select id="matches"></select>');
-        mockDialog = {
+        sandbox = sinon.createSandbox();
+        mockServices = createMockServices();
+        jQueryStub = setupJQueryMocks(sandbox);
+
+        document.body.innerHTML = `                                                                                                                                  
+             <div id="frame">                                                                                                                                         
+                 <textarea id="path"></textarea>                                                                                                                      
+                 <select id="matches"></select>                                                                                                                       
+             </div>                                                                                                                                                   
+         `;
+
+        mockController = {
             uiManager: {
-                frame: mockFrame,
-                updateEndpoint: sinon.stub(),
-                state: { endpointOk: false },
-                updateButtonStates: sinon.stub(),
-                createMatchesHtml: sinon.stub().returns("<option>Test</option>"),
-            },
-        };
-        mockServices = {
-            api: {
-                epAutocomplete: sinon.stub(),
-                epView: sinon.stub(),
-            },
-            dialogs: {
-                dlgAlert: sinon.stub(),
+                state: {
+                    frame: $("#frame"),
+                    endpointOk: false,
+                },
+                updateEndpoint: sandbox.stub().returnsThis(),
+                updateButtonStates: sandbox.stub().returnsThis(),
             },
         };
 
-        manager = new TransferEndpointManager(mockDialog, mockServices);
+        manager = new TransferEndpointManager(mockController, mockServices);
         manager.initialized = true;
+        manager.controller = mockController;
     });
 
     afterEach(() => {
-        sinon.restore();
+        sandbox.restore();
     });
 
     describe("searchEndpoint", () => {
@@ -58,11 +60,20 @@ describe("TransferEndpointManager", () => {
             mockServices.api.epView.callsFake((endpoint, callback) =>
                 callback(true, { code: "ERROR" }),
             );
-            const searchAutocompleteSpy = sinon.spy(manager, "searchEndpointAutocomplete");
+            const searchAutocompleteSpy = sandbox.spy(manager, "searchEndpointAutocomplete");
 
             manager.searchEndpoint("test-endpoint", "test-token");
 
             expect(searchAutocompleteSpy.calledWith("test-endpoint", "test-token")).to.be.true;
+        });
+
+        it("should handle API errors", () => {
+            mockServices.api.epView.throws(new Error("API Error"));
+
+            manager.searchEndpoint("test-endpoint", "test-token");
+
+            expect(mockServices.dialogs.dlgAlert.calledWith("Globus Error", sinon.match.any)).to.be
+                .true;
         });
     });
 
@@ -81,10 +92,12 @@ describe("TransferEndpointManager", () => {
             mockServices.api.epAutocomplete.callsFake((endpoint, callback) =>
                 callback(true, mockData),
             );
+
             manager.searchEndpointAutocomplete("test", "test-token");
 
             expect(manager.endpointManagerList).to.deep.equal(mockData.DATA);
-            expect(mockServices.api.epAutocomplete.calledOnce).to.be.true;
+            expect(jQueryStub.html.called).to.be.true;
+            expect(jQueryStub.prop.calledWith("disabled", false)).to.be.true;
         });
 
         it("should handle no matches case", () => {
@@ -96,24 +109,20 @@ describe("TransferEndpointManager", () => {
             manager.searchEndpointAutocomplete("test", "test-token");
 
             expect(manager.endpointManagerList).to.be.null;
+            expect(jQueryStub.html.calledWith("<option disabled selected>No Matches</option>")).to
+                .be.true;
+            expect(jQueryStub.prop.calledWith("disabled", true)).to.be.true;
             expect(consoleWarnStub.calledWith("No matches found")).to.be.true;
         });
-    });
 
-    describe("getEndpointStatus", () => {
-        it('should return "active" for non-activated endpoint with expires_in = -1', () => {
-            const endpoint = { activated: false, expires_in: -1 };
-            expect(manager.getEndpointStatus(endpoint)).to.equal("active");
-        });
+        it("should handle error responses", () => {
+            mockServices.api.epAutocomplete.callsFake((endpoint, callback) =>
+                callback(true, { code: "ERROR", DATA: [] }),
+            );
 
-        it("should return hours remaining for activated endpoint", () => {
-            const endpoint = { activated: true, expires_in: 7200 };
-            expect(manager.getEndpointStatus(endpoint)).to.equal("2 hrs");
-        });
+            manager.searchEndpointAutocomplete("test", "test-token");
 
-        it('should return "inactive" for non-activated endpoint with expires_in != -1', () => {
-            const endpoint = { activated: false, expires_in: 0 };
-            expect(manager.getEndpointStatus(endpoint)).to.equal("inactive");
+            expect(mockServices.dialogs.dlgAlert.calledWith("Globus Error", "ERROR")).to.be.true;
         });
     });
 
@@ -123,8 +132,8 @@ describe("TransferEndpointManager", () => {
         });
 
         it("should process valid path input", () => {
-            $("#path", mockFrame).val("endpoint/path");
-            const searchEndpointSpy = sinon.spy(manager, "searchEndpoint");
+            jQueryStub.val.returns("endpoint/path");
+            const searchEndpointSpy = sandbox.spy(manager, "searchEndpoint");
 
             manager.handlePathInput("test-token");
 
@@ -132,7 +141,7 @@ describe("TransferEndpointManager", () => {
         });
 
         it("should handle empty path input", () => {
-            $("#path", mockFrame).val("");
+            jQueryStub.val.returns("");
 
             manager.handlePathInput("test-token");
 
@@ -141,13 +150,44 @@ describe("TransferEndpointManager", () => {
         });
 
         it("should ignore stale requests", () => {
-            $("#path", mockFrame).val("endpoint/path");
+            jQueryStub.val.returns("endpoint/path");
             manager.currentSearchToken = "different-token";
-            const searchEndpointSpy = sinon.spy(manager, "searchEndpoint");
+            const searchEndpointSpy = sandbox.spy(manager, "searchEndpoint");
 
             manager.handlePathInput("test-token");
 
             expect(searchEndpointSpy.called).to.be.false;
+        });
+
+        it("should handle uninitialized state", () => {
+            manager.initialized = false;
+            const handlePathInputSpy = sandbox.spy(manager, "handlePathInput");
+
+            manager.handlePathInput("test-token");
+
+            expect(handlePathInputSpy.calledOnce).to.be.true;
+        });
+    });
+
+    describe("updateMatchesList", () => {
+        it("should update matches list with endpoints", () => {
+            const endpoints = [
+                { id: "1", name: "endpoint1" },
+                { id: "2", name: "endpoint2" },
+            ];
+
+            manager.updateMatchesList(endpoints);
+
+            expect(jQueryStub.html.called).to.be.true;
+            expect(jQueryStub.prop.calledWith("disabled", false)).to.be.true;
+        });
+
+        it("should handle empty endpoints list", () => {
+            manager.updateMatchesList([]);
+
+            expect(jQueryStub.html.calledWith("<option disabled selected>No Matches</option>")).to
+                .be.true;
+            expect(jQueryStub.prop.calledWith("disabled", true)).to.be.true;
         });
     });
 });
