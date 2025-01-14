@@ -112,9 +112,9 @@ module.exports = (function () {
         let record = new Record(data_key);
 
         if (!record.exists()) {
-            // If the record does not exist then the path would not be consistent.
-            console.log("AUTHZ act: read client: " + client._id + " path " + path + " FAILED");
-            throw [g_lib.ERR_PERM_DENIED, "Invalid record specified: " + path];
+            // Return not found error for non-existent records
+            console.log("AUTHZ act: read client: " + client._id + " path " + path + " NOT_FOUND");
+            throw [g_lib.ERR_NOT_FOUND, "Record not found: " + path];
         }
         // Special case - allow unknown client to read a publicly accessible record
         // if record exists and if it is a public record

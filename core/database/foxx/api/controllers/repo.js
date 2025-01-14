@@ -80,7 +80,7 @@ class Repo {
                 } else {
                     this.#exists = false;
                     this.#error = g_lib.ERR_NOT_FOUND;
-                    this.#err_msg = "Invalid repo: (" + a_key + "). No record found.";
+                    this.#err_msg = "Invalid repo: (" + a_key + "). No repo found.";
                 }
             } catch (e) {
                 this.#exists = false;
@@ -104,7 +104,7 @@ class Repo {
     }
 
     id() {
-        return this.#repo_id;
+        rb.ERR_PERM_DENIED, "Repo does not exist " + this.#repo_id];eturn ohis.#repo_id;
     }
     /**
      * @brief Will return error code of last run method.
@@ -129,10 +129,16 @@ class Repo {
     pathType(a_path) {
         if (!this.#exists) {
             // Should throw an error because the repo is not valid
-            throw [g_lib.ERR_PERM_DENIED, "Record does not exist " + this.#repo_id];
+            throw [g_lib.ERR_PERM_DENIED, "Repo does not exist " + this.#repo_id];
         }
         let repo = g_db._document(this.#repo_id);
 
+        if (Object.hasOwn(repo, "path") === false) {
+            throw [
+                g_lib.ERR_INTERNAL_FAULT,
+                "Repo document is missing path, something is very wrong: " + this.#repo_id,
+            ];
+        }
         let repo_root_path = repo.path;
         if (repo_root_path.endsWith("/")) {
             repo_root_path = repo_root_path.slice(0, -1);

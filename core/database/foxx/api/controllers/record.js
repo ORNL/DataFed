@@ -60,14 +60,31 @@ class Record {
     /**
      * @brief will create the path to key as it should appear on the repository.
      **/
-    _pathToRecord(basePath) {
-        return basePath.endsWith("/") ? basePath + this.#key : basePath + "/" + this.#key;
+    _pathToRecord(loc, basePath) {
+        const path = basePath.endsWith("/") ? basePath : basePath + "/";
+        if (loc.uid.charAt(0) == "u") {
+            return path + "user/" + loc.uid.substr(2) + "/" + this.#key;
+        } else if (loc.uid.charAt(0) == "p") {
+            return path + "project/" + loc.uid.substr(2) + "/" + this.#key;
+        } else {
+            this.#error = g_lib.ERR_INTERNAL_FAULT;
+            this.#err_msg = "Provided path does not fit within supported directory ";
+            this.#err_msg += "structure for repository, no user or project folder has";
+            this.#err_msg += " been determined for the record.";
+            console.log(e);
+            return null;
+        }
     }
 
     /**
      * @brief Compares two paths and if an error is detected will save the error code and message.
      **/
     _comparePaths(storedPath, inputPath) {
+        if (storedPath === null) {
+            this.#error = g_lib.ERR_INTERNAL_FAULT;
+            this.#err_msg = "Stored path for repo is null.";
+            return false;
+        }
         if (storedPath !== inputPath) {
             this.#error = g_lib.ERR_PERM_DENIED;
             this.#err_msg =
@@ -159,7 +176,7 @@ class Record {
         }
 
         // If there is a new repo we need to check the path there and use that
-        if (this.#loc.new_repo) {
+        if (this.#loc.hasOwnProperty("new_repo") && this.#loc.new_repo) {
             // Below we get the allocation associated with data item by
             // 1. Checking if the data item is in flight, is in the process
             // of being moved to a new location or new owner and using that
@@ -180,13 +197,36 @@ class Record {
                 return false;
             }
 
-            let stored_path = this._pathToRecord(new_alloc.path);
+            this.#repo = g_db._document(this.#loc.new_repo);
+
+            if (!this.#repo) {
+                this.#error = g_lib.ERR_INTERNAL_FAULT;
+                this.#err_msg =
+                    "Unable to find repo that record is meant to be allocated too, '" +
+                    this.#loc.new_repo +
+                    "' record '" +
+                    this.#data_id;
+                return false;
+            }
+
+            // If path is missing the starting "/" add it back in
+            if (!a_path.startsWith("/") && this.#repo.path.startsWith("/")) {
+                a_path = "/" + a_path;
+            }
+
+            let stored_path = this._pathToRecord(this.#loc, this.#repo.path);
 
             if (!this._comparePaths(stored_path, a_path)) {
                 return false;
             }
         } else {
-            let stored_path = this._pathToRecord(this.#alloc.path);
+
+            this.#repo = g_db._document(this.#loc._to);
+
+            if (!a_path.startsWith("/") && this.#repo.path.startsWith("/")) {
+                a_path = "/" + a_path;
+            }
+            let stored_path = this._pathToRecord(this.#loc, this.#repo.path);
 
             // If there is no new repo check that the paths align
             if (!this._comparePaths(stored_path, a_path)) {
