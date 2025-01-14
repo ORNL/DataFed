@@ -588,32 +588,18 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                     // TODO: remove, set elsewhere, do not hard code
                                     a_req.session.collection_id = "5066556a-bcd6-4e00-8e3f-b45e0ec88b1a";
 
-                                    let optional_data = {
-                                        type: AccessTokenType.GLOBUS_DEFAULT,
-                                    };
-                                    if (!is_auth_token) {   // TODO: assuming transfer resource, may want to be explicit
-                                        const user_collection_id = a_req.session.collection_id;
-                                        if (!user_collection_id) {
-                                            throw new Error("Transfer token received without collection context");
-                                            a_resp.redirect("/ui/error");
-                                        }
-                                        const token_type = client_token.data.resource_server === "transfer.globus.org" ? AccessTokenType.GLOBUS_TRANSFER : AccessTokenType.GLOBUS_DEFAULT;  // TODO: cover all types
-                                        optional_data.type = token_type;
-                                        optional_data.other = a_req.session.collection_id + "|" + xfr_token.scope; // TODO: extract into formatting method
-
-                                        // TODO: remove
+                                    if (!is_auth_token) { // TODO: remove
                                         console.log("Dump of reply data: ", reply);
                                         console.log("Dump of reply ident data: ", reply.user[0].ident);
                                     }
-
-                                    // Refresh Globus access & refresh tokens to Core/DB
-                                    setAccessToken(
-                                        uid,
-                                        xfr_token.access_token,
-                                        xfr_token.refresh_token,
-                                        xfr_token.expires_in,
-                                        optional_data
-                                    );
+                                    const resource_server = client_token.data.resource_sever;
+                                    try {
+                                        setTransferToken(a_req.session, resource_server, is_auth_token, xfr_token);
+                                    }
+                                    catch (err) {
+                                        a_resp.redirect("ui/error");
+                                        throw err;
+                                    }
 
                                     // TODO Account may be disable from SDMS (active = false)
                                     a_resp.redirect("/ui/main");
@@ -2212,6 +2198,30 @@ const AccessTokenType = Object.freeze({
     GLOBUS_DEFAULT: 5,
     ACCESS_SENTINEL: 255,
 });
+
+const setTransferToken = (request_session, resource_server, is_auth_token, transfer_token) => { // TODO: may be better to strictly parse optional data
+    let optional_data = {
+        type: AccessTokenType.GLOBUS_DEFAULT,
+    };
+    if (!is_auth_token) {   // TODO: assuming transfer resource, may want to be explicit
+        const user_collection_id = request_session.collection_id;
+        if (!user_collection_id) {
+            throw new Error("Transfer token received without collection context");
+        }
+        const token_type = resource_server === "transfer.globus.org" ? AccessTokenType.GLOBUS_TRANSFER : AccessTokenType.GLOBUS_DEFAULT;  // TODO: cover all types
+        optional_data.type = token_type;
+        optional_data.other = user_collection_id + "|" + transfer_token.scope; // TODO: extract into formatting method
+    }
+
+    // Refresh Globus access & refresh tokens to Core/DB
+    setAccessToken(
+        request_session.uid,
+        transfer_token.access_token,
+        transfer_token.refresh_token,
+        transfer_token.expires_in,
+        optional_data
+    );
+};
 
 process.on("unhandledRejection", (reason, p) => {
     logger.error(
