@@ -14,7 +14,7 @@ module.exports = (function () {
      * Checks if a client has the required permissions on a record.
      *
      * @param {string} a_data_key - A DataFed key associated with a record (not prepended with 'd/').
-     * @param {Object} a_client - A user document representing the client whose permissions are being verified.
+     * @param {object} a_client - A user document representing the client whose permissions are being verified.
      *                            The client document contains the following properties:
      *                            - `_key` (string): The client's unique key.
      *                            - `_id` (string): The client's unique identifier.
