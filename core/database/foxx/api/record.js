@@ -68,14 +68,25 @@ class Record {
      **/
     _pathToRecord(loc, basePath) {
         const path = basePath.endsWith("/") ? basePath : basePath + "/";
-        return path + (loc.uid.charAt(0) == "u" ? "user/" : "project/") +
-                            loc.uid.substr(2) + "/" + this.#key;
+        if ( loc.uid.charAt(0) == "u" ) {
+            return path + "user/" + loc.uid.substr(2) + "/" + this.#key;
+        } else if( loc.uid.charAt(0) == "p" ) {
+            return path + "project/" + loc.uid.substr(2) + "/" + this.#key;
+        } else {
+            this.#error = g_lib.ERR_INTERNAL_FAULT;
+            this.#err_msg = "Provided path does not fit within supported directory ";
+            this.#err_msg += "structure for repository, no user or project folder has";
+            this.#err_msg += " been determined for the record.";
+            console.log(e);
+            return null;
+        }
     }
 
     /**
      * @brief Compares two paths and if an error is detected will save the error code and message.
      **/
     _comparePaths(storedPath, inputPath) {
+        if (storedPath === null) { return false; }
         if (storedPath !== inputPath) {
             this.#error = g_lib.ERR_PERM_DENIED;
             this.#err_msg =
@@ -162,10 +173,6 @@ class Record {
         }
 
         console.log("is path consisstent");
-        // If path is missing the starting "/" add it back in
-        if (!a_path.startsWith("/") && this.#alloc.path.startsWith("/")) {
-            a_path = "/" + a_path;
-        }
   
         console.log("31");
         // If there is a new repo we need to check the path there and use that
@@ -201,6 +208,12 @@ class Record {
                     "Unable to find repo that record is meant to be allocated too, '" + this.#loc.new_repo + "' record '" + this.#data_id;
                 return false;
             } 
+
+            // If path is missing the starting "/" add it back in
+            if (!a_path.startsWith("/") && this.#repo.path.startsWith("/")) {
+                a_path = "/" + a_path;
+            }
+
             let stored_path = this._pathToRecord(this.#loc, this.#repo.path);
 
         console.log("35");
@@ -210,6 +223,9 @@ class Record {
         } else {
             this.#repo = g_db._document(this.#loc._to);
 
+            if (!a_path.startsWith("/") && this.#repo.path.startsWith("/")) {
+                a_path = "/" + a_path;
+            }
             let stored_path = this._pathToRecord(this.#loc, this.#repo.path);
 
         console.log("36");
