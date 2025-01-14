@@ -83,6 +83,7 @@ describe("TransferEndpointManager", () => {
         });
 
         it("should update matches list with autocomplete results", () => {
+            const updateMatchesListSpy = sandbox.spy(manager, "updateMatchesList");
             const mockData = {
                 DATA: [
                     { id: "1", canonical_name: "endpoint1" },
@@ -95,12 +96,14 @@ describe("TransferEndpointManager", () => {
 
             manager.searchEndpointAutocomplete("test", "test-token");
 
+            expect(updateMatchesListSpy.calledWith(mockData.DATA)).to.be.true;
             expect(manager.endpointManagerList).to.deep.equal(mockData.DATA);
             expect(jQueryStub.html.called).to.be.true;
             expect(jQueryStub.prop.calledWith("disabled", false)).to.be.true;
         });
 
         it("should handle no matches case", () => {
+            const updateMatchesListSpy = sandbox.spy(manager, "updateMatchesList");
             mockServices.api.epAutocomplete.callsFake((endpoint, callback) =>
                 callback(true, { DATA: [] }),
             );
@@ -109,6 +112,7 @@ describe("TransferEndpointManager", () => {
             manager.searchEndpointAutocomplete("test", "test-token");
 
             expect(manager.endpointManagerList).to.be.null;
+            expect(updateMatchesListSpy.calledWith([])).to.be.true;
             expect(jQueryStub.html.calledWith("<option disabled selected>No Matches</option>")).to
                 .be.true;
             expect(jQueryStub.prop.calledWith("disabled", true)).to.be.true;
