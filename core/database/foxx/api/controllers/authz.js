@@ -3,6 +3,7 @@
 const g_db = require("@arangodb").db;
 const path = require("path");
 const pathModule = require("./../utils/posix_path");
+const Record = require("./record");
 const g_lib = require("../support");
 const { Repo, PathType } = require("./repo");
 const { Project } = require("./project");
@@ -34,11 +35,13 @@ module.exports = (function () {
         const data_id = "d/" + a_data_key;
         // If the user is not an admin of the object we will need
         // to check if the user has the write authorization
+        console.log("checking client is admin");
         if (g_lib.hasAdminPermObject(a_client, data_id)) {
             return true;
         }
         let data = g_db.d.document(data_id);
         // Grab the data item
+        console.log("checking client has permissions");
         if (g_lib.hasPermissions(a_client, data, a_perm)) {
             return true;
         }
@@ -138,6 +141,7 @@ module.exports = (function () {
             console.log("AUTHZ act: read client: " + client._id + " path " + path + " FAILED");
             throw [record.error(), record.errorMessage()];
         }
+        return true;
     };
 
     /* \brief Placeholder strategy method
@@ -147,6 +151,7 @@ module.exports = (function () {
      **/
     obj.none = function (client, path, a_repo) {
         const permission = g_lib.PERM_NONE;
+        return true;
     };
 
     /* \brief This method denies access to a GridFTP action
@@ -157,6 +162,7 @@ module.exports = (function () {
             g_lib.ERR_PERM_DENIED,
             "Permissions denied for client " + client._id + " on path: " + path,
         ];
+        return true;
     };
 
     /**
@@ -219,6 +225,7 @@ module.exports = (function () {
             console.log("AUTHZ act: create client: " + client._id + " path " + path + " FAILED");
             throw [record.error(), record.errorMessage()];
         }
+        return true;
     };
 
     /**
@@ -269,6 +276,7 @@ module.exports = (function () {
             console.log("AUTHZ act: lookup client: " + client._id + " path " + path + " FAILED");
             throw [record.error(), record.errorMessage()];
         }
+        return true;
     };
 
     /**
@@ -322,6 +330,7 @@ module.exports = (function () {
                 "Client " + client._id + " does not have lookup permissions on " + path,
             ];
         }
+        return true;
     };
 
     /**
@@ -347,6 +356,7 @@ module.exports = (function () {
                 "Client " + client._id + " does not have lookup permissions on " + path,
             ];
         }
+        return true;
     };
 
     /**
@@ -365,7 +375,7 @@ module.exports = (function () {
      */
     obj.lookupRepoRoot = function (client, path, a_repo) {
         if (a_repo.hasAccess(client._id)) {
-            return;
+            return true;
         }
 
         throw [obj.ERR_NO_ALLOCATION, "Client " + client._id + " has no allocation on repo."];
@@ -389,7 +399,7 @@ module.exports = (function () {
      */
     obj.lookupRepo = function (client, path, a_repo) {
         if (a_repo.hasAccess(client._id)) {
-            return;
+            return true;
         }
 
         throw [obj.ERR_NO_ALLOCATION, "Client " + client._id + " has no allocation on repo."];
@@ -413,7 +423,7 @@ module.exports = (function () {
      */
     obj.lookupRepoBase = function (client, path, a_repo) {
         if (a_repo.hasAccess(client._id)) {
-            return;
+            return true;
         }
 
         throw [obj.ERR_NO_ALLOCATION, "Client " + client._id + " has no allocation on repo."];
