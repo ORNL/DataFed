@@ -590,14 +590,14 @@ app.get("/ui/authn", (a_req, a_resp) => {
                         a_req.session.collection_id = "5066556a-bcd6-4e00-8e3f-b45e0ec88b1a";
 
                         if (token_type === AccessTokenType.GLOBUS_AUTH) {   // TODO: something better
-                            token_type =AccessTokenType.GLOBUS_DEFAULT;
+                            token_type = AccessTokenType.GLOBUS_DEFAULT;
                         }
 
                         // TODO: is this the best way to allow for arbitrary inputs?
                         const token_context = { // passed values are mutable
                             resource_server: client_token.data.resource_sever,
                             collection_id: a_req.session.collection_id,
-                            scope: xfer_token.scope,
+                            scope: xfr_token.scope,
                         }
                         try {
                             const optional_data = constructOptionalData(token_type, token_context);
