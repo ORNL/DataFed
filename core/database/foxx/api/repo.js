@@ -133,8 +133,11 @@ class Repo {
         }
         let repo = g_db._document(this.#repo_id);
 
-        if ( Object.hasOwn(repo, "path") === false ) {
-            throw [g_lib.ERR_INTERNAL_FAULT, "Repo document is missing path, something is very wrong: " + this.#repo_id];
+        if (Object.hasOwn(repo, "path") === false) {
+            throw [
+                g_lib.ERR_INTERNAL_FAULT,
+                "Repo document is missing path, something is very wrong: " + this.#repo_id,
+            ];
         }
         let repo_root_path = repo.path;
         if (repo_root_path.endsWith("/")) {

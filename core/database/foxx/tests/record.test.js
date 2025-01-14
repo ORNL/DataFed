@@ -9,7 +9,7 @@ const arangodb = require("@arangodb");
 
 function recordRepoAndUserSetup(record_key, user_id, repo_data) {
     const record_id = "d/" + record_key;
-    if ( ! g_db._exists(record_id ) ) {
+    if (!g_db._exists(record_id)) {
         g_db.d.save({
             _key: record_key,
             _id: record_id,
@@ -17,7 +17,7 @@ function recordRepoAndUserSetup(record_key, user_id, repo_data) {
     }
     g_db.repo.save(repo_data);
 
-    if ( ! g_db._exists(user_id ) ) {
+    if (!g_db._exists(user_id)) {
         g_db.u.save({
             _id: user_id,
         });
@@ -47,7 +47,7 @@ describe("Record Class", () => {
         const repo_id = "repo/datafed-at-com";
         const repo_data = {
             _key: "datafed-at-com",
-        }
+        };
         // Create nodes
         recordRepoAndUserSetup(valid_key, owner_id, repo_data);
 
@@ -76,7 +76,7 @@ describe("Record Class", () => {
         // Create nodes
         const repo_data = {
             _key: "datafed-at-org",
-        }
+        };
         recordRepoAndUserSetup(valid_key, owner_id, repo_data);
 
         const record = new Record(valid_key);
@@ -96,7 +96,7 @@ describe("Record Class", () => {
         // Create nodes
         const repo_data = {
             _key: "datafed-banana-com",
-        }
+        };
         recordRepoAndUserSetup(valid_key, owner_id, repo_data);
 
         // Create edges
@@ -121,7 +121,7 @@ describe("Record Class", () => {
         // Create nodes
         const repo_data = {
             _key: "datafed-best-com",
-        }
+        };
         recordRepoAndUserSetup(valid_key, owner_id, repo_data);
 
         // Create edges
@@ -151,7 +151,7 @@ describe("Record Class", () => {
             _id: repo_id,
             _key: "datafed-at-super",
             path: "/correct/file/path",
-        }
+        };
         // Create nodes
         recordRepoAndUserSetup(valid_key, owner_id, repo_data);
 
@@ -179,7 +179,7 @@ describe("Record Class", () => {
         const repo_data = {
             _key: "datafed-fine-com",
             path: "/correct/file/path",
-        }
+        };
         recordRepoAndUserSetup(valid_key, owner_id, repo_data);
 
         // Create edges
@@ -210,7 +210,7 @@ describe("Record Class", () => {
         const repo_data = {
             _key: "datafed-cool-com",
             path: "/correct/file/path",
-        }
+        };
         recordRepoAndUserSetup(valid_key, owner_id, repo_data);
 
         // Create edges
@@ -226,7 +226,8 @@ describe("Record Class", () => {
         });
 
         const record = new Record(valid_key);
-        expect(record.isPathConsistent("/correct/file/path/user/" + owner_name + "/" + valid_key)).to.be.true;
+        expect(record.isPathConsistent("/correct/file/path/user/" + owner_name + "/" + valid_key))
+            .to.be.true;
         expect(record.error()).to.be.null;
         expect(record.errorMessage()).to.be.null;
     });
@@ -243,11 +244,11 @@ describe("Record Class", () => {
         const repo_data = {
             _key: "orange-at-org",
             path: "/old/file/path",
-        }
+        };
         const repo_data_new = {
             _key: "watermelon-at-org",
             path: "/correct/file/path",
-        }
+        };
         recordRepoAndUserSetup(valid_key, owner_id, repo_data);
         recordRepoAndUserSetup(valid_key, owner_id, repo_data_new);
 
@@ -283,11 +284,11 @@ describe("Record Class", () => {
         const repo_data = {
             _key: "passionfruit",
             path: "/old/file/path",
-        }
+        };
         const repo_data_new = {
             _key: "hamburger",
             path: "/new/file/path",
-        }
+        };
         recordRepoAndUserSetup(valid_key, owner_id, repo_data);
         recordRepoAndUserSetup(valid_key, owner_id, repo_data_new);
 
@@ -308,7 +309,8 @@ describe("Record Class", () => {
         });
 
         const record = new Record(valid_key);
-        expect(record.isPathConsistent("/incorrect/file/path/user/sherry/" + valid_key)).to.be.false;
+        expect(record.isPathConsistent("/incorrect/file/path/user/sherry/" + valid_key)).to.be
+            .false;
         expect(record.error()).to.equal(g_lib.ERR_PERM_DENIED);
         const pattern = /^Record path is not consistent/;
         expect(record.errorMessage()).to.match(pattern);

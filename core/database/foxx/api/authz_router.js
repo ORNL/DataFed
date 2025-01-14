@@ -38,18 +38,17 @@ router
             // :
             // "email" : "bobjones@gmail.com"
             const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
-            if ( ! client ) {
+            if (!client) {
                 console.log(
                     "AUTHZ act: " +
                         req.queryParams.act +
                         " client: " +
-                         + req.queryParams.client +
+                        +req.queryParams.client +
                         " path " +
                         req.queryParams.file +
                         " FAILED",
                 );
                 throw [g_lib.ERR_PERM_DENIED, "Unknown client: " + req.queryParams.client];
-
             }
             let repo = new Repo(req.queryParams.repo);
             let path_type = repo.pathType(req.queryParams.file);
@@ -65,7 +64,11 @@ router
                         req.queryParams.file +
                         " FAILED",
                 );
-                throw [g_lib.ERR_PERM_DENIED, "Unknown path, or path is not consistent with supported repository folder hierarchy: " + req.queryParams.file];
+                throw [
+                    g_lib.ERR_PERM_DENIED,
+                    "Unknown path, or path is not consistent with supported repository folder hierarchy: " +
+                        req.queryParams.file,
+                ];
             }
 
             // Determine permissions associated with path provided

@@ -64,9 +64,9 @@ class Record {
      **/
     _pathToRecord(loc, basePath) {
         const path = basePath.endsWith("/") ? basePath : basePath + "/";
-        if ( loc.uid.charAt(0) == "u" ) {
+        if (loc.uid.charAt(0) == "u") {
             return path + "user/" + loc.uid.substr(2) + "/" + this.#key;
-        } else if( loc.uid.charAt(0) == "p" ) {
+        } else if (loc.uid.charAt(0) == "p") {
             return path + "project/" + loc.uid.substr(2) + "/" + this.#key;
         } else {
             this.#error = g_lib.ERR_INTERNAL_FAULT;
@@ -82,7 +82,9 @@ class Record {
      * @brief Compares two paths and if an error is detected will save the error code and message.
      **/
     _comparePaths(storedPath, inputPath) {
-        if (storedPath === null) { return false; }
+        if (storedPath === null) {
+            return false;
+        }
         if (storedPath !== inputPath) {
             this.#error = g_lib.ERR_PERM_DENIED;
             this.#err_msg =
@@ -192,12 +194,15 @@ class Record {
 
             this.#repo = g_db._document(this.#loc.new_repo);
 
-            if ( ! this.#repo ) {
+            if (!this.#repo) {
                 this.#error = g_lib.ERR_INTERNAL_FAULT;
                 this.#err_msg =
-                    "Unable to find repo that record is meant to be allocated too, '" + this.#loc.new_repo + "' record '" + this.#data_id;
+                    "Unable to find repo that record is meant to be allocated too, '" +
+                    this.#loc.new_repo +
+                    "' record '" +
+                    this.#data_id;
                 return false;
-            } 
+            }
 
             // If path is missing the starting "/" add it back in
             if (!a_path.startsWith("/") && this.#repo.path.startsWith("/")) {

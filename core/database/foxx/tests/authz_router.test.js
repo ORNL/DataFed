@@ -49,34 +49,31 @@ const project_file_path = repo_path + "/project/" + project_key + "/" + valid_ke
  * This method sets up the database with the documents for a user with a data record
  *
  * Creates a user, creates a repository and adds an allocation that connects the user
- * to the repository. A record is also created and is connected to the repository 
+ * to the repository. A record is also created and is connected to the repository
  * via a location connection.
  **/
 function defaultWorkingSetup() {
-
     g_db.uuid.save({
-        _id: james_uuid_id
+        _id: james_uuid_id,
     });
 
     g_db.ident.save({
         _from: james_id,
-        _to: james_uuid_id
+        _to: james_uuid_id,
     });
 
     const repo_data = {
         _key: repo_key,
-          path: repo_path
-    }
+        path: repo_path,
+    };
     // Create nodes
     //recordRepoAndUserSetup(valid_key, base_user_data, repo_data);
 
     g_db.d.save({
         _key: valid_key,
-        owner: james_id
+        owner: james_id,
     });
-    g_db.repo.save(repo_data,
-            { waitForSync: true }
-    );
+    g_db.repo.save(repo_data, { waitForSync: true });
 
     g_db.u.save(base_user_data);
 
@@ -85,14 +82,13 @@ function defaultWorkingSetup() {
         _from: record_id,
         _to: repo_id,
         uid: james_id,
-        new_repo: null
+        new_repo: null,
     });
 
     g_db.alloc.save({
         _from: james_id,
         _to: repo_id,
     });
-
 }
 
 /**
@@ -106,39 +102,40 @@ function defaultWorkingSetup() {
  * A collection
  * A owner
  * A repo
- * 
+ *
  * These different documents are connected through edges.
  * record <-> item <-> collection
  * record <-> owner <-> project
  * record <-> loc <-> repo
- * uuid <-> ident <-> user 
+ * uuid <-> ident <-> user
  * group <-> acl <-> collection
  * user <-> member <-> group
  * project <-> alloc <-> repo
  * project <-> owner <-> group
  **/
 function defaultWorkingSetupProject() {
-
     // Create nodes
     g_db.uuid.save({
-        _id: james_uuid_id
+        _id: james_uuid_id,
     });
 
     g_db.u.save(base_user_data);
 
     g_db.p.save({
-      _key: project_key
+        _key: project_key,
     });
 
-    const root = g_db.c.save({
-        _key: "p_" + project_key + "_root",
-        is_root: true,
-        owner: project_id,
-        acls: 2,
-    },
-    {
-        returnNew: true,
-    });
+    const root = g_db.c.save(
+        {
+            _key: "p_" + project_key + "_root",
+            is_root: true,
+            owner: project_id,
+            acls: 2,
+        },
+        {
+            returnNew: true,
+        },
+    );
 
     const mem_grp = g_db.g.save(
         {
@@ -152,19 +149,17 @@ function defaultWorkingSetupProject() {
 
     g_db.d.save({
         _key: valid_key,
-        owner: project_id
+        owner: project_id,
     });
 
     const repo_data = {
         _key: repo_key,
-        path: repo_path
-    }
-    g_db.repo.save(repo_data,
-            { waitForSync: true }
-    );
+        path: repo_path,
+    };
+    g_db.repo.save(repo_data, { waitForSync: true });
 
     // Create edges
-     g_db.item.save({
+    g_db.item.save({
         _from: root._id,
         _to: record_id,
     });
@@ -180,7 +175,7 @@ function defaultWorkingSetupProject() {
         _from: record_id,
         _to: repo_id,
         uid: project_id,
-        new_repo: null
+        new_repo: null,
     });
 
     g_db.alloc.save({
@@ -188,25 +183,24 @@ function defaultWorkingSetupProject() {
         _to: repo_id,
     });
 
-   g_db.member.save({
+    g_db.member.save({
         _from: mem_grp._id,
         _to: james_id,
     });
 
     g_db.ident.save({
         _from: james_id,
-        _to: james_uuid_id
+        _to: james_uuid_id,
     });
 
     g_db.owner.save({
         _from: record_id,
-        _to: project_id
+        _to: project_id,
     });
 }
 
 // NOTE: describe block strings are compared against test specification during test call, not file name
 describe("unit_authz_router: the Foxx microservice authz_router", () => {
-
     beforeEach(() => {
         g_db.u.truncate();
         g_db.ident.truncate();
@@ -222,51 +216,67 @@ describe("unit_authz_router: the Foxx microservice authz_router", () => {
         g_db.alloc.truncate();
         g_db.loc.truncate();
         g_db.repo.truncate();
-
     });
 
     it("unit_authz_router: gridftp create action with user record and valid file path.", () => {
         defaultWorkingSetup();
-        const request_string = `${authz_base_url}/gridftp?client=` + james_uuid + `&repo=` + encodeURIComponent(repo_id) + `&file=` + encodeURIComponent(file_path) + `&act=create`
+        const request_string =
+            `${authz_base_url}/gridftp?client=` +
+            james_uuid +
+            `&repo=` +
+            encodeURIComponent(repo_id) +
+            `&file=` +
+            encodeURIComponent(file_path) +
+            `&act=create`;
 
         // act
         const response = request.get(request_string);
 
         // assert
         expect(response.status).to.equal(204);
-
     });
 
     it("unit_authz_router: gridftp create action with user record and invalid file path.", () => {
         defaultWorkingSetup();
-        
+
         // This is invalid because bobby does not exist as a user and the record "valid_key" they are not the owner of or have a membership too.
         const bad_file_path = repo_path + "/user/bobby/" + valid_key;
-        const request_string = `${authz_base_url}/gridftp?client=` + james_uuid + `&repo=` + encodeURIComponent(repo_id) + `&file=` + encodeURIComponent(bad_file_path) + `&act=create`
+        const request_string =
+            `${authz_base_url}/gridftp?client=` +
+            james_uuid +
+            `&repo=` +
+            encodeURIComponent(repo_id) +
+            `&file=` +
+            encodeURIComponent(bad_file_path) +
+            `&act=create`;
 
         // act
         const response = request.get(request_string);
 
         // assert
         expect(response.status).to.equal(400);
-
     });
 
     it("unit_authz_router: gridftp create action with invalid repo and valid file path.", () => {
         defaultWorkingSetup();
-        const bad_repo_id = "repo/not_exist"
-        const request_string = `${authz_base_url}/gridftp?client=` + james_uuid + `&repo=` + encodeURIComponent(bad_repo_id) + `&file=` + encodeURIComponent(file_path) + `&act=create`
+        const bad_repo_id = "repo/not_exist";
+        const request_string =
+            `${authz_base_url}/gridftp?client=` +
+            james_uuid +
+            `&repo=` +
+            encodeURIComponent(bad_repo_id) +
+            `&file=` +
+            encodeURIComponent(file_path) +
+            `&act=create`;
 
         // act
         const response = request.get(request_string);
 
         // assert
         expect(response.status).to.equal(400);
-
     });
 
     it("unit_authz_router: gridftp create action with invalid client and valid file path.", () => {
-
         // Here we are creating a valid user but they simply do not have access to the provided file
         // path.
         const bad_user_data = {
@@ -281,37 +291,48 @@ describe("unit_authz_router: the Foxx microservice authz_router", () => {
         g_db.u.save(bad_user_data);
 
         g_db.uuid.save({
-            _id: george_uuid_id
+            _id: george_uuid_id,
         });
 
         g_db.ident.save({
             _from: "u/george",
-            _to: george_uuid_id
+            _to: george_uuid_id,
         });
 
         defaultWorkingSetup();
-        const bad_repo_id = "repo/not_exist"
-        const request_string = `${authz_base_url}/gridftp?client=` + george_uuid + `&repo=` + encodeURIComponent(repo_id) + `&file=` + encodeURIComponent(file_path) + `&act=create`
+        const bad_repo_id = "repo/not_exist";
+        const request_string =
+            `${authz_base_url}/gridftp?client=` +
+            george_uuid +
+            `&repo=` +
+            encodeURIComponent(repo_id) +
+            `&file=` +
+            encodeURIComponent(file_path) +
+            `&act=create`;
 
         // act
         const response = request.get(request_string);
 
         // assert
         expect(response.status).to.equal(400);
-
     });
-
 
     it("unit_authz_router: gridftp create action with valid repo and valid file path in project.", () => {
         defaultWorkingSetupProject();
-        const bad_repo_id = "repo/not_exist"
-        const request_string = `${authz_base_url}/gridftp?client=` + james_uuid + `&repo=` + encodeURIComponent(repo_id) + `&file=` + encodeURIComponent(project_file_path) + `&act=create`
+        const bad_repo_id = "repo/not_exist";
+        const request_string =
+            `${authz_base_url}/gridftp?client=` +
+            james_uuid +
+            `&repo=` +
+            encodeURIComponent(repo_id) +
+            `&file=` +
+            encodeURIComponent(project_file_path) +
+            `&act=create`;
 
         // act
         const response = request.get(request_string);
 
         // assert
         expect(response.status).to.equal(204);
-
     });
 });
