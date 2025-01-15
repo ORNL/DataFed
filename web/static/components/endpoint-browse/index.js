@@ -273,7 +273,7 @@ export function show(endpoint, path, mode, callback) {
         onSelect: callback,
     });
 
-    browser.render.dialog({
+    browser.render().dialog({
         title: `Browse End-Point ${endpoint.name}`,
         modal: true,
         width: CONFIG.UI.SIZE.WIDTH,
