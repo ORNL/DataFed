@@ -246,7 +246,7 @@ router
         }
     })
     .queryParam("task_id", joi.string().required(), "Task ID")
-    .body(joi.string().required(), "Parameters")
+    .body(joi.object().optional(), "Parameters")
     .summary("Abort a schedule task")
     .description("Abort a schedule task and return list of new runnable tasks.");
 
