@@ -34,6 +34,45 @@ class EndpointBrowser {
         };
     }
 
+    pathNavigator() {
+        return `
+            <div class='col-flex'>
+                 <div class="path-navigator">
+                     <div class="row-flex">
+                         <label class="path-label">Path:</label>
+                         <div class="path-input-container">
+                            <input type="text" id="path" value="${this.state.path}"/>
+                         </div>                                                                                                                                      
+                         <div>                                                                                                                                            
+                             <button id="up" class="btn small">Up</button>                                                                                                
+                         </div>                                                                                                                                           
+                     </div>                                                                                                                                               
+                 </div>     
+             </div>                                                                                                                                              
+         `;
+    }
+
+    fileTree() {
+        return `                                                                                                                                                     
+             <div class="endpoint-browser file-tree-view ui-widget content">                                                                                          
+                 <table id="file_tree">                                                                                                                               
+                     <colgroup>                                                                                                                                       
+                         <col/>                                                                                                                                       
+                         <col/>                                                                                                                                       
+                         <col/>                                                                                                                                       
+                     </colgroup>                                                                                                                                      
+                     <tbody>                                                                                                                                          
+                         <tr>                                                                                                                                         
+                             <td style="white-space:nowrap;padding:0 2em 0 0"></td>                                                                                   
+                             <td style="white-space:nowrap;padding:0 2em 0 0"></td>                                                                                   
+                             <td style="white-space:nowrap"></td>                                                                                                     
+                         </tr>                                                                                                                                        
+                     </tbody>                                                                                                                                         
+                 </table>                                                                                                                                             
+             </div>                                                                                                                                              
+         `;
+    }
+
     /**
      * Renders dialog content
      * @returns {jQuery} Dialog element
@@ -41,34 +80,12 @@ class EndpointBrowser {
     render() {
         this.element =
             $(`                                                                                                                                           
-             <div class='col-flex' style='height:100%'>
-                <!-- Path navigation bar -->                                                                                                               
-                 <div style='flex:none'>                                                                                                                              
-                     <div class='row-flex' style='align-items:center'>                                                                                                
-                         <label style='flex:none'>Path:&nbsp;</label>                                                                                                 
-                         <div style='flex:auto'>                                                                                                                      
-                             <input type='text' id='path' style='width:100%' value='${this.state.path}'/>                                                             
-                         </div>                                                                                                                                       
-                         <div style='flex:none'>                                                                                                                      
-                             &nbsp;<button id='up' class='btn small'>Up</button>                                                                                      
-                         </div>                                                                                                                                       
-                     </div>                                                                                                                                           
-                 </div>
-                 <!-- Spacing -->                                                                                                                                               
-                 <div style='flex:none;padding:.25em'></div>
-                 <!-- File/Directory tree container -->                                                                                                         
-                 <div class='tree-container ui-widget-content' style='flex:1 1 100%;min-height:0;overflow:auto'>                                                      
-                     <table id='file_tree'>                                                                                                                           
-                         <colgroup><col/><col/><col/></colgroup>                                                                                            
-                         <tbody><tr>                                                                                                                                  
-                             <td style='white-space:nowrap;padding:0 2em 0 0'></td>                                                                                   
-                             <td style='white-space:nowrap;padding:0 2em 0 0'></td>                                                                                   
-                             <td style='white-space:nowrap'></td>                                                                                                     
-                         </tr></tbody>                                                                                                                                
-                     </table>                                                                                                                                         
-                 </div>                                                                                                                                               
-             </div>                                                                                                                                                   
-         `);
+         <div class="endpoint-browser">                                                                                                                           
+             ${this.pathNavigator()}                                                                                                                        
+             <div class="spacer"></div>                                                                                                                           
+             ${this.fileTree()}                                                                                                                             
+         </div>                                                                                                                                                   
+     `);
 
         this.initUI();
         return this.element;

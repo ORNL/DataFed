@@ -1,0 +1,41 @@
+
+.ui-widget {
+    height: 95%;
+}
+
+.col-flex {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+#records {
+    flex: 1 1 auto;
+    display: none;
+    height: 6em;
+    overflow: auto;
+}
+
+textarea#path {
+    width: 100%;
+    resize: none;
+}
+
+button#browse {
+    margin-left: 10px;
+    line-height: 1.5;
+    vertical-align: top;
+}
+
+select#matches {
+    width: 100%;
+}
+
+span#title {
+    /* Add any specific styles for the title span here */
+}
+
+.flex-container {
+    display: flex;
+    align-items: flex-start;
+}

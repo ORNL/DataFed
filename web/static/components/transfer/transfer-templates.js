@@ -51,30 +51,24 @@ export function getTransferOptionsTemplate(mode) {
  */
 export function getDialogTemplate(labels, mode) {
     return `
-        <div class='ui-widget' style='height:95%'>
-            ${labels.record}: <span id='title'></span><br>
-            <div class='col-flex' style='height:100%'>
-                <div id='records' class='ui-widget ui-widget-content'
-                     style='flex: 1 1 auto;display:none;height:6em;overflow:auto'>
-                </div>
-                <div style='flex:none'><br>
-                    <span>${labels.endpoint} Path:</span>
-                    <div style='display: flex; align-items: flex-start;'>
-                        <textarea class='ui-widget-content' id='path' rows=3
-                                 style='width:100%;resize:none;'></textarea>
-                        <button class='btn small' id='browse'
-                                style='margin-left:10px; line-height:1.5; vertical-align: top;'
-                                disabled>Browse</button>
-                    </div>
-                    <br>
-                    <select class='ui-widget-content ui-widget' id='matches'
-                            size='7' style='width: 100%;' disabled>
-                        <option disabled selected>No Matches</option>
-                    </select>
-                    ${getTransferOptionsTemplate(mode)}
-                </div>
-            </div>
-        </div>
+         <div class='ui-widget'>                                                                                                                                      
+             ${labels.record}: <span id='title'></span><br>                                                                                                           
+             <div class='col-flex'>                                                                                                                                   
+                 <div id='records' class='ui-widget ui-widget-content'></div>                                                                                         
+                 <div><br>                                                                                                                                            
+                     <span>${labels.endpoint} Path:</span>                                                                                                            
+                     <div class='flex-container'>                                                                                                                     
+                         <textarea class='ui-widget-content' id='path' rows=3></textarea>                                                                             
+                         <button class='btn small' id='browse' disabled>Browse</button>                                                                               
+                     </div>                                                                                                                                           
+                     <br>                                                                                                                                             
+                     <select class='ui-widget-content ui-widget' id='matches' size='7' disabled>                                                                      
+                         <option disabled selected>No Matches</option>                                                                                                
+                     </select>                                                                                                                                        
+                     ${getTransferOptionsTemplate(mode)}                                                                                                              
+                 </div>                                                                                                                                               
+             </div>                                                                                                                                                   
+         </div>  
     `;
 }
 
