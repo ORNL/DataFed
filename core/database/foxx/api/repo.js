@@ -108,10 +108,10 @@ class Repo {
     id() {
         return this.#repo_id;
     }
+
     /**
      * Will return error code of last run method.
-     *
-     * returns {number} - If no error code, will return null
+     * @returns {number} - If no error code, will return null
      **/
     error() {
         return this.#error;
@@ -129,7 +129,8 @@ class Repo {
     /**
      * Detect what kind of POSIX path has been provided
      *
-     * returns {string} - posix path type
+     * @param {string} a_path - the POSIX path that is supposed to exist on the repo
+     * @returns {string} - posix path type
      **/
     pathType(a_path) {
         if (!this.#exists) {

@@ -65,8 +65,10 @@ class Record {
     /**
      * Generates the full path to the record as it should appear in the repository.
      *
-     * @returns {object} loc - The location object which specifies the owner of the record.
+     * @param {object} loc - The location object which specifies the owner of the record.
      * @param {string} basePath - The base path where the record is stored.
+     *
+     * @returns {string} - the path to the record or null if error
      */
     _pathToRecord(loc, basePath) {
         const path = basePath.endsWith("/") ? basePath : basePath + "/";
@@ -126,7 +128,7 @@ class Record {
     /**
      * Will return error code of last run method.
      *
-     * @returns {integer} - error code
+     * @returns {number} - error code
      **/
     error() {
         return this.#error;
