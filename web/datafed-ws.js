@@ -1911,16 +1911,6 @@ function setAccessToken(a_uid, a_acc_tok, a_ref_tok, a_expires_sec, token_option
         getCurrentLineNumber(),
         "setAccessToken uid: " + a_uid + " expires in: " + a_expires_sec,
     );
-    // TODO: remove
-    console.log(
-        "Made it to setAccessToken with uid: ",
-        a_uid,
-        " access token: ",
-        a_acc_tok,
-        " optional params: ",
-        token_optional_params,
-    );
-    // end
     let message_data = { access: a_acc_tok, refresh: a_ref_tok, expiresIn: a_expires_sec };
     if (token_optional_params && Object.keys(token_optional_params).length > 0) {
         message_data = { ...token_optional_params, ...message_data };
