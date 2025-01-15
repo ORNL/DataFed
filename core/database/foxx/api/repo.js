@@ -49,7 +49,8 @@ class Repo {
     #repo_key = null;
 
     /**
-     * @brief Constructs a Repo object and checks if the key exists in the database.
+     * Constructs a Repo object and checks if the key exists in the database.
+     *
      * @param {string} a_key or id - The unique identifier for the repo, of repo key.
      * e.g. can be either
      * repo/repo_name
@@ -92,8 +93,9 @@ class Repo {
     }
 
     /**
-     * @brief Checks if the repo exists in the database.
-     * @return {boolean} True if the repo exists, otherwise false.
+     * Checks if the repo exists in the database.
+     *
+     * @returns {boolean} True if the repo exists, otherwise false.
      */
     exists() {
         return this.#exists;
@@ -107,24 +109,27 @@ class Repo {
         return this.#repo_id;
     }
     /**
-     * @brief Will return error code of last run method.
+     * Will return error code of last run method.
      *
-     * If no error code, will return null
+     * returns {number} - If no error code, will return null
      **/
     error() {
         return this.#error;
     }
 
     /**
-     * @brief Retrieves the error code of the last run method.
-     * @return {string|null} Error code or null if no error.
+     * Retrieves the error code of the last run method.
+     *
+     * @returns {string|null} Error code or null if no error.
      */
     errorMessage() {
         return this.#err_msg;
     }
 
     /**
-     * @brief Detect what kind of POSIX path has been provided
+     * Detect what kind of POSIX path has been provided
+     *
+     * returns {string} - posix path type
      **/
     pathType(a_path) {
         if (!this.#exists) {

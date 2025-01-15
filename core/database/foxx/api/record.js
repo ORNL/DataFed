@@ -65,7 +65,7 @@ class Record {
     /**
      * Generates the full path to the record as it should appear in the repository.
      *
-     * @returns {object} - The location object which specifies the owner of the record.
+     * @returns {object} loc - The location object which specifies the owner of the record.
      * @param {string} basePath - The base path where the record is stored.
      */
     _pathToRecord(loc, basePath) {
