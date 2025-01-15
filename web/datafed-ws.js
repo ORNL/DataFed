@@ -492,14 +492,9 @@ app.get("/ui/authn", (a_req, a_resp) => {
 
     g_globus_auth.code.getToken(a_req.originalUrl).then(
         function (client_token) {
-            // TODO: remove
-            console.log("Client token: ", client_token);
-            if (client_token.data.other_tokens) {
-                console.log("First other token: ", client_token.data.other_tokens[0]);
-            }
-
-            let token_type = resolveTokenType(client_token.data.resource_server);
-            let xfr_token = token_type === AccessTokenType.GLOBUS_AUTH ? client_token.data.other_tokens[0] : client_token.data; // Auth tokens will come with an additional transfer token, but transfer tokens (which come with consent collections) will come alone (for now)
+            const other_tokens_exist = client_token.data.other_tokens.length > 0;
+            let token_type = resolveTokenType(client_token.data.resource_server, other_tokens_exist);
+            let xfr_token = token_type === AccessTokenType.GLOBUS_DEFAULT && other_tokens_exist ? client_token.data.other_tokens[0] : client_token.data; // Auth tokens will come with an additional transfer token, but transfer tokens (which come with consent collections) will come alone (for now)
 
             const opts = {
                 hostname: "auth.globus.org",
@@ -587,11 +582,7 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                     // TODO: remove, set elsewhere, do not hard code
                                     a_req.session.collection_id = "5066556a-bcd6-4e00-8e3f-b45e0ec88b1a";
 
-                                    if (token_type === AccessTokenType.GLOBUS_AUTH) {   // TODO: something better
-                                        token_type = AccessTokenType.GLOBUS_DEFAULT;
-                                    }
-
-                                    // TODO: is this the best way to allow for arbitrary inputs?
+                                    // Note: context/optional params for arbitrary input
                                     const token_context = { // passed values are mutable
                                         resource_server: client_token.data.resource_sever,
                                         collection_id: a_req.session.collection_id,
@@ -619,7 +610,6 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                 }
                             },
                         );
-
                     } else {
                         // TODO - Not sure this is required - req.on('error'...) should catch this?
                         logger.error(
@@ -2216,13 +2206,14 @@ const AccessTokenType = Object.freeze({
 /** Resolves token type based on a provided resource server
  *
  * @param {string} resource_server - Resource server on which token functions
+ * @param {boolean} [other_tokens_exist = false] - Indicates whether other tokens are present
  * @returns {AccessTokenType | number}
  */
-const resolveTokenType = (resource_server) => {
+const resolveTokenType = (resource_server, other_tokens_exist = false) => {
     let token_type;
     switch (resource_server) {  // TODO: exhaustive coverage of types
         case "auth.globus.org": {
-            token_type = AccessTokenType.GLOBUS_AUTH;
+            token_type = other_tokens_exist ? AccessTokenType.GLOBUS_DEFAULT : AccessTokenType.GLOBUS_AUTH;
             break;
         }
         case "transfer.api.globus.org": {
