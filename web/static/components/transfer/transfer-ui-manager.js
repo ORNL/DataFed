@@ -1,6 +1,6 @@
 import { ep_recent } from "../../settings.js";
 import { TransferMode } from "../../models/transfer-model.js";
-import { show } from "../../dlg_ep_browse.js";
+import { show } from "../endpoint-browse/index.js";
 import { inputTheme, setStatusText } from "../../util.js";
 import { createMatchesHtml, formatRecordTitle, getDialogTemplate } from "./transfer-templates.js";
 
