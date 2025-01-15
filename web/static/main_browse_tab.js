@@ -2078,11 +2078,20 @@ function treeSelectRange(a_tree, a_node) {
     }
 }
 
-/** @brief Check if past is allowed to specified node
- *  @param dest_node - Candidate paste destination node
- *  @param src_node - Node being dragged
+/**
+ * @function
+ * Check if pasting is allowed to the specified node.
  *
- * There is additional source information in pasteXXX
+ * This function checks whether a paste operation is allowed based on various conditions,
+ * such as whether the destination node is valid, whether the source and destination nodes
+ * belong to the same scope, and other restrictions like node types and parent-child relationships.
+ *
+ * @param {object} dest_node - The candidate destination node where the paste operation is being attempted.
+ * @param {object} src_node - The node being dragged or copied to the destination.
+ *
+ * @returns {string|boolean} Returns "over" if the paste is allowed, otherwise returns `false`.
+ *
+ * There is additional source information in the pasteSourceParent and pasteCollections variables.
  */
 function pasteAllowed(dest_node, src_node) {
     //console.log("pasteAllowed:",dest_node, src_node);

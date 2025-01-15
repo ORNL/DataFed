@@ -6,14 +6,25 @@ module.exports = (function () {
     let obj = {};
 
     /**
-     * \brief will split a path string into components
+     * Splits a POSIX path string into its components.
      *
-     * Example POSIX path
+     * @param {string} a_posix_path - The POSIX path to be split.
+     *
+     * @returns {string[]} An array of path components.
+     *
+     * @throws {Error} If the provided path is not a valid string.
+     *
+     * @example
+     * // Input:
      * const posixPath = '/usr/local/bin/node';
      *
-     * output: ['usr', 'local', 'bin', 'node']
+     * // Execution:
+     * const splitPath = splitPOSIXPath(posixPath);
+     * console.log(splitPath);
      *
-     **/
+     * // Output:
+     * ['usr', 'local', 'bin', 'node']
+     */
     obj.splitPOSIXPath = function (a_posix_path) {
         if (!a_posix_path) {
             throw new Error("Invalid POSIX path");
