@@ -1498,14 +1498,21 @@ var tasks_func = (function () {
 
     // ----------------------- External Support Functions ---------------------
 
-    /** @brief Delete projects and associated data
+    /**
+     * Deletes one or more projects and associated data. If a project has no allocations, it can
+     * be deleted immediately. If a project has allocations and raw data, a task must be initialized
+     * to delete the allocations. Deletion is exclusive—if any other tasks are using the project or
+     * associated data, the operation will be denied.
      *
-     * Delete one or more projects. If a project has no allocations,
-     * it can be deleted immediately. If a project has allocations and
-     * raw data, the project can be deleted, but a task must be initialized
-     * to delete the allocations. Deletion is an exclusive operation - if
-     * any other tasks are using the project or associated data, the delete
-     * operation will be denied.
+     * @param {object} a_client - The client object that contains user details and permissions.
+     * @param {Array<string>} a_proj_ids - An array of project IDs to be deleted.
+     * @returns {object} An object containing the task to delete the projects and allocations.
+     * @throws {Array} Throws an error array containing a code and message if the project does
+     * not exist or the client lacks permissions.
+     *
+     * @example
+     * const result = obj.taskInitProjDelete(client, ['proj_id_1', 'proj_id_2']);
+     * console.log(result);
      */
     obj.taskInitProjDelete = function (a_client, a_proj_ids) {
         var i, proj_id;
@@ -2178,11 +2185,16 @@ var tasks_func = (function () {
         return doc;
     };
 
-    /** @brief Deletes a collection record
+    /**
+     * Deletes a collection record. This function should not be called directly and is used
+     * only by task or process code. The function does not recursively delete contained items.
      *
-     * NOTE: DO NOT CALL THIS DIRECTLY - USED ONLY BY TASK/PROCESS CODE
+     * @param {string} a_id - The ID of the collection to delete.
+     * @throws {Error} Throws an error if the collection or associated graph objects cannot be deleted.
      *
-     * Does not recursively delete contained items.
+     * This function will delete aliases, notes, topics, and tags associated with the collection,
+     * but it will not recursively delete contained items.
+     * Use this function only within tasks or process code.
      */
     obj._deleteCollection = function (a_id) {
         // Delete alias
@@ -2215,10 +2227,15 @@ var tasks_func = (function () {
         g_graph.c.remove(a_id);
     };
 
-    /** @brief Deletes data records
+    /**
+     * Deletes a data record and its associated graph objects. This function does not delete raw
+     * data but adjusts the allocation accordingly.
      *
-     * Deletes record and associated graph objects. Does not delete raw data
-     * but does adjust allocation.
+     * @param {string} a_id - The ID of the data record to delete.
+     * @throws {Error} Throws an error if the data record or associated graph objects cannot be deleted.
+     *
+     * This function will delete aliases, notes, tags, and update schema counts and allocations.
+     * It will not delete raw data, but it will adjust the allocation associated with the data record.
      */
     obj._deleteDataRecord = function (a_id) {
         //console.log( "delete rec", a_id );
@@ -2365,11 +2382,19 @@ var tasks_func = (function () {
         //console.log( "deleting records finished", Date.now() );
     };
 
-    /** @brief Deletes project immediately
+    /**
+     * Deletes a project and all associated graph objects immediately.
      *
-     * Deletes projects and associated graph objects.
+     * This function deletes allocations, owned records (e.g., data, collections, groups),
+     * and the project itself. It performs a direct deletion of the project and its related
+     * items, and should **NOT** be used on projects containing raw data.
      *
-     * DO NOT USE ON PROJECTS WITH RAW DATA!!!!
+     * @param {string} a_proj_id - The ID of the project to delete.
+     * @throws {Error} Throws an error if the project or associated items cannot be deleted.
+     *
+     * Use this function with caution, as it will permanently delete allocations, data,
+     * collections, groups, and the project. It should not be used for projects that
+     * contain raw data.
      */
     obj._projectDelete = function (a_proj_id) {
         console.log("_projectDelete", a_proj_id);
