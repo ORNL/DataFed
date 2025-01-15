@@ -493,8 +493,14 @@ app.get("/ui/authn", (a_req, a_resp) => {
     g_globus_auth.code.getToken(a_req.originalUrl).then(
         function (client_token) {
             const other_tokens_exist = client_token.data.other_tokens.length > 0;
-            let token_type = resolveTokenType(client_token.data.resource_server, other_tokens_exist);
-            let xfr_token = token_type === AccessTokenType.GLOBUS_DEFAULT && other_tokens_exist ? client_token.data.other_tokens[0] : client_token.data; // Auth tokens will come with an additional transfer token, but transfer tokens (which come with consent collections) will come alone (for now)
+            let token_type = resolveTokenType(
+                client_token.data.resource_server,
+                other_tokens_exist,
+            );
+            let xfr_token =
+                token_type === AccessTokenType.GLOBUS_DEFAULT && other_tokens_exist
+                    ? client_token.data.other_tokens[0]
+                    : client_token.data; // Auth tokens in DEFAULT come with an additional transfer token, but transfer tokens (which come with consent collections) will come alone (for now)
 
             const opts = {
                 hostname: "auth.globus.org",
@@ -546,8 +552,11 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                         "User: " + uid + "not registered",
                                     );
 
-                                    if (token_type === AccessTokenType.GLOBUS_TRANSFER) {   // Error and do not register user in case of non-auth token
-                                        throw new Error("Transfer token received for non-existent user.")
+                                    if (token_type === AccessTokenType.GLOBUS_TRANSFER) {
+                                        // Error and do not register user in case of non-auth token
+                                        throw new Error(
+                                            "Transfer token received for non-existent user.",
+                                        );
                                         a_resp.redirect("/ui/error");
                                     }
 
@@ -566,13 +575,13 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                         "/ui/authn",
                                         getCurrentLineNumber(),
                                         "User: " +
-                                        uid +
-                                        " verified, acc:" +
-                                        xfr_token.access_token +
-                                        ", ref: " +
-                                        xfr_token.refresh_token +
-                                        ", exp:" +
-                                        xfr_token.expires_in,
+                                            uid +
+                                            " verified, acc:" +
+                                            xfr_token.access_token +
+                                            ", ref: " +
+                                            xfr_token.refresh_token +
+                                            ", exp:" +
+                                            xfr_token.expires_in,
                                     );
 
                                     // Store only data needed for active session
@@ -580,16 +589,21 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                     a_req.session.reg = true;
 
                                     // TODO: remove, set elsewhere, do not hard code
-                                    a_req.session.collection_id = "5066556a-bcd6-4e00-8e3f-b45e0ec88b1a";
+                                    a_req.session.collection_id =
+                                        "5066556a-bcd6-4e00-8e3f-b45e0ec88b1a";
 
                                     // Note: context/optional params for arbitrary input
-                                    const token_context = { // passed values are mutable
+                                    const token_context = {
+                                        // passed values are mutable
                                         resource_server: client_token.data.resource_sever,
                                         collection_id: a_req.session.collection_id,
                                         scope: xfr_token.scope,
-                                    }
+                                    };
                                     try {
-                                        const optional_data = constructOptionalData(token_type, token_context);
+                                        const optional_data = constructOptionalData(
+                                            token_type,
+                                            token_context,
+                                        );
 
                                         // Refresh Globus access & refresh tokens to Core/DB
                                         setAccessToken(
@@ -597,10 +611,9 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                             xfr_token.access_token,
                                             xfr_token.refresh_token,
                                             xfr_token.expires_in,
-                                            optional_data
+                                            optional_data,
                                         );
-                                    }
-                                    catch (err) {
+                                    } catch (err) {
                                         a_resp.redirect("ui/error");
                                         throw err;
                                     }
@@ -2201,9 +2214,13 @@ const AccessTokenType = Object.freeze({
  */
 const resolveTokenType = (resource_server, other_tokens_exist = false) => {
     let token_type;
-    switch (resource_server) {  // TODO: exhaustive coverage of types
+    switch (
+        resource_server // TODO: exhaustive coverage of types
+    ) {
         case "auth.globus.org": {
-            token_type = other_tokens_exist ? AccessTokenType.GLOBUS_DEFAULT : AccessTokenType.GLOBUS_AUTH;
+            token_type = other_tokens_exist
+                ? AccessTokenType.GLOBUS_DEFAULT
+                : AccessTokenType.GLOBUS_AUTH;
             break;
         }
         case "transfer.api.globus.org": {
@@ -2231,27 +2248,27 @@ const resolveTokenType = (resource_server, other_tokens_exist = false) => {
  * @throws Error - When a required collection ID cannot be found in the session
  */
 const constructOptionalData = (token_type, token_context) => {
-
     let optional_data = { type: token_type };
     switch (token_type) {
         case AccessTokenType.GLOBUS_AUTH: {
-            throw new Error("Invalid state");   // TODO: build capability
+            throw new Error("Invalid state"); // TODO: build capability
         }
         case AccessTokenType.GLOBUS_TRANSFER: {
-            const {collection_id, scope} = token_context;
+            const { collection_id, scope } = token_context;
             if (!collection_id) {
                 throw new Error("Transfer token received without collection context");
             }
             if (!scope) {
                 throw new Error("Transfer token received without scope context");
             }
-            optional_data.other = collection_id + "|" + scope;  // Database API expects format `<uuid>|<scope>`
+            optional_data.other = collection_id + "|" + scope; // Database API expects format `<uuid>|<scope>`
             break;
         }
         case AccessTokenType.GLOBUS_DEFAULT: {
             break;
         }
-        default: {  // TODO: exhaustive coverage of types
+        default: {
+            // TODO: exhaustive coverage of types
             throw new Error("Invalid state");
         }
     }
