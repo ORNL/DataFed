@@ -606,6 +606,8 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                         );
 
                                         // Refresh Globus access & refresh tokens to Core/DB
+                                        // NOTE: core services seem entirely in charge of refreshing tokens once they are set (ClientWorker.cpp).
+                                        // This should only be triggered when new tokens are coming in, like when a token expires or a transfer token is created.
                                         setAccessToken(
                                             a_req.session.uid,
                                             xfr_token.access_token,
