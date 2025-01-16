@@ -640,18 +640,18 @@ module.exports = (function () {
      * Retrieves user information based on the provided client ID.
      *
      * The return value should be a client containing the following information:
-     * {
-     *   "_key" : "bob",
-     *   "_id" : "u/bob",
-     *   "name" : "bob junior",
-     *   "name_first" : "bob",
-     *   "name_last" : "jones",
-     *   "is_admin" : true,
-     *   "max_coll" : 50,
-     *   "max_proj" : 10,
-     *   "max_sav_qry" : 20,
-     *   "email" : "bobjones@gmail.com"
-     * }
+     *
+     * "_key" : "bob",
+     * "_id" : "u/bob",
+     * "name" : "bob junior",
+     * "name_first" : "bob",
+     * "name_last" : "jones",
+     * "is_admin" : true,
+     * "max_coll" : 50,
+     * "max_proj" : 10,
+     * "max_sav_qry" : 20,
+     * "email" : "bobjones@gmail.com"
+     *
      *
      * The client ID can be in the following formats:
      * - SDMS uname (e.g., "xxxxx...")
@@ -663,7 +663,7 @@ module.exports = (function () {
      *
      * @param {string} a_client_id - The client ID, which can be in various formats (SDMS uname, UUID, or Account).
      * @throws {Array} Throws an error if the user does not exist, or the client ID is invalid.
-     * @returns {Object} The user record containing details such as name, admin status, and email.
+     * @returns {object} The user record containing details such as name, admin status, and email.
      *
      * @example
      * const user = obj.getUserFromClientID('u/bob');
@@ -1044,29 +1044,30 @@ module.exports = (function () {
     };
 
     /**
-     * @breif checks to make sure the client has admin permissions on an object
+     * checks to make sure the client has admin permissions on an object
      *
-     * @param a_client - this is a user document i.e.
+     * @param {object} a_client - this is a user document i.e.
      *
-     * {
-     *   "_key" : "bob",
-     *   "_id" : "u/bob",
-     *   "name" : "bob junior ",
-     *   "name_first" : "bob",
-     *   "name_last" : "jones",
-     *   "is_admin" : true,
-     *   "max_coll" : 50,
-     *   "max_proj" : 10,
-     *   "max_sav_qry" : 20,
-     *   :
-     *   "email" : "bobjones@gmail.com"
-     * }
      *
-     * @param a_object_id - the identity of a record or collection or project
+     * "_key" : "bob",
+     * "_id" : "u/bob",
+     * "name" : "bob junior ",
+     * "name_first" : "bob",
+     * "name_last" : "jones",
+     * "is_admin" : true,
+     * "max_coll" : 50,
+     * "max_proj" : 10,
+     * "max_sav_qry" : 20,
+     * :
+     * "email" : "bobjones@gmail.com"
+     *
+     * @param {string} a_object_id - the identity of a record or collection or project
      *
      * "d/fdakjfla"
      * "p/big_thing"
      * "c/my_collection"
+     *
+     * @returns {boolean} - if client has admin rights on the object.
      **/
     obj.hasAdminPermObject = function (a_client, a_object_id) {
         if (a_client.is_admin) return true;
@@ -3188,9 +3189,12 @@ module.exports = (function () {
     };
 
     /**
+     * Parses other_token_data string field and breaks it into pieces
      *
-     * @param token_type {obj.AccessTokenType} Type to determine parse logic.
-     * @param other_token_data {string}
+     * @param {integer} token_type - Type to determine parse logic.
+     *
+     * @param {string} other_token_data
+     *
      * String of additional token data, delimited by the '|' character.
      * The format is determined by the token type.
      * Currently expecting the following formats:
