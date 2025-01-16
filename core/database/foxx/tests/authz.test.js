@@ -76,7 +76,9 @@ describe("Authz functions", () => {
 
             let req_perm = g_lib.PERM_CREATE;
 
-            expect(() => authzModule.isRecordActionAuthorized(client, data_key, req_perm)).to.throw();
+            expect(() =>
+                authzModule.isRecordActionAuthorized(client, data_key, req_perm),
+            ).to.throw();
         });
     });
 
@@ -203,7 +205,6 @@ describe("Authz functions", () => {
     });
 
     describe("unit_authz: 'Jack' is a creator of the an 'apples' document in the 'fruity' project, 'Mandy' is the admin of the 'condiments' project, 'Mandy' should not have access to the 'apples' document.", () => {
-
         it("unit_authz: should return false.", () => {
             let data_key = "apples";
             let data_id = "d/" + data_key;
@@ -351,7 +352,6 @@ describe("Authz functions", () => {
             );
 
             g_db.u.save(tim, { waitForSync: true });
-
 
             let req_perm = g_lib.PERM_READ;
 

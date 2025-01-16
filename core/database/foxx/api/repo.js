@@ -132,45 +132,58 @@ class Repo {
      * @param {string} a_path - the POSIX path that is supposed to exist on the repo
      * @returns {string} - posix path type
      **/
-	pathType(a_path) {
-		// Ensure the repo exists
-		if (!this.#exists) { throw [g_lib.ERR_PERM_DENIED, "Repo does not exist " + this.#repo_id]; }
+    pathType(a_path) {
+        // Ensure the repo exists
+        if (!this.#exists) {
+            throw [g_lib.ERR_PERM_DENIED, "Repo does not exist " + this.#repo_id];
+        }
 
-		let repo = g_db._document(this.#repo_id);
-		if (!repo.path) { throw [g_lib.ERR_INTERNAL_FAULT, "Repo document is missing path: " + this.#repo_id]; }
+        let repo = g_db._document(this.#repo_id);
+        if (!repo.path) {
+            throw [g_lib.ERR_INTERNAL_FAULT, "Repo document is missing path: " + this.#repo_id];
+        }
 
-		// Get and sanitize the repo root path
-		let repo_root_path = repo.path.replace(/\/$/, '');
-		let sanitized_path = a_path.replace(/\/$/, '');
+        // Get and sanitize the repo root path
+        let repo_root_path = repo.path.replace(/\/$/, "");
+        let sanitized_path = a_path.replace(/\/$/, "");
 
-		// Check if the sanitized path is exactly the repo root path
-		if (sanitized_path === repo_root_path) { return PathType.REPO_ROOT_PATH; }
+        // Check if the sanitized path is exactly the repo root path
+        if (sanitized_path === repo_root_path) {
+            return PathType.REPO_ROOT_PATH;
+        }
 
-		// Check if the sanitized path is a valid base path
-		if (sanitized_path.length < repo_root_path.length && repo_root_path.startsWith(sanitized_path + "/")) {
-			return PathType.REPO_BASE_PATH;
-		}
-		
-		// Ensure the sanitized path starts with the repo root path
-		if (!sanitized_path.startsWith(repo_root_path + "/")) { return PathType.UNKNOWN; }
+        // Check if the sanitized path is a valid base path
+        if (
+            sanitized_path.length < repo_root_path.length &&
+            repo_root_path.startsWith(sanitized_path + "/")
+        ) {
+            return PathType.REPO_BASE_PATH;
+        }
 
-		// Get the relative path and its components
-		const relative_path = sanitized_path.substr(repo_root_path.length);
-		const relative_path_components = pathModule.splitPOSIXPath(relative_path);
+        // Ensure the sanitized path starts with the repo root path
+        if (!sanitized_path.startsWith(repo_root_path + "/")) {
+            return PathType.UNKNOWN;
+        }
 
-		// Map the first component to its corresponding PathType
-		const pathMapping = {
-			project: [PathType.REPO_PATH, PathType.PROJECT_PATH, PathType.PROJECT_RECORD_PATH],
-			user: [PathType.REPO_PATH, PathType.USER_PATH, PathType.USER_RECORD_PATH]
-		};
+        // Get the relative path and its components
+        const relative_path = sanitized_path.substr(repo_root_path.length);
+        const relative_path_components = pathModule.splitPOSIXPath(relative_path);
 
-		const firstComponent = relative_path_components[0];
-		if (pathMapping[firstComponent]) {
-			return pathMapping[firstComponent][relative_path_components.length - 1] || PathType.UNKNOWN;
-		}
+        // Map the first component to its corresponding PathType
+        const pathMapping = {
+            project: [PathType.REPO_PATH, PathType.PROJECT_PATH, PathType.PROJECT_RECORD_PATH],
+            user: [PathType.REPO_PATH, PathType.USER_PATH, PathType.USER_RECORD_PATH],
+        };
 
-		return PathType.UNKNOWN;
-	}
+        const firstComponent = relative_path_components[0];
+        if (pathMapping[firstComponent]) {
+            return (
+                pathMapping[firstComponent][relative_path_components.length - 1] || PathType.UNKNOWN
+            );
+        }
+
+        return PathType.UNKNOWN;
+    }
 }
 
 module.exports = { Repo, PathType };
