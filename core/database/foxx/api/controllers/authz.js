@@ -14,20 +14,24 @@ module.exports = (function () {
     /**
      * Checks if a client has the required permissions on a record.
      *
+     * @param {object} a_client - A user document representing the client being verified.
+     * The client object should have the following structure:
+     *
+     * "_key": "bob",
+     * "_id": "u/bob",
+     * "name": "bob junior",
+     * "name_first": "bob",
+     * "name_last": "jones",
+     * "is_admin": true,
+     * "max_coll": 50,
+     * "max_proj": 10,
+     * "max_sav_qry": 20,
+     * "email": "bobjones@gmail.com"
+     *
      * @param {string} a_data_key - A DataFed key associated with a record (not prepended with 'd/').
-     * @param {object} a_client - A user document representing the client whose permissions are being verified.
-     *                            The client document contains the following properties:
-     *                            - `_key` (string): The client's unique key.
-     *                            - `_id` (string): The client's unique identifier.
-     *                            - `name` (string): The full name of the client.
-     *                            - `name_first` (string): The first name of the client.
-     *                            - `name_last` (string): The last name of the client.
-     *                            - `is_admin` (boolean): Indicates if the client has admin privileges.
-     *                            - `max_coll` (number): Maximum collections allowed.
-     *                            - `max_proj` (number): Maximum projects allowed.
-     *                            - `max_sav_qry` (number): Maximum saved queries allowed.
-     *                            - `email` (string): The client's email address.
-     * @param {string} a_perm - The permission type to check
+     * @param {string} a_perm - The permission type to check (e.g., `PERM_CREATE`, `PERM_WR_DATA`, `PERM_RD_DATA`).
+     *
+     * @returns {boolean} True if the client has the required permissions, otherwise false.
      *
      * @see support#obj - for permission options i.e.PERM_CREATE, PERM_WR_DATA, PERM_RD_DATA`
      **/
