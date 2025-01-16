@@ -443,6 +443,12 @@ end_to_end_web_test:
       -DINSTALL_FOXX=OFF
     - cmake --build build --target end_to_end_web_tests
 
+################################################################################
+# Log output
+################################################################################
+# We don't want to run the log jobs if the infrastructure was never stood up
+# because the jobs will hang indefinately
+
 end_to_end_error_discovery_arango:
   needs: ["check-ci-infrastructure", "end-to-end-arango-setup"]
   stage: log
