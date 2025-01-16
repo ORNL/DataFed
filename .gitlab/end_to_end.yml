@@ -444,17 +444,18 @@ end_to_end_web_test:
     - cmake --build build --target end_to_end_web_tests
 
 end_to_end_error_discovery_arango:
-  needs: ["check-ci-infrastructure"]
+  needs: ["check-ci-infrastructure", "end-to-end-arango-setup"]
   stage: log
   tags:
     - ci-datafed-arango
   script:
     - sudo journalctl --no-pager -u arangodb3.service
   rules:
-    - when: always
+    - job: check-ci-infrastructure
+      when: on_success
 
 end_to_end_error_discovery_gcs:
-  needs: ["check-ci-infrastructure"]
+  needs: ["check-ci-infrastructure", "end-to-end-gcs-authz-setup"]
   extends: .error_logs_client_end_to_end
   variables:
     PROJECT: "datafed"
@@ -462,9 +463,12 @@ end_to_end_error_discovery_gcs:
   tags:
     - ci-datafed-globus
     - docker
+  rules:
+    - job: check-ci-infrastructure
+      when: on_success
 
 end_to_end_error_discovery_repo:
-  needs: ["check-ci-infrastructure"]
+  needs: ["check-ci-infrastructure", "end-to-end-repo-setup"]
   extends: .error_logs_client_end_to_end
   variables:
     PROJECT: "datafed"
@@ -472,9 +476,12 @@ end_to_end_error_discovery_repo:
   tags:
     - ci-datafed-globus
     - docker
+  rules:
+    - job: check-ci-infrastructure
+      when: on_success
 
 end_to_end_error_discovery_core:
-  needs: ["check-ci-infrastructure"]
+  needs: ["check-ci-infrastructure", "end-to-end-core-setup"]
   extends: .error_logs_client_end_to_end
   variables:
     PROJECT: "datafed"
@@ -482,9 +489,12 @@ end_to_end_error_discovery_core:
   tags:
     - ci-datafed-core
     - docker
+  rules:
+    - job: check-ci-infrastructure
+      when: on_success
 
 end_to_end_error_discovery_web:
-  needs: ["check-ci-infrastructure"]
+  needs: ["check-ci-infrastructure", "end-to-end-ws-setup"]
   extends: .error_logs_client_end_to_end
   variables:
     PROJECT: "datafed"
@@ -492,3 +502,6 @@ end_to_end_error_discovery_web:
   tags:
     - ci-datafed-core
     - docker
+  rules:
+    - job: check-ci-infrastructure
+      when: on_success
