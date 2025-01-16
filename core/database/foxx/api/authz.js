@@ -95,15 +95,6 @@ module.exports = (function () {
         const path_components = pathModule.splitPOSIXPath(path);
         const data_key = path_components.at(-1);
 
-        let record = new Record(data_key);
-        // This does not mean the record exsts in the repo it checks if an entry
-        // exists in the database.
-        if (!record.exists()) {
-            // If the record does not exist then the path would noe be consistent.
-            console.log("AUTHZ act: create client: " + client._id + " path " + path + " FAILED");
-            throw [g_lib.ERR_PERM_DENIED, "Invalid record specified: " + path];
-        }
-
         if (!client) {
             console.log(
                 "AUTHZ act: create" + " client: " + client._id + " path " + path + " FAILED",
@@ -120,6 +111,15 @@ module.exports = (function () {
                 g_lib.ERR_PERM_DENIED,
                 "Client " + client._id + " does not have create permissions on " + path,
             ];
+        }
+
+        let record = new Record(data_key);
+        // This does not mean the record exsts in the repo it checks if an entry
+        // exists in the database.
+        if (!record.exists()) {
+            // If the record does not exist then the path would not be consistent.
+            console.log("AUTHZ act: create client: " + client._id + " path " + path + " FAILED");
+            throw [g_lib.ERR_PERM_DENIED, "Invalid record specified: " + path];
         }
 
         // This will tell us if the proposed path is consistent with what we expect
