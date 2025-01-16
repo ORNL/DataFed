@@ -26,7 +26,6 @@ Help()
   echo "-a, --gitlab-api-token            The GitLab API token for checking the"
   echo "                                  status of a pipeline."
 }
-
 GITLAB_PROJECT_ID="10830"
 
 OS_APP_ID=$(printenv OS_APP_ID || true)
@@ -145,7 +144,7 @@ data=$(curl -s --retry 5 -i -X POST \
         }
     }" \
       https://orc-open.ornl.gov:13000/v3/auth/tokens) 
-error_code=$?
+error_code="$?"
 if [ "$error_code" == "6" ]
 then
   echo "Unable to connect to Open Stack API endpoints, make sure you are"
@@ -226,16 +225,19 @@ find_orc_instance_by_name() {
     found_vm_id="TRUE"
   fi
 }
+body=$(echo "$data" | sed -n 's/^\({\".*\)/\1/p')
 
-body=$(echo $data | sed 's/^.*{\"token/{\"token/' )
+if jq -e 'has("error")' <<< "$body" > /dev/null; then
+    echo "Error Detected!"
+    echo "$body" | jq
+    exit 2
+fi
 
 compute_url=$(echo "$body" | jq '.token.catalog[] | select(.name=="nova") |.endpoints[] | select(.interface=="public") | .url ')
 sanitize_compute_url=$(echo $compute_url | sed 's/\"//g')
 header=$(echo "$data" | sed 's/{\"token.*//')
 subject_token=$(echo "$data" | grep "X-Subject-Token" | awk '{print $2}' )
-
 sanitize_subject_token=${subject_token:0:268}
-
 
 ################################################################################
 # Check 1 - Are there running pipelines
