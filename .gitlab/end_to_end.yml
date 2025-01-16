@@ -444,6 +444,7 @@ end_to_end_web_test:
     - cmake --build build --target end_to_end_web_tests
 
 end_to_end_error_discovery_arango:
+  needs: ["check-ci-infrastructure"]
   stage: log
   tags:
     - ci-datafed-arango
@@ -453,6 +454,7 @@ end_to_end_error_discovery_arango:
     - when: always
 
 end_to_end_error_discovery_gcs:
+  needs: ["check-ci-infrastructure"]
   extends: .error_logs_client_end_to_end
   variables:
     PROJECT: "datafed"
@@ -462,6 +464,7 @@ end_to_end_error_discovery_gcs:
     - docker
 
 end_to_end_error_discovery_repo:
+  needs: ["check-ci-infrastructure"]
   extends: .error_logs_client_end_to_end
   variables:
     PROJECT: "datafed"
@@ -471,6 +474,7 @@ end_to_end_error_discovery_repo:
     - docker
 
 end_to_end_error_discovery_core:
+  needs: ["check-ci-infrastructure"]
   extends: .error_logs_client_end_to_end
   variables:
     PROJECT: "datafed"
@@ -480,6 +484,7 @@ end_to_end_error_discovery_core:
     - docker
 
 end_to_end_error_discovery_web:
+  needs: ["check-ci-infrastructure"]
   extends: .error_logs_client_end_to_end
   variables:
     PROJECT: "datafed"
