@@ -450,9 +450,6 @@ end_to_end_error_discovery_arango:
     - ci-datafed-arango
   script:
     - sudo journalctl --no-pager -u arangodb3.service
-  rules:
-    - job: check-ci-infrastructure
-      when: on_success
 
 end_to_end_error_discovery_gcs:
   needs: ["check-ci-infrastructure", "end-to-end-gcs-authz-setup"]
@@ -463,9 +460,6 @@ end_to_end_error_discovery_gcs:
   tags:
     - ci-datafed-globus
     - docker
-  rules:
-    - job: check-ci-infrastructure
-      when: on_success
 
 end_to_end_error_discovery_repo:
   needs: ["check-ci-infrastructure", "end-to-end-repo-setup"]
@@ -476,9 +470,6 @@ end_to_end_error_discovery_repo:
   tags:
     - ci-datafed-globus
     - docker
-  rules:
-    - job: check-ci-infrastructure
-      when: on_success
 
 end_to_end_error_discovery_core:
   needs: ["check-ci-infrastructure", "end-to-end-core-setup"]
@@ -489,9 +480,6 @@ end_to_end_error_discovery_core:
   tags:
     - ci-datafed-core
     - docker
-  rules:
-    - job: check-ci-infrastructure
-      when: on_success
 
 end_to_end_error_discovery_web:
   needs: ["check-ci-infrastructure", "end-to-end-ws-setup"]
@@ -502,6 +490,3 @@ end_to_end_error_discovery_web:
   tags:
     - ci-datafed-core
     - docker
-  rules:
-    - job: check-ci-infrastructure
-      when: on_success
