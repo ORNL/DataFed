@@ -449,7 +449,7 @@ end_to_end_web_test:
 end-to-end-signal:
   stage: end-to-end-test-finish-signal
   tags:
-    - runner
+    - datafed-infrastructure
   script:
     - echo "Signal end of end to end tests"
   when: always
