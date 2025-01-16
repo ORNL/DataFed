@@ -444,13 +444,23 @@ end_to_end_web_test:
     - cmake --build build --target end_to_end_web_tests
 
 ################################################################################
+# Signal end to end to end tests
+################################################################################
+end-to-end-signal:
+  stage: end-to-end-test-finish-signal
+  tags:
+    - runner
+  script:
+    - echo "Signal end of end to end tests"
+  when: always
+################################################################################
 # Log output
 ################################################################################
 # We don't want to run the log jobs if the infrastructure was never stood up
 # because the jobs will hang indefinately
 
 end_to_end_error_discovery_arango:
-  needs: ["check-ci-infrastructure", "end-to-end-arango-setup"]
+  needs: ["check-ci-infrastructure", "end-to-end-arango-setup", "end-to-end-signal"]
   stage: log
   tags:
     - ci-datafed-arango
@@ -458,7 +468,7 @@ end_to_end_error_discovery_arango:
     - sudo journalctl --no-pager -u arangodb3.service
 
 end_to_end_error_discovery_gcs:
-  needs: ["check-ci-infrastructure", "end-to-end-gcs-authz-setup"]
+  needs: ["check-ci-infrastructure", "end-to-end-gcs-authz-setup", "end-to-end-signal"]
   extends: .error_logs_client_end_to_end
   variables:
     PROJECT: "datafed"
@@ -468,7 +478,7 @@ end_to_end_error_discovery_gcs:
     - docker
 
 end_to_end_error_discovery_repo:
-  needs: ["check-ci-infrastructure", "end-to-end-repo-setup"]
+  needs: ["check-ci-infrastructure", "end-to-end-repo-setup", "end-to-end-signal"]
   extends: .error_logs_client_end_to_end
   variables:
     PROJECT: "datafed"
@@ -478,7 +488,7 @@ end_to_end_error_discovery_repo:
     - docker
 
 end_to_end_error_discovery_core:
-  needs: ["check-ci-infrastructure", "end-to-end-core-setup"]
+  needs: ["check-ci-infrastructure", "end-to-end-core-setup", "end-to-end-signal"]
   extends: .error_logs_client_end_to_end
   variables:
     PROJECT: "datafed"
@@ -488,7 +498,7 @@ end_to_end_error_discovery_core:
     - docker
 
 end_to_end_error_discovery_web:
-  needs: ["check-ci-infrastructure", "end-to-end-ws-setup"]
+  needs: ["check-ci-infrastructure", "end-to-end-ws-setup", "end-to-end-signal"]
   extends: .error_logs_client_end_to_end
   variables:
     PROJECT: "datafed"
