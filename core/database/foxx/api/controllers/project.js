@@ -76,7 +76,7 @@ class Project {
 
     /**
      * @brief Checks if the project exists in the database.
-     * @return {boolean} True if the project exists, otherwise false.
+     * @returns {boolean} True if the project exists, otherwise false.
      */
     exists() {
         return this.#exists;
@@ -111,6 +111,7 @@ class Project {
 
     /**
      * \brief Determines if a client is a member of the project
+     * @param a_client_id
      **/
     isMember(a_client_id) {
         if (a_client_id.substring(0, 2) !== "u/") {
@@ -127,6 +128,7 @@ class Project {
 
     /**
      * \brief Determines if a client is an admin of the project
+     * @param a_client_id
      **/
     isAdmin(a_client_id) {
         if (a_client_id.substring(0, 2) !== "u/") {
@@ -163,6 +165,7 @@ class Project {
 
     /**
      * \brief Check if project has allocation on repo
+     * @param a_repo_id
      **/
     hasAllocationOnRepo(a_repo_id) {
         if (a_repo_id.substring(0, 5) !== "repo/") {
@@ -185,7 +188,7 @@ class Project {
 
     /**
      * @brief Retrieves the error code of the last run method.
-     * @return {string|null} Error code or null if no error.
+     * @returns {string|null} Error code or null if no error.
      */
     errorMessage() {
         return this.#err_msg;
@@ -198,6 +201,7 @@ class Project {
      *  - PROJ_MEMBER
      *  - PROJ_NO_ROLE
      *  - PROJ_MANAGER
+     * @param a_client_id
      **/
     getProjectRole(a_client_id) {
         return g_lib.getProjectRole(a_client_id, this.#project_id);

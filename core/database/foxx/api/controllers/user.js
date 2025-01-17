@@ -67,7 +67,7 @@ class User {
 
     /**
      * @brief Checks if the project exists in the database.
-     * @return {boolean} True if the project exists, otherwise false.
+     * @returns {boolean} True if the project exists, otherwise false.
      */
     exists() {
         return this.#exists;
@@ -92,7 +92,7 @@ class User {
 
     /**
      * @brief Retrieves the error code of the last run method.
-     * @return {string|null} Error code or null if no error.
+     * @returns {string|null} Error code or null if no error.
      */
     errorMessage() {
         return this.#err_msg;

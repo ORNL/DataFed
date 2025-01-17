@@ -169,6 +169,9 @@ module.exports = (function () {
      *
      * /mnt/large/data/project/physics/849384  - PROJECT_RECORD_PATH
      * /mnt/large/data/user/tim/598035         - USER_RECORD_PATH
+     * @param client
+     * @param path
+     * @param a_repo
      */
     obj.createRecord = function (client, path, a_repo) {
         const permission = g_lib.PERM_WR_DATA;
@@ -235,6 +238,9 @@ module.exports = (function () {
      *
      * NOTE: Lookup grants a user the ability to see the path content from the
      * Globus service.
+     * @param client
+     * @param path
+     * @param a_repo
      */
     obj.lookupRecord = function (client, path, a_repo) {
         const path_components = pathModule.splitPOSIXPath(path);
@@ -284,6 +290,9 @@ module.exports = (function () {
      *
      * NOTE: Lookup grants a user the ability to see the path content from the
      * Globus service.
+     * @param client
+     * @param path
+     * @param a_repo
      */
     obj.lookupProject = function (client, path, a_repo) {
         const path_components = pathModule.splitPOSIXPath(path);
@@ -338,6 +347,9 @@ module.exports = (function () {
      *
      * NOTE: Lookup grants a user the ability to see the path content from the
      * Globus service.
+     * @param client
+     * @param path
+     * @param a_repo
      */
     obj.lookupUser = function (client, path, a_repo) {
         const path_components = pathModule.splitPOSIXPath(path);
@@ -365,6 +377,9 @@ module.exports = (function () {
      * Example:
      *
      * /mnt/large/data                         - REPO_ROOT_PATH
+     * @param client
+     * @param path
+     * @param a_repo
      */
     obj.lookupRepoRoot = function (client, path, a_repo) {
         if (a_repo.hasAccess(client._id)) {
@@ -389,6 +404,9 @@ module.exports = (function () {
      *
      * /mnt/large/data/project                 - REPO_PATH
      * /mnt/large/data/user                    - REPO_PATH
+     * @param client
+     * @param path
+     * @param a_repo
      */
     obj.lookupRepo = function (client, path, a_repo) {
         if (a_repo.hasAccess(client._id)) {
@@ -413,6 +431,9 @@ module.exports = (function () {
      *
      * /mnt                                    - REPO_BASE_PATH
      * /mnt/large                              - REPO_BASE_PATH
+     * @param client
+     * @param path
+     * @param a_repo
      */
     obj.lookupRepoBase = function (client, path, a_repo) {
         if (a_repo.hasAccess(client._id)) {

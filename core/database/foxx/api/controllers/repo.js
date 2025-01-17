@@ -187,6 +187,7 @@ class Repo {
 
     /**
      * \brief Determine if client is an admin of a repository.
+     * @param a_client_id
      **/
     isAdmin(a_client_id) {
         if (!g_db.u.exists(a_client_id)) {
@@ -201,6 +202,7 @@ class Repo {
      *
      * This could be either a user allocation on a project allocation that the user is a part of,
      * or the user could be an admin.
+     * @param a_client_id
      **/
     hasAccess(a_client_id) {
         if (a_client_id[0] !== "u") {
