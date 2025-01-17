@@ -56,7 +56,7 @@ describe("Authz functions", () => {
     });
 
     describe("unit_authz: if a record is part of George's user allocation a non owning regular user 'bob' should not have access to the record", () => {
-        it("unit_authz: should thrown an error if bob tries to run a create request on the record.", () => {
+        it("unit_authz: should throw an error if bob tries to run a create request on the record.", () => {
             let data_key = "data_key";
             let data_id = "d/" + data_key;
 
@@ -78,7 +78,10 @@ describe("Authz functions", () => {
 
             expect(() =>
                 authzModule.isRecordActionAuthorized(client, data_key, req_perm),
-            ).to.throw();
+            ).to.throw().and.satisfy((error) => {
+                return Array.isArray(error) &&
+                   error[0] === g_lib.ERR_NOT_FOUND;
+            });
         });
     });
 
