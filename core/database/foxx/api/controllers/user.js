@@ -16,12 +16,12 @@ class User {
 
     /**
      * User document
-     *
      **/
     #user = null;
 
     /**
-     * @brief Constructs a User object and checks if the key exists in the database.
+     * Constructs a User object and checks if the key exists in the database.
+     *
      * @param {string} a_key or id - The unique identifier for the project, of project key.
      * e.g. can be either
      * u/user_name
@@ -66,7 +66,8 @@ class User {
     }
 
     /**
-     * @brief Checks if the project exists in the database.
+     * Checks if the project exists in the database.
+     *
      * @returns {boolean} True if the project exists, otherwise false.
      */
     exists() {
@@ -82,16 +83,17 @@ class User {
     }
 
     /**
-     * @brief Will return error code of last run method.
+     * Will return error code of last run method.
      *
-     * If no error code, will return null
+     * @returns {number} If no error code, will return null
      **/
     error() {
         return this.#error;
     }
 
     /**
-     * @brief Retrieves the error code of the last run method.
+     * Retrieves the error code of the last run method.
+     *
      * @returns {string|null} Error code or null if no error.
      */
     errorMessage() {
@@ -113,6 +115,8 @@ class User {
 
     /**
      * Get all the repos the user has access too.
+     *
+     * @returns {Set} of all repo ids associated with the user.
      **/
     getRepos() {
         // Grab all projects associated with the user

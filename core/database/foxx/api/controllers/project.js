@@ -31,7 +31,7 @@ class Project {
     #project = null;
 
     /**
-     * @brief Constructs a Project object and checks if the key exists in the database.
+     * Constructs a Project object and checks if the key exists in the database.
      * @param {string} a_key or id - The unique identifier for the project, of project key.
      * e.g. can be either
      * p/project_name
@@ -75,7 +75,8 @@ class Project {
     }
 
     /**
-     * @brief Checks if the project exists in the database.
+     * Checks if the project exists in the database.
+     *
      * @returns {boolean} True if the project exists, otherwise false.
      */
     exists() {
@@ -91,7 +92,9 @@ class Project {
     }
 
     /**
-     * \brief Get the allocations associated with the project
+     * Get the allocations associated with the project
+     *
+     * @returns {Array} allocations linked to the project
      **/
     getAllocations() {
         const allocs = g_db.alloc
@@ -103,15 +106,19 @@ class Project {
     }
 
     /**
-     * \brief Get the members associated with the project
+     * Get the members associated with the project
+     *
+     * @returns {Array} project members attached to the project
      **/
     getMembers() {
         this.#project.members;
     }
 
     /**
-     * \brief Determines if a client is a member of the project
-     * @param a_client_id
+     * Determines if a client is a member of the project
+     *
+     * @param {string} a_client_id - a client id string
+     * @returns {boolean} true or false depending on if the client is a member of the project or not
      **/
     isMember(a_client_id) {
         if (a_client_id.substring(0, 2) !== "u/") {
@@ -127,8 +134,10 @@ class Project {
     }
 
     /**
-     * \brief Determines if a client is an admin of the project
-     * @param a_client_id
+     * Determines if a client is an admin of the project
+     *
+     * @param {string} a_client_id - unique identifier for a client
+     * @returns {boolean} true if client is an admin of the project false otherwise
      **/
     isAdmin(a_client_id) {
         if (a_client_id.substring(0, 2) !== "u/") {
@@ -154,9 +163,9 @@ class Project {
         return false;
     }
     /**
-     * \brief Get the ids of the repositories the project has allocations on
+     * Get the ids of the repositories the project has allocations on
      *
-     * Returns a set of repo ids.
+     * @returns {set} a set of repo ids.
      **/
     getRepositoryIds() {
         const allocs = this.getAllocations();
@@ -164,8 +173,10 @@ class Project {
     }
 
     /**
-     * \brief Check if project has allocation on repo
-     * @param a_repo_id
+     * Check if project has allocation on repo
+     *
+     * @param {string} a_repo_id - globally unique repository id
+     * @returns {boolean} true if repository has allocations on project.
      **/
     hasAllocationOnRepo(a_repo_id) {
         if (a_repo_id.substring(0, 5) !== "repo/") {
@@ -178,16 +189,17 @@ class Project {
     }
 
     /**
-     * @brief Will return error code of last run method.
+     * Will return error code of last run method.
      *
-     * If no error code, will return null
+     * @returns {number} If no error code, will return null
      **/
     error() {
         return this.#error;
     }
 
     /**
-     * @brief Retrieves the error code of the last run method.
+     * Retrieves the error code of the last run method.
+     *
      * @returns {string|null} Error code or null if no error.
      */
     errorMessage() {
@@ -195,13 +207,15 @@ class Project {
     }
 
     /**
-     * \brief Will return what role a client has on the project
+     * Will return what role a client has on the project
      *
      * Possible roles include
-     *  - PROJ_MEMBER
-     *  - PROJ_NO_ROLE
-     *  - PROJ_MANAGER
-     * @param a_client_id
+     * - PROJ_MEMBER
+     * - PROJ_NO_ROLE
+     * - PROJ_MANAGER
+     *
+     * @param {string} a_client_id - globally unique identifier
+     * @returns {number} associated with project role.
      **/
     getProjectRole(a_client_id) {
         return g_lib.getProjectRole(a_client_id, this.#project_id);

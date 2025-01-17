@@ -88,7 +88,7 @@ module.exports = (function () {
      * /mnt/large/data/user/tim/598035         - USER_RECORD_PATH
      */
 
-    /* \brief Checks if a Client has read access to a Record
+    /* Checks if a Client has read access to a Record
      *
      * This method assumes that the categorization is either
      * - USER_RECORD_PATH
@@ -100,6 +100,10 @@ module.exports = (function () {
      * /mnt/large/data/project/physics/849384  - PROJECT_RECORD_PATH
      * /mnt/large/data/user/tim/598035         - USER_RECORD_PATH
      *
+     * @param {object} client - the client who is being checked to see if they have authorization.
+     * @param {string} path - the POSIX file path being checked to ensure the user has authorization on it.
+     * @param {object} a_repo - the repo where the path is located.
+     * @returns {boolean} True if the client has the required permissions, otherwise false.
      **/
     obj.readRecord = function (client, path, a_repo) {
         const permission = g_lib.PERM_RD_DATA;
@@ -137,18 +141,26 @@ module.exports = (function () {
         return true;
     };
 
-    /* \brief Placeholder strategy method
+    /* Placeholder strategy method
      *
      * This method grants authorization and does not do anything.
      *
+     * @param {object} client - the client who is being checked to see if they have authorization.
+     * @param {string} path - the POSIX file path being checked to ensure the user has authorization on it.
+     * @param {object} a_repo - the repo where the path is located.
+     * @returns {boolean} True if the client has the required permissions, otherwise false.
      **/
     obj.none = function (client, path, a_repo) {
         const permission = g_lib.PERM_NONE;
         return true;
     };
 
-    /* \brief This method denies access to a GridFTP action
+    /* This method denies access to a GridFTP action
      *
+     * @param {object} client - the client who is being checked to see if they have authorization.
+     * @param {string} path - the POSIX file path being checked to ensure the user has authorization on it.
+     * @param {object} a_repo - the repo where the path is located.
+     * @returns {boolean} True if the client has the required permissions, otherwise false.
      **/
     obj.denied = function (client, path, a_repo) {
         throw [
@@ -159,7 +171,7 @@ module.exports = (function () {
     };
 
     /**
-     * \brief This method will check if a user has write permissions
+     * This method will check if a user has write permissions
      *
      * This strategy method applies to paths of the type:
      * - USER_RECORD_PATH
@@ -169,22 +181,15 @@ module.exports = (function () {
      *
      * /mnt/large/data/project/physics/849384  - PROJECT_RECORD_PATH
      * /mnt/large/data/user/tim/598035         - USER_RECORD_PATH
-     * @param client
-     * @param path
-     * @param a_repo
+     *
+     * @param {object} client - the client who is being checked to see if they have authorization.
+     * @param {string} path - the POSIX file path being checked to ensure the user has authorization on it.
+     * @param {object} a_repo - the repo where the path is located.
+     * @returns {boolean} True if the client has the required permissions, otherwise false.
      */
     obj.createRecord = function (client, path, a_repo) {
         const permission = g_lib.PERM_WR_DATA;
 
-        // Will split a posix path into an array
-        // E.g.
-        // Will split a posix path into an array
-        // E.g.
-        // path = "/usr/local/bin"
-        // const path_components = pathModule.splitPOSIXPath(path);
-        //
-        // Path components will be
-        // ["usr", "local", "bin"]
         const path_components = pathModule.splitPOSIXPath(path);
         const data_key = path_components.at(-1);
         let record = new Record(data_key);
@@ -225,7 +230,7 @@ module.exports = (function () {
     };
 
     /**
-     * \brief This method will check if a user has lookup ability on a Record
+     * This method will check if a user has lookup ability on a Record
      *
      * This strategy method applies to paths of the type:
      * - USER_RECORD_PATH
@@ -238,9 +243,11 @@ module.exports = (function () {
      *
      * NOTE: Lookup grants a user the ability to see the path content from the
      * Globus service.
-     * @param client
-     * @param path
-     * @param a_repo
+     *
+     * @param {object} client - the client who is being checked to see if they have authorization.
+     * @param {string} path - the POSIX file path being checked to ensure the user has authorization on it.
+     * @param {object} a_repo - the repo where the path is located.
+     * @returns {boolean} True if the client has the required permissions, otherwise false.
      */
     obj.lookupRecord = function (client, path, a_repo) {
         const path_components = pathModule.splitPOSIXPath(path);
@@ -279,7 +286,7 @@ module.exports = (function () {
     };
 
     /**
-     * \brief This method will check if a user has lookup ability on a Project
+     * This method will check if a user has lookup ability on a Project
      *
      * This strategy method applies to paths of the type:
      * - PROJECT_PATH
@@ -290,9 +297,11 @@ module.exports = (function () {
      *
      * NOTE: Lookup grants a user the ability to see the path content from the
      * Globus service.
-     * @param client
-     * @param path
-     * @param a_repo
+     *
+     * @param {object} client - the client who is being checked to see if they have authorization.
+     * @param {string} path - the POSIX file path being checked to ensure the user has authorization on it.
+     * @param {object} a_repo - the repo where the path is located.
+     * @returns {boolean} True if the client has the required permissions, otherwise false.
      */
     obj.lookupProject = function (client, path, a_repo) {
         const path_components = pathModule.splitPOSIXPath(path);
@@ -336,7 +345,7 @@ module.exports = (function () {
     };
 
     /**
-     * \brief This method will check if a user has lookup ability on a user folder
+     * This method will check if a user has lookup ability on a user folder
      *
      * This strategy method applies to paths of the type:
      * - USER_PATH
@@ -347,9 +356,11 @@ module.exports = (function () {
      *
      * NOTE: Lookup grants a user the ability to see the path content from the
      * Globus service.
-     * @param client
-     * @param path
-     * @param a_repo
+     *
+     * @param {object} client - the client who is being checked to see if they have authorization.
+     * @param {string} path - the POSIX file path being checked to ensure the user has authorization on it.
+     * @param {object} a_repo - the repo where the path is located.
+     * @returns {boolean} True if the client has the required permissions, otherwise false.
      */
     obj.lookupUser = function (client, path, a_repo) {
         const path_components = pathModule.splitPOSIXPath(path);
@@ -365,7 +376,7 @@ module.exports = (function () {
     };
 
     /**
-     * \brief This method will check if a user has lookup ability on the Repo folder
+     * This method will check if a user has lookup ability on the Repo folder
      *
      * This lookup is a little expensive because only users with accounts on the
      * repo should be approved to see anything in it we need to know what users
@@ -377,9 +388,11 @@ module.exports = (function () {
      * Example:
      *
      * /mnt/large/data                         - REPO_ROOT_PATH
-     * @param client
-     * @param path
-     * @param a_repo
+     *
+     * @param {object} client - the client who is being checked to see if they have authorization.
+     * @param {string} path - the POSIX file path being checked to ensure the user has authorization on it.
+     * @param {object} a_repo - the repo where the path is located.
+     * @returns {boolean} True if the client has the required permissions, otherwise false.
      */
     obj.lookupRepoRoot = function (client, path, a_repo) {
         if (a_repo.hasAccess(client._id)) {
@@ -390,7 +403,7 @@ module.exports = (function () {
     };
 
     /**
-     * \brief This method will check if a user has lookup ability on the Repo
+     * This method will check if a user has lookup ability on the Repo
      * project and user folders
      *
      * This lookup is a little expensive because only users with accounts on the
@@ -404,9 +417,11 @@ module.exports = (function () {
      *
      * /mnt/large/data/project                 - REPO_PATH
      * /mnt/large/data/user                    - REPO_PATH
-     * @param client
-     * @param path
-     * @param a_repo
+     *
+     * @param {object} client - the client who is being checked to see if they have authorization.
+     * @param {string} path - the POSIX file path being checked to ensure the user has authorization on it.
+     * @param {object} a_repo - the repo where the path is located.
+     * @returns {boolean} True if the client has the required permissions, otherwise false.
      */
     obj.lookupRepo = function (client, path, a_repo) {
         if (a_repo.hasAccess(client._id)) {
@@ -417,7 +432,7 @@ module.exports = (function () {
     };
 
     /**
-     * \brief This method will check if a user has lookup ability on the Repo
+     * This method will check if a user has lookup ability on the Repo
      * base path
      *
      * This lookup is a little expensive because only users with accounts on the
@@ -431,9 +446,11 @@ module.exports = (function () {
      *
      * /mnt                                    - REPO_BASE_PATH
      * /mnt/large                              - REPO_BASE_PATH
-     * @param client
-     * @param path
-     * @param a_repo
+     *
+     * @param {object} client - the client who is being checked to see if they have authorization.
+     * @param {string} path - the POSIX file path being checked to ensure the user has authorization on it.
+     * @param {object} a_repo - the repo where the path is located.
+     * @returns {boolean} True if the client has the required permissions, otherwise false.
      */
     obj.lookupRepoBase = function (client, path, a_repo) {
         if (a_repo.hasAccess(client._id)) {
