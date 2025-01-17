@@ -103,15 +103,6 @@ module.exports = (function () {
      **/
     obj.readRecord = function (client, path, a_repo) {
         const permission = g_lib.PERM_RD_DATA;
-        // Will split a posix path into an array
-        // E.g.
-        // Will split a posix path into an array
-        // E.g.
-        // path = "/usr/local/bin"
-        // const path_components = pathModule.splitPOSIXPath(path);
-        //
-        // Path components will be
-        // ["usr", "local", "bin"]
         const path_components = pathModule.splitPOSIXPath(path);
         const data_key = path_components.at(-1);
         let record = new Record(data_key);
