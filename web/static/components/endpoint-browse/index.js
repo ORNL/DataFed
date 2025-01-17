@@ -36,19 +36,17 @@ class EndpointBrowser {
 
     pathNavigator() {
         return `
-            <div class='col-flex'>
-                 <div class="path-navigator">
-                     <div class="row-flex">
-                         <label class="path-label">Path:</label>
-                         <div class="path-input-container">
-                            <input type="text" id="path" value="${this.state.path}"/>
-                         </div>                                                                                                                                      
-                         <div>                                                                                                                                            
-                             <button id="up" class="btn small">Up</button>                                                                                                
-                         </div>                                                                                                                                           
-                     </div>                                                                                                                                               
-                 </div>     
-             </div>                                                                                                                                              
+             <div class='endpoint-browser col-flex'>                                                                                                                  
+                  <div class="path-navigator row-flex">                                                                                                               
+                      <label class="path-label">Path:</label>                                                                                                         
+                      <div class="path-input-container">                                                                                                              
+                         <input type="text" id="path" value="${this.state.path}"/>                                                                                    
+                      </div>                                                                                                                                          
+                      <div>                                                                                                                                           
+                          <button id="up" class="btn small">Up</button>                                                                                               
+                      </div>                                                                                                                                          
+                  </div>                                                                                                                                              
+              </div>                                                                                                                                           
          `;
     }
 
@@ -62,10 +60,10 @@ class EndpointBrowser {
                          <col/>                                                                                                                                       
                      </colgroup>                                                                                                                                      
                      <tbody>                                                                                                                                          
-                         <tr>                                                                                                                                         
-                             <td style="white-space:nowrap;padding:0 2em 0 0"></td>                                                                                   
-                             <td style="white-space:nowrap;padding:0 2em 0 0"></td>                                                                                   
-                             <td style="white-space:nowrap"></td>                                                                                                     
+                         <tr>
+                            <td/>
+                            <td/>
+                            <td/>                                                                                                     
                          </tr>                                                                                                                                        
                      </tbody>                                                                                                                                         
                  </table>                                                                                                                                             

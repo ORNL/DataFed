@@ -4,13 +4,16 @@
     height: 100%;
 }
 
-.endpoint-browser .path-label {
+.endpoint-browser .path-label,
+.endpoint-browser .path-input-container,
+.endpoint-browser .row-flex,
+.endpoint-browser .spacer,
+.endpoint-browser .file-tree-view {
     margin-right: 0.5em;
 }
 
 .endpoint-browser .path-input-container {
     flex: auto;
-    margin-right: 0.5em;
 }
 
 .endpoint-browser .path-input-container input {
@@ -18,13 +21,12 @@
 }
 
 .endpoint-browser .row-flex {
-    display: flex;
     align-items: center;
 }
 
 .endpoint-browser .spacer {
     flex: none;
-    padding: .25em;
+    padding: 0.25em;
 }
 
 .endpoint-browser .file-tree-view {
