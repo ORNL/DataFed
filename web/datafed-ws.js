@@ -525,7 +525,7 @@ app.get("/ui/authn", (a_req, a_resp) => {
                 res.on("end", () => {
                     if (res.statusCode >= 200 && res.statusCode < 300) {
                         const userinfo = JSON.parse(data);
-                        const uid = userinfo.username.substr(0, userinfo.username.indexOf("@"));
+                        const uid = userinfo.username.substring(0, userinfo.username.indexOf("@"));
 
                         logger.info(
                             "/ui/authn",
@@ -553,11 +553,16 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                     );
 
                                     if (token_type === AccessTokenType.GLOBUS_TRANSFER) {
-                                        // Error and do not register user in case of non-auth token
-                                        throw new Error(
+                                        // Log error and do not register user in case of non-auth token
+                                        logger.error(
+                                            "ui/authn",
+                                            getCurrentLineNumber(),
                                             "Transfer token received for non-existent user.",
                                         );
                                         a_resp.redirect("/ui/error");
+                                        throw new Error(
+                                            "Transfer token received for non-existent user.",
+                                        );
                                     }
 
                                     // Store all data need for registration in session (temporarily)
