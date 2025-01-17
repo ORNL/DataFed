@@ -35,6 +35,8 @@ import { v4 as uuidv4 } from "uuid";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 
+import OAuthTokenHandler, { AccessTokenType } from "./services/auth/TokenHandler.js";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -492,15 +494,8 @@ app.get("/ui/authn", (a_req, a_resp) => {
 
     g_globus_auth.code.getToken(a_req.originalUrl).then(
         function (client_token) {
-            const other_tokens_exist = client_token.data.other_tokens.length > 0;
-            let token_type = resolveTokenType(
-                client_token.data.resource_server,
-                other_tokens_exist,
-            );
-            let xfr_token =
-                token_type === AccessTokenType.GLOBUS_DEFAULT && other_tokens_exist
-                    ? client_token.data.other_tokens[0]
-                    : client_token.data; // Auth tokens in DEFAULT come with an additional transfer token, but transfer tokens (which come with consent collections) will come alone (for now)
+            const token_handler = new OAuthTokenHandler(client_token);
+            let xfr_token = token_handler.extractTransferToken();
 
             const opts = {
                 hostname: "auth.globus.org",
@@ -552,7 +547,7 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                         "User: " + uid + "not registered",
                                     );
 
-                                    if (token_type === AccessTokenType.GLOBUS_TRANSFER) {
+                                    if (token_handler.getTokenType() === AccessTokenType.GLOBUS_TRANSFER) {
                                         // Log error and do not register user in case of non-auth token
                                         logger.error(
                                             "ui/authn",
@@ -605,8 +600,7 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                         scope: xfr_token.scope,
                                     };
                                     try {
-                                        const optional_data = constructOptionalData(
-                                            token_type,
+                                        const optional_data = token_handler.constructOptionalData(
                                             token_context,
                                         );
 
@@ -2202,86 +2196,6 @@ protobuf.load("SDMS_Auth.proto", function (err, root) {
     processProtoFile(msg);
     if (--g_ready_start == 0) startServer();
 });
-
-// TODO: convert to protobufjs read of enum
-const AccessTokenType = Object.freeze({
-    GENERIC: 1,
-    GLOBUS: 2,
-    GLOBUS_AUTH: 3,
-    GLOBUS_TRANSFER: 4,
-    GLOBUS_DEFAULT: 5,
-    ACCESS_SENTINEL: 255,
-});
-
-/** Resolves token type based on a provided resource server
- *
- * @param {string} resource_server - Resource server on which token functions
- * @param {boolean} [other_tokens_exist = false] - Indicates whether other tokens are present
- * @returns {AccessTokenType | number}
- */
-const resolveTokenType = (resource_server, other_tokens_exist = false) => {
-    let token_type;
-    switch (
-        resource_server // TODO: exhaustive coverage of types
-    ) {
-        case "auth.globus.org": {
-            token_type = other_tokens_exist
-                ? AccessTokenType.GLOBUS_DEFAULT
-                : AccessTokenType.GLOBUS_AUTH;
-            break;
-        }
-        case "transfer.api.globus.org": {
-            token_type = AccessTokenType.GLOBUS_TRANSFER;
-            break;
-        }
-        default: {
-            token_type = AccessTokenType.GLOBUS_DEFAULT;
-        }
-    }
-    return token_type;
-};
-/** OptionalData object
- * @typedef {object} OptionalData
- * @property {AccessTokenType | number} type - The type of token being stored
- * @property {string} [other] - Additional constructed data to provide more context for backend
- */
-/** Constructs optional token data for SetAccessToken based on token type
- *
- * @param {AccessTokenType | number} token_type - Type of token being processed
- * @param {object} token_context - Object with arbitrary keys for context when building optional data
- * @param {string} [token_context.collection_id] - Globus Collection ID to be associated with token
- * @param {string} [token_context.scope] - Scope(s) to be associated with token
- * @returns {OptionalData}
- * @throws Error - When a required collection ID cannot be found in the session
- */
-const constructOptionalData = (token_type, token_context) => {
-    let optional_data = { type: token_type };
-    switch (token_type) {
-        case AccessTokenType.GLOBUS_AUTH: {
-            throw new Error("Invalid state"); // TODO: build capability
-        }
-        case AccessTokenType.GLOBUS_TRANSFER: {
-            const { collection_id, scope } = token_context;
-            if (!collection_id) {
-                throw new Error("Transfer token received without collection context");
-            }
-            if (!scope) {
-                throw new Error("Transfer token received without scope context");
-            }
-            optional_data.other = collection_id + "|" + scope; // Database API expects format `<uuid>|<scope>`
-            break;
-        }
-        case AccessTokenType.GLOBUS_DEFAULT: {
-            break;
-        }
-        default: {
-            // TODO: exhaustive coverage of types
-            throw new Error("Invalid state");
-        }
-    }
-
-    return optional_data;
-};
 
 process.on("unhandledRejection", (reason, p) => {
     logger.error(
