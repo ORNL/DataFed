@@ -250,32 +250,23 @@ describe("Testing Repo class", () => {
     it("unit_repo: testing isAdmin, for a user, with repo admin access", () => {
         const path = "/mnt/repo_root";
         const repo_id = "repo/bam";
-        g_db.repo.save(
-            {
-                _id: repo_id,
-                _key: "bam",
-                path: path,
-            },
-            { waitForSync: true },
-        );
+        g_db.repo.save({
+            _id: repo_id,
+            _key: "bam",
+            path: path,
+        });
 
         const user_id = "u/hone";
-        g_db.u.save(
-            {
-                _id: user_id,
-                _key: "hone",
-                is_admin: false,
-            },
-            { waitForSync: true },
-        );
+        g_db.u.save({
+            _id: user_id,
+            _key: "hone",
+            is_admin: false,
+        });
 
-        g_db.admin.save(
-            {
-                _from: repo_id,
-                _to: user_id,
-            },
-            { waitForSync: true },
-        );
+        g_db.admin.save({
+            _from: repo_id,
+            _to: user_id,
+        });
 
         const repo = new Repo(repo_id);
 
@@ -285,24 +276,18 @@ describe("Testing Repo class", () => {
     it("unit_repo: testing isAdmin, for a user, with no privileges", () => {
         const path = "/mnt/repo_root";
         const repo_id = "repo/bam";
-        g_db.repo.save(
-            {
-                _id: repo_id,
-                _key: "bam",
-                path: path,
-            },
-            { waitForSync: true },
-        );
+        g_db.repo.save({
+            _id: repo_id,
+            _key: "bam",
+            path: path,
+        });
 
         const user_id = "u/hone";
-        g_db.u.save(
-            {
-                _id: user_id,
-                _key: "hone",
-                is_admin: false,
-            },
-            { waitForSync: true },
-        );
+        g_db.u.save({
+            _id: user_id,
+            _key: "hone",
+            is_admin: false,
+        });
 
         const repo = new Repo(repo_id);
 
@@ -314,37 +299,28 @@ describe("Testing Repo class", () => {
         const path = "/mnt/lair";
         const repo_key = "paper";
         const repo_id = "repo/" + repo_key;
-        g_db.repo.save(
-            {
-                _id: repo_id,
-                _key: repo_key,
-                path: path,
-            },
-            { waitForSync: true },
-        );
+        g_db.repo.save({
+            _id: repo_id,
+            _key: repo_key,
+            path: path,
+        });
 
         // Create user
         const user_key = "randy";
         const user_id = "u/randy";
-        g_db.u.save(
-            {
-                _id: user_id,
-                _key: user_key,
-                is_admin: false,
-            },
-            { waitForSync: true },
-        );
+        g_db.u.save({
+            _id: user_id,
+            _key: user_key,
+            is_admin: false,
+        });
 
         // Create project
         const project_key = "bigthing";
         const project_id = "p/" + project_key;
-        g_db.p.save(
-            {
-                _id: project_id,
-                _key: project_key,
-            },
-            { waitForSync: true },
-        );
+        g_db.p.save({
+            _id: project_id,
+            _key: project_key,
+        });
 
         // Create allocation connecting repo to project
         g_db.alloc.save({
@@ -367,7 +343,7 @@ describe("Testing Repo class", () => {
         // Create a repo with no allocations
         const repo_key = "emptyrepo";
         const repo_id = "repo/" + repo_key;
-        g_db.repo.save({ _id: repo_id, _key: repo_key, path: "/mnt/empty" }, { waitForSync: true });
+        g_db.repo.save({ _id: repo_id, _key: repo_key, path: "/mnt/empty" });
 
         const repo = new Repo(repo_id);
         expect(repo.exists()).to.be.true;
@@ -378,13 +354,13 @@ describe("Testing Repo class", () => {
         // Create repo
         const repo_key = "multiproject";
         const repo_id = "repo/" + repo_key;
-        g_db.repo.save({ _id: repo_id, _key: repo_key, path: "/mnt/multi" }, { waitForSync: true });
+        g_db.repo.save({ _id: repo_id, _key: repo_key, path: "/mnt/multi" });
 
         // Create multiple projects
         const project_keys = ["proj1", "proj2", "proj3"];
         const project_ids = project_keys.map((key) => `p/${key}`);
         project_ids.forEach((project_id) => {
-            g_db.p.save({ _id: project_id, _key: project_id.split("/")[1] }, { waitForSync: true });
+            g_db.p.save({ _id: project_id, _key: project_id.split("/")[1] });
             g_db.alloc.save({ _from: project_id, _to: repo_id });
         });
 
@@ -398,15 +374,12 @@ describe("Testing Repo class", () => {
         // Create repo
         const repo_key = "invalidalloc";
         const repo_id = "repo/" + repo_key;
-        g_db.repo.save(
-            { _id: repo_id, _key: repo_key, path: "/mnt/invalid" },
-            { waitForSync: true },
-        );
+        g_db.repo.save({ _id: repo_id, _key: repo_key, path: "/mnt/invalid" });
 
         // Create invalid allocations (e.g., user to repo)
         const user_key = "invaliduser";
         const user_id = "u/" + user_key;
-        g_db.u.save({ _id: user_id, _key: user_key }, { waitForSync: true });
+        g_db.u.save({ _id: user_id, _key: user_key });
         g_db.alloc.save({ _from: user_id, _to: repo_id });
 
         const repo = new Repo(repo_id);
@@ -421,14 +394,8 @@ describe("Testing Repo class", () => {
         const repo2_key = "repo2";
         const repo2_id = "repo/" + repo2_key;
 
-        g_db.repo.save(
-            { _id: repo1_id, _key: repo1_key, path: "/mnt/repo1" },
-            { waitForSync: true },
-        );
-        g_db.repo.save(
-            { _id: repo2_id, _key: repo2_key, path: "/mnt/repo2" },
-            { waitForSync: true },
-        );
+        g_db.repo.save({ _id: repo1_id, _key: repo1_key, path: "/mnt/repo1" });
+        g_db.repo.save({ _id: repo2_id, _key: repo2_key, path: "/mnt/repo2" });
 
         // Create projects
         const project1_key = "project1";
@@ -439,9 +406,9 @@ describe("Testing Repo class", () => {
         const project2_id = "p/" + project2_key;
         const project3_id = "p/" + project3_key;
 
-        g_db.p.save({ _id: project1_id, _key: project1_key }, { waitForSync: true });
-        g_db.p.save({ _id: project2_id, _key: project2_key }, { waitForSync: true });
-        g_db.p.save({ _id: project3_id, _key: project3_key }, { waitForSync: true });
+        g_db.p.save({ _id: project1_id, _key: project1_key });
+        g_db.p.save({ _id: project2_id, _key: project2_key });
+        g_db.p.save({ _id: project3_id, _key: project3_key });
 
         // Allocate projects to repos
         g_db.alloc.save({ _from: project1_id, _to: repo1_id });
@@ -469,13 +436,13 @@ describe("Testing Repo class", () => {
         const repo_key = "fine_wine";
         const repo_id = "repo/" + repo_key;
 
-        g_db.repo.save({ _id: repo_id, _key: repo_key, path: "/mnt/white" }, { waitForSync: true });
+        g_db.repo.save({ _id: repo_id, _key: repo_key, path: "/mnt/white" });
 
         // Create projects
         const project_key = "zinfandel";
         const project_id = "p/" + project_key;
 
-        g_db.p.save({ _id: project_id, _key: project_key }, { waitForSync: true });
+        g_db.p.save({ _id: project_id, _key: project_key });
 
         // Allocate projects to repos
         g_db.alloc.save({ _from: project_id, _to: repo_id });
@@ -517,15 +484,12 @@ describe("Testing Repo class", () => {
         // Create a repository
         const repo_key = "direct_alloc_repo";
         const repo_id = "repo/" + repo_key;
-        g_db.repo.save(
-            { _id: repo_id, _key: repo_key, path: "/mnt/direct_alloc" },
-            { waitForSync: true },
-        );
+        g_db.repo.save({ _id: repo_id, _key: repo_key, path: "/mnt/direct_alloc" });
 
         // Create a user
         const user_key = "alice";
         const user_id = "u/" + user_key;
-        g_db.u.save({ _id: user_id, _key: user_key }, { waitForSync: true });
+        g_db.u.save({ _id: user_id, _key: user_key });
 
         // Direct allocation from user to repo
         g_db.alloc.save({ _from: user_id, _to: repo_id });
@@ -540,15 +504,12 @@ describe("Testing Repo class", () => {
         // Create a repository
         const repo_key = "no_alloc_repo";
         const repo_id = "repo/" + repo_key;
-        g_db.repo.save(
-            { _id: repo_id, _key: repo_key, path: "/mnt/no_alloc" },
-            { waitForSync: true },
-        );
+        g_db.repo.save({ _id: repo_id, _key: repo_key, path: "/mnt/no_alloc" });
 
         // Create a user
         const user_key = "charlie";
         const user_id = "u/" + user_key;
-        g_db.u.save({ _id: user_id, _key: user_key }, { waitForSync: true });
+        g_db.u.save({ _id: user_id, _key: user_key });
 
         // Test repo
         const repo = new Repo(repo_id);
@@ -563,19 +524,13 @@ describe("Testing Repo class", () => {
         const repo_key_2 = "different_repo";
         const repo_id_2 = "repo/" + repo_key_2;
 
-        g_db.repo.save(
-            { _id: repo_id_1, _key: repo_key_1, path: "/mnt/other" },
-            { waitForSync: true },
-        );
-        g_db.repo.save(
-            { _id: repo_id_2, _key: repo_key_2, path: "/mnt/different" },
-            { waitForSync: true },
-        );
+        g_db.repo.save({ _id: repo_id_1, _key: repo_key_1, path: "/mnt/other" });
+        g_db.repo.save({ _id: repo_id_2, _key: repo_key_2, path: "/mnt/different" });
 
         // Create a user
         const user_key = "dave";
         const user_id = "u/" + user_key;
-        g_db.u.save({ _id: user_id, _key: user_key }, { waitForSync: true });
+        g_db.u.save({ _id: user_id, _key: user_key });
 
         // Create allocation to a different repo
         g_db.alloc.save({ _from: user_id, _to: repo_id_1 }); // Allocating user to repo 1

@@ -76,12 +76,11 @@ describe("Authz functions", () => {
 
             let req_perm = g_lib.PERM_CREATE;
 
-            expect(() =>
-                authzModule.isRecordActionAuthorized(client, data_key, req_perm),
-            ).to.throw().and.satisfy((error) => {
-                return Array.isArray(error) &&
-                   error[0] === g_lib.ERR_NOT_FOUND;
-            });
+            expect(() => authzModule.isRecordActionAuthorized(client, data_key, req_perm))
+                .to.throw()
+                .and.satisfy((error) => {
+                    return Array.isArray(error) && error[0] === g_lib.ERR_NOT_FOUND;
+                });
         });
     });
 
@@ -170,14 +169,11 @@ describe("Authz functions", () => {
             let data_key = "bananas";
             let data_id = "d/" + data_key;
 
-            g_db.d.save(
-                {
-                    _key: data_key,
-                    _id: data_id,
-                    creator: "u/george",
-                },
-                { waitForSync: true },
-            );
+            g_db.d.save({
+                _key: data_key,
+                _id: data_id,
+                creator: "u/george",
+            });
 
             let bob = {
                 _key: "bob",
@@ -191,16 +187,13 @@ describe("Authz functions", () => {
                 is_admin: false,
             };
 
-            g_db.u.save(bob, { waitForSync: true });
-            g_db.u.save(george, { waitForSync: true });
+            g_db.u.save(bob);
+            g_db.u.save(george);
 
-            g_db.owner.save(
-                {
-                    _from: data_id,
-                    _to: "u/george",
-                },
-                { waitForSync: true },
-            );
+            g_db.owner.save({
+                _from: data_id,
+                _to: "u/george",
+            });
             let req_perm = g_lib.PERM_CREATE;
 
             expect(authzModule.isRecordActionAuthorized(bob, data_key, req_perm)).to.be.false;
@@ -212,14 +205,11 @@ describe("Authz functions", () => {
             let data_key = "apples";
             let data_id = "d/" + data_key;
 
-            g_db.d.save(
-                {
-                    _key: data_key,
-                    _id: data_id,
-                    creator: "u/jack",
-                },
-                { waitForSync: true },
-            );
+            g_db.d.save({
+                _key: data_key,
+                _id: data_id,
+                creator: "u/jack",
+            });
 
             let jack = {
                 _key: "jack",
@@ -227,27 +217,21 @@ describe("Authz functions", () => {
                 is_admin: false,
             };
 
-            g_db.u.save(jack, { waitForSync: true });
+            g_db.u.save(jack);
 
             let fruity_project_id = "p/fruity";
-            g_db.p.save(
-                {
-                    _key: "fruity",
-                    _id: fruity_project_id,
-                    name: "Project Fruity",
-                },
-                { waitForSync: true },
-            );
+            g_db.p.save({
+                _key: "fruity",
+                _id: fruity_project_id,
+                name: "Project Fruity",
+            });
 
             let condiments_project_id = "p/condiments";
-            g_db.p.save(
-                {
-                    _key: "condiments",
-                    _id: condiments_project_id,
-                    name: "Project Condiments",
-                },
-                { waitForSync: true },
-            );
+            g_db.p.save({
+                _key: "condiments",
+                _id: condiments_project_id,
+                name: "Project Condiments",
+            });
 
             let mandy_admin_id = "u/mandy";
             let mandy = {
@@ -255,41 +239,29 @@ describe("Authz functions", () => {
                 _id: mandy_admin_id,
                 is_admin: false,
             };
-            g_db.u.save(mandy, { waitForSync: true });
+            g_db.u.save(mandy);
 
             let amy_admin_id = "u/amy";
-            g_db.u.save(
-                {
-                    _key: "amy",
-                    _id: amy_admin_id,
-                    is_admin: false,
-                },
-                { waitForSync: true },
-            );
+            g_db.u.save({
+                _key: "amy",
+                _id: amy_admin_id,
+                is_admin: false,
+            });
 
-            g_db.owner.save(
-                {
-                    _from: data_id,
-                    _to: fruity_project_id,
-                },
-                { waitForSync: true },
-            );
+            g_db.owner.save({
+                _from: data_id,
+                _to: fruity_project_id,
+            });
 
-            g_db.admin.save(
-                {
-                    _from: fruity_project_id,
-                    _to: amy_admin_id,
-                },
-                { waitForSync: true },
-            );
+            g_db.admin.save({
+                _from: fruity_project_id,
+                _to: amy_admin_id,
+            });
 
-            g_db.admin.save(
-                {
-                    _from: condiments_project_id,
-                    _to: mandy_admin_id,
-                },
-                { waitForSync: true },
-            );
+            g_db.admin.save({
+                _from: condiments_project_id,
+                _to: mandy_admin_id,
+            });
             let req_perm = g_lib.PERM_CREATE;
 
             // Non-project admin should not have permission
@@ -302,14 +274,11 @@ describe("Authz functions", () => {
             let data_key = "cherry";
             let data_id = "d/" + data_key;
 
-            g_db.d.save(
-                {
-                    _key: data_key,
-                    _id: data_id,
-                    creator: "tim",
-                },
-                { waitForSync: true },
-            );
+            g_db.d.save({
+                _key: data_key,
+                _id: data_id,
+                creator: "tim",
+            });
 
             let tim = {
                 _key: "tim",
@@ -319,14 +288,11 @@ describe("Authz functions", () => {
 
             // A project is the owner
             let project_id = "p/red_fruit";
-            g_db.p.save(
-                {
-                    _key: "red_fruit",
-                    _id: project_id,
-                    name: "Project Red Fruit",
-                },
-                { waitForSync: true },
-            );
+            g_db.p.save({
+                _key: "red_fruit",
+                _id: project_id,
+                name: "Project Red Fruit",
+            });
 
             let bob_id = "u/bob";
 
@@ -336,25 +302,19 @@ describe("Authz functions", () => {
                 is_admin: false,
             };
 
-            g_db.u.save(bob, { waitForSync: true });
+            g_db.u.save(bob);
 
-            g_db.owner.save(
-                {
-                    _from: data_id,
-                    _to: project_id,
-                },
-                { waitForSync: true },
-            );
+            g_db.owner.save({
+                _from: data_id,
+                _to: project_id,
+            });
 
-            g_db.admin.save(
-                {
-                    _from: project_id,
-                    _to: bob_id,
-                },
-                { waitForSync: true },
-            );
+            g_db.admin.save({
+                _from: project_id,
+                _to: bob_id,
+            });
 
-            g_db.u.save(tim, { waitForSync: true });
+            g_db.u.save(tim);
 
             let req_perm = g_lib.PERM_READ;
 

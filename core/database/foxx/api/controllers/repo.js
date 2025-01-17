@@ -136,7 +136,7 @@ class Repo {
     pathType(a_path) {
         // Ensure the repo exists
         if (!this.#exists) {
-            throw [g_lib.ERR_PERM_DENIED, "Repo does not exist " + this.#repo_id];
+            throw [g_lib.ERR_NOT_FOUND, "Repo does not exist " + this.#repo_id];
         }
 
         let repo = g_db._document(this.#repo_id);
