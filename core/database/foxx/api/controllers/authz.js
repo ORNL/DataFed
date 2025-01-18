@@ -197,7 +197,7 @@ module.exports = (function () {
         // This does not mean the record exsts in the repo it checks if an entry
         // exists in the database.
         if (!record.exists()) {
-            // If the record does not exist then the path would noe be consistent.
+            // If the record does not exist then the path would not be consistent.
             console.log("AUTHZ act: create client: " + client._id + " path " + path + " FAILED");
             throw [g_lib.ERR_PERM_DENIED, "Invalid record specified: " + path];
         }
@@ -325,7 +325,7 @@ module.exports = (function () {
         }
 
         // Project does not exist on repo, i.e. no allocation on repo
-        const repo_ids = project.getRepoIds();
+        const repo_ids = project.getRepositoryIds();
         if (!repo_ids.has(repo.id())) {
             console.log("AUTHZ act: lookup client: " + client._id + " path " + path + " DENIED");
             throw [
@@ -384,67 +384,15 @@ module.exports = (function () {
      * are approved for the repo.
      *
      * This strategy method applies to paths of the type:
+     * - REPO_BASE_PATH
      * - REPO_ROOT_PATH
-     *
-     * Example:
-     *
-     * /mnt/large/data                         - REPO_ROOT_PATH
-     *
-     * @param {object} client - the client who is being checked to see if they have authorization.
-     * @param {string} path - the POSIX file path being checked to ensure the user has authorization on it.
-     * @param {object} a_repo - the repo where the path is located.
-     * @returns {boolean} True if the client has the required permissions, otherwise false.
-     */
-    obj.lookupRepoRoot = function (client, path, a_repo) {
-        if (a_repo.hasAccess(client._id)) {
-            return true;
-        }
-
-        throw [obj.ERR_NO_ALLOCATION, "Client " + client._id + " has no allocation on repo."];
-    };
-
-    /**
-     * This method will check if a user has lookup ability on the Repo
-     * project and user folders
-     *
-     * This lookup is a little expensive because only users with accounts on the
-     * repo should be approved to see anything in it we need to know what users
-     * are approved for the repo.
-     *
-     * This strategy method applies to paths of the type:
      * - REPO_PATH
      *
      * Example:
      *
+     * /mnt/large/data                         - REPO_ROOT_PATH
      * /mnt/large/data/project                 - REPO_PATH
      * /mnt/large/data/user                    - REPO_PATH
-     *
-     * @param {object} client - the client who is being checked to see if they have authorization.
-     * @param {string} path - the POSIX file path being checked to ensure the user has authorization on it.
-     * @param {object} a_repo - the repo where the path is located.
-     * @returns {boolean} True if the client has the required permissions, otherwise false.
-     */
-    obj.lookupRepo = function (client, path, a_repo) {
-        if (a_repo.hasAccess(client._id)) {
-            return true;
-        }
-
-        throw [obj.ERR_NO_ALLOCATION, "Client " + client._id + " has no allocation on repo."];
-    };
-
-    /**
-     * This method will check if a user has lookup ability on the Repo
-     * base path
-     *
-     * This lookup is a little expensive because only users with accounts on the
-     * repo should be approved to see anything in it we need to know what users
-     * are approved for the repo.
-     *
-     * This strategy method applies to paths of the type:
-     * - REPO_BASE_PATH
-     *
-     * Example:
-     *
      * /mnt                                    - REPO_BASE_PATH
      * /mnt/large                              - REPO_BASE_PATH
      *
@@ -453,7 +401,7 @@ module.exports = (function () {
      * @param {object} a_repo - the repo where the path is located.
      * @returns {boolean} True if the client has the required permissions, otherwise false.
      */
-    obj.lookupRepoBase = function (client, path, a_repo) {
+    obj.lookupRepo = function (client, path, a_repo) {
         if (a_repo.hasAccess(client._id)) {
             return true;
         }
@@ -485,13 +433,13 @@ module.exports = (function () {
             [PathType.REPO_PATH]: obj.none,
         },
         create: {
-            [PathType.USER_PATH]: obj.none,
+            [PathType.USER_PATH]: obj.lookupUser,
             [PathType.USER_RECORD_PATH]: obj.createRecord,
-            [PathType.PROJECT_PATH]: obj.none,
+            [PathType.PROJECT_PATH]: obj.lookupProject,
             [PathType.PROJECT_RECORD_PATH]: obj.createRecord,
-            [PathType.REPO_BASE_PATH]: obj.none,
-            [PathType.REPO_ROOT_PATH]: obj.none,
-            [PathType.REPO_PATH]: obj.none,
+            [PathType.REPO_BASE_PATH]: obj.lookupRepo,
+            [PathType.REPO_ROOT_PATH]: obj.lookupRepo,
+            [PathType.REPO_PATH]: obj.lookupRepo,
         },
         delete: {
             [PathType.USER_PATH]: obj.denied,
@@ -516,8 +464,8 @@ module.exports = (function () {
             [PathType.USER_RECORD_PATH]: obj.lookupRecord,
             [PathType.PROJECT_PATH]: obj.lookupProject,
             [PathType.PROJECT_RECORD_PATH]: obj.lookupRecord,
-            [PathType.REPO_BASE_PATH]: obj.lookupRepoBase,
-            [PathType.REPO_ROOT_PATH]: obj.lookupRepoRoot,
+            [PathType.REPO_BASE_PATH]: obj.lookupRepo,
+            [PathType.REPO_ROOT_PATH]: obj.lookupRepo,
             [PathType.REPO_PATH]: obj.lookupRepo,
         },
     };
