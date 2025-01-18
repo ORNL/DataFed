@@ -132,7 +132,7 @@ class User {
             })
             .toArray();
 
-        const repo_ids = [...new Set(allocs.map((obj) => obj._to))];
+        const repo_ids = [...new Set(user_allocs.map((obj) => obj._to))];
 
         project_repos.forEach((repo) => repo_ids.add(item));
         return repo_ids;
