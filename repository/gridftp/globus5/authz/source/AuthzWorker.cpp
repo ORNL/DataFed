@@ -57,10 +57,28 @@ namespace SDMS {
 AuthzWorker::AuthzWorker(struct Config *a_config, LogContext log_context)
     : m_config(a_config) {
 
+  auto log_path_authz = std::string(m_config->log_path);
+  if (log_path_authz.length() > 0) {
+    // Append to the existing path because we don't want the C++ and C code
+    // trying to write to the same file
+    log_path_authz.append("_authz");
+    std::ofstream log_file_worker(log_path_authz);
+    SDMS::global_logger.addStream(log_file_worker);
+  }
+
+#if defined(DONT_USE_SYSLOG)
+  SDMS::global_logger.setSysLog(false);
+#else
+  SDMS::global_logger.setSysLog(true);
+#endif
+  SDMS::global_logger.setLevel(SDMS::LogLevel::INFO);
+  SDMS::global_logger.addStream(std::cerr);
+
   m_log_context = log_context;
   m_log_context.thread_name += "-authz_worker";
   m_log_context.thread_id = 0;
 
+  DL_INFO(m_log_context, "Testing AuthzWorker capability");
   // Convert config item to string for easier manipulation
   m_local_globus_path_root = std::string(m_config->globus_collection_path);
 
@@ -630,21 +648,6 @@ const char *getReleaseVersion() {
 // The same
 int checkAuthorization(char *client_id, char *object, char *action,
                        struct Config *config) {
-#if defined(DONT_USE_SYSLOG)
-  SDMS::global_logger.setSysLog(false);
-#else
-  SDMS::global_logger.setSysLog(true);
-#endif
-  SDMS::global_logger.setLevel(SDMS::LogLevel::INFO);
-  SDMS::global_logger.addStream(std::cerr);
-  auto log_path_authz = std::string(config->log_path);
-  if (log_path_authz.length() > 0) {
-    // Append to the existing path because we don't want the C++ and C code
-    // trying to write to the same file
-    log_path_authz.append("_authz");
-    std::ofstream log_file_worker(log_path_authz);
-    SDMS::global_logger.addStream(log_file_worker);
-  }
 
   SDMS::LogContext log_context;
   log_context.thread_name = "authz_check";
