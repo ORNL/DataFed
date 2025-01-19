@@ -124,7 +124,7 @@ AuthzWorker::AuthzWorker(struct Config *a_config, LogContext log_context)
   m_log_context = log_context;
   m_log_context.thread_name += "-authz_worker";
   m_log_context.thread_id = 0;
-
+  DL_INFO(m_log_context, "config log_path: " << std::string(m_config->log_path) << " length " << std::string(m_config->log_path).length() );
   DL_INFO(m_log_context, "Testing AuthzWorker capability");
   // Convert config item to string for easier manipulation
   m_local_globus_path_root = std::string(a_config->globus_collection_path);

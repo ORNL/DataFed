@@ -588,6 +588,8 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
             }
 
             if (client_id) {
+                AUTHZ_LOG_INFO(
+                    "libauthz.c checkAuth g_config log_path: ", g_config.log_path);
               if (checkAuthorization(client_id, object, action, &g_config) ==
                   0) {
                 result = GLOBUS_SUCCESS;
