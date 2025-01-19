@@ -328,6 +328,7 @@ bool loadConfig() {
       } else if (strcmp(buf, "log_path") == 0) {
         err = setConfigVal("log_path", g_config.log_path, val, MAX_PATH_LEN);
         AUTHZ_LOG_INIT(g_config.log_path);
+        AUTHZ_LOG_INFO("g_config.log_path is %s\n", g_config.log_path);
       } else if (strcmp(buf, "test_path") == 0) {
         err = setConfigVal("test_path", g_config.test_path, val, MAX_PATH_LEN);
       } else if (strcmp(buf, "globus-collection-path") == 0) {
@@ -600,7 +601,7 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
 
             if (client_id) {
                 AUTHZ_LOG_INFO(
-                    "libauthz.c checkAuth g_config log_path: ", g_config.log_path);
+                    "libauthz.c checkAuth g_config log_path: %s\n", g_config.log_path);
               if (checkAuthorization(client_id, object, action, &g_config) ==
                   0) {
                 result = GLOBUS_SUCCESS;
