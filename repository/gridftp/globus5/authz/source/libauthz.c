@@ -214,7 +214,6 @@ static struct Config g_config;
 bool setConfigVal(const char *a_label, char *a_dest, char *a_src,
                   size_t a_max_len) {
   size_t len = strlen(a_src);
-
   if (len == 0) {
     AUTHZ_LOG_ERROR("DataFed - '%s' value not set.\n", a_label);
     return true;
@@ -228,6 +227,8 @@ bool setConfigVal(const char *a_label, char *a_dest, char *a_src,
   }
 
   strcpy(a_dest, a_src);
+  AUTHZ_LOG_INFO("Datafed setting src [%s]=%s", a_label, a_src);
+  AUTHZ_LOG_INFO("Datafed setting dest [%s]=%s", a_label, a_dest);
 
   return false;
 }
@@ -273,7 +274,11 @@ bool loadConfig() {
     AUTHZ_LOG_INFO("DataFed - Loading authz config file: %s\n", cfg_file);
     inf = fopen(cfg_file, "r");
   }
+
+  AUTHZ_LOG_INFO("Config file found.");
   if (inf) {
+
+    AUTHZ_LOG_INFO("Reading config file.");
     size_t MAX_BUF = 1024;
     char buf[MAX_BUF];
     int lc = -1;
