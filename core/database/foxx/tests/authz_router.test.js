@@ -73,7 +73,7 @@ function defaultWorkingSetup() {
         _key: valid_key,
         owner: james_id,
     });
-    g_db.repo.save(repo_data, { waitForSync: true });
+    g_db.repo.save(repo_data);
 
     g_db.u.save(base_user_data);
 
@@ -156,7 +156,7 @@ function defaultWorkingSetupProject() {
         _key: repo_key,
         path: repo_path,
     };
-    g_db.repo.save(repo_data, { waitForSync: true });
+    g_db.repo.save(repo_data);
 
     // Create edges
     g_db.item.save({
