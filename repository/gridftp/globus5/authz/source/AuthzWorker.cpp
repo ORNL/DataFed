@@ -532,31 +532,30 @@ int AuthzWorker::processResponse(ICommunicator::Response &response) {
         response.message->get(MessageAttribute::CORRELATION_ID));
   }
   if (response.time_out) {
-    std::string error_msg =
-        "AuthWorker.cpp Core service did not respond within timeout.";
 
     AddressSplitter splitter(m_comm->address());
 
     if (splitter.port().value() != 7512) {
 
-      error_msg += "Port number is defined for: " + m_comm->address() +
+      std::string error_msg = "Port number is defined for: " + m_comm->address() +
                    " however, it is a non standard port, the standard port "
                    "for connecting to the core server is port number 7512, "
                    "whereas here you are using port: " +
                    std::to_string(splitter.port().value());
+       DL_DEBUG(m_log_context, error_msg);
     }
 
-    DL_WARNING(m_log_context, error_msg);
+    DL_WARNING(m_log_context, "FAILED AuthWorker.cpp Core service did not respond within timeout.");
     EXCEPT(1, "Core service did not respond");
   } else if (response.error) {
     // This will just log the output without throwing.
-    DL_ERROR(m_log_context, "AuthWorker.cpp there was an error when "
+    DL_ERROR(m_log_context, "FAILED AuthWorker.cpp there was an error when "
                             "communicating with the core service: "
                                 << response.error_msg);
   } else {
 
     if (not response.message) {
-      DL_ERROR(m_log_context, "No error was reported and no time out occured "
+      DL_ERROR(m_log_context, "FAILED No error was reported and no time out occured "
                               "but message is not defined.");
       EXCEPT(1, "This exception indicates that something is very wrong.");
     }
@@ -565,9 +564,10 @@ int AuthzWorker::processResponse(ICommunicator::Response &response) {
         std::get<google::protobuf::Message *>(response.message->getPayload());
     Anon::NackReply *nack = dynamic_cast<Anon::NackReply *>(payload);
     if (!nack) {
+      DL_DEBUG(m_log_context, "SUCCESS");
       return 0;
     } else {
-      DL_DEBUG(m_log_context, "Received NACK reply");
+      DL_DEBUG(m_log_context, "FAILED Received NACK reply");
     }
   }
   return 1;
@@ -654,6 +654,7 @@ int AuthzWorker::checkAuth(char *client_id, char *path, char *action) {
   LogContext log_context = m_log_context;
   log_context.correlation_id =
       std::get<std::string>(message->get(MessageAttribute::CORRELATION_ID));
+  DL_INFO(log_context, "Sending RepoAuthzRequest to repo: " << m_config->repo_id << " from client: " << client_id << " path: " << sanitized_path << " with action: " << action);
 
   auto response = m_comm->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
 
