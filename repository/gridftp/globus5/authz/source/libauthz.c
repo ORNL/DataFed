@@ -274,7 +274,7 @@ bool loadConfig() {
     AUTHZ_LOG_INFO("DataFed - Loading authz config file: %s\n", cfg_file);
     inf = fopen(cfg_file, "r");
   }
-  fseek(file, 0, SEEK_SET); // Moves the file pointer to the beginning.
+  fseek(inf, 0, SEEK_SET); // Moves the file pointer to the beginning.
   AUTHZ_LOG_INFO("Config file found.");
   if (inf) {
 
