@@ -101,7 +101,7 @@ AuthzWorker::AuthzWorker(struct Config *a_config, LogContext log_context)
  {
   m_config = std::make_unique<Config>();
   copyConfig(*m_config, *a_config);
-  auto log_path_authz = std::string(m_config->log_path);
+  std::string log_path_authz = "/datafed/logs/authzcpp.log";//std::string(m_config->log_path);
   if (log_path_authz.length() > 0) {
     // Append to the existing path because we don't want the C++ and C code
     // trying to write to the same file

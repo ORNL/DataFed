@@ -364,16 +364,16 @@ bool loadConfig() {
     if (g_config.server_key[0] == 0)
       strcat(miss, " server_key");
 
-    AUTHZ_LOG_INFO("DataFed Authz module started, version %s\n", getVersion());
-    AUTHZ_LOG_INFO("                         API, version %s\n",
-                   getAPIVersion());
-    AUTHZ_LOG_INFO("                     Release, version %s\n",
-                   getReleaseVersion());
-
     if (miss[0] != 0) {
-      AUTHZ_LOG_ERROR("DataFed - Missing required authz config items:%s\n",
-                      miss);
-      return true;
+
+        AUTHZ_LOG_INFO("DataFed Authz module started, version %s\n", getVersion());
+        AUTHZ_LOG_INFO("                         API, version %s\n",
+                getAPIVersion());
+        AUTHZ_LOG_INFO("                     Release, version %s\n",
+                getReleaseVersion());
+        AUTHZ_LOG_ERROR("DataFed - Missing required authz config items:%s\n",
+                miss);
+        return true;
     }
   } else {
 
