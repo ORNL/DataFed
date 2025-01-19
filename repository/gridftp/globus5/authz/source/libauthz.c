@@ -289,15 +289,19 @@ bool loadConfig() {
       lc++;
 
       // Stop at EOF
-      if (!fgets(buf, MAX_BUF, inf))
+      if (!fgets(buf, MAX_BUF, inf)) {
+        AUTHZ_LOG_INFO("Reading complete.");
         break;
+      }
 
       buf[strcspn(buf, "\r\n")] = 0;
 
       AUTHZ_LOG_ERROR("Buffer is %s\n",buf);
       // Skip comments and blank lines
-      if (strlen(buf) == 0 || buf[0] == '#')
+      if (strlen(buf) == 0 || buf[0] == '#') {
+        AUTHZ_LOG_INFO("skipping line: %s", buf);
         continue;
+      }
 
       // Content is formatted as "key=value" (no spaces)
       val = strchr(buf, '=');
@@ -345,6 +349,7 @@ bool loadConfig() {
       }
 
       if (err) {
+        AUTHZ_LOG_ERROR("Error encountered while reading authz config file: %s\n", buf);
         fclose(inf);
         return true;
       }
