@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <fstream>
+#include <memory>
 #include <random>
 #include <string>
 #include <syslog.h>
@@ -33,6 +34,39 @@ using namespace SDMS::Anon;
 using namespace SDMS::Auth;
 
 namespace {
+
+// Helper function to copy Config struct safely
+void copyConfig(Config& dest, const Config& src) {
+    std::strncpy(dest.repo_id, src.repo_id, MAX_ID_LEN - 1);
+    dest.repo_id[MAX_ID_LEN - 1] = '\0';
+
+    std::strncpy(dest.server_addr, src.server_addr, MAX_ADDR_LEN - 1);
+    dest.server_addr[MAX_ADDR_LEN - 1] = '\0';
+
+    std::strncpy(dest.pub_key, src.pub_key, MAX_KEY_LEN - 1);
+    dest.pub_key[MAX_KEY_LEN - 1] = '\0';
+
+    std::strncpy(dest.priv_key, src.priv_key, MAX_KEY_LEN - 1);
+    dest.priv_key[MAX_KEY_LEN - 1] = '\0';
+
+    std::strncpy(dest.server_key, src.server_key, MAX_KEY_LEN - 1);
+    dest.server_key[MAX_KEY_LEN - 1] = '\0';
+
+    std::strncpy(dest.user, src.user, MAX_ID_LEN - 1);
+    dest.user[MAX_ID_LEN - 1] = '\0';
+
+    std::strncpy(dest.test_path, src.test_path, MAX_PATH_LEN - 1);
+    dest.test_path[MAX_PATH_LEN - 1] = '\0';
+
+    std::strncpy(dest.log_path, src.log_path, MAX_PATH_LEN - 1);
+    dest.log_path[MAX_PATH_LEN - 1] = '\0';
+
+    std::strncpy(dest.globus_collection_path, src.globus_collection_path, MAX_PATH_LEN - 1);
+    dest.globus_collection_path[MAX_PATH_LEN - 1] = '\0';
+
+    dest.timeout = src.timeout; // Direct copy for scalar types
+}
+
 
 /**
  * \brief Designed to generated a random string of characters
@@ -54,16 +88,29 @@ std::string randomAlphaNumericCode() {
 
 namespace SDMS {
 
-AuthzWorker::AuthzWorker(struct Config *a_config, LogContext log_context)
-    : m_config(a_config) {
+AuthzWorker::~AuthzWorker() {
+    if (std::string(m_config->log_path).length() > 0) {
+        SDMS::global_logger.removeStream(stream_it);
+        if (m_log_file_worker.is_open()) {
+            m_log_file_worker.close();
+        }
+    }
+}
 
+AuthzWorker::AuthzWorker(struct Config *a_config, LogContext log_context)
+ {
+  m_config = std::make_unique<Config>();
+  copyConfig(*m_config, *a_config);
   auto log_path_authz = std::string(m_config->log_path);
   if (log_path_authz.length() > 0) {
     // Append to the existing path because we don't want the C++ and C code
     // trying to write to the same file
     log_path_authz.append("_authz");
-    std::ofstream log_file_worker(log_path_authz);
-    SDMS::global_logger.addStream(log_file_worker);
+    m_log_file_worker.open(log_path_authz, std::ios::out | std::ios::app);
+    if (!m_log_file_worker.is_open()) {
+        throw std::ios_base::failure("Failed to open the file: " + log_path_authz);
+    }
+    stream_it = SDMS::global_logger.addStream(m_log_file_worker);
   }
 
 #if defined(DONT_USE_SYSLOG)
@@ -80,9 +127,9 @@ AuthzWorker::AuthzWorker(struct Config *a_config, LogContext log_context)
 
   DL_INFO(m_log_context, "Testing AuthzWorker capability");
   // Convert config item to string for easier manipulation
-  m_local_globus_path_root = std::string(m_config->globus_collection_path);
+  m_local_globus_path_root = std::string(a_config->globus_collection_path);
 
-  m_test_path = std::string(m_config->test_path);
+  m_test_path = std::string(a_config->test_path);
   // NOTE the test_path MUST end with '/' this is to prevent authorization
   // by accident to a subfolder i.e.
   //
