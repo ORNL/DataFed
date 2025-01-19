@@ -227,8 +227,8 @@ bool setConfigVal(const char *a_label, char *a_dest, char *a_src,
   }
 
   strcpy(a_dest, a_src);
-  AUTHZ_LOG_INFO("Datafed setting src [%s]=%s", a_label, a_src);
-  AUTHZ_LOG_INFO("Datafed setting dest [%s]=%s", a_label, a_dest);
+  AUTHZ_LOG_INFO("Datafed setting src [%s]=%s\n", a_label, a_src);
+  AUTHZ_LOG_INFO("Datafed setting dest [%s]=%s\n", a_label, a_dest);
 
   return false;
 }
@@ -294,6 +294,7 @@ bool loadConfig() {
 
       buf[strcspn(buf, "\r\n")] = 0;
 
+      AUTHZ_LOG_ERROR("Buffer is %s\n",buf);
       // Skip comments and blank lines
       if (strlen(buf) == 0 || buf[0] == '#')
         continue;
@@ -313,30 +314,30 @@ bool loadConfig() {
       g_config.timeout = 10000;
       g_config.log_path[0] = '\0';
 
-      if (strcmp(buf, "repo_id") == 0)
+      if (strcmp(buf, "repo_id") == 0) {
         err = setConfigVal("repo_id", g_config.repo_id, val, MAX_ID_LEN);
-      else if (strcmp(buf, "server_address") == 0)
+      } else if (strcmp(buf, "server_address") == 0) {
         err = setConfigVal("server_address", g_config.server_addr, val,
                            MAX_ADDR_LEN);
-      else if (strcmp(buf, "user") == 0)
+      } else if (strcmp(buf, "user") == 0) {
         err = setConfigVal("user", g_config.user, val, MAX_ID_LEN);
-      else if (strcmp(buf, "log_path") == 0) {
+      } else if (strcmp(buf, "log_path") == 0) {
         err = setConfigVal("log_path", g_config.log_path, val, MAX_PATH_LEN);
         AUTHZ_LOG_INIT(g_config.log_path);
-      } else if (strcmp(buf, "test_path") == 0)
+      } else if (strcmp(buf, "test_path") == 0) {
         err = setConfigVal("test_path", g_config.test_path, val, MAX_PATH_LEN);
-      else if (strcmp(buf, "globus-collection-path") == 0)
+      } else if (strcmp(buf, "globus-collection-path") == 0) {
         err = setConfigVal("globus-collection-path",
                            g_config.globus_collection_path, val, MAX_PATH_LEN);
-      else if (strcmp(buf, "pub_key") == 0)
+      } else if (strcmp(buf, "pub_key") == 0) {
         err = loadKeyFile(g_config.pub_key, val);
-      else if (strcmp(buf, "priv_key") == 0)
+      } else if (strcmp(buf, "priv_key") == 0) {
         err = loadKeyFile(g_config.priv_key, val);
-      else if (strcmp(buf, "server_key") == 0)
+      } else if (strcmp(buf, "server_key") == 0) {
         err = loadKeyFile(g_config.server_key, val);
-      else if (strcmp(buf, "timeout") == 0)
+      } else if (strcmp(buf, "timeout") == 0) {
         g_config.timeout = atoi(val);
-      else {
+      } else {
         err = true;
         AUTHZ_LOG_ERROR(
             "DataFed - Invalid key, '%s', in authz config file at line %i.\n",
