@@ -274,7 +274,7 @@ bool loadConfig() {
     AUTHZ_LOG_INFO("DataFed - Loading authz config file: %s\n", cfg_file);
     inf = fopen(cfg_file, "r");
   }
-
+  fseek(file, 0, SEEK_SET); // Moves the file pointer to the beginning.
   AUTHZ_LOG_INFO("Config file found.");
   if (inf) {
 
@@ -296,7 +296,7 @@ bool loadConfig() {
 
       buf[strcspn(buf, "\r\n")] = 0;
 
-      AUTHZ_LOG_ERROR("Buffer is %s\n",buf);
+      AUTHZ_LOG_INFO("Buffer is %s\n",buf);
       // Skip comments and blank lines
       if (strlen(buf) == 0 || buf[0] == '#') {
         AUTHZ_LOG_INFO("skipping line: %s", buf);
