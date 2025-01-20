@@ -1,19 +1,15 @@
 .endpoint-browser {
     display: flex;
     flex-direction: column;
-    height: 100%;
 }
 
-.endpoint-browser .path-label,
-.endpoint-browser .path-input-container,
-.endpoint-browser .row-flex,
-.endpoint-browser .spacer,
-.endpoint-browser .file-tree-view {
+.endpoint-browser .path-label {
     margin-right: 0.5em;
 }
 
 .endpoint-browser .path-input-container {
     flex: auto;
+    margin-right: 0.5em;
 }
 
 .endpoint-browser .path-input-container input {
@@ -21,6 +17,7 @@
 }
 
 .endpoint-browser .row-flex {
+    display: flex;
     align-items: center;
 }
 
@@ -35,11 +32,11 @@
     overflow: auto;
 }
 
-.endpoint-browser .file-tree-view table {
+.endpoint-browser .file-tree-view tbody {
     width: 100%;
 }
 
-.endpoint-browser .file-tree-view td {
+.endpoint-browser .file-tree-view tbody td {
     white-space: nowrap;
     padding: 0 2em 0 0;
 }

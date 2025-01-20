@@ -46,28 +46,28 @@ class EndpointBrowser {
                           <button id="up" class="btn small">Up</button>                                                                                               
                       </div>                                                                                                                                          
                   </div>                                                                                                                                              
-              </div>                                                                                                                                           
+              </div>                                                                                                                                              
          `;
     }
 
     fileTree() {
-        return `                                                                                                                                                     
-             <div class="endpoint-browser file-tree-view ui-widget content">                                                                                          
-                 <table id="file_tree">                                                                                                                               
-                     <colgroup>                                                                                                                                       
-                         <col/>                                                                                                                                       
-                         <col/>                                                                                                                                       
-                         <col/>                                                                                                                                       
-                     </colgroup>                                                                                                                                      
-                     <tbody>                                                                                                                                          
+        return `
+             <div class="endpoint-browser file-tree-view ui-widget content">
+                 <table id="file_tree">
+                     <colgroup>
+                         <col/>
+                         <col/>
+                         <col/>
+                     </colgroup>
+                     <tbody>
                          <tr>
-                            <td/>
-                            <td/>
-                            <td/>                                                                                                     
+                             <td></td>
+                             <td></td>
+                             <td></td>
                          </tr>                                                                                                                                        
-                     </tbody>                                                                                                                                         
-                 </table>                                                                                                                                             
-             </div>                                                                                                                                              
+                     </tbody>
+                 </table>
+             </div>
          `;
     }
 
