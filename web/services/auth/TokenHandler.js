@@ -18,17 +18,57 @@ export default class OAuthTokenHandler {
     #token_type;
 
     /**
+     * @typedef {object} OAuthTransferToken
+     * @property {string} access_token - Access token
+     * @property {string} [refresh_token] - Refresh token
+     * @property {number} expires_in - Integer time in ms until expiration
+     * @property {string} scope - Scope of token
+     */
+    /**
      * @param {object} client_token - OAuth token object from which to extract relevant information
-     * @param {object} client_token.data - Raw data object for OAuth token
+     * @param {OAuthTransferToken} client_token.data - Raw data object for OAuth token
      * @param {array} client_token.data.other_tokens - Other OAuth tokens passed with parent, can be empty
      * @param {string} client_token.data.resource_server - Resource server on which OAuth token functions
      */
     constructor(client_token) {
-        // TODO: build validator - confirm existence of required token properties
         this.#client_token = Object.freeze(client_token);
         this.#other_tokens_exist = client_token.data.other_tokens.length > 0;
         this.#token_type = this.#resolveTokenType();
+        this.#validateToken();
     }
+
+    /**
+     * Validates client token is supported and has required properties
+     */
+    #validateToken() {
+        // TODO: build capability for currently unsupported token types
+        switch (this.#token_type) {
+            case AccessTokenType.GENERIC: {
+                throw new Error("Unsupported token");
+            }
+            case AccessTokenType.GLOBUS: {
+                throw new Error("Unsupported token");
+            }
+            case AccessTokenType.GLOBUS_AUTH: {
+                throw new Error("Unsupported token");
+            }
+            case AccessTokenType.GLOBUS_TRANSFER: {
+                // TODO: confirm existence of required token properties
+                break;
+            }
+            case AccessTokenType.GLOBUS_DEFAULT: {
+                // TODO: confirm existence of required token properties
+                if (!this.#other_tokens_exist) {
+                    throw new Error("Default token handling requires additional transfer tokens in other_tokens field")
+                }
+                break;
+            }
+            case AccessTokenType.ACCESS_SENTINEL: {
+                throw new Error("Invalid state");
+            }
+        }
+    }
+
     /** Resolves token type based on a provided resource server
      *
      * @returns {AccessTokenType | number}
@@ -50,7 +90,7 @@ export default class OAuthTokenHandler {
                 break;
             }
             default: {
-                token_type = AccessTokenType.GLOBUS_DEFAULT;
+                token_type = AccessTokenType.GENERIC;
             }
         }
         return token_type;
@@ -68,6 +108,7 @@ export default class OAuthTokenHandler {
         }
         return return_value;
     }
+
     /** OptionalData object
      * @typedef {object} OptionalData
      * @property {AccessTokenType | number} type - The type of token being stored
@@ -111,13 +152,6 @@ export default class OAuthTokenHandler {
         return optional_data;
     }
 
-    /**
-     * @typedef {object} OAuthTransferToken
-     * @property {string} access_token - Access token
-     * @property {string} [refresh_token] - Refresh token
-     * @property {number} expires_in - Integer time in ms until expiration
-     * @property {string} scope - Scope of token
-     */
     /**
      * @returns {OAuthTransferToken} - Appropriate OAuth transfer token depending upon token configuration
      */
