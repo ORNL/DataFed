@@ -28,20 +28,16 @@ describe("OAuthTokenHandler provided with Globus auth resource server", () => {
     let second_other_token;
     beforeEach(() => {
         first_other_token = {
-            data: {
-                resource_server: "transfer.api.globus.org",
-                other_tokens: [],
-                access_token: "first_other.access_token",
-                refresh_token: "first_other.refresh_token",
-                expires_in: 123456789,
-                scope: "test::urn::transfer.globus.org::all",
-            },
+            resource_server: "transfer.api.globus.org",
+            other_tokens: [],
+            access_token: "first_other.access_token",
+            refresh_token: "first_other.refresh_token",
+            expires_in: 123456789,
+            scope: "test::urn::transfer.globus.org::all",
         };
         second_other_token = {
-            data: {
-                access_token: "second_other.access_token",
-                refresh_token: "second_other.access_token",
-            },
+            access_token: "second_other.access_token",
+            refresh_token: "second_other.access_token",
         };
         test_token = {
             data: {
@@ -70,7 +66,7 @@ describe("OAuthTokenHandler provided with Globus auth resource server", () => {
     });
     it("should return an object with only the token type from constructOptionalData when other_tokens field has valid contents", () => {
         const token_handler = new OAuthTokenHandler(test_token);
-        const token_context = { scope: first_other_token.data.scope };
+        const token_context = { scope: first_other_token.scope };
         expect(token_handler.constructOptionalData(token_context)).to.deep.equal({
             type: AccessTokenType.GLOBUS_DEFAULT,
         });
@@ -81,15 +77,14 @@ describe("OAuthTokenHandler provided with Globus transfer resource server", () =
     let test_token;
     let first_other_token;
     beforeEach(() => {
-        first_other_token = {   // This token should be ignored
-            data: {
-                resource_server: "transfer.api.globus.org",
-                other_tokens: [],
-                access_token: "first_other.access_token",
-                refresh_token: "first_other.refresh_token",
-                expires_in: 123456789,
-                scope: "test::urn::transfer.globus.org::all",
-            },
+        first_other_token = {
+            // This token should be ignored
+            resource_server: "transfer.api.globus.org",
+            other_tokens: [],
+            access_token: "first_other.access_token",
+            refresh_token: "first_other.refresh_token",
+            expires_in: 123456789,
+            scope: "test::urn::transfer.globus.org::all",
         };
         test_token = {
             data: {
@@ -113,12 +108,16 @@ describe("OAuthTokenHandler provided with Globus transfer resource server", () =
     it("should throw an error during constructOptionalData when a collection_id is not provided in context", () => {
         const token_handler = new OAuthTokenHandler(test_token);
         const token_context = { scope: test_token.data.scope };
-        expect(() => {const optional_data = token_handler.constructOptionalData(token_context)}).to.throw("Transfer token received without collection context");
+        expect(() => {
+            const optional_data = token_handler.constructOptionalData(token_context);
+        }).to.throw("Transfer token received without collection context");
     });
     it("should throw an error during constructOptionalData when a scope is not provided in context", () => {
         const token_handler = new OAuthTokenHandler(test_token);
         const token_context = { collection_id: "mock id" };
-        expect(() => {const optional_data = token_handler.constructOptionalData(token_context)}).to.throw("Transfer token received without scope context");
+        expect(() => {
+            const optional_data = token_handler.constructOptionalData(token_context);
+        }).to.throw("Transfer token received without scope context");
     });
     it("should return appropriate optional data from constructOptionalData when necessary context is provided", () => {
         const test_collection_id = "test_collection_id";

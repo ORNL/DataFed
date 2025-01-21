@@ -24,6 +24,28 @@ export default class OAuthTokenHandler {
      * @property {number} expires_in - Integer time in ms until expiration
      * @property {string} scope - Scope of token
      */
+    #oauth_transfer_token_schema = {
+        access_token: (input_string) => {
+            if (typeof input_string !== "string") {
+                throw new Error("Missing required parameter 'access_token': string");
+            }
+        },
+        refresh_token: (input_string) => {
+            if (typeof input_string !== "string") {
+                throw new Error("Missing required parameter 'refresh_token': string");
+            }
+        },
+        expires_in: (input_number) => {
+            if (typeof input_number !== "number") {
+                throw new Error("Missing required parameter 'expires_in': number");
+            }
+        },
+        scope: (input_string) => {
+            if (typeof input_string !== "string") {
+                throw new Error("Missing required parameter 'scope': string");
+            }
+        },
+    };
     /**
      * @param {object} client_token - OAuth token object from which to extract relevant information
      * @param {OAuthTransferToken} client_token.data - Raw data object for OAuth token
@@ -53,14 +75,24 @@ export default class OAuthTokenHandler {
                 throw new Error("Unsupported token");
             }
             case AccessTokenType.GLOBUS_TRANSFER: {
-                // TODO: confirm existence of required token properties
+                const transfer_token = this.#client_token.data;
+                Object.keys(this.#oauth_transfer_token_schema).map((key) => {
+                    // Inspired by: https://stackoverflow.com/a/38616988
+                    this.#oauth_transfer_token_schema[key](transfer_token[key]);
+                });
                 break;
             }
             case AccessTokenType.GLOBUS_DEFAULT: {
-                // TODO: confirm existence of required token properties
                 if (!this.#other_tokens_exist) {
-                    throw new Error("Default token handling requires additional transfer tokens in other_tokens field")
+                    throw new Error(
+                        "Default token handling requires additional transfer tokens in other_tokens field",
+                    );
                 }
+                const first_token = this.#client_token.data.other_tokens[0];
+                Object.keys(this.#oauth_transfer_token_schema).map((key) => {
+                    // Inspired by: https://stackoverflow.com/a/38616988
+                    this.#oauth_transfer_token_schema[key](first_token[key]);
+                });
                 break;
             }
             case AccessTokenType.ACCESS_SENTINEL: {
