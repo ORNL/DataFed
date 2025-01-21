@@ -18,7 +18,7 @@
     "sanitize-html": "^2.11.0"
   },
   "scripts": {
-    "test": "mocha --config .mocharc.cjs"
+    "test": "mocha"
   },
   "repository": {
     "type": "git",
