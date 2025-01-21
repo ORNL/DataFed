@@ -547,7 +547,10 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                         "User: " + uid + "not registered",
                                     );
 
-                                    if (token_handler.getTokenType() === AccessTokenType.GLOBUS_TRANSFER) {
+                                    if (
+                                        token_handler.getTokenType() ===
+                                        AccessTokenType.GLOBUS_TRANSFER
+                                    ) {
                                         // Log error and do not register user in case of non-auth token
                                         logger.error(
                                             "ui/authn",
@@ -600,9 +603,8 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                         scope: xfr_token.scope,
                                     };
                                     try {
-                                        const optional_data = token_handler.constructOptionalData(
-                                            token_context,
-                                        );
+                                        const optional_data =
+                                            token_handler.constructOptionalData(token_context);
 
                                         // Refresh Globus access & refresh tokens to Core/DB
                                         // NOTE: core services seem entirely in charge of refreshing tokens once they are set (ClientWorker.cpp).
