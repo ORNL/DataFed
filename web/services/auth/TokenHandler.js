@@ -66,13 +66,13 @@ export default class OAuthTokenHandler {
         // TODO: build capability for currently unsupported token types
         switch (this.#token_type) {
             case AccessTokenType.GENERIC: {
-                throw new Error("Unsupported token");
+                throw new Error("Unsupported token type: GENERIC");
             }
             case AccessTokenType.GLOBUS: {
-                throw new Error("Unsupported token");
+                throw new Error("Unsupported token type: GLOBUS");
             }
             case AccessTokenType.GLOBUS_AUTH: {
-                throw new Error("Unsupported token");
+                throw new Error("Unsupported token type: GLOBUS_AUTH");
             }
             case AccessTokenType.GLOBUS_TRANSFER: {
                 const transfer_token = this.#client_token.data;
@@ -107,25 +107,22 @@ export default class OAuthTokenHandler {
      */
     #resolveTokenType() {
         const resource_server = this.#client_token.data.resource_server;
-        let token_type;
         switch (
             resource_server // TODO: exhaustive coverage of types
         ) {
             case "auth.globus.org": {
-                token_type = this.#other_tokens_exist
-                    ? AccessTokenType.GLOBUS_DEFAULT
-                    : AccessTokenType.GLOBUS_AUTH;
-                break;
+                if (this.#other_tokens_exist) {
+                    return AccessTokenType.GLOBUS_DEFAULT;
+                }
+                return AccessTokenType.GLOBUS_AUTH;
             }
             case "transfer.api.globus.org": {
-                token_type = AccessTokenType.GLOBUS_TRANSFER;
-                break;
+                return AccessTokenType.GLOBUS_TRANSFER;
             }
             default: {
-                token_type = AccessTokenType.GENERIC;
+                return AccessTokenType.GENERIC;
             }
         }
-        return token_type;
     }
 
     /** Allows read access to resolved token type
@@ -133,12 +130,7 @@ export default class OAuthTokenHandler {
      * @returns {AccessTokenType | number}
      */
     getTokenType() {
-        let return_value = this.#token_type;
-        if (typeof return_value === "object") {
-            // should not be the case
-            return_value = Object.freeze(this.#token_type);
-        }
-        return return_value;
+        return this.#token_type;
     }
 
     /** OptionalData object
@@ -159,7 +151,7 @@ export default class OAuthTokenHandler {
         let optional_data = { type: token_type };
         switch (token_type) {
             case AccessTokenType.GLOBUS_AUTH: {
-                throw new Error("Invalid state"); // TODO: build capability
+                throw new Error("Invalid state - Globus auth tokens not currently supported"); // TODO: build capability
             }
             case AccessTokenType.GLOBUS_TRANSFER: {
                 const { collection_id, scope } = token_context;
@@ -177,7 +169,7 @@ export default class OAuthTokenHandler {
             }
             default: {
                 // TODO: exhaustive coverage of types
-                throw new Error("Invalid state");
+                throw new Error("Invalid state - Unsupported token type detected.");
             }
         }
 
