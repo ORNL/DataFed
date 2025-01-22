@@ -598,10 +598,6 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                     a_req.session.uid = uid;
                                     a_req.session.reg = true;
 
-                                    // TODO: remove, set elsewhere, do not hard code
-                                    a_req.session.collection_id =
-                                        "5066556a-bcd6-4e00-8e3f-b45e0ec88b1a";
-
                                     // Note: context/optional params for arbitrary input
                                     const token_context = {
                                         // passed values are mutable
