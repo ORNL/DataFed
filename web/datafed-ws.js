@@ -565,9 +565,6 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                             "Transfer token received for non-existent user.",
                                         );
                                         a_resp.redirect("/ui/error");
-                                        throw new Error(
-                                            "Transfer token received for non-existent user.",
-                                        );
                                     }
 
                                     // Store all data need for registration in session (temporarily)
@@ -598,6 +595,8 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                     a_req.session.uid = uid;
                                     a_req.session.reg = true;
 
+                                    let redirect_path = "/ui/main";
+
                                     // Note: context/optional params for arbitrary input
                                     const token_context = {
                                         // passed values are mutable
@@ -620,13 +619,12 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                             optional_data,
                                         );
                                     } catch (err) {
-                                        a_resp.redirect("ui/error");
+                                        redirect_path = "/ui/error";
                                         logger.error("/ui/authn", getCurrentLineNumber(), err);
-                                        throw err;
                                     }
 
                                     // TODO Account may be disable from SDMS (active = false)
-                                    a_resp.redirect("/ui/main");
+                                    a_resp.redirect(redirect_path);
                                 }
                             },
                         );
