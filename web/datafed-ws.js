@@ -494,7 +494,14 @@ app.get("/ui/authn", (a_req, a_resp) => {
 
     g_globus_auth.code.getToken(a_req.originalUrl).then(
         function (client_token) {
-            const token_handler = new OAuthTokenHandler(client_token);
+            let token_handler;
+            try {
+                token_handler = new OAuthTokenHandler(client_token);
+            } catch (err) {
+                a_resp.redirect("/ui/error");
+                logger.error("/ui/authn", getCurrentLineNumber(), err);
+                throw err;
+            }
             let xfr_token = token_handler.extractTransferToken();
 
             const opts = {
@@ -553,7 +560,7 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                     ) {
                                         // Log error and do not register user in case of non-auth token
                                         logger.error(
-                                            "ui/authn",
+                                            "/ui/authn",
                                             getCurrentLineNumber(),
                                             "Transfer token received for non-existent user.",
                                         );
@@ -618,6 +625,7 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                         );
                                     } catch (err) {
                                         a_resp.redirect("ui/error");
+                                        logger.error("/ui/authn", getCurrentLineNumber(), err);
                                         throw err;
                                     }
 
@@ -719,24 +727,29 @@ app.get("/api/usr/register", (a_req, a_resp) => {
                     }
                 } else {
                     // Save access token
-                    setAccessToken(
-                        a_req.session.uid,
-                        a_req.session.acc_tok,
-                        a_req.session.ref_tok,
-                        a_req.session.acc_tok_ttl,
-                    );
+                    try {
+                        setAccessToken(
+                            a_req.session.uid,
+                            a_req.session.acc_tok,
+                            a_req.session.ref_tok,
+                            a_req.session.acc_tok_ttl,
+                        );
+                    } catch (err) {
+                        logger.error("/api/usr/register", getCurrentLineNumber(), err);
+                        throw err;
+                    } finally {
+                        // Remove data not needed for active session
+                        delete a_req.session.name;
+                        delete a_req.session.email;
+                        delete a_req.session.uuids;
+                        delete a_req.session.acc_tok;
+                        delete a_req.session.acc_tok_ttl;
+                        delete a_req.session.ref_tok;
+                        delete a_req.session.uuids;
+                    }
 
                     // Set session as registered user
                     a_req.session.reg = true;
-
-                    // Remove data not needed for active session
-                    delete a_req.session.name;
-                    delete a_req.session.email;
-                    delete a_req.session.uuids;
-                    delete a_req.session.acc_tok;
-                    delete a_req.session.acc_tok_ttl;
-                    delete a_req.session.ref_tok;
-                    delete a_req.session.uuids;
 
                     a_resp.send(reply);
                 }
@@ -1921,6 +1934,16 @@ app.get("/ui/theme/save", (a_req, a_resp) => {
     a_resp.send('{"ok":true}');
 });
 
+/** Puts message on ZeroMQ to set a user access token
+ *
+ * @param {string} a_uid - UID to which the access token belongs
+ * @param {string} a_acc_tok - Access token to be associated with user
+ * @param {string} a_ref_tok - Refresh token for access token
+ * @param {number} a_expires_sec - Time until expiration of access token
+ * @param {OptionalData} [token_optional_params] - Optional params for DataFed to process access token accordingly
+ *
+ * @throws Error - When a reply is not received from sendMessageDirect
+ */
 function setAccessToken(a_uid, a_acc_tok, a_ref_tok, a_expires_sec, token_optional_params = {}) {
     logger.info(
         setAccessToken.name,
@@ -1933,6 +1956,10 @@ function setAccessToken(a_uid, a_acc_tok, a_ref_tok, a_expires_sec, token_option
     }
     sendMessageDirect("UserSetAccessTokenRequest", a_uid, message_data, function (reply) {
         // Should be an AckReply
+        if (!reply) {
+            logger.error("setAccessToken", getCurrentLineNumber(), "failed.");
+            throw new Error("setAccessToken failed");
+        }
     });
 }
 
