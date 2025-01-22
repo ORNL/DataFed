@@ -18,7 +18,7 @@ jobs:
       # Step 3: Install Prettier and ESLint globally
       - name: Install Prettier
         run: |
-          npm install -g prettier@3.4.2
+          npm install -g prettier
 
       # Step 4: Run Prettier to format code
       - name: Run prettier
