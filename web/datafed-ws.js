@@ -141,14 +141,7 @@ class Logger {
 const logger = new Logger(LogLevel.INFO);
 
 function getCurrentLineNumber() {
-    let err_stack;
-    try {
-        throw new Error("Find Line Number");
-    } catch (err) {
-        err_stack = err.stack;
-    }
-
-    const stackTrace = err_stack;
+    const stackTrace = new Error().stack;
     const lineMatches = stackTrace.match(/:\d+:\d+/g);
 
     if (lineMatches && lineMatches.length > 1) {
