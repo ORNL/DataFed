@@ -21,11 +21,11 @@ const jqueryCode = readFileSync(jqueryPath, "utf-8");
  */
 function setupTestDOM() {
     const dom = new JSDOM(
-        `<!DOCTYPE html>                                                                                                                                             
-          <html lang="">                                                                                                                                                      
-              <body>                                                                                                                                                  
-                  <div id="transfer-dialog"></div>                                                                                                                    
-              </body>                                                                                                                                                 
+        `<!DOCTYPE html>
+          <html lang="">
+              <body>
+                  <div id="transfer-dialog"></div>
+              </body>
           </html>`,
         {
             url: "http://localhost",
@@ -37,8 +37,6 @@ function setupTestDOM() {
     // Make DOM elements available globally
     global.window = dom.window;
     global.document = dom.window.document;
-    global.navigator = dom.window.navigator;
-    global.location = dom.window.location;
     global.HTMLElement = window.HTMLElement;
     global.Element = window.Element;
     global.Node = window.Node;

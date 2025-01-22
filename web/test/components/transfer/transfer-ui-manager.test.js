@@ -1,4 +1,5 @@
-import { expect, sinon } from "../../setup.js";
+import { expect } from "chai";
+import sinon from "sinon";
 import { createMockServices, setupJQueryMocks } from "../../fixtures/transfer-fixtures.js";
 import { TransferUIManager } from "../../../static/components/transfer/transfer-ui-manager.js";
 import { TransferMode } from "../../../static/models/transfer-model.js";
