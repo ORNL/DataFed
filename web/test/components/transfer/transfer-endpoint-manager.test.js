@@ -1,5 +1,4 @@
-import { expect } from "chai";
-import sinon from "sinon";
+import { expect, sinon } from "../../setup.js";
 import { createMockServices, setupJQueryMocks } from "../../fixtures/transfer-fixtures.js";
 import { TransferEndpointManager } from "../../../static/components/transfer/transfer-endpoint-manager.js";
 
