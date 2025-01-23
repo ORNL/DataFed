@@ -54,7 +54,7 @@ std::string randomAlphaNumericCode() {
 
 namespace SDMS {
 
-AuthzWorker::AuthzWorker(struct Config *a_config, LogContext log_context)
+AuthzWorker::AuthzWorker(struct Config a_config, LogContext log_context)
     : m_config(a_config) {
 
   m_log_context = log_context;
@@ -62,9 +62,9 @@ AuthzWorker::AuthzWorker(struct Config *a_config, LogContext log_context)
   m_log_context.thread_id = 0;
 
   // Convert config item to string for easier manipulation
-  m_local_globus_path_root = std::string(m_config->globus_collection_path);
+  m_local_globus_path_root = std::string(m_config.globus_collection_path);
 
-  m_test_path = std::string(m_config->test_path);
+  m_test_path = std::string(m_config.test_path);
   // NOTE the test_path MUST end with '/' this is to prevent authorization
   // by accident to a subfolder i.e.
   //
@@ -97,9 +97,9 @@ AuthzWorker::AuthzWorker(struct Config *a_config, LogContext log_context)
  **/
 void AuthzWorker::initCommunicator() {
 
-  m_cred_options[CredentialType::PUBLIC_KEY] = m_config->pub_key;
-  m_cred_options[CredentialType::PRIVATE_KEY] = m_config->priv_key;
-  m_cred_options[CredentialType::SERVER_KEY] = m_config->server_key;
+  m_cred_options[CredentialType::PUBLIC_KEY] = m_config.pub_key;
+  m_cred_options[CredentialType::PRIVATE_KEY] = m_config.priv_key;
+  m_cred_options[CredentialType::SERVER_KEY] = m_config.server_key;
   CredentialFactory cred_factory;
   m_sec_ctx = cred_factory.create(ProtocolType::ZQTP, m_cred_options);
 
@@ -144,7 +144,7 @@ void AuthzWorker::initCommunicator() {
 
     return comm_factory.create(socket_options, credentials, timeout_on_receive,
                                timeout_on_poll);
-  }(authz_thread_id, m_config->server_addr, *m_sec_ctx);
+  }(authz_thread_id, m_config.server_addr, *m_sec_ctx);
 }
 
 /**
@@ -182,7 +182,7 @@ bool AuthzWorker::isTestPath(const std::string &posix_path) const {
   if (m_test_path.size() > 0 &&
       posix_path.compare(0, m_test_path.size(), m_test_path) == 0) {
     DL_INFO(m_log_context,
-            "Allowing request within TEST PATH: " << m_config->test_path);
+            "Allowing request within TEST PATH: " << m_config.test_path);
     return true;
   }
   return false;
@@ -574,7 +574,7 @@ int AuthzWorker::checkAuth(char *client_id, char *path, char *action) {
 
   auto auth_req = std::make_unique<Auth::RepoAuthzRequest>();
 
-  auth_req->set_repo(m_config->repo_id);
+  auth_req->set_repo(m_config.repo_id);
   auth_req->set_client(client_id);
   auth_req->set_file(sanitized_path);
   auth_req->set_action(action);
@@ -629,7 +629,7 @@ const char *getReleaseVersion() {
 
 // The same
 int checkAuthorization(char *client_id, char *object, char *action,
-                       struct Config *config) {
+                       struct Config config) {
 #if defined(DONT_USE_SYSLOG)
   SDMS::global_logger.setSysLog(false);
 #else
@@ -637,7 +637,7 @@ int checkAuthorization(char *client_id, char *object, char *action,
 #endif
   SDMS::global_logger.setLevel(SDMS::LogLevel::INFO);
   SDMS::global_logger.addStream(std::cerr);
-  auto log_path_authz = std::string(config->log_path);
+  auto log_path_authz = std::string(config.log_path);
   if (log_path_authz.length() > 0) {
     // Append to the existing path because we don't want the C++ and C code
     // trying to write to the same file
