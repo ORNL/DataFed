@@ -269,8 +269,11 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
             }
 
             if (client_id) {
-              if (checkAuthorization(client_id, object, action,
-                                     createLocalConfigCopy()) == 0) {
+              struct Config config = createLocalConfigCopy();
+                AUTHZ_LOG_INFO(
+                    "libauthz.c Auth client_id: %s, file: %s, action: %s log_file path: %s\n",
+                    client_id, object, action, config.log_path);
+              if (checkAuthorization(client_id, object, action, config) == 0) {
                 result = GLOBUS_SUCCESS;
               } else {
 
