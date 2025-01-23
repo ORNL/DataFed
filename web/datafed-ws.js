@@ -82,12 +82,12 @@ const nullfr = Buffer.from([]);
 g_ctx.fill(null);
 
 const LogLevel = {
-    TRACE: 0,
-    DEBUG: 1,
-    INFO: 2,
-    WARNING: 3,
-    ERROR: 4,
-    CRITICAL: 5,
+    CRITICAL: 0,
+    ERROR: 1,
+    WARNING: 2,
+    INFO: 3,
+    DEBUG: 4,
+    TRACE: 5,
 };
 
 class Logger {
