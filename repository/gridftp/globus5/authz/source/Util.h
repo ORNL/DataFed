@@ -7,20 +7,21 @@
 /**
  * @brief Converts a 16-byte UUID into a canonical string representation.
  *
- * This function takes a 16-byte binary UUID and converts it into a standard 
- * UUID string format (e.g., "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"), where 
- * each 'x' represents a hexadecimal digit and the hyphens separate the UUID 
+ * This function takes a 16-byte binary UUID and converts it into a standard
+ * UUID string format (e.g., "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"), where
+ * each 'x' represents a hexadecimal digit and the hyphens separate the UUID
  * sections as per the canonical format.
  *
- * @param[in] a_uuid Pointer to an array containing 16 bytes of the UUID in binary format.
- * @param[out] a_out Pointer to a pre-allocated character array to hold the resulting string. 
- *                   This array must have at least 37 bytes of space to store the 
- *                   36-character UUID string plus the null terminator.
+ * @param[in] a_uuid Pointer to an array containing 16 bytes of the UUID in
+ * binary format.
+ * @param[out] a_out Pointer to a pre-allocated character array to hold the
+ * resulting string. This array must have at least 37 bytes of space to store
+ * the 36-character UUID string plus the null terminator.
  *
- * The function processes the input UUID byte by byte, converting each byte into 
- * its hexadecimal representation and placing it into the output string. It inserts 
- * hyphens at specific positions to separate the UUID sections. Finally, it appends 
- * a null terminator to ensure the output is a valid C string.
+ * The function processes the input UUID byte by byte, converting each byte into
+ * its hexadecimal representation and placing it into the output string. It
+ * inserts hyphens at specific positions to separate the UUID sections. Finally,
+ * it appends a null terminator to ensure the output is a valid C string.
  */
 void uuidToStr(unsigned char *a_uuid, char *a_out);
 
@@ -35,9 +36,11 @@ void uuidToStr(unsigned char *a_uuid, char *a_out);
  * @param[out] a_uuid A pre-allocated buffer for the decoded UUID string in
  *                    canonical format (36 characters + null terminator).
  *                    The buffer must have a size of at least 37 bytes.
- * @return true if the input string is valid and decoding succeeds; false otherwise.
+ * @return true if the input string is valid and decoding succeeds; false
+ * otherwise.
  *
- * @note The input string must be a multiple of 8 characters for proper decoding.
+ * @note The input string must be a multiple of 8 characters for proper
+ * decoding.
  *
  * Example usage:
  * @code

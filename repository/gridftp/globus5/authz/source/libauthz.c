@@ -1,7 +1,7 @@
 
 // Local private includes
-#include "AuthzWorker.h"
 #include "AuthzLog.h"
+#include "AuthzWorker.h"
 #include "Config.h"
 #include "Util.h"
 
@@ -165,7 +165,7 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
                   callout_username_mapped1);
   AUTHZ_LOG_DEBUG("libauthz.c GLOBUS_GRIDFTP_MAPPED_IDENTITY_ID: %s\n",
                   callout_id_mapped1);
-  
+
   char globus_collection_path[MAX_PATH_LEN];
   getConfigVal("globus_collection_path", globus_collection_path, MAX_PATH_LEN);
   AUTHZ_LOG_INFO("Allowed collection path: %s, action: %s, object is %s\n",
@@ -269,8 +269,8 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
             }
 
             if (client_id) {
-              if (checkAuthorization(client_id, object, action, createLocalConfigCopy() ) ==
-                  0) {
+              if (checkAuthorization(client_id, object, action,
+                                     createLocalConfigCopy()) == 0) {
                 result = GLOBUS_SUCCESS;
               } else {
 

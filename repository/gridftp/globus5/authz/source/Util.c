@@ -10,28 +10,33 @@
 #include <string.h>
 
 void uuidToStr(unsigned char *a_uuid, char *a_out) {
-    static const char *hex = "0123456789abcdef"; ///< Lookup table for hexadecimal digits.
-    static const char *form = "xxxx-xx-xx-xx-xxxxxx"; ///< Format template for UUID sections.
-    
-    unsigned char *pend = a_uuid + 16; ///< Pointer to the end of the input UUID array.
-    char *pout = a_out; ///< Pointer to the current position in the output string.
-    const char *f = form + 1; ///< Pointer to the current position in the format template.
-    
-    for (unsigned char *pin = a_uuid; pin != pend; pout += 2, pin++, f++) {
-        // Convert the high and low nibbles of the current byte to hexadecimal characters.
-        pout[0] = hex[(*pin >> 4) & 0xF];
-        pout[1] = hex[*pin & 0xF];
-        
-        // If the format template specifies a hyphen, add it to the output.
-        if (*f == '-') {
-            pout[2] = '-';
-            pout++;
-            f++;
-        }
+  static const char *hex =
+      "0123456789abcdef"; ///< Lookup table for hexadecimal digits.
+  static const char *form =
+      "xxxx-xx-xx-xx-xxxxxx"; ///< Format template for UUID sections.
+
+  unsigned char *pend =
+      a_uuid + 16;    ///< Pointer to the end of the input UUID array.
+  char *pout = a_out; ///< Pointer to the current position in the output string.
+  const char *f =
+      form + 1; ///< Pointer to the current position in the format template.
+
+  for (unsigned char *pin = a_uuid; pin != pend; pout += 2, pin++, f++) {
+    // Convert the high and low nibbles of the current byte to hexadecimal
+    // characters.
+    pout[0] = hex[(*pin >> 4) & 0xF];
+    pout[1] = hex[*pin & 0xF];
+
+    // If the format template specifies a hyphen, add it to the output.
+    if (*f == '-') {
+      pout[2] = '-';
+      pout++;
+      f++;
     }
-    
-    // Append a null terminator to the output string.
-    pout[0] = 0;
+  }
+
+  // Append a null terminator to the output string.
+  pout[0] = 0;
 }
 
 bool decodeUUID(const char *a_input, char *a_uuid) {
@@ -46,7 +51,9 @@ bool decodeUUID(const char *a_input, char *a_uuid) {
   unsigned char *outp = out;
   size_t out_len = 0;
   size_t i, j;
-  if (len == 0) { return false; }
+  if (len == 0) {
+    return false;
+  }
 
   for (i = 0; i < len; i += 8) {
     word = 0;
@@ -79,4 +86,3 @@ bool decodeUUID(const char *a_input, char *a_uuid) {
 
   return true;
 }
-
