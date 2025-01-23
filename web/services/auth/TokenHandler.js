@@ -49,7 +49,7 @@ export default class OAuthTokenHandler {
     /**
      * @param {object} client_token - OAuth token object from which to extract relevant information
      * @param {OAuthTransferToken} client_token.data - Raw data object for OAuth token
-     * @param {array} client_token.data.other_tokens - Other OAuth tokens passed with parent, can be empty
+     * @param {Array} client_token.data.other_tokens - Other OAuth tokens passed with parent, can be empty
      * @param {string} client_token.data.resource_server - Resource server on which OAuth token functions
      */
     constructor(client_token) {
@@ -103,7 +103,7 @@ export default class OAuthTokenHandler {
 
     /** Resolves token type based on a provided resource server
      *
-     * @returns {AccessTokenType | number}
+     * @returns {AccessTokenType | number} - Access token type
      */
     #resolveTokenType() {
         const resource_server = this.#client_token.data.resource_server;
@@ -127,7 +127,7 @@ export default class OAuthTokenHandler {
 
     /** Allows read access to resolved token type
      *
-     * @returns {AccessTokenType | number}
+     * @returns {AccessTokenType | number} - Access token type
      */
     getTokenType() {
         return this.#token_type;
@@ -143,7 +143,7 @@ export default class OAuthTokenHandler {
      * @param {object} token_context - Object with arbitrary keys for context when building optional data
      * @param {string} [token_context.collection_id] - Globus Collection ID to be associated with token
      * @param {string} [token_context.scope] - Scope(s) to be associated with token
-     * @returns {OptionalData}
+     * @returns {OptionalData} - Optional data construct with appropriate values
      * @throws Error - When a required collection ID cannot be found in the session
      */
     constructOptionalData(token_context) {
