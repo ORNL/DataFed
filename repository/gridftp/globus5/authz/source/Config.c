@@ -5,6 +5,7 @@
 
 // Standard includes
 #include <ctype.h>
+#include <pthread.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>

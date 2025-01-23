@@ -7,7 +7,6 @@
 #define MAX_KEY_LEN 100
 
 // Standard includes
-#include <pthread.h>
 #include <stdbool.h>
 #include <stddef.h>
 
