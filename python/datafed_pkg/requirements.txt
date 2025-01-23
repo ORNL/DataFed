@@ -1,4 +1,4 @@
-protobuf>=4.21.1
+protobuf>=5.27.1
 pyzmq>=16
 wget>=3
 requests>=2
