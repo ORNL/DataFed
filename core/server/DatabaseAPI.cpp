@@ -326,12 +326,18 @@ void DatabaseAPI::userClearKeys(LogContext log_context) {
   dbGet("usr/keys/clear", {}, result, log_context);
 }
 
-void DatabaseAPI::userGetAccessToken(std::string &a_acc_tok,
-                                     std::string &a_ref_tok,
-                                     uint32_t &a_expires_in,
-                                     LogContext log_context) {
+void DatabaseAPI::userGetAccessToken(
+    std::string &a_acc_tok, std::string &a_ref_tok, uint32_t &a_expires_in,
+    const std::string collection_id, const bool mapped_collection,
+    bool &needs_consent, LogContext log_context) {
   Value result;
-  dbGet("usr/token/get", {}, result, log_context);
+  std::vector<std::pair<std::string, std::string>> params = {};
+
+  // TODO: impl backend accept param
+  if (mapped_collection) {
+    params.push_back({"collection_id", collection_id});
+  }
+  dbGet("usr/token/get", params, result, log_context);
 
   TRANSLATE_BEGIN()
 
@@ -340,6 +346,9 @@ void DatabaseAPI::userGetAccessToken(std::string &a_acc_tok,
   a_acc_tok = obj.getString("access");
   a_ref_tok = obj.getString("refresh");
   a_expires_in = (uint32_t)obj.getNumber("expires_in");
+
+  // TODO: impl backend return result
+  needs_consent = obj.getBool("needs_consent");
 
   TRANSLATE_END(result, log_context)
 }
