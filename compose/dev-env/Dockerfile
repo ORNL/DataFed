@@ -66,6 +66,8 @@ WORKDIR /DataFed
 # get config for core
 RUN <<EOF cat > /opt/entrypoint.sh
 #!/bin/bash
+# Generate DataFed env
+/DataFed/scripts/generate_datafed.sh
 # create compile_commands.json via cmake export option
 /opt/datafed/dependencies/bin/cmake -S . -B build -DBUILD_REPO_SERVER=True -DBUILD_AUTHZ=False \
   -DBUILD_CORE_SERVER=True -DBUILD_WEB_SERVER=True \
