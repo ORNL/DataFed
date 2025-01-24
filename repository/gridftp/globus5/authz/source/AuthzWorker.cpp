@@ -591,11 +591,18 @@ int AuthzWorker::checkAuth(char *client_id, char *path, char *action) {
 
   m_log_context.correlation_id =
       std::get<std::string>(message->get(MessageAttribute::CORRELATION_ID));
-  DL_INFO(m_log_context,
-            "Sending RepoAuthzRequest client_id: " << client_id << " path: " << path << " action: " << action );
-  m_comm->send(*message);
 
-  auto response = m_comm->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
+  ICommunicator::Response response; 
+ 
+  int attempt = 0; 
+  int retries = 3;
+  do { 
+    DL_INFO(m_log_context,
+            "Sending RepoAuthzRequest client_id: " << client_id << " path: " << path << " action: " << action << " attempt: " << attempt);
+    m_comm->send(*message);
+    response = m_comm->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
+    ++attempt;
+  } while (response.time_out && attempt < retries);
 
   return processResponse(response);
 }
