@@ -54,6 +54,8 @@ std::string randomAlphaNumericCode() {
 
 namespace SDMS {
 
+static bool log_stream_added = false;
+
 AuthzWorker::AuthzWorker(struct Config a_config, LogContext log_context)
     : m_config(a_config) {
 
@@ -598,7 +600,7 @@ int AuthzWorker::checkAuth(char *client_id, char *path, char *action) {
   int retries = 3;
   do { 
     DL_INFO(m_log_context,
-            "Sending RepoAuthzRequest client_id: " << client_id << " path: " << path << " action: " << action << " attempt: " << attempt);
+            "Sending RepoAuthzRequest client_id: " << client_id << " path: " << path << " action: " << action << " attempt: " << attempt << " address: " << m_comm->address());
     m_comm->send(*message);
     response = m_comm->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
     ++attempt;
@@ -641,7 +643,7 @@ const char *getReleaseVersion() {
 
 // The same
 int checkAuthorization(char *client_id, char *object, char *action,
-                       struct Config config) {
+                       struct Config config, int thread_id) {
 #if defined(DONT_USE_SYSLOG)
   SDMS::global_logger.setSysLog(false);
 #else
@@ -649,10 +651,11 @@ int checkAuthorization(char *client_id, char *object, char *action,
 #endif
   SDMS::LogContext log_context;
   log_context.thread_name = "authz_check";
-  log_context.thread_id = 0;
+  log_context.thread_id = thread_id;
 
   SDMS::global_logger.setLevel(SDMS::LogLevel::INFO);
   SDMS::global_logger.addStream(std::cerr);
+  // The ofstream must exist for the duration of the lifetime
   std::ofstream log_file_worker;
   auto log_path_authz = std::string(config.log_path);
   if (log_path_authz.length() > 0) {
@@ -663,7 +666,10 @@ int checkAuthorization(char *client_id, char *object, char *action,
     if (!log_file_worker.is_open()) {
       DL_ERROR(log_context, "AuthzWorker open log file path failed, path: " << log_path_authz);
     } else {
-      SDMS::global_logger.addStream(log_file_worker);
+      if (log_stream_added == false ) {
+        SDMS::global_logger.addStream(log_file_worker);
+        log_stream_added = true;
+      }
     }
   }
 

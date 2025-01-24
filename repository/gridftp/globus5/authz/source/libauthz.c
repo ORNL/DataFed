@@ -275,7 +275,10 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
                 AUTHZ_LOG_INFO(
                     "libauthz.c Auth client_id: %s, file: %s, action: %s log_file path: %s\n",
                     client_id, object, action, config.log_path);
-              if (checkAuthorization(client_id, object, action, config) == 0) {
+
+              // NOTE - Globus stores thread ids as a pointer, using an int to represent this is non
+              // ideal because it will be truncated on conversion.
+              if (checkAuthorization(client_id, object, action, config, (int) thread_id.dummy) == 0) {
                 result = GLOBUS_SUCCESS;
               } else {
 
