@@ -8,6 +8,7 @@
 // Globus third party includes
 #include <globus_error_hierarchy.h>
 #include <globus_types.h>
+#include <globus_thread.h>
 #include <gssapi.h>
 
 // Standard includes
@@ -170,7 +171,8 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
   getConfigVal("globus_collection_path", globus_collection_path, MAX_PATH_LEN);
   AUTHZ_LOG_INFO("Allowed collection path: %s, action: %s, object is %s\n",
                  globus_collection_path, action, object);
-
+  globus_thread_t thread_id = globus_thread_self();
+  AUTHZ_LOG_INFO("Thread id is: %p\n", (void *) thread_id.dummy); 
   AUTHZ_LOG_ERROR("gsi_authz_authorize_async, handle: %p, act: %s, obj: %s\n",
                   handle, action, object);
 

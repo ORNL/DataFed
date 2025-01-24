@@ -635,20 +635,40 @@ int checkAuthorization(char *client_id, char *object, char *action,
 #else
   SDMS::global_logger.setSysLog(true);
 #endif
+  SDMS::LogContext log_context;
+  log_context.thread_name = "authz_check";
+  log_context.thread_id = 0;
+
   SDMS::global_logger.setLevel(SDMS::LogLevel::INFO);
   SDMS::global_logger.addStream(std::cerr);
+  std::ofstream log_file_worker;
   auto log_path_authz = std::string(config.log_path);
   if (log_path_authz.length() > 0) {
     // Append to the existing path because we don't want the C++ and C code
     // trying to write to the same file
     log_path_authz.append("_authz");
-    std::ofstream log_file_worker(log_path_authz);
+    log_file_worker.open(log_path_authz, std::ios::app);
+    if (!log_file_worker.is_open()) {
+      DL_ERROR(log_context, "AuthzWorker open log file path failed, path: " << log_path_authz);
+    }
+
     SDMS::global_logger.addStream(log_file_worker);
   }
 
-  SDMS::LogContext log_context;
-  log_context.thread_name = "authz_check";
-  log_context.thread_id = 0;
+  std::ofstream log_file_worker2;
+  std::string log_path_authz2 = "/opt/datafed/logs/datafed-authz.log_debug";
+  if (log_path_authz2.length() > 0) {
+    // Append to the existing path because we don't want the C++ and C code
+    // trying to write to the same file
+    log_file_worker2.open(log_path_authz2, std::ios::app);
+    if (!log_file_worker2.is_open()) {
+      DL_ERROR(log_context, "AuthzWorker open log file path failed, path: " << log_path_authz2);
+    }
+
+    SDMS::global_logger.addStream(log_file_worker2);
+  }
+
+
   DL_DEBUG(log_context, "AuthzWorker checkAuthorization "
                             << client_id << ", " << object << ", " << action);
 
@@ -663,6 +683,8 @@ int checkAuthorization(char *client_id, char *object, char *action,
     DL_ERROR(log_context, "AuthzWorker exception: " << e.what());
   }
 
+  log_file_worker.close();
+  log_file_worker2.close();
   return result;
 }
 }
