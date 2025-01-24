@@ -59,7 +59,7 @@ return {
  { import = "astrocommunity.pack.python" },
  { import = "astrocommunity.pack.json" },
  { import = "astrocommunity.pack.typescript" }
-}:
+}
 EOF
 
 WORKDIR /DataFed
