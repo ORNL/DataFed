@@ -656,19 +656,22 @@ int checkAuthorization(char *client_id, char *object, char *action,
   SDMS::global_logger.setLevel(SDMS::LogLevel::INFO);
   SDMS::global_logger.addStream(std::cerr);
   // The ofstream must exist for the duration of the lifetime
+  std::list<SDMS::Logger::StreamEntry>::iterator it;
   std::ofstream log_file_worker;
   auto log_path_authz = std::string(config.log_path);
+  bool added = false;
   if (log_path_authz.length() > 0) {
     // Append to the existing path because we don't want the C++ and C code
     // trying to write to the same file
     log_path_authz.append("_authz");
-    log_file_worker.open(log_path_authz, std::ios::app);
-    if (!log_file_worker.is_open()) {
-      DL_ERROR(log_context, "AuthzWorker open log file path failed, path: " << log_path_authz);
-    } else {
-      if (log_stream_added == false ) {
-        SDMS::global_logger.addStream(log_file_worker);
-        log_stream_added = true;
+    if (SDMS::log_stream_added == false ) {
+      log_file_worker.open(log_path_authz, std::ios::app);
+      if (!log_file_worker.is_open()) {
+        DL_ERROR(log_context, "AuthzWorker open log file path failed, path: " << log_path_authz);
+      } else {
+        it = SDMS::global_logger.addStream(log_file_worker);
+        SDMS::log_stream_added = true;
+        added = true;
       }
     }
   }
@@ -687,7 +690,15 @@ int checkAuthorization(char *client_id, char *object, char *action,
     DL_ERROR(log_context, "AuthzWorker exception: " << e.what());
   }
 
-  log_file_worker.close();
+  // We don't want to close it unless we can also remove it, and we want to 
+  // leave it open until we are completely done. But because it is only defined
+  // in this scope we have to close and remove it.
+  //
+  if (log_file_worker.is_open() && added) {
+    log_file_worker.close();
+    SDMS::global_logger.removeStream(it);
+    SDMS::log_stream_added = false;
+  }
   return result;
 }
 }
