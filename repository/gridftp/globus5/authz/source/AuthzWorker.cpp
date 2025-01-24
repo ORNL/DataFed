@@ -467,8 +467,9 @@ int AuthzWorker::processResponse(ICommunicator::Response &response) {
         response.message->get(MessageAttribute::CORRELATION_ID));
   }
   if (response.time_out) {
-    std::string error_msg =
-        "AuthWorker.cpp Core service did not respond within timeout.";
+    std::string error_msg = "AuthWorker.cpp Core service at address: ";
+    error_msg += m_comm->address();
+    error_msg += " did not respond within timeout. ";
 
     AddressSplitter splitter(m_comm->address());
 
@@ -482,7 +483,7 @@ int AuthzWorker::processResponse(ICommunicator::Response &response) {
     }
 
     DL_WARNING(m_log_context, error_msg);
-    EXCEPT(1, "Core service did not respond");
+    EXCEPT(1, error_msg);
   } else if (response.error) {
     // This will just log the output without throwing.
     DL_ERROR(m_log_context, "AuthWorker.cpp there was an error when "
@@ -650,24 +651,10 @@ int checkAuthorization(char *client_id, char *object, char *action,
     log_file_worker.open(log_path_authz, std::ios::app);
     if (!log_file_worker.is_open()) {
       DL_ERROR(log_context, "AuthzWorker open log file path failed, path: " << log_path_authz);
+    } else {
+      SDMS::global_logger.addStream(log_file_worker);
     }
-
-    SDMS::global_logger.addStream(log_file_worker);
   }
-
-  std::ofstream log_file_worker2;
-  std::string log_path_authz2 = "/opt/datafed/logs/datafed-authz.log_debug";
-  if (log_path_authz2.length() > 0) {
-    // Append to the existing path because we don't want the C++ and C code
-    // trying to write to the same file
-    log_file_worker2.open(log_path_authz2, std::ios::app);
-    if (!log_file_worker2.is_open()) {
-      DL_ERROR(log_context, "AuthzWorker open log file path failed, path: " << log_path_authz2);
-    }
-
-    SDMS::global_logger.addStream(log_file_worker2);
-  }
-
 
   DL_DEBUG(log_context, "AuthzWorker checkAuthorization "
                             << client_id << ", " << object << ", " << action);
@@ -684,7 +671,6 @@ int checkAuthorization(char *client_id, char *object, char *action,
   }
 
   log_file_worker.close();
-  log_file_worker2.close();
   return result;
 }
 }
