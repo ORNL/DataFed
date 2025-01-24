@@ -12,7 +12,7 @@ import * as dlgRepoEdit from "./dlg_repo_edit.js";
 import * as dlgSetACLs from "./dlg_set_acls.js";
 import * as dlgRepoManage from "./dlg_repo_manage.js";
 import * as dlgOwnerChangeConfirm from "./dlg_owner_chg_confirm.js";
-import * as dlgStartXfer from "./dlg_start_xfer.js";
+import { transferDialog } from "./components/transfer/index.js";
 import * as dlgSettings from "./dlg_settings.js";
 import * as dlgCollNewEdit from "./dlg_coll_new_edit.js";
 import * as dlgProjNewEdit from "./dlg_proj_new_edit.js";
@@ -613,7 +613,7 @@ function dataPut(a_id, a_cb) {
     api.dataPutCheck(a_id, function (ok, data) {
         if (ok) {
             //console.log("data put check:",data);
-            dlgStartXfer.show(model.TT_DATA_PUT, [data.item], a_cb);
+            transferDialog.show(model.TT_DATA_PUT, [data.item], a_cb);
         } else {
             dialogs.dlgAlert("Data Put Error", data);
         }
@@ -2078,11 +2078,20 @@ function treeSelectRange(a_tree, a_node) {
     }
 }
 
-/** @brief Check if past is allowed to specified node
- *  @param dest_node - Candidate paste destination node
- *  @param src_node - Node being dragged
+/**
+ * @function
+ * Check if pasting is allowed to the specified node.
  *
- * There is additional source information in pasteXXX
+ * This function checks whether a paste operation is allowed based on various conditions,
+ * such as whether the destination node is valid, whether the source and destination nodes
+ * belong to the same scope, and other restrictions like node types and parent-child relationships.
+ *
+ * @param {object} dest_node - The candidate destination node where the paste operation is being attempted.
+ * @param {object} src_node - The node being dragged or copied to the destination.
+ *
+ * @returns {string|boolean} Returns "over" if the paste is allowed, otherwise returns `false`.
+ *
+ * There is additional source information in the pasteSourceParent and pasteCollections variables.
  */
 function pasteAllowed(dest_node, src_node) {
     //console.log("pasteAllowed:",dest_node, src_node);

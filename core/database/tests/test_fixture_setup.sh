@@ -1,27 +1,20 @@
 #!/bin/bash
 
-# History
-#
-# -e added back in because CI jobs are not failing when there are problems in
-# this script. Residual password files can be removed a different way. i.e.  in
-# a cleanup script associated with a CI job.
-#
-# -e has been removed so that if an error occurs the PASSWORD File is deleted
-# and not left lying around
-set -euf -o pipefail
+
+set -uef -o pipefail
 
 SCRIPT=$(realpath "$BASH_SOURCE[0]")
 SOURCE=$(dirname "$SCRIPT")
-PROJECT_ROOT=$(realpath ${SOURCE}/../../../)
-source ${PROJECT_ROOT}/config/datafed.sh
+PROJECT_ROOT=$(realpath "${SOURCE}/../../../")
+source "${PROJECT_ROOT}/config/datafed.sh"
 source "${PROJECT_ROOT}/scripts/dependency_versions.sh"
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
 Help()
 {
-  echo "$(basename $0) Will run a Foxx unit test"
+  echo "$(basename $0) Will initialize fixtures for Foxx tests"
   echo
-  echo "Syntax: $(basename $0) [-h|u|p|t]"
+  echo "Syntax: $(basename $0) [-h|u|p|y]"
   echo "options:"
   echo "-h, --help                        Print this help message."
   echo "-u, --database-user               Database user, needed to log into the database."
@@ -31,14 +24,19 @@ Help()
   echo "                                  provided via the command line it can also be set"
   echo "                                  using the enviromental variable"
   echo "                                  DATAFED_DATABASE_PASSWORD."
-  echo "-t, --test                        The name of the test to run. If nothing is specified"
-  echo "                                  will run all the tests."
   echo
   echo "NOTE: Do not run this script with sudo!"
 }
 
 local_DATABASE_NAME="sdms"
 local_DATABASE_USER="root"
+
+if [ -z "${DATAFED_DATABASE_HOST:-}" ]
+then
+  local_DATAFED_DATABASE_HOST="localhost"
+else
+  local_DATAFED_DATABASE_HOST=$(printenv DATAFED_DATABASE_HOST)
+fi
 
 if [ -z "${DATAFED_DATABASE_PASSWORD:-}" ]
 then
@@ -54,14 +52,13 @@ else
   local_FOXX_MAJOR_API_VERSION=$(printenv FOXX_MAJOR_API_VERSION)
 fi
 
-TEST_TO_RUN="all"
-
-VALID_ARGS=$(getopt -o hu:p:f:t: --long 'help',database-user:,database-password:,foxx-api-major-version:,test: -- "$@")
+VALID_ARGS=$(getopt -o hu:p:f: --long 'help',database-user:,database-password:,foxx-api-major-version: -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
 fi
 eval set -- "$VALID_ARGS"
 while [ : ]; do
+  echo "$1"
   case "$1" in
     -h | --help)
         Help
@@ -82,13 +79,8 @@ while [ : ]; do
         local_FOXX_MAJOR_API_VERSION=$2
         shift 2
         ;;
-    -t | --test)
-        echo "Processing 'test' option. Input argument is '$2'"
-        TEST_TO_RUN=$2
-        shift 2
-        ;;
-    --) shift; 
-        break 
+    --) shift;
+        break
         ;;
     \?) # incorrect option
         echo "Error: Invalid option"
@@ -112,36 +104,29 @@ fi
 
 # There are apparently 3 different ways to deploy Foxx microservices,
 # Using curl with http requests
-# Using the Arango web ui 
+# Using the Arango web ui
 # Using node module
 #
-# The web deployment requires manual interaction, and I could not figure out the 
-# syntax for the REST http endpoints with curl so we are going to try the node module
+# The web deployment requires manual interaction, and I could not figure out
+# the syntax for the REST http endpoints with curl so we are going to try the
+# node module
 
-# Will only install if not already present
+# Will only install if it is not already installed
 install_nvm
 install_node
 
 FOXX_PREFIX=""
 if ! command -v foxx > /dev/null 2>&1; then
-      FOXX_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/bin/"
+    FOXX_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/bin/"
 fi
 
 PATH_TO_PASSWD_FILE=${SOURCE}/database_temp.password
-if [ "$TEST_TO_RUN" == "all" ]
-then
-  # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint 
-  "${FOXX_PREFIX}foxx" test -u "${local_DATABASE_USER}" \
-   --server "tcp://${DATAFED_DATABASE_HOST}:8529" \
+
+# set up test user fixtures, this script should be idempotent, this script is described in the manifest
+"${FOXX_PREFIX}foxx" script -u "${local_DATABASE_USER}" \
+   --server "tcp://${local_DATAFED_DATABASE_HOST}:8529" \
     -p "${PATH_TO_PASSWD_FILE}" \
     --database "${local_DATABASE_NAME}" \
-    "/api/${local_FOXX_MAJOR_API_VERSION}" --reporter spec
-else
-  echo "Test: $TEST_TO_RUN"
-  # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint 
-  "${FOXX_PREFIX}foxx" test -u "${local_DATABASE_USER}" \
-  --server "tcp://${DATAFED_DATABASE_HOST}:8529" \
-    -p "${PATH_TO_PASSWD_FILE}" \
-    --database "${local_DATABASE_NAME}" \
-    "/api/${local_FOXX_MAJOR_API_VERSION}" "$TEST_TO_RUN" --reporter spec --verbose
-fi
+    "/api/${local_FOXX_MAJOR_API_VERSION}" user-fixture
+
+

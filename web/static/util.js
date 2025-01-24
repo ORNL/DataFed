@@ -2,7 +2,7 @@ import * as settings from "./settings.js";
 import * as model from "./model.js";
 import * as api from "./api.js";
 import * as dialogs from "./dialogs.js";
-import * as dlgStartXfer from "./dlg_start_xfer.js";
+import { transferDialog } from "./components/transfer/index.js";
 
 var status_timer;
 
@@ -750,7 +750,7 @@ export function dataGet(a_ids, a_cb) {
                 }
             }
 
-            dlgStartXfer.show(model.TT_DATA_GET, data.item, a_cb);
+            transferDialog.show(model.TT_DATA_GET, data.item, a_cb);
 
             /* unused http xfr
                 for ( i in data.item ){
@@ -769,37 +769,34 @@ export function dataGet(a_ids, a_cb) {
     });
 }
 
-// Only works on schema records with valid JSON schema definitions
-/*
-export function schemaResolveRefs( a_schema ){
-    var refs = {};
-    _schemaResolveRefs( a_schema.def.properties, refs );
-}
-
-function _schemaResolveRefs( a_props, a_refs ){
-    var v, p;
-    for ( var k in a_props ){
-        v = a_props[k];
-
-        if ( "$ref" in v ){
-        }else if (( p = v.properties ) != undefined ) {
-            _schemaResolveRefs( p, a_refs );
-        }
-    }
-}
-*/
-
 /**
- * Basic implementation of get_authorize_url from Globus SDK
- *  @param {UUID} client_id The UUID of the Globus authentication client
- *  @param {string} redirect_uri The URI safe application-wide Globus Auth redirect URI.
- *  @param {Array<string>}requested_scopes The scopes on the token(s) being requested
- *      In the case of accessing a mapped collection, this should include the mapped collection's UUID
- *      like so: https://auth.globus.org/scopes/YOUR-UUID-HERE/data_access
- *  @param {string} state Allows the application to pass information back to itself
- *  @param {boolean} refresh_tokens Request refresh tokens in addition to access tokens
- *  @param {object} query_params Additional params
- *  @returns {string} The URL a user can follow to provide authorization and consent via Globus
+ * Basic implementation of `get_authorize_url` from the Globus SDK.
+ *
+ * This function generates the authorization URL that a user can follow to provide
+ * authorization and consent via Globus Auth.
+ *
+ * @param {UUID} client_id - The UUID of the Globus authentication client.
+ * @param {string} redirect_uri - The URI-safe application-wide Globus Auth redirect URI.
+ * @param {Array<string>} [requested_scopes=[]] - The scopes on the token(s) being requested.
+ * In the case of accessing a mapped collection, this should include the mapped
+ * collection's UUID, such as: `https://auth.globus.org/scopes/YOUR-UUID-HERE/data_access`.
+ * @param {string} [state="_default"] - Allows the application to pass information back to itself.
+ * @param {boolean} [refresh_tokens=false] - Request refresh tokens in addition to access tokens.
+ * @param {object} [query_params={}] - Additional parameters to be included in the authorization URL.
+ *
+ * @returns {string} The URL a user can follow to provide authorization and consent via Globus.
+ *
+ * @throws {Error} If either `client_id` or `redirect_uri` are not provided.
+ *
+ * @example
+ * const url = globusGetAuthorizeURL(
+ *   'your-client-id',
+ *   'your-redirect-uri',
+ *   ['openid', 'email'],
+ *   'custom-state',
+ *   true,
+ *   { custom_param: 'value' }
+ * );
  */
 export function globusGetAuthorizeURL(
     client_id,
