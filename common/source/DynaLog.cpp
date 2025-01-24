@@ -75,42 +75,57 @@ std::ostream &operator<<(std::ostream &out, const LogLine &log_line) {
   return out;
 }
 
+
+
+
 void Logger::output(const LogLevel level, std::string file, std::string func,
                     int line_num, const LogContext &context,
                     const std::string &message) {
 
-  size_t index = 0;
-  for (auto &output_stream : m_streams) {
-    std::lock_guard<std::mutex> lock(*m_mutexes.at(index));
-    index++;
-    boost::posix_time::ptime time =
-        boost::posix_time::microsec_clock::universal_time();
-    output_stream.get() << boost::posix_time::to_iso_extended_string(time)
-                        << "Z ";
-    output_stream.get() << toString(level) << " ";
-    output_stream.get() << file << ":" << func << ":" << line_num << " ";
-    LogLine log_line(context, message);
-    output_stream.get() << log_line;
-    output_stream.get() << std::endl;
-  }
+    std::lock_guard<std::mutex> lock(m_streams_mutex);  // Lock the list mutex
 
-  if (m_output_to_syslog) {
-    std::stringstream buffer;
-    buffer << message;
-    buffer << file << ":" << func << ":" << line_num << " ";
-    LogLine log_line(context, message);
-    buffer << log_line;
-    buffer << std::endl;
-    syslog(toSysLog(level), "%s", buffer.str().c_str());
-  }
+    for (auto &output_stream : m_streams) {
+        std::lock_guard<std::mutex> stream_lock(*output_stream.mutex);  // Lock individual stream mutex
+        boost::posix_time::ptime time =
+            boost::posix_time::microsec_clock::universal_time();
+        output_stream.stream.get() << boost::posix_time::to_iso_extended_string(time)
+                                   << "Z ";
+        output_stream.stream.get() << toString(level) << " ";
+        output_stream.stream.get() << file << ":" << func << ":" << line_num << " ";
+        LogLine log_line(context, message);
+        output_stream.stream.get() << log_line;
+        output_stream.stream.get() << std::endl;
+    }
+
+    if (m_output_to_syslog) {
+        std::stringstream buffer;
+        buffer << message;
+        buffer << file << ":" << func << ":" << line_num << " ";
+        LogLine log_line(context, message);
+        buffer << log_line;
+        buffer << std::endl;
+        syslog(toSysLog(level), "%s", buffer.str().c_str());
+    }
 }
 
 void Logger::setLevel(LogLevel level) noexcept { m_log_level = level; }
 
-void Logger::addStream(std::ostream &stream) {
-  m_streams.push_back(std::ref(stream));
-  m_mutexes.emplace_back(std::make_unique<std::mutex>());
+std::list<Logger::StreamEntry>::iterator Logger::addStream(std::ostream &stream) {
+    std::lock_guard<std::mutex> lock(m_streams_mutex);  // Lock the list mutex
+    auto it = m_streams.insert(m_streams.end(), StreamEntry{stream});  // Insert and get iterator
+    return it;  // Return the iterator pointing to the new stream element
 }
+
+void Logger::removeStream(std::list<StreamEntry>::iterator it) {
+    std::lock_guard<std::mutex> lock(m_streams_mutex);  // Lock the list mutex
+    if (it != m_streams.end()) {
+        m_streams.erase(it);
+    }
+}
+//void Logger::addStream(std::ostream &stream) {
+//  m_streams.push_back(std::ref(stream));
+//  m_mutexes.emplace_back(std::make_unique<std::mutex>());
+//}
 
 void Logger::trace(std::string file, std::string func, int line_num,
                    const LogContext &context, const std::string &message) {
