@@ -25,6 +25,10 @@ static struct Config g_config;
 // already been initialized
 static bool config_loaded = false;
 
+// Used to control the output of log messages and prevent initialization
+// messaged from reappearing
+static bool first_run = true;
+
 // Initialize the read-write lock for the configuration object
 pthread_rwlock_t config_rwlock = PTHREAD_RWLOCK_INITIALIZER;
 
@@ -339,11 +343,19 @@ bool validateConfig() {
   return true;
 }
 
+/**
+ * Will print the version information first go around..
+ *
+ * @note Assumes you have a thread lock in play
+ **/
 void logRelease() {
-  AUTHZ_LOG_INFO("DataFed Authz module started, version %s\n", getVersion());
-  AUTHZ_LOG_INFO("                         API, version %s\n", getAPIVersion());
-  AUTHZ_LOG_INFO("                     Release, version %s\n",
-                 getReleaseVersion());
+  if(first_run) {
+    AUTHZ_LOG_INFO("DataFed Authz module started, version %s\n", getVersion());
+    AUTHZ_LOG_INFO("                         API, version %s\n", getAPIVersion());
+    AUTHZ_LOG_INFO("                     Release, version %s\n",
+                   getReleaseVersion());
+    first_run = false;
+  }
 }
 
 /******************************************************************************

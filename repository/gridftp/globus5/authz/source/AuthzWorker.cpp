@@ -463,6 +463,9 @@ std::string AuthzWorker::getAuthzPath(char *full_ftp_path) {
 int AuthzWorker::processResponse(ICommunicator::Response &response) {
   if (response.message) { // Make sure the message exists before we try to
                           // access it
+                          
+    // Prefer the correlation id of the received message than the one that
+    // was originally sent
     m_log_context.correlation_id = std::get<std::string>(
         response.message->get(MessageAttribute::CORRELATION_ID));
   }
@@ -586,10 +589,11 @@ int AuthzWorker::checkAuth(char *client_id, char *path, char *action) {
                m_cred_options[CredentialType::PUBLIC_KEY]);
   message->setPayload(std::move(auth_req));
 
-  m_comm->send(*message);
-  LogContext log_context = m_log_context;
-  log_context.correlation_id =
+  m_log_context.correlation_id =
       std::get<std::string>(message->get(MessageAttribute::CORRELATION_ID));
+  DL_INFO(m_log_context,
+            "Sending RepoAuthzRequest client_id: " << client_id << " path: " << path << " action: " << action );
+  m_comm->send(*message);
 
   auto response = m_comm->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
 
