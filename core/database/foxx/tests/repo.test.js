@@ -230,7 +230,8 @@ describe("Testing Repo class", () => {
             path: path,
         });
         const repo = new Repo("foo");
-        expect(repo.pathType("/mnt/datafed/compose-home/user/tim/1135")).to.equal(PathType.USER_RECORD_PATH);
+        expect(repo.pathType("/mnt/datafed/compose-home/user/tim/1135")).to.equal(
+            PathType.USER_RECORD_PATH,
+        );
     });
-
 });
