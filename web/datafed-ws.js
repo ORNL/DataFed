@@ -1877,7 +1877,15 @@ app.post("/ui/ep/recent/save", (a_req, a_resp) => {
 });
 
 app.get("/ui/ep/dir/list", (a_req, a_resp) => {
-    sendMessage("UserGetAccessTokenRequest", {}, a_req, a_resp, function (reply) {
+    // TODO: non-mocked data
+    a_req.session.collection_id = "some fake ID";
+    a_req.session.collection_type = "mapped";
+    const new_message_data = {
+        collection_id: a_req.session.collection_id,
+        collection_type: a_req.session.collection_type,
+    }
+
+    sendMessage("UserGetAccessTokenRequest", {...new_message_data}, a_req, a_resp, function (reply) {
         const opts = {
             hostname: "transfer.api.globusonline.org",
             method: "GET",

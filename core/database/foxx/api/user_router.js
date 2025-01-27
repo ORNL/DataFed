@@ -728,7 +728,7 @@ router
                 user = g_lib.getUserFromClientID(req.queryParams.client);
             }
 
-            var result = {};
+            var result = { token_type: g_lib.AccessTokenType.GLOBUS_DEFAULT, scopes: "" };    // TODO: better defaulting?
             if (collection_token) {
                 // TODO: validate collection type
                 const globus_collection = g_db.globus_coll.document({_key: collection_id});
@@ -738,6 +738,7 @@ router
                     }
                 });
                 if (token_matches.length > 0) {
+                    if (token_matches.length > 1) { console.log("More than one token: ", token_matches); }
                     // TODO: should only be one token
                     const token = token_matches[0];
                     result.access = token.access;
@@ -748,6 +749,9 @@ router
                         result.expires_in = expires_in > 0 ? expires_in : 0;
                     }
                     result.needs_consent = false;
+                    // TODO: consider how this is used
+                    result.token_type = token.type;
+                    result.scopes = token.scope;
                 }
                 else {
                     result.access = "";

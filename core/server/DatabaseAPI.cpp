@@ -329,7 +329,8 @@ void DatabaseAPI::userClearKeys(LogContext log_context) {
 void DatabaseAPI::userGetAccessToken(
     std::string &a_acc_tok, std::string &a_ref_tok, uint32_t &a_expires_in,
     const std::string collection_id, const std::string collection_type,
-    bool &needs_consent, LogContext log_context) {
+    bool &needs_consent, int &token_type, // TODO: use underlying type?
+    std::string &scopes, LogContext log_context) {
   Value result;
   std::vector<std::pair<std::string, std::string>> params = {};
 
@@ -352,6 +353,8 @@ void DatabaseAPI::userGetAccessToken(
 
   // TODO: impl backend return result
   needs_consent = obj.getBool("needs_consent");
+  token_type = (int)obj.getNumber("token_type");
+  scopes = obj.getString("scopes");
 
   TRANSLATE_END(result, log_context)
 }

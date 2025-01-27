@@ -1363,6 +1363,8 @@ std::unique_ptr<IMessage> ClientWorker::procUserGetAccessTokenRequest(
   string acc_tok, ref_tok;
   uint32_t expires_in;
   bool needs_consent;
+  int token_type;
+  string scopes;
 
   // TODO: set according to an updated msg_request obj
   // string collection_id = msg_request.collection_id();
@@ -1373,13 +1375,22 @@ std::unique_ptr<IMessage> ClientWorker::procUserGetAccessTokenRequest(
 
   m_db_client.setClient(a_uid);
   m_db_client.userGetAccessToken(acc_tok, ref_tok, expires_in, collection_id,
-                                 collection_type, needs_consent, log_context);
+                                 collection_type, needs_consent, token_type,
+                                 scopes, log_context);
 
-  if (expires_in < 300) {
+  if (needs_consent) {
+    // short circuit to reply
+  } else if (expires_in < 300) {
     DL_INFO(log_context, "Refreshing access token for " << a_uid);
-
+    // TODO: trigger needs_consent on refresh failure
     m_globus_api.refreshAccessToken(ref_tok, acc_tok, expires_in);
-    m_db_client.userSetAccessToken(acc_tok, expires_in, ref_tok, log_context);
+    if (token_type == AccessTokenType::GLOBUS_DEFAULT) {
+      m_db_client.userSetAccessToken(acc_tok, expires_in, ref_tok, log_context);
+    } else {
+      m_db_client.userSetAccessToken(acc_tok, expires_in, ref_tok,
+                                     (AccessTokenType)token_type,
+                                     collection_id + "|" + scopes, log_context);
+    }
   }
 
   reply.set_access(acc_tok);
