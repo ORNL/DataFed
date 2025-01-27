@@ -221,4 +221,16 @@ describe("Testing Repo class", () => {
         const repo = new Repo("foo");
         expect(repo.pathType("/mnt/repo_root/user/jane/4243")).to.equal(PathType.USER_RECORD_PATH);
     });
+
+    it("unit_repo: should handle a user record path.", () => {
+        const path = "/mnt/datafed/compose-home/";
+        g_db.repo.save({
+            _id: "repo/foo",
+            _key: "foo",
+            path: path,
+        });
+        const repo = new Repo("foo");
+        expect(repo.pathType("/mnt/datafed/compose-home/user/tim/1135")).to.equal(PathType.USER_RECORD_PATH);
+    });
+
 });
