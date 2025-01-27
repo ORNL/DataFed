@@ -1367,13 +1367,13 @@ std::unique_ptr<IMessage> ClientWorker::procUserGetAccessTokenRequest(
   // TODO: set according to an updated msg_request obj
   // string collection_id = msg_request.collection_id();
   string collection_id = "some fake collection id";
-  // bool is_mapped_collection = msg_request.is_mapped_collection();
-  bool is_mapped_collection = true;
+  // collection_type = msg_request.collection_type();
+  string collection_type = "mapped";
+  // check valid setup, type requires id
 
   m_db_client.setClient(a_uid);
   m_db_client.userGetAccessToken(acc_tok, ref_tok, expires_in, collection_id,
-                                 is_mapped_collection, needs_consent,
-                                 log_context);
+                                 collection_type, needs_consent, log_context);
 
   if (expires_in < 300) {
     DL_INFO(log_context, "Refreshing access token for " << a_uid);
@@ -1385,7 +1385,7 @@ std::unique_ptr<IMessage> ClientWorker::procUserGetAccessTokenRequest(
   reply.set_access(acc_tok);
   reply.set_expires_in(expires_in);
 
-  // TODO: update reply object UserAccessTokenReply
+  // set new field on reply
   reply.set_needs_consent(needs_consent);
 
   PROC_MSG_END(log_context);

@@ -328,14 +328,17 @@ void DatabaseAPI::userClearKeys(LogContext log_context) {
 
 void DatabaseAPI::userGetAccessToken(
     std::string &a_acc_tok, std::string &a_ref_tok, uint32_t &a_expires_in,
-    const std::string collection_id, const bool mapped_collection,
+    const std::string collection_id, const std::string collection_type,
     bool &needs_consent, LogContext log_context) {
   Value result;
   std::vector<std::pair<std::string, std::string>> params = {};
 
   // TODO: impl backend accept param
-  if (mapped_collection) {
+  if (!collection_id.empty()) {
     params.push_back({"collection_id", collection_id});
+  }
+  if (!collection_type.empty()) {
+    params.push_back({"collection_type", collection_type});
   }
   dbGet("usr/token/get", params, result, log_context);
 

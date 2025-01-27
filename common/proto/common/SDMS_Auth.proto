@@ -124,7 +124,7 @@ message UserSetAccessTokenRequest
 // Reply: UserAccessTokenReply on success, NackReply on error
 message UserGetAccessTokenRequest
 {
-    optional bool               is_mapped       = 1;
+    optional bool               is_mapped       = 1;    // TODO: should be redundant with collection_type
     optional string             collection_id   = 2;
     optional string             collection_type = 3;    // TODO: use enum
 }

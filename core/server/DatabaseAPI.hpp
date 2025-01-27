@@ -64,8 +64,8 @@ public:
   void userGetAccessToken(std::string &a_acc_tok, std::string &a_ref_tok,
                           uint32_t &a_expires_in,
                           const std::string collection_id,
-                          const bool mapped_collection, bool &needs_consent,
-                          LogContext log_context);
+                          const std::string collection_type,
+                          bool &needs_consent, LogContext log_context);
   void getExpiringAccessTokens(uint32_t a_expires_in,
                                std::vector<UserTokenInfo> &a_expiring_tokens,
                                LogContext log_context);

@@ -697,6 +697,21 @@ router
 router
     .get("/token/get", function (req, res) {
         try {
+            const {collection_id, collection_type} = req.queryParams;
+            let collection_token = false;
+            if (collection_id || collection_type) {
+                if (collection_id && collection_type) {
+                    collection_token = true;
+                }
+                else {
+                    throw [
+                        g_lib.ERR_INVALID_PARAM,
+                        "/token/get Requires 'collection_id' and 'collection_type' both if one is present, received "
+                        + "collection_id: " + collection_id + " collection_type: " + collection_type,
+                    ];
+                }
+            }
+
             var user;
 
             if (req.queryParams.subject) {
@@ -714,15 +729,20 @@ router
             }
 
             var result = {};
-            if (user.access != undefined) result.access = user.access;
-            if (user.refresh != undefined) result.refresh = user.refresh;
-            if (user.expiration) {
-                var exp = user.expiration - Math.floor(Date.now() / 1000);
-                console.log("tok/get", Math.floor(Date.now() / 1000), user.expiration, exp);
-                result.expires_in = exp > 0 ? exp : 0;
-            } else {
-                console.log("tok/get - no expiration");
-                result.expires_in = 0;
+            if (collection_token) {
+                // TODO: find token on `globus_coll`
+            }
+            else {
+                if (user.access != undefined) result.access = user.access;
+                if (user.refresh != undefined) result.refresh = user.refresh;
+                if (user.expiration) {
+                    var exp = user.expiration - Math.floor(Date.now() / 1000);
+                    console.log("tok/get", Math.floor(Date.now() / 1000), user.expiration, exp);
+                    result.expires_in = exp > 0 ? exp : 0;
+                } else {
+                    console.log("tok/get - no expiration");
+                    result.expires_in = 0;
+                }
             }
 
             res.send(result);
@@ -732,6 +752,8 @@ router
     })
     .queryParam("client", joi.string().required(), "Client ID")
     .queryParam("subject", joi.string().optional(), "UID of subject user")
+    .queryParam("collection_id", joi.string().optional(), "ID of collection with which token is associated")
+    .queryParam("collection_type", joi.string().optional(), "Type of collection with which token is associated")
     .summary("Get user tokens")
     .description("Get user tokens");
 
