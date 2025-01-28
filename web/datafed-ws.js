@@ -1799,6 +1799,11 @@ app.post("/api/sch/delete", (a_req, a_resp) => {
 
 app.get("/ui/ep/view", (a_req, a_resp) => {
     sendMessage("UserGetAccessTokenRequest", {}, a_req, a_resp, function (reply) {
+        if (reply.needs_consent) {
+            // Do something
+            console.log("Received UserGetAccessTokenResponse: ", reply);
+            return;
+        }
         const opts = {
             hostname: "transfer.api.globusonline.org",
             method: "GET",
@@ -1831,6 +1836,11 @@ app.get("/ui/ep/view", (a_req, a_resp) => {
 
 app.get("/ui/ep/autocomp", (a_req, a_resp) => {
     sendMessage("UserGetAccessTokenRequest", {}, a_req, a_resp, function (reply) {
+        if (reply.needs_consent) {
+            // Do something
+            console.log("Received UserGetAccessTokenResponse: ", reply);
+            return;
+        }
         const opts = {
             hostname: "transfer.api.globusonline.org",
             method: "GET",
@@ -1886,6 +1896,11 @@ app.get("/ui/ep/dir/list", (a_req, a_resp) => {
     }
 
     sendMessage("UserGetAccessTokenRequest", {...new_message_data}, a_req, a_resp, function (reply) {
+        if (reply.needs_consent) {
+            // Do something
+            console.log("Received UserGetAccessTokenResponse: ", reply);
+            return;
+        }
         const opts = {
             hostname: "transfer.api.globusonline.org",
             method: "GET",
