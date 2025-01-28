@@ -211,6 +211,11 @@ bool clearContext(globus_gsi_authz_handle_t a_handle) {
 // points to the configuration file used for DataFed comm settings
 static struct Config g_config;
 
+// Function to access g_config for testing
+struct Config getConfig() {
+    return g_config;
+}
+
 bool setConfigVal(const char *a_label, char *a_dest, char *a_src,
                   size_t a_max_len) {
   size_t len = strlen(a_src);
@@ -280,6 +285,10 @@ bool loadConfig() {
     char *val;
     bool err;
 
+    // Default values must be outside the while
+    g_config.timeout = 10000;
+    g_config.log_path[0] = '\0';
+
     while (1) {
       lc++;
 
@@ -304,9 +313,6 @@ bool loadConfig() {
         val++;
       }
 
-      // Default values
-      g_config.timeout = 10000;
-      g_config.log_path[0] = '\0';
 
       if (strcmp(buf, "repo_id") == 0)
         err = setConfigVal("repo_id", g_config.repo_id, val, MAX_ID_LEN);
@@ -364,13 +370,14 @@ bool loadConfig() {
     if (g_config.server_key[0] == 0)
       strcat(miss, " server_key");
 
-    AUTHZ_LOG_INFO("DataFed Authz module started, version %s\n", getVersion());
-    AUTHZ_LOG_INFO("                         API, version %s\n",
-                   getAPIVersion());
-    AUTHZ_LOG_INFO("                     Release, version %s\n",
-                   getReleaseVersion());
-
     if (miss[0] != 0) {
+
+      AUTHZ_LOG_INFO("DataFed Authz module started, version %s\n", getVersion());
+      AUTHZ_LOG_INFO("                         API, version %s\n",
+                     getAPIVersion());
+      AUTHZ_LOG_INFO("                     Release, version %s\n",
+                     getReleaseVersion());
+
       AUTHZ_LOG_ERROR("DataFed - Missing required authz config items:%s\n",
                       miss);
       return true;
