@@ -729,45 +729,41 @@ router
             }
 
             var result = { token_type: g_lib.AccessTokenType.GLOBUS_DEFAULT, scopes: "" };    // TODO: better defaulting?
+            // TODO: request AccessTokenType? Maybe we can assume transfer
             if (collection_token) {
-                // TODO: validate collection type
+                // TODO: validate collection type - mapped vs HA
                 const globus_collection = g_db.globus_coll.exists({_key: collection_id});
-                if (!globus_collection) {   // TODO: should this be sooner?
-                    // Collection not found, need to go through flow
-                    result.needs_consent = true;
-                }
-                else {
-                    const token_matches = g_db.globus_token.outEdges(user._id).flatMap(edge => {
-                        if (edge._to === globus_collection._id) {
-                            return edge;
-                        }
-                    });
-                    if (token_matches.length > 0) {
-                        if (token_matches.length > 1) {
-                            console.log("More than one token: ", token_matches);
-                        }
-                        // TODO: should only be one token
-                        const token = token_matches[0];
-                        result.access = token.access;
-                        result.refresh = token.refresh;
-                        if (token.expiration) { // TODO: refresh expired tokens
-                            const expires_in = token.expiration - Math.floor(Date.now() / 1000);
-                            console.log("token/get collection ", Math.floor(Date.now() / 1000), token.expiration, expires_in);
-                            result.expires_in = expires_in > 0 ? expires_in : 0;
-                        }
-                        result.needs_consent = false;
-                        // TODO: consider how this is used
-                        result.token_type = token.type;
-                        result.scopes = token.scope;
-                    } else {
-                        result.access = "";
-                        result.refresh = "";
-                        result.expires_in = 0;
-                        result.needs_consent = true;
+                // TODO: should this be a query?
+                const token_matches = g_db.globus_token.outEdges(user._id).filter(edge => {
+                    // NOTE: this will result in no matches if globus collection document DNE
+                    return edge._to === globus_collection?._id;
+                });
+                if (token_matches.length > 0) {
+                    if (token_matches.length > 1) {
+                        console.log("More than one token: ", token_matches);
                     }
+                    // TODO: should only be one token
+                    const token = token_matches[0];
+                    result.access = token.access;
+                    result.refresh = token.refresh;
+                    if (token.expiration) { // TODO: refresh expired tokens
+                        const expires_in = token.expiration - Math.floor(Date.now() / 1000);
+                        console.log("token/get collection ", Math.floor(Date.now() / 1000), token.expiration, expires_in);
+                        result.expires_in = expires_in > 0 ? expires_in : 0;
+                    }
+                    result.needs_consent = false;
+                    // TODO: consider how this is used
+                    result.token_type = token.type;
+                    result.scopes = token.scope;
+                } else { // Cases covered: no matches, no tokens, no collection - all require same consent flow
+                    result.access = "";
+                    result.refresh = "";
+                    result.expires_in = 0;
+                    result.needs_consent = true;
                 }
             }
             else {
+                // NOTE: original logic wrapped in else block
                 result.needs_consent = false;
                 if (user.access != undefined) result.access = user.access;
                 if (user.refresh != undefined) result.refresh = user.refresh;
