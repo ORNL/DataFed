@@ -731,33 +731,40 @@ router
             var result = { token_type: g_lib.AccessTokenType.GLOBUS_DEFAULT, scopes: "" };    // TODO: better defaulting?
             if (collection_token) {
                 // TODO: validate collection type
-                const globus_collection = g_db.globus_coll.document({_key: collection_id});
-                const token_matches = g_db.globus_token.outEdges(user._id).flatMap(edge => {
-                    if (edge._to === globus_collection._id) {
-                        return edge;
-                    }
-                });
-                if (token_matches.length > 0) {
-                    if (token_matches.length > 1) { console.log("More than one token: ", token_matches); }
-                    // TODO: should only be one token
-                    const token = token_matches[0];
-                    result.access = token.access;
-                    result.refresh = token.refresh;
-                    if (token.expiration) { // TODO: refresh expired tokens
-                        const expires_in = token.expiration - Math.floor(Date.now() / 1000);
-                        console.log("token/get collection ", Math.floor(Date.now() / 1000), token.expiration, expires_in);
-                        result.expires_in = expires_in > 0 ? expires_in : 0;
-                    }
-                    result.needs_consent = false;
-                    // TODO: consider how this is used
-                    result.token_type = token.type;
-                    result.scopes = token.scope;
+                const globus_collection = g_db.globus_coll.exists({_key: collection_id});
+                if (!globus_collection) {   // TODO: should this be sooner?
+                    // Collection not found, need to go through flow
+                    result.needs_consent = true;
                 }
                 else {
-                    result.access = "";
-                    result.refresh = "";
-                    result.expires_in = 0;
-                    result.needs_consent = true;
+                    const token_matches = g_db.globus_token.outEdges(user._id).flatMap(edge => {
+                        if (edge._to === globus_collection._id) {
+                            return edge;
+                        }
+                    });
+                    if (token_matches.length > 0) {
+                        if (token_matches.length > 1) {
+                            console.log("More than one token: ", token_matches);
+                        }
+                        // TODO: should only be one token
+                        const token = token_matches[0];
+                        result.access = token.access;
+                        result.refresh = token.refresh;
+                        if (token.expiration) { // TODO: refresh expired tokens
+                            const expires_in = token.expiration - Math.floor(Date.now() / 1000);
+                            console.log("token/get collection ", Math.floor(Date.now() / 1000), token.expiration, expires_in);
+                            result.expires_in = expires_in > 0 ? expires_in : 0;
+                        }
+                        result.needs_consent = false;
+                        // TODO: consider how this is used
+                        result.token_type = token.type;
+                        result.scopes = token.scope;
+                    } else {
+                        result.access = "";
+                        result.refresh = "";
+                        result.expires_in = 0;
+                        result.needs_consent = true;
+                    }
                 }
             }
             else {
