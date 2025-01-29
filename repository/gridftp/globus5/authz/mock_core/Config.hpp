@@ -33,7 +33,6 @@ private:
 public:
   std::string cred_dir;
   uint32_t port;
-  uint32_t timeout;
   uint32_t repo_chunk_size;
   uint32_t repo_timeout;
   uint32_t num_client_worker_threads;

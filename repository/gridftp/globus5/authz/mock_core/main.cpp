@@ -153,8 +153,6 @@ int main(int a_argc, char **a_argv) {
     std::cout << std::endl;
     std::cout << "Config cred_dir: " << config.cred_dir << std::endl;
     std::cout << "Config port: " << std::to_string(config.port) << std::endl;
-    std::cout << "Config timeout: " << std::to_string(config.timeout)
-              << std::endl;
     std::cout << "Config repo_chunk_size: "
               << std::to_string(config.repo_chunk_size) << std::endl;
     std::cout << "Config num_client_worker_threads: "

@@ -17,7 +17,7 @@ namespace MockCore {
 // default public port 9998, private is assumed to be one above
 // default private port = public_port + 1
 Config::Config()
-    : port(MockGlobals::repo_port), timeout(5), num_client_worker_threads(4),
+    : port(MockGlobals::repo_port), num_client_worker_threads(4),
       repo_chunk_size(100), repo_timeout(60000) {
   RepoData r;
 
