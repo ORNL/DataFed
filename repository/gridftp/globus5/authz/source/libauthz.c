@@ -261,7 +261,7 @@ bool loadKeyFile(char *a_dest, char *a_filename) {
 
 bool loadConfig() {
   AUTHZ_LOG_DEBUG("loadConfig\n");
-  bool error = true;
+  const bool error = true;
   memset(&g_config, 0, sizeof(struct Config));
 
   const char *cfg_file = getenv("DATAFED_AUTHZ_CFG_FILE");
@@ -289,6 +289,13 @@ bool loadConfig() {
     // Default values must be outside the while
     g_config.timeout = 10000;
     g_config.log_path[0] = '\0';
+    g_config.user[0] = '\0';
+    g_config.repo_id[0] = '\0';
+    g_config.server_addr[0] = '\0';
+    g_config.pub_key[0] = '\0';
+    g_config.globus_collection_path[0] = '\0';
+    g_config.priv_key[0] = '\0';
+    g_config.server_key[0] = '\0';
 
     while (1) {
       lc++;
@@ -314,37 +321,38 @@ bool loadConfig() {
         val++;
       }
 
+      bool err;
       if (strcmp(buf, "repo_id") == 0)
-        error = setConfigVal("repo_id", g_config.repo_id, val, MAX_ID_LEN);
+        err = setConfigVal("repo_id", g_config.repo_id, val, MAX_ID_LEN);
       else if (strcmp(buf, "server_address") == 0)
-        error = setConfigVal("server_address", g_config.server_addr, val,
+        err = setConfigVal("server_address", g_config.server_addr, val,
                            MAX_ADDR_LEN);
       else if (strcmp(buf, "user") == 0)
-        error = setConfigVal("user", g_config.user, val, MAX_ID_LEN);
+        err = setConfigVal("user", g_config.user, val, MAX_ID_LEN);
       else if (strcmp(buf, "log_path") == 0) {
-        error = setConfigVal("log_path", g_config.log_path, val, MAX_PATH_LEN);
+        err = setConfigVal("log_path", g_config.log_path, val, MAX_PATH_LEN);
         AUTHZ_LOG_INIT(g_config.log_path);
       } else if (strcmp(buf, "test_path") == 0)
-        error = setConfigVal("test_path", g_config.test_path, val, MAX_PATH_LEN);
+        err = setConfigVal("test_path", g_config.test_path, val, MAX_PATH_LEN);
       else if (strcmp(buf, "globus-collection-path") == 0)
-        error = setConfigVal("globus-collection-path",
+        err = setConfigVal("globus-collection-path",
                            g_config.globus_collection_path, val, MAX_PATH_LEN);
       else if (strcmp(buf, "pub_key") == 0)
-        error = loadKeyFile(g_config.pub_key, val);
+        err = loadKeyFile(g_config.pub_key, val);
       else if (strcmp(buf, "priv_key") == 0)
-        error = loadKeyFile(g_config.priv_key, val);
+        err = loadKeyFile(g_config.priv_key, val);
       else if (strcmp(buf, "server_key") == 0)
-        error = loadKeyFile(g_config.server_key, val);
+        err = loadKeyFile(g_config.server_key, val);
       else if (strcmp(buf, "timeout") == 0)
         g_config.timeout = atoi(val);
       else {
-        error = true;
+        err = true;
         AUTHZ_LOG_ERROR(
             "DataFed - Invalid key, '%s', in authz config file at line %i.\n",
             buf, lc);
       }
 
-      if (error) {
+      if (err) {
         fclose(inf);
         return error;
       }
@@ -353,24 +361,26 @@ bool loadConfig() {
     fclose(inf);
 
     char miss[1024];
-    miss[0] = 0;
+    miss[0] = '\0';
 
-    if (g_config.user[0] == 0)
+    if (g_config.user[0] == '\0')
       strcat(miss, " user");
-    if (g_config.repo_id[0] == 0)
+    if (g_config.repo_id[0] == '\0')
       strcat(miss, " repo_id");
-    if (g_config.server_addr[0] == 0)
+    if (g_config.server_addr[0] == '\0')
       strcat(miss, " server_address");
-    if (g_config.pub_key[0] == 0)
+    if (g_config.pub_key[0] == '\0')
       strcat(miss, " pub_key");
-    if (g_config.globus_collection_path[0] == 0)
+    if (g_config.globus_collection_path[0] == '\0')
       strcat(miss, " globus-collection-path");
-    if (g_config.priv_key[0] == 0)
+    if (g_config.priv_key[0] == '\0')
       strcat(miss, " priv_key");
-    if (g_config.server_key[0] == 0)
+    if (g_config.server_key[0] == '\0')
       strcat(miss, " server_key");
 
-    if (miss[0] != 0) {
+    // If any of the parameters are missing then there is an error somewhere
+    // So if miss is anything other than 0 something is missing.
+    if (miss[0] != '\0') {
 
       AUTHZ_LOG_INFO("DataFed Authz module started, version %s\n", getVersion());
       AUTHZ_LOG_INFO("                         API, version %s\n",

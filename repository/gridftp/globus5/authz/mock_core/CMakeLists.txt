@@ -13,14 +13,12 @@ list(REMOVE_ITEM Sources files ${Main})
 if(BUILD_SHARED_LIBS)
   add_library( datafed-mock-core-lib SHARED ${Sources} )
   target_link_libraries( datafed-mock-core-lib PRIVATE protobuf::libprotobuf Threads::Threads
-    "${DATAFED_CURL_LIBRARIES}" "${OPENSSL_SSL_LIBRARY}" "${OPENSSL_CRYPTO_LIBRARY}"
-    "${DATAFED_ZLIB_LIBRARIES}"  ${DATAFED_BOOST_LIBRARIES} libzmq nlohmann_json_schema_validator -ldl )
+      ${DATAFED_BOOST_LIBRARIES} libzmq -ldl )
 else()
   add_library( datafed-mock-core-lib STATIC ${Sources} )
   target_link_libraries( datafed-mock-core-lib PRIVATE protobuf::libprotobuf Threads::Threads
-    "${DATAFED_CURL_LIBRARIES}" "${OPENSSL_SSL_LIBRARY}" "${OPENSSL_CRYPTO_LIBRARY}"
-    "${DATAFED_ZLIB_LIBRARIES}"  "${DATAFED_BOOST_LIBRARIES}" libzmq-static
-    "${DATAFED_JSON_SCHEMA_LIBRARY_PATH}" -ldl )
+    "${DATAFED_BOOST_LIBRARIES}" libzmq-static
+     -ldl )
 endif()
 target_include_directories( datafed-mock-core-lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} )
 set_target_properties(datafed-mock-core-lib PROPERTIES POSITION_INDEPENDENT_CODE ON)

@@ -11,6 +11,10 @@
 #include <filesystem> // For checking and removing files (C++17)
 
 extern "C" {
+// Globus third party includes
+#include <globus_error_hierarchy.h>
+#include <globus_types.h>
+#include <gssapi.h>
 
 // Local private includes
 #include "Config.h"
@@ -142,7 +146,7 @@ BOOST_AUTO_TEST_CASE(test_gsi_authz_init) {
 		BOOST_CHECK_EQUAL( std::string(conf.log_path), "");
 		BOOST_CHECK_EQUAL( std::string(conf.globus_collection_path), "");
 	
-		gsi_authz_init();
+		globus_result_t result = gsi_authz_init();
 
 		conf = getConfig();
 		BOOST_CHECK_EQUAL( std::string(conf.repo_id), repo_id);
@@ -153,7 +157,8 @@ BOOST_AUTO_TEST_CASE(test_gsi_authz_init) {
 		BOOST_CHECK_EQUAL( std::string(conf.user), user);
 		BOOST_CHECK_EQUAL( std::string(conf.log_path), log_path);
 		BOOST_CHECK_EQUAL( std::string(conf.globus_collection_path), globus_collection_path);
-			
+		
+    BOOST_CHECK_EQUAL( result, GLOBUS_SUCCESS);  
 }
 
 BOOST_AUTO_TEST_SUITE_END()

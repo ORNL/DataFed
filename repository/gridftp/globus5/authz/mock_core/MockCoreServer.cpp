@@ -14,9 +14,6 @@
 #include "common/TraceException.hpp"
 #include "common/Util.hpp"
 
-// Third party includes
-#include <curl/curl.h>
-
 // Standard includes
 #include <chrono>
 #include <fstream>
@@ -41,8 +38,6 @@ namespace MockCore {
 
 Server::Server(LogContext log_context)
     : m_config(Config::getInstance()), m_log_context(log_context) {
-  // One-time global libcurl init
-  curl_global_init(CURL_GLOBAL_DEFAULT);
 
   // Load ZMQ keys
   loadKeys(m_config.cred_dir);

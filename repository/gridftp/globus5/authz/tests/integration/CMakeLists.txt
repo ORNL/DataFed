@@ -1,14 +1,3 @@
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../mock/mock_start.sh 
-  ${CMAKE_CURRENT_BINARY_DIR}/../mock_start.sh 
-  COPYONLY)
-
-
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../mock/mock_stop.sh 
-  ${CMAKE_CURRENT_BINARY_DIR}/../mock/mock_stop.sh 
-  COPYONLY)
-
-
-
 # Each test listed in Alphabetical order
 foreach(PROG
     test_gsi_authz_init
@@ -23,7 +12,8 @@ foreach(PROG
     target_compile_definitions(integration_${PROG} PRIVATE BOOST_TEST_DYN_LINK)
   endif()
 
-
   add_test(integration_${PROG} integration_${PROG})
+
+  set_tests_properties(integration_${PROG} PROPERTIES FIXTURES_REQUIRED FIX_MOCK)
 
 endforeach(PROG)
