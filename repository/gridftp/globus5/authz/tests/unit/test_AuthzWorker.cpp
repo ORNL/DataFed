@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(GetAuthzPathGlobusBaseSetToRoot) {
   SDMS::LogContext log_context;
   config.globus_collection_path[0] = '/';
   config.globus_collection_path[1] = '\0';
-  SDMS::AuthzWorker worker(&config, log_context);
+  SDMS::AuthzWorker worker(config, log_context);
   char deep_path[] = "ftp://hostname/globus/root/a/b/c/d/e.txt";
   std::string expected_result = "/globus/root/a/b/c/d/e.txt";
 
@@ -228,7 +228,7 @@ BOOST_AUTO_TEST_CASE(RemoveOriginGlobusBaseSetToRoot) {
   SDMS::LogContext log_context;
   config.globus_collection_path[0] = '/';
   config.globus_collection_path[1] = '\0';
-  SDMS::AuthzWorker worker(&config, log_context);
+  SDMS::AuthzWorker worker(config, log_context);
   char deep_path[] = "ftp://hostname/globus/root/a/b/c/d/e.txt";
   std::string expected_result = "/globus/root/a/b/c/d/e.txt";
 
