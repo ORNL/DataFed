@@ -4,6 +4,9 @@
 #include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>
 
+// Local private includes
+#include "AuthzWorker.hpp"
+
 // Standard includes
 #include <cstdlib>    // For std::setenv
 #include <filesystem> // For checking and removing files (C++17)
@@ -17,7 +20,6 @@ extern "C" {
 #include <gssapi.h>
 
 // Local private includes
-#include "AuthzWorker.hpp"
 #include "Config.h"
 
 // Globus third party includes
@@ -130,6 +132,7 @@ BOOST_AUTO_TEST_CASE(test_gsi_authz_init) {
   // server_address=tcp://${local_DATAFED_DOMAIN}:${local_DATAFED_SERVER_PORT}
 
   initializeDefaults();
+
   struct Config conf = createLocalConfigCopy();
   conf.repo_id[0] = '\0';
   conf.server_addr[0] = '\0';
@@ -151,17 +154,15 @@ BOOST_AUTO_TEST_CASE(test_gsi_authz_init) {
 
   globus_result_t result = gsi_authz_init();
 
-
-
-  conf = createLocalConfigCopy();
+  auto config = createLocalConfigCopy();
 
 	// Test a valid full FTP path when the globus_collection_path is /
 	SDMS::LogContext log_context;
 
-	strcpy(config.globus_collection_path[0], "/mnt/datafed");
-	SDMS::AuthzWorker worker(&config, log_context);
+	strcpy(config.globus_collection_path, "/mnt/datafed");
+	SDMS::AuthzWorker worker(config, log_context);
 
-	char client_id = "23c9067f-60e8-4741-9af1-482280faced4";
+	char client_id[] = "23c9067f-60e8-4741-9af1-482280faced4";
 	char path[] = "ftp://ci-datafed-globus2/mnt/datafed/datafedci-home";
 	char action[] = "lookup";
 	

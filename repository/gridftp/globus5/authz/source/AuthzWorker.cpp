@@ -589,10 +589,19 @@ int AuthzWorker::checkAuth(char *client_id, char *path, char *action) {
 
   auto auth_req = std::make_unique<Auth::RepoAuthzRequest>();
 
-  auth_req->set_repo(m_config.repo_id);
-  auth_req->set_client(client_id);
+  auto cpp_repo_id = std::string(m_config.repo_id);
+  auto cpp_client_id = std::string(client_id);
+  auto cpp_action = std::string(action);
+
+  auth_req->set_repo(cpp_repo_id);
+  auth_req->set_client(cpp_client_id);
   auth_req->set_file(sanitized_path);
-  auth_req->set_action(action);
+  auth_req->set_action(cpp_action);
+
+  
+  DL_INFO(m_log_context, "Sending RepoAuthzRequest std::string client_id: "
+                             << cpp_client_id << " path: " << sanitized_path << " action: "
+                             << cpp_action << " repo id: " << cpp_repo_id);
 
   MessageFactory msg_factory;
   auto message = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);

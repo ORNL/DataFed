@@ -38,7 +38,7 @@ const std::string priv_key_path = "./datafed-repo-key.priv";
 const std::string priv_key = "1:BoDR8-#sGZuRWyP*jr+Csm-kT}zV:tn@gRDS.u";
 const std::string log_path = "./datafed-gsi-authz.log";
 const std::string user = "TheRock";
-const std::string globus_collection_path = "/";
+const std::string globus_collection_path = "/mnt/datafed";
 
 BOOST_AUTO_TEST_SUITE(test_gsi)
 
@@ -162,6 +162,8 @@ BOOST_AUTO_TEST_CASE(test_gsi_authz_init) {
                     globus_collection_path);
 
   BOOST_CHECK_EQUAL(result, GLOBUS_SUCCESS);
+
+
 }
 
 BOOST_AUTO_TEST_SUITE_END()
