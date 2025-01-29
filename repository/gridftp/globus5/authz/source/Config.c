@@ -402,10 +402,9 @@ bool getConfigVal(const char *a_label, char *a_dest, size_t a_max_len) {
   } else if (strcmp(a_label, "globus_collection_path") == 0) {
     strncpy(a_dest, g_config.globus_collection_path, a_max_len);
   } else {
-    pthread_rwlock_unlock(&config_rwlock);
+    err = true;
     // Make it clear nothing was found
     a_dest[0] = '\0';
-    return true;
   }
 
   // Release the read lock
