@@ -6,18 +6,19 @@ import { createMatchesHtml, formatRecordTitle, getDialogTemplate } from "./trans
 
 /**
  * @class TransferUIManager
- * @classDesc Manages the UI components and interactions for file transfer operations
+ * 
+ * Manages the UI components and interactions for file transfer operations
  */
 export class TransferUIManager {
     #controller;
 
     /**
      * Creates a new TransferUIManager instance
-     * @param {Object} controller - The dialog controller instance
-     * @param services - The service objects to use for API and dialog operations
-     * @param {Object} services.dialogs - Dialog service
+     * @param {object} controller - The dialog controller instance
+     * @param {object} services - The service objects to use for API and dialog operations
+     * @param {object} services.dialogs - Dialog service
      * @param {Function} services.dialogs.dlgAlert - Alert dialog function
-     * @param {Object} services.api - API service
+     * @param {object} services.api - API service
      * @param {Function} services.api.epView - Endpoint view API function
      * @param {Function} services.api.xfrStart - Transfer start API function
      */
@@ -206,7 +207,7 @@ export class TransferUIManager {
 
     /**
      * Creates the main dialog element
-     * @param {Object} labels - Dialog labels
+     * @param {object} labels - Dialog labels
      * @returns {jQuery} Created dialog jQuery object
      */
     createDialog(labels) {
@@ -243,7 +244,7 @@ export class TransferUIManager {
 
     /**
      * Updates encryption options based on endpoint and scheme
-     * @param {Object} endpoint - The endpoint configuration
+     * @param {object} endpoint - The endpoint configuration
      * @param {string} scheme - The transfer scheme
      */
     updateEncryptionOptions(endpoint, scheme) {
@@ -271,7 +272,7 @@ export class TransferUIManager {
 
     /**
      * Updates the endpoint configuration and UI
-     * @param {Object} data - The endpoint data
+     * @param {object} data - The endpoint data
      * @param {string} data.canonical_name - The canonical endpoint name
      * @param {string} data.id - The endpoint ID
      */
@@ -352,7 +353,7 @@ export class TransferUIManager {
 
     /**
      * Gets the default path for a given endpoint
-     * @param {Object} endpoint - The endpoint configuration object
+     * @param {object} endpoint - The endpoint configuration object
      * @param {string} endpoint.name - The name of the endpoint
      * @param {string} [endpoint.default_directory] - The default directory path
      * @returns {string} The formatted default path
@@ -391,7 +392,7 @@ export class TransferUIManager {
 
     /**
      * Gets the dialog labels based on transfer mode
-     * @returns {Object} Object containing endpoint, record, and dialogTitle labels
+     * @returns {object} Object containing endpoint, record, and dialogTitle labels
      */
     getDialogLabels() {
         const isGet = this.#controller.model.mode === TransferMode.TT_DATA_GET;
@@ -404,9 +405,9 @@ export class TransferUIManager {
 
     /**
      * Gets encryption options based on endpoint and scheme
-     * @param {Object} endpoint - The endpoint configuration
+     * @param {object} endpoint - The endpoint configuration
      * @param {string} scheme - The transfer scheme
-     * @returns {Object} Encryption options configuration
+     * @returns {object} Encryption options configuration
      */
     getEncryptionOptions(endpoint, scheme) {
         if (endpoint.force_encryption) {
@@ -432,7 +433,7 @@ export class TransferUIManager {
 
     /**
      * Gets the record tree data for display
-     * @returns {Array<Object>} Array of tree node data objects
+     * @returns {Array<object>} Array of tree node data objects
      */
     getRecordTreeData() {
         return this.#controller.model.records.map((item) => {
@@ -475,7 +476,7 @@ export class TransferUIManager {
 
     /**
      * Gets the current transfer configuration
-     * @returns {Object|null} Transfer configuration object or null if validation fails
+     * @returns {object|null} Transfer configuration object or null if validation fails
      * @property {string} path - The transfer path
      * @property {string} encrypt - The encryption mode
      * @property {boolean} origFilename - Whether to use original filename
@@ -612,7 +613,7 @@ export class TransferUIManager {
     /**
      * Handles transfer response from the server
      * @param {boolean} ok - Whether the transfer was successful
-     * @param {Object} data - Response data from server
+     * @param {object} data - Response data from server
      */
     handleTransferResponse(ok, data) {
         if (ok) {
@@ -627,7 +628,7 @@ export class TransferUIManager {
 
     /**
      * Initiates the transfer operation
-     * @param {Object} config - Transfer configuration
+     * @param {object} config - Transfer configuration
      * @param {string} config.path - Transfer path
      * @param {string} config.extension - File extension
      * @param {string} config.encrypt - Encryption mode

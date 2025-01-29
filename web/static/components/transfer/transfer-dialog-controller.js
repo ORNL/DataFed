@@ -6,17 +6,18 @@ import * as api from "../../api.js";
 
 /**
  * @class TransferDialogController
- * @classDesc Manages the UI and logic for data transfers
+ * 
+ * Manages the UI and logic for data transfers
  */
 export class TransferDialogController {
     /**
      * @param {number} mode - Transfer mode (GET/PUT)
-     * @param {Array<Object>} ids - Records to transfer
+     * @param {Array<object>} ids - Records to transfer
      * @param {Function} callback - Completion callback
-     * @param services - The service objects to use for API and dialog operations
-     * @param {Object} services.dialogs - Dialog service
+     * @param {object} services - The service objects to use for API and dialog operations
+     * @param {object} services.dialogs - Dialog service
      * @param {Function} services.dialogs.dlgAlert - Alert dialog function
-     * @param {Object} services.api - API service
+     * @param {object} services.api - API service
      */
     constructor(mode, ids, callback, services = { dialogs, api }) {
         this.model = new TransferModel(mode, ids);
