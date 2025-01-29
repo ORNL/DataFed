@@ -111,11 +111,11 @@ void Server::loadKeys(const std::string &a_cred_dir) {
 /**
  * Start and run external interfaces.
  *
- * This method is not really needed anymore. Originally there were separete
- * start/run/pause methods to allow a host program to control conre service, but
- * these features were never needed/used. The functions performed here could be
- * put in the constructor, but leaving them here allows the use of the calling
- * thread ti run one of the interfaces.
+ * This method is no longer strictly necessary. Originally, separate 
+ * start, run, and pause methods were implemented to allow a host program 
+ * to control the core service, but these features were never needed or used.
+ * The functions performed here could be moved to the constructor; however, 
+ * keeping them in this method allows the calling thread to run one of the interfaces.
  */
 void Server::run() {
   DL_INFO(m_log_context, "Public/private MAPI starting on ports "
