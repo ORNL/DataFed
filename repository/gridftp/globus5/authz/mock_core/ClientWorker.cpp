@@ -39,9 +39,10 @@ map<uint16_t, ClientWorker::msg_fun_t> ClientWorker::m_msg_handlers;
 // TODO - This should be defined in proto files
 #define NOTE_MASK_MD_ERR 0x2000
 
-ClientWorker::ClientWorker(IMockCoreServer &a_core, size_t a_tid, LogContext log_context_in) : m_config(Config::getInstance()), m_core(a_core), m_tid(a_tid),
-      m_run(true),
-      m_log_context(log_context_in) {
+ClientWorker::ClientWorker(IMockCoreServer &a_core, size_t a_tid,
+                           LogContext log_context_in)
+    : m_config(Config::getInstance()), m_core(a_core), m_tid(a_tid),
+      m_run(true), m_log_context(log_context_in) {
   // This should be hidden behind a factory or some other builder
   m_msg_mapper = std::unique_ptr<IMessageMapper>(new ProtoBufMap);
   setupMsgHandlers();
@@ -353,7 +354,6 @@ ClientWorker::procVersionRequest(const std::string &a_uid,
   PROC_MSG_END(log_context);
 }
 
-
 std::unique_ptr<IMessage>
 ClientWorker::procRepoAuthzRequest(const std::string &a_uid,
                                    std::unique_ptr<IMessage> &&msg_request,
@@ -363,16 +363,14 @@ ClientWorker::procRepoAuthzRequest(const std::string &a_uid,
       std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
   PROC_MSG_BEGIN(RepoAuthzRequest, AckReply, log_context)
 
-  DL_INFO(log_context, "AUTHZ repo request received: " << a_uid
-                                       << ", usr: " << request->client()
-                                       << ", file: " << request->file()
-                                       << ", act: " << request->action());
+  DL_INFO(log_context, "AUTHZ repo request received: "
+                           << a_uid << ", usr: " << request->client()
+                           << ", file: " << request->file()
+                           << ", act: " << request->action());
 
   EXCEPT(1, "This function needs to be mocked before testing repo request.");
   PROC_MSG_END(log_context);
 }
-
-
 
 } // namespace MockCore
 } // namespace SDMS

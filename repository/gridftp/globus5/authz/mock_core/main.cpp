@@ -25,17 +25,16 @@ namespace po = boost::program_options;
 
 void create_pid_file() {
 
-    std::string pid_file = "./server.pid";
-    std::ofstream file(pid_file);
-    if (!file) {
-        std::cerr << "Failed to create PID file: " << pid_file << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    file << getpid(); // Write the current process ID to the file
-    file.close();
-    std::cout << "PID file created: " << pid_file << std::endl;
+  std::string pid_file = "./server.pid";
+  std::ofstream file(pid_file);
+  if (!file) {
+    std::cerr << "Failed to create PID file: " << pid_file << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  file << getpid(); // Write the current process ID to the file
+  file.close();
+  std::cout << "PID file created: " << pid_file << std::endl;
 }
-
 
 /** @brief Entry point for Mock Core Server
  *
@@ -51,7 +50,7 @@ int main(int a_argc, char **a_argv) {
 
   try {
 
-		create_pid_file();
+    create_pid_file();
     DL_INFO(log_context, "DataFed mock core server starting.");
 
     MockCore::Config &config = MockCore::Config::getInstance();
@@ -63,11 +62,16 @@ int main(int a_argc, char **a_argv) {
 
     po::options_description opts("Options");
 
-    opts.add_options()("help,?", "Show help")
-      ("cred-dir,c",po::value<string>(&config.cred_dir),"Server credentials directory, will look for files mock-datafed-core.priv and mock-datafed-core.pub.")
-      ("port,p", po::value<uint32_t>(&config.port), "Service port, this is the public port core service is listening on for mock set to 9998, private by default is public_port + 1")
-      ("gen-keys", po::bool_switch(&gen_keys),"Generate new server keys then exit")
-      ("log-level", po::value<unsigned int>(&cfg_log_level), "Set log level");
+    opts.add_options()("help,?", "Show help")(
+        "cred-dir,c", po::value<string>(&config.cred_dir),
+        "Server credentials directory, will look for files "
+        "mock-datafed-core.priv and mock-datafed-core.pub.")(
+        "port,p", po::value<uint32_t>(&config.port),
+        "Service port, this is the public port core service is listening on "
+        "for mock set to 9998, private by default is public_port + 1")(
+        "gen-keys", po::bool_switch(&gen_keys),
+        "Generate new server keys then exit")(
+        "log-level", po::value<unsigned int>(&cfg_log_level), "Set log level");
 
     try {
       po::variables_map opt_map;
@@ -149,17 +153,21 @@ int main(int a_argc, char **a_argv) {
     std::cout << std::endl;
     std::cout << "Config cred_dir: " << config.cred_dir << std::endl;
     std::cout << "Config port: " << std::to_string(config.port) << std::endl;
-    std::cout << "Config timeout: " << std::to_string(config.timeout) << std::endl;
-    std::cout << "Config repo_chunk_size: " << std::to_string(config.repo_chunk_size) << std::endl;
-    std::cout << "Config num_client_worker_threads: " << std::to_string(config.num_client_worker_threads) << std::endl;
+    std::cout << "Config timeout: " << std::to_string(config.timeout)
+              << std::endl;
+    std::cout << "Config repo_chunk_size: "
+              << std::to_string(config.repo_chunk_size) << std::endl;
+    std::cout << "Config num_client_worker_threads: "
+              << std::to_string(config.num_client_worker_threads) << std::endl;
     std::cout << std::endl;
     auto repos = config.getRepos();
     std::cout << "Mocked Repos" << std::endl;
-    for( const auto & repo : repos) {
+    for (const auto &repo : repos) {
       std::cout << "Repo Id: " << repo.second.id() << std::endl;
       std::cout << "title: " << repo.second.title() << std::endl;
       std::cout << "desc: " << repo.second.desc() << std::endl;
-      std::cout << "capacity: " << std::to_string(repo.second.capacity()) << std::endl;
+      std::cout << "capacity: " << std::to_string(repo.second.capacity())
+                << std::endl;
       std::cout << "address: " << repo.second.address() << std::endl;
       std::cout << "endpoint: " << repo.second.endpoint() << std::endl;
       std::cout << "path: " << repo.second.path() << std::endl;

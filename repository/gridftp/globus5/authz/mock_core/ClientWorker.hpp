@@ -54,12 +54,11 @@ private:
   void setupMsgHandlers();
   void workerThread(LogContext log_context);
 
-
   // Routing functions
   std::unique_ptr<IMessage>
   procVersionRequest(const std::string &a_uid,
-                                 std::unique_ptr<IMessage> &&msg_request,
-                                 LogContext log_context);
+                     std::unique_ptr<IMessage> &&msg_request,
+                     LogContext log_context);
 
   std::unique_ptr<IMessage>
   procRepoAuthzRequest(const std::string &a_uid,
@@ -72,9 +71,9 @@ private:
 
   bool isRunning() const;
 
-  Config &m_config;    ///< Ref to configuration singleton
+  Config &m_config;        ///< Ref to configuration singleton
   IMockCoreServer &m_core; ///< Ref to parent MockCoreServer interface
-  size_t m_tid;        ///< Thread ID
+  size_t m_tid;            ///< Thread ID
   std::unique_ptr<std::thread> m_worker_thread; ///< Local thread handle
   mutable std::mutex m_run_mutex;
   bool m_run;                  ///< Thread run flag

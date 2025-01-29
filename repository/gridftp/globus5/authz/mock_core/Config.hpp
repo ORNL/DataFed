@@ -31,7 +31,6 @@ private:
   std::map<std::string, RepoData> m_repos;
 
 public:
-
   std::string cred_dir;
   uint32_t port;
   uint32_t timeout;

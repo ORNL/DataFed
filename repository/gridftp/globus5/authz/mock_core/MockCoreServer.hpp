@@ -86,14 +86,14 @@ private:
   void ioSecure(LogContext log_context, int thread_count);
   int getNewThreadId();
 
-  Config &m_config;                 ///< Ref to configuration singleton
-  std::thread m_io_secure_thread;   ///< Secure I/O thread handle
-  std::string m_pub_key;            ///< Public key for secure interface
-  std::string m_priv_key;           ///< Private key for secure interface
-  std::thread m_msg_router_thread;  ///< Main message router thread handle
+  Config &m_config;                ///< Ref to configuration singleton
+  std::thread m_io_secure_thread;  ///< Secure I/O thread handle
+  std::string m_pub_key;           ///< Public key for secure interface
+  std::string m_priv_key;          ///< Private key for secure interface
+  std::thread m_msg_router_thread; ///< Main message router thread handle
   std::mutex m_thread_count_mutex; ///< Mutex for metrics updates
   std::vector<std::shared_ptr<ClientWorker>>
-      m_workers;                   ///< List of ClientWorker instances
+      m_workers; ///< List of ClientWorker instances
   LogContext m_log_context;
   int m_thread_count = 0; // Keep track of the number of threads created
   int m_main_thread_id = 0;

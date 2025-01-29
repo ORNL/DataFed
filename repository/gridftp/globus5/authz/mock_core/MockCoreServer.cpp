@@ -72,15 +72,15 @@ Server::Server(LogContext log_context)
       std::make_unique<Reset>(accesses_to_reset, key_type_to_apply_reset));
 
   // Must occur after loading config settings
-  m_auth_manager = std::move(AuthenticationManager(
-      purge_intervals, std::move(purge_conditions)));
+  m_auth_manager = std::move(
+      AuthenticationManager(purge_intervals, std::move(purge_conditions)));
 
-  for( auto & r : m_config.getRepos() ) {
-    m_auth_manager.addKey(PublicKeyType::PERSISTENT, r.second.pub_key(), r.second.id());
+  for (auto &r : m_config.getRepos()) {
+    m_auth_manager.addKey(PublicKeyType::PERSISTENT, r.second.pub_key(),
+                          r.second.id());
   }
   // Start ZAP handler must be started before any other socket binds are called
   // m_zap_thread = thread( &Server::zapHandler, this );
-
 }
 
 Server::~Server() {
@@ -108,7 +108,6 @@ void Server::loadKeys(const std::string &a_cred_dir) {
   std::cout << "Public key is: " << m_pub_key << std::endl;
   std::cout << "Private key is: " << m_priv_key << std::endl;
 }
-
 
 /**
  * Start and run external interfaces.
@@ -272,7 +271,8 @@ void Server::ioSecure(LogContext log_context, int thread_count) {
 
     { // Proxy Server Credentials and Socket Options - these options are used
       // to define the server socket that the proxy will use to communicate with
-      // the web server and repo server. The proxy acts like a server to the frontend
+      // the web server and repo server. The proxy acts like a server to the
+      // frontend
       SocketOptions server_socket_options;
       server_socket_options.scheme = URIScheme::TCP;
       server_socket_options.class_type = SocketClassType::SERVER;
@@ -318,7 +318,6 @@ void Server::ioSecure(LogContext log_context, int thread_count) {
   }
 }
 
-
 // Triggered by client worker
 void Server::authenticateClient(const std::string &a_cert_uid,
                                 const std::string &a_key,
@@ -332,5 +331,5 @@ void Server::authenticateClient(const std::string &a_cert_uid,
   }
 }
 
-} // namespace Core
+} // namespace MockCore
 } // namespace SDMS

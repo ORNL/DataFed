@@ -213,7 +213,7 @@ static struct Config g_config;
 
 // Function to access g_config for testing
 struct Config getConfig() {
-    return g_config;
+  return g_config;
 }
 
 bool setConfigVal(const char *a_label, char *a_dest, char *a_src,
@@ -382,7 +382,8 @@ bool loadConfig() {
     // So if miss is anything other than 0 something is missing.
     if (miss[0] != '\0') {
 
-      AUTHZ_LOG_INFO("DataFed Authz module started, version %s\n", getVersion());
+      AUTHZ_LOG_INFO("DataFed Authz module started, version %s\n",
+                     getVersion());
       AUTHZ_LOG_INFO("                         API, version %s\n",
                      getAPIVersion());
       AUTHZ_LOG_INFO("                     Release, version %s\n",
@@ -409,7 +410,7 @@ bool loadConfig() {
   AUTHZ_LOG_INFO("                     Release, version %s\n",
                  getReleaseVersion());
 
-  return ! error;
+  return !error;
 }
 
 // The same

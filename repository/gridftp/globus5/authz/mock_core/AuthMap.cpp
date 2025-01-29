@@ -1,8 +1,8 @@
 
 // Local private includes
 #include "AuthMap.hpp"
-#include "common/TraceException.hpp"
 #include "MockGlobals.hpp"
+#include "common/TraceException.hpp"
 
 using namespace std;
 
@@ -25,7 +25,6 @@ AuthMap::AuthMap(const AuthMap &auth_map) {
   auth_map.m_persistent_clients_mtx.lock();
   m_persistent_auth_clients = auth_map.m_persistent_auth_clients;
   auth_map.m_persistent_clients_mtx.unlock();
-
 }
 
 AuthMap &AuthMap::operator=(const AuthMap &&auth_map) {
@@ -196,7 +195,10 @@ bool AuthMap::hasKey(const PublicKeyType pub_key_type,
     } else {
       return false;
     }
-    EXCEPT(1, "Probably need to put something here for the mock to work. key is: " + public_key);
+    EXCEPT(
+        1,
+        "Probably need to put something here for the mock to work. key is: " +
+            public_key);
   } else {
     EXCEPT(1, "Unrecognized PublicKey Type during execution of hasKey.");
   }

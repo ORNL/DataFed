@@ -50,7 +50,7 @@ public:
 
   AuthMap(time_t trans_active_inc, time_t session_active_inc)
       : m_trans_active_increment(trans_active_inc),
-        m_session_active_increment(session_active_inc) {};
+        m_session_active_increment(session_active_inc){};
 
   AuthMap(const AuthMap &);
 
