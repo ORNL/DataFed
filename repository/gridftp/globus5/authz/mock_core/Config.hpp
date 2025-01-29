@@ -18,6 +18,9 @@
 namespace SDMS {
 namespace MockCore {
 
+// NOTE this would be better as an observer pattern using a separate object
+// default public port 9998, private is assumed to be one above
+// default private port = public_port + 1
 class Config {
 public:
   static Config &getInstance() {
