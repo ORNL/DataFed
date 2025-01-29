@@ -597,6 +597,7 @@ int AuthzWorker::checkAuth(char *client_id, char *path, char *action) {
   ICommunicator::Response response; 
  
   int attempt = 0; 
+  // TODO - this needs to be configurable
   int retries = 3;
   do { 
     DL_INFO(m_log_context,

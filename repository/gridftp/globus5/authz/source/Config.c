@@ -31,6 +31,21 @@ static bool first_run = true;
 
 // Initialize the read-write lock for the configuration object
 pthread_rwlock_t config_rwlock = PTHREAD_RWLOCK_INITIALIZER;
+/******************************************************************************
+ * File Scoped Vars
+ ******************************************************************************/
+// Config file has the following format
+// 
+// key=value
+// 
+// i.e.
+// fruit=banana
+//
+// This three constants define the max char limit for key and the value
+#define CONFIG_FILE_MAX_KEY_CHAR_SIZE 256
+#define CONFIG_FILE_MAX_VALUE_CHAR_SIZE 768
+// 256 + 768 = 1024
+#define CONFIG_FILE_MAX_LINE_LEN 1024
 
 /******************************************************************************
  * File Scoped Functions
@@ -64,8 +79,10 @@ pthread_rwlock_t config_rwlock = PTHREAD_RWLOCK_INITIALIZER;
  */
 bool setConfigValInternal(const char *a_label, char *a_dest, const char *a_src,
                           size_t a_max_len) {
-  size_t len = strlen(a_src);
-  if (len == 0) {
+
+  // 1 added to account for null char
+  size_t len = strlen(a_src) + 1;
+  if (len == 1) {
     AUTHZ_LOG_ERROR("DataFed - '%s' value not set.\n", a_label);
     return true;
   }
@@ -214,6 +231,9 @@ bool validConfigLine(const char *line, int line_number, char *key,
   }
 
   // Parse the line for key=value
+  // %255[^=] → Reads up to 255 characters into key, stopping at =.
+  // = Matches the literal = character in the input.
+  // %767s Reads up to 767 non-whitespace characters into value.
   if (sscanf(line, "%255[^=]=%767s", key, value) != 2) {
     AUTHZ_LOG_ERROR("Syntax error in config file at line %d: %s", line_number,
                     line);
@@ -253,7 +273,8 @@ bool validConfigLine(const char *line, int line_number, char *key,
  * @note Assumes read write thread lock is in place.
  */
 bool parseConfigLine(const char *line, int line_number) {
-  char key[256], value[768];
+  char key[CONFIG_FILE_MAX_KEY_CHAR_SIZE];
+  char value[CONFIG_FILE_MAX_VALUE_CHAR_SIZE];
   if (validConfigLine(line, line_number, key, value) == false) {
     return false;
   }
@@ -322,7 +343,7 @@ bool parseConfigLine(const char *line, int line_number) {
  * @note Assumes read write thread lock is in place.
  */
 bool validateConfig() {
-  char missing[1024] = {0};
+  char missing[CONFIG_FILE_MAX_LINE_LEN] = {0};
 
   if (g_config.repo_id[0] == '\0') {
     strcat(missing, " repo_id");
