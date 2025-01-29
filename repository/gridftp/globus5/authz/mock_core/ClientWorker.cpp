@@ -41,8 +41,8 @@ map<uint16_t, ClientWorker::msg_fun_t> ClientWorker::m_msg_handlers;
 
 ClientWorker::ClientWorker(IMockCoreServer &a_core, size_t a_tid,
                            LogContext log_context_in)
-    : m_config(Config::getInstance()), m_core(a_core), m_tid(a_tid),
-      m_run(true), m_log_context(log_context_in),
+    : m_config(Config::getInstance()), m_tid(a_tid), m_run(true),
+      m_log_context(log_context_in),
       m_msg_mapper(std::unique_ptr<IMessageMapper>(new ProtoBufMap)) {
   setupMsgHandlers();
   LogContext log_context = m_log_context;

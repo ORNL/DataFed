@@ -54,7 +54,7 @@ class ClientWorker;
 class Server : public IMockCoreServer {
 public:
   /// CoreServer constructor (uses Config singleton)
-  Server(LogContext);
+  explicit Server(LogContext);
 
   /// CoreServer destructor
   virtual ~Server();

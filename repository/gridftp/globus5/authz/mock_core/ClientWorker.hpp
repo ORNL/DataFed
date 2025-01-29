@@ -71,13 +71,11 @@ private:
 
   bool isRunning() const;
 
-  Config &m_config;        ///< Ref to configuration singleton
-  IMockCoreServer &m_core; ///< Ref to parent MockCoreServer interface
-  size_t m_tid;            ///< Thread ID
+  Config &m_config; ///< Ref to configuration singleton
+  size_t m_tid;     ///< Thread ID
   std::unique_ptr<std::thread> m_worker_thread; ///< Local thread handle
   mutable std::mutex m_run_mutex;
-  bool m_run;                  ///< Thread run flag
-  std::string m_validator_err; ///< String buffer for metadata validation errors
+  bool m_run; ///< Thread run flag
   LogContext m_log_context;
   MessageFactory m_msg_factory;
   std::unique_ptr<IMessageMapper> m_msg_mapper;
