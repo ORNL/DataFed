@@ -41,6 +41,10 @@ struct Config {
  * access to the global configuration during the initialization process. It
  * ensures that the configuration is only loaded once, even if multiple threads
  * attempt to initialize it.
+ *
+ * @note The DATAFED_AUTHZ_CFG_FILE env variable must be set in the gridFTP
+ * service script (usually /etc/init.d/globus-gridftp-server). This variable
+ * points to the configuration file used for DataFed communcation settings
  */
 bool initializeGlobalConfig();
 

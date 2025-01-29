@@ -77,12 +77,13 @@ bool clearContext(globus_gsi_authz_handle_t a_handle) {
 
 // The same
 globus_result_t gsi_authz_init() {
-  // openlog("gsi_authz", 0, LOG_AUTH);
+  AUTHZ_LOG_DEBUG("gsi_authz_init\n");
   memset(g_active_contexts, 0, sizeof(g_active_contexts));
 
   // This line is different
-  if (initializeGlobalConfig())
+  if (initializeGlobalConfig()) {
     return GLOBUS_FAILURE;
+  }
 
   return GLOBUS_SUCCESS;
 }
