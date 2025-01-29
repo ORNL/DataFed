@@ -29,6 +29,7 @@
 17. [1168] - Add authz unit testing to the CI
 18. [1200] - Add JavaScript linter (eslint) and (prettier) formatter for JavaScript
 19. [1180] - Refactor of authz foxx module, split into objects and added unit tests
+20. [1255] - Fixes bug, in libauthz with log_path var not being read in from config file.
 
 # v2024.6.17.10.40
 
