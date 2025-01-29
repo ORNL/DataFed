@@ -2,7 +2,7 @@ import { createMatchesHtml } from "./transfer-templates.js";
 
 /**
  * @class TransferEndpointManager
- * 
+ *
  * Manages endpoint operations and state for file transfers
  */
 export class TransferEndpointManager {

@@ -6,7 +6,7 @@ import * as api from "../../api.js";
 
 /**
  * @class TransferDialogController
- * 
+ *
  * Manages the UI and logic for data transfers
  */
 export class TransferDialogController {

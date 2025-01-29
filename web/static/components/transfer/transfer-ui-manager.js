@@ -6,7 +6,7 @@ import { createMatchesHtml, formatRecordTitle, getDialogTemplate } from "./trans
 
 /**
  * @class TransferUIManager
- * 
+ *
  * Manages the UI components and interactions for file transfer operations
  */
 export class TransferUIManager {
