@@ -43,10 +43,10 @@ export function getTransferOptionsTemplate(mode) {
 
 /**
  * Gets the dialog template HTML
- * @param {Object} labels - The labels for dialog elements
- * @param {TransferMode[keyof TransferMode]} mode - The transfer mode
+ * @param {object} labels - The labels for dialog elements
  * @param {string} labels.record - Record label text
  * @param {string} labels.endpoint - Endpoint label text
+ * @param {TransferMode[keyof TransferMode]} mode - The transfer mode
  * @returns {string} The dialog template HTML
  */
 export function getDialogTemplate(labels, mode) {
@@ -80,7 +80,7 @@ export function getDialogTemplate(labels, mode) {
 
 /**
  * Creates HTML for endpoint matches
- * @param {Array<Object>} endpoints - List of endpoint objects
+ * @param {Array<object>} endpoints - List of endpoint objects
  * @returns {string} Generated HTML for matches
  */
 export function createMatchesHtml(endpoints) {
@@ -103,8 +103,8 @@ export function createMatchesHtml(endpoints) {
 
 /**
  * Formats a record title for display
- * @param {Object} item - The record item
- * @param {Object} info - Record information
+ * @param {object} item - The record item
+ * @param {object} info - Record information
  * @returns {string} Formatted HTML string for record title
  * @private
  */
