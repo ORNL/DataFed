@@ -191,6 +191,18 @@ BOOST_AUTO_TEST_CASE(GetAuthzPathGlobusBaseSetToRoot) {
   BOOST_CHECK_EQUAL(worker.getAuthzPath(deep_path), expected_result);
 }
 
+BOOST_AUTO_TEST_CASE(GetAuthzPathSameValInRepoNameAndRootPath) {
+	// Test a valid full FTP path when the globus_collection_path is /
+	SDMS::LogContext log_context;
+
+	strcpy(config.globus_collection_path, "/mnt/datafed");
+	SDMS::AuthzWorker worker(config, log_context);
+	char deep_path[] = "ftp://ci-datafed-globus2/mnt/datafed/datafedci-home";
+	std::string expected_result = "/datafedci-home";
+
+	BOOST_CHECK_EQUAL(worker.getAuthzPath(deep_path), expected_result);
+}
+
 BOOST_AUTO_TEST_CASE(InvalidURLTooFewSlashesTest) {
   SDMS::LogContext log_context;
   SDMS::AuthzWorker worker(config, log_context);
