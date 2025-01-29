@@ -79,8 +79,6 @@ Server::Server(LogContext log_context)
     m_auth_manager.addKey(PublicKeyType::PERSISTENT, r.second.pub_key(),
                           r.second.id());
   }
-  // Start ZAP handler must be started before any other socket binds are called
-  // m_zap_thread = thread( &Server::zapHandler, this );
 }
 
 Server::~Server() {
@@ -93,8 +91,9 @@ Server::~Server() {
 void Server::loadKeys(const std::string &a_cred_dir) {
   string fname = a_cred_dir + "mock-datafed-core-key.pub";
   ifstream inf(fname.c_str());
-  if (!inf.is_open() || !inf.good())
+  if (!inf.is_open() || !inf.good()) {
     EXCEPT_PARAM(1, std::string("Could not open public key file: ") + fname);
+  }
   inf >> m_pub_key;
   inf.close();
 

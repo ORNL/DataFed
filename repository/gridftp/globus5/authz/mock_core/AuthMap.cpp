@@ -9,10 +9,9 @@ using namespace std;
 namespace SDMS {
 
 namespace MockCore {
-AuthMap::AuthMap(const AuthMap &auth_map) {
-
-  m_trans_active_increment = auth_map.m_trans_active_increment;
-  m_session_active_increment = auth_map.m_session_active_increment;
+AuthMap::AuthMap(const AuthMap &auth_map)
+    : m_trans_active_increment(auth_map.m_trans_active_increment),
+      m_session_active_increment(auth_map.m_session_active_increment) {
 
   auth_map.m_trans_clients_mtx.lock();
   m_trans_auth_clients = auth_map.m_trans_auth_clients;
