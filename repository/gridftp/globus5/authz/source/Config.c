@@ -459,28 +459,11 @@ bool setConfigVal(const char *a_label, const char *a_src) {
   return err;
 }
 
-bool initializeGlobalConfig() {
-
-  // Acquire a write lock to modify configuration values
-  pthread_rwlock_wrlock(&config_rwlock);
-
-  // Initialized only at start
-  if (config_loaded) {
-    AUTHZ_LOG_INFO("Config file already loaded. Skipping reload.\n");
-    return false; // Return false to indicate no errors
-  }
-
-  // Moving default initialization outside of the while loop prevents overwriting
-  initializeDefaults();
-
-  FILE *config_file = openConfigFile("DATAFED_AUTHZ_CFG_FILE",
-                                     "/opt/datafed/authz/datafed-authz.cfg");
-  if (!config_file) {
-    return true;
-  }
-
+bool parseConfigFile(FILE * config_file) {
   char line[1024];
+  line[0] = '\0';
   int line_number = 0;
+  bool parse_success = true;
   while (fgets(line, sizeof(line), config_file)) {
     line_number++;
     line[strcspn(line, "\r\n")] = '\0'; // Remove newlines
@@ -488,29 +471,48 @@ bool initializeGlobalConfig() {
       continue; // Skip comments/empty lines
 
     if (parseConfigLine(line, line_number)) {
-      fclose(config_file);
-      // Avoid trying to reload
-      config_loaded = true;
-      logRelease();
-      return true;
+      AUTHZ_LOG_ERROR("Configuration file parsing failed line: %s.", line);
+      parse_success = false;
+      break;
     }
   }
+  return parse_success;
+}
 
-  fclose(config_file);
+bool initializeGlobalConfig() {
+  bool error_found = true;
+  // Acquire a write lock to modify configuration values
+  pthread_rwlock_wrlock(&config_rwlock);
 
-  if (!validateConfig()) {
-    AUTHZ_LOG_ERROR("Configuration validation failed.");
-    // Avoid trying to reload
-    config_loaded = true;
-    logRelease();
-    return true;
+  // Initialized only at start
+  if (config_loaded) {
+    AUTHZ_LOG_INFO("Config file already loaded. Skipping reload.\n");
+    error_found = false;
+  } else {
+
+    // Moving default initialization outside of the while loop prevents overwriting
+    initializeDefaults();
+
+    FILE *config_file = openConfigFile("DATAFED_AUTHZ_CFG_FILE",
+        "/opt/datafed/authz/datafed-authz.cfg");
+    if (config_file) {
+
+      bool parse_success = parseConfigFile(config_file);
+
+      fclose(config_file);
+
+      if (parse_success && validateConfig()) {
+        AUTHZ_LOG_INFO("Configuration loaded successfully.");
+        error_found = false;
+      } else {
+        AUTHZ_LOG_ERROR("Configuration validation failed.");
+      }
+
+      // Avoid trying to reload
+      config_loaded = true;
+    }
   }
-
-  AUTHZ_LOG_INFO("Configuration loaded successfully.");
-
-  // Release the write lock
-  config_loaded = true;
   logRelease();
   pthread_rwlock_unlock(&config_rwlock);
-  return false;
+  return error_found;
 }
