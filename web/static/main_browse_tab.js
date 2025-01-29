@@ -12,7 +12,7 @@ import * as dlgRepoEdit from "./dlg_repo_edit.js";
 import * as dlgSetACLs from "./dlg_set_acls.js";
 import * as dlgRepoManage from "./dlg_repo_manage.js";
 import * as dlgOwnerChangeConfirm from "./dlg_owner_chg_confirm.js";
-import * as dlgStartXfer from "./dlg_start_xfer.js";
+import { transferDialog } from "./components/transfer/index.js";
 import * as dlgSettings from "./dlg_settings.js";
 import * as dlgCollNewEdit from "./dlg_coll_new_edit.js";
 import * as dlgProjNewEdit from "./dlg_proj_new_edit.js";
@@ -613,7 +613,7 @@ function dataPut(a_id, a_cb) {
     api.dataPutCheck(a_id, function (ok, data) {
         if (ok) {
             //console.log("data put check:",data);
-            dlgStartXfer.show(model.TT_DATA_PUT, [data.item], a_cb);
+            transferDialog.show(model.TT_DATA_PUT, [data.item], a_cb);
         } else {
             dialogs.dlgAlert("Data Put Error", data);
         }

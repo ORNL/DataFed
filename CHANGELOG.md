@@ -29,7 +29,8 @@
 17. [1168] - Add authz unit testing to the CI
 18. [1200] - Add JavaScript linter (eslint) and (prettier) formatter for JavaScript
 19. [1180] - Refactor of authz foxx module, split into objects and added unit tests
-20. [1241] - Adds a bug fix resulting from a race condition in the global configuration struct in the globus callout library
+20. [1257] - Bug in authz library parsing of authz.conf file, globus paths incorrectly sanitized when using just '/'
+21. [1241] - Adds a bug fix resulting from a race condition in the global configuration struct in the globus callout library
 
 # v2024.6.17.10.40
 
