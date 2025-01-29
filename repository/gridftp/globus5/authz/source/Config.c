@@ -127,6 +127,14 @@ bool loadKeyFile(char *a_dest, char *a_filename) {
 void initializeDefaults() {
   g_config.timeout = 10000;
   g_config.log_path[0] = '\0';
+  g_config.repo_id[0] = '\0';
+  g_config.server_addr[0] = '\0';
+  g_config.user[0] = '\0';
+  g_config.test_path[0] = '\0';
+  g_config.globus_collection_path[0] = '\0';
+  g_config.pub_key[0] = '\0';
+  g_config.priv_key[0] = '\0';
+  g_config.server_key[0] = '\0';
 }
 
 /**
@@ -443,8 +451,7 @@ bool setConfigVal(const char *a_label, const char *a_src) {
     err = setConfigValInternal(a_label, g_config.globus_collection_path, a_src,
                                MAX_PATH_LEN);
   } else {
-    pthread_rwlock_unlock(&config_rwlock);
-    return err;
+    err = true;
   }
 
   // Release the write lock
@@ -463,6 +470,7 @@ bool initializeGlobalConfig() {
     return false; // Return false to indicate no errors
   }
 
+  // Moving default initialization outside of the while loop prevents overwriting
   initializeDefaults();
 
   FILE *config_file = openConfigFile("DATAFED_AUTHZ_CFG_FILE",
