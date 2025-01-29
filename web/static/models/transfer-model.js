@@ -19,7 +19,7 @@ export class TransferModel {
 
     /**
      * @param {TransferMode[keyof TransferMode]} mode - Transfer mode
-     * @param {Array<Object>} records - Data records
+     * @param {Array<object>} records - Data records
      * @throws {Error} If invalid mode provided
      */
     constructor(mode, records) {
@@ -81,8 +81,8 @@ export class TransferModel {
 
     /**
      * Check if record is valid for transfer
-     * @param {Object} record - Data record
-     * @returns {boolean}
+     * @param {object} record - Data record
+     * @returns {boolean} is record valid
      */
     isRecordValid(record) {
         return record.size > 0 && !record.locked;
@@ -90,8 +90,8 @@ export class TransferModel {
 
     /**
      * Get record information
-     * @param {Object} item Record item
-     * @returns {Object} Record info
+     * @param {object} item Record item
+     * @returns {object} Record info
      */
     getRecordInfo(item) {
         if (item.size === 0) {
