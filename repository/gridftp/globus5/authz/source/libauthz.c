@@ -7,8 +7,8 @@
 
 // Globus third party includes
 #include <globus_error_hierarchy.h>
-#include <globus_types.h>
 #include <globus_thread.h>
+#include <globus_types.h>
 #include <gssapi.h>
 
 // Standard includes
@@ -172,7 +172,7 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
   AUTHZ_LOG_INFO("Allowed collection path: %s, action: %s, object is %s\n",
                  globus_collection_path, action, object);
   globus_thread_t thread_id = globus_thread_self();
-  AUTHZ_LOG_INFO("Thread id is: %p\n", (void *) thread_id.dummy); 
+  AUTHZ_LOG_INFO("Thread id is: %p\n", (void *)thread_id.dummy);
   AUTHZ_LOG_ERROR("gsi_authz_authorize_async, handle: %p, act: %s, obj: %s\n",
                   handle, action, object);
 
@@ -272,13 +272,15 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
 
             if (client_id) {
               struct Config config = createLocalConfigCopy();
-                AUTHZ_LOG_INFO(
-                    "libauthz.c Auth client_id: %s, file: %s, action: %s log_file path: %s\n",
-                    client_id, object, action, config.log_path);
+              AUTHZ_LOG_INFO("libauthz.c Auth client_id: %s, file: %s, action: "
+                             "%s log_file path: %s\n",
+                             client_id, object, action, config.log_path);
 
-              // NOTE - Globus stores thread ids as a pointer, using an int to represent this is non
-              // ideal because it will be truncated on conversion.
-              if (checkAuthorization(client_id, object, action, config, (int) thread_id.dummy) == 0) {
+              // NOTE - Globus stores thread ids as a pointer, using an int to
+              // represent this is non ideal because it will be truncated on
+              // conversion.
+              if (checkAuthorization(client_id, object, action, config,
+                                     (int)thread_id.dummy) == 0) {
                 result = GLOBUS_SUCCESS;
               } else {
 

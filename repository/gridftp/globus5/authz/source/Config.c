@@ -35,9 +35,9 @@ pthread_rwlock_t config_rwlock = PTHREAD_RWLOCK_INITIALIZER;
  * File Scoped Vars
  ******************************************************************************/
 // Config file has the following format
-// 
+//
 // key=value
-// 
+//
 // i.e.
 // fruit=banana
 //
@@ -378,9 +378,10 @@ bool validateConfig() {
  * @note Assumes you have a thread lock in play
  **/
 void logRelease() {
-  if(first_run) {
+  if (first_run) {
     AUTHZ_LOG_INFO("DataFed Authz module started, version %s\n", getVersion());
-    AUTHZ_LOG_INFO("                         API, version %s\n", getAPIVersion());
+    AUTHZ_LOG_INFO("                         API, version %s\n",
+                   getAPIVersion());
     AUTHZ_LOG_INFO("                     Release, version %s\n",
                    getReleaseVersion());
     first_run = false;
@@ -480,7 +481,7 @@ bool setConfigVal(const char *a_label, const char *a_src) {
   return err;
 }
 
-bool parseConfigFile(FILE * config_file) {
+bool parseConfigFile(FILE *config_file) {
   char line[1024];
   line[0] = '\0';
   int line_number = 0;
@@ -511,11 +512,12 @@ bool initializeGlobalConfig() {
     error_found = false;
   } else {
 
-    // Moving default initialization outside of the while loop prevents overwriting
+    // Moving default initialization outside of the while loop prevents
+    // overwriting
     initializeDefaults();
 
     FILE *config_file = openConfigFile("DATAFED_AUTHZ_CFG_FILE",
-        "/opt/datafed/authz/datafed-authz.cfg");
+                                       "/opt/datafed/authz/datafed-authz.cfg");
     if (config_file) {
 
       bool parse_success = parseConfigFile(config_file);

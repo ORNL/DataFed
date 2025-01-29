@@ -474,7 +474,7 @@ std::string AuthzWorker::getAuthzPath(char *full_ftp_path) {
 int AuthzWorker::processResponse(ICommunicator::Response &response) {
   if (response.message) { // Make sure the message exists before we try to
                           // access it
-                          
+
     // Prefer the correlation id of the received message than the one that
     // was originally sent
     m_log_context.correlation_id = std::get<std::string>(
@@ -603,14 +603,16 @@ int AuthzWorker::checkAuth(char *client_id, char *path, char *action) {
   m_log_context.correlation_id =
       std::get<std::string>(message->get(MessageAttribute::CORRELATION_ID));
 
-  ICommunicator::Response response; 
- 
-  int attempt = 0; 
+  ICommunicator::Response response;
+
+  int attempt = 0;
   // TODO - this needs to be configurable
   int retries = 3;
-  do { 
-    DL_INFO(m_log_context,
-            "Sending RepoAuthzRequest client_id: " << client_id << " path: " << path << " action: " << action << " attempt: " << attempt << " address: " << m_comm->address());
+  do {
+    DL_INFO(m_log_context, "Sending RepoAuthzRequest client_id: "
+                               << client_id << " path: " << path << " action: "
+                               << action << " attempt: " << attempt
+                               << " address: " << m_comm->address());
     m_comm->send(*message);
     response = m_comm->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
     ++attempt;
@@ -674,10 +676,11 @@ int checkAuthorization(char *client_id, char *object, char *action,
     // Append to the existing path because we don't want the C++ and C code
     // trying to write to the same file
     log_path_authz.append("_authz");
-    if (SDMS::log_stream_added == false ) {
+    if (SDMS::log_stream_added == false) {
       log_file_worker.open(log_path_authz, std::ios::app);
       if (!log_file_worker.is_open()) {
-        DL_ERROR(log_context, "AuthzWorker open log file path failed, path: " << log_path_authz);
+        DL_ERROR(log_context, "AuthzWorker open log file path failed, path: "
+                                  << log_path_authz);
       } else {
         it = SDMS::global_logger.addStream(log_file_worker);
         SDMS::log_stream_added = true;
@@ -700,7 +703,7 @@ int checkAuthorization(char *client_id, char *object, char *action,
     DL_ERROR(log_context, "AuthzWorker exception: " << e.what());
   }
 
-  // We don't want to close it unless we can also remove it, and we want to 
+  // We don't want to close it unless we can also remove it, and we want to
   // leave it open until we are completely done. But because it is only defined
   // in this scope we have to close and remove it.
   //
