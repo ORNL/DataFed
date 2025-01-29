@@ -343,7 +343,8 @@ bool parseConfigLine(const char *line, int line_number) {
  * @note Assumes read write thread lock is in place.
  */
 bool validateConfig() {
-  char missing[CONFIG_FILE_MAX_LINE_LEN] = {0};
+  char missing[CONFIG_FILE_MAX_LINE_LEN];
+  missing[0] = '\0';
 
   if (g_config.repo_id[0] == '\0') {
     strcat(missing, " repo_id");
@@ -482,7 +483,7 @@ bool setConfigVal(const char *a_label, const char *a_src) {
 }
 
 bool parseConfigFile(FILE *config_file) {
-  char line[1024];
+  char line[CONFIG_FILE_MAX_LINE_LEN];
   line[0] = '\0';
   int line_number = 0;
   bool parse_success = true;
