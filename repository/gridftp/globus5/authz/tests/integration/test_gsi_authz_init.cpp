@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(test_gsi_authz_init) {
   config_file << "priv_key=" << priv_key_path << std::endl;
   config_file << "log_path=" << log_path << std::endl;
   config_file << "user=" << user << std::endl;
-  config_file << "globus-collection-path=" << globus_collection_path
+  config_file << "globus_collection_path=" << globus_collection_path
               << std::endl;
 
   config_file.close();
@@ -150,7 +150,7 @@ BOOST_AUTO_TEST_CASE(test_gsi_authz_init) {
 
   globus_result_t result = gsi_authz_init();
 
-  conf = getConfig();
+  conf = createLocalConfigCopy();
   BOOST_CHECK_EQUAL(std::string(conf.repo_id), repo_id);
   BOOST_CHECK_EQUAL(std::string(conf.server_addr), server_address);
   BOOST_CHECK_EQUAL(std::string(conf.pub_key), pub_key);
