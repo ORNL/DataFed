@@ -91,6 +91,7 @@ public:
    * - PERSISTENT
    **/
   virtual std::string getUID(const std::string &pub_key) const final;
+
 };
 
 } // namespace Core
