@@ -35,7 +35,7 @@ void AuthenticationOperator::execute(IMessage &message) {
 
   LogContext log_context;
   log_context.thread_name = "authentication_manager";
-  log_context.tread_id = 0;
+  log_context.thread_id = 0;
   log_context.correlation_id = std::get<std::string>(
             message.get(MessageAttribute::CORRELATION_ID));
 
@@ -43,7 +43,7 @@ void AuthenticationOperator::execute(IMessage &message) {
     m_authentication_manager->incrementKeyAccessCounter(key);
     uid = m_authentication_manager->getUID(key);
   }
-  DL_INFO("Attempt to map key to " << key << " uid set to: " << uid );
+  DL_INFO(log_context, "Attempt to map key to " << key << " uid set to: " << uid );
   message.set(MessageAttribute::ID, uid);
 }
 
