@@ -168,6 +168,10 @@ export class TransferUIManager {
                         this.#controller.endpointManager.currentEndpoint.name + selectedPath,
                     );
                 },
+              // {
+              //     api: this.api,
+              //     dialogs: this.dialogs,
+              // },
             );
         });
     }

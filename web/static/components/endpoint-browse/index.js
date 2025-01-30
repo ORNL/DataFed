@@ -1,5 +1,6 @@
 import * as util from "../../util.js";
 import * as api from "../../api.js";
+import * as dialogs from "../../dialogs.js";
 
 const CONFIG = {
     PATH: { SEPARATOR: "/", UP: "..", CURRENT: "." },
@@ -24,6 +25,11 @@ class EndpointBrowser {
      * @param {string} props.path - Initial path
      * @param {string} props.mode - Browser mode ('file'/'dir')
      * @param {Function} props.onSelect - Selection callback
+     * @param {Object} props.services - The service objects to use for API and dialog operations
+     * @param {Object} props.services.dialogs - Dialog service
+     * @param {Function} props.services.dialogs.dlgAlert - Alert dialog function
+     * @param {Object} props.services.api - API service
+     * @param {Function} props.services.api.getGlobusAuthorizeURL - Globus authorization URL function
      */
     constructor(props) {
         this.props = props;
@@ -77,7 +83,7 @@ class EndpointBrowser {
      */
     render() {
         this.element =
-            $(`                                                                                                                                           
+          $(`                                                                                                                                           
          <div class="endpoint-browser">                                                                                                                           
              ${this.pathNavigator()}                                                                                                                        
              <div class="spacer"></div>                                                                                                                           
@@ -151,8 +157,8 @@ class EndpointBrowser {
      */
     isValidSelection(node) {
         return (
-            (node.data.is_dir && this.props.mode === "dir" && node.key !== CONFIG.PATH.UP) ||
-            (!node.data.is_dir && this.props.mode === "file")
+          (node.data.is_dir && this.props.mode === "dir" && node.key !== CONFIG.PATH.UP) ||
+          (!node.data.is_dir && this.props.mode === "file")
         );
     }
 
@@ -164,8 +170,8 @@ class EndpointBrowser {
         clearTimeout(this.state.timer);
         // Ensure path ends with separator
         const current = this.state.path.endsWith(CONFIG.PATH.SEPARATOR)
-            ? this.state.path
-            : this.state.path + CONFIG.PATH.SEPARATOR;
+          ? this.state.path
+          : this.state.path + CONFIG.PATH.SEPARATOR;
 
         let updatedPath;
         if (newPath === CONFIG.PATH.UP) {
@@ -196,60 +202,95 @@ class EndpointBrowser {
 
         // Fetch directory listing
         api.epDirList(this.props.endpoint.id, this.state.path, false, (data) => {
-            if (data) {
-                const source = data.code
-                    ? [
-                          {
-                              title: `<span class='ui-state-error'>Error: ${data.message}</span>`,
-                              icon: false,
-                              is_dir: true,
-                          },
-                      ]
-                    : [
-                          {
-                              title: CONFIG.PATH.CURRENT,
-                              icon: CONFIG.UI.ICONS.FOLDER,
-                              key: CONFIG.PATH.CURRENT,
-                              is_dir: true,
-                          },
-                          {
-                              title: CONFIG.PATH.UP,
-                              icon: CONFIG.UI.ICONS.FOLDER,
-                              key: CONFIG.PATH.UP,
-                              is_dir: true,
-                          },
-                          // Map API data to tree nodes
-                          ...data.DATA.map((entry) =>
-                              entry.type === "dir"
-                                  ? {
-                                        // Directory node
-                                        title: entry.name,
-                                        icon: CONFIG.UI.ICONS.FOLDER,
-                                        key: entry.name,
-                                        is_dir: true,
-                                    }
-                                  : {
-                                        // File node with size and date
-                                        title: entry.name,
-                                        icon: CONFIG.UI.ICONS.FILE,
-                                        key: entry.name,
-                                        is_dir: false,
-                                        size: util.sizeToString(entry.size),
-                                        date: new Date(
-                                            entry.last_modified.replace(" ", "T"),
-                                        ).toLocaleString(),
-                                    },
-                          ),
-                      ];
+            this.updateTree(data);
+            // this.handleApiResponse(data);
 
-                // Update tree with new data
-                $.ui.fancytree.getTree("#file_tree").reload(source);
-            }
-
-            // Reset loading state
-            this.state.loading = false;
-            $("#file_tree").fancytree("enable");
+            // // Reset loading state
+            // this.state.loading = false;
+            // $("#file_tree").fancytree("enable");
         });
+    }
+
+    /**
+     * Updates the tree with new data
+     * @param {Object} data - The data to update the tree with
+     */
+    updateTree(data) {
+        const source = data.code
+          ? [
+              {
+                  title: `<span class='ui-state-error'>Error: ${data.message}</span>`,
+                  icon: false,
+                  is_dir: true,
+              },
+          ]
+          : [
+              {
+                  title: CONFIG.PATH.CURRENT,
+                  icon: CONFIG.UI.ICONS.FOLDER,
+                  key: CONFIG.PATH.CURRENT,
+                  is_dir: true,
+              },
+              {
+                  title: CONFIG.PATH.UP,
+                  icon: CONFIG.UI.ICONS.FOLDER,
+                  key: CONFIG.PATH.UP,
+                  is_dir: true,
+              },
+              ...data.DATA.map((entry) =>
+                entry.type === "dir"
+                  ? {
+                      title: entry.name,
+                      icon: CONFIG.UI.ICONS.FOLDER,
+                      key: entry.name,
+                      is_dir: true,
+                  }
+                  : {
+                      title: entry.name,
+                      icon: CONFIG.UI.ICONS.FILE,
+                      key: entry.name,
+                      is_dir: false,
+                      size: util.sizeToString(entry.size),
+                      date: new Date(
+                        entry.last_modified.replace(" ", "T"),
+                      ).toLocaleString(),
+                  },
+              ),
+          ];
+
+        $.ui.fancytree.getTree("#file_tree").reload(source);
+        this.state.loading = false;
+        $("#file_tree").fancytree("enable");
+    }
+
+    /**
+     * Handles specific API responses, such as consent requirements.
+     * @param {Object} response - The API response object
+     */
+    handleApiResponse(response) {
+        if (response.code === "ConsentRequired") {
+            this.handleConsentRequired(response);
+        } else {
+            dialogs.dlgAlert("Error", response.message || "An error occurred.");
+        }
+    }
+
+    /**
+     * Handles the consent required response from the API.
+     * @param {Object} response - The API response object
+     */
+    handleConsentRequired(response) {
+        api.getGlobusAuthorizeURL(
+          response.required_scopes,null, true, null,
+          (ok, data) => {
+              console.log("Consent response", ok, data);
+              dialogs.dlgAlert(
+                "Consent Required",
+                `Please provide consent by visiting: ${data}`,
+              );
+          }
+        )
+
     }
 
     /**
@@ -261,9 +302,9 @@ class EndpointBrowser {
 
         // Construct full path for selected node
         const path =
-            this.state.path +
-            (this.state.path.endsWith(CONFIG.PATH.SEPARATOR) ? "" : CONFIG.PATH.SEPARATOR) +
-            (node.key === CONFIG.PATH.CURRENT ? "" : node.key);
+          this.state.path +
+          (this.state.path.endsWith(CONFIG.PATH.SEPARATOR) ? "" : CONFIG.PATH.SEPARATOR) +
+          (node.key === CONFIG.PATH.CURRENT ? "" : node.key);
 
         this.props.onSelect(path);
     }
@@ -279,6 +320,7 @@ class EndpointBrowser {
  * @param {string} path - Initial path
  * @param {string} mode - Browser mode ('file'/'dir')
  * @param {Function} callback - Selection callback
+ * @param services - The service objects to use for API and dialog operations
  */
 export function show(endpoint, path, mode, callback) {
     const browser = new EndpointBrowser({
