@@ -511,6 +511,7 @@ bool initializeGlobalConfig() {
   if (config_loaded) {
     AUTHZ_LOG_INFO("Config file already loaded. Skipping reload.\n");
     error_found = false;
+    logRelease();
   } else {
 
     // Moving default initialization outside of the while loop prevents
@@ -535,8 +536,8 @@ bool initializeGlobalConfig() {
       // Avoid trying to reload
       config_loaded = true;
     }
+    logRelease();
   }
-  logRelease();
   pthread_rwlock_unlock(&config_rwlock);
   return error_found;
 }
