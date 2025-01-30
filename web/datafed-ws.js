@@ -1543,6 +1543,79 @@ app.post("/api/cat/search", (a_req, a_resp) => {
     });
 });
 
+/**
+ * Basic implementation of `get_authorize_url` from the Globus SDK.
+ *
+ * This function generates the authorization URL that a user can follow to provide
+ * authorization and consent via Globus Auth.
+ *
+ * @param {Array<string>} [requested_scopes=[]] - The scopes on the token(s) being requested.
+ * In the case of accessing a mapped collection, this should include the mapped
+ * collection's UUID, such as: `https://auth.globus.org/scopes/YOUR-UUID-HERE/data_access`.
+ * @param {string} [state="_default"] - Allows the application to pass information back to itself.
+ * @param {boolean} [refresh_tokens=false] - Request refresh tokens in addition to access tokens.
+ * @param {object} [query_params={}] - Additional parameters to be included in the authorization URL.
+ *
+ * @returns {string} The URL a user can follow to provide authorization and consent via Globus.
+ *
+ * @example
+ * const url = globusGetAuthorizeURL(
+ *   'your-client-id',
+ *   'your-redirect-uri',
+ *   ['openid', 'email'],
+ *   'custom-state',
+ *   true,
+ *   { custom_param: 'value' }
+ * );
+ */
+app.get("/api/globus/authorize_url", (a_req, a_resp) => {
+    const client_id = g_client_id;
+    const redirect_uri = g_extern_url;
+    const { requested_scopes, state, refresh_tokens, query_params } = a_req.query;
+
+    const scopes = requested_scopes
+      ? requested_scopes.split(",")
+      : ["openid", "profile", "email", "urn:globus:auth:scope:transfer.api.globus.org:all"];
+
+    if (refresh_tokens) {
+        scopes.push("offline_access");
+    }
+
+    // TODO: stubbed client object to provide base url, we should extract if possible
+    const auth_client = {
+        base_url: "https://auth.globus.org",
+    };
+
+    const authorize_base_url = `${auth_client.base_url}/v2/oauth2/authorize`;
+    /*  NOTE: using URLSearchParams changes encoding of  " " to "+" which Globus accepts, despite saying otherwise
+        https://docs.globus.org/api/auth/developer-guide/#obtaining-authorization
+     */
+      // TODO: consider moving back to custom encoding in anticipation that Globus will no longer accept a different encoding scheme
+    const params = new URLSearchParams({
+          client_id,
+          redirect_uri,
+          scope: scopes.join(" "), // Scopes need to be separated by a space
+          state: state || "_default",
+          response_type: "code",
+          access_type: refresh_tokens === "true" ? "offline" : "online",
+          prompt: "login",
+      });
+
+    if (query_params) {
+        const additionalParams = JSON.parse(query_params);
+        Object.entries(additionalParams).forEach(([key, value]) => {
+            if (value) {
+                // short-circuit on empty param values or if param already defined,
+                // TODO: are there cases where we may want empty params?
+                params.set(key, value);
+            }
+        });
+    }
+
+    const authorize_url = `${authorize_base_url}?${params.toString()}`;
+    a_resp.json({ authorize_url });
+});
+
 app.post("/api/col/pub/search/data", (a_req, a_resp) => {
     sendMessage("RecordSearchPublishedRequest", a_req.body, a_req, a_resp, function (reply) {
         a_resp.send(reply);
