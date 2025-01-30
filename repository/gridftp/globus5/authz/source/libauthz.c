@@ -161,11 +161,11 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
   char *callout_username_mapped1 = getenv("GLOBUS_GRIDFTP_MAPPED_USERNAME");
   char *callout_id_mapped1 = getenv("GLOBUS_GRIDFTP_MAPPED_IDENTITY_ID");
 
-  AUTHZ_LOG_DEBUG("libauthz.c GLOBUS_GRIDFTP_GUEST_IDENTITY_IDS: %s\n",
+  AUTHZ_LOG_DEBUG("gsi_authz_authorize_async GLOBUS_GRIDFTP_GUEST_IDENTITY_IDS: %s\n",
                   callout_ids1);
-  AUTHZ_LOG_DEBUG("libauthz.c GLOBUS_GRIDFTP_MAPPED_USERNAME: %s\n",
+  AUTHZ_LOG_DEBUG("gsi_authz_authorize_async GLOBUS_GRIDFTP_MAPPED_USERNAME: %s\n",
                   callout_username_mapped1);
-  AUTHZ_LOG_DEBUG("libauthz.c GLOBUS_GRIDFTP_MAPPED_IDENTITY_ID: %s\n",
+  AUTHZ_LOG_DEBUG("gsi_authz_authorize_async GLOBUS_GRIDFTP_MAPPED_IDENTITY_ID: %s\n",
                   callout_id_mapped1);
 
   char globus_collection_path[MAX_PATH_LEN];
@@ -256,24 +256,24 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
 
               if (callout_ids != NULL) {
                 AUTHZ_LOG_DEBUG(
-                    "libauthz.c GLOBUS_GRIDFTP_GUEST_IDENTITY_IDS: %s\n",
+                    "gsi_authz_authorize_async GLOBUS_GRIDFTP_GUEST_IDENTITY_IDS: %s\n",
                     callout_ids);
                 client_id = strdup(callout_ids);
                 AUTHZ_LOG_INFO("libauthz.c client_id(s): %s\n", client_id);
               } else if (callout_id_mapped != NULL) {
                 AUTHZ_LOG_DEBUG(
-                    "libauthz.c GLOBUS_GRIDFTP_MAPPED_IDENTITY_ID: %s\n",
+                    "gsi_authz_authorize_async GLOBUS_GRIDFTP_MAPPED_IDENTITY_ID: %s\n",
                     callout_id_mapped);
                 client_id = strdup(callout_id_mapped);
               } else {
                 AUTHZ_LOG_ERROR(
-                    "libauthz.c GLOBUS_GRIDFTP_GUEST_IDENTITY_IDS.\n");
+                    "gsi_authz_authorize_async GLOBUS_GRIDFTP_GUEST_IDENTITY_IDS.\n");
               }
             }
 
             if (client_id) {
               struct Config config = createLocalConfigCopy();
-              AUTHZ_LOG_INFO("libauthz.c Auth client_id: %s, file: %s, action: "
+              AUTHZ_LOG_INFO("gsi_authz_authorize_async client_id: %s, file: %s, action: "
                              "%s log_file path: %s\n",
                              client_id, object, action, config.log_path);
 
@@ -286,9 +286,8 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
               } else {
 
                 AUTHZ_LOG_INFO(
-                    "libauthz.c Auth client_id: %s, file: %s, action: %s\n",
+                    "gsi_authz_authorize_async client_id: %s, file: %s, action: %s, status: FALIED, msg: checkAuthorization command failed\n",
                     client_id, object, action);
-                AUTHZ_LOG_INFO("libauthz.c checkAuthorization FAIL.\n");
               }
 
               free(client_id);
@@ -297,33 +296,32 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
 
           gss_release_buffer(&min_stat, &target_buf);
         } else {
-          AUTHZ_LOG_ERROR("gss_display_name target FAILED, maj: %d, min: %d\n",
+          AUTHZ_LOG_ERROR("gsi_authz_authorize_async path: %s, action: %s, object: %s, status: FAILED, msg: gss_display_name target FAILED, maj: %d, min: %d\n", globus_collection_path, action, object,
                           maj_stat, min_stat);
         }
 
         gss_release_buffer(&min_stat, &client_buf);
       } else {
-        AUTHZ_LOG_ERROR("gss_display_name source FAILED, maj: %d, min: %d\n",
+        AUTHZ_LOG_ERROR("gsi_authz_authorize_async path: %s, action: %s, object: %s, status: FAILED, msg: gss_display_name source FAILED, maj: %d, min: %d\n", globus_collection_path, action, object,
                         maj_stat, min_stat);
       }
     } else {
-      AUTHZ_LOG_ERROR("gss_inquire_context FAILED, maj: %d, min: %d\n",
+      AUTHZ_LOG_ERROR("gsi_authz_authorize_async path: %s, action: %s, object: %s, status: FAILED, msg: gss_inquire_context FAILED, maj: %d, min: %d\n", globus_collection_path, action, object,
                       maj_stat, min_stat);
     }
   } else {
-    AUTHZ_LOG_ERROR("context handle lookup FAILED\n");
+    AUTHZ_LOG_ERROR("gsi_authz_authorize_async path: %s, action: %s, object: %s, status: FAILED, msg: context handle\n", globus_collection_path, action, object);
   }
 
   if (result != GLOBUS_SUCCESS) {
     globus_object_t *error = globus_error_construct_no_authentication(0, 0);
-    AUTHZ_LOG_INFO("Authz: FAILED\n");
+
+    AUTHZ_LOG_INFO("gsi_authz_authorize_async path: %s, action: %s, object: %s, status: FAILED\n", globus_collection_path, action, object);
     result = globus_error_put(error);
   } else {
-    AUTHZ_LOG_DEBUG("Authz: PASSED\n");
+    AUTHZ_LOG_INFO("gsi_authz_authorize_async path: %s, action: %s, object: %s, status: PASSED\n", globus_collection_path, action, object);
     callback(callback_arg, handle, result);
   }
-
-  AUTHZ_LOG_ERROR("Authz returning\n");
 
   return result;
 }
