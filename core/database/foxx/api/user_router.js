@@ -784,8 +784,8 @@ router
     })
     .queryParam("client", joi.string().required(), "Client ID")
     .queryParam("subject", joi.string().optional(), "UID of subject user")
-    .queryParam("collection_id", joi.string().optional(), "ID of collection with which token is associated")
-    .queryParam("collection_type", joi.string().optional(), "Type of collection with which token is associated")
+    .queryParam("collection_id", joi.string().optional().guid(), "ID of collection with which token is associated") // https://joi.dev/api/?v=17.13.3#stringguid---aliases-uuid
+    .queryParam("collection_type", joi.string().optional().valid("mapped"), "Type of collection with which token is associated")
     .summary("Get user tokens")
     .description("Get user tokens");
 

@@ -1366,12 +1366,14 @@ std::unique_ptr<IMessage> ClientWorker::procUserGetAccessTokenRequest(
   int token_type;
   string scopes;
 
-  // TODO: set according to an updated msg_request obj
-  // string collection_id = msg_request.collection_id();
-  string collection_id = "some fake collection id";
-  // collection_type = msg_request.collection_type();
-  string collection_type = "mapped";
-  // check valid setup, type requires id
+  string collection_id;
+  string collection_type;
+
+  if (request->has_collection_type() &&
+      request->has_collection_id()) { // TODO: set if exists individually?
+    collection_type = request->collection_type();
+    collection_id = request->collection_id();
+  }
 
   m_db_client.setClient(a_uid);
   m_db_client.userGetAccessToken(acc_tok, ref_tok, expires_in, collection_id,
@@ -1382,14 +1384,19 @@ std::unique_ptr<IMessage> ClientWorker::procUserGetAccessTokenRequest(
     // short circuit to reply
   } else if (expires_in < 300) {
     DL_INFO(log_context, "Refreshing access token for " << a_uid);
-    // TODO: trigger needs_consent on refresh failure
-    m_globus_api.refreshAccessToken(ref_tok, acc_tok, expires_in);
     if (token_type == AccessTokenType::GLOBUS_DEFAULT) {
+      m_globus_api.refreshAccessToken(ref_tok, acc_tok, expires_in);
       m_db_client.userSetAccessToken(acc_tok, expires_in, ref_tok, log_context);
     } else {
-      m_db_client.userSetAccessToken(acc_tok, expires_in, ref_tok,
-                                     (AccessTokenType)token_type,
-                                     collection_id + "|" + scopes, log_context);
+      try {
+        m_globus_api.refreshAccessToken(ref_tok, acc_tok, expires_in);
+        m_db_client.userSetAccessToken(
+            acc_tok, expires_in, ref_tok, (AccessTokenType)token_type,
+            collection_id + "|" + scopes, log_context);
+      } catch (TraceException &e) { // TODO: assuming refresh failed
+        // TODO: invalidate other values?
+        needs_consent = true;
+      }
     }
   }
 
