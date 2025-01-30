@@ -619,7 +619,7 @@ int AuthzWorker::checkAuth(char *client_id, char *path, char *action) {
   MessageFactory msg_factory;
   auto message = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
   message->set(MessageAttribute::KEY,
-               m_cred_options[CredentialType::PUBLIC_KEY]);
+               m_cred_options[CredentialType::SERVER_KEY]);
   message->setPayload(std::move(auth_req));
 
   m_log_context.correlation_id =
