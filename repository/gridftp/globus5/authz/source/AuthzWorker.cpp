@@ -618,8 +618,11 @@ int AuthzWorker::checkAuth(char *client_id, char *path, char *action) {
 
   MessageFactory msg_factory;
   auto message = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
+
+  // This needs to point to the public key of the repo not the core server. The
+  // core server will use this key to figure out if the repo is authorized.
   message->set(MessageAttribute::KEY,
-               m_cred_options[CredentialType::SERVER_KEY]);
+               m_cred_options[CredentialType::PUBLIC_KEY]);
   message->setPayload(std::move(auth_req));
 
   m_log_context.correlation_id =
