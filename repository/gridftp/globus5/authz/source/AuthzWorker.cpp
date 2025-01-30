@@ -82,6 +82,16 @@ AuthzWorker::AuthzWorker(struct Config a_config, LogContext log_context)
     m_test_path += '/';
   }
 
+  DL_DEBUG("Authz init config repo_id: " << m_config.repo_id); 
+  DL_DEBUG("Authz init config server_addr: " << m_config.server_addr); 
+  DL_DEBUG("Authz init config pub_key: " << m_config.pub_key); 
+  DL_DEBUG("Authz init config priv_key: " << m_config.priv_key); 
+  DL_DEBUG("Authz init config server_key: " << m_config.server_key); 
+  DL_DEBUG("Authz init config user: " << m_config.user); 
+  DL_DEBUG("Authz init config test_path: " << m_config.test_path); 
+  DL_DEBUG("Authz init config log_path: " << m_config.log_path); 
+  DL_DEBUG("Authz init config globus_collection_path: " << m_config.globus_collection_path); 
+
   // Add a backslash if not present
   initCommunicator();
 }
@@ -125,6 +135,9 @@ void AuthzWorker::initCommunicator() {
     socket_options.connection_security = SocketConnectionSecurity::SECURE;
     socket_options.host = splitter.host();
     socket_options.port = splitter.port();
+
+    DL_DEBUG("Authz init socket_options host: " << socket_options.host); 
+    DL_DEBUG("Authz init socket_options port: " << socket_options.port); 
 
     if (socket_options.port.has_value()) {
       if (socket_options.port.value() != 7512) {
@@ -674,7 +687,7 @@ int checkAuthorization(char *client_id, char *object, char *action,
   log_context.thread_name = "authz_check";
   log_context.thread_id = thread_id;
 
-  SDMS::global_logger.setLevel(SDMS::LogLevel::INFO);
+  SDMS::global_logger.setLevel(SDMS::LogLevel::TRACE);
   SDMS::global_logger.addStream(std::cerr);
   // The ofstream must exist for the duration of the lifetime
   std::list<SDMS::Logger::StreamEntry>::iterator it;
