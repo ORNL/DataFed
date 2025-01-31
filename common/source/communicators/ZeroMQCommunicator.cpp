@@ -657,7 +657,12 @@ ZeroMQCommunicator::ZeroMQCommunicator(const SocketOptions &socket_options,
   const int keep_alive_intvl = 5;
   const int reconnect_ivl = 500;
   const int reconnect_ivl_max = 4000;
-  const int linger_milliseconds = 100;
+
+  const int linger_milliseconds = 1000;
+  const int num_messages = 10000000;
+
+  zmq_setsockopt(m_zmq_socket, ZMQ_RCVHWM, &num_messages, sizeof(const int));
+  zmq_setsockopt(m_zmq_socket, ZMQ_SNDHWM, &num_messages, sizeof(const int));
 
   zmq_setsockopt(m_zmq_socket, ZMQ_TCP_KEEPALIVE, &keep_alive,
                  sizeof(const int));
