@@ -1798,12 +1798,8 @@ app.post("/api/sch/delete", (a_req, a_resp) => {
 });
 
 app.get("/ui/ep/view", (a_req, a_resp) => {
+    // TODO: include message data if needed
     sendMessage("UserGetAccessTokenRequest", {}, a_req, a_resp, function (reply) {
-        if (reply.needs_consent) {
-            // Do something
-            console.log("Received UserGetAccessTokenResponse: ", reply);
-            return;
-        }
         const opts = {
             hostname: "transfer.api.globusonline.org",
             method: "GET",
@@ -1835,12 +1831,8 @@ app.get("/ui/ep/view", (a_req, a_resp) => {
 });
 
 app.get("/ui/ep/autocomp", (a_req, a_resp) => {
+    // TODO: include message data if needed
     sendMessage("UserGetAccessTokenRequest", {}, a_req, a_resp, function (reply) {
-        if (reply.needs_consent) {
-            // Do something
-            console.log("Received UserGetAccessTokenResponse: ", reply);
-            return;
-        }
         const opts = {
             hostname: "transfer.api.globusonline.org",
             method: "GET",
@@ -1887,19 +1879,15 @@ app.post("/ui/ep/recent/save", (a_req, a_resp) => {
 });
 
 app.get("/ui/ep/dir/list", (a_req, a_resp) => {
-    // TODO: non-mocked data
-    a_req.session.collection_id = "some fake ID";
-    a_req.session.collection_type = "mapped";
-    const new_message_data = {
-        collection_id: a_req.session.collection_id,
-        collection_type: a_req.session.collection_type,
+    const message_data = {
+        collectionId: a_req.session.collection_id,
+        collectionType: a_req.session.collection_type,
     }
 
-    sendMessage("UserGetAccessTokenRequest", {...new_message_data}, a_req, a_resp, function (reply) {
-        if (reply.needs_consent) {
+    sendMessage("UserGetAccessTokenRequest", {...message_data}, a_req, a_resp, function (reply) {
+        if (reply.needsConsent) {
             // Do something
-            console.log("Received UserGetAccessTokenResponse: ", reply);
-            return;
+            a_resp.redirect("/ui/error");
         }
         const opts = {
             hostname: "transfer.api.globusonline.org",
