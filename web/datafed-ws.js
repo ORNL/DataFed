@@ -1889,6 +1889,7 @@ app.get("/ui/ep/dir/list", (a_req, a_resp) => {
             // Do something
             a_resp.status(403);
             a_resp.send("Globus collection needs consent. Follow: <consent link here>");
+            return;
         }
         const opts = {
             hostname: "transfer.api.globusonline.org",
