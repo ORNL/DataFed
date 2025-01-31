@@ -1012,16 +1012,22 @@ export function themeSave(a_theme, a_cb) {
     _asyncGet("/ui/theme/save?theme=" + encodeURIComponent(a_theme), null, a_cb);
 }
 
-export function getGlobusAuthorizeURL(requested_scopes, state, refresh_tokens, query_params, a_cb) {
+export function getGlobusAuthorizeURL(
+    requested_scopes,
+    a_cb,
+    refresh_tokens = false,
+    query_params = {},
+    state = "_default",
+) {
     _asyncGet(
-      "/api/globus/authorize_url",
-      {
-          refresh_tokens,
-          requested_scopes: requested_scopes.join(","),
-          query_params: JSON.stringify(query_params),
-          state,
-      },
-      a_cb,
+        "/api/globus/authorize_url",
+        {
+            refresh_tokens,
+            requested_scopes: requested_scopes.join(","),
+            query_params: JSON.stringify(query_params),
+            state,
+        },
+        a_cb,
     );
 }
 

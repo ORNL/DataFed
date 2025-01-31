@@ -83,7 +83,7 @@ class EndpointBrowser {
      */
     render() {
         this.element =
-          $(`                                                                                                                                           
+            $(`                                                                                                                                           
          <div class="endpoint-browser">                                                                                                                           
              ${this.pathNavigator()}                                                                                                                        
              <div class="spacer"></div>                                                                                                                           
@@ -157,8 +157,8 @@ class EndpointBrowser {
      */
     isValidSelection(node) {
         return (
-          (node.data.is_dir && this.props.mode === "dir" && node.key !== CONFIG.PATH.UP) ||
-          (!node.data.is_dir && this.props.mode === "file")
+            (node.data.is_dir && this.props.mode === "dir" && node.key !== CONFIG.PATH.UP) ||
+            (!node.data.is_dir && this.props.mode === "file")
         );
     }
 
@@ -170,8 +170,8 @@ class EndpointBrowser {
         clearTimeout(this.state.timer);
         // Ensure path ends with separator
         const current = this.state.path.endsWith(CONFIG.PATH.SEPARATOR)
-          ? this.state.path
-          : this.state.path + CONFIG.PATH.SEPARATOR;
+            ? this.state.path
+            : this.state.path + CONFIG.PATH.SEPARATOR;
 
         let updatedPath;
         if (newPath === CONFIG.PATH.UP) {
@@ -216,81 +216,71 @@ class EndpointBrowser {
      * @param {Object} data - The data to update the tree with
      */
     updateTree(data) {
-        const source = data.code
-          ? [
-              {
-                  title: `<span class='ui-state-error'>Error: ${data.message}</span>`,
-                  icon: false,
-                  is_dir: true,
-              },
-          ]
-          : [
-              {
-                  title: CONFIG.PATH.CURRENT,
-                  icon: CONFIG.UI.ICONS.FOLDER,
-                  key: CONFIG.PATH.CURRENT,
-                  is_dir: true,
-              },
-              {
-                  title: CONFIG.PATH.UP,
-                  icon: CONFIG.UI.ICONS.FOLDER,
-                  key: CONFIG.PATH.UP,
-                  is_dir: true,
-              },
-              ...data.DATA.map((entry) =>
-                entry.type === "dir"
-                  ? {
-                      title: entry.name,
-                      icon: CONFIG.UI.ICONS.FOLDER,
-                      key: entry.name,
-                      is_dir: true,
-                  }
-                  : {
-                      title: entry.name,
-                      icon: CONFIG.UI.ICONS.FILE,
-                      key: entry.name,
-                      is_dir: false,
-                      size: util.sizeToString(entry.size),
-                      date: new Date(
-                        entry.last_modified.replace(" ", "T"),
-                      ).toLocaleString(),
-                  },
-              ),
-          ];
+        let source;
+
+        if (data.code) {
+            if (data.code === "ConsentRequired") {
+                api.getGlobusAuthorizeURL(data.required_scopes, (ok, data) => {
+                    source = [
+                        {
+                            title: `<span class='ui-state-error'>Consent Required: Please provide <a href="${data.authorize_url}">consent</a>.</span>`,
+                            icon: false,
+                            is_dir: true,
+                        },
+                    ];
+
+                    $.ui.fancytree.getTree("#file_tree").reload(source);
+                    this.state.loading = false;
+                    $("#file_tree").fancytree("enable");
+                });
+            } else {
+                source = [
+                    {
+                        title: `<span class='ui-state-error'>Error: ${data.message}</span>`,
+                        icon: false,
+                        is_dir: true,
+                    },
+                ];
+            }
+        } else {
+            source = [
+                {
+                    title: CONFIG.PATH.CURRENT,
+                    icon: CONFIG.UI.ICONS.FOLDER,
+                    key: CONFIG.PATH.CURRENT,
+                    is_dir: true,
+                },
+                {
+                    title: CONFIG.PATH.UP,
+                    icon: CONFIG.UI.ICONS.FOLDER,
+                    key: CONFIG.PATH.UP,
+                    is_dir: true,
+                },
+                ...data.DATA.map((entry) =>
+                    entry.type === "dir"
+                        ? {
+                              title: entry.name,
+                              icon: CONFIG.UI.ICONS.FOLDER,
+                              key: entry.name,
+                              is_dir: true,
+                          }
+                        : {
+                              title: entry.name,
+                              icon: CONFIG.UI.ICONS.FILE,
+                              key: entry.name,
+                              is_dir: false,
+                              size: util.sizeToString(entry.size),
+                              date: new Date(
+                                  entry.last_modified.replace(" ", "T"),
+                              ).toLocaleString(),
+                          },
+                ),
+            ];
+        }
 
         $.ui.fancytree.getTree("#file_tree").reload(source);
         this.state.loading = false;
         $("#file_tree").fancytree("enable");
-    }
-
-    /**
-     * Handles specific API responses, such as consent requirements.
-     * @param {Object} response - The API response object
-     */
-    handleApiResponse(response) {
-        if (response.code === "ConsentRequired") {
-            this.handleConsentRequired(response);
-        } else {
-            dialogs.dlgAlert("Error", response.message || "An error occurred.");
-        }
-    }
-
-    /**
-     * Handles the consent required response from the API.
-     * @param {Object} response - The API response object
-     */
-    handleConsentRequired(response) {
-        api.getGlobusAuthorizeURL(
-          response.required_scopes,null, true, null,
-          (ok, data) => {
-              console.log("Consent response", ok, data);
-              dialogs.dlgAlert(
-                "Consent Required",
-                `Please provide consent by visiting: ${data}`,
-              );
-          }
-        )
-
     }
 
     /**
@@ -302,9 +292,9 @@ class EndpointBrowser {
 
         // Construct full path for selected node
         const path =
-          this.state.path +
-          (this.state.path.endsWith(CONFIG.PATH.SEPARATOR) ? "" : CONFIG.PATH.SEPARATOR) +
-          (node.key === CONFIG.PATH.CURRENT ? "" : node.key);
+            this.state.path +
+            (this.state.path.endsWith(CONFIG.PATH.SEPARATOR) ? "" : CONFIG.PATH.SEPARATOR) +
+            (node.key === CONFIG.PATH.CURRENT ? "" : node.key);
 
         this.props.onSelect(path);
     }
