@@ -8,6 +8,7 @@ const auth = createAuth("pbkdf2");
 const g_db = require("@arangodb").db;
 const g_graph = require("@arangodb/general-graph")._graph("sdmsg");
 const g_lib = require("./support");
+const { UserToken } = require("./lib/user_token");
 
 module.exports = router;
 
@@ -697,20 +698,8 @@ router
 router
     .get("/token/get", function (req, res) {
         try {
+            const collection_token = UserToken.validateRequestParams(req.queryParams);
             const {collection_id, collection_type} = req.queryParams;
-            let collection_token = false;
-            if (collection_id || collection_type) {
-                if (collection_id && collection_type) {
-                    collection_token = true;
-                }
-                else {
-                    throw [
-                        g_lib.ERR_INVALID_PARAM,
-                        "/token/get Requires 'collection_id' and 'collection_type' both if one is present, received "
-                        + "collection_id: " + collection_id + " collection_type: " + collection_type,
-                    ];
-                }
-            }
 
             var user;
 
@@ -728,7 +717,8 @@ router
                 user = g_lib.getUserFromClientID(req.queryParams.client);
             }
 
-            var result = { token_type: g_lib.AccessTokenType.GLOBUS_DEFAULT, scopes: "" };    // TODO: better defaulting?
+            let token_document = user;
+            let needs_consent = false;
             // TODO: request AccessTokenType? Maybe we can assume transfer
             if (collection_token) {
                 // TODO: validate collection type - mapped vs HA
@@ -743,39 +733,15 @@ router
                         console.log("More than one token: ", token_matches);
                     }
                     // TODO: should only be one token
-                    const token = token_matches[0];
-                    result.access = token.access;
-                    result.refresh = token.refresh;
-                    if (token.expiration) { // TODO: refresh expired tokens
-                        const expires_in = token.expiration - Math.floor(Date.now() / 1000);
-                        console.log("token/get collection ", Math.floor(Date.now() / 1000), token.expiration, expires_in);
-                        result.expires_in = expires_in > 0 ? expires_in : 0;
-                    }
-                    result.needs_consent = false;
-                    // TODO: consider how this is used
-                    result.token_type = token.type;
-                    result.scopes = token.scope;
+                    token_document = token_matches[0];
+                    needs_consent = false;
+
                 } else { // Cases covered: no matches, no tokens, no collection - all require same consent flow
-                    result.access = "";
-                    result.refresh = "";
-                    result.expires_in = 0;
-                    result.needs_consent = true;
+                    token_document = {};
+                    needs_consent = true;
                 }
             }
-            else {
-                // NOTE: original logic wrapped in else block
-                result.needs_consent = false;
-                if (user.access != undefined) result.access = user.access;
-                if (user.refresh != undefined) result.refresh = user.refresh;
-                if (user.expiration) {
-                    var exp = user.expiration - Math.floor(Date.now() / 1000);
-                    console.log("tok/get", Math.floor(Date.now() / 1000), user.expiration, exp);
-                    result.expires_in = exp > 0 ? exp : 0;
-                } else {
-                    console.log("tok/get - no expiration");
-                    result.expires_in = 0;
-                }
-            }
+            const result = UserToken.formatUserToken(collection_token, token_document, needs_consent);
 
             res.send(result);
         } catch (e) {
