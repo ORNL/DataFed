@@ -35,19 +35,26 @@ export class UserToken {
 
     /**
      * @typedef userTokenResponse
+     * @property {boolean} needs_consent - True if consent flow needs to be triggered, in which case other fields will be undefined
+     * @property {string} [access] - Access token
+     * @property {string} [refresh] - Refresh token
+     * @property {number} [expires_in] - Time until token expiry
+     * @property {g_lib.AccessTokenType | number} [token_type] - Type of token retrieved, useful when refreshing tokens
+     * @property {string} [scopes] - Scope associated with token, useful when refreshing tokens; only present on collection tokens
      */
     /**
-     *
-     * @param {boolean} is_collection_token
-     * @param {object} token_document
-     * @param {boolean} needs_consent
-     * @returns {userTokenResponse}
+     * Build response object
+     * @param {boolean} is_collection_token - Whether the token relates to a collection
+     * @param {object} token_document - Database document holding relevant token info
+     * @param {boolean} needs_consent - Whether consent is required
+     * @returns {userTokenResponse} - Object containing token information, or whether consent flow should start
      */
     static formatUserToken(is_collection_token, token_document, needs_consent) {
         let result_token = {
             needs_consent: needs_consent,
-        }
-        if (needs_consent) {    // short circuit when consent flow is required
+        };
+        if (needs_consent) {
+            // short circuit when consent flow is required
             return result_token;
         }
         result_token.access = token_document.access;
@@ -59,6 +66,7 @@ export class UserToken {
             result_token.expires_in = 0;
         }
         if (is_collection_token) {
+            // NOTE: this is only necessary in case of refresh
             result_token.token_type = token_document.type;
             result_token.scopes = token_document.scope;
         } else {

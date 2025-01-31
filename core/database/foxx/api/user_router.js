@@ -719,7 +719,6 @@ router
 
             let token_document = user;
             let needs_consent = false;
-            // TODO: request AccessTokenType? Maybe we can assume transfer
             if (collection_token) {
                 // TODO: validate collection type - mapped vs HA
                 const globus_collection = g_db.globus_coll.exists({_key: collection_id});
