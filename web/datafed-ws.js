@@ -496,6 +496,7 @@ app.get("/ui/authn", (a_req, a_resp) => {
         function (client_token) {
             let token_handler;
             try {
+                console.log('client_token', client_token);
                 token_handler = new OAuthTokenHandler(client_token);
             } catch (err) {
                 a_resp.redirect("/ui/error");
@@ -1569,13 +1570,17 @@ app.post("/api/cat/search", (a_req, a_resp) => {
  * );
  */
 app.get("/api/globus/authorize_url", (a_req, a_resp) => {
-    const client_id = g_client_id;
-    const redirect_uri = g_extern_url;
+    const client_id = g_oauth_credentials.clientId;
+    const redirect_uri = g_oauth_credentials.redirectUri;
     const { requested_scopes, state, refresh_tokens, query_params } = a_req.query;
+
+    console.log('query', requested_scopes, state, refresh_tokens, query_params);
 
     const scopes = requested_scopes
       ? requested_scopes.split(",")
       : ["openid", "profile", "email", "urn:globus:auth:scope:transfer.api.globus.org:all"];
+
+    console.log('scopes', scopes);
 
     if (refresh_tokens) {
         scopes.push("offline_access");
@@ -1595,9 +1600,9 @@ app.get("/api/globus/authorize_url", (a_req, a_resp) => {
           client_id,
           redirect_uri,
           scope: scopes.join(" "), // Scopes need to be separated by a space
-          state: state || "_default",
+          state,
           response_type: "code",
-          access_type: refresh_tokens === "true" ? "offline" : "online",
+          access_type: refresh_tokens === true ? "offline" : "online",
           prompt: "login",
       });
 
