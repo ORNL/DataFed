@@ -33,6 +33,8 @@ ENV                       DATAFED_DIR="${DATAFED_DIR}"
 ENV DATAFED_DEPENDENCIES_INSTALL_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
 ENV              DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
 ENV          DATAFED_DEFAULT_LOG_PATH="$DATAFED_INSTALL_PATH/logs"
+# Set to false by default to avoid wiping the database
+ENV                 ENABLE_FOXX_TESTS="FALSE"
 
 COPY ./core/CMakeLists.txt             ${BUILD_DIR}/core/CMakeLists.txt
 COPY ./CMakeLists.txt                  ${BUILD_DIR}
