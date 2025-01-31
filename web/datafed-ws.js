@@ -1887,7 +1887,8 @@ app.get("/ui/ep/dir/list", (a_req, a_resp) => {
     sendMessage("UserGetAccessTokenRequest", {...message_data}, a_req, a_resp, function (reply) {
         if (reply.needsConsent) {
             // Do something
-            a_resp.redirect("/ui/error");
+            a_resp.status(403);
+            a_resp.send("Globus collection needs consent. Follow: <consent link here>");
         }
         const opts = {
             hostname: "transfer.api.globusonline.org",
