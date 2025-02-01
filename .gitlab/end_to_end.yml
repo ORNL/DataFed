@@ -250,8 +250,8 @@ end-to-end-repo-setup:
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     - ./scripts/container_stop.sh -n "repo-" -p
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
-    - cat $CI_DATAFED_CORE_PUB_KEY > /shared/datafed-repo-key.pub
-    - cat $CI_DATAFED_CORE_PRIV_KEY > /shared/datafed-repo-key.priv
+    - cat $CI_DATAFED_REPO_PUB_KEY > /shared/datafed-repo-key.pub
+    - cat $CI_DATAFED_REPO_PRIV_KEY > /shared/datafed-repo-key.priv
     - echo "#!/bin/bash" > "${RUN_FILE}"
     - echo "docker run -d \\" >> "${RUN_FILE}"
     - echo "--name \"repo-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> "${RUN_FILE}"
@@ -314,8 +314,8 @@ end-to-end-gcs-authz-setup:
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     - ./scripts/container_stop.sh -n "${COMPONENT}" -p
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
-    - cat $CI_DATAFED_CORE_PUB_KEY > /shared/datafed-repo-key.pub
-    - cat $CI_DATAFED_CORE_PRIV_KEY > /shared/datafed-repo-key.priv
+    - cat $CI_DATAFED_REPO_PUB_KEY > /shared/datafed-repo-key.pub
+    - cat $CI_DATAFED_REPO_PRIV_KEY > /shared/datafed-repo-key.priv
     - echo "#!/bin/bash" > run_globus.sh
     - echo "docker run -d \\" >> run_globus.sh
     - echo "--name \"${COMPONENT}-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_globus.sh
