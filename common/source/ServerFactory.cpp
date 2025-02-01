@@ -1,7 +1,7 @@
 
 // Local private includes
 #include "servers/Proxy.hpp"
-
+#include "servers/ProxyBasicZMQ.hpp"
 // Local public includes
 #include "common/IServer.hpp"
 #include "common/SocketOptions.hpp"
@@ -39,7 +39,7 @@ std::unique_ptr<IServer> ServerFactory::create(
                       "been provided that will never be used!");
     }
     return std::unique_ptr<IServer>(
-        new Proxy(socket_options, socket_credentials, m_log_context));
+        new ProxyBasicZMQ(socket_options, socket_credentials, m_log_context));
   }
 
   EXCEPT_PARAM(1, "Error Server type unsupported");
