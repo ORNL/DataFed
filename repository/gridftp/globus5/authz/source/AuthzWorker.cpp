@@ -54,6 +54,9 @@ std::string randomAlphaNumericCode() {
 
 namespace SDMS {
 
+static bool log_stream_added = false;
+static bool cerr_stream_added = false;
+
 AuthzWorker::AuthzWorker(struct Config *a_config, LogContext log_context)
     : m_config(a_config) {
 
@@ -638,40 +641,77 @@ const char *getReleaseVersion() {
 
 // The same
 int checkAuthorization(char *client_id, char *object, char *action,
-                       struct Config *config) {
+		struct Config *config) {
+
+	int result = -1;
+
+  // To log errors if there are exceptions the code block below must be defined
+  // outside the try catch
 #if defined(DONT_USE_SYSLOG)
   SDMS::global_logger.setSysLog(false);
 #else
   SDMS::global_logger.setSysLog(true);
 #endif
   SDMS::global_logger.setLevel(SDMS::LogLevel::INFO);
-  SDMS::global_logger.addStream(std::cerr);
   auto log_path_authz = std::string(config->log_path);
-  if (log_path_authz.length() > 0) {
-    // Append to the existing path because we don't want the C++ and C code
-    // trying to write to the same file
-    log_path_authz.append("_authz");
-    std::ofstream log_file_worker(log_path_authz);
-    SDMS::global_logger.addStream(log_file_worker);
+  // Only add cerr once we don't need to close it like the file stream
+  if( SDMS::cerr_stream_added == false ) {
+    SDMS::global_logger.addStream(std::cerr);
+    SDMS::cerr_stream_added = true;
   }
 
   SDMS::LogContext log_context;
   log_context.thread_name = "authz_check";
   log_context.thread_id = 0;
-  DL_DEBUG(log_context, "AuthzWorker checkAuthorization "
-                            << client_id << ", " << object << ", " << action);
 
-  int result = -1;
+	try {
+		std::ofstream log_file_worker;
 
-  try {
-    SDMS::AuthzWorker worker(config, log_context);
-    result = worker.checkAuth(client_id, object, action);
-  } catch (TraceException &e) {
-    DL_ERROR(log_context, "AuthzWorker exception: " << e.toString());
-  } catch (exception &e) {
-    DL_ERROR(log_context, "AuthzWorker exception: " << e.what());
-  }
+    // Used to determine if the file stream has been added
+		bool added = false;
+		// The ofstream must exist for the duration of the log output then it must
+    // be removed
+    uint32_t stream_id;
 
-  return result;
+		if (log_path_authz.length() > 0) {
+			// Append to the existing path because we don't want the C++ and C code
+			// trying to write to the same file
+			log_path_authz.append("_authz");
+
+			if (SDMS::log_stream_added == false) {
+
+				log_file_worker.open(log_path_authz, std::ios::app);
+				if (!log_file_worker.is_open()) {
+					DL_ERROR(log_context, "AuthzWorker open log file path failed, path: "
+							<< log_path_authz);
+				} else {
+					stream_id = SDMS::global_logger.addStream(log_file_worker);
+					SDMS::log_stream_added = true;
+					added = true;
+				}
+			}
+		}
+
+		DL_DEBUG(log_context, "AuthzWorker checkAuthorization "
+				<< client_id << ", " << object << ", " << action);
+
+		SDMS::AuthzWorker worker(config, log_context);
+		result = worker.checkAuth(client_id, object, action);
+
+		// We don't want to close it unless we can also remove it, and we want to
+		// leave it open until we are completely done. But because it is only defined
+		// within this function scope we have to close and remove it.
+		if (log_file_worker.is_open() && added) {
+			log_file_worker.close();
+			SDMS::global_logger.removeStream(stream_id);
+			SDMS::log_stream_added = false;
+		}
+
+	} catch (TraceException &e) {
+		DL_ERROR(log_context, "AuthzWorker exception: " << e.toString());
+	} catch (exception &e) {
+		DL_ERROR(log_context, "AuthzWorker exception: " << e.what());
+	}
+	return result;
 }
 }
