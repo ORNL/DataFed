@@ -13,6 +13,7 @@ extern const char *repo_title;
 extern const uint64_t repo_capacity;
 extern const char *repo_desc;
 extern const char *repo_globus_uuid;
+extern const char *client_uuid;
 extern const char *repo_path;
 extern const uint32_t repo_port;
 } // namespace MockGlobals

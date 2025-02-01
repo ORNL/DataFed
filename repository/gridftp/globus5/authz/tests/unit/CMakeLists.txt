@@ -1,7 +1,9 @@
 # Each test listed in Alphabetical order
 foreach(PROG
-    test_getVersion
     test_AuthzWorker
+    test_Config
+    test_getVersion
+    test_Util
 )
 
   file(GLOB ${PROG}_SOURCES ${PROG}*.cpp)

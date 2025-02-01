@@ -26,6 +26,7 @@ build-gcs:
         - cmake/**/*
         - repository/docker/entrypoint_authz.sh
         - repository/docker/Dockerfile.gcs
+        - repository/gridftp/**/*
       when: on_success
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
@@ -70,5 +71,6 @@ retag-image:
         - cmake/**/*
         - repository/docker/entrypoint_authz.sh
         - repository/docker/Dockerfile.gcs
+        - repository/gridftp/**/*
       when: never
     - when: on_success

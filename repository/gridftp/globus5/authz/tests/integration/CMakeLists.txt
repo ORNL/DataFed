@@ -3,6 +3,7 @@ foreach(PROG
     test_gsi_authz_init
 )
 
+   #test_AuthzWorker
   file(GLOB ${PROG}_SOURCES ${PROG}*.cpp)
   add_executable(integration_${PROG} ${${PROG}_SOURCES})
 

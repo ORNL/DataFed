@@ -7,6 +7,6 @@ const char *getVersion();
 const char *getAPIVersion();
 const char *getReleaseVersion();
 int checkAuthorization(char *client_id, char *object, char *action,
-                       struct Config *config);
+                       struct Config config, int thread_id);
 
 #endif
