@@ -32,6 +32,7 @@
 20. [1257] - Bug in authz library parsing of authz.conf file, globus paths incorrectly sanitized when using just '/'
 21. [1255] - Fixes bug, in libauthz with log_path var not being read in from config file.
 22. [1268] - Bug fixes unbound variable in foxx entrypoint file.
+23. [1269] - Update Arangodb to 3.12.4
 
 # v2024.6.17.10.40
 
