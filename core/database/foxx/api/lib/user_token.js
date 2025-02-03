@@ -50,7 +50,7 @@ class UserToken {
      * @param {string} [token_document.refresh] - Refresh token
      * @param {number} [token_document.expiration] - Expiration time of access token
      * @param {g_lib.AccessTokenType | number} [token_document.type] - Access token type, present when retrieving a collection token
-     * @param {string} [token_document.scope] - Access token scopes, present when retrieving a collection token
+     * @param {string} [token_document.dependent_scopes] - Access token scopes, present when retrieving a collection token
      * @param {boolean} needs_consent - Whether consent is required
      * @returns {userTokenResponse} - Object containing token information, or whether consent flow should start
      */
@@ -73,7 +73,7 @@ class UserToken {
         if (is_collection_token) {
             // NOTE: this is only necessary in case of refresh
             result_token.token_type = token_document.type;
-            result_token.scopes = token_document.scope
+            result_token.scopes = token_document.dependent_scopes;
             // NOTE: force consent flow if proper refresh variables are unavailable
             result_token.needs_consent = !result_token.token_type || !result_token.scopes;
         } else {

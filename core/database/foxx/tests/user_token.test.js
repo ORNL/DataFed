@@ -48,13 +48,17 @@ describe("unit_user_token: The user_token library module class UserToken evaluat
     const valid_collection_token_doc = {
         ...valid_token_doc,
         type: g_lib.AccessTokenType.GLOBUS_TRANSFER,
-        scope: "fake token scope",
+        dependent_scopes: "fake token scope",
     };
     it("Should return an object with only needs_consent if needs_consent=true", () => {
         const is_collection_token = true;
         const needs_consent = true;
 
-        const response_token = UserToken.formatUserToken(is_collection_token, valid_collection_token_doc, needs_consent);
+        const response_token = UserToken.formatUserToken(
+            is_collection_token,
+            valid_collection_token_doc,
+            needs_consent,
+        );
 
         expect(Object.keys(response_token).length).to.equal(1);
         expect(response_token.needs_consent).to.be.true;
@@ -66,7 +70,11 @@ describe("unit_user_token: The user_token library module class UserToken evaluat
 
         const token_document = valid_token_doc;
 
-        const response_token = UserToken.formatUserToken(is_collection_token, token_document, needs_consent);
+        const response_token = UserToken.formatUserToken(
+            is_collection_token,
+            token_document,
+            needs_consent,
+        );
 
         expect(response_token.needs_consent).to.be.false;
         expect(response_token.access).to.equal(token_document.access);
@@ -81,23 +89,31 @@ describe("unit_user_token: The user_token library module class UserToken evaluat
 
         const token_document = valid_collection_token_doc;
 
-        const response_token = UserToken.formatUserToken(is_collection_token, token_document, needs_consent);
+        const response_token = UserToken.formatUserToken(
+            is_collection_token,
+            token_document,
+            needs_consent,
+        );
 
         expect(response_token.needs_consent).to.be.false;
         expect(response_token.access).to.equal(token_document.access);
         expect(response_token.refresh).to.equal(token_document.refresh);
         expect(response_token.expires_in).to.exist;
         expect(response_token.token_type).to.equal(token_document.type);
-        expect(response_token.scopes).to.equal(token_document.scope);
+        expect(response_token.scopes).to.equal(token_document.dependent_scopes);
     });
 
     it("Should flag needs_consent=true if token_document does not hold scope information for a collection_token", () => {
         const is_collection_token = true;
         const needs_consent = false;
 
-        const token_document = { ...valid_collection_token_doc, scope: undefined };
+        const token_document = { ...valid_collection_token_doc, dependent_scopes: undefined };
 
-        const response_token = UserToken.formatUserToken(is_collection_token, token_document, needs_consent);
+        const response_token = UserToken.formatUserToken(
+            is_collection_token,
+            token_document,
+            needs_consent,
+        );
 
         expect(response_token.needs_consent).to.be.true;
         // These following values should not matter
@@ -105,7 +121,7 @@ describe("unit_user_token: The user_token library module class UserToken evaluat
         expect(response_token.refresh).to.equal(token_document.refresh);
         expect(response_token.expires_in).to.exist;
         expect(response_token.token_type).to.equal(token_document.type);
-        expect(response_token.scopes).to.equal(token_document.scope);
+        expect(response_token.scopes).to.equal(token_document.dependent_scopes);
     });
 
     it("Should flag needs_consent=true if token_document does not hold type information for a collection_token", () => {
@@ -114,7 +130,11 @@ describe("unit_user_token: The user_token library module class UserToken evaluat
 
         const token_document = { ...valid_collection_token_doc, type: undefined };
 
-        const response_token = UserToken.formatUserToken(is_collection_token, token_document, needs_consent);
+        const response_token = UserToken.formatUserToken(
+            is_collection_token,
+            token_document,
+            needs_consent,
+        );
 
         expect(response_token.needs_consent).to.be.true;
         // The following values should not matter
@@ -122,6 +142,6 @@ describe("unit_user_token: The user_token library module class UserToken evaluat
         expect(response_token.refresh).to.equal(token_document.refresh);
         expect(response_token.expires_in).to.exist;
         expect(response_token.token_type).to.equal(token_document.type);
-        expect(response_token.scopes).to.equal(token_document.scope);
+        expect(response_token.scopes).to.equal(token_document.dependent_scopes);
     });
 });
