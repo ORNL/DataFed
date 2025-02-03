@@ -699,7 +699,7 @@ router
     .get("/token/get", function (req, res) {
         try {
             const collection_token = UserToken.validateRequestParams(req.queryParams);
-            const {collection_id, collection_type} = req.queryParams;
+            const { collection_id, collection_type } = req.queryParams;
 
             var user;
 
@@ -721,26 +721,37 @@ router
             let needs_consent = false;
             if (collection_token) {
                 // TODO: validate collection type - mapped vs HA
-                const globus_collection = g_db.globus_coll.exists({_key: collection_id});
+                const globus_collection = g_db.globus_coll.exists({ _key: collection_id });
                 // TODO: should this be a query?
-                const token_matches = g_db.globus_token.outEdges(user._id).filter(edge => {
+                const token_matches = g_db.globus_token.outEdges(user._id).filter((edge) => {
                     // NOTE: this will result in no matches if globus collection document DNE
                     return edge._to === globus_collection?._id;
                 });
                 if (token_matches.length > 0) {
                     if (token_matches.length > 1) {
-                        console.log("More than one token: ", token_matches);
+                        // Relationship should be unique based on AccessTokenType
+                        throw [
+                            g_lib.ERR_INTERNAL_FAULT,
+                            "Too many matching tokens for user: " +
+                                user._id +
+                                " to collection: " +
+                                globus_collection._id,
+                        ];
                     }
-                    // TODO: should only be one token
+                    // TODO: account for AccessTokenType
                     token_document = token_matches[0];
                     needs_consent = false;
-
-                } else { // Cases covered: no matches, no tokens, no collection - all require same consent flow
+                } else {
+                    // Cases covered: no matches, no tokens, no collection - all require same consent flow
                     token_document = {};
                     needs_consent = true;
                 }
             }
-            const result = UserToken.formatUserToken(collection_token, token_document, needs_consent);
+            const result = UserToken.formatUserToken(
+                collection_token,
+                token_document,
+                needs_consent,
+            );
 
             res.send(result);
         } catch (e) {
@@ -749,8 +760,16 @@ router
     })
     .queryParam("client", joi.string().required(), "Client ID")
     .queryParam("subject", joi.string().optional(), "UID of subject user")
-    .queryParam("collection_id", joi.string().optional().guid(), "ID of collection with which token is associated") // https://joi.dev/api/?v=17.13.3#stringguid---aliases-uuid
-    .queryParam("collection_type", joi.string().optional().valid("mapped"), "Type of collection with which token is associated")
+    .queryParam(
+        "collection_id",
+        joi.string().optional().guid(),
+        "ID of collection with which token is associated",
+    ) // https://joi.dev/api/?v=17.13.3#stringguid---aliases-uuid
+    .queryParam(
+        "collection_type",
+        joi.string().optional().valid("mapped"),
+        "Type of collection with which token is associated",
+    )
     .summary("Get user tokens")
     .description("Get user tokens");
 
