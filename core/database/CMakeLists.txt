@@ -22,7 +22,7 @@ if( ENABLE_FOXX_TESTS )
   add_test(NAME foxx_support COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_foxx.sh" -t "unit_support")
   add_test(NAME foxx_user_router COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_foxx.sh" -t "unit_user_router")
   add_test(NAME foxx_authz_router COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_foxx.sh" -t "unit_authz_router")
-  add_test(NAME foxx_unit_user_token COMMAND "{CMAKE_CURRENT_SOURCE_DIR}/tests/test_foxx.sh" -t "unit_user_token")
+  add_test(NAME foxx_unit_user_token COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_foxx.sh" -t "unit_user_token")
 
   set_tests_properties(foxx_setup PROPERTIES FIXTURES_SETUP Foxx)
   set_tests_properties(foxx_teardown PROPERTIES FIXTURES_CLEANUP Foxx)

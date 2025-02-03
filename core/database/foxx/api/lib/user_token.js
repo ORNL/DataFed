@@ -2,7 +2,7 @@
 
 const g_lib = require("../support.js");
 
-export class UserToken {
+class UserToken {
     constructor() {}
 
     /**
@@ -82,3 +82,5 @@ export class UserToken {
         return result_token;
     }
 }
+
+module.exports = { UserToken };
