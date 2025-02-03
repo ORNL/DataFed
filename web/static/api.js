@@ -1013,12 +1013,12 @@ export function themeSave(a_theme, a_cb) {
 }
 
 export function getGlobusAuthorizeURL(
-  a_cb,
-  collection_id,
-  requested_scopes,
-  refresh_tokens = false,
-  query_params = {},
-  state = "_default",
+    a_cb,
+    collection_id,
+    requested_scopes,
+    refresh_tokens = false,
+    query_params = {},
+    state = "_default",
 ) {
     _asyncGet(
         "/api/globus/authorize_url",

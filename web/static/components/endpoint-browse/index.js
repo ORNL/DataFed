@@ -215,7 +215,6 @@ class EndpointBrowser {
         $.ui.fancytree.getTree("#file_tree").reload(source);
         this.state.loading = false;
         $("#file_tree").fancytree("enable");
-
     }
 
     /**
@@ -241,21 +240,21 @@ class EndpointBrowser {
                 is_dir: true,
             },
             ...data.DATA.map((entry) =>
-              entry.type === "dir"
-                ? {
-                    title: entry.name,
-                    icon: CONFIG.UI.ICONS.FOLDER,
-                    key: entry.name,
-                    is_dir: true,
-                }
-                : {
-                    title: entry.name,
-                    icon: CONFIG.UI.ICONS.FILE,
-                    key: entry.name,
-                    is_dir: false,
-                    size: util.sizeToString(entry.size),
-                    date: new Date(entry.last_modified.replace(" ", "T")).toLocaleString(),
-                },
+                entry.type === "dir"
+                    ? {
+                          title: entry.name,
+                          icon: CONFIG.UI.ICONS.FOLDER,
+                          key: entry.name,
+                          is_dir: true,
+                      }
+                    : {
+                          title: entry.name,
+                          icon: CONFIG.UI.ICONS.FILE,
+                          key: entry.name,
+                          is_dir: false,
+                          size: util.sizeToString(entry.size),
+                          date: new Date(entry.last_modified.replace(" ", "T")).toLocaleString(),
+                      },
             ),
         ];
     }
@@ -267,19 +266,23 @@ class EndpointBrowser {
      */
     handleApiError(data) {
         if (data.code === "ConsentRequired") {
-            api.getGlobusAuthorizeURL((ok, data) => {
-                const source = [
-                    {
-                        title: `<span class='ui-state-error'>Consent Required: Please provide <a href="${data.authorize_url}">consent</a>.</span>`,
-                        icon: false,
-                        is_dir: true,
-                    },
-                ];
+            api.getGlobusAuthorizeURL(
+                (ok, data) => {
+                    const source = [
+                        {
+                            title: `<span class='ui-state-error'>Consent Required: Please provide <a href="${data.authorize_url}">consent</a>.</span>`,
+                            icon: false,
+                            is_dir: true,
+                        },
+                    ];
 
-                $.ui.fancytree.getTree("#file_tree").reload(source);
-                this.state.loading = false;
-                $("#file_tree").fancytree("enable");
-            }, this.props.endpoint.id, data.required_scopes);
+                    $.ui.fancytree.getTree("#file_tree").reload(source);
+                    this.state.loading = false;
+                    $("#file_tree").fancytree("enable");
+                },
+                this.props.endpoint.id,
+                data.required_scopes,
+            );
         } else {
             return [
                 {
@@ -289,7 +292,6 @@ class EndpointBrowser {
                 },
             ];
         }
-
     }
 
     /**
