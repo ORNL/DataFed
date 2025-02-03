@@ -14,7 +14,7 @@
 # registerProtocol() method then loads uses this information to create
 # consistent message type framing for python send/recv methods.
 
-from google.protobuf.message_factory import MessageFactory
+from google.protobuf.message_factory import GetMessageClass
 import logging
 import zmq
 import zmq.utils.z85
@@ -197,12 +197,12 @@ class Connection:
             if frame_values[0] > 0:
                 # Create message by parsing content
                 data = self._socket.recv(0)
-                reply = MessageFactory().GetMessageClass(desc)()
+                reply = GetMessageClass(desc)()
                 reply.ParseFromString(data)
             else:
                 # No content, just create message instance
                 data = self._socket.recv(0)
-                reply = MessageFactory().GetMessageClass(desc)()
+                reply = GetMessageClass(desc)()
 
             return reply, desc.name, frame_values[3]
         else:
@@ -272,6 +272,6 @@ class Connection:
     def makeMessage(self, msg_name):
         # find message descriptor based on type (descriptor index)
         if msg_name in self._msg_desc_by_name:
-            return MessageFactory().GetMessageClass(self._msg_desc_by_name[msg_name])()
+            return GetMessageClass(self._msg_desc_by_name[msg_name])()
         else:
             return None
