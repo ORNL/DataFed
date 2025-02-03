@@ -124,9 +124,8 @@ message UserSetAccessTokenRequest
 // Reply: UserAccessTokenReply on success, NackReply on error
 message UserGetAccessTokenRequest
 {
-    optional bool               is_mapped       = 1;    // TODO: should be redundant with collection_type
-    optional string             collection_id   = 2;
-    optional string             collection_type = 3;    // TODO: use enum
+    optional string             collection_id   = 1;
+    optional string             collection_type = 2;    // TODO: use enum
 }
 
 // Reply containing the user Globus access token and expiration time (in

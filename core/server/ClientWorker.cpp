@@ -1369,9 +1369,10 @@ std::unique_ptr<IMessage> ClientWorker::procUserGetAccessTokenRequest(
   string collection_id;
   string collection_type;
 
-  if (request->has_collection_type() &&
-      request->has_collection_id()) { // TODO: set if exists individually?
+  if (request->has_collection_type()) {
     collection_type = request->collection_type();
+  }
+  if (request->has_collection_id()) {
     collection_id = request->collection_id();
   }
 
@@ -1402,8 +1403,6 @@ std::unique_ptr<IMessage> ClientWorker::procUserGetAccessTokenRequest(
 
   reply.set_access(acc_tok);
   reply.set_expires_in(expires_in);
-
-  // set new field on reply
   reply.set_needs_consent(needs_consent);
 
   PROC_MSG_END(log_context);

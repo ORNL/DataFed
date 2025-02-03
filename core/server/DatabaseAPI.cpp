@@ -334,7 +334,6 @@ void DatabaseAPI::userGetAccessToken(
   Value result;
   std::vector<std::pair<std::string, std::string>> params = {};
 
-  // TODO: impl backend accept param
   if (!collection_id.empty()) {
     params.push_back({"collection_id", collection_id});
   }
@@ -350,8 +349,6 @@ void DatabaseAPI::userGetAccessToken(
   a_acc_tok = obj.getString("access");
   a_ref_tok = obj.getString("refresh");
   a_expires_in = (uint32_t)obj.getNumber("expires_in");
-
-  // TODO: impl backend return result
   needs_consent = obj.getBool("needs_consent");
   token_type = (int)obj.getNumber("token_type");
   scopes = obj.getString("scopes");
