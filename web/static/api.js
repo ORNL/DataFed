@@ -1013,15 +1013,17 @@ export function themeSave(a_theme, a_cb) {
 }
 
 export function getGlobusAuthorizeURL(
-    requested_scopes,
-    a_cb,
-    refresh_tokens = false,
-    query_params = {},
-    state = "_default",
+  a_cb,
+  collection_id,
+  requested_scopes,
+  refresh_tokens = false,
+  query_params = {},
+  state = "_default",
 ) {
     _asyncGet(
         "/api/globus/authorize_url",
         {
+            collection_id,
             refresh_tokens,
             requested_scopes: requested_scopes.join(","),
             query_params: JSON.stringify(query_params),

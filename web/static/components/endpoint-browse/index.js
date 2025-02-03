@@ -203,11 +203,6 @@ class EndpointBrowser {
         // Fetch directory listing
         api.epDirList(this.props.endpoint.id, this.state.path, false, (data) => {
             this.updateTree(data);
-            // this.handleApiResponse(data);
-
-            // // Reset loading state
-            // this.state.loading = false;
-            // $("#file_tree").fancytree("enable");
         });
     }
 
@@ -216,71 +211,85 @@ class EndpointBrowser {
      * @param {Object} data - The data to update the tree with
      */
     updateTree(data) {
-        let source;
+        const source = this.getTreeSource(data);
+        $.ui.fancytree.getTree("#file_tree").reload(source);
+        this.state.loading = false;
+        $("#file_tree").fancytree("enable");
 
+    }
+
+    /**
+     * Get tree source data
+     * @param {Object} data - API response data
+     * @returns {Array} Tree source data
+     */
+    getTreeSource(data) {
         if (data.code) {
-            if (data.code === "ConsentRequired") {
-                api.getGlobusAuthorizeURL(data.required_scopes, (ok, data) => {
-                    source = [
-                        {
-                            title: `<span class='ui-state-error'>Consent Required: Please provide <a href="${data.authorize_url}">consent</a>.</span>`,
-                            icon: false,
-                            is_dir: true,
-                        },
-                    ];
+            return this.handleApiError(data);
+        }
+        return [
+            {
+                title: CONFIG.PATH.CURRENT,
+                icon: CONFIG.UI.ICONS.FOLDER,
+                key: CONFIG.PATH.CURRENT,
+                is_dir: true,
+            },
+            {
+                title: CONFIG.PATH.UP,
+                icon: CONFIG.UI.ICONS.FOLDER,
+                key: CONFIG.PATH.UP,
+                is_dir: true,
+            },
+            ...data.DATA.map((entry) =>
+              entry.type === "dir"
+                ? {
+                    title: entry.name,
+                    icon: CONFIG.UI.ICONS.FOLDER,
+                    key: entry.name,
+                    is_dir: true,
+                }
+                : {
+                    title: entry.name,
+                    icon: CONFIG.UI.ICONS.FILE,
+                    key: entry.name,
+                    is_dir: false,
+                    size: util.sizeToString(entry.size),
+                    date: new Date(entry.last_modified.replace(" ", "T")).toLocaleString(),
+                },
+            ),
+        ];
+    }
 
-                    $.ui.fancytree.getTree("#file_tree").reload(source);
-                    this.state.loading = false;
-                    $("#file_tree").fancytree("enable");
-                });
-            } else {
-                source = [
+    /**
+     * Handle API error responses
+     * @param {Object} data - API response data
+     * @returns {Array} Error message source
+     */
+    handleApiError(data) {
+        if (data.code === "ConsentRequired") {
+            api.getGlobusAuthorizeURL((ok, data) => {
+                const source = [
                     {
-                        title: `<span class='ui-state-error'>Error: ${data.message}</span>`,
+                        title: `<span class='ui-state-error'>Consent Required: Please provide <a href="${data.authorize_url}">consent</a>.</span>`,
                         icon: false,
                         is_dir: true,
                     },
                 ];
-            }
+
+                $.ui.fancytree.getTree("#file_tree").reload(source);
+                this.state.loading = false;
+                $("#file_tree").fancytree("enable");
+            }, this.props.endpoint.id, data.required_scopes);
         } else {
-            source = [
+            return [
                 {
-                    title: CONFIG.PATH.CURRENT,
-                    icon: CONFIG.UI.ICONS.FOLDER,
-                    key: CONFIG.PATH.CURRENT,
+                    title: `<span class='ui-state-error'>Error: ${data.message}</span>`,
+                    icon: false,
                     is_dir: true,
                 },
-                {
-                    title: CONFIG.PATH.UP,
-                    icon: CONFIG.UI.ICONS.FOLDER,
-                    key: CONFIG.PATH.UP,
-                    is_dir: true,
-                },
-                ...data.DATA.map((entry) =>
-                    entry.type === "dir"
-                        ? {
-                              title: entry.name,
-                              icon: CONFIG.UI.ICONS.FOLDER,
-                              key: entry.name,
-                              is_dir: true,
-                          }
-                        : {
-                              title: entry.name,
-                              icon: CONFIG.UI.ICONS.FILE,
-                              key: entry.name,
-                              is_dir: false,
-                              size: util.sizeToString(entry.size),
-                              date: new Date(
-                                  entry.last_modified.replace(" ", "T"),
-                              ).toLocaleString(),
-                          },
-                ),
             ];
         }
 
-        $.ui.fancytree.getTree("#file_tree").reload(source);
-        this.state.loading = false;
-        $("#file_tree").fancytree("enable");
     }
 
     /**

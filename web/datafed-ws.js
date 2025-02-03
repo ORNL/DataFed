@@ -302,6 +302,14 @@ app.use(
     }),
 );
 
+function storeCollectionId(req, res, next) {
+    if (req.query.collection_id) {
+        req.session.collection_id = req.query.collection_id;
+    }
+    next();
+}
+
+
 app.use(cookieParser(g_session_secret));
 app.use(
     helmet({
@@ -622,6 +630,7 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                     } catch (err) {
                                         redirect_path = "/ui/error";
                                         logger.error("/ui/authn", getCurrentLineNumber(), err);
+                                        delete a_req.session.collection_id;
                                     }
 
                                     // TODO Account may be disable from SDMS (active = false)
@@ -1549,7 +1558,7 @@ app.post("/api/cat/search", (a_req, a_resp) => {
  *
  * This function generates the authorization URL that a user can follow to provide
  * authorization and consent via Globus Auth.
- *
+ * @param {string} [collection_id=""] - The specified collection id
  * @param {Array<string>} [requested_scopes=[]] - The scopes on the token(s) being requested.
  * In the case of accessing a mapped collection, this should include the mapped
  * collection's UUID, such as: `https://auth.globus.org/scopes/YOUR-UUID-HERE/data_access`.
@@ -1569,7 +1578,7 @@ app.post("/api/cat/search", (a_req, a_resp) => {
  *   { custom_param: 'value' }
  * );
  */
-app.get("/api/globus/authorize_url", (a_req, a_resp) => {
+app.get("/api/globus/authorize_url", storeCollectionId, (a_req, a_resp) => {
     const client_id = g_oauth_credentials.clientId;
     const redirect_uri = g_oauth_credentials.redirectUri;
     const { requested_scopes, state, refresh_tokens, query_params } = a_req.query;
