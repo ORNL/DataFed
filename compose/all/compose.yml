@@ -80,7 +80,7 @@ services:
       - datafed-internal
 
   arango:
-    image: arangodb:3.12.0.2
+    image: arangodb/arangodb:3.12.4
     environment:
       ARANGO_ROOT_PASSWORD: "${DATAFED_DATABASE_PASSWORD}"
     volumes:
