@@ -5,7 +5,7 @@ const { UserToken } = require("../api/lib/user_token");
 
 const { expect } = require("chai");
 
-describe("The user_token library module class UserToken evaluating static method validateRequestParams", () => {
+describe("unit_user_token: The user_token library module class UserToken evaluating static method validateRequestParams", () => {
     const valid_params = {
         // random ID
         collection_id: "ba873943-199d-4c9c-a998-10383329e5df",
@@ -39,7 +39,7 @@ describe("The user_token library module class UserToken evaluating static method
     });
 });
 
-describe("The user_token library module class UserToken evaluating static method formatUserToken", () => {
+describe("unit_user_token: The user_token library module class UserToken evaluating static method formatUserToken", () => {
     const valid_token_doc = {
         access: "fake access token",
         refresh: "fake refresh token",
