@@ -79,8 +79,7 @@ class UserToken {
             result_token.scopes = token_document.dependent_scopes;
             // NOTE: force consent flow if proper refresh variables are unavailable
             result_token.needs_consent = !result_token.token_type || !result_token.scopes;
-        }
-        else {
+        } else {
             result_token.token_type = g_lib.AccessTokenType.GLOBUS_DEFAULT;
         }
         return result_token;
