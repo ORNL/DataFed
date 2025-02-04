@@ -351,6 +351,7 @@ void DatabaseAPI::userGetAccessToken(
   a_expires_in = (uint32_t)obj.getNumber("expires_in");
   needs_consent = obj.getBool("needs_consent");
   token_type = (int)obj.getNumber("token_type");
+  // NOTE: scopes will be a blank string for token_type=GLOBUS_DEFAULT
   scopes = obj.getString("scopes");
 
   TRANSLATE_END(result, log_context)

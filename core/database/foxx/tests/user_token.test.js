@@ -50,7 +50,14 @@ describe("unit_user_token: The user_token library module class UserToken evaluat
         type: g_lib.AccessTokenType.GLOBUS_TRANSFER,
         dependent_scopes: "fake token scope",
     };
-    it("Should return an object with only needs_consent if needs_consent=true", () => {
+    it("Should return an object with default values if needs_consent=true", () => {
+        const default_values = {
+            access: "",
+            refresh: "",
+            expires_in: 0,
+            token_type: g_lib.AccessTokenType.ACCESS_SENTINEL,
+            scopes: "",
+        };
         const is_collection_token = true;
         const needs_consent = true;
 
@@ -60,8 +67,8 @@ describe("unit_user_token: The user_token library module class UserToken evaluat
             needs_consent,
         );
 
-        expect(Object.keys(response_token).length).to.equal(1);
         expect(response_token.needs_consent).to.be.true;
+        expect(response_token).to.include(default_values);
     });
 
     it("Should return relevant information from a token document when needs_consent=false and is_collection_token=false", () => {

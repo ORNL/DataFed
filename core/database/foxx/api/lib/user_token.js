@@ -36,11 +36,11 @@ class UserToken {
     /**
      * @typedef userTokenResponse
      * @property {boolean} needs_consent - True if consent flow needs to be triggered, in which case other fields will be undefined
-     * @property {string} [access] - Access token
-     * @property {string} [refresh] - Refresh token
-     * @property {number} [expires_in] - Time until token expiry
-     * @property {g_lib.AccessTokenType | number} [token_type] - Type of token retrieved, useful when refreshing tokens
-     * @property {string} [scopes] - Scope associated with token, useful when refreshing tokens; only present on collection tokens
+     * @property {string} access - Access token
+     * @property {string} refresh - Refresh token
+     * @property {number} expires_in - Time until token expiry
+     * @property {g_lib.AccessTokenType | number} token_type - Type of token retrieved, useful when refreshing tokens
+     * @property {string} scopes - Scope associated with token, useful when refreshing tokens
      */
     /**
      * Build response object
@@ -57,6 +57,11 @@ class UserToken {
     static formatUserToken(is_collection_token, token_document, needs_consent) {
         let result_token = {
             needs_consent: needs_consent,
+            access: "",
+            refresh: "",
+            expires_in: 0,
+            token_type: g_lib.AccessTokenType.ACCESS_SENTINEL,
+            scopes: "",
         };
         if (needs_consent) {
             // short circuit when consent flow is required
@@ -67,8 +72,6 @@ class UserToken {
         if (token_document.expiration) {
             const expires_in = token_document.expiration - Math.floor(Date.now() / 1000);
             result_token.expires_in = expires_in > 0 ? expires_in : 0;
-        } else {
-            result_token.expires_in = 0;
         }
         if (is_collection_token) {
             // NOTE: this is only necessary in case of refresh
@@ -76,7 +79,8 @@ class UserToken {
             result_token.scopes = token_document.dependent_scopes;
             // NOTE: force consent flow if proper refresh variables are unavailable
             result_token.needs_consent = !result_token.token_type || !result_token.scopes;
-        } else {
+        }
+        else {
             result_token.token_type = g_lib.AccessTokenType.GLOBUS_DEFAULT;
         }
         return result_token;
