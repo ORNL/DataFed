@@ -105,7 +105,8 @@ function recordCreate(client, record, result) {
         obj.md = record.md;
         if (Array.isArray(obj.md)) throw [g_lib.ERR_INVALID_PARAM, "Metadata cannot be an array"];
     } else {
-        obj.md = "{}";
+        // Save it as an empty object.
+        obj.md = {};
     }
 
     if (obj.alias) {
