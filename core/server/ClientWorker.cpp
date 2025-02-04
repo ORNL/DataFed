@@ -1394,8 +1394,9 @@ std::unique_ptr<IMessage> ClientWorker::procUserGetAccessTokenRequest(
         m_db_client.userSetAccessToken(
             acc_tok, expires_in, ref_tok, (AccessTokenType)token_type,
             collection_id + "|" + scopes, log_context);
-      } catch (TraceException &e) { // TODO: assuming refresh failed
-        // TODO: invalidate other values?
+      } catch (TraceException &e) { // NOTE: assumes refresh failed (invalid or
+                                    // failure). new token fetched will upsert
+                                    // and overwrite old values on database
         needs_consent = true;
       }
     }
