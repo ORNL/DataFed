@@ -461,9 +461,9 @@ install_foxx_cli() {
 }
 
 install_arangodb() {
-  curl -OL https://download.arangodb.com/arangodb311/DEBIAN/Release.key
+  curl -OL https://download.arangodb.com/arangodb312/DEBIAN/Release.key
   "$SUDO_CMD" apt-key add - < Release.key
-  echo 'deb https://download.arangodb.com/arangodb311/DEBIAN/ /' | "$SUDO_CMD" tee /etc/apt/sources.list.d/arangodb.list
+  echo 'deb https://download.arangodb.com/arangodb312/DEBIAN/ /' | "$SUDO_CMD" tee /etc/apt/sources.list.d/arangodb.list
   "$SUDO_CMD" apt-get install apt-transport-https
   "$SUDO_CMD" apt-get update
   "$SUDO_CMD" apt-get install arangodb3
