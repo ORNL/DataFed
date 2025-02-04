@@ -557,11 +557,16 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
                     $("#sch_id", frame).val(a_data.schId);
                 }
 
+                var md;
                 if (a_data.metadata) {
-                    var md = JSON.parse(a_data.metadata);
-                    var txt = JSON.stringify(md, null, 4);
-                    jsoned.setValue(txt, -1);
+                  md = JSON.parse(a_data.metadata);
+                } else {
+                  md = {};  // Set empty metadata to an empty JSON object
                 }
+
+                var txt = JSON.stringify(md, null, 4);
+                jsoned.setValue(txt, -1); 
+
 
                 if (a_data.deps && a_data.deps.length) {
                     var i, dep, row;
