@@ -246,6 +246,26 @@ The following example demonstrates the use of **enums** to enforce predefined ch
        "type": "object"
    }
 
+### Example Schema Using References
+
+The following example demonstrates the use of **references** to existing schemas, assuming the previous schema was saved as **equipment** with verison number 0 **equipment:0**:
+
+.. code-block:: json
+   {
+       "properties": {
+           "equipment": {
+               "$ref": "equipment:0"
+           },
+           "voltage": {
+               "type": "number"
+           }
+       },
+       "required": [
+           "voltage",
+           "equipment"
+       ],
+       "type": "object"
+   }
 
 Transfers
 ---------
