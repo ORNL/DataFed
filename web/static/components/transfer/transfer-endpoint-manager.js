@@ -1,19 +1,20 @@
 import { createMatchesHtml } from "./transfer-templates.js";
 
 /**
- * @classDesc Manages endpoint operations and state for file transfers
  * @class TransferEndpointManager
+ *
+ * Manages endpoint operations and state for file transfers
  */
 export class TransferEndpointManager {
     #controller;
 
     /**
      * Creates a new TransferEndpointManager instance
-     * @param {Object} controller - The transfer controller instance
-     * @param services - The service objects to use for API and dialog operations
-     * @param {Object} services.dialogs - Dialog service
+     * @param {object} controller - The transfer controller instance
+     * @param {object} services - The service objects to use for API and dialog operations
+     * @param {object} services.dialogs - Dialog service
      * @param {Function} services.dialogs.dlgAlert - Alert dialog function
-     * @param {Object} services.api - API service
+     * @param {object} services.api - API service
      * @param {Function} services.api.epView - Endpoint view API function
      * @param {Function} services.api.epAutocomplete - Endpoint autocomplete API function
      */
@@ -108,7 +109,7 @@ export class TransferEndpointManager {
 
     /**
      * Updates the list of endpoint matches in the UI
-     * @param {Array<Object>} [endpoints=[]] - Array of endpoint objects
+     * @param {Array<object>} [endpoints=[]] - Array of endpoint objects
      */
     updateMatchesList(endpoints = []) {
         const matches = $("#matches", this.#controller.uiManager.state.frame);
