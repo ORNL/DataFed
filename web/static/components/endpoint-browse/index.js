@@ -16,20 +16,20 @@ const CONFIG = {
 
 /**
  * EndpointBrowser Component
- * @classDesc Handles browsing and selecting files/directories from endpoints
+ * Handles browsing and selecting files/directories from endpoints
  */
 class EndpointBrowser {
     /**
-     * @param {Object} props - Browser configuration
-     * @param {Object} props.endpoint - Endpoint details
+     * @param {object} props - Browser configuration
+     * @param {object} props.endpoint - Endpoint details
      * @param {string} props.path - Initial path
      * @param {string} props.mode - Browser mode ('file'/'dir')
      * @param {Function} props.onSelect - Selection callback
-     * @param {Object} props.services - The service objects to use for API and dialog operations
-     * @param {Object} props.services.dialogs - Dialog service
+     * @param {object} props.services - The service objects to use for API and dialog operations
+     * @param {object} props.services.dialogs - Dialog service
      * @param {Function} props.services.dialogs.dlgAlert - Alert dialog function
-     * @param {Object} props.services.api - API service
-     * @param {Function} props.services.api.getGlobusAuthorizeURL - Globus authorization URL function
+     * @param {object} props.services.api - API service
+     * @param {Function} props.services.api.getGlobusConsentURL - Globus authorization URL function
      */
     constructor(props) {
         this.props = props;
@@ -152,7 +152,7 @@ class EndpointBrowser {
     }
 
     /**
-     * @param {Object} node - Tree node
+     * @param {object} node - Tree node
      * @returns {boolean} Whether selection is valid
      */
     isValidSelection(node) {
@@ -208,7 +208,7 @@ class EndpointBrowser {
 
     /**
      * Updates the tree with new data
-     * @param {Object} data - The data to update the tree with
+     * @param {object} data - The data to update the tree with
      */
     updateTree(data) {
         const source = this.getTreeSource(data);
@@ -219,7 +219,7 @@ class EndpointBrowser {
 
     /**
      * Get tree source data
-     * @param {Object} data - API response data
+     * @param {object} data - API response data
      * @returns {Array} Tree source data
      */
     getTreeSource(data) {
@@ -261,16 +261,16 @@ class EndpointBrowser {
 
     /**
      * Handle API error responses
-     * @param {Object} data - API response data
+     * @param {object} data - API response data
      * @returns {Array} Error message source
      */
     handleApiError(data) {
         if (data.code === "ConsentRequired") {
-            api.getGlobusAuthorizeURL(
+            api.getGlobusConsentURL(
                 (ok, data) => {
                     const source = [
                         {
-                            title: `<span class='ui-state-error'>Consent Required: Please provide <a href="${data.authorize_url}">consent</a>.</span>`,
+                            title: `<span class='ui-state-error'>Consent Required: Please provide <a href="${data.consent_url}">consent</a>.</span>`,
                             icon: false,
                             is_dir: true,
                         },
@@ -317,11 +317,10 @@ class EndpointBrowser {
 
 /**
  * Show endpoint browser dialog
- * @param {Object} endpoint - Endpoint configuration
+ * @param {object} endpoint - Endpoint configuration
  * @param {string} path - Initial path
  * @param {string} mode - Browser mode ('file'/'dir')
  * @param {Function} callback - Selection callback
- * @param services - The service objects to use for API and dialog operations
  */
 export function show(endpoint, path, mode, callback) {
     const browser = new EndpointBrowser({
