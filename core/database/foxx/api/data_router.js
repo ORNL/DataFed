@@ -99,9 +99,13 @@ function recordCreate(client, record, result) {
         }
     }
 
+    // If no custom metadata is provided by the user empty curly braces should
+    // be set so as to trigger schema validation errors.
     if (record.md) {
         obj.md = record.md;
         if (Array.isArray(obj.md)) throw [g_lib.ERR_INVALID_PARAM, "Metadata cannot be an array"];
+    } else {
+        obj.md = "{}";
     }
 
     if (obj.alias) {
