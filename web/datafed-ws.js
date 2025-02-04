@@ -36,6 +36,7 @@ import { fileURLToPath } from "url";
 import { dirname } from "path";
 
 import OAuthTokenHandler, { AccessTokenType } from "./services/auth/TokenHandler.js";
+import { generateConsentURL } from "./services/auth/ConsentHandler.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -111,26 +112,31 @@ class Logger {
             this.log("CRIT", function_name, line_number, message, correlation_id);
         }
     }
+
     error(function_name, line_number, message, correlation_id = "") {
         if (this._level >= LogLevel.ERROR) {
             this.log("ERROR", function_name, line_number, message, correlation_id);
         }
     }
+
     warning(function_name, line_number, message, correlation_id = "") {
         if (this._level >= LogLevel.WARNING) {
             this.log("WARNING", function_name, line_number, message, correlation_id);
         }
     }
+
     info(function_name, line_number, message, correlation_id = "") {
         if (this._level >= LogLevel.INFO) {
             this.log("INFO", function_name, line_number, message, correlation_id);
         }
     }
+
     debug(function_name, line_number, message, correlation_id = "") {
         if (this._level >= LogLevel.DEBUG) {
             this.log("DEBUG", function_name, line_number, message, correlation_id);
         }
     }
+
     trace(function_name, line_number, message, correlation_id = "") {
         if (this._level >= LogLevel.TRACE) {
             this.log("TRACE", function_name, line_number, message, correlation_id);
@@ -308,7 +314,6 @@ function storeCollectionId(req, res, next) {
     }
     next();
 }
-
 
 app.use(cookieParser(g_session_secret));
 app.use(
@@ -496,15 +501,15 @@ app.get("/ui/authn", (a_req, a_resp) => {
     logger.info("/ui/authn", getCurrentLineNumber(), "Globus authenticated - log in to DataFed");
 
     /* This after Globus authentication. Loads Globus tokens and identity information.
-    The user is then checked in DataFed and, if present redirected to the main page; otherwise, sent to
-    the registration page.
-    */
+The user is then checked in DataFed and, if present redirected to the main page; otherwise, sent to
+the registration page.
+*/
 
     g_globus_auth.code.getToken(a_req.originalUrl).then(
         function (client_token) {
             let token_handler;
             try {
-                console.log('client_token', client_token);
+                console.log("client_token", client_token);
                 token_handler = new OAuthTokenHandler(client_token);
             } catch (err) {
                 a_resp.redirect("/ui/error");
@@ -1553,81 +1558,19 @@ app.post("/api/cat/search", (a_req, a_resp) => {
     });
 });
 
-/**
- * Basic implementation of `get_authorize_url` from the Globus SDK.
- *
- * This function generates the authorization URL that a user can follow to provide
- * authorization and consent via Globus Auth.
- * @param {string} [collection_id=""] - The specified collection id
- * @param {Array<string>} [requested_scopes=[]] - The scopes on the token(s) being requested.
- * In the case of accessing a mapped collection, this should include the mapped
- * collection's UUID, such as: `https://auth.globus.org/scopes/YOUR-UUID-HERE/data_access`.
- * @param {string} [state="_default"] - Allows the application to pass information back to itself.
- * @param {boolean} [refresh_tokens=false] - Request refresh tokens in addition to access tokens.
- * @param {object} [query_params={}] - Additional parameters to be included in the authorization URL.
- *
- * @returns {string} The URL a user can follow to provide authorization and consent via Globus.
- *
- * @example
- * const url = globusGetAuthorizeURL(
- *   'your-client-id',
- *   'your-redirect-uri',
- *   ['openid', 'email'],
- *   'custom-state',
- *   true,
- *   { custom_param: 'value' }
- * );
- */
-app.get("/api/globus/authorize_url", storeCollectionId, (a_req, a_resp) => {
-    const client_id = g_oauth_credentials.clientId;
-    const redirect_uri = g_oauth_credentials.redirectUri;
+app.get("/api/globus/consent_url", storeCollectionId, (a_req, a_resp) => {
     const { requested_scopes, state, refresh_tokens, query_params } = a_req.query;
 
-    console.log('query', requested_scopes, state, refresh_tokens, query_params);
+    const consent_url = generateConsentURL(
+        g_oauth_credentials.clientId,
+        g_oauth_credentials.redirectUri,
+        refresh_tokens,
+        requested_scopes,
+        query_params,
+        state,
+    );
 
-    const scopes = requested_scopes
-      ? requested_scopes.split(",")
-      : ["openid", "profile", "email", "urn:globus:auth:scope:transfer.api.globus.org:all"];
-
-    console.log('scopes', scopes);
-
-    if (refresh_tokens) {
-        scopes.push("offline_access");
-    }
-
-    // TODO: stubbed client object to provide base url, we should extract if possible
-    const auth_client = {
-        base_url: "https://auth.globus.org",
-    };
-
-    const authorize_base_url = `${auth_client.base_url}/v2/oauth2/authorize`;
-    /*  NOTE: using URLSearchParams changes encoding of  " " to "+" which Globus accepts, despite saying otherwise
-        https://docs.globus.org/api/auth/developer-guide/#obtaining-authorization
-     */
-      // TODO: consider moving back to custom encoding in anticipation that Globus will no longer accept a different encoding scheme
-    const params = new URLSearchParams({
-          client_id,
-          redirect_uri,
-          scope: scopes.join(" "), // Scopes need to be separated by a space
-          state,
-          response_type: "code",
-          access_type: refresh_tokens === true ? "offline" : "online",
-          prompt: "login",
-      });
-
-    if (query_params) {
-        const additionalParams = JSON.parse(query_params);
-        Object.entries(additionalParams).forEach(([key, value]) => {
-            if (value) {
-                // short-circuit on empty param values or if param already defined,
-                // TODO: are there cases where we may want empty params?
-                params.set(key, value);
-            }
-        });
-    }
-
-    const authorize_url = `${authorize_base_url}?${params.toString()}`;
-    a_resp.json({ authorize_url });
+    a_resp.json({ consent_url });
 });
 
 app.post("/api/col/pub/search/data", (a_req, a_resp) => {

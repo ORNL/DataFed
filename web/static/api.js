@@ -1012,7 +1012,7 @@ export function themeSave(a_theme, a_cb) {
     _asyncGet("/ui/theme/save?theme=" + encodeURIComponent(a_theme), null, a_cb);
 }
 
-export function getGlobusAuthorizeURL(
+export function getGlobusConsentURL(
     a_cb,
     collection_id,
     requested_scopes,
@@ -1021,7 +1021,7 @@ export function getGlobusAuthorizeURL(
     state = "_default",
 ) {
     _asyncGet(
-        "/api/globus/authorize_url",
+        "/api/globus/consent_url",
         {
             collection_id,
             refresh_tokens,
