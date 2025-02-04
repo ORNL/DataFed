@@ -699,6 +699,7 @@ router
     .get("/token/get", function (req, res) {
         try {
             const collection_token = UserToken.validateRequestParams(req.queryParams);
+            // TODO: collection type determines logic when mapped vs HA
             const { collection_id, collection_type } = req.queryParams;
 
             var user;
@@ -720,8 +721,6 @@ router
             let token_document = user;
             let needs_consent = false;
             if (collection_token) {
-                // TODO: validate collection type - mapped vs HA
-                const globus_collection = g_db.globus_coll.exists({ _key: collection_id });
                 // TODO: should this be a query?
                 const token_matches = g_db.globus_token.outEdges(user._id).filter((edge) => {
                     // NOTE: this will result in no matches if globus collection document DNE
@@ -738,7 +737,7 @@ router
                                 globus_collection._id,
                         ];
                     }
-                    // TODO: account for AccessTokenType
+                    // TODO: account for AccessTokenType; currently only GLOBUS_DEFAULT and GLOBUS_TRANSFER are supported
                     token_document = token_matches[0];
                     needs_consent = false;
                 } else {

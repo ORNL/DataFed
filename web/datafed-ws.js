@@ -1882,9 +1882,9 @@ app.get("/ui/ep/dir/list", (a_req, a_resp) => {
     const message_data = {
         collectionId: a_req.session.collection_id,
         collectionType: a_req.session.collection_type,
-    }
+    };
 
-    sendMessage("UserGetAccessTokenRequest", {...message_data}, a_req, a_resp, function (reply) {
+    sendMessage("UserGetAccessTokenRequest", { ...message_data }, a_req, a_resp, function (reply) {
         if (reply.needsConsent) {
             // Do something
             a_resp.status(403);
