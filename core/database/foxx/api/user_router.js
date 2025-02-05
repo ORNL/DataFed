@@ -721,6 +721,7 @@ router
             let token_document = user;
             let needs_consent = false;
             if (collection_token) {
+                const globus_collection = g_db.globus_coll.exists({ _key: collection_id });
                 // TODO: should this be a query?
                 const token_matches = g_db.globus_token.outEdges(user._id).filter((edge) => {
                     // NOTE: this will result in no matches if globus collection document DNE
@@ -734,7 +735,7 @@ router
                             "Too many matching tokens for user: " +
                                 user._id +
                                 " to collection: " +
-                                globus_collection._id,
+                                globus_collection?._id,
                         ];
                     }
                     // TODO: account for AccessTokenType; currently only GLOBUS_DEFAULT and GLOBUS_TRANSFER are supported
