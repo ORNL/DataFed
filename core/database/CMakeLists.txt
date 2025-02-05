@@ -35,6 +35,5 @@ if( ENABLE_FOXX_TESTS )
   set_tests_properties(foxx_repo PROPERTIES FIXTURES_REQUIRED Foxx)
   set_tests_properties(foxx_path PROPERTIES FIXTURES_REQUIRED Foxx)
   set_tests_properties(foxx_user_router PROPERTIES FIXTURES_REQUIRED "Foxx;FoxxDBFixtures")
-  # may not require fixture
   set_tests_properties(foxx_unit_user_token PROPERTIES FIXTURES_REQUIRED Foxx)
 endif()
