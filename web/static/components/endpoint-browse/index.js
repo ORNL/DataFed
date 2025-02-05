@@ -228,12 +228,6 @@ class EndpointBrowser {
         }
         return [
             {
-                title: CONFIG.PATH.CURRENT,
-                icon: CONFIG.UI.ICONS.FOLDER,
-                key: CONFIG.PATH.CURRENT,
-                is_dir: true,
-            },
-            {
                 title: CONFIG.PATH.UP,
                 icon: CONFIG.UI.ICONS.FOLDER,
                 key: CONFIG.PATH.UP,
