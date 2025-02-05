@@ -79,7 +79,7 @@ export class TransferUIManager {
                         )}`,
                     ),
             },
-            "#go_btn": {
+            ".go_btn": {
                 disabled: true,
             },
         };
@@ -530,7 +530,6 @@ export class TransferUIManager {
                     click: () => this.handleTransfer(),
                 },
             ],
-            // open: () => this.showDialog(),
             close: function () {
                 $(this).dialog("destroy").remove();
             },
