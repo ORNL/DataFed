@@ -23,10 +23,12 @@ jobs:
 
       # Step 4: Run flake8 and black on notebooks in ./foo
       - name: Lint Jupyter Notebooks with flake8
-        run: nbqa flake8 ./jupyter_notebooks
+        run: nbqa flake8 .
+        working-directory: jupyter_notebooks
 
       - name: Format Jupyter Notebooks with black
-        run: nbqa black ./jupyter_notebooks --check
+        run: nbqa black . --check
+        working-directory: jupyter_notebooks
 
       # Step 5: Report status
       - name: Complete
