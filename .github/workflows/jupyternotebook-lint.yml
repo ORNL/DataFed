@@ -1,5 +1,9 @@
 name: Jupyter Notebook Linter
-on: push
+on:
+  push:
+    paths:
+      - '**/*.ipynb'
+      - '.github/workflows/jupyternotebook-lint.yml'
 
 jobs:
   lint-jupyter:
