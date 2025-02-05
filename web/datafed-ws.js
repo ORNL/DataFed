@@ -509,7 +509,6 @@ the registration page.
         function (client_token) {
             let token_handler;
             try {
-                console.log("client_token", client_token);
                 token_handler = new OAuthTokenHandler(client_token);
             } catch (err) {
                 a_resp.redirect("/ui/error");

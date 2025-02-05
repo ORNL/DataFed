@@ -1025,7 +1025,7 @@ export function getGlobusConsentURL(
         {
             collection_id,
             refresh_tokens,
-            requested_scopes: requested_scopes.join(","),
+            requested_scopes,
             query_params: JSON.stringify(query_params),
             state,
         },
