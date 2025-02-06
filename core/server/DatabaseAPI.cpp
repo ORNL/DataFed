@@ -3186,6 +3186,13 @@ void DatabaseAPI::taskInitDataPut(const Auth::DataPutRequest &a_request,
   if (a_request.has_check() && a_request.check())
     body += ",\"check\":true";
 
+  if (a_request.has_collection_id()) {
+    body += ",\"collection_id\":\"" + a_request.collection_id() + "\"";
+  }
+  if (a_request.has_collection_type()) {
+    body += ",\"collection_type\":\"" + a_request.collection_type() + "\"";
+  }
+
   body += "}";
 
   dbPost("dat/put", {}, &body, a_result, log_context);

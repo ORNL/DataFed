@@ -1658,6 +1658,9 @@ router
 
 router
     .post("/put", function (req, res) {
+        // TODO: validate input parameters like in Issue 1215
+        //  const is_collection = user_token.validate(req.queryParams);
+        const {collection_id, collection_type} = req.queryParams;
         try {
             g_db._executeTransaction({
                 collections: {
@@ -1692,6 +1695,7 @@ router
                         req.body.ext,
                         res_ids,
                         req.body.check,
+                        { collection_id: collection_id, collection_type: collection_type } // TODO: add contextual switch
                     );
 
                     if (!req.body.check)
@@ -1713,6 +1717,8 @@ router
                 encrypt: joi.number().optional(),
                 ext: joi.string().optional(),
                 check: joi.boolean().optional(),
+                collection_id: joi.string().optional().guid(),
+                collection_type: joi.string().optional().valid("mapped"),
             })
             .required(),
         "Parameters",

@@ -452,7 +452,7 @@ var tasks_func = (function () {
 
     // ----------------------- DATA PUT ----------------------------
 
-    obj.taskInitDataPut = function (a_client, a_path, a_encrypt, a_ext, a_res_ids, a_check) {
+    obj.taskInitDataPut = function (a_client, a_path, a_encrypt, a_ext, a_res_ids, a_check, additional_param_obj) {
         console.log("taskInitDataPut");
 
         var result = g_proc.preprocessItems(a_client, null, a_res_ids, g_lib.TT_DATA_PUT);
@@ -467,6 +467,8 @@ var tasks_func = (function () {
                 encrypt: a_encrypt,
                 ext: a_ext,
                 glob_data: result.glob_data,
+                collection_id: additional_param_obj.collection_id,
+                collection_type: additional_param_obj.collection_type,
             };
             var task = obj._createTask(a_client._id, g_lib.TT_DATA_PUT, 2, state);
 
