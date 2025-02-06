@@ -21,7 +21,7 @@
 using namespace std;
 using namespace libjson;
 
-//#define TASK_DELAY sleep(60);
+// #define TASK_DELAY sleep(60);
 #define TASK_DELAY
 
 namespace SDMS {
@@ -205,6 +205,7 @@ TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
   bool encrypted = true;
   GlobusAPI::EndpointInfo ep_info;
 
+  // TODO: token values fetched here
   string acc_tok = obj.getString("acc_tok");
   string ref_tok = obj.getString("ref_tok");
   uint32_t expires_in = obj.getNumber("acc_tok_exp_in");

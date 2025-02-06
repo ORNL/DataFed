@@ -541,7 +541,7 @@ var tasks_func = (function () {
             //console.log("taskRunDataPut - do xfr");
             // Transfer data step
 
-            var tokens = g_lib.getAccessToken(a_task.client);
+            var tokens = g_lib.getAccessToken(a_task.client, state); // TODO: refresh token ?
             params = {
                 uid: a_task.client,
                 type: a_task.type,
