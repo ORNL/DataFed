@@ -62,13 +62,13 @@ export function getDialogTemplate(labels, mode) {
                     <div style='display: flex; align-items: flex-start;'>
                         <textarea class='ui-widget-content' id='path' rows=3
                                  style='width:100%;resize:none;'></textarea>
-                        <button class='btn small' id='browse'
-                                style='margin-left:10px; line-height:1.5; vertical-align: top;'
-                                disabled>Browse</button>
+                        <button class='btn small' id='browse' style='margin-left:10px; line-height:1.5; 
+                        vertical-align: top;' disabled>
+                            Browse
+                        </button>
                     </div>
                     <br>
-                    <select class='ui-widget-content ui-widget' id='matches'
-                            size='7' style='width: 100%;' disabled>
+                    <select class='ui-widget-content ui-widget' id='matches' size='7' style='width: 100%;' disabled>
                         <option disabled selected>No Matches</option>
                     </select>
                     ${getTransferOptionsTemplate(mode)}
