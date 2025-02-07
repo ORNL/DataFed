@@ -233,12 +233,22 @@ describe("unit_user_router: the Foxx microservice user_router token/get endpoint
     });
 
     it("Should indicate consent flow is needed when a token is not found for a specified collection", () => {
-        const collection_not_related_uuid = "d08c40c6-b778-427d-9963-255ce2bbbd2e"; // Fake UUID
+        const collection_not_related_uuid = "94445318-2097-4ed8-8550-f73cd292b11f"; // TODO: pull from globus_collection_fixture.js
         const collection_not_related_url = `${token_get_test_user_base_url}&collection_id=${collection_not_related_uuid}&collection_type=mapped`;
 
         const response = request.get(collection_not_related_url);
 
         expect(response.status).to.equal(200);
         expect(JSON.parse(response.body)).to.include({ needs_consent: true });
+    });
+
+    it("Should throw an error when a specified collection cannot be found", () => {
+        const collection_not_exists_uuid = "d08c40c6-b778-427d-9963-255ce2bbbd2e"; // Fake UUID
+        const collection_not_exists_url = `${token_get_test_user_base_url}&collection_id=${collection_not_exists_uuid}&collection_type=mapped`;
+
+        const response = request.get(collection_not_exists_url);
+
+        expect(response.status).to.equal(400);
+        expect(response.body).to.include("No such collection");
     });
 });

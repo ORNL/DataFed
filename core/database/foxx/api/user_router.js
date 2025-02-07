@@ -722,11 +722,16 @@ router
             let needs_consent = false;
             if (collection_token) {
                 const globus_collection = g_db.globus_coll.exists({ _key: collection_id });
-                // TODO: should this be a query?
-                const token_matches = g_db.globus_token.outEdges(user._id).filter((edge) => {
-                    // NOTE: this will result in no matches if globus collection document DNE
-                    return edge._to === globus_collection?._id;
-                });
+                if (!globus_collection) {
+                    throw [
+                        g_lib.ERR_INVALID_PARAM,
+                        "No such collection '" + collection_id + "'",
+                    ];
+                }
+                const token_matches = g_db.globus_token.byExample({
+                    _from: user._id,
+                    _to: globus_collection._id,
+                }).toArray();
                 if (token_matches.length > 0) {
                     if (token_matches.length > 1) {
                         // Relationship should be unique based on AccessTokenType
