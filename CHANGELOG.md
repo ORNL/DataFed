@@ -35,6 +35,7 @@
 23. [1269] - Update Arangodb to 3.12.4
 24. [1293] - Refactor, can upload to unchecked record
 25. [1223] - Fix deprecated method usage for Protobuf in Python client library
+26. [1288] - Bug Jupyternote books in documentation were fixed.
 
 # v2024.6.17.10.40
 
