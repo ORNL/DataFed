@@ -1,6 +1,5 @@
 import * as util from "../../util.js";
 import * as api from "../../api.js";
-import * as dialogs from "../../dialogs.js";
 
 const CONFIG = {
     PATH: { SEPARATOR: "/", UP: "..", CURRENT: "." },
