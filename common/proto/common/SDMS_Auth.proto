@@ -134,7 +134,7 @@ message UserAccessTokenReply
 {
     required string             access          = 1; // Globus access token
     required uint32             expires_in      = 2; // Access token expiration in seconds
-    required bool               needs_consent   = 3; // Indicate requirement of consent flow
+    optional bool               needs_consent   = 3; // Indicate requirement of consent flow
 }
 
 // Request to create a new DataFed user account.
