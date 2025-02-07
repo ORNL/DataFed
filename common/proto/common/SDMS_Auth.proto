@@ -124,14 +124,17 @@ message UserSetAccessTokenRequest
 // Reply: UserAccessTokenReply on success, NackReply on error
 message UserGetAccessTokenRequest
 {
+    optional string             collection_id   = 1;
+    optional string             collection_type = 2;    // TODO: use enum
 }
 
 // Reply containing the user Globus access token and expiration time (in
 // seconds) for authenticated user.
 message UserAccessTokenReply
 {
-    required string             access      = 1; // Globus access token
-    required uint32             expires_in  = 2; // Access token expiration in seconds
+    required string             access          = 1; // Globus access token
+    required uint32             expires_in      = 2; // Access token expiration in seconds
+    optional bool               needs_consent   = 3; // Indicate requirement of consent flow
 }
 
 // Request to create a new DataFed user account.

@@ -309,6 +309,7 @@ module.exports = (function () {
         GLOBUS_AUTH: 3,
         GLOBUS_TRANSFER: 4,
         GLOBUS_DEFAULT: 5,
+        ACCESS_SENTINEL: 255,
     };
 
     obj.procInputParam = function (a_in, a_field, a_update, a_out) {

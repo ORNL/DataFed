@@ -2,7 +2,15 @@ const { db } = require("@arangodb");
 const g_lib = require("../api/support");
 
 const current_time = Math.floor(Date.now() / 1000);
-const uid_list = ["testUser0", "testUser1", "testUser2", "testUser3", "testUser4"];
+const get_token_test_user = "getTokenUser";
+const uid_list = [
+    "testUser0",
+    "testUser1",
+    "testUser2",
+    "testUser3",
+    "testUser4",
+    get_token_test_user,
+];
 const end_uid = uid_list.at(-1);
 const base_user_data = {
     name_first: "test",

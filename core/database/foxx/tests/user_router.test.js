@@ -155,3 +155,100 @@ describe("unit_user_router: the Foxx microservice user_router token/set endpoint
         expect(user_data.access).to.not.equal(query_params.access); // should not update user doc
     });
 });
+describe("unit_user_router: the Foxx microservice user_router token/get endpoint", () => {
+    const test_uuid = "b68ef5fb-f511-4e98-b8a3-dbc6acbcb6f2"; // fake UUID
+    const test_scope = "urn:globus:auth:scope:transfer.api.globus.org:all";
+    const get_token_test_user = "getTokenUser";
+    const test_access_token = "test_access_token";
+    const test_refresh_token = "test_refresh_token";
+    const test_globus_access_token = "test_globus_access_token";
+    const test_globus_refresh_token = "test_globus_refresh_token";
+    const test_globus_token_type = g_lib.AccessTokenType.GLOBUS_TRANSFER;
+    const test_other_token_data = test_uuid + "%7C" + test_scope;
+    const test_expires_in = "12345689";
+    before(() => {
+        // One time set up of some test user data
+        const default_token_query_string = `${usr_base_url}/token/set?client=${get_token_test_user}&access=${test_access_token}&refresh=${test_refresh_token}&expires_in=${test_expires_in}`;
+        const default_token_response = request.get(default_token_query_string);
+        expect(default_token_response.status).to.equal(204);
+
+        const collection_token_query_string = `${usr_base_url}/token/set?client=${get_token_test_user}&access=${test_globus_access_token}&refresh=${test_globus_refresh_token}&expires_in=500000&type=${test_globus_token_type}&other_token_data=${test_other_token_data}`;
+        const collection_token_response = request.get(collection_token_query_string);
+        expect(collection_token_response.status).to.equal(204);
+    });
+
+    const token_get_test_user_base_url = `${usr_base_url}/token/get?client=${get_token_test_user}`;
+    it("Should reject the optional collection_id param if it is not a valid GUID", () => {
+        const invalid_guid = "invalid_guid";
+        const invalid_guid_url = `${token_get_test_user_base_url}&collection_id=${invalid_guid}`;
+
+        const response = request.get(invalid_guid_url);
+
+        expect(response.status).to.equal(400);
+        expect(response.body).to.include(
+            'query parameter \\"collection_id\\" must be a valid GUID',
+        );
+    });
+
+    it("Should reject optional collection_type param if it is not of value `mapped`", () => {
+        const not_mapped = "not_mapped";
+        const invalid_type_url = `${token_get_test_user_base_url}&collection_type=${not_mapped}`;
+
+        const response = request.get(invalid_type_url);
+
+        expect(response.status).to.equal(400);
+        expect(response.body).to.include(
+            'query parameter \\"collection_type\\" must be one of [mapped]',
+        );
+    });
+
+    it("Should retrieve the default token when optional params are not provided", () => {
+        const response = request.get(token_get_test_user_base_url);
+
+        expect(response.status).to.equal(200);
+
+        const json_body = JSON.parse(response.body);
+        expect(json_body).to.include({ needs_consent: false });
+        expect(json_body).to.include({ access: test_access_token, refresh: test_refresh_token });
+        expect(response.body).to.include("expires_in");
+        expect(json_body).to.include({ token_type: g_lib.AccessTokenType.GLOBUS_DEFAULT });
+    });
+
+    it("Should retrieve specified collection token when optional params are provided", () => {
+        const collection_url = `${token_get_test_user_base_url}&collection_id=${test_uuid}&collection_type=mapped`;
+
+        const response = request.get(collection_url);
+
+        expect(response.status).to.equal(200);
+
+        const json_body = JSON.parse(response.body);
+        expect(json_body).to.include({ needs_consent: false });
+        expect(json_body).to.include({
+            access: test_globus_access_token,
+            refresh: test_globus_refresh_token,
+        });
+        expect(response.body).to.include("expires_in");
+        expect(json_body).to.include({ token_type: test_globus_token_type });
+        expect(json_body).to.include({ scopes: test_scope });
+    });
+
+    it("Should indicate consent flow is needed when a token is not found for a specified collection", () => {
+        const collection_not_related_uuid = "94445318-2097-4ed8-8550-f73cd292b11f"; // TODO: pull from globus_collection_fixture.js
+        const collection_not_related_url = `${token_get_test_user_base_url}&collection_id=${collection_not_related_uuid}&collection_type=mapped`;
+
+        const response = request.get(collection_not_related_url);
+
+        expect(response.status).to.equal(200);
+        expect(JSON.parse(response.body)).to.include({ needs_consent: true });
+    });
+
+    it("Should indicate consent flow is needed when a specified collection cannot be found", () => {
+        const collection_not_exists_uuid = "d08c40c6-b778-427d-9963-255ce2bbbd2e"; // Fake UUID
+        const collection_not_exists_url = `${token_get_test_user_base_url}&collection_id=${collection_not_exists_uuid}&collection_type=mapped`;
+
+        const response = request.get(collection_not_exists_url);
+
+        expect(response.status).to.equal(200);
+        expect(JSON.parse(response.body)).to.include({ needs_consent: true });
+    });
+});

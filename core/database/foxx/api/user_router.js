@@ -8,6 +8,7 @@ const auth = createAuth("pbkdf2");
 const g_db = require("@arangodb").db;
 const g_graph = require("@arangodb/general-graph")._graph("sdmsg");
 const g_lib = require("./support");
+const { UserToken } = require("./lib/user_token");
 
 module.exports = router;
 
@@ -697,6 +698,10 @@ router
 router
     .get("/token/get", function (req, res) {
         try {
+            const collection_token = UserToken.validateRequestParams(req.queryParams);
+            // TODO: collection type determines logic when mapped vs HA
+            const { collection_id, collection_type } = req.queryParams;
+
             var user;
 
             if (req.queryParams.subject) {
@@ -713,17 +718,43 @@ router
                 user = g_lib.getUserFromClientID(req.queryParams.client);
             }
 
-            var result = {};
-            if (user.access != undefined) result.access = user.access;
-            if (user.refresh != undefined) result.refresh = user.refresh;
-            if (user.expiration) {
-                var exp = user.expiration - Math.floor(Date.now() / 1000);
-                console.log("tok/get", Math.floor(Date.now() / 1000), user.expiration, exp);
-                result.expires_in = exp > 0 ? exp : 0;
-            } else {
-                console.log("tok/get - no expiration");
-                result.expires_in = 0;
+            let token_document = user;
+            let needs_consent = false;
+            if (collection_token) {
+                // Default - conditions not met for: no collection, no tokens, and no matches - all require consent flow
+                token_document = {};
+                needs_consent = true;
+
+                const globus_collection = g_db.globus_coll.exists({ _key: collection_id });
+                if (globus_collection) {
+                    const token_matches = g_db.globus_token
+                        .byExample({
+                            _from: user._id,
+                            _to: globus_collection._id,
+                        })
+                        .toArray();
+                    if (token_matches.length > 0) {
+                        if (token_matches.length > 1) {
+                            // Relationship should be unique based on AccessTokenType
+                            throw [
+                                g_lib.ERR_INTERNAL_FAULT,
+                                "Too many matching tokens for user: " +
+                                    user._id +
+                                    " to collection: " +
+                                    globus_collection._id,
+                            ];
+                        }
+                        // TODO: account for AccessTokenType; currently only GLOBUS_DEFAULT and GLOBUS_TRANSFER are supported
+                        token_document = token_matches[0];
+                        needs_consent = false;
+                    }
+                }
             }
+            const result = UserToken.formatUserToken(
+                collection_token,
+                token_document,
+                needs_consent,
+            );
 
             res.send(result);
         } catch (e) {
@@ -732,6 +763,16 @@ router
     })
     .queryParam("client", joi.string().required(), "Client ID")
     .queryParam("subject", joi.string().optional(), "UID of subject user")
+    .queryParam(
+        "collection_id",
+        joi.string().optional().guid(),
+        "ID of collection with which token is associated",
+    ) // https://joi.dev/api/?v=17.13.3#stringguid---aliases-uuid
+    .queryParam(
+        "collection_type",
+        joi.string().optional().valid("mapped"),
+        "Type of collection with which token is associated",
+    )
     .summary("Get user tokens")
     .description("Get user tokens");
 
