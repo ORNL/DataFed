@@ -1,7 +1,7 @@
 import { ep_recent } from "../../settings.js";
 import { TransferMode } from "../../models/transfer-model.js";
 import { show } from "../endpoint-browse/index.js";
-import {inputDisable, inputEnable, inputTheme, setStatusText} from "../../util.js";
+import { inputDisable, inputEnable, inputTheme, setStatusText } from "../../util.js";
 import { createMatchesHtml, formatRecordTitle, getDialogTemplate } from "./transfer-templates.js";
 
 /**
@@ -152,7 +152,8 @@ export class TransferUIManager {
                 browsePath,
                 this.#controller.model.mode === TransferMode.TT_DATA_GET ? "dir" : "file",
                 (selectedPath) => {
-                    const fullPath = this.#controller.endpointManager.currentEndpoint.name + selectedPath;
+                    const fullPath =
+                        this.#controller.endpointManager.currentEndpoint.name + selectedPath;
                     pathInput.val(fullPath);
                     this.enableStartButton(true);
                 },
@@ -202,15 +203,10 @@ export class TransferUIManager {
         return this.state.frame;
     }
 
-    /**
-     * ------------UPDATE------------
-     */
     updateButtonState(selector, enable, frame) {
         this.safeUIOperation(() => {
             const element = $(selector, frame);
-            enable
-              ? inputEnable(element)
-              : inputDisable(element);
+            enable ? inputEnable(element) : inputDisable(element);
         });
     }
 

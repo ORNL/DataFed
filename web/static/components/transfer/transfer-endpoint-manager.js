@@ -145,7 +145,7 @@ export class TransferEndpointManager {
             return;
         }
 
-        // TODO What if the path is prepopulated to a dir and the mode is put? 
+        // TODO What if the path is prepopulated to a dir and the mode is put?
         const pathElement = $("#path", this.#controller.uiManager.state.frame);
         const path = pathElement?.val()?.trim() || "";
 
