@@ -33,5 +33,5 @@ jobs:
         run: black  --exclude '/jupyter_notebooks/' --check .
       - name: Lint with flake8
         run: |
-          flake8 --count --select=E9,F63,F7,F82 --show-source --statistics --max-line-length 100 .
-          flake8 --count --statistics --max-line-length 100 .
+          flake8 --count --select=E9,F63,F7,F82 --show-source --statistics .
+          flake8 --count --statistics .
