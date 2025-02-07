@@ -8,6 +8,8 @@
 3. [1009] - Add collections to database for holding Globus tokens. 
 4. [1002] - Add backoff for task worker when database fails to prevent log overflow.
 5. [1109] - Add support for Globus token association to Globus collection and user.
+6. [1110] - Feature support listing collection contents from mapped collections from web ui
+7. [1070] - Trigger consent redirect and flow in web UI when listing contents of mapped collection
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 1. [984] - Fixes {server_default} from showing up in path.
@@ -33,6 +35,7 @@
 21. [1255] - Fixes bug, in libauthz with log_path var not being read in from config file.
 22. [1268] - Bug fixes unbound variable in foxx entrypoint file.
 23. [1269] - Update Arangodb to 3.12.4
+24. [1293] - Refactor, can upload to unchecked record
 
 # v2024.6.17.10.40
 
