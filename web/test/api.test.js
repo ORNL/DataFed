@@ -30,7 +30,7 @@ describe("getGlobusConsentURL", function () {
             expect(options.data).to.deep.equal({
                 collection_id,
                 refresh_tokens,
-                requested_scopes: requested_scopes.join(","),
+                requested_scopes,
                 query_params: JSON.stringify(query_params),
                 state,
             });
@@ -62,7 +62,7 @@ describe("getGlobusConsentURL", function () {
             expect(options.data).to.include({
                 collection_id,
                 refresh_tokens: false,
-                requested_scopes: requested_scopes.join(","),
+                requested_scopes,
                 query_params: "{}",
                 state: "_default",
             });
@@ -85,7 +85,7 @@ describe("getGlobusConsentURL", function () {
         asyncGetStub.callsFake((options) => {
             expect(options.url).to.equal("/api/globus/consent_url");
             expect(options.data).to.include({
-                requested_scopes: "",
+                requested_scopes,
             });
             options.success({ consent_url: "http://example.com" });
         });
