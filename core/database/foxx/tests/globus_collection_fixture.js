@@ -4,9 +4,7 @@ const { db } = require("@arangodb");
 
 const current_time = Math.floor(Date.now() / 1000);
 const collection_no_token_uuid = "94445318-2097-4ed8-8550-f73cd292b11f";
-const collection_key_list = [
-    collection_no_token_uuid,
-];
+const collection_key_list = [collection_no_token_uuid];
 const end_collection_key = collection_key_list.at(-1);
 const base_globus_collection_data = {
     name: "Test fixture collection",
@@ -17,7 +15,7 @@ const base_globus_collection_data = {
     ut: current_time,
     type: "mapped",
     ha_enabled: false,
-}
+};
 
 if (!db._collection("globus_coll")) {
     throw "This collection - globus_coll - does not exist";
