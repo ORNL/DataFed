@@ -31,7 +31,7 @@ jobs:
         working-directory: jupyter_notebooks
 
       - name: Format Jupyter Notebooks with black
-        run: nbqa black . --check --line-length 80
+        run: nbqa black . --check
         working-directory: jupyter_notebooks
 
       # Step 5: Report status
