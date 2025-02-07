@@ -721,35 +721,33 @@ router
             let token_document = user;
             let needs_consent = false;
             if (collection_token) {
+                // Default - conditions not met for: no collection, no tokens, and no matches - all require consent flow
+                token_document = {};
+                needs_consent = true;
+
                 const globus_collection = g_db.globus_coll.exists({ _key: collection_id });
-                if (!globus_collection) {
-                    throw [
-                        g_lib.ERR_INVALID_PARAM,
-                        "No such collection '" + collection_id + "'",
-                    ];
-                }
-                const token_matches = g_db.globus_token.byExample({
-                    _from: user._id,
-                    _to: globus_collection._id,
-                }).toArray();
-                if (token_matches.length > 0) {
-                    if (token_matches.length > 1) {
-                        // Relationship should be unique based on AccessTokenType
-                        throw [
-                            g_lib.ERR_INTERNAL_FAULT,
-                            "Too many matching tokens for user: " +
-                                user._id +
-                                " to collection: " +
-                                globus_collection?._id,
-                        ];
+                if (globus_collection) {
+                    const token_matches = g_db.globus_token
+                        .byExample({
+                            _from: user._id,
+                            _to: globus_collection._id,
+                        })
+                        .toArray();
+                    if (token_matches.length > 0) {
+                        if (token_matches.length > 1) {
+                            // Relationship should be unique based on AccessTokenType
+                            throw [
+                                g_lib.ERR_INTERNAL_FAULT,
+                                "Too many matching tokens for user: " +
+                                    user._id +
+                                    " to collection: " +
+                                    globus_collection._id,
+                            ];
+                        }
+                        // TODO: account for AccessTokenType; currently only GLOBUS_DEFAULT and GLOBUS_TRANSFER are supported
+                        token_document = token_matches[0];
+                        needs_consent = false;
                     }
-                    // TODO: account for AccessTokenType; currently only GLOBUS_DEFAULT and GLOBUS_TRANSFER are supported
-                    token_document = token_matches[0];
-                    needs_consent = false;
-                } else {
-                    // Cases covered: no matches, no tokens, no collection - all require same consent flow
-                    token_document = {};
-                    needs_consent = true;
                 }
             }
             const result = UserToken.formatUserToken(
