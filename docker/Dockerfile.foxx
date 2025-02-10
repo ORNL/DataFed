@@ -33,6 +33,8 @@ ENV                       DATAFED_DIR="${DATAFED_DIR}"
 ENV DATAFED_DEPENDENCIES_INSTALL_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
 ENV              DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
 ENV          DATAFED_DEFAULT_LOG_PATH="$DATAFED_INSTALL_PATH/logs"
+# Set to false by default to avoid wiping the database
+ENV                 ENABLE_FOXX_TESTS="FALSE"
 
 COPY ./core/CMakeLists.txt             ${BUILD_DIR}/core/CMakeLists.txt
 COPY ./CMakeLists.txt                  ${BUILD_DIR}
@@ -51,12 +53,12 @@ RUN mkdir -p ${DATAFED_DIR}
 RUN mkdir -p ${DATAFED_INSTALL_PATH}
 RUN mkdir -p ${DATAFED_DEFAULT_LOG_PATH}
 
-RUN curl -OL https://download.arangodb.com/arangodb311/DEBIAN/Release.key; apt-key add - < Release.key
+RUN curl -OL https://download.arangodb.com/arangodb312/DEBIAN/Release.key; apt-key add - < Release.key
 
 # RUN echo 'deb https://download.arangodb.com/arangodb311/DEBIAN/ /' | tee /etc/apt/sources.list.d/arangodb.list
 # If trust the site but the gpg key has expired can add [trusted=yes]
 # i.e.
-RUN echo 'deb [trusted=yes] https://download.arangodb.com/arangodb311/DEBIAN/ /' | tee /etc/apt/sources.list.d/arangodb.list
+RUN echo 'deb [trusted=yes] https://download.arangodb.com/arangodb312/DEBIAN/ /' | tee /etc/apt/sources.list.d/arangodb.list
 RUN apt update
 RUN apt install arangodb3-client -y
 RUN arangosh --version
