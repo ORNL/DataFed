@@ -22,9 +22,12 @@ build-repo:
     - changes:
         - docker/**/*
         - scripts/**/*
-        - web/**/*
         - common/proto/**/*
         - .gitlab-ci.yml
+        - CMakeLists.txt
+        - cmake/**/*
+        - repository/CMakeLists.txt
+        - repository/server/**/*
       when: on_success
 
 retag-image:
@@ -42,9 +45,12 @@ retag-image:
     - changes:
         - docker/**/*
         - scripts/**/*
-        - web/**/*
         - common/proto/**/*
         - .gitlab-ci.yml
+        - CMakeLists.txt
+        - cmake/**/*
+        - repository/CMakeLists.txt
+        - repository/server/**/*
       when: never
     - when: on_success
 
