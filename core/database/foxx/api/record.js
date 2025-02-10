@@ -20,6 +20,8 @@ class Record {
     #loc = null;
     // Allocation object, determines what allocation data item is associated with
     #alloc = null;
+    // Determines what repo the data item is associated with
+    #repo = null;
     // The data key
     #key = null;
     // The data id simply the key prepended with 'd/'
@@ -63,11 +65,25 @@ class Record {
     /**
      * Generates the full path to the record as it should appear in the repository.
      *
+     * @param {object} loc - The location object which specifies the owner of the record.
      * @param {string} basePath - The base path where the record is stored.
-     * @returns {string} - The full path to the record.
+     *
+     * @returns {string} - the path to the record or null if error
      */
-    _pathToRecord(basePath) {
-        return basePath.endsWith("/") ? basePath + this.#key : basePath + "/" + this.#key;
+    _pathToRecord(loc, basePath) {
+        const path = basePath.endsWith("/") ? basePath : basePath + "/";
+        if (loc.uid.charAt(0) == "u") {
+            return path + "user/" + loc.uid.substr(2) + "/" + this.#key;
+        } else if (loc.uid.charAt(0) == "p") {
+            return path + "project/" + loc.uid.substr(2) + "/" + this.#key;
+        } else {
+            this.#error = g_lib.ERR_INTERNAL_FAULT;
+            this.#err_msg = "Provided path does not fit within supported directory ";
+            this.#err_msg += "structure for repository, no user or project folder has";
+            this.#err_msg += " been determined for the record.";
+            console.log(e);
+            return null;
+        }
     }
 
     /**
@@ -78,6 +94,9 @@ class Record {
      * @returns {boolean} - true if paths are equal false otherwise
      **/
     _comparePaths(storedPath, inputPath) {
+        if (storedPath === null) {
+            return false;
+        }
         if (storedPath !== inputPath) {
             this.#error = g_lib.ERR_PERM_DENIED;
             this.#err_msg =
@@ -109,7 +128,7 @@ class Record {
     /**
      * Will return error code of last run method.
      *
-     * @returns {integer} - error code
+     * @returns {number} - error code
      **/
     error() {
         return this.#error;
@@ -167,13 +186,8 @@ class Record {
             return false;
         }
 
-        // If path is missing the starting "/" add it back in
-        if (!a_path.startsWith("/") && this.#alloc.path.startsWith("/")) {
-            a_path = "/" + a_path;
-        }
-
         // If there is a new repo we need to check the path there and use that
-        if (this.#loc.new_repo) {
+        if (this.#loc.hasOwnProperty("new_repo") && this.#loc.new_repo) {
             // Below we get the allocation associated with data item by
             // 1. Checking if the data item is in flight, is in the process
             // of being moved to a new location or new owner and using that
@@ -185,8 +199,8 @@ class Record {
                 _to: this.#loc.new_repo,
             });
 
-            // If no allocation is found for the item thrown an error
-            // if the paths do not align also thrown an error.
+            // If no allocation is found for the item throw an error
+            // if the paths do not align also throw an error.
             if (!new_alloc) {
                 this.#error = g_lib.ERR_PERM_DENIED;
                 this.#err_msg =
@@ -194,13 +208,35 @@ class Record {
                 return false;
             }
 
-            let stored_path = this._pathToRecord(new_alloc.path);
+            this.#repo = g_db._document(this.#loc.new_repo);
+
+            if (!this.#repo) {
+                this.#error = g_lib.ERR_INTERNAL_FAULT;
+                this.#err_msg =
+                    "Unable to find repo that record is meant to be allocated too, '" +
+                    this.#loc.new_repo +
+                    "' record '" +
+                    this.#data_id;
+                return false;
+            }
+
+            // If path is missing the starting "/" add it back in
+            if (!a_path.startsWith("/") && this.#repo.path.startsWith("/")) {
+                a_path = "/" + a_path;
+            }
+
+            let stored_path = this._pathToRecord(this.#loc, this.#repo.path);
 
             if (!this._comparePaths(stored_path, a_path)) {
                 return false;
             }
         } else {
-            let stored_path = this._pathToRecord(this.#alloc.path);
+            this.#repo = g_db._document(this.#loc._to);
+
+            if (!a_path.startsWith("/") && this.#repo.path.startsWith("/")) {
+                a_path = "/" + a_path;
+            }
+            let stored_path = this._pathToRecord(this.#loc, this.#repo.path);
 
             // If there is no new repo check that the paths align
             if (!this._comparePaths(stored_path, a_path)) {

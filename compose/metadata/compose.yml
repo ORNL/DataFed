@@ -66,6 +66,9 @@ services:
       DATAFED_DATABASE_PASSWORD: "${DATAFED_DATABASE_PASSWORD}"
       DATAFED_DATABASE_IP_ADDRESS: "${DATAFED_DATABASE_IP_ADDRESS}"
       DATAFED_DATABASE_HOST: "arango"
+      # NOTE enabling foxx tests will cause state changes in the database
+      # do not run this unless you are ok with the database being wiped.
+      ENABLE_FOXX_TESTS: "${DATAFED_ENABLE_FOXX_TESTS}"
     healthcheck:
       test: ["CMD", "/bin/bash", "-c", "[ -f /tmp/.foxx_is_installed ]"]
       interval: 10s
@@ -77,7 +80,7 @@ services:
       - datafed-internal
 
   arango:
-    image: arangodb:3.12.0.2
+    image: arangodb/arangodb:3.12.4
     environment:
       ARANGO_ROOT_PASSWORD: "${DATAFED_DATABASE_PASSWORD}"
     volumes:

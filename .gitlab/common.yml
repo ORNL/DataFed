@@ -303,8 +303,6 @@
         echo "$MATCHING_CONTAINERS"
         docker logs $MATCHING_CONTAINERS;
       fi
-  rules:
-    - when: always
 
 # In the case that we are not needing to actually rebuild the image we want to
 # retag the image that already exists in harbor with the current commit, this
