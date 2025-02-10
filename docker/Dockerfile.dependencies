@@ -4,7 +4,7 @@ ARG DATAFED_DEPENDENCIES_INSTALL_PATH="/opt/datafed/dependencies"
 ARG            GCS_IMAGE="code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
 ARG            BUILD_DIR="$DATAFED_DIR/source"
 ARG              LIB_DIR="/opt/datafed/dependencies/lib"
-ARG           BASE_IMAGE="ubuntu:focal"
+ARG           BASE_IMAGE="debian:bookworm-slim"
 
 FROM ${BASE_IMAGE} AS base
 
@@ -62,13 +62,13 @@ RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_depen
 COPY ./scripts/install_authz_dependencies.sh ${BUILD_DIR}/scripts/
 RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_dependencies.sh -a -w -c -r 
 
-COPY ./scripts/copy_dependency.sh ${BUILD_DIR}/scripts/
-RUN ${BUILD_DIR}/scripts/copy_dependency.sh protobuf from
-RUN ${BUILD_DIR}/scripts/copy_dependency.sh protoc from
-RUN ${BUILD_DIR}/scripts/copy_dependency.sh libzmq from
-RUN ${BUILD_DIR}/scripts/copy_dependency.sh libsodium from
-RUN ${BUILD_DIR}/scripts/copy_dependency.sh boost_program_options from
-RUN ${BUILD_DIR}/scripts/copy_dependency.sh boost_filesystem from
+# COPY ./scripts/copy_dependency.sh ${BUILD_DIR}/scripts/
+# RUN ${BUILD_DIR}/scripts/copy_dependency.sh protobuf from
+# RUN ${BUILD_DIR}/scripts/copy_dependency.sh protoc from
+# RUN ${BUILD_DIR}/scripts/copy_dependency.sh libzmq from
+# RUN ${BUILD_DIR}/scripts/copy_dependency.sh libsodium from
+# RUN ${BUILD_DIR}/scripts/copy_dependency.sh boost_program_options from
+# RUN ${BUILD_DIR}/scripts/copy_dependency.sh boost_filesystem from
 
 RUN mkdir -p ${DATAFED_INSTALL_PATH}
 RUN mkdir -p ${DATAFED_INSTALL_PATH}/keys

@@ -2,7 +2,7 @@
 # cd ${PROJECT_ROOT} or cd DataFed
 # docker build -f repository/docker/Dockerfile .
 
-ARG           BUILD_BASE="ubuntu:focal"
+ARG           BUILD_BASE="debian:bookworm-slim"
 ARG         DEPENDENCIES="dependencies"
 ARG              RUNTIME="runtime"
 ARG          DATAFED_DIR="/datafed"
@@ -70,10 +70,10 @@ ENV                           LIB_DIR="$LIB_DIR"
 
 WORKDIR /datafed
 
-COPY --from=repo-build /libraries/libboost_program_options.so /libraries/libboost_program_options.so
-COPY --from=repo-build /libraries/libboost_filesystem.so      /libraries/libboost_filesystem.so
-RUN ${BUILD_DIR}/scripts/copy_dependency.sh boost_program_options to
-RUN ${BUILD_DIR}/scripts/copy_dependency.sh boost_filesystem to
+COPY --from=repo-build /usr/lib/x86_64-linux-gnu/libboost_program_options.so /usr/lib/x86_64-linux-gnu/libboost_program_options.so
+COPY --from=repo-build /usr/lib/x86_64-linux-gnu/libboost_filesystem.so      /usr/lib/x86_64-linux-gnu/libboost_filesystem.so
+# RUN ${BUILD_DIR}/scripts/copy_dependency.sh boost_program_options to
+# RUN ${BUILD_DIR}/scripts/copy_dependency.sh boost_filesystem to
 
 RUN ldconfig
 

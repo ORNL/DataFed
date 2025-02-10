@@ -1,7 +1,7 @@
 # NOTE this image must be built with respect to the base of the project i.e.
 # cd ${PROJECT_ROOT} or cd DataFed
 # docker build -f web/docker/Dockerfile .
-ARG           BUILD_BASE="ubuntu:focal"
+ARG           BUILD_BASE="debian:bookworm-slim"
 ARG         DEPENDENCIES="dependencies"
 ARG              RUNTIME="runtime"
 ARG          DATAFED_DIR="/datafed"
