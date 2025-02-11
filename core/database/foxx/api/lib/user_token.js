@@ -1,9 +1,40 @@
 "use strict";
 
 const g_lib = require("../support.js");
+const {UserModel} = require("../models/user");
+const {GlobusCollectionModel} = require("../models/globus_collection");
+const {GlobusTokenModel} = require("../models/globus_token");
 
 class UserToken {
-    constructor() {}
+    #user_model;
+    user;
+    globus_collection;
+    globus_token;
+    constructor(kwargs = {}) {
+        const { user_key, user_id, globus_collection_id } = kwargs;
+        this.#user_model = new UserModel(user_id, user_key);
+        this.user = this.#user_model.get();
+        if (typeof globus_collection_id !== "undefined") {
+            console.log("Globus collection ID provided!");
+            const globus_collection_model = new GlobusCollectionModel(globus_collection_id);
+            this.globus_collection = globus_collection_model.get();
+
+            if (globus_collection_model.exists()) {
+                // TODO: this is currently handling the validation of required fields, and I want that to be more clear
+                const globus_token_model = new GlobusTokenModel(this.user.id, this.globus_collection.id);
+                this.globus_token = globus_token_model.get();
+            }
+        }
+    }
+
+    get_token() {
+        // TODO: follow a model
+        let token = this.#user_model.get_token();
+        if (!!this.globus_token) {
+            token = this.globus_token;
+        }
+        return Object.freeze(token);
+    }
 
     /**
      * Validates request parameter object has all necessary pieces and determines whether the requested token is a collection token
