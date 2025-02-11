@@ -97,6 +97,175 @@ Search
 
 The ``Search`` tab below the action buttons allows users to query DataFed for data matching a specified metadata expression within a specified scope.
 
+Schemas
+-------
+
+DataFed currently supports schema creation for records through the web portal.
+
+Schema Creation
+^^^^^^^^^^^^^^^
+
+To create a new schema, navigate to the main dashboard and click the ``Schemas`` button. This will open the ``Create New Schema`` dialog, which consists of three separate tabs: ``General``, ``Definition``, and ``References``.
+
+- **General Tab**:  
+  In this tab, you must provide a valid string identifier (`ID`) and a brief `Description` of the schema.
+
+- **Definition Tab**:  
+  This tab requires a **valid JSON Schema definition**. DataFed conforms to the official [JSON Schema standard](https://json-schema.org/).
+
+- **References Tab**:  
+  This section lists locations where the schema is referenced within DataFed.
+
+### Example Schema Definition
+
+The following is an example of a JSON schema definition used in DataFed:
+
+.. code-block:: json
+   {
+       "properties": {
+           "Cat": {
+               "properties": {
+                   "Height": {
+                       "type": "string"
+                   },
+                   "LastSeen_DateTime": {
+                       "type": "string"
+                   },
+                   "Name": {
+                       "type": "string"
+                   },
+                   "Photo_Date": {
+                       "type": "string"
+                   },
+                   "Weight": {
+                       "type": "string"
+                   }
+               },
+               "required": [
+                   "Name",
+                   "Photo_Date",
+                   "Height",
+                   "Weight",
+                   "LastSeen_DateTime"
+               ],
+               "type": "object"
+           },
+           "Owner": {
+               "properties": {
+                   "Address": {
+                       "type": "string"
+                   },
+                   "Name": {
+                       "type": "string"
+                   }
+               },
+               "required": [
+                   "Name",
+                   "Address"
+               ],
+               "type": "object"
+           }
+       },
+       "required": [
+           "Cat",
+           "Owner"
+       ],
+       "type": "object"
+   }
+
+### Example Schema Using Enums
+
+The following example demonstrates the use of **enums** to enforce predefined choices for various fields:
+
+.. code-block:: json
+   {
+       "properties": {
+           "data_format": {
+               "description": "The format in which experimental data is stored.",
+               "enum": [
+                   "CSV",
+                   "JSON",
+                   "HDF5",
+                   "NetCDF"
+               ],
+               "type": "string"
+           },
+           "experiment_type": {
+               "description": "The type of scientific experiment being conducted.",
+               "enum": [
+                   "Physics",
+                   "Chemistry",
+                   "Biology",
+                   "Astronomy",
+                   "Materials Science"
+               ],
+               "type": "string"
+           },
+           "instrument": {
+               "description": "The scientific instrument used for measurements.",
+               "enum": [
+                   "Spectrometer",
+                   "Microscope",
+                   "X-ray Diffractometer",
+                   "Mass Spectrometer",
+                   "Electron Microscope"
+               ],
+               "type": "string"
+           },
+           "measurement_unit": {
+               "description": "The SI unit of measurement used in the experiment.",
+               "enum": [
+                   "meters",
+                   "kilograms",
+                   "seconds",
+                   "kelvin",
+                   "moles",
+                   "amperes",
+                   "candela"
+               ],
+               "type": "string"
+           },
+           "status": {
+               "description": "The current status of the experiment.",
+               "enum": [
+                   "Pending",
+                   "In Progress",
+                   "Completed",
+                   "Failed"
+               ],
+               "type": "string"
+           }
+       },
+       "required": [
+           "experiment_type",
+           "measurement_unit",
+           "instrument",
+           "status",
+           "data_format"
+       ],
+       "type": "object"
+   }
+
+### Example Schema Using References
+
+The following example demonstrates the use of **references** to existing schemas, assuming the previous schema was saved as **equipment** with verison number 0 **equipment:0**:
+
+.. code-block:: json
+   {
+       "properties": {
+           "equipment": {
+               "$ref": "equipment:0"
+           },
+           "voltage": {
+               "type": "number"
+           }
+       },
+       "required": [
+           "voltage",
+           "equipment"
+       ],
+       "type": "object"
+   }
 
 Transfers
 ---------

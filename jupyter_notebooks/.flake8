@@ -1,0 +1,12 @@
+[flake8]
+max-line-length = 100
+
+# Ignoring the following is specific to jupyternotebooks
+#
+# F821 - Ignore undefined variable errors, these are false positives in jupyter
+#        notebooks if they are defined in a previous cell.
+# F841 - assigned to but unused, appears because the examples have code
+#        that the user will need to fill in.
+# F401 - imported but unused, occurs because the user will need to fill in
+#        parts that require the import.
+extend-ignore = F821, F401, F841
