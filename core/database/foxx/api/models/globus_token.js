@@ -39,24 +39,28 @@ class GlobusTokenModel {
     }
 
     #get_database_entry() {
-        if (typeof this.#database_entry === "undefined") {
-            const token_matches = globus_token_collection.byExample({
-               _from: this.#user_id,
-               _to: this.#collection_id,
-            }).toArray();
+        if (typeof this.#database_entry !== "undefined") {
+            return;
+        }
+        const token_matches = globus_token_collection.byExample({
+           _from: this.#user_id,
+           _to: this.#collection_id,
+        }).toArray();
 
-            if (token_matches.length > 0) {
-                if (token_matches.length > 1) {
-                    throw [
-                        support.ERR_INTERNAL_FAULT,
-                        "Too many matching tokens for user: " +
-                        this.#user_id +
-                        " to collection: " +
-                        this.#collection_id,
-                    ];
-                }
-                this.#database_entry = token_matches[0];
+        if (token_matches.length > 0) {
+            if (token_matches.length > 1) {
+                throw [
+                    support.ERR_INTERNAL_FAULT,
+                    "Too many matching tokens for user: " +
+                    this.#user_id +
+                    " to collection: " +
+                    this.#collection_id,
+                ];
             }
+            this.#database_entry = token_matches[0];
+        }
+        else {
+            this.#database_entry = {};
         }
     }
 
@@ -77,13 +81,10 @@ class GlobusTokenModel {
     }
 
     #fetch_from_db() {
-        // TODO: it looks like this is trying to pull an _id when a collection does not exist during testing
         if (!this.#is_fetched) {
             this.#get_database_entry();
             // TODO: verify exists in each
-            if (typeof this.#database_entry !== "undefined") {
-                this.#map_entry_to_globus_token();
-            }
+            this.#map_entry_to_globus_token();
             this.#is_fetched = true;
         }
     }
