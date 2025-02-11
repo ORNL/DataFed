@@ -1,7 +1,10 @@
 "use strict";
 
-const g_db = require("@arangodb").db;
+// local imports
 const g_lib = require("./support");
+const {UserToken} = require("./lib/user_token");
+
+const g_db = require("@arangodb").db;
 const g_graph = require("@arangodb/general-graph")._graph("sdmsg");
 const g_proc = require("./process");
 var g_internal = require("internal");
@@ -541,7 +544,9 @@ var tasks_func = (function () {
             //console.log("taskRunDataPut - do xfr");
             // Transfer data step
 
-            var tokens = g_lib.getAccessToken(a_task.client, state); // TODO: refresh token ?
+            //var tokens = g_lib.getAccessToken(a_task.client, state); // TODO: refresh token ?
+            const token_doc = new UserToken({user_id: a_task.client, globus_collection_id: state.colleciton_id}).get_token();
+            var tokens = UserToken.formatUserTokenForTransferTask(token_doc);
             params = {
                 uid: a_task.client,
                 type: a_task.type,

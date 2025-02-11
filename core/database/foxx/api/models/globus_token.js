@@ -83,7 +83,6 @@ class GlobusTokenModel {
     #fetch_from_db() {
         if (!this.#is_fetched) {
             this.#get_database_entry();
-            // TODO: verify exists in each
             this.#map_entry_to_globus_token();
             this.#is_fetched = true;
         }

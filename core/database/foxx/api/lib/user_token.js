@@ -115,6 +115,15 @@ class UserToken {
         }
         return result_token;
     }
+
+    static formatUserTokenForTransferTask(token_doc) {
+        const exp_in = token_doc.expiration - Math.floor(Date.now() / 1000);
+        return Object.freeze({
+            acc_tok: token_doc.access,
+            ref_tok: token_doc.refresh,
+            acc_tok_exp_in: exp_in > 0 ? exp_in : 0,
+        });
+    }
 }
 
 module.exports = { UserToken };
