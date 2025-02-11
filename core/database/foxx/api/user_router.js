@@ -719,44 +719,10 @@ router
                 user = g_lib.getUserFromClientID(req.queryParams.client);
             }
 
-            console.log("Building user_token");
             const user_token = new UserToken({user_id: user._id, globus_collection_id: collection_id});
-            console.log("User token built ", user_token);
-            // let token_document = user;
             let needs_consent = false;
-            // if (collection_token) {
-            //     // Default - conditions not met for: no collection, no tokens, and no matches - all require consent flow
-            //     token_document = {};
-            //     needs_consent = true;
-            //
-            //     const globus_collection = g_db.globus_coll.exists({ _key: collection_id });
-            //     if (globus_collection) {
-            //         const token_matches = g_db.globus_token
-            //             .byExample({
-            //                 _from: user._id,
-            //                 _to: globus_collection._id,
-            //             })
-            //             .toArray();
-            //         if (token_matches.length > 0) {
-            //             if (token_matches.length > 1) {
-            //                 // Relationship should be unique based on AccessTokenType
-            //                 throw [
-            //                     g_lib.ERR_INTERNAL_FAULT,
-            //                     "Too many matching tokens for user: " +
-            //                         user._id +
-            //                         " to collection: " +
-            //                         globus_collection._id,
-            //                 ];
-            //             }
-            //             // TODO: account for AccessTokenType; currently only GLOBUS_DEFAULT and GLOBUS_TRANSFER are supported
-            //             token_document = token_matches[0];
-            //             needs_consent = false;
-            //         }
-            //     }
-            // }
-            console.log("Getting doc ", user_token);
+
             const token_document = user_token.get_token();
-            console.log("Got token doc", token_document);
             if (collection_token && Object.keys(token_document).length === 0) {
                 needs_consent = true;
             }
