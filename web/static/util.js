@@ -4,7 +4,7 @@ import * as api from "./api.js";
 import * as dialogs from "./dialogs.js";
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { TransferDialog } from '../components/transfer/TransferDialog';
+import { TransferDialog } from '../src/components/transfer/TransferDialog';
 import { TransferMode } from './models/transfer-model';
 
 var status_timer;
