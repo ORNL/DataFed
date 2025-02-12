@@ -1,10 +1,22 @@
-import * as model from "./model.js";
-import * as util from "./util.js";
-import * as api from "./api.js";
-import { AlertDialog } from "./components/dialogs/AlertDialog"
-import * as dlgPickTopic from "./dlg_pick_topic.js";
+import { CollectionDialog } from './components/collection/CollectionDialog';
+import * as api from './api';
 
 export function show(a_data, a_parent, a_upd_perms, a_cb) {
+    const handleSave = async (collection) => {
+        try {
+            const response = a_data 
+                ? await api.collUpdate(collection)
+                : await api.collCreate(collection);
+                
+            if (response.ok && a_cb) {
+                a_cb(response.coll[0]);
+            }
+        } catch (error) {
+            console.error('Failed to save collection:', error);
+        }
+    };
+
+    return CollectionDialog;
     var ele = document.createElement("div");
     ele.id = (a_data ? a_data.id.replace("/", "_") : "c_new") + "_edit";
     var frame = $(ele),
