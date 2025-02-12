@@ -1,7 +1,7 @@
 import * as model from "./model.js";
 import * as util from "./util.js";
 import * as api from "./api.js";
-import * as dialogs from "./dialogs.js";
+import { AlertDialog } from "./components/dialogs/AlertDialog"
 import * as dlgPickTopic from "./dlg_pick_topic.js";
 
 export function show(a_data, a_parent, a_upd_perms, a_cb) {
@@ -29,9 +29,6 @@ export function show(a_data, a_parent, a_upd_perms, a_cb) {
         </tr>\
         </table>",
     );
-
-    //<tr><td></td><td colspan='2'><label for='auto_tag'></label><input type='checkbox' name='auto_tag' id='auto_tag' checked>Auto-tag data records</td></tr>\
-
     var dlg_title;
     if (a_data) {
         dlg_title = "Edit Collection " + a_data.id;
@@ -47,7 +44,7 @@ export function show(a_data, a_parent, a_upd_perms, a_cb) {
 
             if (a_cb) a_cb(reply.coll[0]);
         } else {
-            dialogs.dlgAlert("Collection " + (a_data ? "Update" : "Create") + " Error", reply);
+            AlertDialog("Collection " + (a_data ? "Update" : "Create") + " Error", reply);
         }
     }
 
@@ -85,10 +82,12 @@ export function show(a_data, a_parent, a_upd_perms, a_cb) {
                         );
 
                         if (!a_data.topic && is_pub && !obj.topic) {
-                            dialogs.dlgAlert(
-                                "Data Entry Error",
-                                "Category is required for public data.",
-                            );
+                            AlertDialog({
+                                title: "Data Entry Error",
+                                message: "Category is required for public data.",
+                                isOpen: true,
+                                onClose: () => console.log("hi")
+                            });
                             return;
                         }
 
@@ -123,10 +122,12 @@ export function show(a_data, a_parent, a_upd_perms, a_cb) {
                         );
 
                         if (is_pub && !obj.topic) {
-                            dialogs.dlgAlert(
-                                "Data Entry Error",
-                                "Category is required for public data.",
-                            );
+                            AlertDialog({
+                                title: "Data Entry Error",
+                                message: "Category is required for public data.",
+                                isOpen: true,
+                                onClose: () => console.log("hi")
+                            });
                             return;
                         }
 
