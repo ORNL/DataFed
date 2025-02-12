@@ -1,6 +1,5 @@
 import React from 'react';
-import { Button } from '../common/Button';
-import { Input } from '../common/Input';
+import { Button, Input } from '@mui/material';
 import { parseSize } from '../../util';
 import { AllocationFormProps } from './types';
 

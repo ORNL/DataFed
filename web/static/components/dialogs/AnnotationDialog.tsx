@@ -18,7 +18,7 @@ import {
 import { styled } from '@mui/material/styles';
 import * as api from '../../api';
 import * as model from '../../model';
-import { AlertDialog } from '../AlertDialog';
+import { AlertDialog } from './AlertDialog';
 import { AnnotationDialogProps, FormData } from '../../types/annotation';
 
 const StyledDialogContent = styled(DialogContent)(({ theme }) => ({

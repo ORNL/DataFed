@@ -1,5 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import * as Dialog from '../../dialogs';
+import {
+    Dialog,
+} from '@mui/material';
 import { AllocationForm } from './AllocationForm';
 import { AllocationDialogProps, Allocation } from './types';
 import * as api from '../../api';
