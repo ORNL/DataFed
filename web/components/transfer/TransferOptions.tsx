@@ -2,7 +2,7 @@ import React from 'react';
 import { TransferMode } from '../../static/models/transfer-model';
 
 interface TransferOptionsProps {
-  mode: TransferMode;
+  mode: typeof TransferMode;
   path: string;
   encrypt: number;
   extension: string;

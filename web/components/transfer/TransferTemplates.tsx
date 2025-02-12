@@ -2,7 +2,7 @@ import React from 'react';
 import { TransferMode } from '../../static/models/transfer-model';
 
 interface ModeSpecificOptionsProps {
-  mode: TransferMode;
+  mode: typeof TransferMode;
   onExtensionChange?: (value: string) => void;
   onOrigFilenameChange?: (checked: boolean) => void;
 }
@@ -44,7 +44,7 @@ export const ModeSpecificOptions: React.FC<ModeSpecificOptionsProps> = ({
 };
 
 interface TransferOptionsProps {
-  mode: TransferMode;
+  mode: typeof  TransferMode;
   onEncryptionChange: (value: string) => void;
   onExtensionChange?: (value: string) => void;
   onOrigFilenameChange?: (checked: boolean) => void;

@@ -33,7 +33,7 @@ interface UIManager {
 interface Controller {
   uiManager: UIManager;
   model: {
-    mode: TransferMode;
+    mode: typeof TransferMode;
   };
 }
 

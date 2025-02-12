@@ -3,7 +3,7 @@ import { TransferState, TransferConfig } from '../types/transfer.types';
 import { TransferMode } from '../../../static/models/transfer-model';
 
 interface TransferContextState extends TransferState {
-  mode: TransferMode;
+  mode: typeof TransferMode;
   isInitialized: boolean;
 }
 
@@ -19,7 +19,7 @@ const initialState: TransferContextState = {
   encrypt: 1,
   extension: '',
   origFilename: false,
-  mode: TransferMode.TT_DATA_GET,
+  mode: TransferMode,
   isInitialized: false
 };
 
@@ -45,7 +45,7 @@ function transferReducer(state: TransferContextState, action: TransferAction): T
   }
 }
 
-export function TransferProvider({ children, mode }: { children: ReactNode; mode: TransferMode }) {
+export function TransferProvider({ children, mode }: { children: ReactNode; mode: typeof TransferMode }) {
   const [state, dispatch] = useReducer(transferReducer, { ...initialState, mode });
 
   return (

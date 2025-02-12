@@ -4,7 +4,7 @@ import { TransferOptions } from './TransferTemplates';
 import { dlgAlert } from '../../static/dialogs';
 
 interface TransferDialogProps {
-  mode: TransferMode;
+  mode: typeof TransferMode;
   onClose: () => void;
   onTransfer: (config: TransferConfig) => void;
 }

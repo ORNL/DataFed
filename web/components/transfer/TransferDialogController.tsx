@@ -5,7 +5,7 @@ import { Services } from './types/transfer.types';
 import { TransferMode } from '../../static/models/transfer-model';
 
 interface TransferDialogControllerProps {
-  mode: TransferMode;
+  mode: typeof TransferMode;
   ids: string[];
   onComplete: (config?: { path: string; encrypt: number }) => void;
   services: Services;
@@ -23,7 +23,7 @@ export const TransferDialogController: React.FC<TransferDialogControllerProps> =
   };
 
   return (
-    <TransferProvider mode={mode}>
+    <TransferProvider mode={mode} children={''}>
       <TransferDialog
         mode={mode}
         ids={ids}

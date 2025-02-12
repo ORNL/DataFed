@@ -7,7 +7,7 @@ import { TransferOptions } from './TransferTemplates';
 interface Services {
   api: {
     epView: (id: string, callback: (ok: boolean, data: any) => void) => void;
-    xfrStart: (ids: string[], mode: TransferMode, path: string, extension: string, encrypt: number, origFilename: boolean, callback: (ok: boolean, data: any) => void) => void;
+    xfrStart: (ids: string[], mode: typeof TransferMode, path: string, extension: string, encrypt: number, origFilename: boolean, callback: (ok: boolean, data: any) => void) => void;
   };
   dialogs: {
     dlgAlert: (title: string, message: string) => void;
@@ -16,7 +16,7 @@ interface Services {
 
 interface Controller {
   model: {
-    mode: TransferMode;
+    mode: typeof TransferMode;
     records: any[];
   };
   endpointManager: {
@@ -35,40 +35,25 @@ interface TransferUIManagerProps {
 }
 
 interface TransferState {
-  recordTree: any;
   path: string;
   encrypt: number;
   extension: string;
   origFilename: boolean;
-  inputTimer: NodeJS.Timeout | null;
 }
 
 export const TransferUIManager: React.FC<TransferUIManagerProps> = ({ controller, services }) => {
   const [state, setState] = useState<TransferState>({
-    recordTree: null,
     path: '',
     encrypt: 1,
     extension: '',
     origFilename: false,
-    inputTimer: null
   });
 
   const handlePathInput = useCallback((value: string) => {
-    if (state.inputTimer) {
-      clearTimeout(state.inputTimer);
-    }
-
-    const timer = setTimeout(() => {
-      controller.endpointManager.currentSearchToken = ++controller.endpointManager.searchTokenIterator;
-      controller.endpointManager.handlePathInput(controller.endpointManager.currentSearchToken);
-    }, 250);
-
-    setState(prev => ({
-      ...prev,
-      path: value,
-      inputTimer: timer
-    }));
-  }, [controller.endpointManager, state.inputTimer]);
+    controller.endpointManager.currentSearchToken = ++controller.endpointManager.searchTokenIterator;
+    controller.endpointManager.handlePathInput(controller.endpointManager.currentSearchToken);
+    setState(prev => ({ ...prev, path: value }));
+  }, [controller.endpointManager]);
 
   const handleTransfer = useCallback(() => {
     if (!state.path.trim()) {
@@ -83,8 +68,8 @@ export const TransferUIManager: React.FC<TransferUIManagerProps> = ({ controller
       extension: state.extension.trim()
     };
 
-    if (controller.model.mode === TransferMode.TT_DATA_GET || 
-        controller.model.mode === TransferMode.TT_DATA_PUT) {
+    if (controller.model.mode === TransferMode.TT_DATA_GET ||
+      controller.model.mode === TransferMode.TT_DATA_PUT) {
       const ids = controller.ids || [];
       services.api.xfrStart(
         ids,
@@ -107,17 +92,9 @@ export const TransferUIManager: React.FC<TransferUIManagerProps> = ({ controller
     }
   }, [state, controller, services]);
 
-  useEffect(() => {
-    return () => {
-      if (state.inputTimer) {
-        clearTimeout(state.inputTimer);
-      }
-    };
-  }, [state.inputTimer]);
-
   return (
     <div className="transfer-ui-manager">
-      <TransferOptions 
+      <TransferOptions
         mode={controller.model.mode}
         path={state.path}
         encrypt={state.encrypt}
