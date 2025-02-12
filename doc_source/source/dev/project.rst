@@ -14,3 +14,7 @@ Personnel
 - Dale Stansberry, Sr. Software Developer - PI, architect, lead developer of the DataFed Project
 - Suhas Somnath, Computer Scientist - Scientific user requirements and Python interface development
 - Jessica Breet, Data Scientist - Scientific user requirements and system testing
+- Josh Brown, Software Engineer
+- Aaron Perez, Full Stack
+- Blake, Nedved, Sotware Developer
+- Tony, Ramirez, Software Developer
