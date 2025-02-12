@@ -3,7 +3,7 @@ import * as Dialog from '../../dialogs';
 import { AllocationForm } from './AllocationForm';
 import { AllocationDialogProps, Allocation } from './types';
 import * as api from '../../api';
-import * as dlgPickUser from '../../dlg_pick_user';
+import UserSelectionDialog from '../../UserSelectionDialog';
 import * as dlgPickProject from '../../dlg_pick_proj';
 
 const DEFAULT_REC_LIMIT = 1000;
@@ -24,6 +24,7 @@ export const AllocationDialog: React.FC<AllocationDialogProps> = ({
     }));
     const [error, setError] = useState<string>('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
 
     const handleChange = useCallback((field: keyof Allocation, value: any) => {
         setFormData(prev => ({
@@ -34,11 +35,7 @@ export const AllocationDialog: React.FC<AllocationDialogProps> = ({
     }, []);
 
     const handleSelectUser = useCallback(() => {
-        dlgPickUser.show(repo, excludedIds, true, (users) => {
-            if (users?.[0]) {
-                handleChange('id', users[0]);
-            }
-        });
+        setIsUserDialogOpen(true);
     }, [repo, excludedIds, handleChange]);
 
     const handleSelectProject = useCallback(() => {
@@ -93,6 +90,7 @@ export const AllocationDialog: React.FC<AllocationDialogProps> = ({
     }, [repo, formData, allocation, validate, isSubmitting, onSave, onClose]);
 
     return (
+        <>
         <Dialog
             title={`${allocation ? 'Edit' : 'Add'} Allocation`}
             onClose={onClose}
@@ -109,5 +107,17 @@ export const AllocationDialog: React.FC<AllocationDialogProps> = ({
                 disabled={isSubmitting}
             />
         </Dialog>
+            <UserSelectionDialog
+                a_uid={repo}
+                a_excl={excludedIds}
+                a_single_sel={true}
+                onClose={(users) => {
+                    setIsUserDialogOpen(false);
+                    if (users?.[0]) {
+                        handleChange('id', users[0]);
+                    }
+                }}
+            />
+        </>
     );
 };
