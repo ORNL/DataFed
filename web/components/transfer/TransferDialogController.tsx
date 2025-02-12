@@ -12,8 +12,8 @@ interface Services {
 
 export class TransferDialogController {
   private model: TransferModel;
-  private endpointManager: TransferEndpointManager;
-  private uiManager: TransferUIManager;
+  private endpointManager: typeof TransferEndpointManager;
+  private uiManager: typeof TransferUIManager;
   private ids: Array<object>;
   private callback: Function;
   private services: Services;
