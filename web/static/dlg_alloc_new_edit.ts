@@ -1,11 +1,26 @@
-import * as settings from "./settings.js";
-import * as util from "./util.js";
-import * as api from "./api.js";
-import * as dialogs from "./dialogs.js";
-import * as dlgPickUser from "./dlg_pick_user.js";
-import * as dlgPickProject from "./dlg_pick_proj.js";
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { AllocationDialog } from './components/allocation/AllocationDialog';
 
-export function show(a_repo, a_alloc, a_excl, a_cb) {
+export function show(a_repo: string, a_alloc: any, a_excl: string[], a_cb: (allocation: any) => void) {
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+
+    const handleClose = () => {
+        ReactDOM.unmountComponentAtNode(container);
+        document.body.removeChild(container);
+    };
+
+    ReactDOM.render(
+        <AllocationDialog
+            repo={a_repo}
+            allocation={a_alloc}
+            excludedIds={a_excl}
+            onClose={handleClose}
+            onSave={a_cb}
+        />,
+        container
+    );
     var ele = document.createElement("div");
     var frame = $(ele);
 
