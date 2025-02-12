@@ -2,7 +2,10 @@ import * as settings from "./settings.js";
 import * as model from "./model.js";
 import * as api from "./api.js";
 import * as dialogs from "./dialogs.js";
-import { transferDialog } from "../components/transfer/index.js";
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { TransferDialog } from '../components/transfer/TransferDialog';
+import { TransferMode } from './models/transfer-model';
 
 var status_timer;
 
@@ -750,7 +753,28 @@ export function dataGet(a_ids, a_cb) {
                 }
             }
 
-            transferDialog.show(model.TT_DATA_GET, data.item, a_cb);
+            // Create a container for the dialog if it doesn't exist
+            let dialogContainer = document.getElementById('transfer-dialog-container');
+            if (!dialogContainer) {
+                dialogContainer = document.createElement('div');
+                dialogContainer.id = 'transfer-dialog-container';
+                document.body.appendChild(dialogContainer);
+            }
+
+            // Render the TransferDialog React component
+            ReactDOM.render(
+                React.createElement(TransferDialog, {
+                    mode: TransferMode.TT_DATA_GET,
+                    onClose: () => {
+                        ReactDOM.unmountComponentAtNode(dialogContainer);
+                    },
+                    onTransfer: (config) => {
+                        ReactDOM.unmountComponentAtNode(dialogContainer);
+                        if (a_cb) a_cb(config);
+                    }
+                }),
+                dialogContainer
+            );
 
             /* unused http xfr
                 for ( i in data.item ){
