@@ -12,33 +12,35 @@ export const ModeSpecificOptions: React.FC<ModeSpecificOptionsProps> = ({
   onExtensionChange,
   onOrigFilenameChange 
 }) => {
-  if (mode === TransferMode.TT_DATA_GET) {
-    return (
-      <div>
-        <br />
-        File extension override: 
-        <input 
-          id='ext' 
-          type='text' 
-          onChange={(e) => onExtensionChange?.(e.target.value)}
-        />
-        <br />
-      </div>
-    );
-  } else if (mode === TransferMode.TT_DATA_PUT) {
-    return (
-      <div>
-        <br />
-        <label htmlFor='orig_fname'>Download to original filename(s)</label>
-        <input 
-          id='orig_fname' 
-          type='checkbox'
-          onChange={(e) => onOrigFilenameChange?.(e.target.checked)} 
-        />
-      </div>
-    );
+  switch (mode) {
+    case TransferMode.TT_DATA_GET:
+      return (
+        <div>
+          <br />
+          File extension override: 
+          <input 
+            id='ext' 
+            type='text' 
+            onChange={(e) => onExtensionChange?.(e.target.value)}
+          />
+          <br />
+        </div>
+      );
+    case TransferMode.TT_DATA_PUT:
+      return (
+        <div>
+          <br />
+          <label htmlFor='orig_fname'>Download to original filename(s)</label>
+          <input 
+            id='orig_fname' 
+            type='checkbox'
+            onChange={(e) => onOrigFilenameChange?.(e.target.checked)} 
+          />
+        </div>
+      );
+    default:
+      return null;
   }
-  return null;
 };
 
 interface TransferOptionsProps {

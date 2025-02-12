@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 interface TransferEndpointManagerProps {
   controller: any;
@@ -6,7 +6,9 @@ interface TransferEndpointManagerProps {
 }
 
 export const TransferEndpointManager: React.FC<TransferEndpointManagerProps> = ({ controller, services }) => {
-  // Endpoint manager logic
+  useEffect(() => {
+    // Initialize endpoint manager logic on mount
+  }, []);
 
   return <div id="transfer-endpoint-manager"></div>;
-}; 
+};
