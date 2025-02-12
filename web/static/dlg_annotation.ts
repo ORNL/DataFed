@@ -1,7 +1,7 @@
 import * as util from "./util.js";
 import * as model from "./model.js";
 import * as api from "./api.js";
-import * as dialogs from "./dialogs.js";
+import { AlertDialog } from "./components/dialogs/AlertDialog"
 
 export function show(a_subject, a_annotation, a_new_state, a_comment_idx, a_cb) {
     const content =
@@ -108,7 +108,7 @@ export function show(a_subject, a_annotation, a_new_state, a_comment_idx, a_cb) 
                                 new_title,
                                 function (ok, data) {
                                     if (!ok) {
-                                        dialogs.dlgAlert("Server Error", data);
+                                        AlertDialog("Server Error", data);
                                     } else {
                                         dlg_inst.dialog("close");
                                         a_cb(data);
@@ -123,7 +123,7 @@ export function show(a_subject, a_annotation, a_new_state, a_comment_idx, a_cb) 
                                 a_comment_idx,
                                 function (ok, data) {
                                     if (!ok) {
-                                        dialogs.dlgAlert("Server Error", data);
+                                        AlertDialog("Server Error", data);
                                     } else {
                                         dlg_inst.dialog("close");
                                         a_cb(data);
@@ -140,7 +140,10 @@ export function show(a_subject, a_annotation, a_new_state, a_comment_idx, a_cb) 
                             activate,
                             function (ok, data) {
                                 if (!ok) {
-                                    dialogs.dlgAlert("Server Error", data);
+                                    AlertDialog({
+                                        message: "Server Error",
+                                        ...data
+                                    });
                                 } else {
                                     dlg_inst.dialog("close");
                                     a_cb(data);
