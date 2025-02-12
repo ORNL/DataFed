@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Dialog } from '../common/Dialog';
+import * as Dialog from '../../dialogs';
 import { AllocationForm } from './AllocationForm';
 import { AllocationDialogProps, Allocation } from './types';
 import * as api from '../../api';
-import * as dlgPickUser from '../user/UserPickerDialog';
-import * as dlgPickProject from '../project/ProjectPickerDialog';
+import * as dlgPickUser from '../../dlg_pick_user';
+import * as dlgPickProject from '../../dlg_pick_proj';
 
 export const AllocationDialog: React.FC<AllocationDialogProps> = ({
     repo,

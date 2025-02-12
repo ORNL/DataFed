@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { AllocationDialog } from './components/allocation/AllocationDialog';
+import * as util from "./util.js"
 
 export function show(a_repo: string, a_alloc: any, a_excl: string[], a_cb: (allocation: any) => void) {
     const container = document.createElement('div');
