@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import * as Dialog from '../../dialogs';
 import { AllocationForm } from './AllocationForm';
 import { AllocationDialogProps, Allocation } from './types';
 import * as api from '../../api';
 import * as dlgPickUser from '../../dlg_pick_user';
 import * as dlgPickProject from '../../dlg_pick_proj';
+
+const DEFAULT_REC_LIMIT = 1000;
 
 export const AllocationDialog: React.FC<AllocationDialogProps> = ({
     repo,
@@ -13,41 +15,41 @@ export const AllocationDialog: React.FC<AllocationDialogProps> = ({
     onClose,
     onSave
 }) => {
-    const [formData, setFormData] = useState<Allocation>(
-        allocation || {
-            repo,
-            id: null,
-            dataLimit: 0,
-            dataSize: 0,
-            recLimit: 1000
-        }
-    );
+    const [formData, setFormData] = useState<Allocation>(() => ({
+        repo,
+        id: allocation?.id ?? null,
+        dataLimit: allocation?.dataLimit ?? 0,
+        dataSize: allocation?.dataSize ?? 0,
+        recLimit: allocation?.recLimit ?? DEFAULT_REC_LIMIT
+    }));
     const [error, setError] = useState<string>('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleChange = (field: keyof Allocation, value: any) => {
+    const handleChange = useCallback((field: keyof Allocation, value: any) => {
         setFormData(prev => ({
             ...prev,
             [field]: value
         }));
-    };
+        setError(''); // Clear error when user makes changes
+    }, []);
 
-    const handleSelectUser = () => {
+    const handleSelectUser = useCallback(() => {
         dlgPickUser.show(repo, excludedIds, true, (users) => {
             if (users?.[0]) {
                 handleChange('id', users[0]);
             }
         });
-    };
+    }, [repo, excludedIds, handleChange]);
 
-    const handleSelectProject = () => {
+    const handleSelectProject = useCallback(() => {
         dlgPickProject.show(excludedIds, true, (projects) => {
             if (projects?.[0]) {
                 handleChange('id', projects[0]);
             }
         });
-    };
+    }, [excludedIds, handleChange]);
 
-    const validate = (): boolean => {
+    const validate = useCallback((): boolean => {
         if (!formData.id) {
             setError('Subject ID cannot be empty');
             return false;
@@ -65,16 +67,17 @@ export const AllocationDialog: React.FC<AllocationDialogProps> = ({
             return false;
         }
         return true;
-    };
+    }, [formData]);
 
-    const handleSave = async () => {
-        if (!validate()) return;
+    const handleSave = useCallback(async () => {
+        if (!validate() || isSubmitting) return;
 
-        const apiCall = allocation 
-            ? () => api.allocSet(repo, formData.id!, formData.dataLimit, formData.recLimit)
-            : () => api.allocCreate(repo, formData.id!, formData.dataLimit, formData.recLimit);
-
+        setIsSubmitting(true);
         try {
+            const apiCall = allocation 
+                ? () => api.allocSet(repo, formData.id!, formData.dataLimit, formData.recLimit)
+                : () => api.allocCreate(repo, formData.id!, formData.dataLimit, formData.recLimit);
+
             const result = await apiCall();
             if (result.ok) {
                 onSave(formData);
@@ -83,9 +86,11 @@ export const AllocationDialog: React.FC<AllocationDialogProps> = ({
                 setError(`Allocation ${allocation ? 'update' : 'creation'} failed (${result.data})`);
             }
         } catch (err) {
-            setError(`API error: ${err.message}`);
+            setError(`API error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        } finally {
+            setIsSubmitting(false);
         }
-    };
+    }, [repo, formData, allocation, validate, isSubmitting, onSave, onClose]);
 
     return (
         <Dialog
@@ -93,6 +98,7 @@ export const AllocationDialog: React.FC<AllocationDialogProps> = ({
             onClose={onClose}
             onConfirm={handleSave}
             error={error}
+            isSubmitting={isSubmitting}
         >
             <AllocationForm
                 allocation={formData}
@@ -100,6 +106,7 @@ export const AllocationDialog: React.FC<AllocationDialogProps> = ({
                 onChange={handleChange}
                 onSelectUser={handleSelectUser}
                 onSelectProject={handleSelectProject}
+                disabled={isSubmitting}
             />
         </Dialog>
     );
