@@ -1,7 +1,7 @@
-import { ep_recent } from "../../settings.js";
-import { TransferMode } from "../../models/transfer-model.js";
-import { show } from "../endpoint-browse/index.js";
-import { inputDisable, inputEnable, inputTheme, setStatusText } from "../../util.js";
+import { ep_recent } from "../../static/settings.js";
+import { TransferMode } from "../../static/models/transfer-model.js";
+import { show } from "../endpoint-browse";
+import { inputDisable, inputEnable, inputTheme, setStatusText } from "../../static/util.js";
 import { createMatchesHtml, formatRecordTitle, getDialogTemplate } from "./transfer-templates.js";
 
 /**

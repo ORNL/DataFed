@@ -1,5 +1,5 @@
-import { escapeHTML } from "../../util.js";
-import { TransferMode } from "../../models/transfer-model.js";
+import { escapeHTML } from "../../static/util.js";
+import { TransferMode } from "../../static/models/transfer-model.js";
 
 /**
  * @module TransferTemplates

@@ -1,5 +1,5 @@
-import * as util from "../../util.js";
-import * as api from "../../api.js";
+import * as util from "../../static/util.js";
+import * as api from "../../static/api.js";
 
 const CONFIG = {
     PATH: { SEPARATOR: "/", UP: "..", CURRENT: "." },

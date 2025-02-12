@@ -1,8 +1,8 @@
 import { TransferEndpointManager } from "./transfer-endpoint-manager.js";
-import { TransferModel } from "../../models/transfer-model.js";
+import { TransferModel } from "../../static/models/transfer-model.js";
 import { TransferUIManager } from "./transfer-ui-manager.js";
-import * as dialogs from "../../dialogs.js";
-import * as api from "../../api.js";
+import * as dialogs from "../../static/dialogs.js";
+import * as api from "../../static/api.js";
 
 /**
  * @class TransferDialogController

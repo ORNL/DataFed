@@ -2,7 +2,7 @@ import * as settings from "./settings.js";
 import * as model from "./model.js";
 import * as api from "./api.js";
 import * as dialogs from "./dialogs.js";
-import { transferDialog } from "./components/transfer/index.js";
+import { transferDialog } from "../components/transfer/index.js";
 
 var status_timer;
 

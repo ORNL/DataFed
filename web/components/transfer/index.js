@@ -1,4 +1,4 @@
-import { dlgAlert } from "../../dialogs.js";
+import { dlgAlert } from "../../static/dialogs.js";
 import { TransferDialogController } from "./transfer-dialog-controller.js";
 
 export class TransferDialog {
