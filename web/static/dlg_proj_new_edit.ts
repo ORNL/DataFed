@@ -2,7 +2,7 @@ import * as model from "./model.js";
 import * as util from "./util.js";
 import * as settings from "./settings.js";
 import * as api from "./api.js";
-import * as dialogs from "./dialogs.js";
+import { AlertDialog } from "./components/dialogs/AlertDialog"
 import * as dlgPickUser from "./dlg_pick_user.js";
 
 export function show(a_data, a_upd_perms, a_cb) {
@@ -149,7 +149,7 @@ export function show(a_data, a_upd_perms, a_cb) {
                             console.log("update project");
                             api.projUpdate(proj, function (ok, data) {
                                 if (!ok) {
-                                    dialogs.dlgAlert("Project Update Error", data);
+                                    AlertDialog({message: "Project Update Error", ...data});
                                 } else {
                                     result = data[0];
                                     do_close();
@@ -163,7 +163,7 @@ export function show(a_data, a_upd_perms, a_cb) {
                             console.log("Set def alloc", tmp);
                             api.setDefaultAlloc(tmp, a_data.id, function (ok, data) {
                                 if (!ok) {
-                                    dialogs.dlgAlert("Error Setting Default Allocation", data);
+                                    AlertDialog({message: "Error Setting Default Allocation", ...data});
                                 } else {
                                     if (!result) result = a_data;
                                     do_close();
@@ -195,7 +195,7 @@ export function show(a_data, a_upd_perms, a_cb) {
 
                         api.projCreate(proj, function (ok, data) {
                             if (!ok) {
-                                dialogs.dlgAlert("Project Create Error", data);
+                                AlertDialog({message: "Project Create Error", ...data});
                             } else {
                                 result = data[0];
                                 do_close();

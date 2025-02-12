@@ -1,7 +1,7 @@
 import * as util from "./util.js";
 import * as api from "./api.js";
-import * as dialogs from "./dialogs.js";
-import * as dlgPickUser from "./dlg_pick_user.js";
+import { AlertDialog } from "./components/dialogs/AlertDialog"
+import UserPicker from "./components/UserPicker"
 
 export function show(a_uid, a_excl, a_group, cb) {
     const content =
@@ -39,21 +39,26 @@ export function show(a_uid, a_excl, a_group, cb) {
 
     function addUsers() {
         var excl = [...a_excl, ...group.member];
-        dlgPickUser.show(a_uid, excl, false, function (uids) {
-            if (uids.length > 0) {
-                var i, id;
-                for (i in uids) {
-                    id = uids[i];
-                    if (a_excl.indexOf(id) == -1 && !mem_tree.getNodeByKey(id)) {
-                        mem_tree.rootNode.addNode({
-                            title: util.escapeHTML(id.substr(2)),
-                            icon: false,
-                            key: id,
-                        });
-                        group.member.push(id);
+        UserPicker({
+            uid: a_uid,
+            exclude: excl,
+            singleSelect: false,
+            onClose: function (uids) {
+                if (uids.length > 0) {
+                    var i, id;
+                    for (i in uids) {
+                        id = uids[i];
+                        if (a_excl.indexOf(id) == -1 && !mem_tree.getNodeByKey(id)) {
+                            mem_tree.rootNode.addNode({
+                                title: util.escapeHTML(id.substr(2)),
+                                icon: false,
+                                key: id,
+                            });
+                            group.member.push(id);
+                        }
                     }
+                    if (group.member.length) $("#btn_clear", frame).button("enable");
                 }
-                if (group.member.length) $("#btn_clear", frame).button("enable");
             }
         });
     }
@@ -170,7 +175,7 @@ export function show(a_uid, a_excl, a_group, cb) {
 
                         api.groupUpdate(group, function (ok, data) {
                             if (!ok) {
-                                dialogs.dlgAlert("Server Error", data);
+                                AlertDialog({message: "Server Error", ...data});
                             } else {
                                 dlg_inst.dialog("close");
                                 cb(data);
@@ -179,7 +184,7 @@ export function show(a_uid, a_excl, a_group, cb) {
                     } else {
                         api.groupCreate(a_uid, group, function (ok, data) {
                             if (!ok) {
-                                dialogs.dlgAlert("Server Error", data);
+                                AlertDialog({message: "Server Error", ...data});
                             } else {
                                 dlg_inst.dialog("close");
                                 cb(data);
