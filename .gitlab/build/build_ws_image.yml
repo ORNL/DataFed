@@ -25,6 +25,7 @@ build-ws:
         - docker/**/*
         - scripts/**/*
         - web/**/*
+        - cmake/**/*
         - common/proto/**/*
         - .gitlab-ci.yml
         - CMakeLists.txt
@@ -48,6 +49,7 @@ retag-image:
         - docker/**/*
         - scripts/**/*
         - web/**/*
+        - cmake/**/*
         - common/proto/**/*
         - .gitlab-ci.yml
         - CMakeLists.txt
