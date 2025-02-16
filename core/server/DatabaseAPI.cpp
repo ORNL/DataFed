@@ -1737,12 +1737,22 @@ void DatabaseAPI::queryCreate(const Auth::QueryCreateRequest &a_request,
     EXCEPT(1, "Invalid search request");
   }
 
-  string body =
+  /*string body =
       string("{") + "\"qry_begin\":\"" + qry_begin + "\",\"qry_end\":\"" +
       qry_end + "\",\"qry_filter\":\"" + qry_filter + "\",\"params\":{" +
       params + "},\"limit\":" + to_string(cnt) + ",\"title\":\"" +
       escapeJSON(a_request.title()) + "\"" + ",\"query\":" + query_json + "}";
+  */
+  nlohmann::json payload;
+  payload["qry_begin"] = qry_begin;
+  payload["qry_end"] = qry_end;
+  payload["qry_filter"] = qry_filter;
+  payload["params"] = params;
+  payload["limit"] = to_string(cnt);
+  payload["title"] = escapeJSON(a_requeset.title());
+  payload["query"] = query_json;
 
+  string body = payload.dump();
   dbPost("qry/create", {}, &body, result, log_context);
 
   setQueryData(a_reply, result, log_context);
@@ -1752,7 +1762,9 @@ void DatabaseAPI::queryUpdate(const Auth::QueryUpdateRequest &a_request,
                               Auth::QueryDataReply &a_reply,
                               LogContext log_context) {
   Value result;
-  string body = "{\"id\":\"" + a_request.id() + "\"";
+  // string body = "{\"id\":\"" + a_request.id() + "\"";
+  nlohmann::json payload;
+  payload["id"] = a_request.id();
 
   if (a_request.has_title()) {
     body += ",\"title\":\"" + escapeJSON(a_request.title()) + "\"";
@@ -1776,13 +1788,21 @@ void DatabaseAPI::queryUpdate(const Auth::QueryUpdateRequest &a_request,
       EXCEPT(1, "Invalid search request");
     }
 
-    body += ",\"qry_begin\":\"" + qry_begin + "\",\"qry_end\":\"" + qry_end +
+    /*body += ",\"qry_begin\":\"" + qry_begin + "\",\"qry_end\":\"" + qry_end +
             "\",\"qry_filter\":\"" + qry_filter + "\",\"params\":{" + params +
             "},\"limit\":" + to_string(cnt) + ",\"query\":" + query_json;
+    */
+    payload["qry_begin"] = qry_begin;
+    payload["qry_end"] = qry_end;
+    payload["qry_filter"] = qry_filter;
+    payload["params"] = params;
+    payload["limit"] = to_string(cnt);
+    payload["query"] = query_json;
   }
 
-  body += "}";
+  // body += "}";
 
+  string body = payload.dump();
   dbPost("qry/update", {}, &body, result, log_context);
 
   setQueryData(a_reply, result, log_context);
