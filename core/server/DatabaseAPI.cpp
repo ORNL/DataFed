@@ -874,7 +874,7 @@ void DatabaseAPI::recordCreate(const Auth::RecordCreateRequest &a_request,
                                Auth::RecordDataReply &a_reply,
                                LogContext log_context) {
   Value result;
-
+  // TODO: json serialization
   string body;
 
   if (a_request.has_metadata())
@@ -953,6 +953,7 @@ void DatabaseAPI::recordCreateBatch(
 void DatabaseAPI::recordUpdate(const Auth::RecordUpdateRequest &a_request,
                                Auth::RecordDataReply &a_reply,
                                libjson::Value &result, LogContext log_context) {
+  // TODO: json serialization
   string body = "{\"id\":\"" + a_request.id() + "\"";
   if (a_request.has_title())
     body += ",\"title\":\"" + escapeJSON(a_request.title()) + "\"";
@@ -1032,6 +1033,7 @@ void DatabaseAPI::recordUpdateSize(const Auth::RepoDataSizeReply &a_size_rep,
                                    LogContext log_context) {
   libjson::Value result;
 
+  // TODO: json serialization
   string body = "{\"records\":[";
 
   for (int i = 0; i < a_size_rep.size_size(); i++) {
@@ -1060,6 +1062,7 @@ void DatabaseAPI::recordExport(const Auth::RecordExportRequest &a_request,
                                LogContext log_context) {
   Value result;
 
+  // TODO: json serialization
   string body = "{\"id\":[";
 
   for (int i = 0; i < a_request.id_size(); i++) {
@@ -1315,6 +1318,7 @@ void DatabaseAPI::collCreate(const Auth::CollCreateRequest &a_request,
                              Auth::CollDataReply &a_reply,
                              LogContext log_context) {
   Value result;
+  // TODO: json serialization
   string body = "{\"title\":\"" + escapeJSON(a_request.title()) + "\"";
 
   if (a_request.has_desc())
@@ -1350,6 +1354,7 @@ void DatabaseAPI::collUpdate(const Auth::CollUpdateRequest &a_request,
                              Auth::CollDataReply &a_reply,
                              LogContext log_context) {
   Value result;
+  // TODO: json serialization
   string body = "{\"id\":\"" + a_request.id() + "\"";
 
   if (a_request.has_title())
@@ -2155,6 +2160,7 @@ void DatabaseAPI::repoCreate(const Auth::RepoCreateRequest &a_request,
                              Auth::RepoDataReply &a_reply,
                              LogContext log_context) {
   Value result;
+  // TODO: json serialization
 
   string body = "{\"id\":\"" + a_request.id() + "\"";
   body += ",\"title\":\"" + escapeJSON(a_request.title()) + "\"";
@@ -2192,7 +2198,7 @@ void DatabaseAPI::repoUpdate(const Auth::RepoUpdateRequest &a_request,
                              Auth::RepoDataReply &a_reply,
                              LogContext log_context) {
   Value result;
-
+  // TODO: json serialization
   string body = "{\"id\":\"" + a_request.id() + "\"";
   if (a_request.has_title())
     body += ",\"title\":\"" + escapeJSON(a_request.title()) + "\"";
@@ -2883,6 +2889,7 @@ void DatabaseAPI::schemaView(const Auth::SchemaViewRequest &a_request,
 void DatabaseAPI::schemaCreate(const Auth::SchemaCreateRequest &a_request,
                                LogContext log_context) {
   libjson::Value result;
+  // TODO: json serialization
   string body = "{\"id\":\"";
   body.append(a_request.id());
   body.append("\",\"desc\":\"");
@@ -2901,6 +2908,7 @@ void DatabaseAPI::schemaCreate(const Auth::SchemaCreateRequest &a_request,
 void DatabaseAPI::schemaRevise(const Auth::SchemaReviseRequest &a_request,
                                LogContext log_context) {
   libjson::Value result;
+  // TODO: json serialization
   string body = "{";
 
   if (a_request.has_desc()) {
@@ -2941,6 +2949,7 @@ void DatabaseAPI::schemaRevise(const Auth::SchemaReviseRequest &a_request,
 void DatabaseAPI::schemaUpdate(const Auth::SchemaUpdateRequest &a_request,
                                LogContext log_context) {
   libjson::Value result;
+  // TODO: json serialization
   string body = "{";
 
   if (a_request.has_id_new()) {
@@ -3131,6 +3140,7 @@ void DatabaseAPI::taskAbort(const std::string &a_task_id,
                             libjson::Value &a_task_reply,
                             LogContext log_context) {
   libjson::Value doc(a_msg);
+  // TODO: json serialization
   string body = doc.toString();
 
   dbPost("task/abort", {{"task_id", a_task_id}}, &body, a_task_reply,
@@ -3141,6 +3151,7 @@ void DatabaseAPI::taskInitDataGet(const Auth::DataGetRequest &a_request,
                                   Auth::DataGetReply &a_reply,
                                   libjson::Value &a_result,
                                   LogContext log_context) {
+  // TODO: json serialization
   string body = "{\"id\":[";
 
   for (int i = 0; i < a_request.id_size(); i++) {
@@ -3205,6 +3216,7 @@ void DatabaseAPI::taskInitDataPut(const Auth::DataPutRequest &a_request,
                                   Auth::DataPutReply &a_reply,
                                   libjson::Value &a_result,
                                   LogContext log_context) {
+  // TODO: json serialization
   string body = "{\"id\":[\"" + a_request.id() + "\"]";
 
   if (a_request.has_path())
@@ -3265,6 +3277,7 @@ void DatabaseAPI::setDataPutReply(Auth::DataPutReply &a_reply,
 void DatabaseAPI::taskInitRecordCollectionDelete(
     const std::vector<std::string> &a_ids, TaskDataReply &a_reply,
     libjson::Value &a_result, LogContext log_context) {
+  // TODO: json serialization
   string body = "{\"ids\":[";
 
   for (vector<string>::const_iterator i = a_ids.begin(); i != a_ids.end();
@@ -3285,6 +3298,7 @@ void DatabaseAPI::taskInitRecordAllocChange(
     const Auth::RecordAllocChangeRequest &a_request,
     Auth::RecordAllocChangeReply &a_reply, libjson::Value &a_result,
     LogContext log_context) {
+  // TODO: json serialization
   string body = "{\"ids\":[";
 
   for (int i = 0; i < a_request.id_size(); i++) {
@@ -3325,6 +3339,7 @@ void DatabaseAPI::taskInitRecordOwnerChange(
     const Auth::RecordOwnerChangeRequest &a_request,
     Auth::RecordOwnerChangeReply &a_reply, libjson::Value &a_result,
     LogContext log_context) {
+  // TODO: json serialization
   string body = "{\"ids\":[";
 
   for (int i = 0; i < a_request.id_size(); i++) {
@@ -3370,6 +3385,7 @@ void DatabaseAPI::taskInitRecordOwnerChange(
 void DatabaseAPI::taskInitProjectDelete(
     const Auth::ProjectDeleteRequest &a_request, Auth::TaskDataReply &a_reply,
     libjson::Value &a_result, LogContext log_context) {
+  // TODO: json serialization
   string body = "{\"ids\":[";
 
   for (int i = 0; i < a_request.id_size(); i++) {
@@ -3554,6 +3570,7 @@ void DatabaseAPI::taskUpdate(const std::string &a_id, LogContext log_context,
   if (!a_status && !a_progress && !a_state)
     return;
 
+  // TODO: json serialization
   string body = "{";
   string delim = "";
 
@@ -3652,6 +3669,7 @@ void DatabaseAPI::metricsUpdateMsgCounts(
     LogContext log_context) {
   map<string, std::map<uint16_t, uint32_t>>::const_iterator u;
   map<uint16_t, uint32_t>::const_iterator m;
+  // TODO: json serialization
   string body = "{\"timestamp\":" + to_string(a_timestamp) +
                 ",\"total\":" + to_string(a_total) + ",\"uids\":{";
   bool c = false, cc;
