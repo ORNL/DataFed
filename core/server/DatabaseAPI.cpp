@@ -20,6 +20,8 @@
 #include <memory>
 #include <unistd.h>
 
+#include <nlohmann/json.hpp>
+
 using namespace std;
 
 namespace SDMS {
@@ -1265,13 +1267,24 @@ void DatabaseAPI::generalSearch(const Auth::SearchRequest &a_request,
   uint32_t cnt = parseSearchRequest(a_request, qry_begin, qry_end, qry_filter,
                                     params, log_context);
 
-  string body =
-      "{\"mode\":" + to_string(a_request.mode()) + ",\"published\":" +
-      ((a_request.has_published() && a_request.published()) ? "true"
-                                                            : "false") +
-      ",\"qry_begin\":\"" + qry_begin + "\",\"qry_end\":\"" + qry_end +
-      "\",\"qry_filter\":\"" + qry_filter + "\",\"params\":{" + params +
-      "},\"limit\":" + to_string(cnt) + "}";
+  /* string body =
+       "{\"mode\":" + to_string(a_request.mode()) + ",\"published\":" +
+       ((a_request.has_published() && a_request.published()) ? "true"
+                                                             : "false") +
+       ",\"qry_begin\":\"" + qry_begin + "\",\"qry_end\":\"" + qry_end +
+       "\",\"qry_filter\":\"" + qry_filter + "\",\"params\":{" + params +
+       "},\"limit\":" + to_string(cnt) + "}";
+   */
+  nlohmann::json payload;
+  payload["mode"] = to_string(a_request.mode());
+  payload["published"] = a_request.has_published() && a_request.published();
+  payload["qry_begin"] = qry_begin;
+  payload["qry_end"] = qry_end;
+  payload["qry_filter"] = qry_filter;
+  payload["params"] = params;
+  payload["limit"] = to_string(cnt);
+
+  string body = payload.dump();
 
   DL_DEBUG(log_context, "Query: [" << body << "]");
 
