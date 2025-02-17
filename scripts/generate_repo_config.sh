@@ -30,7 +30,6 @@ Help()
   echo "-g, --globus-collection-base-path   The Globus (POSIX) Base path to the Guest Collection."
 }
 
-local_DATAFED_PORT="7512"
 if [ -z "${DATAFED_DOMAIN}" ]
 then
   local_DATAFED_DOMAIN="datafed.ornl.gov"
@@ -52,6 +51,14 @@ then
   local_DATAFED_LOG_PATH="/var/log/datafed"
 else
   local_DATAFED_LOG_PATH=$(printenv DATAFED_DEFAULT_LOG_PATH)
+fi
+
+local_DATAFED_SERVER_PORT=""
+if [ -z "${DATAFED_SERVER_PORT}" ]
+then
+    local_DATAFED_SERVER_PORT="7512"
+else
+    local_DATAFED_SERVER_PORT=$(printenv DATAFED_SERVER_PORT)
 fi
 
 local_DATAFED_CRED_DIR="${DATAFED_INSTALL_PATH}/keys/"
@@ -113,7 +120,7 @@ CONFIG_FILE_NAME="datafed-repo.cfg"
 # same port listed in the datafed-repo.cfg file.
 cat << EOF > "$PATH_TO_CONFIG_DIR/$CONFIG_FILE_NAME"
 cred-dir=$local_DATAFED_CRED_DIR
-server=tcp://$local_DATAFED_DOMAIN:${local_DATAFED_PORT}
+server=tcp://$local_DATAFED_DOMAIN:${local_DATAFED_SERVER_PORT}
 port=$local_DATAFED_REPO_PORT
 threads=$local_DATAFED_REPO_THREADS
 globus-collection-path=$local_DATAFED_GCS_COLLECTION_BASE_PATH
