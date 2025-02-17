@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { AllocationDialog } from './components/allocation/AllocationDialog';
+import { AllocationDialog } from './components/dialogs/AllocationDialog';
 import { Allocation } from './components/allocation/types';
 
 export function show(repo: string, allocation: Allocation | null, excludedIds: string[], onSave: (allocation: Allocation) => void): void {

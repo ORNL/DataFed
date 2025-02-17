@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { CollectionDialog } from './components/collection/CollectionDialog';
+import { CollectionDialog } from './components/dialogs/CollectionDialog';
 import * as api from './api';
 import { CollectionData } from './types/collection';
 
