@@ -141,7 +141,7 @@
   script:
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     - docker system prune -f
-    - docker build -f "${DOCKER_FILE_PATH}" -t "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" .
+    - docker build --no-cache -f "${DOCKER_FILE_PATH}" -t "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" .
     - echo "Tagging ${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest as ${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
     - docker tag "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
@@ -170,7 +170,7 @@
 .build_image: &build_image |
   BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
   export DATAFED_HARBOR_REPOSITORY="${COMPONENT}-${BRANCH_LOWER}"
-  docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" -f "${DOCKER_FILE_PATH}" -t "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" .
+  docker build --no-cache --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" -f "${DOCKER_FILE_PATH}" -t "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" .
   docker tag "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
   docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
   docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
@@ -196,7 +196,7 @@
   then
     BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     export DATAFED_HARBOR_REPOSITORY="${COMPONENT}-${INTERMEDIATE_LAYER_NAME}-${BRANCH_LOWER}"
-    docker build --build-arg DEPENDENCIES="${REGISTRY}/${PROJECT}/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/${PROJECT}/runtime-${BRANCH_LOWER}:latest" --target "${INTERMEDIATE_TARGET}" -f "${DOCKER_FILE_PATH}" -t "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest" .
+    docker build --no-cache --build-arg DEPENDENCIES="${REGISTRY}/${PROJECT}/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/${PROJECT}/runtime-${BRANCH_LOWER}:latest" --target "${INTERMEDIATE_TARGET}" -f "${DOCKER_FILE_PATH}" -t "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest" .
     echo "Tagging ${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest ${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
     docker tag "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest" "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
     docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"

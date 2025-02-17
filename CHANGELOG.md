@@ -30,10 +30,13 @@
 17. [1168] - Add authz unit testing to the CI
 18. [1200] - Add JavaScript linter (eslint) and (prettier) formatter for JavaScript
 19. [1180] - Refactor of authz foxx module, split into objects and added unit tests
-20. [1257] - Bug in authz library parsing of authz.conf file, globus paths incorrectly sanitized when using just '/'
-21. [1255] - Fixes bug, in libauthz with log_path var not being read in from config file.
-22. [1268] - Bug fixes unbound variable in foxx entrypoint file.
-23. [1269] - Update Arangodb to 3.12.4
+20. [1223] - Fix deprecated method usage for Protobuf in Python client library
+21. [1257] - Bug in authz library parsing of authz.conf file, globus paths incorrectly sanitized when using just '/'
+22. [1255] - Fixes bug, in libauthz with log_path var not being read in from config file.
+23. [1268] - Bug fixes unbound variable in foxx entrypoint file.
+24. [1269] - Update Arangodb to 3.12.4
+25. [1288] - Bug Jupyter Notebook in documentation were fixed.
+26. [1321] - Refactor, allow core config threads via env vars
 
 # v2024.6.17.10.40
 
