@@ -1754,7 +1754,7 @@ void DatabaseAPI::queryCreate(const Auth::QueryCreateRequest &a_request,
   payload["qry_filter"] = qry_filter;
   payload["params"] = params;
   payload["limit"] = to_string(cnt);
-  payload["title"] = escapeJSON(a_requeset.title());
+  payload["title"] = escapeJSON(a_request.title());
   payload["query"] = query_json;
 
   string body = payload.dump();
