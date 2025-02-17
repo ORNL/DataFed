@@ -1772,7 +1772,8 @@ void DatabaseAPI::queryUpdate(const Auth::QueryUpdateRequest &a_request,
   payload["id"] = a_request.id();
 
   if (a_request.has_title()) {
-    body += ",\"title\":\"" + escapeJSON(a_request.title()) + "\"";
+    // body += ",\"title\":\"" + escapeJSON(a_request.title()) + "\"";
+    payload["title"] = escapeJSON(a_request.title());
   }
 
   if (a_request.has_query()) {
