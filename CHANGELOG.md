@@ -34,7 +34,8 @@
 22. [1255] - Fixes bug, in libauthz with log_path var not being read in from config file.
 23. [1268] - Bug fixes unbound variable in foxx entrypoint file.
 24. [1269] - Update Arangodb to 3.12.4
-25. [1288] - Bug Jupyternote books in documentation were fixed.
+25. [1288] - Bug Jupyter Notebook in documentation were fixed.
+26. [1321] - Refactor, allow core config threads via env vars
 
 # v2024.6.17.10.40
 
