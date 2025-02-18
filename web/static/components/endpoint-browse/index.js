@@ -13,6 +13,16 @@ const CONFIG = {
     },
 };
 
+class ApiError extends Error {
+    constructor(data) {
+        super(data.message);
+        this.name = 'ApiError';
+        this.data = data;
+        this.code = data.code;
+    }
+
+}
+
 /**
  * EndpointBrowser Component
  * Handles browsing and selecting files/directories from endpoints
@@ -122,21 +132,10 @@ class EndpointBrowser {
             source: [{ title: "loading...", icon: false, is_dir: true }],
             selectMode: 1,
             // Render additional columns (size and date)
-            renderColumns: (_, data) => {
-                const $cols = $(data.node.tr).find(">td");
-                // Directories span all columns
-                if (data.node.data.is_dir) {
-                    $cols.eq(0).prop("colspan", 3).nextAll().remove();
-                    return;
-                }
-                // Files show size and date
-                $cols.eq(1).text(data.node.data.size);
-                $cols.eq(2).text(data.node.data.date);
-            },
+            renderColumns: this.renderTreeColumns,
             // Handle node selection
             activate: (_, data) => {
                 data.node.setSelected(true);
-                // Enable/disable select button based on selection validity
                 $("#sel_btn").button(this.isValidSelection(data.node) ? "enable" : "disable");
             },
             // Handle double-click navigation
@@ -150,15 +149,24 @@ class EndpointBrowser {
         this.loadTree();
     }
 
+    renderTreeColumns(_, data) {
+        const $cols = $(data.node.tr).find(">td");
+        if (data.node.data.is_dir) {
+            $cols.eq(0).prop("colspan", 3).nextAll().remove();
+            return;
+        }
+        $cols.eq(1).text(data.node.data.size);
+        $cols.eq(2).text(data.node.data.date);
+    }
+
     /**
      * @param {object} node - Tree node
      * @returns {boolean} Whether selection is valid
      */
     isValidSelection(node) {
-        return (
-            (node.data.is_dir && this.props.mode === "dir" && node.key !== CONFIG.PATH.UP) ||
-            (!node.data.is_dir && this.props.mode === "file")
-        );
+        const isDir = node?.data?.is_dir;
+        const notUp = node?.key !== CONFIG.PATH.UP;
+        return isDir && ((this.props.mode === "dir" && notUp) || this.props.mode === "file");
     }
 
     /**
@@ -175,7 +183,9 @@ class EndpointBrowser {
         let updatedPath;
         if (newPath === CONFIG.PATH.UP) {
             // Handle "up" navigation
-            if (current.length === 1) return; // Already at root
+            if (current.length === 1) { // Already at root
+                return;
+            }
             const idx = current.lastIndexOf(CONFIG.PATH.SEPARATOR, current.length - 2);
             updatedPath = idx > 0 ? current.substring(0, idx + 1) : CONFIG.PATH.SEPARATOR;
         } else {
@@ -191,40 +201,45 @@ class EndpointBrowser {
     /**
      * Load tree data from API
      */
-    loadTree() {
-        if (this.state.loading) return;
+    async loadTree() {
+        if (this.state.loading) {
+            return;
+        }
 
         // Set loading state
         this.state.loading = true;
         $("#sel_btn").button("disable");
         $("#file_tree").fancytree("disable");
 
-        // Fetch directory listing
-        api.epDirList(this.props.endpoint.id, this.state.path, false, (data) => {
-            this.updateTree(data);
-        });
-    }
+        try {
+            // Fetch directory listing
+            const data = await new Promise(resolve => {
+                api.epDirList(this.props.endpoint.id, this.state.path, false, resolve);
+            })
 
-    /**
-     * Updates the tree with new data
-     * @param {object} data - The data to update the tree with
-     */
-    updateTree(data) {
-        const source = this.getTreeSource(data);
-        $.ui.fancytree.getTree("#file_tree").reload(source);
-        this.state.loading = false;
-        $("#file_tree").fancytree("enable");
-    }
+            console.log("data", data);
 
+            if (data.code) {
+                throw new ApiError(data);
+            }
+
+            const source = this.getTreeSource(data);
+            console.log('the source', source);
+            $.ui.fancytree.getTree("#file_tree").reload(source);
+        } catch (error) {
+            const errorSource = await this.createErrorSource(error);
+            $.ui.fancytree.getTree("#file_tree").reload(errorSource);
+        } finally {
+            this.state.loading = false;
+            $("#file_tree").fancytree("enable");
+        }
+    }
     /**
      * Get tree source data
      * @param {object} data - API response data
      * @returns {Array} Tree source data
      */
     getTreeSource(data) {
-        if (data.code) {
-            return this.handleApiError(data);
-        }
         return [
             {
                 title: CONFIG.PATH.UP,
@@ -233,66 +248,63 @@ class EndpointBrowser {
                 is_dir: true,
             },
             ...data.DATA.map((entry) =>
-                entry.type === "dir"
-                    ? {
-                          title: entry.name,
-                          icon: CONFIG.UI.ICONS.FOLDER,
-                          key: entry.name,
-                          is_dir: true,
-                      }
-                    : {
-                          title: entry.name,
-                          icon: CONFIG.UI.ICONS.FILE,
-                          key: entry.name,
-                          is_dir: false,
-                          size: util.sizeToString(entry.size),
-                          date: new Date(entry.last_modified.replace(" ", "T")).toLocaleString(),
-                      },
+              entry.type === "dir"
+                ? {
+                    title: entry.name,
+                    icon: CONFIG.UI.ICONS.FOLDER,
+                    key: entry.name,
+                    is_dir: true,
+                }
+                : {
+                    title: entry.name,
+                    icon: CONFIG.UI.ICONS.FILE,
+                    key: entry.name,
+                    is_dir: false,
+                    size: util.sizeToString(entry.size),
+                    date: new Date(entry.last_modified.replace(" ", "T")).toLocaleString(),
+                },
             ),
         ];
     }
 
     /**
      * Handle API error responses
-     * @param {object} data - API response data
-     * @returns {Array} Error message source
+     * @param {object} error - API response data
+     * @returns {Promise<Array>} Error message source
      */
-    handleApiError(data) {
-        if (data.code === "ConsentRequired") {
-            api.getGlobusConsentURL(
-                (ok, data) => {
-                    const source = [
-                        {
-                            title: `<span class='ui-state-error'>Consent Required: Please provide <a href="${data.consent_url}">consent</a>.</span>`,
-                            icon: false,
-                            is_dir: true,
-                        },
-                    ];
+    async createErrorSource(error) {
+        let title = "";
 
-                    $.ui.fancytree.getTree("#file_tree").reload(source);
-                    this.state.loading = false;
-                    $("#file_tree").fancytree("enable");
-                },
-                this.props.endpoint.id,
-                data.required_scopes,
-            );
+        if (error instanceof ApiError && error.code === "ConsentRequired") {
+            const data = await new Promise(resolve => {
+                api.getGlobusConsentURL(
+                  (_, data) => resolve(data),
+                  this.props.endpoint.id,
+                  error.data.required_scopes
+                );
+            });
+            title = `<span class='ui-state-error'>Consent Required: Please provide <a href="${data.consent_url}">consent</a>.</span>`;
         } else {
-            return [
-                {
-                    title: `<span class='ui-state-error'>Error: ${data.message}</span>`,
-                    icon: false,
-                    is_dir: true,
-                },
-            ];
+            title = `<span class='ui-state-error'>Error: ${error instanceof ApiError ? error.data.message : error.message}</span>`;
         }
+
+        return [{
+            title,
+            icon: false,
+            is_dir: true
+        }];
     }
 
     /**
      * Handle selection confirmation
      */
     handleSelect() {
+        console.log("handling select");
         const node = $.ui.fancytree.getTree("#file_tree").activeNode;
-        if (!node || !this.props.onSelect) return;
+        console.log("nodew" , node);
+        if (!node || !this.props.onSelect) {
+            return;
+        }
 
         // Construct full path for selected node
         const path =

@@ -496,23 +496,14 @@ export class TransferUIManager {
      * Handles changes in endpoint matches selection
      * @param {Event} event - The change event object
      */
-    handleMatchesChange(event) {
-        if (
-            !this.#controller.endpointManager.endpointManagerList ||
-            !this.#controller.endpointManager.endpointManagerList.length
-        ) {
-            console.warn("No endpoint list available");
+    async handleMatchesChange(event) {
+        const selectedIndex = $(event.target).prop("selectedIndex") - 1;
+        if (selectedIndex < 0) {
             return;
         }
 
-        const selectedIndex = $(event.target).prop("selectedIndex") - 1;
-
-        // Out of bounds selection prevention
-        if (
-            selectedIndex < 0 ||
-            selectedIndex >= this.#controller.endpointManager.endpointManagerList.length
-        ) {
-            console.error("Invalid selection index:", selectedIndex);
+        const endpoints = this.#controller.endpointManager.endpointManagerList;
+        if (!endpoints?.length) {
             return;
         }
 
@@ -521,15 +512,24 @@ export class TransferUIManager {
             console.warn("Invalid endpoint data:", endpoint);
             return;
         }
+
         // Set endpoint list to selected endpoint once we validate it
         this.#controller.endpointManager.endpointManagerList = endpoint;
-        this.api.epView(endpoint.id, (ok, data) => {
-            if (ok && !data.code) {
-                this.handleSelectedEndpoint(data);
-            } else {
-                this.dialogs.dlgAlert("Globus Error", data);
-            }
-        });
+        try {
+            const data = await new Promise((resolve, reject) => {
+                this.api.epView(endpoint.id, (ok, data) => {
+                    if (ok && !data.code) {
+                        resolve(data);
+                    } else {
+                        reject(data);
+                    }
+                });
+            });
+
+            this.handleSelectedEndpoint(data);
+        } catch (error) {
+            this.dialogs.dlgAlert("Globus Error", error);
+        }
     }
 
     handleSelectionChange() {
@@ -538,13 +538,7 @@ export class TransferUIManager {
             return;
         }
 
-        try {
-            const selectedNodes = this.state.recordTree.getSelectedNodes();
-            // Prevent transfers if a data record isn't selected
-            this.enableStartButton(selectedNodes.length > 0);
-        } catch (error) {
-            console.error("Error handling selection change:", error);
-        }
+        this.enableStartButton(this.state.recordTree.getSelectedNodes().length > 0);
     }
 
     /**
