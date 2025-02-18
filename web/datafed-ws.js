@@ -1798,6 +1798,7 @@ app.post("/api/sch/delete", (a_req, a_resp) => {
 });
 
 app.get("/ui/ep/view", (a_req, a_resp) => {
+    // TODO: include message data if needed
     sendMessage("UserGetAccessTokenRequest", {}, a_req, a_resp, function (reply) {
         const opts = {
             hostname: "transfer.api.globusonline.org",
@@ -1830,6 +1831,7 @@ app.get("/ui/ep/view", (a_req, a_resp) => {
 });
 
 app.get("/ui/ep/autocomp", (a_req, a_resp) => {
+    // TODO: include message data if needed
     sendMessage("UserGetAccessTokenRequest", {}, a_req, a_resp, function (reply) {
         const opts = {
             hostname: "transfer.api.globusonline.org",
@@ -1877,7 +1879,18 @@ app.post("/ui/ep/recent/save", (a_req, a_resp) => {
 });
 
 app.get("/ui/ep/dir/list", (a_req, a_resp) => {
-    sendMessage("UserGetAccessTokenRequest", {}, a_req, a_resp, function (reply) {
+    const message_data = {
+        collectionId: a_req.session.collection_id,
+        collectionType: a_req.session.collection_type,
+    };
+
+    sendMessage("UserGetAccessTokenRequest", { ...message_data }, a_req, a_resp, function (reply) {
+        if (reply.needsConsent) {
+            // Do something
+            a_resp.status(403);
+            a_resp.send("Globus collection needs consent. Follow: <consent link here>");
+            return;
+        }
         const opts = {
             hostname: "transfer.api.globusonline.org",
             method: "GET",
