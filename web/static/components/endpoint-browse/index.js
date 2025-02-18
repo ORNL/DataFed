@@ -16,11 +16,10 @@ const CONFIG = {
 class ApiError extends Error {
     constructor(data) {
         super(data.message);
-        this.name = 'ApiError';
+        this.name = "ApiError";
         this.data = data;
         this.code = data.code;
     }
-
 }
 
 /**
@@ -166,7 +165,10 @@ class EndpointBrowser {
     isValidSelection(node) {
         const isDir = node?.data?.is_dir;
         const notUp = node?.key !== CONFIG.PATH.UP;
-        return ((isDir && this.props.mode === "dir") || (!isDir && this.props.mode === "file")) && notUp;
+        return (
+            ((isDir && this.props.mode === "dir") || (!isDir && this.props.mode === "file")) &&
+            notUp
+        );
     }
 
     /**
@@ -183,7 +185,8 @@ class EndpointBrowser {
         let updatedPath;
         if (newPath === CONFIG.PATH.UP) {
             // Handle "up" navigation
-            if (current.length === 1) { // Already at root
+            if (current.length === 1) {
+                // Already at root
                 return;
             }
             const idx = current.lastIndexOf(CONFIG.PATH.SEPARATOR, current.length - 2);
@@ -213,9 +216,9 @@ class EndpointBrowser {
 
         try {
             // Fetch directory listing
-            const data = await new Promise(resolve => {
+            const data = await new Promise((resolve) => {
                 api.epDirList(this.props.endpoint.id, this.state.path, false, resolve);
-            })
+            });
 
             if (data.code) {
                 throw new ApiError(data);
@@ -231,6 +234,7 @@ class EndpointBrowser {
             $("#file_tree").fancytree("enable");
         }
     }
+
     /**
      * Get tree source data
      * @param {object} data - API response data
@@ -245,21 +249,21 @@ class EndpointBrowser {
                 is_dir: true,
             },
             ...data.DATA.map((entry) =>
-              entry.type === "dir"
-                ? {
-                    title: entry.name,
-                    icon: CONFIG.UI.ICONS.FOLDER,
-                    key: entry.name,
-                    is_dir: true,
-                }
-                : {
-                    title: entry.name,
-                    icon: CONFIG.UI.ICONS.FILE,
-                    key: entry.name,
-                    is_dir: false,
-                    size: util.sizeToString(entry.size),
-                    date: new Date(entry.last_modified.replace(" ", "T")).toLocaleString(),
-                },
+                entry.type === "dir"
+                    ? {
+                          title: entry.name,
+                          icon: CONFIG.UI.ICONS.FOLDER,
+                          key: entry.name,
+                          is_dir: true,
+                      }
+                    : {
+                          title: entry.name,
+                          icon: CONFIG.UI.ICONS.FILE,
+                          key: entry.name,
+                          is_dir: false,
+                          size: util.sizeToString(entry.size),
+                          date: new Date(entry.last_modified.replace(" ", "T")).toLocaleString(),
+                      },
             ),
         ];
     }
@@ -273,11 +277,11 @@ class EndpointBrowser {
         let title = "";
 
         if (error instanceof ApiError && error.code === "ConsentRequired") {
-            const data = await new Promise(resolve => {
+            const data = await new Promise((resolve) => {
                 api.getGlobusConsentURL(
-                  (_, data) => resolve(data),
-                  this.props.endpoint.id,
-                  error.data.required_scopes
+                    (_, data) => resolve(data),
+                    this.props.endpoint.id,
+                    error.data.required_scopes,
                 );
             });
             title = `<span class='ui-state-error'>Consent Required: Please provide <a href="${data.consent_url}">consent</a>.</span>`;
@@ -285,11 +289,13 @@ class EndpointBrowser {
             title = `<span class='ui-state-error'>Error: ${error instanceof ApiError ? error.data.message : error.message}</span>`;
         }
 
-        return [{
-            title,
-            icon: false,
-            is_dir: true
-        }];
+        return [
+            {
+                title,
+                icon: false,
+                is_dir: true,
+            },
+        ];
     }
 
     /**

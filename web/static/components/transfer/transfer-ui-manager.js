@@ -540,12 +540,10 @@ export class TransferUIManager {
         const atLeastOneNodeSelected = this.state.recordTree.getSelectedNodes().length > 0;
         const config = this.getTransferInput();
         if (!config) {
-            this.enableStartButton(false)
+            this.enableStartButton(false);
         }
 
-        this.enableStartButton(
-          (atLeastOneNodeSelected && !config?.path.endsWith("/"))
-        );
+        this.enableStartButton(atLeastOneNodeSelected && !config?.path.endsWith("/"));
     }
 
     /**
