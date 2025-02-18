@@ -166,7 +166,7 @@ class EndpointBrowser {
     isValidSelection(node) {
         const isDir = node?.data?.is_dir;
         const notUp = node?.key !== CONFIG.PATH.UP;
-        return isDir && ((this.props.mode === "dir" && notUp) || this.props.mode === "file");
+        return ((isDir && this.props.mode === "dir") || (!isDir && this.props.mode === "file")) && notUp;
     }
 
     /**
@@ -217,14 +217,11 @@ class EndpointBrowser {
                 api.epDirList(this.props.endpoint.id, this.state.path, false, resolve);
             })
 
-            console.log("data", data);
-
             if (data.code) {
                 throw new ApiError(data);
             }
 
             const source = this.getTreeSource(data);
-            console.log('the source', source);
             $.ui.fancytree.getTree("#file_tree").reload(source);
         } catch (error) {
             const errorSource = await this.createErrorSource(error);
@@ -299,9 +296,7 @@ class EndpointBrowser {
      * Handle selection confirmation
      */
     handleSelect() {
-        console.log("handling select");
         const node = $.ui.fancytree.getTree("#file_tree").activeNode;
-        console.log("nodew" , node);
         if (!node || !this.props.onSelect) {
             return;
         }

@@ -537,8 +537,15 @@ export class TransferUIManager {
             console.warn("Record tree not initialized when handling selection change");
             return;
         }
+        const atLeastOneNodeSelected = this.state.recordTree.getSelectedNodes().length > 0;
+        const config = this.getTransferInput();
+        if (!config) {
+            this.enableStartButton(false)
+        }
 
-        this.enableStartButton(this.state.recordTree.getSelectedNodes().length > 0);
+        this.enableStartButton(
+          (atLeastOneNodeSelected && !config?.path.endsWith("/"))
+        );
     }
 
     /**
