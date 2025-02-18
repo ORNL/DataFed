@@ -36,6 +36,7 @@ import { fileURLToPath } from "url";
 import { dirname } from "path";
 
 import OAuthTokenHandler, { AccessTokenType } from "./services/auth/TokenHandler.js";
+import { generateConsentURL } from "./services/auth/ConsentHandler.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -111,26 +112,31 @@ class Logger {
             this.log("CRIT", function_name, line_number, message, correlation_id);
         }
     }
+
     error(function_name, line_number, message, correlation_id = "") {
         if (this._level >= LogLevel.ERROR) {
             this.log("ERROR", function_name, line_number, message, correlation_id);
         }
     }
+
     warning(function_name, line_number, message, correlation_id = "") {
         if (this._level >= LogLevel.WARNING) {
             this.log("WARNING", function_name, line_number, message, correlation_id);
         }
     }
+
     info(function_name, line_number, message, correlation_id = "") {
         if (this._level >= LogLevel.INFO) {
             this.log("INFO", function_name, line_number, message, correlation_id);
         }
     }
+
     debug(function_name, line_number, message, correlation_id = "") {
         if (this._level >= LogLevel.DEBUG) {
             this.log("DEBUG", function_name, line_number, message, correlation_id);
         }
     }
+
     trace(function_name, line_number, message, correlation_id = "") {
         if (this._level >= LogLevel.TRACE) {
             this.log("TRACE", function_name, line_number, message, correlation_id);
@@ -301,6 +307,13 @@ app.use(
         },
     }),
 );
+
+function storeCollectionId(req, res, next) {
+    if (req.query.collection_id) {
+        req.session.collection_id = req.query.collection_id;
+    }
+    next();
+}
 
 app.use(cookieParser(g_session_secret));
 app.use(
@@ -488,9 +501,9 @@ app.get("/ui/authn", (a_req, a_resp) => {
     logger.info("/ui/authn", getCurrentLineNumber(), "Globus authenticated - log in to DataFed");
 
     /* This after Globus authentication. Loads Globus tokens and identity information.
-    The user is then checked in DataFed and, if present redirected to the main page; otherwise, sent to
-    the registration page.
-    */
+The user is then checked in DataFed and, if present redirected to the main page; otherwise, sent to
+the registration page.
+*/
 
     g_globus_auth.code.getToken(a_req.originalUrl).then(
         function (client_token) {
@@ -621,6 +634,7 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                     } catch (err) {
                                         redirect_path = "/ui/error";
                                         logger.error("/ui/authn", getCurrentLineNumber(), err);
+                                        delete a_req.session.collection_id;
                                     }
 
                                     // TODO Account may be disable from SDMS (active = false)
@@ -1541,6 +1555,21 @@ app.post("/api/cat/search", (a_req, a_resp) => {
     sendMessage("CatalogSearchRequest", a_req.body, a_req, a_resp, function (reply) {
         a_resp.send(reply);
     });
+});
+
+app.get("/api/globus/consent_url", storeCollectionId, (a_req, a_resp) => {
+    const { requested_scopes, state, refresh_tokens, query_params } = a_req.query;
+
+    const consent_url = generateConsentURL(
+        g_oauth_credentials.clientId,
+        g_oauth_credentials.redirectUri,
+        refresh_tokens,
+        requested_scopes,
+        query_params,
+        state,
+    );
+
+    a_resp.json({ consent_url });
 });
 
 app.post("/api/col/pub/search/data", (a_req, a_resp) => {
