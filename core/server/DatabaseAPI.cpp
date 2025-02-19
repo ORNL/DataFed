@@ -3122,29 +3122,38 @@ void DatabaseAPI::taskInitDataGet(const Auth::DataGetRequest &a_request,
                                   Auth::DataGetReply &a_reply,
                                   libjson::Value &a_result,
                                   LogContext log_context) {
-  string body = "{\"id\":[";
+  // string body = "{\"id\":[";
+  nlohmann::json payload;
 
+  nlohmann::json ids = nlohmann::json::array();
   for (int i = 0; i < a_request.id_size(); i++) {
-    if (i > 0)
-      body += ",";
+    // if (i > 0)
+    //   body += ",";
 
-    body += "\"" + a_request.id(i) + "\"";
+    // body += "\"" + a_request.id(i) + "\"";
+    ids.push_back(a_request.id(i));
   }
-  body += "]";
+  // body += "]";
+  payload["id"] = ids;
 
   if (a_request.has_path())
-    body += ",\"path\":\"" + a_request.path() + "\"";
+    // body += ",\"path\":\"" + a_request.path() + "\"";
+    payload["path"] = a_request.path();
 
   if (a_request.has_encrypt())
-    body += ",\"encrypt\":" + to_string(a_request.encrypt());
+    // body += ",\"encrypt\":" + to_string(a_request.encrypt());
+    payload["encrypt"] = to_string(a_request.encrypt());
 
   if (a_request.has_orig_fname() && a_request.orig_fname())
-    body += ",\"orig_fname\":true";
+    // body += ",\"orig_fname\":true";
+    payload["orig_fname"] = a_request.orig_fname();
 
   if (a_request.has_check() && a_request.check())
-    body += ",\"check\":true";
+    // body += ",\"check\":true";
+    payload["check"] = a_request.check();
 
-  body += "}";
+  // body += "}";
+  string body = payload.dump();
 
   dbPost("dat/get", {}, &body, a_result, log_context);
 
