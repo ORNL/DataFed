@@ -737,6 +737,8 @@ ClientWorker::procDataGetRequest(const std::string &a_uid,
 
   DL_DEBUG(log_context, "procDataGetRequest, uid: " << a_uid);
 
+  if (request->has_collection_id() && request->has_collection_type()) {
+  }
   libjson::Value result;
 
   m_db_client.setClient(a_uid);
@@ -756,27 +758,48 @@ ClientWorker::procDataPutRequest(const std::string &a_uid,
 
   DL_DEBUG(log_context, "procDataPutRequest, uid: " << a_uid);
 
+  m_db_client.setClient(a_uid);
+
+  bool needs_consent;
+
   if (request->has_collection_id() && request->has_collection_type()) {
     // TODO: extract to function
     string access, refresh, collection_id, scopes;
-    bool needs_consent;
     int token_type;
     uint32_t expires_in;
+
     m_db_client.userGetAccessToken(access, refresh, expires_in,
                                    request->collection_id(),
                                    request->collection_type(), needs_consent,
                                    token_type, scopes, log_context);
+
     if (needs_consent) {
-      // TODO: return consent flow
-    }
-    if (expires_in < 300) {
-      // TODO: refresh and catch error to flag needs_consent
+      // short circuit to reply
+    } else if (expires_in < 300) {
+      DL_INFO(log_context, "Refreshing access token for " << a_uid);
+      if (token_type == AccessTokenType::GLOBUS_DEFAULT) {
+        m_globus_api.refreshAccessToken(refresh, access, expires_in);
+        m_db_client.userSetAccessToken(access, expires_in, refresh,
+                                       log_context);
+      } else {
+        try {
+          m_globus_api.refreshAccessToken(refresh, access, expires_in);
+          m_db_client.userSetAccessToken(
+              access, expires_in, refresh, (AccessTokenType)token_type,
+              collection_id + "|" + scopes, log_context);
+        } catch (
+            TraceException &e) { // NOTE: assumes refresh failed (invalid or
+                                 // failure). new token fetched will upsert
+                                 // and overwrite old values on database
+          needs_consent = true;
+        }
+      }
     }
   }
 
+  // TODO: react to needs_consent
   libjson::Value result;
 
-  m_db_client.setClient(a_uid);
   m_db_client.taskInitDataPut(*request, reply, result, log_context);
   handleTaskResponse(result, log_context);
 
