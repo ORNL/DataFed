@@ -756,6 +756,24 @@ ClientWorker::procDataPutRequest(const std::string &a_uid,
 
   DL_DEBUG(log_context, "procDataPutRequest, uid: " << a_uid);
 
+  if (request->has_collection_id() && request->has_collection_type()) {
+    // TODO: extract to function
+    string access, refresh, collection_id, scopes;
+    bool needs_consent;
+    int token_type;
+    uint32_t expires_in;
+    m_db_client.userGetAccessToken(access, refresh, expires_in,
+                                   request->collection_id(),
+                                   request->collection_type(), needs_consent,
+                                   token_type, scopes, log_context);
+    if (needs_consent) {
+      // TODO: return consent flow
+    }
+    if (expires_in < 300) {
+      // TODO: refresh and catch error to flag needs_consent
+    }
+  }
+
   libjson::Value result;
 
   m_db_client.setClient(a_uid);
