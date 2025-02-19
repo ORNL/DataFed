@@ -95,7 +95,8 @@ void TaskWorker::workerThread(LogContext log_context) {
 
         cmd = (uint32_t)obj.getNumber("cmd");
 
-        const Value &params = obj.getValue("params");
+        const Value &params =
+            obj.getValue("params"); // TODO: params object will contain token
 
         if (obj.has("step")) {
           step = obj.asNumber();
@@ -216,7 +217,8 @@ TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
     DL_DEBUG(log_context, "Refreshing access token for "
                               << uid << " (expires in " << expires_in << ")");
 
-    me.m_glob.refreshAccessToken(ref_tok, acc_tok, expires_in);
+    me.m_glob.refreshAccessToken(
+        ref_tok, acc_tok, expires_in); // TODO: same logic changes for get
     me.m_db.setClient(uid);
     me.m_db.userSetAccessToken(acc_tok, expires_in, ref_tok, log_context);
   }

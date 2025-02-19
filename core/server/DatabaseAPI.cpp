@@ -12,6 +12,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
 #include <google/protobuf/util/json_util.h>
+#include <nlohmann/json.hpp>
 #include <zmq.h>
 
 // Standard includes
@@ -3185,28 +3186,36 @@ void DatabaseAPI::taskInitDataPut(const Auth::DataPutRequest &a_request,
                                   Auth::DataPutReply &a_reply,
                                   libjson::Value &a_result,
                                   LogContext log_context) {
-  string body = "{\"id\":[\"" + a_request.id() + "\"]";
+  nlohmann::json payload;
+  // string body = "{\"id\":[\"" + a_request.id() + "\"]";
+  payload["id"] =
+      nlohmann::json::array({a_request.id()}); // why is this an array?
 
   if (a_request.has_path())
-    body += ",\"path\":\"" + a_request.path() + "\"";
+    // body += ",\"path\":\"" + a_request.path() + "\"";
+    payload["path"] = a_request.path();
 
   if (a_request.has_encrypt())
-    body += ",\"encrypt\":" + to_string(a_request.encrypt());
+    // body += ",\"encrypt\":" + to_string(a_request.encrypt());
+    payload["encrypt"] = to_string(a_request.encrypt());
 
   if (a_request.has_ext())
-    body += ",\"ext\":\"" + a_request.ext() + "\"";
+    // body += ",\"ext\":\"" + a_request.ext() + "\"";
+    payload["ext"] = a_request.ext();
 
   if (a_request.has_check() && a_request.check())
-    body += ",\"check\":true";
+    // body += ",\"check\":true";
+    payload["check"] = a_request.check();
 
   if (a_request.has_collection_id()) {
-    body += ",\"collection_id\":\"" + a_request.collection_id() + "\"";
+    payload["collection_id"] = a_request.collection_id();
   }
   if (a_request.has_collection_type()) {
-    body += ",\"collection_type\":\"" + a_request.collection_type() + "\"";
+    payload["collection_type"] = a_request.collection_type();
   }
 
-  body += "}";
+  // body += "}";
+  string body = payload.dump();
 
   dbPost("dat/put", {}, &body, a_result, log_context);
 
