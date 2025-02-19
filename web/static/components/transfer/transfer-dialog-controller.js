@@ -28,6 +28,16 @@ export class TransferDialogController {
         this.services = services;
     }
 
+    saveCache() {
+        const state = {
+            mode: this.model.mode,
+            ids: this.ids,
+            callback: this.callback,
+        };
+        sessionStorage.setItem("transferDialogState", JSON.stringify(state));
+        sessionStorage.setItem("resumeFlow", true);
+    }
+
     show() {
         try {
             this.uiManager.initializeComponents();

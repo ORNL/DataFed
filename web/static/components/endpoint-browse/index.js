@@ -40,12 +40,22 @@ class EndpointBrowser {
      * @param {Function} props.services.api.getGlobusConsentURL - Globus authorization URL function
      */
     constructor(props) {
-        this.props = props;
+        const cachedComponentData = this.loadCache();
+        this.props = cachedComponentData?.props || props;
         this.state = {
-            path: props.path,
+            path: cachedComponentData?.state?.path || props.path,
             loading: false,
             timer: null,
         };
+    }
+
+    /**
+     * Save component state to cache
+     * @returns {object | null} The cached component data
+     */
+    loadCache() {
+        const data = sessionStorage.getItem("endpointBrowserState");
+        return data ? JSON.parse(data) : null;
     }
 
     pathNavigator() {
@@ -164,11 +174,11 @@ class EndpointBrowser {
      */
     isValidSelection(node) {
         const isDir = node?.data?.is_dir;
-        const notUp = node?.key !== CONFIG.PATH.UP;
-        return (
-            ((isDir && this.props.mode === "dir") || (!isDir && this.props.mode === "file")) &&
-            notUp
-        );
+        const notUpDirInput = node?.key !== CONFIG.PATH.UP;
+        const dirMode = isDir && this.props.mode === "dir";
+        const fileMode = !isDir && this.props.mode === "file";
+
+        return (dirMode || fileMode) && notUpDirInput;
     }
 
     /**
@@ -289,6 +299,13 @@ class EndpointBrowser {
         let title = "";
 
         if (error instanceof ApiError && error.code === "ConsentRequired") {
+            // Save state only when consent is required to restore it later
+            // We only need the path
+            sessionStorage.setItem(
+                "endpointBrowserState",
+                JSON.stringify(this.state.path, this.props),
+            );
+            // Generate consent URL
             const data = await new Promise((resolve) => {
                 api.getGlobusConsentURL(
                     (_, data) => resolve(data),

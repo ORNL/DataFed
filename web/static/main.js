@@ -3,6 +3,7 @@ import * as util from "/util.js";
 import * as api from "/api.js";
 import * as settings from "/settings.js";
 import * as dialogs from "/dialogs.js";
+import { TransferDialogController } from "./components/transfer/transfer-dialog-controller.js";
 
 $(".btn-help").on("click", function () {
     window.open("https://ornl.github.io/DataFed/", "datafed-docs");
@@ -42,6 +43,7 @@ $(document).ready(function () {
     }
 
     resizeUI();
+    resumeTransferFlow();
 
     api.userView(tmpl_data.user_uid, true, function (ok, user) {
         if (ok && user) {
@@ -67,3 +69,28 @@ $(document).ready(function () {
         }
     });
 });
+
+/**
+ * Resumes the transfer flow if the 'resumeFlow' flag is set in sessionStorage.
+ * Retrieves the saved state from sessionStorage and initializes the TransferDialogController
+ * with the saved state values. Removes the 'resumeFlow' flag from sessionStorage after resuming.
+ */
+const resumeTransferFlow = () => {
+    const resumeFlow = sessionStorage.getItem("resumeFlow");
+    if (resumeFlow === "true") {
+        const savedState = sessionStorage.getItem("transferDialogState");
+        if (savedState) {
+            const state = JSON.parse(savedState);
+
+            const transferDialogController = new TransferDialogController(
+                state.mode,
+                state.ids,
+                state.callback,
+            );
+
+            transferDialogController.show();
+        }
+
+        sessionStorage.removeItem("resumeFlow");
+    }
+};

@@ -27,12 +27,27 @@ export class TransferUIManager {
         this.api = services.api; // Dependency injection
         this.dialogs = services.dialogs; // Dependency injection
 
+        this.cachedComponentData = this.loadCache();
+
         this.inputTimer = null;
-        this.state = {
+        this.state = this.cachedComponentData?.state || {
             recordTree: null,
             frame: null,
             encryptRadios: null,
         };
+    }
+
+    /**
+     * Save component state to cache
+     * @returns {object | null} The cached component data
+     */
+    loadCache() {
+        const data = sessionStorage.getItem("transferDialogUIState");
+        return data ? JSON.parse(data) : null;
+    }
+
+    saveCache() {
+        sessionStorage.setItem("transferDialogUIState", this.state);
     }
 
     /**
@@ -106,58 +121,83 @@ export class TransferUIManager {
         const pathInput = $("#path", this.state.frame);
         inputTheme(pathInput);
 
+        /**
+         * Set initial value from cached state if available.
+         * If there were multiple endpoints, the first one is selected and the rest are ignored
+         */
+        this.cachedComponentData &&
+            this.#controller.endpointManager.handlePathInput(
+                this.#controller.endpointManager.state.currentSearchToken,
+            );
+
+        /**
+         * Adds an input event listener to the path input element.
+         * Clears any existing input timer, increments the current search token,
+         * and sets a new input timer to handle the path input after a delay of 250ms.
+         */
         pathInput.on("input", () => {
             clearTimeout(this.inputTimer);
-            this.#controller.endpointManager.currentSearchToken = ++this.#controller.endpointManager
-                .searchTokenIterator;
+            this.#controller.endpointManager.state.currentSearchToken = ++this.#controller
+                .endpointManager.state.searchTokenIterator;
 
             this.inputTimer = setTimeout(() => {
                 this.#controller.endpointManager.handlePathInput(
-                    this.#controller.endpointManager.currentSearchToken,
+                    this.#controller.endpointManager.state.currentSearchToken,
                 );
             }, 250);
         });
 
+        /**
+         * If there are recent endpoints, set the path input value to the first recent endpoint,
+         * select the input, and initialize autocomplete with the recent endpoints.
+         * Also, handle the path input immediately with the current search token.
+         */
         if (ep_recent.length) {
             pathInput.val(ep_recent[0]);
             pathInput.select();
             pathInput.autocomplete({
                 source: ep_recent,
                 select: () => {
-                    this.#controller.endpointManager.currentSearchToken = ++this.#controller
+                    this.#controller.endpointManager.state.currentSearchToken = ++this.#controller
                         .endpointManager.searchTokenIterator;
                     this.#controller.endpointManager.handlePathInput(
-                        this.#controller.endpointManager.currentSearchToken,
+                        this.#controller.endpointManager.state.currentSearchToken,
                     );
                     return true;
                 },
             });
             this.#controller.endpointManager.handlePathInput(
-                this.#controller.endpointManager.currentSearchToken,
+                this.#controller.endpointManager.state.currentSearchToken,
             );
         }
     }
 
     initializeBrowseButton() {
+        const pathInput = $("#path", this.state.frame);
+
+        if (this.cachedComponentData) {
+            this.showBrowseDialog(pathInput);
+        }
+
         $("#browse", this.state.frame).on("click", () => {
-            if (!this.#controller.endpointManager.currentEndpoint) {
-                return;
+            if (this.#controller.endpointManager.state.currentEndpoint) {
+                this.showBrowseDialog(pathInput);
             }
+        });
+    }
 
-            const pathInput = $("#path", this.state.frame);
-            let browsePath = this.getBrowsePath(pathInput.val());
+    showBrowseDialog(pathInput) {
+        const browsePath = this.getBrowsePath(pathInput.val());
+        const mode = this.#controller.model.mode === TransferMode.TT_DATA_GET ? "dir" : "file";
+        // On dialog view, cache necessary data for view reconstruction
+        this.saveCache();
+        this.#controller.endpointManager.saveCache();
+        this.#controller.saveCache();
 
-            show(
-                this.#controller.endpointManager.currentEndpoint,
-                browsePath,
-                this.#controller.model.mode === TransferMode.TT_DATA_GET ? "dir" : "file",
-                (selectedPath) => {
-                    const fullPath =
-                        this.#controller.endpointManager.currentEndpoint.name + selectedPath;
-                    pathInput.val(fullPath);
-                    this.enableStartButton(true);
-                },
-            );
+        show(this.#controller.endpointManager.currentEndpoint, browsePath, mode, (selectedPath) => {
+            const fullPath = this.#controller.endpointManager.currentEndpoint.name + selectedPath;
+            pathInput.val(fullPath);
+            this.enableStartButton(true);
         });
     }
 
@@ -253,7 +293,7 @@ export class TransferUIManager {
      * @param {string} data.id - The endpoint ID
      */
     handleSelectedEndpoint(data) {
-        this.#controller.endpointManager.currentEndpoint = {
+        this.#controller.endpointManager.state.currentEndpoint = {
             ...data,
             name: data.canonical_name || data.id,
         };
@@ -262,13 +302,15 @@ export class TransferUIManager {
         const currentPath = pathInput.val();
         if (
             !currentPath ||
-            !currentPath.startsWith(this.#controller.endpointManager.currentEndpoint.name)
+            !currentPath.startsWith(this.#controller.endpointManager.state.currentEndpoint.name)
         ) {
-            const newPath = this.getDefaultPath(this.#controller.endpointManager.currentEndpoint);
+            const newPath = this.getDefaultPath(
+                this.#controller.endpointManager.state.currentEndpoint,
+            );
             pathInput.val(newPath);
         }
 
-        const endpoint = this.#controller.endpointManager.currentEndpoint;
+        const endpoint = this.#controller.endpointManager.state.currentEndpoint;
         const matches = $("#matches", this.state.frame);
         matches.html(
             createMatchesHtml([
@@ -287,7 +329,7 @@ export class TransferUIManager {
     updateEndpointOptions(endpoint) {
         if (
             !endpoint ||
-            !this.#controller.endpointManager.initialized ||
+            !this.#controller.endpointManager.state.initialized ||
             !this.state.encryptRadios
         ) {
             console.warn("Cannot update endpoint options - not ready");
@@ -333,7 +375,9 @@ export class TransferUIManager {
      * @returns {string} The formatted browse path
      */
     getBrowsePath(currentPath) {
-        const defaultedPath = this.getDefaultPath(this.#controller.endpointManager.currentEndpoint);
+        const defaultedPath = this.getDefaultPath(
+            this.#controller.endpointManager.state.currentEndpoint,
+        );
         const delimiter = currentPath.indexOf("/");
 
         // If no delimiter, return default path based on current endpoint
@@ -502,19 +546,19 @@ export class TransferUIManager {
             return;
         }
 
-        const endpoints = this.#controller.endpointManager.endpointManagerList;
+        const endpoints = this.#controller.endpointManager.state.endpointManagerList;
         if (!endpoints?.length) {
             return;
         }
 
-        const endpoint = this.#controller.endpointManager.endpointManagerList[selectedIndex];
+        const endpoint = this.#controller.endpointManager.state.endpointManagerList[selectedIndex];
         if (!endpoint || !endpoint.id) {
             console.warn("Invalid endpoint data:", endpoint);
             return;
         }
 
         // Set endpoint list to selected endpoint once we validate it
-        this.#controller.endpointManager.endpointManagerList = endpoint;
+        this.#controller.endpointManager.state.endpointManagerList = endpoint;
         try {
             const data = await new Promise((resolve, reject) => {
                 this.api.epView(endpoint.id, (ok, data) => {
