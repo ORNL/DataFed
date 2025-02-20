@@ -3510,7 +3510,7 @@ void DatabaseAPI::taskUpdate(const std::string &a_id, LogContext log_context,
   }
 
   if (a_progress) {
-    payload["progress"] =  to_string(*a_progress);
+    payload["progress"] = to_string(*a_progress);
   }
 
   if (a_state) {
@@ -3593,7 +3593,6 @@ void DatabaseAPI::metricsUpdateMsgCounts(
   nlohmann::json payload;
   payload["timestamp"] = to_string(a_timestamp);
   payload["total"] = to_string(a_total);
-  
 
   nlohmann::json uids;
   for (u = a_metrics.begin(); u != a_metrics.end(); ++u) {
@@ -3606,7 +3605,7 @@ void DatabaseAPI::metricsUpdateMsgCounts(
       }
     }
     uid_body["msg"] = uid_msg;
-    
+
     uids[u->first] = uid_body;
   }
 
@@ -3629,7 +3628,7 @@ void DatabaseAPI::metricsUpdateMsgCounts(
           first_of_tuple[1]: ...
         }
       }
-    
+
     new format:
       {
         timestamp: ..,
@@ -3641,7 +3640,7 @@ void DatabaseAPI::metricsUpdateMsgCounts(
               second_of_tuple[0]_tuple_0: second_of_tuple[0]_tuple_1,
               second_of_tuple[1]_tuple_0: second_of_tuple[1]_tuple_1,
             }
-          } 
+          }
         }
       }
   */
