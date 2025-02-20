@@ -3272,24 +3272,21 @@ void DatabaseAPI::taskInitRecordOwnerChange(
     const Auth::RecordOwnerChangeRequest &a_request,
     Auth::RecordOwnerChangeReply &a_reply, libjson::Value &a_result,
     LogContext log_context) {
-  // TODO: json serialization
   string body = "{\"ids\":[";
-
+  nlohmann::json payload;
+  nlohmann::json ids = nlohmann::json::array();
   for (int i = 0; i < a_request.id_size(); i++) {
-    if (i > 0)
-      body += ",";
-
-    body += "\"" + a_request.id(i) + "\"";
+    ids.push_back(a_request.id(i));
   }
-  body += "],\"coll_id\":\"" + a_request.coll_id() + "\"";
+  payload["ids"] = ids;
+  payload["coll_id"] = a_request.coll_id();
   if (a_request.has_repo_id())
-    body += ",\"repo_id\":\"" + a_request.repo_id() + "\"";
+    payload["repo_id"] = a_request.repo_id();
   // if ( a_request.has_proj_id() )
   //    body += string(",\"proj_id\":\"") + a_request.proj_id() + "\"";
   if (a_request.has_check())
-    body +=
-        string(",\"check\":\"") + (a_request.check() ? "true" : "false") + "\"";
-  body += "}";
+    payload["check"] = a_request.check();
+  string body = payload.dump();
 
   dbPost("dat/owner_chg", {}, &body, a_result, log_context);
 
@@ -3318,16 +3315,15 @@ void DatabaseAPI::taskInitRecordOwnerChange(
 void DatabaseAPI::taskInitProjectDelete(
     const Auth::ProjectDeleteRequest &a_request, Auth::TaskDataReply &a_reply,
     libjson::Value &a_result, LogContext log_context) {
-  // TODO: json serialization
-  string body = "{\"ids\":[";
+  nlohmann::json payload;
+  nlohmann::json ids = nlohmann::json::array();
 
   for (int i = 0; i < a_request.id_size(); i++) {
-    if (i > 0)
-      body += ",";
-
-    body += "\"" + a_request.id(i) + "\"";
+    ids.push_back(a_request.id(i));
   }
-  body += "]}";
+  payload["ids"] = ids;
+
+  string body = payload.dump();
 
   dbPost("prj/delete", {}, &body, a_result, log_context);
 
@@ -3503,32 +3499,24 @@ void DatabaseAPI::taskUpdate(const std::string &a_id, LogContext log_context,
   if (!a_status && !a_progress && !a_state)
     return;
 
-  // TODO: json serialization
-  string body = "{";
-  string delim = "";
+  nlohmann::json payload;
 
   if (a_status) {
-    body += "\"status\":" + to_string(*a_status);
-    delim = ",";
+    payload["status"] = to_string(*a_status);
   }
 
   if (a_message) {
-    body += delim + "\"message\":\"" + *a_message + "\"";
-    if (!delim.size())
-      delim = ",";
+    payload["message"] = *a_message;
   }
 
   if (a_progress) {
-    body += delim + "\"progress\":" + to_string(*a_progress);
-    if (!delim.size())
-      delim = ",";
+    payload["progress"] =  to_string(*a_progress);
   }
 
   if (a_state) {
-    body += delim + "\"state\":" + a_state->toString();
+    payload["state"] = a_state->toString();
   }
-
-  body += "}";
+  string body = payload.dump();
 
   Value result;
   dbPost("task/update", {{"task_id", a_id}}, &body, result, log_context);
@@ -3602,34 +3590,61 @@ void DatabaseAPI::metricsUpdateMsgCounts(
     LogContext log_context) {
   map<string, std::map<uint16_t, uint32_t>>::const_iterator u;
   map<uint16_t, uint32_t>::const_iterator m;
-  // TODO: json serialization
-  string body = "{\"timestamp\":" + to_string(a_timestamp) +
-                ",\"total\":" + to_string(a_total) + ",\"uids\":{";
-  bool c = false, cc;
+  nlohmann::json payload;
+  payload["timestamp"] = to_string(a_timestamp);
+  payload["total"] = to_string(a_total);
+  
 
+  nlohmann::json uids;
   for (u = a_metrics.begin(); u != a_metrics.end(); ++u) {
-    if (c)
-      body += ",";
-    else
-      c = true;
-
-    body += "\"" + u->first + "\":{\"tot\":" + to_string(u->second.at(0)) +
-            ",\"msg\":{";
-
-    for (cc = false, m = u->second.begin(); m != u->second.end(); ++m) {
+    nlohmann::json uid_body;
+    uid_body["tot"] = to_string(u->second.at(0));
+    nlohmann::json uid_msg;
+    for (m = u->second.begin(); m != u->second.end(); ++m) {
       if (m->first != 0) {
-        if (cc)
-          body += ",";
-        else
-          cc = true;
-
-        body += "\"" + to_string(m->first) + "\":" + to_string(m->second);
+        uid_msg[to_string(m->first)] = to_string(m->second);
       }
     }
-    body += "}}";
+    uid_body["msg"] = uid_msg;
+    
+    uids[u->first] = uid_body;
   }
 
-  body += "}}";
+  payload["uids"] = uids;
+  string body = payload.dump();
+  /* TODO: verify formatting
+  old format:
+      {
+        timestamp: ..,
+        total: ..,
+        uids: {
+          first_of_tuple[0]: {
+            tot: second_of_tuple[0],
+            msg: {
+              second_of_tuple[0]_tuple_0: second_of_tuple[0]_tuple_1,
+              second_of_tuple[1]_tuple_0: second_of_tuple[1]_tuple_1,
+              ...
+            }
+          }
+          first_of_tuple[1]: ...
+        }
+      }
+    
+    new format:
+      {
+        timestamp: ..,
+        total: ..,
+        uids: {
+          first_of_tuple[0]: {
+            tot: second_of_tuple[0],
+            msg: {
+              second_of_tuple[0]_tuple_0: second_of_tuple[0]_tuple_1,
+              second_of_tuple[1]_tuple_0: second_of_tuple[1]_tuple_1,
+            }
+          } 
+        }
+      }
+  */
 
   libjson::Value result;
 
