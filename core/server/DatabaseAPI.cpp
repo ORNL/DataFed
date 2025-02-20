@@ -1062,18 +1062,12 @@ void DatabaseAPI::recordExport(const Auth::RecordExportRequest &a_request,
                                LogContext log_context) {
   Value result;
 
-  // TODO: json serialization
   nlohmann::json payload;
-  // string body = "{\"id\":[";
-  nlohmann::json admins = nlohmann::json::array();
+  nlohmann::json ids = nlohmann::json::array();
   for (int i = 0; i < a_request.id_size(); i++) {
-    // if (i > 0)
-    // body += ",";
-    // body += "\"" + a_request.id(i) + "\"";
-    admins.push_back(a_request.id(i));
+    ids.push_back(a_request.id(i));
   }
-  payload["admins"] = admins;
-  // body += "]}";
+  payload["id"] = ids;
 
   string body = payload.dump();
 
@@ -1322,41 +1316,29 @@ void DatabaseAPI::collCreate(const Auth::CollCreateRequest &a_request,
                              Auth::CollDataReply &a_reply,
                              LogContext log_context) {
   Value result;
-  // TODO: json serialization
   nlohmann::json payload;
 
   payload["title"] = escapeJSON(a_request.title());
-  // string body = "{\"title\":\"" + escapeJSON(a_request.title()) + "\"";
 
   if (a_request.has_desc())
     payload["desc"] = escapeJSON(a_request.desc());
-  // body += ",\"desc\":\"" + escapeJSON(a_request.desc()) + "\"";
 
   if (a_request.has_alias())
     payload["alias"] = a_request.alias();
-  // body += ",\"alias\":\"" + a_request.alias() + "\"";
 
   if (a_request.has_parent_id())
     payload["parent"] = a_request.parent_id();
-  // body += ",\"parent\":\"" + a_request.parent_id() + "\"";
 
   if (a_request.has_topic())
     payload["topic"] = escapeJSON(a_request.topic());
-  // body += ",\"topic\":\"" + escapeJSON(a_request.topic()) + "\"";
 
   if (a_request.tags_size()) {
     nlohmann::json tags = nlohmann::json::array();
-    // body += ",\"tags\":[";
     for (int i = 0; i < a_request.tags_size(); i++) {
-      // if (i)
-      // body += ",";
       tags.push_back(a_request.tags(i));
-      // body += "\"" + a_request.tags(i) + "\"";
-      // body += "]";
     }
     payload["tags"] = tags;
   }
-  // body += "}";
 
   string body = payload.dump();
   dbPost("col/create", {}, &body, result, log_context);
@@ -1368,44 +1350,29 @@ void DatabaseAPI::collUpdate(const Auth::CollUpdateRequest &a_request,
                              Auth::CollDataReply &a_reply,
                              LogContext log_context) {
   Value result;
-  // TODO: json serialization
   nlohmann::json payload;
-  // string body = "{\"id\":\"" + a_request.id() + "\"";
   payload["id"] = a_request.id();
   if (a_request.has_title())
     payload["title"] = escapeJSON(a_request.title());
-  // body += ",\"title\":\"" + escapeJSON(a_request.title()) + "\"";
 
   if (a_request.has_desc())
     payload["desc"] = escapeJSON(a_request.desc());
-  // body += ",\"desc\":\"" + escapeJSON(a_request.desc()) + "\"";
 
   if (a_request.has_alias())
     payload["alias"] = a_request.alias();
-  // body += ",\"alias\":\"" + a_request.alias() + "\"";
 
   if (a_request.has_topic())
     payload["topic"] = escapeJSON(a_request.topic());
-  // body += ",\"topic\":\"" + escapeJSON(a_request.topic()) + "\"";
 
   if (a_request.has_tags_clear() && a_request.tags_clear()) {
-    payload["tags_clear"] = true;
-    // body += ",\"tags_clear\":true";
+    payload["tags_clear"] = a_request.tags_clear();
   } else if (a_request.tags_size()) {
-
     nlohmann::json tags = nlohmann::json::array();
-    // body += ",\"tags\":[";
     for (int i = 0; i < a_request.tags_size(); i++) {
-      // if (i)
-      // body += ",";
-      // body += "\"" + a_request.tags(i) + "\"";
       tags.push_back(a_request.tags(i));
     }
     payload["tags"] = tags;
-    // body += "]";
   }
-
-  // body += "}";
 
   string body = payload.dump();
   dbPost("col/update", {}, &body, result, log_context);
@@ -2187,7 +2154,6 @@ void DatabaseAPI::repoCreate(const Auth::RepoCreateRequest &a_request,
                              Auth::RepoDataReply &a_reply,
                              LogContext log_context) {
   Value result;
-  // TODO: json serialization
 
   nlohmann::json payload;
   payload["id"] = a_request.id();
@@ -2198,37 +2164,20 @@ void DatabaseAPI::repoCreate(const Auth::RepoCreateRequest &a_request,
   payload["endpoint"] = a_request.endpoint();
   payload["capacity"] = to_string(a_request.capacity());
 
-  /*  string body = "{\"id\":\"" + a_request.id() + "\"";
-  body += ",\"title\":\"" + escapeJSON(a_request.title()v) + "\"";
-  body += ",\"path\":\"" + escapeJSON(a_request.path()) + "\"";
-  body += ",\"pub_key\":\"" + escapeJSON(a_request.pub_key()) + "\"";
-  body += ",\"address\":\"" + a_request.address() + "\"";
-  body += ",\"endpoint\":\"" + a_request.endpoint() + "\"";
-  body += ",\"capacity\":\"" + to_string(a_request.capacity()) + "\"";
-*/
-
   if (a_request.has_desc())
     payload["desc"] = escapeJSON(a_request.desc());
-  // body += ",\"desc\":\"" + escapeJSON(a_request.desc()) + "\"";
   if (a_request.has_domain())
     payload["domain"] = a_request.domain();
-  // body += ",\"domain\":\"" + a_request.domain() + "\"";
   if (a_request.has_exp_path())
     payload["exp_path"] = escapeJSON(a_request.exp_path());
-  // body += ",\"exp_path\":\"" + escapeJSON(a_request.exp_path()) + "\"";
-  if (a_request.admin_size() > 0) { // FLAG HERE - CHECK HOW TO GO ABOUT THIS
+  if (a_request.admin_size() > 0) {
     nlohmann::json admins = nlohmann::json::array();
-    // body += ",\"admins\":[";
     for (int i = 0; i < a_request.admin_size(); ++i) {
-      // if (i > 0)
-      // body += ",";
       admins.push_back(a_request.admin(i));
-      // body += "\"" + a_request.admin(i) + "\"";
     }
-    // body += "]";
     payload["admins"] = admins;
   }
-  // body += "}";
+
   string body = payload.dump();
   dbPost("repo/create", {}, &body, result, log_context);
 
@@ -2240,51 +2189,34 @@ void DatabaseAPI::repoUpdate(const Auth::RepoUpdateRequest &a_request,
                              Auth::RepoDataReply &a_reply,
                              LogContext log_context) {
   Value result;
-  // TODO: json serialization
   nlohmann::json payload;
   payload["id"] = a_request.id();
 
-  // string body = "{\"id\":\"" + a_request.id() + "\"";
   if (a_request.has_title())
     payload["title"] = escapeJSON(a_request.title());
-  // body += ",\"title\":\"" + escapeJSON(a_request.title()) + "\"";
   if (a_request.has_desc())
     payload["desc"] = escapeJSON(a_request.desc());
-  // body += ",\"desc\":\"" + escapeJSON(a_request.desc()) + "\"";
   if (a_request.has_path())
     payload["path"] = escapeJSON(a_request.path());
-  // body += ",\"path\":\"" + escapeJSON(a_request.path()) + "\"";
   if (a_request.has_exp_path())
     payload["exp_path"] = escapeJSON(a_request.exp_path());
-  // body += ",\"exp_path\":\"" + escapeJSON(a_request.exp_path()) + "\"";
   if (a_request.has_domain())
     payload["domain"] = a_request.domain();
-  // body += ",\"domain\":\"" + a_request.domain() + "\"";
   if (a_request.has_pub_key())
     payload["pub_key"] = escapeJSON(a_request.pub_key());
-  // body += ",\"pub_key\":\"" + escapeJSON(a_request.pub_key()) + "\"";
   if (a_request.has_address())
     payload["address"] = a_request.address();
-  // body += ",\"address\":\"" + a_request.address() + "\"";
   if (a_request.has_endpoint())
     payload["endpoint"] = a_request.endpoint();
-  // body += ",\"endpoint\":\"" + a_request.endpoint() + "\"";
   if (a_request.has_capacity())
     payload["capacity"] = to_string(a_request.capacity());
-  // body += ",\"capacity\":\"" + to_string(a_request.capacity()) + "\"";
   if (a_request.admin_size() > 0) {
-    // body += ",\"admins\":[";
     nlohmann::json admins = nlohmann::json::array();
     for (int i = 0; i < a_request.admin_size(); ++i) {
-      // if (i > 0)
-      // body += ",";
-      // body += "\"" + a_request.admin(i) + "\"";
       admins.push_back(a_request.admin(i));
     }
-    // body += "]";
     payload["admins"] = admins;
   }
-  // body += "}";
   string body = payload.dump();
   dbPost("repo/update", {}, &body, result, log_context);
 
@@ -2945,7 +2877,6 @@ void DatabaseAPI::schemaView(const Auth::SchemaViewRequest &a_request,
 void DatabaseAPI::schemaCreate(const Auth::SchemaCreateRequest &a_request,
                                LogContext log_context) {
   libjson::Value result;
-  // TODO: json serialization
 
   nlohmann::json payload;
 
@@ -2956,66 +2887,30 @@ void DatabaseAPI::schemaCreate(const Auth::SchemaCreateRequest &a_request,
   payload["def"] = a_request.def();
   string body = payload.dump();
 
-  /*
-  string body = "{\"id\":\"";
-  body.append(a_request.id());
-  body.append("\",\"desc\":\"");
-  body.append(escapeJSON(a_request.desc()));
-  body.append("\",\"pub\":");
-  body.append(a_request.pub() ? "true" : "false");
-  body.append(",\"sys\":");
-  body.append(a_request.sys() ? "true" : "false");
-  body.append(",\"def\":");
-  body.append(a_request.def());
-  body.append("}");
-*/
-
   dbPost("schema/create", {}, &body, result, log_context);
 }
 
 void DatabaseAPI::schemaRevise(const Auth::SchemaReviseRequest &a_request,
                                LogContext log_context) {
   libjson::Value result;
-  // TODO: json serialization
 
-  // string body = "{";
   nlohmann::json payload;
 
   if (a_request.has_desc()) {
-    // body.append("\"desc\":\"");
-    // body.append(a_request.desc());
-    // body.append("\"");
     payload["desc"] = a_request.desc();
   }
 
   if (a_request.has_pub()) {
-    // if (body.size() > 1)
-    // body.append(",");
-
-    // body.append("\"pub\":");
-    // body.append(a_request.pub() ? "true" : "false");
     payload["pub"] = a_request.pub();
   }
 
   if (a_request.has_sys()) {
-    // if (body.size() > 1)
-    // body.append(",");
-
-    // body.append("\"sys\":");
-    // body.append(a_request.sys() ? "true" : "false");
     payload["sys"] = a_request.sys();
   }
 
   if (a_request.has_def()) {
-    // if (body.size() > 1)
-    // body.append(",");
-
-    // body.append("\"def\":");
-    // body.append(a_request.def());
     payload["def"] = a_request.def();
   }
-
-  // body.append("}");
   string body = payload.dump();
 
   dbPost("schema/revise", {{"id", a_request.id()}}, &body, result, log_context);
@@ -3024,58 +2919,27 @@ void DatabaseAPI::schemaRevise(const Auth::SchemaReviseRequest &a_request,
 void DatabaseAPI::schemaUpdate(const Auth::SchemaUpdateRequest &a_request,
                                LogContext log_context) {
   libjson::Value result;
-  // TODO: json serialization
 
-  // string body = "{";
   nlohmann::json payload;
   if (a_request.has_id_new()) {
-    // if (body.size() > 1)
-    // body.append(",");
-
-    // body.append("\"id\":\"");
-    // body.append(a_request.id_new());
-    // body.append("\"");
     payload["id"] = a_request.id_new();
   }
 
   if (a_request.has_desc()) {
-    // if (body.size() > 1)
-    // body.append(",");
-
-    // body.append("\"desc\":\"");
-    // body.append(a_request.desc());
-    // body.append("\"");
     payload["desc"] = a_request.desc();
   }
 
   if (a_request.has_pub()) {
-    // if (body.size() > 1)
-    // body.append(",");
-
-    // body.append("\"pub\":");
-    // body.append(a_request.pub() ? "true" : "false");
     payload["pub"] = a_request.pub();
   }
 
   if (a_request.has_sys()) {
-    // if (body.size() > 1)
-    // body.append(",");
-
-    // body.append("\"sys\":");
-    // body.append(a_request.sys() ? "true" : "false");
     payload["sys"] = a_request.sys();
   }
 
   if (a_request.has_def()) {
-    // if (body.size() > 1)
-    // body.append(",");
-
-    // body.append("\"def\":");
-    // body.append(a_request.def());
     payload["def"] = a_request.def();
   }
-
-  // body.append("}");
   string body = payload.dump();
 
   dbPost("schema/update", {{"id", a_request.id()}}, &body, result, log_context);
@@ -3233,38 +3097,26 @@ void DatabaseAPI::taskInitDataGet(const Auth::DataGetRequest &a_request,
                                   Auth::DataGetReply &a_reply,
                                   libjson::Value &a_result,
                                   LogContext log_context) {
-  // TODO: json serialization
-  // string body = "{\"id\":[";
   nlohmann::json payload;
 
   nlohmann::json ids = nlohmann::json::array();
   for (int i = 0; i < a_request.id_size(); i++) {
-    // if (i > 0)
-    //   body += ",";
-
-    // body += "\"" + a_request.id(i) + "\"";
     ids.push_back(a_request.id(i));
   }
-  // body += "]";
   payload["id"] = ids;
 
   if (a_request.has_path())
-    // body += ",\"path\":\"" + a_request.path() + "\"";
     payload["path"] = a_request.path();
 
   if (a_request.has_encrypt())
-    // body += ",\"encrypt\":" + to_string(a_request.encrypt());
     payload["encrypt"] = to_string(a_request.encrypt());
 
   if (a_request.has_orig_fname() && a_request.orig_fname())
-    // body += ",\"orig_fname\":true";
     payload["orig_fname"] = a_request.orig_fname();
 
   if (a_request.has_check() && a_request.check())
-    // body += ",\"check\":true";
     payload["check"] = a_request.check();
 
-  // body += "}";
   string body = payload.dump();
 
   dbPost("dat/get", {}, &body, a_result, log_context);
@@ -3308,27 +3160,21 @@ void DatabaseAPI::taskInitDataPut(const Auth::DataPutRequest &a_request,
                                   libjson::Value &a_result,
                                   LogContext log_context) {
   nlohmann::json payload;
-  // string body = "{\"id\":[\"" + a_request.id() + "\"]";
   payload["id"] =
       nlohmann::json::array({a_request.id()}); // why is this an array?
 
   if (a_request.has_path())
-    // body += ",\"path\":\"" + a_request.path() + "\"";
     payload["path"] = a_request.path();
 
   if (a_request.has_encrypt())
-    // body += ",\"encrypt\":" + to_string(a_request.encrypt());
     payload["encrypt"] = to_string(a_request.encrypt());
 
   if (a_request.has_ext())
-    // body += ",\"ext\":\"" + a_request.ext() + "\"";
     payload["ext"] = a_request.ext();
 
   if (a_request.has_check() && a_request.check())
-    // body += ",\"check\":true";
     payload["check"] = a_request.check();
 
-  // body += "}";
   string body = payload.dump();
 
   dbPost("dat/put", {}, &body, a_result, log_context);
@@ -3388,22 +3234,19 @@ void DatabaseAPI::taskInitRecordAllocChange(
     const Auth::RecordAllocChangeRequest &a_request,
     Auth::RecordAllocChangeReply &a_reply, libjson::Value &a_result,
     LogContext log_context) {
-  // TODO: json serialization
-  string body = "{\"ids\":[";
-
+  nlohmann::json payload;
+  nlohmann::json ids = nlohmann::json::array();
   for (int i = 0; i < a_request.id_size(); i++) {
-    if (i > 0)
-      body += ",";
-
-    body += "\"" + a_request.id(i) + "\"";
+    ids.push_back(a_request.id(i));
   }
-  body += "],\"repo_id\":\"" + a_request.repo_id() + "\"";
+  payload["ids"] = ids;
+
+  payload["repo_id"] = a_request.repo_id();
   if (a_request.has_proj_id())
-    body += string(",\"proj_id\":\"") + a_request.proj_id() + "\"";
+    payload["proj_id"] = a_request.proj_id();
   if (a_request.has_check())
-    body +=
-        string(",\"check\":\"") + (a_request.check() ? "true" : "false") + "\"";
-  body += "}";
+    payload["check"] = a_request.check();
+  string body = payload.dump();
 
   dbPost("dat/alloc_chg", {}, &body, a_result, log_context);
 
