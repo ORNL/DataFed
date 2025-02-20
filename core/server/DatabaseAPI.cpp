@@ -1003,9 +1003,9 @@ void DatabaseAPI::recordUpdate(const Auth::RecordUpdateRequest &a_request,
     nlohmann::json dep_rem = nlohmann::json::array();
     for (int i = 0; i < a_request.dep_rem_size(); i++) {
       nlohmann::json dep_rem_entry;
-      dep_add_entry["id"] = a_request.dep_rem(i).id();
-      dep_add_entry["type"] = to_string(a_request.dep_rem(i).type());
-      dep_add.push_back(dep_rem_entry);
+      dep_rem_entry["id"] = a_request.dep_rem(i).id();
+      dep_rem_entry["type"] = to_string(a_request.dep_rem(i).type());
+      dep_rem.push_back(dep_rem_entry);
     }
     payload["dep_rem"] = dep_rem;
   }
@@ -1042,7 +1042,7 @@ void DatabaseAPI::recordUpdateSize(const Auth::RepoDataSizeReply &a_size_rep,
   }
   payload["records"] = records;
 
-  sting body = payload.dump();
+  string body = payload.dump();
 
   dbPost("dat/update/size", {}, &body, result, log_context);
 }
@@ -1353,15 +1353,15 @@ void DatabaseAPI::collCreate(const Auth::CollCreateRequest &a_request,
       // body += "\"" + a_request.tags(i) + "\"";
       // body += "]";
     }
-    }
     payload["tags"] = tags;
+  }
     // body += "}";
 
     string body = payload.dump();
     dbPost("col/create", {}, &body, result, log_context);
 
     setCollData(a_reply, result, log_context);
-  }
+}
 
   void DatabaseAPI::collUpdate(const Auth::CollUpdateRequest &a_request,
                                Auth::CollDataReply &a_reply,
