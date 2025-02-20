@@ -896,7 +896,7 @@ void DatabaseAPI::recordCreate(const Auth::RecordCreateRequest &a_request,
     payload["alias"] = a_request.alias();
 
   if (a_request.tags_size()) {
-    nlohmann::json tags = nlohmann:json::array();
+    nlohmann::json tags = nlohmann::json::array();
     for (int i = 0; i < a_request.tags_size(); i++) {
       tags.push_back(a_request.tags(i));
     }
@@ -922,7 +922,6 @@ void DatabaseAPI::recordCreate(const Auth::RecordCreateRequest &a_request,
   if (a_request.has_repo_id())
     payload["repo"] = a_request.repo_id();
   if (a_request.deps_size()) {
-    body += ",\"deps\":[";
     nlohmann::json deps = nlohmann::json::array();
 
     for (int i = 0; i < a_request.deps_size(); i++) {
@@ -955,7 +954,7 @@ void DatabaseAPI::recordCreateBatch(
 void DatabaseAPI::recordUpdate(const Auth::RecordUpdateRequest &a_request,
                                Auth::RecordDataReply &a_reply,
                                libjson::Value &result, LogContext log_context) {
-  nlohmann:json payload;
+  nlohmann::json payload;
   payload["id"] = a_request.id();
   if (a_request.has_title())
     payload["title"] = escapeJSON(a_request.title());
@@ -967,7 +966,7 @@ void DatabaseAPI::recordUpdate(const Auth::RecordUpdateRequest &a_request,
   if (a_request.has_tags_clear() && a_request.tags_clear()) {
     payload["tags_clear"] = a_request.tags_clear();
   } else if (a_request.tags_size()) {
-    nlohmann::json tags = nlohmann:json::array();
+    nlohmann::json tags = nlohmann::json::array();
     for (int i = 0; i < a_request.tags_size(); i++) {
       tags.push_back(a_request.tags(i));
     }
