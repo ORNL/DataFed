@@ -3381,10 +3381,10 @@ void DatabaseAPI::collCreate(const Auth::CollCreateRequest &a_request,
   void DatabaseAPI::taskInitRecordCollectionDelete(
       const std::vector<std::string> &a_ids, TaskDataReply &a_reply,
       libjson::Value &a_result, LogContext log_context) {
-
     nlohmann::json payload;
     payload["ids"] = a_ids;
-    payload.dump();
+    string body = payload.dump();
+
     dbPost("dat/delete", {}, &body, a_result, log_context);
 
     setTaskDataReply(a_reply, a_result, log_context);
