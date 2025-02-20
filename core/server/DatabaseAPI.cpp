@@ -1350,26 +1350,27 @@ void DatabaseAPI::collCreate(const Auth::CollCreateRequest &a_request,
     for (int i = 0; i < a_request.tags_size(); i++) {
       //if (i)
         //body += ",";
-    tags.push_back(a_reqyest.tags(i));
+    tags.push_back(a_request.tags(i));
     //body += "\"" + a_request.tags(i) + "\"";
     //body += "]";
   }
   payload["tags"] = tags;  
   //body += "}";
 
+  string body = payload.dump();
   dbPost("col/create", {}, &body, result, log_context);
 
   setCollData(a_reply, result, log_context);
 }
 
 void DatabaseAPI::collUpdate(const Auth::CollUpdateRequest &a_request,
-                             Auth::CollDataReply &a_reply,
-                             LogContext log_context) {
+        Auth::CollDataReply &a_reply,
+        LogContext log_context){
   Value result;
   // TODO: json serialization
   nlohmann::json payload;
   //string body = "{\"id\":\"" + a_request.id() + "\"";
-
+    payload["id"] = a_request.id();
   if (a_request.has_title())
     payload["title"] = escapeJSON(a_request.title());
     //body += ",\"title\":\"" + escapeJSON(a_request.title()) + "\"";
