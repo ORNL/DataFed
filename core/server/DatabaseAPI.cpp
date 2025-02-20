@@ -886,7 +886,7 @@ void DatabaseAPI::recordCreate(const Auth::RecordCreateRequest &a_request,
                                Auth::RecordDataReply &a_reply,
                                LogContext log_context) {
   Value result;
-  nlohmann:json payload;
+  nlohmann::json payload;
 
   payload["title"] = escapeJSON(a_request.title());
 
