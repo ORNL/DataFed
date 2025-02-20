@@ -90,9 +90,8 @@ export class TransferEndpointManager {
 
                 if (ok && !data.code) {
                     console.info("Direct endpoint match found:", data);
-                    this.#controller.uiManager.updateEndpoint(data);
-                    this.#controller.uiManager.state.endpointOk = true;
-                    this.#controller.uiManager.updateButtonStates();
+                    this.#controller.uiManager.enableBrowseButton(true);
+                    this.#controller.uiManager.handleSelectedEndpoint(data);
                 } else {
                     console.warn("No direct match, trying autocomplete");
                     this.searchEndpointAutocomplete(endpoint, searchToken);
@@ -146,14 +145,17 @@ export class TransferEndpointManager {
             return;
         }
 
+        // TODO What if the path is prepopulated to a dir and the mode is put?
         const pathElement = $("#path", this.#controller.uiManager.state.frame);
         const path = pathElement?.val()?.trim() || "";
 
-        if (!path.length) {
-            console.info("Empty path - disabling endpoint");
+        // No input or set input to empty, reset state
+        if (!path || !path.length) {
             this.endpointManagerList = null;
+            this.currentEndpoint = null;
             this.updateMatchesList([]);
-            this.#controller.uiManager.updateButtonStates();
+            this.#controller.uiManager.enableStartButton(false);
+            this.#controller.uiManager.enableBrowseButton(false);
             return;
         }
 
@@ -165,9 +167,9 @@ export class TransferEndpointManager {
             this.currentEndpoint?.name,
         );
 
-        if (!this.currentEndpoint || endpoint !== this.currentEndpoint.name) {
+        // Edge case: input is just a /. Ideally we have some middleware validation to avoid this
+        if (endpoint && (!this.currentEndpoint || endpoint !== this.currentEndpoint.name)) {
             console.info("Endpoint changed or not set - searching for new endpoint");
-            this.#controller.uiManager.updateButtonStates();
             this.searchEndpoint(endpoint, searchToken);
         }
     }

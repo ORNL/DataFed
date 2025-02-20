@@ -8,6 +8,7 @@
   "version": "@DATAFED_FOXX_API_MAJOR@.@DATAFED_FOXX_API_MINOR@.@DATAFED_FOXX_API_PATCH@",
   "tests": "tests/**/*.js",
   "scripts": {
-    "user-fixture": "tests/user_fixture.js"
+    "user-fixture": "tests/user_fixture.js",
+    "collection-fixture": "tests/globus_collection_fixture.js"
   }
 }

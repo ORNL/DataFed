@@ -1012,6 +1012,27 @@ export function themeSave(a_theme, a_cb) {
     _asyncGet("/ui/theme/save?theme=" + encodeURIComponent(a_theme), null, a_cb);
 }
 
+export function getGlobusConsentURL(
+    a_cb,
+    collection_id,
+    requested_scopes,
+    refresh_tokens = false,
+    query_params = {},
+    state = "_default",
+) {
+    _asyncGet(
+        "/api/globus/consent_url",
+        {
+            collection_id,
+            refresh_tokens,
+            requested_scopes,
+            query_params: JSON.stringify(query_params),
+            state,
+        },
+        a_cb,
+    );
+}
+
 export function taskList_url(a_since) {
     return "/api/task/list" + (a_since != undefined ? "?since=" + a_since : "");
 }

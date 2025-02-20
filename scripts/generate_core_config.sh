@@ -47,8 +47,19 @@ Help()
 }
 
 # Set defaults use environment variables by default
-local_DATAFED_CORE_CLIENT_THREADS=2
-local_DATAFED_CORE_TASK_THREADS=2
+if [ -z "${DATAFED_CORE_CLIENT_THREADS}" ]
+then
+  local_DATAFED_CORE_CLIENT_THREADS="2"
+else
+  local_DATAFED_CORE_CLIENT_THREADS=$(printenv DATAFED_CORE_CLIENT_THREADS)
+fi
+
+if [ -z "${DATAFED_CORE_TASK_THREADS}" ]
+then
+  local_DATAFED_CORE_TASK_THREADS="2"
+else
+  local_DATAFED_CORE_TASK_THREADS=$(printenv DATAFED_CORE_TASK_THREADS)
+fi
 
 if [ -z "${DATAFED_CRED_DIR}" ]
 then

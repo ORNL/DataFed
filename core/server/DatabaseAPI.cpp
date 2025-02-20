@@ -328,12 +328,21 @@ void DatabaseAPI::userClearKeys(LogContext log_context) {
   dbGet("usr/keys/clear", {}, result, log_context);
 }
 
-void DatabaseAPI::userGetAccessToken(std::string &a_acc_tok,
-                                     std::string &a_ref_tok,
-                                     uint32_t &a_expires_in,
-                                     LogContext log_context) {
+void DatabaseAPI::userGetAccessToken(
+    std::string &a_acc_tok, std::string &a_ref_tok, uint32_t &a_expires_in,
+    const std::string collection_id, const std::string collection_type,
+    bool &needs_consent, int &token_type, // TODO: use underlying type?
+    std::string &scopes, LogContext log_context) {
   Value result;
-  dbGet("usr/token/get", {}, result, log_context);
+  std::vector<std::pair<std::string, std::string>> params = {};
+
+  if (!collection_id.empty()) {
+    params.push_back({"collection_id", collection_id});
+  }
+  if (!collection_type.empty()) {
+    params.push_back({"collection_type", collection_type});
+  }
+  dbGet("usr/token/get", params, result, log_context);
 
   TRANSLATE_BEGIN()
 
@@ -342,6 +351,10 @@ void DatabaseAPI::userGetAccessToken(std::string &a_acc_tok,
   a_acc_tok = obj.getString("access");
   a_ref_tok = obj.getString("refresh");
   a_expires_in = (uint32_t)obj.getNumber("expires_in");
+  needs_consent = obj.getBool("needs_consent");
+  token_type = (int)obj.getNumber("token_type");
+  // NOTE: scopes will be a blank string for token_type=GLOBUS_DEFAULT
+  scopes = obj.getString("scopes");
 
   TRANSLATE_END(result, log_context)
 }
