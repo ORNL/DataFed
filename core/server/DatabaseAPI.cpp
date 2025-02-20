@@ -12,6 +12,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
 #include <google/protobuf/util/json_util.h>
+#include <nlohmann/json.hpp>
 #include <zmq.h>
 
 // Standard includes
@@ -19,8 +20,6 @@
 #include <cctype>
 #include <memory>
 #include <unistd.h>
-
-#include <nlohmann/json.hpp>
 
 using namespace std;
 
@@ -1087,9 +1086,9 @@ void DatabaseAPI::recordExport(const Auth::RecordExportRequest &a_request,
   }
   payload["admins"] = admins;
   //body += "]}";
-    
+
   string body = payload.dump();
-  
+
   dbPost("dat/export", {}, &body, result, log_context);
 
   TRANSLATE_BEGIN()
@@ -1344,7 +1343,7 @@ void DatabaseAPI::collCreate(const Auth::CollCreateRequest &a_request,
   if (a_request.has_desc())
     payload["desc"] = escapeJSON(a_request.desc());
     //body += ",\"desc\":\"" + escapeJSON(a_request.desc()) + "\"";
-    
+
   if (a_request.has_alias())
     payload["alias"] = a_request.alias();
     //body += ",\"alias\":\"" + a_request.alias() + "\"";
@@ -1367,7 +1366,7 @@ void DatabaseAPI::collCreate(const Auth::CollCreateRequest &a_request,
     //body += "\"" + a_request.tags(i) + "\"";
     //body += "]";
   }
-  payload["tags"] = tags;  
+  payload["tags"] = tags;
   //body += "}";
 
   string body = payload.dump();
@@ -2202,7 +2201,7 @@ void DatabaseAPI::repoCreate(const Auth::RepoCreateRequest &a_request,
 
   nlohmann::json payload;
   payload["id"] = a_request.id();
-  payload["title"] =  escapeJSON(a_request.title()); 
+  payload["title"] =  escapeJSON(a_request.title());
   payload["path"] = escapeJSON(a_request.path());
   payload["pub_key"] = escapeJSON(a_request.pub_key());
   payload["address"] = a_request.address();
@@ -2217,7 +2216,7 @@ void DatabaseAPI::repoCreate(const Auth::RepoCreateRequest &a_request,
   body += ",\"endpoint\":\"" + a_request.endpoint() + "\"";
   body += ",\"capacity\":\"" + to_string(a_request.capacity()) + "\"";
 */
-    
+
 
   if (a_request.has_desc())
     payload["desc"] = escapeJSON(a_request.desc());
@@ -2226,7 +2225,7 @@ void DatabaseAPI::repoCreate(const Auth::RepoCreateRequest &a_request,
     payload["domain"] = a_request.domain();
     //body += ",\"domain\":\"" + a_request.domain() + "\"";
   if (a_request.has_exp_path())
-    payload["exp_path"] =  escapeJSON(a_request.exp_path()); 
+    payload["exp_path"] =  escapeJSON(a_request.exp_path());
     //body += ",\"exp_path\":\"" + escapeJSON(a_request.exp_path()) + "\"";
   if (a_request.admin_size() > 0) { //FLAG HERE - CHECK HOW TO GO ABOUT THIS
       nlohmann::json admins = nlohmann::json::array();
@@ -2254,12 +2253,12 @@ void DatabaseAPI::repoUpdate(const Auth::RepoUpdateRequest &a_request,
   Value result;
   // TODO: json serialization
   nlohmann::json payload;
-  payload["id"] = a_request.id(); 
+  payload["id"] = a_request.id();
 
-  
+
   //string body = "{\"id\":\"" + a_request.id() + "\"";
   if (a_request.has_title())
-    payload["title"] = escapeJSON(a_request.title());  
+    payload["title"] = escapeJSON(a_request.title());
     //body += ",\"title\":\"" + escapeJSON(a_request.title()) + "\"";
   if (a_request.has_desc())
     payload["desc"] = escapeJSON(a_request.desc());
@@ -2960,8 +2959,8 @@ void DatabaseAPI::schemaCreate(const Auth::SchemaCreateRequest &a_request,
   libjson::Value result;
   // TODO: json serialization
 
-  nlohmann::json payload;  
-    
+  nlohmann::json payload;
+
   payload["id"] = a_request.id();
   payload["desc"] = escapeJSON(a_request.desc());
   payload["pub"] = a_request.pub();
@@ -2991,8 +2990,8 @@ void DatabaseAPI::schemaRevise(const Auth::SchemaReviseRequest &a_request,
                                LogContext log_context) {
   libjson::Value result;
   // TODO: json serialization
-  
-  
+
+
   //string body = "{";
   nlohmann::json payload;
 
@@ -3032,7 +3031,7 @@ void DatabaseAPI::schemaRevise(const Auth::SchemaReviseRequest &a_request,
 
   //body.append("}");
   string body = payload.dump();
-  
+
   dbPost("schema/revise", {{"id", a_request.id()}}, &body, result, log_context);
 }
 
@@ -3092,7 +3091,7 @@ void DatabaseAPI::schemaUpdate(const Auth::SchemaUpdateRequest &a_request,
 
   //body.append("}");
   string body = payload.dump();
-  
+
   dbPost("schema/update", {{"id", a_request.id()}}, &body, result, log_context);
 }
 
@@ -3239,7 +3238,7 @@ void DatabaseAPI::taskAbort(const std::string &a_task_id,
   libjson::Value doc(a_msg);
   // TODO: json serialization --FLAG CHECK ON THIS LATER
   string body = doc.toString();
-  
+
   dbPost("task/abort", {{"task_id", a_task_id}}, &body, a_task_reply,
          log_context);
 }
@@ -3313,22 +3312,36 @@ void DatabaseAPI::taskInitDataPut(const Auth::DataPutRequest &a_request,
                                   Auth::DataPutReply &a_reply,
                                   libjson::Value &a_result,
                                   LogContext log_context) {
-  // TODO: json serialization
-  string body = "{\"id\":[\"" + a_request.id() + "\"]";
+  nlohmann::json payload;
+  // string body = "{\"id\":[\"" + a_request.id() + "\"]";
+  payload["id"] =
+      nlohmann::json::array({a_request.id()}); // why is this an array?
 
   if (a_request.has_path())
-    body += ",\"path\":\"" + a_request.path() + "\"";
+    // body += ",\"path\":\"" + a_request.path() + "\"";
+    payload["path"] = a_request.path();
 
   if (a_request.has_encrypt())
-    body += ",\"encrypt\":" + to_string(a_request.encrypt());
+    // body += ",\"encrypt\":" + to_string(a_request.encrypt());
+    payload["encrypt"] = to_string(a_request.encrypt());
 
   if (a_request.has_ext())
-    body += ",\"ext\":\"" + a_request.ext() + "\"";
+    // body += ",\"ext\":\"" + a_request.ext() + "\"";
+    payload["ext"] = a_request.ext();
 
   if (a_request.has_check() && a_request.check())
-    body += ",\"check\":true";
+    // body += ",\"check\":true";
+    payload["check"] = a_request.check();
 
-  body += "}";
+  if (a_request.has_collection_id()) {
+    payload["collection_id"] = a_request.collection_id();
+  }
+  if (a_request.has_collection_type()) {
+    payload["collection_type"] = a_request.collection_type();
+  }
+
+  // body += "}";
+  string body = payload.dump();
 
   dbPost("dat/put", {}, &body, a_result, log_context);
 
