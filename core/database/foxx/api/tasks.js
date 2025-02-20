@@ -2,7 +2,7 @@
 
 // local imports
 const g_lib = require("./support");
-const {UserToken} = require("./lib/user_token");
+const { UserToken } = require("./lib/user_token");
 
 const g_db = require("@arangodb").db;
 const g_graph = require("@arangodb/general-graph")._graph("sdmsg");
@@ -455,18 +455,33 @@ var tasks_func = (function () {
 
     // ----------------------- DATA PUT ----------------------------
 
-    obj.taskInitDataPut = function (a_client, a_path, a_encrypt, a_ext, a_res_ids, a_check, additional_param_obj) {
+    obj.taskInitDataPut = function (
+        a_client,
+        a_path,
+        a_encrypt,
+        a_ext,
+        a_res_ids,
+        a_check,
+        additional_param_obj,
+    ) {
         console.log("taskInitDataPut");
 
         var result = g_proc.preprocessItems(a_client, null, a_res_ids, g_lib.TT_DATA_PUT);
 
-        if( UserToken.validateRequestParams(additional_param_obj) ) {
+        if (UserToken.validateRequestParams(additional_param_obj)) {
             const token_doc = new UserToken({
                 user_id: a_client._id,
-                globus_collection_id: additional_param_obj.colleciton_id
+                globus_collection_id: additional_param_obj.colleciton_id,
             }).get_token();
-            if (typeof token_doc.access !== "string" ||  token_doc.access.length === 0) {
-                throw [g_lib.ERR_NOT_FOUND, "Globus token for mapped collection " + additional_param_obj.collection_id + " for user " + a_client._id + " does not exist."];
+            if (typeof token_doc.access !== "string" || token_doc.access.length === 0) {
+                throw [
+                    g_lib.ERR_NOT_FOUND,
+                    "Globus token for mapped collection " +
+                        additional_param_obj.collection_id +
+                        " for user " +
+                        a_client._id +
+                        " does not exist.",
+                ];
             }
         }
 
@@ -555,7 +570,10 @@ var tasks_func = (function () {
             // Transfer data step
 
             //var tokens = g_lib.getAccessToken(a_task.client, state); // TODO: refresh token ?
-            const token_doc = new UserToken({user_id: a_task.client, globus_collection_id: state.colleciton_id}).get_token();
+            const token_doc = new UserToken({
+                user_id: a_task.client,
+                globus_collection_id: state.colleciton_id,
+            }).get_token();
             var tokens = UserToken.formatUserTokenForTransferTask(token_doc);
             params = {
                 uid: a_task.client,

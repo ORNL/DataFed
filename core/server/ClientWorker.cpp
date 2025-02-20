@@ -759,44 +759,44 @@ ClientWorker::procDataPutRequest(const std::string &a_uid,
   DL_DEBUG(log_context, "procDataPutRequest, uid: " << a_uid);
 
   m_db_client.setClient(a_uid);
-
-  bool needs_consent;
-
-  if (request->has_collection_id() && request->has_collection_type()) {
-    // TODO: extract to function
-    string access, refresh, collection_id, scopes;
-    int token_type;
-    uint32_t expires_in;
-
-    m_db_client.userGetAccessToken(access, refresh, expires_in,
-                                   request->collection_id(),
-                                   request->collection_type(), needs_consent,
-                                   token_type, scopes, log_context);
-
-    if (needs_consent) {
-      // short circuit to reply
-    } else if (expires_in < 300) {
-      DL_INFO(log_context, "Refreshing access token for " << a_uid);
-      if (token_type == AccessTokenType::GLOBUS_DEFAULT) {
-        m_globus_api.refreshAccessToken(refresh, access, expires_in);
-        m_db_client.userSetAccessToken(access, expires_in, refresh,
-                                       log_context);
-      } else {
-        try {
-          m_globus_api.refreshAccessToken(refresh, access, expires_in);
-          m_db_client.userSetAccessToken(
-              access, expires_in, refresh, (AccessTokenType)token_type,
-              collection_id + "|" + scopes, log_context);
-        } catch (
-            TraceException &e) { // NOTE: assumes refresh failed (invalid or
-                                 // failure). new token fetched will upsert
-                                 // and overwrite old values on database
-          needs_consent = true;
-        }
-      }
-    }
-  }
-
+  // TODO: do we need any of this if backend at least checks existence?
+  // bool needs_consent;
+  //
+  // if (request->has_collection_id() && request->has_collection_type()) {
+  //   // TODO: extract to function
+  //   string access, refresh, collection_id, scopes;
+  //   int token_type;
+  //   uint32_t expires_in;
+  //
+  //   m_db_client.userGetAccessToken(access, refresh, expires_in,
+  //                                  request->collection_id(),
+  //                                  request->collection_type(), needs_consent,
+  //                                  token_type, scopes, log_context);
+  //
+  //   if (needs_consent) {
+  //     // short circuit to reply
+  //   } else if (expires_in < 300) {
+  //     DL_INFO(log_context, "Refreshing access token for " << a_uid);
+  //     if (token_type == AccessTokenType::GLOBUS_DEFAULT) {
+  //       m_globus_api.refreshAccessToken(refresh, access, expires_in);
+  //       m_db_client.userSetAccessToken(access, expires_in, refresh,
+  //                                      log_context);
+  //     } else {
+  //       try {
+  //         m_globus_api.refreshAccessToken(refresh, access, expires_in);
+  //         m_db_client.userSetAccessToken(
+  //             access, expires_in, refresh, (AccessTokenType)token_type,
+  //             collection_id + "|" + scopes, log_context);
+  //       } catch (
+  //           TraceException &e) { // NOTE: assumes refresh failed (invalid or
+  //                                // failure). new token fetched will upsert
+  //                                // and overwrite old values on database
+  //         needs_consent = true;
+  //       }
+  //     }
+  //   }
+  // }
+  //
   // TODO: react to needs_consent
   libjson::Value result;
 
