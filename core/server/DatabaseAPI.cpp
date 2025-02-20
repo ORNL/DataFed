@@ -3272,7 +3272,6 @@ void DatabaseAPI::taskInitRecordOwnerChange(
     const Auth::RecordOwnerChangeRequest &a_request,
     Auth::RecordOwnerChangeReply &a_reply, libjson::Value &a_result,
     LogContext log_context) {
-  string body = "{\"ids\":[";
   nlohmann::json payload;
   nlohmann::json ids = nlohmann::json::array();
   for (int i = 0; i < a_request.id_size(); i++) {
