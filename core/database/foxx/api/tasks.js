@@ -469,11 +469,11 @@ var tasks_func = (function () {
         var result = g_proc.preprocessItems(a_client, null, a_res_ids, g_lib.TT_DATA_PUT);
 
         if (UserToken.validateRequestParams(additional_param_obj)) {
-            const token_doc = new UserToken({
+            const token_exists = new UserToken({
                 user_id: a_client._id,
-                globus_collection_id: additional_param_obj.colleciton_id,
-            }).get_token();
-            if (typeof token_doc.access !== "string" || token_doc.access.length === 0) {
+                globus_collection_id: additional_param_obj.collection_id,
+            }).exists();
+            if (!token_exists) {
                 throw [
                     g_lib.ERR_NOT_FOUND,
                     "Globus token for mapped collection " +
