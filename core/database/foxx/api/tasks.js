@@ -589,6 +589,7 @@ var tasks_func = (function () {
                 acc_tok_exp_in: tokens.acc_tok_exp_in,
                 token_type: extra_token_format.token_type,
                 scopes: extra_token_format.scopes,
+                collection_id: state.collection_id,
             };
             params = Object.assign(params, state.xfr[a_task.step - 1]);
             reply = {

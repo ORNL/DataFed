@@ -14,6 +14,7 @@
 #include "common/SocketOptions.hpp"
 
 // Standard includes
+#include "common/TraceException.hpp"
 #include "unistd.h"
 #include <memory>
 #include <sstream>
@@ -206,21 +207,39 @@ TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
   bool encrypted = true;
   GlobusAPI::EndpointInfo ep_info;
 
-  // TODO: token values fetched here
   string acc_tok = obj.getString("acc_tok");
   string ref_tok = obj.getString("ref_tok");
   uint32_t expires_in = obj.getNumber("acc_tok_exp_in");
+  uint32_t token_type =
+      obj.getNumber("token_type"); // TODO use enum if possible
+  string scopes = obj.getString("scopes");
+  string collection_id = obj.getString("collection_id");
 
   DL_TRACE(log_context, ">>>> Token Expires in: " << expires_in);
 
   if (expires_in < 3600) {
-    DL_DEBUG(log_context, "Refreshing access token for "
-                              << uid << " (expires in " << expires_in << ")");
+    if (token_type ==
+        AccessTokenType::GLOBUS_DEFAULT) { // TODO: this work is mostly
+                                           // duplicated from ClientWorker
+      DL_DEBUG(log_context, "Refreshing access token for "
+                                << uid << " (expires in " << expires_in << ")");
 
-    me.m_glob.refreshAccessToken(
-        ref_tok, acc_tok, expires_in); // TODO: same logic changes for get
-    me.m_db.setClient(uid);
-    me.m_db.userSetAccessToken(acc_tok, expires_in, ref_tok, log_context);
+      me.m_glob.refreshAccessToken(ref_tok, acc_tok, expires_in);
+      me.m_db.setClient(uid);
+      me.m_db.userSetAccessToken(acc_tok, expires_in, ref_tok, log_context);
+    } else {
+      try {
+        me.m_glob.refreshAccessToken(ref_tok, acc_tok, expires_in);
+        me.m_db.userSetAccessToken(acc_tok, expires_in, ref_tok,
+                                   (AccessTokenType)token_type,
+                                   collection_id + "|" + scopes, log_context);
+      } catch (TraceException &e) {
+        DL_ERROR(log_context,
+                 "Failure when refreshing Globus Mapped collection token for "
+                     << uid << " on collection " << collection_id);
+        throw e;
+      }
+    }
   }
 
   if (type == TT_DATA_GET || type == TT_DATA_PUT) {
