@@ -890,10 +890,13 @@ void DatabaseAPI::recordCreate(const Auth::RecordCreateRequest &a_request,
 
   payload["title"] = escapeJSON(a_request.title());
 
-  if (a_request.has_desc())
+  if (a_request.has_desc()) {
     payload["desc"] = escapeJSON(a_request.desc());
-  if (a_request.has_alias())
+  }
+
+  if (a_request.has_alias()) {
     payload["alias"] = a_request.alias();
+  }
 
   if (a_request.tags_size()) {
     nlohmann::json tags = nlohmann::json::array();
@@ -903,24 +906,31 @@ void DatabaseAPI::recordCreate(const Auth::RecordCreateRequest &a_request,
     payload["tags"] = tags;
   }
 
-  if (a_request.has_metadata())
+  if (a_request.has_metadata()) {
     payload["md"] = a_request.metadata();
-  if (a_request.has_sch_id())
+  }
+  if (a_request.has_sch_id()) {
     payload["sch_id"] = a_request.sch_id();
-  if (a_request.has_parent_id())
+  }
+  if (a_request.has_parent_id()) {
     payload["parent"] = a_request.parent_id();
+  }
   if (a_request.has_external()) {
     payload["external"] = a_request.external();
   } else {
-    if (a_request.has_ext())
+    if (a_request.has_ext()) {
       payload["ext"] = a_request.ext();
-    if (a_request.has_ext_auto())
+    }
+    if (a_request.has_ext_auto()) {
       payload["ext_auto"] = a_request.ext_auto();
+    }
   }
-  if (a_request.has_source())
+  if (a_request.has_source()) {
     payload["source"] = a_request.source();
-  if (a_request.has_repo_id())
+  }
+  if (a_request.has_repo_id()) {
     payload["repo"] = a_request.repo_id();
+  }
   if (a_request.deps_size()) {
     nlohmann::json deps = nlohmann::json::array();
 
@@ -956,12 +966,15 @@ void DatabaseAPI::recordUpdate(const Auth::RecordUpdateRequest &a_request,
                                libjson::Value &result, LogContext log_context) {
   nlohmann::json payload;
   payload["id"] = a_request.id();
-  if (a_request.has_title())
+  if (a_request.has_title()) {
     payload["title"] = escapeJSON(a_request.title());
-  if (a_request.has_desc())
+  }
+  if (a_request.has_desc()) {
     payload["desc"] = escapeJSON(a_request.desc());
-  if (a_request.has_alias())
+  }
+  if (a_request.has_alias()) {
     payload["alias"] = a_request.alias();
+  }
 
   if (a_request.has_tags_clear() && a_request.tags_clear()) {
     payload["tags_clear"] = a_request.tags_clear();
@@ -979,14 +992,18 @@ void DatabaseAPI::recordUpdate(const Auth::RecordUpdateRequest &a_request,
       payload["mdset"] = a_request.mdset();
     }
   }
-  if (a_request.has_sch_id())
+  if (a_request.has_sch_id()) {
     payload["sch_id"] = a_request.sch_id();
-  if (a_request.has_source())
+  }
+  if (a_request.has_source()) {
     payload["source"] = a_request.source();
-  if (a_request.has_ext())
+  }
+  if (a_request.has_ext()) {
     payload["ext"] = a_request.ext();
-  if (a_request.has_ext_auto())
+  }
+  if (a_request.has_ext_auto()) {
     payload["ext_auto"] = a_request.ext_auto();
+  }
 
   if (a_request.dep_add_size()) {
     nlohmann::json dep_add = nlohmann::json::array();
@@ -1313,17 +1330,21 @@ void DatabaseAPI::collCreate(const Auth::CollCreateRequest &a_request,
 
   payload["title"] = escapeJSON(a_request.title());
 
-  if (a_request.has_desc())
+  if (a_request.has_desc()) {
     payload["desc"] = escapeJSON(a_request.desc());
+  }
 
-  if (a_request.has_alias())
+  if (a_request.has_alias()) {
     payload["alias"] = a_request.alias();
+  }
 
-  if (a_request.has_parent_id())
+  if (a_request.has_parent_id()) {
     payload["parent"] = a_request.parent_id();
+  }
 
-  if (a_request.has_topic())
+  if (a_request.has_topic()) {
     payload["topic"] = escapeJSON(a_request.topic());
+  }
 
   if (a_request.tags_size()) {
     nlohmann::json tags = nlohmann::json::array();
@@ -1345,17 +1366,21 @@ void DatabaseAPI::collUpdate(const Auth::CollUpdateRequest &a_request,
   Value result;
   nlohmann::json payload;
   payload["id"] = a_request.id();
-  if (a_request.has_title())
+  if (a_request.has_title()) {
     payload["title"] = escapeJSON(a_request.title());
+  }
 
-  if (a_request.has_desc())
+  if (a_request.has_desc()) {
     payload["desc"] = escapeJSON(a_request.desc());
+  }
 
-  if (a_request.has_alias())
+  if (a_request.has_alias()) {
     payload["alias"] = a_request.alias();
+  }
 
-  if (a_request.has_topic())
+  if (a_request.has_topic()) {
     payload["topic"] = escapeJSON(a_request.topic());
+  }
 
   if (a_request.has_tags_clear() && a_request.tags_clear()) {
     payload["tags_clear"] = a_request.tags_clear();
@@ -2142,12 +2167,15 @@ void DatabaseAPI::repoCreate(const Auth::RepoCreateRequest &a_request,
   payload["endpoint"] = a_request.endpoint();
   payload["capacity"] = to_string(a_request.capacity());
 
-  if (a_request.has_desc())
+  if (a_request.has_desc()) {
     payload["desc"] = escapeJSON(a_request.desc());
-  if (a_request.has_domain())
+  }
+  if (a_request.has_domain()) {
     payload["domain"] = a_request.domain();
-  if (a_request.has_exp_path())
+  }
+  if (a_request.has_exp_path()) {
     payload["exp_path"] = escapeJSON(a_request.exp_path());
+  }
   if (a_request.admin_size() > 0) {
     nlohmann::json admins = nlohmann::json::array();
     for (int i = 0; i < a_request.admin_size(); ++i) {
@@ -2170,24 +2198,33 @@ void DatabaseAPI::repoUpdate(const Auth::RepoUpdateRequest &a_request,
   nlohmann::json payload;
   payload["id"] = a_request.id();
 
-  if (a_request.has_title())
+  if (a_request.has_title()) {
     payload["title"] = escapeJSON(a_request.title());
-  if (a_request.has_desc())
+  }
+  if (a_request.has_desc()) {
     payload["desc"] = escapeJSON(a_request.desc());
-  if (a_request.has_path())
+  }
+  if (a_request.has_path()) {
     payload["path"] = escapeJSON(a_request.path());
-  if (a_request.has_exp_path())
+  }
+  if (a_request.has_exp_path()) {
     payload["exp_path"] = escapeJSON(a_request.exp_path());
-  if (a_request.has_domain())
+  }
+  if (a_request.has_domain()) {
     payload["domain"] = a_request.domain();
-  if (a_request.has_pub_key())
+  }
+  if (a_request.has_pub_key()) {
     payload["pub_key"] = escapeJSON(a_request.pub_key());
-  if (a_request.has_address())
+  }
+  if (a_request.has_address()) {
     payload["address"] = a_request.address();
-  if (a_request.has_endpoint())
+  }
+  if (a_request.has_endpoint()) {
     payload["endpoint"] = a_request.endpoint();
-  if (a_request.has_capacity())
+  }
+  if (a_request.has_capacity()) {
     payload["capacity"] = to_string(a_request.capacity());
+  }
   if (a_request.admin_size() > 0) {
     nlohmann::json admins = nlohmann::json::array();
     for (int i = 0; i < a_request.admin_size(); ++i) {
@@ -3083,17 +3120,21 @@ void DatabaseAPI::taskInitDataGet(const Auth::DataGetRequest &a_request,
   }
   payload["id"] = ids;
 
-  if (a_request.has_path())
+  if (a_request.has_path()) {
     payload["path"] = a_request.path();
+  }
 
-  if (a_request.has_encrypt())
+  if (a_request.has_encrypt()) {
     payload["encrypt"] = to_string(a_request.encrypt());
+  }
 
-  if (a_request.has_orig_fname() && a_request.orig_fname())
+  if (a_request.has_orig_fname() && a_request.orig_fname()) {
     payload["orig_fname"] = a_request.orig_fname();
+  }
 
-  if (a_request.has_check() && a_request.check())
+  if (a_request.has_check() && a_request.check()) {
     payload["check"] = a_request.check();
+  }
 
   string body = payload.dump();
 
@@ -3141,17 +3182,21 @@ void DatabaseAPI::taskInitDataPut(const Auth::DataPutRequest &a_request,
   payload["id"] =
       nlohmann::json::array({a_request.id()}); // why is this an array?
 
-  if (a_request.has_path())
+  if (a_request.has_path()) {
     payload["path"] = a_request.path();
+  }
 
-  if (a_request.has_encrypt())
+  if (a_request.has_encrypt()) {
     payload["encrypt"] = to_string(a_request.encrypt());
+  }
 
-  if (a_request.has_ext())
+  if (a_request.has_ext()) {
     payload["ext"] = a_request.ext();
+  }
 
-  if (a_request.has_check() && a_request.check())
+  if (a_request.has_check() && a_request.check()) {
     payload["check"] = a_request.check();
+  }
 
   string body = payload.dump();
 
@@ -3220,10 +3265,12 @@ void DatabaseAPI::taskInitRecordAllocChange(
   payload["ids"] = ids;
 
   payload["repo_id"] = a_request.repo_id();
-  if (a_request.has_proj_id())
+  if (a_request.has_proj_id()) {
     payload["proj_id"] = a_request.proj_id();
-  if (a_request.has_check())
+  }
+  if (a_request.has_check()) {
     payload["check"] = a_request.check();
+  }
   string body = payload.dump();
 
   dbPost("dat/alloc_chg", {}, &body, a_result, log_context);
@@ -3257,12 +3304,14 @@ void DatabaseAPI::taskInitRecordOwnerChange(
   }
   payload["ids"] = ids;
   payload["coll_id"] = a_request.coll_id();
-  if (a_request.has_repo_id())
+  if (a_request.has_repo_id()) {
     payload["repo_id"] = a_request.repo_id();
+  }
   // if ( a_request.has_proj_id() )
   //    body += string(",\"proj_id\":\"") + a_request.proj_id() + "\"";
-  if (a_request.has_check())
+  if (a_request.has_check()) {
     payload["check"] = a_request.check();
+  }
   string body = payload.dump();
 
   dbPost("dat/owner_chg", {}, &body, a_result, log_context);
