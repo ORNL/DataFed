@@ -5,10 +5,27 @@ const {UserModel} = require("../models/user");
 const {GlobusCollectionModel} = require("../models/globus_collection");
 const {GlobusTokenModel} = require("../models/globus_token");
 
+/**
+ * @property {string} [access] - Access token
+ * @property {string} [refresh] - Refresh token
+ * @property {number} [expiration] - Exact DataFed server time of expiration
+ * @property {g_lib.AccessTokenType | number} [type] - Access token type, present when retrieving a collection token
+ * @property {string} [dependent_scopes] - Access token scopes, present when retrieving a collection token
+ */
+class DataFedOAuthToken {
+    access;
+    refresh;
+    expiration;
+    type;
+    dependent_scopes;
+}
+
 class UserToken {
     #user_model;
     user;
+    /** @type {Readonly<GlobusCollection>} */
     globus_collection;
+    /** @type {DataFedOAuthToken} */
     #working_token;
     constructor(kwargs = {}) {
         const { user_key, user_id, globus_collection_id } = kwargs;
@@ -34,11 +51,19 @@ class UserToken {
         }
     }
 
+    /** Gets token
+     *
+     * @returns {Readonly<DataFedOAuthToken>} The token in read only form
+     */
     get_token() {
         this.#fetch_token();
         return Object.freeze(this.#working_token);
     }
 
+    /** Validates minimum viable token attributes exist
+     *
+     * @returns {boolean} Whether the token has required attributes
+     */
     exists() {
         this.#fetch_token();
         // check that required fields are not null
@@ -85,12 +110,7 @@ class UserToken {
     /**
      * Build response object
      * @param {boolean} is_collection_token - Whether the token relates to a collection
-     * @param {object} token_document - Database document holding relevant token info
-     * @param {string} [token_document.access] - Access token
-     * @param {string} [token_document.refresh] - Refresh token
-     * @param {number} [token_document.expiration] - Expiration time of access token
-     * @param {g_lib.AccessTokenType | number} [token_document.type] - Access token type, present when retrieving a collection token
-     * @param {string} [token_document.dependent_scopes] - Access token scopes, present when retrieving a collection token
+     * @param {DataFedOAuthToken} token_document - Database document holding relevant token info
      * @param {boolean} needs_consent - Whether consent is required
      * @returns {userTokenResponse} - Object containing token information, or whether consent flow should start
      */
