@@ -1040,6 +1040,7 @@ void DatabaseAPI::recordUpdateSize(const Auth::RepoDataSizeReply &a_size_rep,
     record_entry["size"] =
         to_string(a_size_rep.size(i).size()); // size size size!! :D
     // TODO: the word size has lost all meaning
+    records.push_back(record_entry);
   }
   payload["records"] = records;
 
