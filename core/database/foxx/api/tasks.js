@@ -572,9 +572,14 @@ var tasks_func = (function () {
             //var tokens = g_lib.getAccessToken(a_task.client, state); // TODO: refresh token ?
             const token_doc = new UserToken({
                 user_id: a_task.client,
-                globus_collection_id: state.colleciton_id,
+                globus_collection_id: state.collection_id,
             }).get_token();
             var tokens = UserToken.formatUserTokenForTransferTask(token_doc);
+            const extra_token_format = UserToken.formatUserToken(
+                !!state.collection_id, // TODO: assuming collection correctly assigned from earlier step
+                token_doc,
+                false,
+            );
             params = {
                 uid: a_task.client,
                 type: a_task.type,
@@ -582,6 +587,8 @@ var tasks_func = (function () {
                 acc_tok: tokens.acc_tok,
                 ref_tok: tokens.ref_tok,
                 acc_tok_exp_in: tokens.acc_tok_exp_in,
+                token_type: extra_token_format.token_type,
+                scopes: extra_token_format.scopes,
             };
             params = Object.assign(params, state.xfr[a_task.step - 1]);
             reply = {
