@@ -1759,7 +1759,7 @@ void DatabaseAPI::queryCreate(const Auth::QueryCreateRequest &a_request,
   payload["params"] = params;
   payload["limit"] = to_string(cnt);
   payload["title"] = escapeJSON(a_request.title());
-  payload["query"] = query_json;
+  payload["query"] = nlohmann::json::parse(query_json);
 
   string body = payload.dump();
   dbPost("qry/create", {}, &body, result, log_context);
@@ -1801,7 +1801,7 @@ void DatabaseAPI::queryUpdate(const Auth::QueryUpdateRequest &a_request,
     payload["qry_filter"] = qry_filter;
     payload["params"] = params;
     payload["limit"] = to_string(cnt);
-    payload["query"] = query_json;
+    payload["query"] = nlohmann::json::parse(query_json);
   }
 
   string body = payload.dump();
