@@ -888,10 +888,10 @@ void DatabaseAPI::recordCreate(const Auth::RecordCreateRequest &a_request,
   Value result;
   nlohmann::json payload;
 
-  payload["title"] = escapeJSON(a_request.title());
+  payload["title"] = a_request.title();
 
   if (a_request.has_desc()) {
-    payload["desc"] = escapeJSON(a_request.desc());
+    payload["desc"] = a_request.desc();
   }
 
   if (a_request.has_alias()) {
@@ -967,10 +967,10 @@ void DatabaseAPI::recordUpdate(const Auth::RecordUpdateRequest &a_request,
   nlohmann::json payload;
   payload["id"] = a_request.id();
   if (a_request.has_title()) {
-    payload["title"] = escapeJSON(a_request.title());
+    payload["title"] = a_request.title();
   }
   if (a_request.has_desc()) {
-    payload["desc"] = escapeJSON(a_request.desc());
+    payload["desc"] = a_request.desc();
   }
   if (a_request.has_alias()) {
     payload["alias"] = a_request.alias();
@@ -1328,10 +1328,10 @@ void DatabaseAPI::collCreate(const Auth::CollCreateRequest &a_request,
   Value result;
   nlohmann::json payload;
 
-  payload["title"] = escapeJSON(a_request.title());
+  payload["title"] = a_request.title();
 
   if (a_request.has_desc()) {
-    payload["desc"] = escapeJSON(a_request.desc());
+    payload["desc"] = a_request.desc();
   }
 
   if (a_request.has_alias()) {
@@ -1343,7 +1343,7 @@ void DatabaseAPI::collCreate(const Auth::CollCreateRequest &a_request,
   }
 
   if (a_request.has_topic()) {
-    payload["topic"] = escapeJSON(a_request.topic());
+    payload["topic"] = a_request.topic();
   }
 
   if (a_request.tags_size()) {
@@ -1367,11 +1367,11 @@ void DatabaseAPI::collUpdate(const Auth::CollUpdateRequest &a_request,
   nlohmann::json payload;
   payload["id"] = a_request.id();
   if (a_request.has_title()) {
-    payload["title"] = escapeJSON(a_request.title());
+    payload["title"] = a_request.title();
   }
 
   if (a_request.has_desc()) {
-    payload["desc"] = escapeJSON(a_request.desc());
+    payload["desc"] = a_request.desc();
   }
 
   if (a_request.has_alias()) {
@@ -1379,7 +1379,7 @@ void DatabaseAPI::collUpdate(const Auth::CollUpdateRequest &a_request,
   }
 
   if (a_request.has_topic()) {
-    payload["topic"] = escapeJSON(a_request.topic());
+    payload["topic"] = a_request.topic();
   }
 
   if (a_request.has_tags_clear() && a_request.tags_clear()) {
@@ -1758,7 +1758,7 @@ void DatabaseAPI::queryCreate(const Auth::QueryCreateRequest &a_request,
   payload["qry_filter"] = qry_filter;
   payload["params"] = params;
   payload["limit"] = to_string(cnt);
-  payload["title"] = escapeJSON(a_request.title());
+  payload["title"] = a_request.title();
   payload["query"] = nlohmann::json::parse(query_json);
 
   string body = payload.dump();
@@ -1775,7 +1775,7 @@ void DatabaseAPI::queryUpdate(const Auth::QueryUpdateRequest &a_request,
   payload["id"] = a_request.id();
 
   if (a_request.has_title()) {
-    payload["title"] = escapeJSON(a_request.title());
+    payload["title"] = a_request.title();
   }
 
   if (a_request.has_query()) {
@@ -2160,21 +2160,21 @@ void DatabaseAPI::repoCreate(const Auth::RepoCreateRequest &a_request,
 
   nlohmann::json payload;
   payload["id"] = a_request.id();
-  payload["title"] = escapeJSON(a_request.title());
-  payload["path"] = escapeJSON(a_request.path());
-  payload["pub_key"] = escapeJSON(a_request.pub_key());
+  payload["title"] = a_request.title();
+  payload["path"] = a_request.path();
+  payload["pub_key"] = a_request.pub_key();
   payload["address"] = a_request.address();
   payload["endpoint"] = a_request.endpoint();
   payload["capacity"] = to_string(a_request.capacity());
 
   if (a_request.has_desc()) {
-    payload["desc"] = escapeJSON(a_request.desc());
+    payload["desc"] = a_request.desc();
   }
   if (a_request.has_domain()) {
     payload["domain"] = a_request.domain();
   }
   if (a_request.has_exp_path()) {
-    payload["exp_path"] = escapeJSON(a_request.exp_path());
+    payload["exp_path"] = a_request.exp_path();
   }
   if (a_request.admin_size() > 0) {
     nlohmann::json admins = nlohmann::json::array();
@@ -2199,22 +2199,22 @@ void DatabaseAPI::repoUpdate(const Auth::RepoUpdateRequest &a_request,
   payload["id"] = a_request.id();
 
   if (a_request.has_title()) {
-    payload["title"] = escapeJSON(a_request.title());
+    payload["title"] = a_request.title();
   }
   if (a_request.has_desc()) {
-    payload["desc"] = escapeJSON(a_request.desc());
+    payload["desc"] = a_request.desc();
   }
   if (a_request.has_path()) {
-    payload["path"] = escapeJSON(a_request.path());
+    payload["path"] = a_request.path();
   }
   if (a_request.has_exp_path()) {
-    payload["exp_path"] = escapeJSON(a_request.exp_path());
+    payload["exp_path"] = a_request.exp_path();
   }
   if (a_request.has_domain()) {
     payload["domain"] = a_request.domain();
   }
   if (a_request.has_pub_key()) {
-    payload["pub_key"] = escapeJSON(a_request.pub_key());
+    payload["pub_key"] = a_request.pub_key();
   }
   if (a_request.has_address()) {
     payload["address"] = a_request.address();
@@ -2896,7 +2896,7 @@ void DatabaseAPI::schemaCreate(const Auth::SchemaCreateRequest &a_request,
   nlohmann::json payload;
 
   payload["id"] = a_request.id();
-  payload["desc"] = escapeJSON(a_request.desc());
+  payload["desc"] = a_request.desc();
   payload["pub"] = a_request.pub();
   payload["sys"] = a_request.sys();
   payload["def"] = a_request.def();
@@ -3832,9 +3832,9 @@ uint32_t DatabaseAPI::parseSearchRequest(const Auth::SearchRequest &a_request,
              "name:name,alias:i.alias") +
       (a_request.mode() == SM_DATA ? ",size:i.size,md_err:i.md_err" : "") + "}";
 
-  a_qry_begin = escapeJSON(a_qry_begin);
-  a_qry_end = escapeJSON(a_qry_end);
-  a_qry_filter = escapeJSON(a_qry_filter);
+  a_qry_begin = a_qry_begin;
+  a_qry_end = a_qry_end;
+  a_qry_filter = a_qry_filter;
 
   return cnt;
 }
