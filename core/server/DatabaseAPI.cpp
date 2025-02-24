@@ -3722,7 +3722,7 @@ void DatabaseAPI::metricsUpdateMsgCounts(
     body = new_body;
   } else {
     body = old_body;
-    DL_DEBUG(
+    DL_WARNING(
         log_context,
         "Serialized metric bodies did not match, new serialization yielded:\n"
             << new_body << "\n old serialization yielded:\n"
