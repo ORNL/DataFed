@@ -3610,10 +3610,42 @@ void DatabaseAPI::taskPurge(uint32_t a_age_sec, LogContext log_context) {
   dbGet("task/purge", {{"age_sec", to_string(a_age_sec)}}, result, log_context);
 }
 
-void DatabaseAPI::metricsUpdateMsgCounts(
+/* TODO: verify formatting
+  old format:
+      {
+        timestamp: ..,
+        total: ..,
+        uids: {
+          first_of_tuple[0]: {
+            tot: second_of_tuple[0],
+            msg: {
+              second_of_tuple[0]_tuple_0: second_of_tuple[0]_tuple_1,
+              second_of_tuple[1]_tuple_0: second_of_tuple[1]_tuple_1,
+              ...
+            }
+          }
+          first_of_tuple[1]: ...
+        }
+      }
+    new format:
+      {
+        timestamp: ..,
+        total: ..,
+        uids: {
+          first_of_tuple[0]: {
+            tot: second_of_tuple[0],
+            msg: {
+              second_of_tuple[0]_tuple_0: second_of_tuple[0]_tuple_1,
+              second_of_tuple[1]_tuple_0: second_of_tuple[1]_tuple_1,
+            }
+          }
+        }
+      }
+  */
+
+std::string DatabaseAPI::newJsonMetricParse(
     uint32_t a_timestamp, uint32_t a_total,
-    const std::map<std::string, std::map<uint16_t, uint32_t>> &a_metrics,
-    LogContext log_context) {
+    const std::map<std::string, std::map<uint16_t, uint32_t>> &a_metrics) {
   map<string, std::map<uint16_t, uint32_t>>::const_iterator u;
   map<uint16_t, uint32_t>::const_iterator m;
   nlohmann::json payload;
@@ -3637,39 +3669,65 @@ void DatabaseAPI::metricsUpdateMsgCounts(
 
   payload["uids"] = uids;
   string body = payload.dump();
-  /* TODO: verify formatting
-  old format:
-      {
-        timestamp: ..,
-        total: ..,
-        uids: {
-          first_of_tuple[0]: {
-            tot: second_of_tuple[0],
-            msg: {
-              second_of_tuple[0]_tuple_0: second_of_tuple[0]_tuple_1,
-              second_of_tuple[1]_tuple_0: second_of_tuple[1]_tuple_1,
-              ...
-            }
-          }
-          first_of_tuple[1]: ...
-        }
-      }
+  return body;
+}
 
-    new format:
-      {
-        timestamp: ..,
-        total: ..,
-        uids: {
-          first_of_tuple[0]: {
-            tot: second_of_tuple[0],
-            msg: {
-              second_of_tuple[0]_tuple_0: second_of_tuple[0]_tuple_1,
-              second_of_tuple[1]_tuple_0: second_of_tuple[1]_tuple_1,
-            }
-          }
-        }
+// TODO: verify and remove
+std::string DatabaseAPI::oldJsonMetricParse(
+    uint32_t a_timestamp, uint32_t a_total,
+    const std::map<std::string, std::map<uint16_t, uint32_t>> &a_metrics) {
+  map<string, std::map<uint16_t, uint32_t>>::const_iterator u;
+  map<uint16_t, uint32_t>::const_iterator m;
+  string body = "{\"timestamp\":" + to_string(a_timestamp) +
+                ",\"total\":" + to_string(a_total) + ",\"uids\":{";
+  bool c = false, cc;
+
+  for (u = a_metrics.begin(); u != a_metrics.end(); ++u) {
+    if (c)
+      body += ",";
+    else
+      c = true;
+
+    body += "\"" + u->first + "\":{\"tot\":" + to_string(u->second.at(0)) +
+            ",\"msg\":{";
+
+    for (cc = false, m = u->second.begin(); m != u->second.end(); ++m) {
+      if (m->first != 0) {
+        if (cc)
+          body += ",";
+        else
+          cc = true;
+
+        body += "\"" + to_string(m->first) + "\":" + to_string(m->second);
       }
-  */
+    }
+    body += "}}";
+  }
+
+  body += "}}";
+  return body;
+}
+
+void DatabaseAPI::metricsUpdateMsgCounts(
+    uint32_t a_timestamp, uint32_t a_total,
+    const std::map<std::string, std::map<uint16_t, uint32_t>> &a_metrics,
+    LogContext log_context) {
+
+  string body;
+  string new_body = newJsonMetricParse(a_timestamp, a_total, a_metrics);
+  string old_body = oldJsonMetricParse(a_timestamp, a_total, a_metrics);
+
+  if (new_body == old_body) {
+    // on match use safer serialization
+    body = new_body;
+  } else {
+    body = old_body;
+    DL_DEBUG(
+        log_context,
+        "Serialized metric bodies did not match, new serialization yielded:\n"
+            << new_body << "\n old serialization yielded:\n"
+            << old_body);
+  }
 
   libjson::Value result;
 
