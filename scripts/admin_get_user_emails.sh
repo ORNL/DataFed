@@ -10,8 +10,8 @@ set -f -o pipefail
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
-PROJECT_ROOT=$(realpath ${SOURCE}/..)
-source ${PROJECT_ROOT}/config/datafed.sh
+PROJECT_ROOT=$(realpath "${SOURCE}/..")
+source "${PROJECT_ROOT}/config/datafed.sh"
 
 Help()
 {
@@ -104,15 +104,15 @@ fi
 
 # We are now going to initialize the DataFed database in Arango, but only if sdms database does
 # not exist
-output=$(curl -s --dump - --user $local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD http://localhost:8529/_api/database/user)
+output=$(curl -s --dump - --user "$local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD" http://localhost:8529/_api/database/user)
 if [[ ! "$output" =~ .*"sdms".* ]]; then
   echo "Something is wrong, the sdms database is missing!"
   exit 1
 fi
 
-data=$(curl -s -X POST --header 'accept: application/json' -u $local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD http://localhost:8529/_db/sdms/_api/cursor -d "{ \"query\" : \"FOR user1 IN u RETURN user1.email\" }") 
-emails=$(echo $data | jq .result) 
-emails_cleaned=$(echo $emails | sed 's/", "/ /g' | sed 's/\[ "//g'  | sed 's/" \]//g') 
+data=$(curl -s -X POST --header 'accept: application/json' -u "$local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD" http://localhost:8529/_db/sdms/_api/cursor -d "{ \"query\" : \"FOR user1 IN u RETURN user1.email\" }") 
+emails=$(echo "$data" | jq .result) 
+emails_cleaned=$(echo "$emails" | sed 's/", "/ /g' | sed 's/\[ "//g'  | sed 's/" \]//g') 
 
 if [ -f "$local_DATAFED_OUTPUT_FILE" ]
 then
@@ -123,5 +123,5 @@ fi
 for email in ${emails_cleaned} 
 do 
   echo "$email"
-  echo $email  >> "$local_DATAFED_OUTPUT_FILE"
+  echo "$email"  >> "$local_DATAFED_OUTPUT_FILE"
 done 

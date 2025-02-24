@@ -1,5 +1,6 @@
-#!/bin/python3
-# import json
+#!/usr/bin/env python3
+# WARNING - to work with python environments we cannot use /bin/python3 or
+#           a hardcoded abs path.
 import os
 import sys
 import unittest

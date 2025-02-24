@@ -25,6 +25,7 @@ ARG DATAFED_DEPENDENCIES_INSTALL_PATH
 ARG LIB_DIR
 
 ENV DATAFED_DEPENDENCIES_INSTALL_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH"
+ENV  DATAFED_GCS_COLLECTION_BASE_PATH="/mnt/datafed"
 ENV  DATAFED_GCS_COLLECTION_ROOT_PATH="/mnt/datafed"
 ENV     DATAFED_GLOBUS_CRED_FILE_PATH=/opt/datafed/globus/client_cred.json
 ENV              DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
@@ -38,7 +39,6 @@ ENV                              TERM="xterm"
 ENV                    DATAFED_GCS_IP=""
 ENV      BUILD_WITH_METADATA_SERVICES="TRUE"
 ENV                    DATAFED_DOMAIN="localhost"
-ENV               DATAFED_REPO_DOMAIN="localhost"
 
 RUN mkdir -p ${BUILD_DIR}
 RUN mkdir -p ${DATAFED_INSTALL_PATH}/logs
@@ -67,9 +67,6 @@ COPY ./scripts/copy_dependency.sh              ${BUILD_DIR}/scripts/
 
 RUN ${BUILD_DIR}/scripts/generate_datafed.sh
 RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_authz_dependencies.sh unify
-
-# All files should be owned by the datafed user
-RUN chown -R datafed:root ${DATAFED_DIR}
 
 COPY --chown=datafed:root ./scripts/dependency_versions.sh            ${BUILD_DIR}/scripts/
 COPY --chown=datafed:root ./scripts/generate_authz_config.sh          ${BUILD_DIR}/scripts/generate_authz_config.sh
@@ -127,6 +124,7 @@ RUN ${BUILD_DIR}/scripts/generate_gsi-authz_config.sh
 RUN ${BUILD_DIR}/scripts/generate_authz_config.sh &&  \
   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake -S. -B build  \
     -DBUILD_REPO_SERVER=False         \
+    -DBUILD_AUTHZ_TESTS=True          \
     -DBUILD_AUTHZ=True                \
     -DBUILD_AUTHZ_WITH_SYSLOG=False   \
     -DBUILD_CORE_SERVER=False         \

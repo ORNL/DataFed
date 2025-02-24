@@ -1,4 +1,4 @@
-db._useDatabase('sdms');
+db._useDatabase("sdms");
 db._truncate("u");
 db._truncate("accn");
 db._truncate("uuid");
@@ -9,6 +9,8 @@ db._truncate("c");
 db._truncate("t");
 db._truncate("a");
 db._truncate("q");
+db._truncate("globus_token");
+db._truncate("globus_coll");
 db._truncate("owner");
 db._truncate("member");
 db._truncate("item");

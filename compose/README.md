@@ -102,7 +102,7 @@ docker compose -f compose.yml config
 WARNING - Docker Compose will prioritize env variables in the following priority
 1. From you shell env
 2. From the .env file
-3. Internally from winthin the image
+3. Internally from within the image
 Be sure that you are not accidentally overwriting .env variables.
 
 At this point you should be able to navigate in your browser to

@@ -1,6 +1,10 @@
 #!/bin/env bash
 
-set -uf -o pipefail
+# The setup script must throw an error if there is a problem. This has
+# implications on the CI pipelines as well as the ability to detect problems
+# when standing up datafed.
+# -e turns on failures if script hits a problem
+set -euf -o pipefail
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
@@ -59,7 +63,7 @@ GATEWAY_NAME="${DATAFED_GCS_ROOT_NAME} Storage Gateway"
 COLLECTION_NAME="${DATAFED_GCS_ROOT_NAME} Collection Mapped"
 GUEST_COLLECTION_NAME="${DATAFED_GCS_ROOT_NAME} Collection Guest"
 
-gateway_line=$( globus-connect-server storage-gateway list | grep "$GATEWAY_NAME" )
+gateway_line=$( globus-connect-server storage-gateway list | grep "$GATEWAY_NAME" || echo "")
 
 echo "$DATAFED_GLOBUS_REPO_USER"
 cat << EOF > mapping.json 
@@ -113,7 +117,7 @@ fi
 mkdir -p "${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}/user"
 mkdir -p "${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}/project"
 
-collection_line=$( globus-connect-server collection list | grep "$COLLECTION_NAME" )
+collection_line=$( globus-connect-server collection list | grep "$COLLECTION_NAME" || echo "")
 
 spaces_in_name=$(echo $GATEWAY_NAME | awk '{print gsub("[ \t]",""); exit}')
 columns=$(( $spaces_in_name + 3 ))

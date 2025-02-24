@@ -1,4 +1,6 @@
-#!/bin/python3
+#!/usr/bin/env python3
+# WARNING - to work with python environments we cannot use /bin/python3 or
+#           a hardcoded abs path.
 import json
 import os
 import sys
@@ -53,7 +55,7 @@ class TestDataFedPythonAPICollectionCRUD(unittest.TestCase):
         count = 0
         while True:
             try:
-                result = self._df_api.loginByPassword(self._username, password)
+                self._df_api.loginByPassword(self._username, password)
                 break
             except BaseException:
                 pass

@@ -11,8 +11,6 @@
 # secure ZeroMQ link.
 
 
-import xmlrpc.client
-import re
 import zmq
 from . import Version_pb2
 from . import SDMS_Anon_pb2 as anon
@@ -20,36 +18,7 @@ from . import SDMS_Auth_pb2 as auth
 from . import Connection
 from . import VERSION
 
-# Function to check if a string contains any letters
-def contains_letters(s):
-    return bool(re.search('[a-zA-Z]', s))
-
-def remove_after_prefix_with_numbers(s):
-    # Use regular expression to match the prefix with numbers
-    match = re.match(r'(\d+.*?)(\D.*)', s)
-    if match:
-        return match.group(1)  # Return the part before the remaining string
-    return s  # If no match is found, return the original string
-
-# Check with pypi if a newer release is available, only look for stable
-# versions
-def get_latest_stable_version(package_name):
-    try:
-        client = xmlrpc.client.ServerProxy("https://pypi.org/pypi")
-        releases = client.package_releases(package_name)
-
-        # Filter the list to remove entries that contain any letters, we don't
-        # want to look at entries that could be a pre-release of some sort and
-        # recommend that the user use for instance a beta version.
-        releases = [release for release in releases if not 
-                    contains_letters(release)]
-        if not releases:
-            return None
-
-        return releases[0]
-    except Exception as e:
-        print(f"Unable to connect to pypi: {e}")
-        return None
+from . import VersionUtils
 
 
 ##
@@ -202,7 +171,7 @@ class API:
 
         # Make a request to pypi
         package_name = "datafed"  # Replace with the package name you want to check
-        latest_version_on_pypi = get_latest_stable_version(package_name)
+        latest_version_on_pypi = VersionUtils.get_latest_stable_version(package_name)
 
         self.new_client_avail = False
         if latest_version_on_pypi:
@@ -210,7 +179,7 @@ class API:
             major, minor, patch_w_prerelease = VERSION.__version__.split(".")
 
             # Remove prerelease part from patch
-            patch = remove_after_prefix_with_numbers(patch_w_prerelease)
+            patch = VersionUtils.remove_after_prefix_with_numbers(patch_w_prerelease)
 
             if pypi_major > major:
                 self.new_client_avail = latest_version_on_pypi
@@ -234,7 +203,9 @@ class API:
                 "Incompatible server api detected {}.{}.{}, you are running "
                 "{}.{}.{} consider "
                 "upgrading the datafed python client.".format(
-                    reply.api_major, reply.api_minor, reply.api_patch,
+                    reply.api_major,
+                    reply.api_minor,
+                    reply.api_patch,
                     Version_pb2.DATAFED_COMMON_PROTOCOL_API_MAJOR,
                     Version_pb2.DATAFED_COMMON_PROTOCOL_API_MINOR,
                     Version_pb2.DATAFED_COMMON_PROTOCOL_API_PATCH,

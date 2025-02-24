@@ -1,7 +1,7 @@
 <% if @enableGoogleAnalytics : %>
 		<!-- Google tag (gtag.js) -->
-		<script async src="https://www.googletagmanager.com/gtag/js?id=<%- @googleAnalyticsTag %>"></script>
-		<script>
+		<script nonce="<%= @nonce %>" async src="https://www.googletagmanager.com/gtag/js?id=<%- @googleAnalyticsTag %>"></script>
+		<script nonce="<%= @nonce %>">
 			window.dataLayer = window.dataLayer || [];
 			function gtag(){dataLayer.push(arguments);}
 			gtag('js', new Date());

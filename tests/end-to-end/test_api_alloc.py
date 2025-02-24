@@ -1,4 +1,6 @@
-#!/bin/python3
+#!/usr/bin/env python3
+# WARNING - to work with python environments we cannot use /bin/python3 or
+#           a hardcoded abs path.
 import json
 import os
 import sys
@@ -49,7 +51,7 @@ class TestDataFedPythonAPIRepoAlloc(unittest.TestCase):
         count = 0
         while True:
             try:
-                result = self._df_api.loginByPassword(username, password)
+                self._df_api.loginByPassword(username, password)
                 break
             except BaseException:
                 pass
@@ -57,8 +59,6 @@ class TestDataFedPythonAPIRepoAlloc(unittest.TestCase):
             # Try three times to authenticate
             assert count < 3
 
-        print("Attempt to login result")
-        print(result)
         path_to_repo_form = os.environ.get("DATAFED_REPO_FORM_PATH")
         if path_to_repo_form is None:
             self.fail("DATAFED_REPO_FORM_PATH env variable is not defined")

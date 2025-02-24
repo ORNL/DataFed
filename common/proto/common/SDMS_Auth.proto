@@ -21,7 +21,6 @@ enum Protocol
     ID = 2;
 }
 
-
 // ============================================================================
 // ----------- Setup/Config Messages ------------------------------------------
 // ============================================================================
@@ -116,6 +115,8 @@ message UserSetAccessTokenRequest
     required string             access      = 1; // Access token
     required uint32             expires_in  = 2; // Access expiration time in seconds
     required string             refresh     = 3; // Refresh token (never expires)
+    optional AccessTokenType    type        = 4 [default = GLOBUS_DEFAULT];
+    optional string             other       = 5; // Other information relevant to the set access token
 }
 
 // Get user access token (from Globus OAuth). This token will allow client to

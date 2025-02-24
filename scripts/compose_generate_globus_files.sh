@@ -70,7 +70,19 @@ then
   mkdir -p "$local_DATAFED_GLOBUS_KEY_DIR"
 fi
 
-. "${DIRECTORY}/.env"
+# Because docker compose honors spaces and reads in .env files as literals
+# we cannot include the quotes for variables that have spaces. So we need to
+# convert this file such that it is in a format that can be readable by bash
+# before loading it into the env
+
+cp "${DIRECTORY}/.env" "${DIRECTORY}/.env_shell"
+
+sed -i 's/=\([^"]*\)/="\1"/' "${DIRECTORY}/.env_shell"
+
+. "${DIRECTORY}/.env_shell"
+
+# Cleanup after loading env
+rm "${DIRECTORY}/.env_shell"
 
 DATAFED_GLOBUS_DEPLOYMENT_KEY_PATH="$DATAFED_HOST_DEPLOYMENT_KEY_PATH" \
 DATAFED_GLOBUS_CRED_FILE_PATH="$DATAFED_HOST_CRED_FILE_PATH" \

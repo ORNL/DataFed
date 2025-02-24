@@ -3,22 +3,20 @@ import * as model from "./model.js";
 import * as api from "./api.js";
 import * as panel_info from "./panel_item_info.js";
 
-export function newGraphPanel( a_id, a_frame, a_parent ){
-    return new GraphPanel( a_id, a_frame, a_parent );
+export function newGraphPanel(a_id, a_frame, a_parent) {
+    return new GraphPanel(a_id, a_frame, a_parent);
 }
 
-function makeLabel( node, item ){
+function makeLabel(node, item) {
     //console.log("makeLabel",node,item);
-    if ( item.alias ){
+    if (item.alias) {
         node.label = item.alias;
-    }else
-        node.label = item.id;
+    } else node.label = item.id;
 
-    node.label += util.generateNoteSpan( item, true );
+    node.label += util.generateNoteSpan(item, true);
 }
 
-function GraphPanel( a_id, a_frame, a_parent ){
-
+function GraphPanel(a_id, a_frame, a_parent) {
     //var graph_div = $(a_id,a_frame);
     var inst = this;
     var node_data = [];
@@ -31,52 +29,68 @@ function GraphPanel( a_id, a_frame, a_parent ){
     var svg = null;
     var simulation = null;
     var sel_node = null;
-    var focus_node_id, sel_node_id, r = 10;
+    var focus_node_id,
+        sel_node_id,
+        r = 10;
 
-    this.load = function( a_id, a_sel_node_id ){
+    this.load = function (a_id, a_sel_node_id) {
         focus_node_id = a_id;
-        sel_node_id = a_sel_node_id?a_sel_node_id:a_id;
+        sel_node_id = a_sel_node_id ? a_sel_node_id : a_id;
         sel_node = null;
 
         //console.log("owner:",a_owner);
-        api.dataGetDepGraph( a_id, function( a_data ){
+        api.dataGetDepGraph(a_id, function (a_data) {
             var item, i, j, dep, node;
 
             link_data = [];
 
             var new_node_data = [];
-            var id,id_map = {};
+            var id,
+                id_map = {};
 
-            for ( i in a_data.item ){
+            for (i in a_data.item) {
                 item = a_data.item[i];
                 //console.log("node:",item);
-                node = {id:item.id,doi:item.doi,size:item.size,notes:item.notes,inhErr:item.inhErr,locked:item.locked,links:[]};
+                node = {
+                    id: item.id,
+                    doi: item.doi,
+                    size: item.size,
+                    notes: item.notes,
+                    inhErr: item.inhErr,
+                    locked: item.locked,
+                    links: [],
+                };
 
-                makeLabel( node, item );
+                makeLabel(node, item);
 
-                if ( item.gen != undefined ){
+                if (item.gen != undefined) {
                     node.row = item.gen;
                     node.col = 0;
                 }
 
-                if ( item.id == a_id ){
+                if (item.id == a_id) {
                     node.comp = true;
                 }
 
-                if ( item.id == sel_node_id ){
+                if (item.id == sel_node_id) {
                     sel_node = node;
                 }
 
                 id_map[node.id] = new_node_data.length;
                 new_node_data.push(node);
-                for ( j in item.dep ){
+                for (j in item.dep) {
                     dep = item.dep[j];
-                    id = item.id+"-"+dep.id;
-                    link_data.push({source:item.id,target:dep.id,ty:model.DepTypeFromString[dep.type],id:id});
+                    id = item.id + "-" + dep.id;
+                    link_data.push({
+                        source: item.id,
+                        target: dep.id,
+                        ty: model.DepTypeFromString[dep.type],
+                        id: id,
+                    });
                 }
             }
 
-            for ( i in link_data ){
+            for (i in link_data) {
                 dep = link_data[i];
 
                 node = new_node_data[id_map[dep.source]];
@@ -87,9 +101,9 @@ function GraphPanel( a_id, a_frame, a_parent ){
 
             // Copy any existing position data to new nodes
             var node2;
-            for ( i in node_data ){
+            for (i in node_data) {
                 node = node_data[i];
-                if ( id_map[node.id] != undefined ){
+                if (id_map[node.id] != undefined) {
                     node2 = new_node_data[id_map[node.id]];
                     node2.x = node.x;
                     node2.y = node.y;
@@ -98,43 +112,46 @@ function GraphPanel( a_id, a_frame, a_parent ){
 
             node_data = new_node_data;
 
-            if ( !sel_node ){
-                if ( node_data.length ){
+            if (!sel_node) {
+                if (node_data.length) {
                     sel_node = node_data[0];
                     sel_node_id = sel_node.id;
-                }else{
+                } else {
                     sel_node_id = null;
                 }
             }
 
             renderGraph();
-            panel_info.showSelectedInfo( sel_node_id, inst.checkGraphUpdate );
+            panel_info.showSelectedInfo(sel_node_id, inst.checkGraphUpdate);
             a_parent.updateBtnState();
         });
     };
 
-    this.checkGraphUpdate = function( a_data, a_source ){
-        console.log("graph check updates", a_data, a_source );
-        console.log("sel node", sel_node );
+    this.checkGraphUpdate = function (a_data, a_source) {
+        console.log("graph check updates", a_data, a_source);
+        console.log("sel node", sel_node);
         // source is sel_node_id, so check sel_node
-        if ( a_data.size != sel_node.size ){
+        if (a_data.size != sel_node.size) {
             console.log("size diff, update!");
-            model.update( [a_data] );
+            model.update([a_data]);
         }
-    }
+    };
 
     // TODO Why are IDs separate from data?
 
-    this.update = function( a_ids, a_data ){
+    this.update = function (a_ids, a_data) {
         // Only updates locked and alias of impacted nodes
 
-        var ids = Array.isArray(a_ids)?a_ids:[a_ids];
-        var data = Array.isArray(a_data)?a_data:[a_data];
-        var i, node, item, render = false;
+        var ids = Array.isArray(a_ids) ? a_ids : [a_ids];
+        var data = Array.isArray(a_data) ? a_data : [a_data];
+        var i,
+            node,
+            item,
+            render = false;
 
-        for ( i = 0; i < ids.length; i++ ){
-            node = findNode( ids[i] );
-            if ( node ){
+        for (i = 0; i < ids.length; i++) {
+            node = findNode(ids[i]);
+            if (node) {
                 render = true;
                 item = data[i];
 
@@ -142,314 +159,311 @@ function GraphPanel( a_id, a_frame, a_parent ){
                 node.notes = item.notes;
                 console.log("updating:", node);
 
-                makeLabel( node, item );
+                makeLabel(node, item);
             }
         }
 
-        if ( render )
-            renderGraph();
+        if (render) renderGraph();
     };
 
-    this.clear = function(){
+    this.clear = function () {
         links_grp.selectAll("*").remove();
         nodes_grp.selectAll("*").remove();
         node_data = [];
         link_data = [];
     };
 
-    this.resized = function( a_width, a_height ){
-        graph_center_x = a_width/2;
+    this.resized = function (a_width, a_height) {
+        graph_center_x = a_width / 2;
     };
 
-    this.getSelectedID = function(){
-        if ( sel_node )
-            return sel_node.id;
+    this.getSelectedID = function () {
+        if (sel_node) return sel_node.id;
     };
 
-    this.getSelectedNodes = function(){
+    this.getSelectedNodes = function () {
         var sel = [];
-        if ( sel_node ){
-            sel.push({ key: sel_node.id, data: { doi: sel_node.doi, size: sel_node.size }, parent: { key: "" }});
+        if (sel_node) {
+            sel.push({
+                key: sel_node.id,
+                data: { doi: sel_node.doi, size: sel_node.size },
+                parent: { key: "" },
+            });
         }
         return sel;
     };
 
-    this.getSubjectID = function(){
-        if ( focus_node_id )
-            return focus_node_id;
+    this.getSubjectID = function () {
+        if (focus_node_id) return focus_node_id;
     };
 
     // NOTE: D3 changes link source and target IDs strings (in link_data) to node references (in node_data) when renderGraph runs
-    function renderGraph(){
+    function renderGraph() {
         var g;
 
-        links = links_grp.selectAll('line')
-            .data( link_data, function(d) { return d.id; });
+        links = links_grp.selectAll("line").data(link_data, function (d) {
+            return d.id;
+        });
 
-        links.enter()
+        links
+            .enter()
             .append("line")
-                .attr('marker-start',function(d){
-                    //console.log("link enter 1");
-                    switch ( d.ty ){
-                        case 0: return 'url(#arrow-derivation)';
-                        case 1: return 'url(#arrow-component)';
-                        case 2: return 'url(#arrow-new-version)';
-                        default: return '';
-                    }
-                })
-                /*.attr('marker-end',function(d){
+            .attr("marker-start", function (d) {
+                //console.log("link enter 1");
+                switch (d.ty) {
+                    case 0:
+                        return "url(#arrow-derivation)";
+                    case 1:
+                        return "url(#arrow-component)";
+                    case 2:
+                        return "url(#arrow-new-version)";
+                    default:
+                        return "";
+                }
+            })
+            /*.attr('marker-end',function(d){
                     //console.log("link enter 1");
                     switch ( d.ty ){
                         case 2: return 'url(#arrow-new-version)';
                         default: return '';
                     }
                 })*/
-                .attr('class',function(d){
-                    //console.log("link enter 2");
-                    switch ( d.ty ){
-                        case 0: return 'link derivation';
-                        case 1: return 'link component';
-                        case 2: return 'link new-version';
-                    }
-                });
+            .attr("class", function (d) {
+                //console.log("link enter 2");
+                switch (d.ty) {
+                    case 0:
+                        return "link derivation";
+                    case 1:
+                        return "link component";
+                    case 2:
+                        return "link new-version";
+                }
+            });
 
-        links.exit()
-            .remove();
+        links.exit().remove();
 
-        links = links_grp.selectAll('line');
+        links = links_grp.selectAll("line");
 
-        nodes = nodes_grp.selectAll('g')
-            .data( node_data, function(d) { return d.id; });
+        nodes = nodes_grp.selectAll("g").data(node_data, function (d) {
+            return d.id;
+        });
 
         // Update
-        nodes.select("circle.obj")
-            .attr('class',function(d){
-                var res = 'obj ';
+        nodes.select("circle.obj").attr("class", function (d) {
+            var res = "obj ";
 
-                //console.log("upd node", d );
+            //console.log("upd node", d );
 
-                if ( d.id == focus_node_id )
-                    res += "main";
-                else if ( d.row != undefined )
-                    res += "prov";
-                else{
-                    //console.log("upd other node", d );
-                    res += "other";
-                }
+            if (d.id == focus_node_id) res += "main";
+            else if (d.row != undefined) res += "prov";
+            else {
+                //console.log("upd other node", d );
+                res += "other";
+            }
 
-                if ( d.comp )
-                    res += " comp";
-                else
-                    res += " part";
+            if (d.comp) res += " comp";
+            else res += " part";
 
-                return res;
-            });
+            return res;
+        });
 
-        nodes.select("text.label")
-            .html(function(d) {
+        nodes
+            .select("text.label")
+            .html(function (d) {
                 return d.label;
             })
-            .attr('x', function(d){
-                if ( d.locked )
-                    return r + 12;
-                else
-                    return r;
+            .attr("x", function (d) {
+                if (d.locked) return r + 12;
+                else return r;
             });
 
-        nodes.select("text.locked")
-            .html(function(d) {
-                if (d.locked )
-                    return "&#xe6bb";
-                else
-                    return "";
-            });
+        nodes.select("text.locked").html(function (d) {
+            if (d.locked) return "&#xe6bb";
+            else return "";
+        });
 
+        nodes.selectAll(".node > circle.select").attr("class", function (d) {
+            if (d.id == sel_node_id) {
+                //sel_node = d;
+                return "select highlight";
+            } else return "select hidden";
+        });
 
-        nodes.selectAll(".node > circle.select")
-            .attr("class", function(d){
-                if ( d.id == sel_node_id ){
-                    //sel_node = d;
-                    return "select highlight";
-                }else
-                    return "select hidden";
-            });
-
-
-        g = nodes.enter()
+        g = nodes
+            .enter()
             .append("g")
-                .attr("class", "node")
-                .call(d3.drag()
-                    .on("start", dragStarted)
-                    .on("drag", dragged)
-                    .on("end", dragEnded));
+            .attr("class", "node")
+            .call(d3.drag().on("start", dragStarted).on("drag", dragged).on("end", dragEnded));
 
         g.append("circle")
             .attr("r", r)
-            .attr('class',function(d){
-                var res = 'obj ';
+            .attr("class", function (d) {
+                var res = "obj ";
                 //console.log("node enter 1");
 
-                if ( d.id == focus_node_id )
-                    res += "main";
-                else if ( d.row != undefined )
-                    res += "prov";
-                else{
+                if (d.id == focus_node_id) res += "main";
+                else if (d.row != undefined) res += "prov";
+                else {
                     res += "other";
                     //console.log("new other node", d );
                 }
 
-                if ( d.comp )
-                    res += " comp";
-                else
-                    res += " part";
+                if (d.comp) res += " comp";
+                else res += " part";
 
                 return res;
             })
-            .on("mouseover",function(d){
+            .on("mouseover", function (d) {
                 //console.log("mouse over");
                 d3.select(this)
                     .transition()
                     .duration(150)
-                    .attr('r',r*1.5);
+                    .attr("r", r * 1.5);
             })
-            .on("mouseout",function(d){
-                d3.select(this)
-                    .transition()
-                    .duration(500)
-                    .attr('r',r);
+            .on("mouseout", function (d) {
+                d3.select(this).transition().duration(500).attr("r", r);
             })
-            .on("dblclick", function(d,i){
+            .on("dblclick", function (d, i) {
                 //console.log("dbl click");
-                if ( d.comp )
-                    inst.collapseNode();
-                else
-                    inst.expandNode();
+                if (d.comp) inst.collapseNode();
+                else inst.expandNode();
                 d3.event.stopPropagation();
             })
-            .on("click", function(d,i){
-                if ( sel_node != d ){
-                    d3.select(".highlight")
-                        .attr("class","select hidden");
-                    d3.select(this.parentNode).select(".select")
-                        .attr("class","select highlight");
+            .on("click", function (d, i) {
+                if (sel_node != d) {
+                    d3.select(".highlight").attr("class", "select hidden");
+                    d3.select(this.parentNode).select(".select").attr("class", "select highlight");
                     sel_node = d;
                     sel_node_id = d.id;
-                    panel_info.showSelectedInfo( d.id, inst.checkGraphUpdate );
+                    panel_info.showSelectedInfo(d.id, inst.checkGraphUpdate);
                     a_parent.updateBtnState();
                 }
 
-                if ( d3.event.ctrlKey ){
-                    if ( d.comp )
-                        inst.collapseNode();
-                    else
-                        inst.expandNode();
+                if (d3.event.ctrlKey) {
+                    if (d.comp) inst.collapseNode();
+                    else inst.expandNode();
                 }
 
                 d3.event.stopPropagation();
             });
 
         g.append("circle")
-            .attr("r", r *1.5)
-            .attr("class", function(d){
+            .attr("r", r * 1.5)
+            .attr("class", function (d) {
                 //console.log("node enter 3");
 
-                if ( d.id == sel_node_id ){
+                if (d.id == sel_node_id) {
                     //sel_node = d;
                     return "select highlight";
-                }else
-                    return "select hidden";
+                } else return "select hidden";
             });
 
-        var n2 = g.filter(function(d){ return d.size });
+        var n2 = g.filter(function (d) {
+            return d.size;
+        });
         n2.append("line")
             .attr("pointer-events", "none")
-            .attr("x1", -r*.5 )
-            .attr("y1", -r*.3 )
-            .attr("x2", r*.5 )
-            .attr("y2", -r*.3 )
-            .attr("class","data");
-            //.attr("stroke-width", 1 )
-            //.attr("stroke", "white" );
+            .attr("x1", -r * 0.5)
+            .attr("y1", -r * 0.3)
+            .attr("x2", r * 0.5)
+            .attr("y2", -r * 0.3)
+            .attr("class", "data");
+        //.attr("stroke-width", 1 )
+        //.attr("stroke", "white" );
 
         n2.append("line")
             .attr("pointer-events", "none")
-            .attr("x1", -r*.5 )
-            .attr("y1", 0 )
-            .attr("x2", r*.5 )
-            .attr("y2", 0 )
-            .attr("class","data");
-            //.attr("stroke-width", 1 )
-            //.attr("stroke", "white" );
+            .attr("x1", -r * 0.5)
+            .attr("y1", 0)
+            .attr("x2", r * 0.5)
+            .attr("y2", 0)
+            .attr("class", "data");
+        //.attr("stroke-width", 1 )
+        //.attr("stroke", "white" );
 
         n2.append("line")
             .attr("pointer-events", "none")
-            .attr("x1", -r*.5 )
-            .attr("y1", r*.3 )
-            .attr("x2", r*.5 )
-            .attr("y2", r*.3 )
-            .attr("class","data");
-            //.attr("stroke-width", 1 )
-            //.attr("stroke", "white" );
-    
+            .attr("x1", -r * 0.5)
+            .attr("y1", r * 0.3)
+            .attr("x2", r * 0.5)
+            .attr("y2", r * 0.3)
+            .attr("class", "data");
+        //.attr("stroke-width", 1 )
+        //.attr("stroke", "white" );
+
         g.append("text")
-            .attr("class","label")
-            .html(function(d) {
+            .attr("class", "label")
+            .html(function (d) {
                 return d.label;
             })
-            .attr('x', function(d){
-                if ( d.locked )
-                    return r + 12;
-                else
-                    return r;
+            .attr("x", function (d) {
+                if (d.locked) return r + 12;
+                else return r;
             })
-            .attr('y', -r);
+            .attr("y", -r);
 
         g.append("text")
-            .attr("class","locked")
-            .html(function(d) {
-                if (d.locked )
-                    return "&#xe6bb";
-                else
-                    return "";
+            .attr("class", "locked")
+            .html(function (d) {
+                if (d.locked) return "&#xe6bb";
+                else return "";
             })
-            .attr('x', r-3)
-            .attr('y', -r+1);
+            .attr("x", r - 3)
+            .attr("y", -r + 1);
 
-        nodes.exit()
-            .remove();
+        nodes.exit().remove();
 
-        nodes = nodes_grp.selectAll('g');
+        nodes = nodes_grp.selectAll("g");
 
-        if ( simulation ){
+        if (simulation) {
             //console.log("restart sim");
-            simulation
-                .nodes(node_data)
-                .force("link").links(link_data);
+            simulation.nodes(node_data).force("link").links(link_data);
 
             simulation.alpha(1).restart();
-        }else{
-            var linkForce = d3.forceLink(link_data)
-                .strength(function(d){
-                    switch(d.ty){
-                        case 0: return 0.1;
-                        case 1: return 0.1;
-                        case 2: return 0.1;
+        } else {
+            var linkForce = d3
+                .forceLink(link_data)
+                .strength(function (d) {
+                    switch (d.ty) {
+                        case 0:
+                            return 0.1;
+                        case 1:
+                            return 0.1;
+                        case 2:
+                            return 0.1;
                     }
                 })
-                .id( function(d) { return d.id; });
+                .id(function (d) {
+                    return d.id;
+                });
 
-            simulation = d3.forceSimulation()
+            simulation = d3
+                .forceSimulation()
                 .nodes(node_data)
                 //.force('center', d3.forceCenter(200,200))
-                .force('charge', d3.forceManyBody()
-                    .strength(-300))
-                .force('row', d3.forceY( function(d,i){ return d.row != undefined ?(75 + d.row*75):0; })
-                    .strength( function(d){ return d.row != undefined ?0.05:0; }))
-                .force('col', d3.forceX(function(d,i){ return d.col != undefined?graph_center_x:0; })
-                    .strength( function(d){ return d.col != undefined ?0.05:0; }))
-                .force("link", linkForce )
-                .on('tick', simTick);
-
+                .force("charge", d3.forceManyBody().strength(-300))
+                .force(
+                    "row",
+                    d3
+                        .forceY(function (d, i) {
+                            return d.row != undefined ? 75 + d.row * 75 : 0;
+                        })
+                        .strength(function (d) {
+                            return d.row != undefined ? 0.05 : 0;
+                        }),
+                )
+                .force(
+                    "col",
+                    d3
+                        .forceX(function (d, i) {
+                            return d.col != undefined ? graph_center_x : 0;
+                        })
+                        .strength(function (d) {
+                            return d.col != undefined ? 0.05 : 0;
+                        }),
+                )
+                .force("link", linkForce)
+                .on("tick", simTick);
         }
     }
 
@@ -465,11 +479,11 @@ function GraphPanel( a_id, a_frame, a_parent ){
         //console.log("drag",d3.event.x,d3.event.y);
         d.fx = d3.event.x;
         d.fy = d3.event.y;
-        simTick(); 
+        simTick();
         d3.event.sourceEvent.stopPropagation();
     }
 
-    function dragEnded(d){
+    function dragEnded(d) {
         //console.log("drag end",d.id);
         if (!d3.event.active) simulation.alphaTarget(0);
         d.x = d.fx;
@@ -480,49 +494,44 @@ function GraphPanel( a_id, a_frame, a_parent ){
         d3.event.sourceEvent.stopPropagation();
     }
 
-    function findNode( a_id ){
-        for ( var i in node_data ){
-            if ( node_data[i].id == a_id )
-                return node_data[i];
+    function findNode(a_id) {
+        for (var i in node_data) {
+            if (node_data[i].id == a_id) return node_data[i];
         }
     }
 
-    function findLink( a_id ){
-        for ( var i in link_data ){
-            if ( link_data[i].id == a_id )
-                return link_data[i];
+    function findLink(a_id) {
+        for (var i in link_data) {
+            if (link_data[i].id == a_id) return link_data[i];
         }
     }
 
-    this.expandNode = function(){
-        if ( sel_node && !sel_node.comp ){
-            api.dataView( sel_node_id, function( data ){
-                console.log("expand node data:",data);
-                if ( data ){
+    this.expandNode = function () {
+        if (sel_node && !sel_node.comp) {
+            api.dataView(sel_node_id, function (data) {
+                console.log("expand node data:", data);
+                if (data) {
                     var rec = data;
 
                     sel_node.comp = true;
 
-                    var dep,new_node,link,i,id;
+                    var dep, new_node, link, i, id;
 
-                    for ( i in rec.deps ){
+                    for (i in rec.deps) {
                         dep = rec.deps[i];
                         //console.log("dep:",dep);
 
-                        if ( dep.dir == "DEP_IN" )
-                            id = dep.id+"-"+rec.id;
-                        else
-                            id = rec.id+"-"+dep.id;
+                        if (dep.dir == "DEP_IN") id = dep.id + "-" + rec.id;
+                        else id = rec.id + "-" + dep.id;
 
-                        link = findLink( id );
-                        if ( link )
-                            continue;
+                        link = findLink(id);
+                        if (link) continue;
 
-                        link = {id:id,ty:model.DepTypeFromString[dep.type]};
-                        if ( dep.dir == "DEP_IN" ){
+                        link = { id: id, ty: model.DepTypeFromString[dep.type] };
+                        if (dep.dir == "DEP_IN") {
                             link.source = dep.id;
                             link.target = rec.id;
-                        }else{
+                        } else {
                             link.source = rec.id;
                             link.target = dep.id;
                         }
@@ -530,11 +539,16 @@ function GraphPanel( a_id, a_frame, a_parent ){
                         sel_node.links.push(link);
 
                         new_node = findNode(dep.id);
-                        if ( !new_node ){
-                            new_node = {id:dep.id,notes:dep.notes,inhErr:dep.inhErr,links:[link]}
-                            makeLabel( new_node, dep );
-                            node_data.push( new_node );
-                        }else{
+                        if (!new_node) {
+                            new_node = {
+                                id: dep.id,
+                                notes: dep.notes,
+                                inhErr: dep.inhErr,
+                                links: [link],
+                            };
+                            makeLabel(new_node, dep);
+                            node_data.push(new_node);
+                        } else {
                             new_node.links.push(link);
                         }
 
@@ -547,42 +561,45 @@ function GraphPanel( a_id, a_frame, a_parent ){
         }
     };
 
-    this.collapseNode = function(){
+    this.collapseNode = function () {
         //console.log("collapse node");
-        if ( sel_node ){
-            var i, link, dest, loc_trim=[];
+        if (sel_node) {
+            var i,
+                link,
+                dest,
+                loc_trim = [];
 
             sel_node.comp = false;
 
-            for ( i = sel_node.links.length - 1; i >= 0; i-- ){
+            for (i = sel_node.links.length - 1; i >= 0; i--) {
                 link = sel_node.links[i];
                 //console.log("lev 0 link:",link);
-                dest = (link.source != sel_node)?link.source:link.target;
-                graphPruneCalc( dest, [sel_node.id], sel_node );
+                dest = link.source != sel_node ? link.source : link.target;
+                graphPruneCalc(dest, [sel_node.id], sel_node);
 
-                if ( !dest.prune && dest.row == undefined ){
+                if (!dest.prune && dest.row == undefined) {
                     graphPruneReset(-1);
                     link.prune += 1;
                     //graphPrune();
                 }
 
-                if ( dest.prune ){
+                if (dest.prune) {
                     //console.log("PRUNE ALL");
                     graphPrune();
-                }else if ( dest.row == undefined ){
+                } else if (dest.row == undefined) {
                     //console.log("PRUNE LOCAL EDGE ONLY");
                     graphPruneReset();
                     loc_trim.push(link);
                     //link.prune = true;
                     //graphPrune();
-                }else{
+                } else {
                     //console.log("PRUNE NONE");
                     graphPruneReset();
                 }
             }
 
-            if ( loc_trim.length < sel_node.links.length ){
-                for ( i in loc_trim ){
+            if (loc_trim.length < sel_node.links.length) {
+                for (i in loc_trim) {
                     loc_trim[i].prune = true;
                 }
                 graphPrune();
@@ -594,16 +611,19 @@ function GraphPanel( a_id, a_frame, a_parent ){
         }
     };
 
-    this.hideNode = function(){
-        if ( sel_node && sel_node.id != focus_node_id && node_data.length > 1 ){
+    this.hideNode = function () {
+        if (sel_node && sel_node.id != focus_node_id && node_data.length > 1) {
             sel_node.prune = true;
             // Check for disconnection of the graph
-            console.log("hide",sel_node.id);
-            var start = sel_node.links[0].source == sel_node?sel_node.links[0].target:sel_node.links[0].source;
-            console.log("start",start);
-            if ( graphCountConnected( start, [] ) == node_data.length - 1 ){
-                for ( var i in sel_node.links ){
-                    console.log("prune",i,sel_node.links[i]);
+            console.log("hide", sel_node.id);
+            var start =
+                sel_node.links[0].source == sel_node
+                    ? sel_node.links[0].target
+                    : sel_node.links[0].source;
+            console.log("start", start);
+            if (graphCountConnected(start, []) == node_data.length - 1) {
+                for (var i in sel_node.links) {
+                    console.log("prune", i, sel_node.links[i]);
                     sel_node.links[i].prune = true;
                 }
                 graphPrune();
@@ -611,20 +631,27 @@ function GraphPanel( a_id, a_frame, a_parent ){
                 sel_node = node_data[0];
                 sel_node_id = sel_node.id;
                 renderGraph();
-            }else{
+            } else {
                 sel_node.prune = false;
                 util.setStatusText("Cannot hide non-leaf nodes (try collapsing)");
             }
-        }else{
+        } else {
             util.setStatusText("Cannot hide starting node");
         }
     };
 
     // Called automatically from API module when data records are impacted by edits or annotations
-    this.updateData = function( a_data ){
+    this.updateData = function (a_data) {
         //console.log( "graph updating:", a_data );
 
-        var j, node, item, l, l1, same, dep_cnt, render = false;
+        var j,
+            node,
+            item,
+            l,
+            l1,
+            same,
+            dep_cnt,
+            render = false;
 
         //if ( focus_node_id )
         //    inst.load( focus_node_id, sel_node_id );
@@ -633,29 +660,28 @@ function GraphPanel( a_id, a_frame, a_parent ){
         // if found, reload entire graph from DB
         // If not reloading, scan for changes to title, annotations, status...
 
-        for ( var i in a_data ){
+        for (var i in a_data) {
             item = a_data[i];
             //console.log("examine:",i,item);
-            node = findNode( i );
-            if ( node ){
-                if ( item.depsAvail ){
+            node = findNode(i);
+            if (node) {
+                if (item.depsAvail) {
                     //console.log("deps avail on existing node:",node.links);
                     // See if deps have changed
                     l1 = {};
-                    for ( j in node.links ){
+                    for (j in node.links) {
                         l = node.links[j];
-                        if ( l.source.id == i )
-                            l1[l.target.id] = l.ty;
+                        if (l.source.id == i) l1[l.target.id] = l.ty;
                     }
                     //console.log("l1:",l1);
 
                     same = true;
                     dep_cnt = 0;
-                    for ( j in item.dep ){
+                    for (j in item.dep) {
                         l = item.dep[j];
                         //console.log("chk dep",l);
-                        if ( l.dir == "DEP_OUT" ){
-                            if ( l1[l.id] != model.DepTypeFromString[l.type] ){
+                        if (l.dir == "DEP_OUT") {
+                            if (l1[l.id] != model.DepTypeFromString[l.type]) {
                                 //console.log("type mismatch",l.id,l1[l.id],l.type);
                                 same = false;
                                 break;
@@ -664,15 +690,15 @@ function GraphPanel( a_id, a_frame, a_parent ){
                         }
                     }
 
-                    if ( same && Object.keys( l1 ).length != dep_cnt ){
+                    if (same && Object.keys(l1).length != dep_cnt) {
                         //console.log("len mismatch", Object.keys( l1 ).length, dep_cnt);
                         same = false;
                     }
 
-                    if ( !same ){
+                    if (!same) {
                         // Reload graph
                         //console.log("must reload graph (diff deps)");
-                        inst.load( focus_node_id, sel_node_id );
+                        inst.load(focus_node_id, sel_node_id);
                         return;
                     }
                 }
@@ -682,40 +708,39 @@ function GraphPanel( a_id, a_frame, a_parent ){
                 node.notes = item.notes;
                 node.size = item.size;
                 //console.log("updating:", node);
-                makeLabel( node, item );
-                if ( node == sel_node )
-                    panel_info.showSelectedInfo( sel_node_id );
-            }else if ( item.depsAvail ){
+                makeLabel(node, item);
+                if (node == sel_node) panel_info.showSelectedInfo(sel_node_id);
+            } else if (item.depsAvail) {
                 // See if this node might need to be added to graph
-                for ( j in item.dep ){
+                for (j in item.dep) {
                     l = item.dep[j];
-                    if ( l.dir == "DEP_OUT" && findNode( l.id )){
+                    if (l.dir == "DEP_OUT" && findNode(l.id)) {
                         //console.log("must reload graph (new ext deps)");
-                        inst.load( focus_node_id, sel_node_id );
+                        inst.load(focus_node_id, sel_node_id);
                         return;
                     }
                 }
             }
         }
 
-        if ( render ){
+        if (render) {
             renderGraph();
             a_parent.updateBtnState();
         }
-    }
+    };
 
-    function graphCountConnected(a_node,a_visited,a_from){
+    function graphCountConnected(a_node, a_visited, a_from) {
         var count = 0;
 
-        if ( a_visited.indexOf( a_node.id ) < 0 && !a_node.prune ){
+        if (a_visited.indexOf(a_node.id) < 0 && !a_node.prune) {
             a_visited.push(a_node.id);
             count++;
-            var link,dest;
-            for ( var i in a_node.links ){
+            var link, dest;
+            for (var i in a_node.links) {
                 link = a_node.links[i];
-                if ( link != a_from ){
-                    dest = (link.source == a_node?link.target:link.source);
-                    count += graphCountConnected(dest,a_visited,link);
+                if (link != a_from) {
+                    dest = link.source == a_node ? link.target : link.source;
+                    count += graphCountConnected(dest, a_visited, link);
                 }
             }
         }
@@ -723,148 +748,162 @@ function GraphPanel( a_id, a_frame, a_parent ){
         return count;
     }
 
-    function graphPrune(){
-        var i,j,item;
+    function graphPrune() {
+        var i, j, item;
 
-        for ( i = link_data.length - 1; i >= 0; i-- ){
+        for (i = link_data.length - 1; i >= 0; i--) {
             item = link_data[i];
-            if ( item.prune ){
+            if (item.prune) {
                 //console.log("pruning link:",item);
-                if ( !item.source.prune ){
+                if (!item.source.prune) {
                     item.source.comp = false;
-                    j = item.source.links.indexOf( item );
-                    if ( j != -1 ){
-                        item.source.links.splice(j,1);
-                    }else{
+                    j = item.source.links.indexOf(item);
+                    if (j != -1) {
+                        item.source.links.splice(j, 1);
+                    } else {
                         console.log("BAD INDEX IN SOURCE LINKS!");
                     }
                 }
-                if ( !item.target.prune ){
+                if (!item.target.prune) {
                     item.target.comp = false;
-                    j = item.target.links.indexOf( item );
-                    if ( j != -1 ){
-                        item.target.links.splice(j,1);
-                    }else{
+                    j = item.target.links.indexOf(item);
+                    if (j != -1) {
+                        item.target.links.splice(j, 1);
+                    } else {
                         console.log("BAD INDEX IN TARGET LINKS!");
                     }
                 }
-                link_data.splice(i,1);
+                link_data.splice(i, 1);
             }
         }
 
-        for ( i = node_data.length - 1; i >= 0; i-- ){
+        for (i = node_data.length - 1; i >= 0; i--) {
             item = node_data[i];
-            if ( item.prune ){
+            if (item.prune) {
                 //console.log("pruning node:",item);
-                node_data.splice(i,1);
+                node_data.splice(i, 1);
             }
         }
     }
 
-    function graphPruneReset(){
+    function graphPruneReset() {
         var i;
-        for ( i in node_data ){
+        for (i in node_data) {
             node_data[i].prune = false;
         }
-        for ( i in link_data ){
+        for (i in link_data) {
             link_data[i].prune = false;
         }
     }
 
-
     function simTick() {
         //console.log("tick");
-        nodes
-            .attr("transform", function(d) {
-                return "translate(" + d.x + "," + d.y + ")"; });
+        nodes.attr("transform", function (d) {
+            return "translate(" + d.x + "," + d.y + ")";
+        });
 
         links
-            .attr("x1", function(d) { return d.source.x; })
-            .attr("y1", function(d) { return d.source.y; })
-            .attr("x2", function(d) { return d.target.x; })
-            .attr("y2", function(d) { return d.target.y; });
+            .attr("x1", function (d) {
+                return d.source.x;
+            })
+            .attr("y1", function (d) {
+                return d.source.y;
+            })
+            .attr("x2", function (d) {
+                return d.target.x;
+            })
+            .attr("y2", function (d) {
+                return d.target.y;
+            });
     }
-
 
     // Graph Init
     var zoom = d3.zoom();
 
     // TODO Select in our frame only
-    svg = d3.select(a_id)
-    .call(zoom.on("zoom", function () {
-        svg.attr("transform", d3.event.transform);
-    }))
-    .append("g");
+    svg = d3
+        .select(a_id)
+        .call(
+            zoom.on("zoom", function () {
+                svg.attr("transform", d3.event.transform);
+            }),
+        )
+        .append("g");
 
     defineArrowMarkerDeriv(svg);
     defineArrowMarkerComp(svg);
     defineArrowMarkerNewVer(svg);
 
-    links_grp = svg.append("g")
-        .attr("class", "links");
+    links_grp = svg.append("g").attr("class", "links");
 
-    nodes_grp = svg.append("g")
-        .attr("class", "nodes");
+    nodes_grp = svg.append("g").attr("class", "nodes");
 
-    model.registerUpdateListener( this.updateData );
+    model.registerUpdateListener(this.updateData);
 
     return this;
 }
 
 // Depth-first-search to required nodes, mark for pruning
-function graphPruneCalc( a_node, a_visited, a_source ){
-    if ( a_visited.indexOf(a_node.id) < 0 ){
+function graphPruneCalc(a_node, a_visited, a_source) {
+    if (a_visited.indexOf(a_node.id) < 0) {
         a_visited.push(a_node.id);
 
-        if ( a_node.row != undefined ){
+        if (a_node.row != undefined) {
             return false;
         }
 
-        var i, prune, dest, link, keep = false;
+        var i,
+            prune,
+            dest,
+            link,
+            keep = false;
 
-        for ( i in a_node.links ){
+        for (i in a_node.links) {
             link = a_node.links[i];
-            dest = (link.source != a_node)?link.source:link.target;
-            if ( dest != a_source ){
-                prune = graphPruneCalc( dest, a_visited, a_node );
+            dest = link.source != a_node ? link.source : link.target;
+            if (dest != a_source) {
+                prune = graphPruneCalc(dest, a_visited, a_node);
                 keep |= !prune;
             }
         }
 
-        if ( !keep ){
+        if (!keep) {
             a_node.prune = true;
-            for ( i in a_node.links )
-                a_node.links[i].prune=true;
+            for (i in a_node.links) a_node.links[i].prune = true;
         }
     }
 
     return a_node.prune;
 }
 
-function defineArrowMarkerDeriv( a_svg ){
-    a_svg.append('defs').append('marker')
-        .attr('id','arrow-derivation')
-        .attr('refX',-2.5)
-        .attr('refY',2)
-        .attr('orient','auto')
-        .attr('markerWidth',5)
-        .attr('markerHeight',4)
-        .append('svg:path')
-            .attr('class','arrow-path derivation')
-            .attr('d', 'M 5,0 L 0,2 L 5,4');
+function defineArrowMarkerDeriv(a_svg) {
+    a_svg
+        .append("defs")
+        .append("marker")
+        .attr("id", "arrow-derivation")
+        .attr("refX", -2.5)
+        .attr("refY", 2)
+        .attr("orient", "auto")
+        .attr("markerWidth", 5)
+        .attr("markerHeight", 4)
+        .append("svg:path")
+        .attr("class", "arrow-path derivation")
+        .attr("d", "M 5,0 L 0,2 L 5,4");
 }
 
-function defineArrowMarkerComp( a_svg ){
-    a_svg.append('defs').append('marker')
-        .attr('id','arrow-component')
-        .attr('refX',-2.5)
-        .attr('refY',2)
-        .attr('orient','auto')
-        .attr('markerWidth',8)
-        .attr('markerHeight',4)
-        .append('svg:path')
-            .attr('class','arrow-path component')
-            .attr('d', 'M 4,0 L 0,2 L 4,4 L 8,2');
+function defineArrowMarkerComp(a_svg) {
+    a_svg
+        .append("defs")
+        .append("marker")
+        .attr("id", "arrow-component")
+        .attr("refX", -2.5)
+        .attr("refY", 2)
+        .attr("orient", "auto")
+        .attr("markerWidth", 8)
+        .attr("markerHeight", 4)
+        .append("svg:path")
+        .attr("class", "arrow-path component")
+        .attr("d", "M 4,0 L 0,2 L 4,4 L 8,2");
 }
 
 /*
@@ -884,15 +923,17 @@ function defineArrowMarkerNewVer( a_svg, a_name ){
 */
 
 // New version marker at 'end'
-function defineArrowMarkerNewVer( a_svg, a_name ){
-    a_svg.append('defs').append('marker')
-        .attr('id','arrow-new-version')
-        .attr('refX',-2.5)
-        .attr('refY',2)
-        .attr('orient','auto')
-        .attr('markerWidth',7)
-        .attr('markerHeight',4)
-        .append('svg:path')
-            .attr('class','arrow-path new-version')
-            .attr('d', 'M 5,0 L 0,2 L 5,4 L 5,0 M 6,0 L 7,0 L 7,4 L 6,4 L 6,0');
+function defineArrowMarkerNewVer(a_svg, a_name) {
+    a_svg
+        .append("defs")
+        .append("marker")
+        .attr("id", "arrow-new-version")
+        .attr("refX", -2.5)
+        .attr("refY", 2)
+        .attr("orient", "auto")
+        .attr("markerWidth", 7)
+        .attr("markerHeight", 4)
+        .append("svg:path")
+        .attr("class", "arrow-path new-version")
+        .attr("d", "M 5,0 L 0,2 L 5,4 L 5,0 M 6,0 L 7,0 L 7,4 L 6,4 L 6,0");
 }

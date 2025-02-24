@@ -16,6 +16,7 @@ if( NOT DEFINED GLOBUS_VERSION )
   set(GLOBUS_VERSION  5)
 endif()
 OPTION(BUILD_AUTHZ "Build DataFed Authz library" FALSE)
+OPTION(BUILD_AUTHZ_TESTS "Build DataFed Authz Tests" FALSE)
 OPTION(BUILD_AUTHZ_WITH_SYSLOG "Build Authz without syslog" TRUE)
 OPTION(BUILD_CORE_SERVER "Build DataFed Core Server" TRUE)
 OPTION(BUILD_COMMON "Build DataFed common library" TRUE)
@@ -33,6 +34,10 @@ building with static depencies is not completely possible because some system
 libraries must be shared libraries for DataFed to be interoperable. If this
 setting is turned on DataFed will build it's libraries as shared and try to
 link to shared libraries." OFF)
+OPTION(ENABLE_END_TO_END_API_TESTS "Enable end-to-end API testing" FALSE) 
+OPTION(ENABLE_END_TO_END_WEB_TESTS "Enable end-to-end web testing with Playwright" FALSE)
+OPTION(ENABLE_FOXX_TESTS "Enable Foxx testing, off by default because it
+  will overwrite the test database." FALSE)
 
 set(INSTALL_REPO_SERVER ${BUILD_REPO_SERVER})
 set(INSTALL_AUTHZ ${BUILD_AUTHZ})
@@ -58,9 +63,15 @@ get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_OPENSSL" LOCAL_OPENSSL_V
 get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_LIBCURL" LOCAL_CURL_VERSION)
 get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_BOOST" LOCAL_BOOST_VERSION)
 get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_ZLIB_VERSION" LOCAL_ZLIB_VERSION)
+get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_NODE_VERSION" LOCAL_NODE_VERSION)
 # Prioritize the CMD line argument over config file
 if(NOT DEFINED DATAFED_INSTALL_PATH)
   get_value_from_datafed_sh("DATAFED_INSTALL_PATH" DATAFED_INSTALL_PATH)
+endif()
+
+if(NOT DEFINED DATAFED_DOMAIN)
+  get_value_from_datafed_sh("DATAFED_DOMAIN" DATAFED_DOMAIN)
+  message("TESTING: DATAFED_DOMAIN : ${DATAFED_DOMAIN}")
 endif()
 
 if(NOT DEFINED DATAFED_DEPENDENCIES_INSTALL_PATH)
@@ -107,6 +118,17 @@ file( GLOB ProtoFiles "${PROJECT_SOURCE_DIR}/common/proto/common/*.proto" )
 if( BUILD_WEB_SERVER )
   include(./cmake/Web.cmake)
   file(COPY ${ProtoFiles} DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/web/")
+
+  if( ENABLE_UNIT_TESTS )
+    add_test(NAME unit_tests_web COMMAND "${DEPENDENCY_INSTALL_PATH}/nvm/versions/node/${LOCAL_NODE_VERSION}/bin/npm" "test")
+    set_tests_properties(unit_tests_web PROPERTIES WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/web)
+  endif()
+
+endif()
+
+if( BUILD_AUTHZ_TESTS )
+  include(./cmake/GSSAPI.cmake)
+  include(./cmake/GlobusCommon.cmake)
 endif()
 
 if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON OR BUILD_PYTHON_CLIENT) 
@@ -197,14 +219,33 @@ if( INSTALL_WEB_SERVER )
 endif()
 
 if( INSTALL_FOXX ) 
-  install( CODE "execute_process(COMMAND ${PROJECT_SOURCE_DIR}/scripts/install_foxx.sh )")
+  install(CODE "execute_process(COMMAND ${DataFed_SOURCE_DIR}/scripts/install_foxx.sh
+                                OUTPUT_VARIABLE _out
+                                ERROR_VARIABLE _err
+                                RESULT_VARIABLE _res)
+                If (NOT \${_res} EQUAL \"0\")
+                    message( FATAL_ERROR \"out: \${_out} install_foxx failed: \${_err}\")
+                endif()"
+         )
 endif()
 
-if( ENABLE_END_TO_END_TESTS )
-  if( BUILD_PYTHON_CLIENT )  
-    add_subdirectory(tests/end-to-end)
+if (ENABLE_END_TO_END_TESTS)
+	if (NOT ENABLE_END_TO_END_API_TESTS AND NOT ENABLE_END_TO_END_WEB_TESTS)
+    message (FATAL_ERROR "Cannot run end-to-end tests because one of the ENABLE_END_TO_END web or API flag is not on")
   else()
-    message(WARNING "Cannot run end-to-end tests requires building the python client which has not been enabled")
+    add_subdirectory(tests/end-to-end)
+    add_subdirectory(tests/end-to-end/web-UI)
+  endif()
+else()
+  if (ENABLE_END_TO_END_API_TESTS)
+    if (BUILD_PYTHON_CLIENT)
+      add_subdirectory(tests/end-to-end)
+    else()
+      message (FATAL_ERROR "Cannot run end-to-end tests because BUILD_PYTHON_CLIENT is not on")
+    endif()
+  endif()
+  if (ENABLE_END_TO_END_WEB_TESTS)
+    add_subdirectory(tests/end-to-end/web-UI)
   endif()
 endif()
 
@@ -257,5 +298,7 @@ message("             boost system Library: ${DATAFED_BOOST_SYSTEM_LIBRARY_PATH}
 message("         boost filesystem Library: ${DATAFED_BOOST_FILESYSTEM_LIBRARY_PATH}")
 message("    boost program_options Library: ${DATAFED_BOOST_PROGRAM_OPTIONS_LIBRARY_PATH}")
 message("                     zlib Library: ${DATAFED_ZLIB_LIBRARIES}")
+message("                   gssapi Library: ${DATAFED_GSSAPI_LIBRARIES}")
+message("            globus_common Library: ${DATAFED_GLOBUS_COMMON_LIBRARIES}")
 message("")
 

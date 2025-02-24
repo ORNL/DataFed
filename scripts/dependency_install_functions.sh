@@ -1,5 +1,5 @@
 #!/bin/bash
-SCRIPT=$(realpath "$0")
+SCRIPT=$(realpath "$BASH_SOURCE[0]")
 SOURCE=$(dirname "$SCRIPT")
 source "${SOURCE}/dependency_versions.sh"
 PROJECT_ROOT=$(realpath "${SOURCE}/..")
@@ -49,6 +49,11 @@ else
   fi
 fi
 
+# WARNING: overwriting PATH can be very dangerous
+#   In Docker builds this must follow the pattern:
+#     PATH="<desired addition to path>:$PATH"
+#     Curly braces around PATH, like ${PATH} may pull from the host's PATH
+# Please see StackOverflow answer: https://stackoverflow.com/a/38742545
 if [[ ! -v PATH ]]; then
   PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/bin"
 else
@@ -60,6 +65,17 @@ else
 fi
 
 init_python() {
+
+  if [[ ! -v DATAFED_PYTHON_DEPENDENCIES_DIR ]]; then
+    echo "DATAFED_PYTHON_DEPENDENCIES_DIR is not defined please make sure it is defined in the ${PROJECT_ROOT}/config/datafed.sh file."
+    exit 1
+  else
+    if [[ -z "$DATAFED_PYTHON_DEPENDENCIES_DIR" ]]; then
+      echo "DATAFED_PYTHON_DEPENDENCIES_DIR is defined but is empty please make sure it is defined in ${PROJECT_ROOT}/config/datafed.sh file."
+      exit 1
+    fi
+  fi
+
   if [ ! -e "$DATAFED_DEPENDENCIES_INSTALL_PATH" ] || [ ! -d "$DATAFED_PYTHON_DEPENDENCIES_DIR" ]; then
       mkdir -p "$DATAFED_PYTHON_DEPENDENCIES_DIR"
   fi
@@ -80,7 +96,12 @@ install_cmake() {
     # Mark cmake as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.cmake_installed-${DATAFED_CMAKE_VERSION}"
   fi
-  export PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin:${PATH}"
+  # WARNING: overwriting PATH can be very dangerous
+  #   In Docker builds this must follow the pattern:
+  #     PATH="<desired addition to path>:$PATH"
+  #     Curly braces around PATH, like ${PATH} may pull from the host's PATH
+  # Please see StackOverflow answer: https://stackoverflow.com/a/38742545
+  export PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin:$PATH"
 }
 
 install_protobuf() {
@@ -384,12 +405,16 @@ install_node() {
 
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
     nvm install "$DATAFED_NODE_VERSION"
+    nvm use "$DATAFED_NODE_VERSION"
     # Mark node as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.node_installed-${DATAFED_NODE_VERSION}"
     cd "$original_dir"
   else
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
+    # Used by nvm 
+    export NODE_VERSION="$DATAFED_NODE_VERSION"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
+    nvm use "$DATAFED_NODE_VERSION"
   fi
 }
 
@@ -416,13 +441,29 @@ install_foxx_cli() {
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
     export NODE_VERSION="$DATAFED_NODE_VERSION"
+    
+    # check that foxx can be found
+    if [ ! -d "${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm" ]
+    then
+	echo "Something went wrong Foxx is supposed to be installed i.e. "
+	echo "(${DATAFED_DEPENDENCIES_INSTALL_PATH}/.foxx_cli_installed) "
+	echo "exists. But there is no npm folder in: ${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+	exit 1
+    fi
+    if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/bin/foxx" ]
+    then
+	echo "Something went wrong Foxx is supposed to be installed i.e. "
+	echo "(${DATAFED_DEPENDENCIES_INSTALL_PATH}/.foxx_cli_installed) "
+	echo "exists. But there is no foxx binary here: ${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/bin/foxx"
+	exit 1
+    fi
   fi
 }
 
 install_arangodb() {
-  curl -OL https://download.arangodb.com/arangodb311/DEBIAN/Release.key
+  curl -OL https://download.arangodb.com/arangodb312/DEBIAN/Release.key
   "$SUDO_CMD" apt-key add - < Release.key
-  echo 'deb https://download.arangodb.com/arangodb311/DEBIAN/ /' | "$SUDO_CMD" tee /etc/apt/sources.list.d/arangodb.list
+  echo 'deb https://download.arangodb.com/arangodb312/DEBIAN/ /' | "$SUDO_CMD" tee /etc/apt/sources.list.d/arangodb.list
   "$SUDO_CMD" apt-get install apt-transport-https
   "$SUDO_CMD" apt-get update
   "$SUDO_CMD" apt-get install arangodb3
@@ -533,6 +574,9 @@ install_dep_by_name() {
   case "$1" in
     "cmake")
       install_cmake
+      ;;
+    "foxx")
+      install_foxx_cli
       ;;
     "protobuf")
       install_protobuf

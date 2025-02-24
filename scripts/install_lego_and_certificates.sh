@@ -79,7 +79,7 @@ then
   exit 1
 fi
 
-sudo_commands
+sudo_command
 
 "$SUDO_CMD" add-apt-repository --yes ppa:longsleep/golang-backports
 "$SUDO_CMD" apt-get update

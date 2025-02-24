@@ -4,6 +4,7 @@
 
 // Local public includes
 #include "common/DynaLog.hpp"
+#include "common/SDMS.pb.h"
 #include "common/TraceException.hpp"
 #include "common/Util.hpp"
 
@@ -75,6 +76,34 @@ void DatabaseAPI::setClient(const std::string &a_client) {
   m_client = curl_easy_escape(m_curl, a_client.c_str(), 0);
 }
 
+const std::string DatabaseAPI::buildSearchParamURL(
+    const char *endpoint_path,
+    const std::vector<std::pair<std::string, std::string>> &param_vec) {
+  string url;
+
+  url.reserve(512);
+
+  // TODO Get URL base from ctor
+  url.append(m_db_url);
+  url.append(endpoint_path);
+  url.append("?client=");
+  url.append(m_client);
+
+  char *esc_txt;
+
+  for (vector<pair<string, string>>::const_iterator iparam = param_vec.begin();
+       iparam != param_vec.end(); ++iparam) {
+    url.append("&");
+    url.append(iparam->first.c_str());
+    url.append("=");
+    esc_txt = curl_easy_escape(m_curl, iparam->second.c_str(), 0);
+    url.append(esc_txt);
+    curl_free(esc_txt);
+  }
+
+  return url;
+}
+
 long DatabaseAPI::dbGet(const char *a_url_path,
                         const vector<pair<string, string>> &a_params,
                         libjson::Value &a_result, LogContext log_context,
@@ -83,31 +112,13 @@ long DatabaseAPI::dbGet(const char *a_url_path,
 
   a_result.clear();
 
-  string url;
   string res_json;
   char error[CURL_ERROR_SIZE];
 
   error[0] = 0;
 
-  url.reserve(512);
-
-  // TODO Get URL base from ctor
-  url.append(m_db_url);
-  url.append(a_url_path);
-  url.append("?client=");
-  url.append(m_client);
-
-  char *esc_txt;
-
-  for (vector<pair<string, string>>::const_iterator iparam = a_params.begin();
-       iparam != a_params.end(); ++iparam) {
-    url.append("&");
-    url.append(iparam->first.c_str());
-    url.append("=");
-    esc_txt = curl_easy_escape(m_curl, iparam->second.c_str(), 0);
-    url.append(esc_txt);
-    curl_free(esc_txt);
-  }
+  // TODO: construct URL outside of function
+  const string url = buildSearchParamURL(a_url_path, a_params);
 
   DL_DEBUG(log_context, "get url: " << url);
   curl_easy_setopt(m_curl, CURLOPT_URL, url.c_str());
@@ -148,36 +159,13 @@ long DatabaseAPI::dbGet(const char *a_url_path,
   }
 }
 
-bool DatabaseAPI::dbGetRaw(const char *a_url_path,
-                           const vector<pair<string, string>> &a_params,
-                           string &a_result) {
+bool DatabaseAPI::dbGetRaw(const std::string url, string &a_result) {
   a_result.clear();
 
-  string url;
   char error[CURL_ERROR_SIZE];
 
   a_result.clear();
   error[0] = 0;
-
-  url.reserve(512);
-
-  // TODO Get URL base from ctor
-  url.append(m_db_url);
-  url.append(a_url_path);
-  url.append("?client=");
-  url.append(m_client);
-
-  char *esc_txt;
-
-  for (vector<pair<string, string>>::const_iterator iparam = a_params.begin();
-       iparam != a_params.end(); ++iparam) {
-    url.append("&");
-    url.append(iparam->first.c_str());
-    url.append("=");
-    esc_txt = curl_easy_escape(m_curl, iparam->second.c_str(), 0);
-    url.append(esc_txt);
-    curl_free(esc_txt);
-  }
 
   curl_easy_setopt(m_curl, CURLOPT_URL, url.c_str());
   curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, &a_result);
@@ -202,31 +190,13 @@ long DatabaseAPI::dbPost(const char *a_url_path,
 
   a_result.clear();
 
-  string url;
   string res_json;
   char error[CURL_ERROR_SIZE];
 
   error[0] = 0;
 
-  url.reserve(512);
-
-  // TODO Get URL base from ctor
-  url.append(m_db_url);
-  url.append(a_url_path);
-  url.append("?client=");
-  url.append(m_client);
-
-  char *esc_txt;
-
-  for (vector<pair<string, string>>::const_iterator iparam = a_params.begin();
-       iparam != a_params.end(); ++iparam) {
-    url.append("&");
-    url.append(iparam->first.c_str());
-    url.append("=");
-    esc_txt = curl_easy_escape(m_curl, iparam->second.c_str(), 0);
-    url.append(esc_txt);
-    curl_free(esc_txt);
-  }
+  // TODO: construct URL outside of function
+  const string url = buildSearchParamURL(a_url_path, a_params);
 
   curl_easy_setopt(m_curl, CURLOPT_URL, url.c_str());
   curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, &res_json);
@@ -315,8 +285,9 @@ void DatabaseAPI::clientLinkIdentity(const std::string &a_identity,
 
 bool DatabaseAPI::uidByPubKey(const std::string &a_pub_key,
                               std::string &a_uid) {
-  bool found = dbGetRaw("usr/find/by_pub_key", {{"pub_key", a_pub_key}}, a_uid);
-  return found;
+  const string url =
+      buildSearchParamURL("usr/find/by_pub_key", {{"pub_key", a_pub_key}});
+  return dbGetRaw(url, a_uid);
 }
 
 bool DatabaseAPI::userGetKeys(std::string &a_pub_key, std::string &a_priv_key,
@@ -374,16 +345,33 @@ void DatabaseAPI::userGetAccessToken(std::string &a_acc_tok,
 }
 
 void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
-                                     uint32_t a_expires_in,
+                                     const uint32_t a_expires_in,
                                      const std::string &a_ref_tok,
+                                     const SDMS::AccessTokenType &token_type,
+                                     const std::string &other_token_data,
                                      LogContext log_context) {
   string result;
-  dbGetRaw("usr/token/set",
-           {{"access", a_acc_tok},
-            {"refresh", a_ref_tok},
-            {"expires_in", to_string(a_expires_in)}},
-           result);
+  std::vector<pair<string, string>> params = {
+      {"access", a_acc_tok},
+      {"refresh", a_ref_tok},
+      {"expires_in", to_string(a_expires_in)}};
+  if (token_type != SDMS::AccessTokenType::ACCESS_SENTINEL) {
+    params.push_back({"type", to_string(token_type)});
+  }
+  if (!other_token_data.empty()) {
+    params.push_back({"other_token_data", other_token_data});
+  }
+  const string url = buildSearchParamURL("usr/token/set", params);
+  dbGetRaw(url, result);
   DL_TRACE(log_context, "token expires in: " << to_string(a_expires_in));
+}
+
+void DatabaseAPI::userSetAccessToken(const std::string &a_access_token,
+                                     const uint32_t a_expires_in,
+                                     const std::string &a_refresh_token,
+                                     LogContext log_context) {
+  userSetAccessToken(a_access_token, a_expires_in, a_refresh_token,
+                     SDMS::AccessTokenType::GLOBUS_DEFAULT, "", log_context);
 }
 
 void DatabaseAPI::userSetAccessToken(
@@ -391,7 +379,8 @@ void DatabaseAPI::userSetAccessToken(
     LogContext log_context) {
   (void)a_reply;
   userSetAccessToken(a_request.access(), a_request.expires_in(),
-                     a_request.refresh(), log_context);
+                     a_request.refresh(), a_request.type(), a_request.other(),
+                     log_context);
 }
 
 void DatabaseAPI::getExpiringAccessTokens(
@@ -426,7 +415,9 @@ void DatabaseAPI::getExpiringAccessTokens(
 
 void DatabaseAPI::purgeTransferRecords(size_t age) {
   string result;
-  dbGetRaw("xfr/purge", {{"age", to_string(age)}}, result);
+  const string url =
+      buildSearchParamURL("xfr/purge", {{"age", to_string(age)}});
+  dbGetRaw(url, result);
 }
 
 void DatabaseAPI::userCreate(const Auth::UserCreateRequest &a_request,
@@ -4099,9 +4090,9 @@ std::string DatabaseAPI::parseSearchMetadata(const std::string &a_query,
   bool val_token, last_char = false;
   int back_cnt = 0; // Counts contiguous backslashes inside quoted strings
 
-  for (string::const_iterator c = a_query.begin(); c != a_query.end(); c++) {
+  for (string::const_iterator c = a_query.begin(); c != a_query.end(); ++c) {
     next_nws = 0;
-    for (c2 = c + 1; c2 != a_query.end(); c2++) {
+    for (c2 = c + 1; c2 != a_query.end(); ++c2) {
       if (!isspace(*c2)) {
         next_nws = *c2;
         break;
@@ -4278,7 +4269,7 @@ std::string DatabaseAPI::parseSearchIdAlias(const std::string &a_query,
       // Minimum len of key (numbers) is 2
       if (val.size() >= p + 3) {
         for (string::const_iterator c = val.begin() + p + 1; c != val.end();
-             c++) {
+             ++c) {
           if (!isdigit(*c)) {
             id_ok = false;
             break;
@@ -4293,7 +4284,7 @@ std::string DatabaseAPI::parseSearchIdAlias(const std::string &a_query,
     EXCEPT(1, "Invalid ID/Alias query value.");
   }
 
-  for (string::const_iterator c = val.begin(); c != val.end(); c++) {
+  for (string::const_iterator c = val.begin(); c != val.end(); ++c) {
     // ids (keys) are only digits
     // alias are alphanum plus "_-."
     if (!isdigit(*c)) {

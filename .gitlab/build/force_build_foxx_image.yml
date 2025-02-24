@@ -1,0 +1,19 @@
+---
+stages:
+  - build
+
+include:
+  - local: .gitlab/common.yml
+
+build-foxx:
+  extends: .docker_build_script
+  stage: build
+  variables:
+    PROJECT: "datafed"
+    COMPONENT: "foxx"
+    GIT_STRATEGY: clone
+    DOCKER_FILE_PATH: "docker/Dockerfile.foxx"
+    DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
+    BUILD_INTERMEDIATE: "FALSE"
+  tags:
+    - docker

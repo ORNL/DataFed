@@ -69,7 +69,9 @@ fi
 if [ -n "$UID" ]; then
     echo "Switching datafed user to UID: ${UID}"
     usermod -u $UID datafed
-    chown -R datafed:root ${DATAFED_GCS_COLLECTION_ROOT_PATH}
+    # All files should be owned by the datafed user
+    chown -R datafed:root ${DATAFED_DIR}
+    chown -R datafed:root ${DATAFED_INSTALL_PATH}/authz
 fi
 
 if [ ! -f "${DATAFED_INSTALL_PATH}/keys/datafed-core-key.pub" ]
@@ -148,7 +150,7 @@ echo "globus-gridftp-server pid file found!"
 DATAFED_GCS_URL=$(jq -r .domain_name < /var/lib/globus-connect-server/info.json)
 set +e
 HTTP_CODE=$("${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/curl" -s -o /dev/null -w "%{http_code}\n" -I "https://${DATAFED_GCS_URL}/api/info")
-echo "$?"
+echo "curl exit code: $?"
 set -e
 echo "Waiting for domain name (https://${DATAFED_GCS_URL}) to be registered! Code: $HTTP_CODE"
 printf "\n"
@@ -191,15 +193,19 @@ fi
 
 if [ ! -d "${DATAFED_GCS_COLLECTION_ROOT_PATH}" ]
 then
-  mkdir -p "$DATAFED_GCS_COLLECTION_ROOT_PATH"
-  chown -R datafed:root ${DATAFED_GCS_COLLECTION_ROOT_PATH}
+  mkdir -p ""${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}""
+  chown -R datafed:root "${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}"
 fi
 
-"${BUILD_DIR}/scripts/globus/setup_globus.sh"
+# Run this as the dataflow user
+# setup globus command will also create the folders /proeject and user
+# -m - is for preserving the environment
+su -m -c "${BUILD_DIR}/scripts/globus/setup_globus.sh" datafed
 
 source "${DATAFED_PYTHON_ENV}/bin/activate"
 # Must be passed in directly
 GCS_CLI_ENDPOINT_ID="$GCS_CLI_ENDPOINT_ID" \
+DATAFED_GCS_COLLECTION_BASE_PATH="$DATAFED_GCS_COLLECTION_BASE_PATH" \
 DATAFED_GCS_URL="$DATAFED_GCS_URL" \
 GCS_CLI_CLIENT_ID="$GCS_CLI_CLIENT_ID" \
 GCS_CLI_CLIENT_SECRET="$GCS_CLI_CLIENT_SECRET" \
