@@ -723,7 +723,7 @@ router
             let needs_consent = false;
 
             const token_document = user_token.get_token();
-            if (collection_token && Object.keys(token_document).length === 0) {
+            if (!user_token.exists()) {
                 needs_consent = true;
             }
             const result = UserToken.formatUserToken(
