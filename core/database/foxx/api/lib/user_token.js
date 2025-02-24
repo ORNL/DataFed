@@ -46,7 +46,7 @@ class UserToken {
     #fetch_token() {
         // TODO: follow a model
         if (!this.#working_token) {
-            // TODO: does not guarantee token exists
+            // TODO: ensure model is followed and existing tokens also have type: globus_default
             this.#working_token = this.#user_model.get_token();
         }
     }

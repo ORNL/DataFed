@@ -294,7 +294,16 @@ var tasks_func = (function () {
 
     // ----------------------- DATA GET ----------------------------
 
-    obj.taskInitDataGet = function (a_client, a_path, a_encrypt, a_res_ids, a_orig_fname, a_check) {
+    obj.taskInitDataGet = function (
+        a_client,
+        a_path,
+        a_encrypt,
+        a_res_ids,
+        a_orig_fname,
+        a_check,
+        is_collection_token_required = false,
+        collection_info = {},
+    ) {
         console.log("taskInitDataGet");
 
         var result = g_proc.preprocessItems(a_client, null, a_res_ids, g_lib.TT_DATA_GET);
@@ -344,6 +353,8 @@ var tasks_func = (function () {
                     orig_fname: a_orig_fname,
                     glob_data: result.glob_data,
                     ext_data: result.ext_data,
+                    is_collection_token_required: is_collection_token_required,
+                    collection_info: collection_info,
                 },
                 task = obj._createTask(a_client._id, g_lib.TT_DATA_GET, 2, state),
                 i,
@@ -418,7 +429,16 @@ var tasks_func = (function () {
             //console.log("taskRunDataGet - do xfr");
             // Transfer data step
 
-            var tokens = g_lib.getAccessToken(a_task.client);
+            const token_doc = new UserToken({
+                user_id: client,
+                globus_collection_id: state.collection_info.collection_id,
+            }).get_token();
+            var tokens = UserToken.formatUserTokenForTransferTask(token_doc);
+            const extra_token_format = UserToken.formatUserToken(
+                state.is_collection_token_required,
+                token_doc,
+                false,
+            );
             var params = {
                 uid: a_task.client,
                 type: a_task.type,
@@ -426,6 +446,9 @@ var tasks_func = (function () {
                 acc_tok: tokens.acc_tok,
                 ref_tok: tokens.ref_tok,
                 acc_tok_exp_in: tokens.acc_tok_exp_in,
+                token_type: extra_token_format.token_type,
+                scopes: extra_token_format.scopes,
+                collection_id: state.collection_info.collection_id,
             };
             params = Object.assign(params, state.xfr[a_task.step - 1]);
 
@@ -462,28 +485,12 @@ var tasks_func = (function () {
         a_ext,
         a_res_ids,
         a_check,
-        additional_param_obj,
+        is_collection_token_required = false,
+        collection_info = {},
     ) {
         console.log("taskInitDataPut");
 
         var result = g_proc.preprocessItems(a_client, null, a_res_ids, g_lib.TT_DATA_PUT);
-
-        if (UserToken.validateRequestParams(additional_param_obj)) {
-            const token_exists = new UserToken({
-                user_id: a_client._id,
-                globus_collection_id: additional_param_obj.collection_id,
-            }).exists();
-            if (!token_exists) {
-                throw [
-                    g_lib.ERR_NOT_FOUND,
-                    "Globus token for mapped collection " +
-                        additional_param_obj.collection_id +
-                        " for user " +
-                        a_client._id +
-                        " does not exist.",
-                ];
-            }
-        }
 
         if (result.glob_data.length > 0 && !a_check) {
             var idx = a_path.indexOf("/");
@@ -495,8 +502,8 @@ var tasks_func = (function () {
                 encrypt: a_encrypt,
                 ext: a_ext,
                 glob_data: result.glob_data,
-                collection_id: additional_param_obj.collection_id,
-                collection_type: additional_param_obj.collection_type,
+                is_collection_token_required: is_collection_token_required,
+                collection_info: collection_info,
             };
             var task = obj._createTask(a_client._id, g_lib.TT_DATA_PUT, 2, state);
 
@@ -569,14 +576,13 @@ var tasks_func = (function () {
             //console.log("taskRunDataPut - do xfr");
             // Transfer data step
 
-            //var tokens = g_lib.getAccessToken(a_task.client, state); // TODO: refresh token ?
             const token_doc = new UserToken({
                 user_id: a_task.client,
-                globus_collection_id: state.collection_id,
+                globus_collection_id: state.collection_info.collection_id,
             }).get_token();
             var tokens = UserToken.formatUserTokenForTransferTask(token_doc);
             const extra_token_format = UserToken.formatUserToken(
-                !!state.collection_id, // TODO: assuming collection correctly assigned from earlier step
+                state.is_collection_token_required, // TODO: assuming collection correctly assigned from earlier step
                 token_doc,
                 false,
             );
@@ -589,7 +595,7 @@ var tasks_func = (function () {
                 acc_tok_exp_in: tokens.acc_tok_exp_in,
                 token_type: extra_token_format.token_type,
                 scopes: extra_token_format.scopes,
-                collection_id: state.collection_id,
+                collection_id: state.collection_info.collection_id,
             };
             params = Object.assign(params, state.xfr[a_task.step - 1]);
             reply = {
