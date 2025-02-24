@@ -420,6 +420,14 @@ private:
       const char *endpoint_path,
       const std::vector<std::pair<std::string, std::string>> &param_vec);
 
+  std::string newJsonMetricParse(
+      uint32_t a_timestamp, uint32_t a_total,
+      const std::map<std::string, std::map<uint16_t, uint32_t>> &a_metrics);
+
+  std::string oldJsonMetricParse(
+      uint32_t a_timestamp, uint32_t a_total,
+      const std::map<std::string, std::map<uint16_t, uint32_t>> &a_metrics);
+
   CURL *m_curl;
   char *m_client;
   std::string m_client_uid;
