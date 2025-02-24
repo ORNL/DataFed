@@ -17,14 +17,16 @@ Help()
 {
   echo "$(basename $0) Will set up the docker container scripts for the metadata server"
   echo
-  echo "Syntax: $(basename $0) [-h|u|p|o]"
+  echo "Syntax: $(basename $0) [-h|t|b]"
   echo "options:"
-  echo "-h, --help                        Print this help message."
-  echo "-t, --docker-tag		  The tag on Savannah that the currently released containers are under"
+  echo "-h, --help                  Print this help message."
+  echo "-t, --docker-tag		  	The tag on Savannah that the currently released containers are under"
+  echo "-b, --backup-directory		The backup directory that will be mounted into the database container at /backups"
   echo
 }
 
 local_DOCKER_TAG=""
+local_BACKUP_DIRECTORY=""
 
 if [ -z "${DATAFED_DOCKER_TAG}" ]
 then
@@ -33,7 +35,7 @@ else
   local_DOCKER_TAG=$(printenv DATAFED_DOCKER_TAG)
 fi
 
-VALID_ARGS=$(getopt -o ht: --long 'help',docker-tag: -- "$@")
+VALID_ARGS=$(getopt -o ht:b: --long 'help',docker-tag:,backup-directory: -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
 fi
@@ -48,6 +50,10 @@ while [ : ]; do
         local_DOCKER_TAG=$2
         shift 2
         ;;
+    -b | --backup-directory)
+        local_BACKUP_DIRECTORY=$2
+        shift 2
+        ;;
     --) shift; 
         break 
         ;;
@@ -58,6 +64,7 @@ while [ : ]; do
 done
 
 ERROR_DETECTED=0
+
 if [ -z "$local_DOCKER_TAG" ]
 then
   echo "Error DOCKER_TAG is not defined, this is a required argument"
@@ -66,15 +73,58 @@ then
   ERROR_DETECTED=1
 fi
 
+if [ -z "$local_BACKUP_DIRECTORY" ]
+then
+  echo "Error BACKUP_DIRECTORY is not defined, this is a required argument"
+  echo "      This variable can be set using the command line option -b, --backup-directory"
+  ERROR_DETECTED=1
+fi
+
 if [ "$ERROR_DETECTED" == "1" ]
 then
   exit 1
 fi
 
+local_DOCKER_TAG_WEB_SAFE=$(echo $local_DOCKER_TAG | sed 's/\./_/g')
+
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/create_datafed_network.sh"
 #!/bin/bash
 
 docker network create datafed-network
+EOF
+
+cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_arango_container.sh"
+#!/bin/bash
+
+CONFIG_FILE_PATH="\$DATAFED_INSTALL_PATH/config/datafed.sh"
+source "\${CONFIG_FILE_PATH}"
+
+docker run -d \\
+	--restart=always \\
+	--name arangodb \\
+	--log-driver=json-file \\
+	--log-opt max-size=10m \\
+	--log-opt max-file=3 \\
+	-e ARANGO_ROOT_PASSWORD="\$DATAFED_DATABASE_PASSWORD" \\
+	-e LANG="en_US" \\
+	--network datafed-network \\
+	-p 8529:8529 \\
+	-v arangodb_data:/var/lib/arangodb3:Z \\
+	-v "$local_BACKUP_DIRECTORY:/backups" \\
+	-t "arangodb/enterprise:3.12" 
+EOF
+
+cat << EOF > "$DATAFED_INSTALL_PATH/scripts/stop_arango_container.sh"
+#!/bin/bash
+
+docker container stop arangodb
+EOF
+
+cat << EOF > "$DATAFED_INSTALL_PATH/scripts/remove_arango_container.sh"
+#!/bin/bash
+
+docker container stop arangodb
+docker container rm arangodb
 EOF
 
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_core_container.sh"
@@ -83,11 +133,14 @@ cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_core_container.sh"
 CONFIG_FILE_PATH="\$DATAFED_INSTALL_PATH/config/datafed.sh"
 source "\${CONFIG_FILE_PATH}"
 
-USER_ID=$(id -u)
+USER_ID=\$(id -u)
 
 docker run -d \\
 	--restart=always \\
-	--name datafed-core_$local_DOCKER_TAG \\
+	--name datafed-core-$local_DOCKER_TAG \\
+	--log-driver=json-file \\
+	--log-opt max-size=10m \\
+	--log-opt max-file=3 \\
 	-e DATAFED_GLOBUS_APP_SECRET="\$DATAFED_GLOBUS_APP_SECRET" \\
 	-e DATAFED_GLOBUS_APP_ID="\$DATAFED_GLOBUS_APP_ID" \\
 	-e DATAFED_ZEROMQ_SESSION_SECRET="\$DATAFED_ZEROMQ_SESSION_SECRET" \\
@@ -97,6 +150,8 @@ docker run -d \\
 	-e DATAFED_DATABASE_IP_ADDRESS_PORT="http://\$DATAFED_DATABASE_HOST:\$DATAFED_DATABASE_PORT" \\
 	-e DATAFED_DEFAULT_LOG_PATH="/datafed/logs" \\
 	-e DATAFED_CORE_ADDRESS_PORT_INTERNAL="\$DATAFED_CORE_ADDRESS_PORT_INTERNAL" \\
+	-e DATAFED_CORE_CLIENT_THREADS="24" \\
+	-e DATAFED_CORE_TASK_THREADS="24" \\
 	-e UID="\$USER_ID" \\
 	--network datafed-network \\
 	-p 7513:7513 \\
@@ -104,20 +159,20 @@ docker run -d \\
 	-v "\$DATAFED_INSTALL_PATH/logs:/datafed/logs" \\
 	-v "\$DATAFED_INSTALL_PATH/keys/datafed-core-key.pub:/opt/datafed/keys/datafed-core-key.pub" \\
 	-v "\$DATAFED_INSTALL_PATH/keys/datafed-core-key.priv:/opt/datafed/keys/datafed-core-key.priv" \\
-	-t "datafed-core-prod:$local_DOCKER_TAG" 
+	-t "datafed/core:$local_DOCKER_TAG" 
 EOF
 
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/stop_core_container.sh"
 #!/bin/bash
 
-docker container stop datafed-core_$local_DOCKER_TAG
+docker container stop datafed-core-$local_DOCKER_TAG
 EOF
 
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/remove_core_container.sh"
 #!/bin/bash
 
-docker container stop datafed-core_$local_DOCKER_TAG
-docker container rm datafed-core_$local_DOCKER_TAG
+docker container stop datafed-core-$local_DOCKER_TAG
+docker container rm datafed-core-$local_DOCKER_TAG
 EOF
 
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_web_container.sh"
@@ -126,11 +181,14 @@ cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_web_container.sh"
 CONFIG_FILE_PATH="\$DATAFED_INSTALL_PATH/config/datafed.sh"
 source "\$CONFIG_FILE_PATH"
 
-USER_ID=$(id -u)
+USER_ID=\$(id -u)
 
 docker run -d \\
 	--restart=always \\
-	--name datafed-web_$local_DOCKER_TAG \\
+	--name datafed-web-$local_DOCKER_TAG_WEB_SAFE \\
+	--log-driver=json-file \\
+	--log-opt max-size=10m \\
+	--log-opt max-file=3 \\
 	-e DATAFED_GLOBUS_APP_SECRET="\$DATAFED_GLOBUS_APP_SECRET" \\
 	-e DATAFED_GLOBUS_APP_ID="\$DATAFED_GLOBUS_APP_ID" \\
 	-e DATAFED_ZEROMQ_SESSION_SECRET="\$DATAFED_ZEROMQ_SESSION_SECRET" \\
@@ -147,20 +205,20 @@ docker run -d \\
 	-v "\$DATAFED_INSTALL_PATH/keys/datafed-core-key.pub:/opt/datafed/keys/datafed-core-key.pub" \\
 	-v "\$DATAFED_WEB_CERT_PATH:\$DATAFED_WEB_CERT_PATH" \\
 	-v "\$DATAFED_WEB_KEY_PATH:\$DATAFED_WEB_KEY_PATH" \\
-	-t "datafed-web-prod:$local_DOCKER_TAG"
+	-t "datafed/web:$local_DOCKER_TAG"
 EOF
 
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/stop_web_container.sh"
 #!/bin/bash
 
-docker container stop datafed-web_$local_DOCKER_TAG
+docker container stop datafed-web-$local_DOCKER_TAG_WEB_SAFE
 EOF
 
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/remove_web_container.sh"
 #!/bin/bash
 
-docker container stop datafed-web_$local_DOCKER_TAG
-docker container rm datafed-web_$local_DOCKER_TAG
+docker container stop datafed-web-$local_DOCKER_TAG_WEB_SAFE
+docker container rm datafed-web-$local_DOCKER_TAG_WEB_SAFE
 EOF
 
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_nginx_container.sh"
@@ -169,19 +227,20 @@ cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_nginx_container.sh"
 CONFIG_FILE_PATH="\$DATAFED_INSTALL_PATH/config/datafed.sh"
 source "\$CONFIG_FILE_PATH"
 
-USER_ID=$(id -u)
-
-docker run -d \
-	--restart=always \
-	--name datafed-nginx \
-	--network datafed-network \
-	-p 443:443 \
-	-p 80:80 \
-	-v "\$DATAFED_INSTALL_PATH/nginx/nginx.conf:/etc/nginx/conf.d/default.conf" \
-	-v "\$DATAFED_INSTALL_PATH/nginx/sites-enabled:/etc/nginx/sites-enabled" \
-	-v "\$DATAFED_INSTALL_PATH/nginx/www:/www" \
-	-v "\$DATAFED_INSTALL_PATH/keys/datafed.ornl.gov.crt:/etc/nginx/certs/datafed.ornl.gov.crt" \
-	-v "\$DATAFED_INSTALL_PATH/keys/datafed.ornl.gov.key:/etc/nginx/certs/datafed.ornl.gov.key" \
+docker run -d \\
+	--restart=always \\
+	--name datafed-nginx \\
+	--network datafed-network \\
+	--log-driver=json-file \\
+	--log-opt max-size=10m \\
+	--log-opt max-file=3 \\
+	-p 443:443 \\
+	-p 80:80 \\
+	-v "\$DATAFED_INSTALL_PATH/nginx/nginx.conf:/etc/nginx/conf.d/default.conf" \\
+	-v "\$DATAFED_INSTALL_PATH/nginx/sites-enabled:/etc/nginx/sites-enabled" \\
+	-v "\$DATAFED_INSTALL_PATH/nginx/www:/www" \\
+	-v "\$DATAFED_INSTALL_PATH/keys/datafed.ornl.gov.crt:/etc/nginx/certs/datafed.ornl.gov.crt" \\
+	-v "\$DATAFED_INSTALL_PATH/keys/datafed.ornl.gov.key:/etc/nginx/certs/datafed.ornl.gov.key" \\
 	nginx:latest
 EOF
 
@@ -199,6 +258,10 @@ docker container rm datafed-nginx
 EOF
 
 chmod +x "$DATAFED_INSTALL_PATH/scripts/create_datafed_network.sh"
+
+chmod +x "$DATAFED_INSTALL_PATH/scripts/run_arango_container.sh"
+chmod +x "$DATAFED_INSTALL_PATH/scripts/stop_arango_container.sh"
+chmod +x "$DATAFED_INSTALL_PATH/scripts/remove_arango_container.sh"
 
 chmod +x "$DATAFED_INSTALL_PATH/scripts/run_core_container.sh"
 chmod +x "$DATAFED_INSTALL_PATH/scripts/stop_core_container.sh"
