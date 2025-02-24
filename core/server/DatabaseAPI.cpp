@@ -942,7 +942,7 @@ void DatabaseAPI::recordCreate(const Auth::RecordCreateRequest &a_request,
     }
     payload["deps"] = deps;
   }
-  string body = payload.dump();
+  string body = payload.dump(-1, ' ', true);
 
   DL_DEBUG(log_context, "dat create: " << body);
 
@@ -1027,7 +1027,7 @@ void DatabaseAPI::recordUpdate(const Auth::RecordUpdateRequest &a_request,
     payload["dep_rem"] = dep_rem;
   }
 
-  string body = payload.dump();
+  string body = payload.dump(-1, ' ', true);
 
   dbPost("dat/update", {}, &body, result, log_context);
 
@@ -1061,7 +1061,7 @@ void DatabaseAPI::recordUpdateSize(const Auth::RepoDataSizeReply &a_size_rep,
   }
   payload["records"] = records;
 
-  string body = payload.dump();
+  string body = payload.dump(-1, ' ', true);
 
   dbPost("dat/update/size", {}, &body, result, log_context);
 }
@@ -1087,7 +1087,7 @@ void DatabaseAPI::recordExport(const Auth::RecordExportRequest &a_request,
   }
   payload["id"] = ids;
 
-  string body = payload.dump();
+  string body = payload.dump(-1, ' ', true);
 
   dbPost("dat/export", {}, &body, result, log_context);
 
@@ -1295,7 +1295,7 @@ void DatabaseAPI::generalSearch(const Auth::SearchRequest &a_request,
   payload["params"] = params;
   payload["limit"] = to_string(cnt);
 
-  string body = payload.dump();
+  string body = payload.dump(-1, ' ', true);
 
   DL_DEBUG(log_context, "Query: [" << body << "]");
 
@@ -1354,7 +1354,7 @@ void DatabaseAPI::collCreate(const Auth::CollCreateRequest &a_request,
     payload["tags"] = tags;
   }
 
-  string body = payload.dump();
+  string body = payload.dump(-1, ' ', true);
   dbPost("col/create", {}, &body, result, log_context);
 
   setCollData(a_reply, result, log_context);
@@ -1392,7 +1392,7 @@ void DatabaseAPI::collUpdate(const Auth::CollUpdateRequest &a_request,
     payload["tags"] = tags;
   }
 
-  string body = payload.dump();
+  string body = payload.dump(-1, ' ', true);
   dbPost("col/update", {}, &body, result, log_context);
 
   setCollData(a_reply, result, log_context);
@@ -1761,7 +1761,7 @@ void DatabaseAPI::queryCreate(const Auth::QueryCreateRequest &a_request,
   payload["title"] = a_request.title();
   payload["query"] = nlohmann::json::parse(query_json);
 
-  string body = payload.dump();
+  string body = payload.dump(-1, ' ', true);
   dbPost("qry/create", {}, &body, result, log_context);
 
   setQueryData(a_reply, result, log_context);
@@ -1804,7 +1804,7 @@ void DatabaseAPI::queryUpdate(const Auth::QueryUpdateRequest &a_request,
     payload["query"] = nlohmann::json::parse(query_json);
   }
 
-  string body = payload.dump();
+  string body = payload.dump(-1, ' ', true);
   dbPost("qry/update", {}, &body, result, log_context);
 
   setQueryData(a_reply, result, log_context);
@@ -2184,7 +2184,7 @@ void DatabaseAPI::repoCreate(const Auth::RepoCreateRequest &a_request,
     payload["admins"] = admins;
   }
 
-  string body = payload.dump();
+  string body = payload.dump(-1, ' ', true);
   dbPost("repo/create", {}, &body, result, log_context);
 
   std::vector<RepoData> temp;
@@ -2232,7 +2232,7 @@ void DatabaseAPI::repoUpdate(const Auth::RepoUpdateRequest &a_request,
     }
     payload["admins"] = admins;
   }
-  string body = payload.dump();
+  string body = payload.dump(-1, ' ', true);
   dbPost("repo/update", {}, &body, result, log_context);
 
   std::vector<RepoData> temp;
@@ -2900,7 +2900,7 @@ void DatabaseAPI::schemaCreate(const Auth::SchemaCreateRequest &a_request,
   payload["pub"] = a_request.pub();
   payload["sys"] = a_request.sys();
   payload["def"] = a_request.def();
-  string body = payload.dump();
+  string body = payload.dump(-1, ' ', true);
 
   dbPost("schema/create", {}, &body, result, log_context);
 }
@@ -2926,7 +2926,7 @@ void DatabaseAPI::schemaRevise(const Auth::SchemaReviseRequest &a_request,
   if (a_request.has_def()) {
     payload["def"] = a_request.def();
   }
-  string body = payload.dump();
+  string body = payload.dump(-1, ' ', true);
 
   dbPost("schema/revise", {{"id", a_request.id()}}, &body, result, log_context);
 }
@@ -2955,7 +2955,7 @@ void DatabaseAPI::schemaUpdate(const Auth::SchemaUpdateRequest &a_request,
   if (a_request.has_def()) {
     payload["def"] = a_request.def();
   }
-  string body = payload.dump();
+  string body = payload.dump(-1, ' ', true);
 
   dbPost("schema/update", {{"id", a_request.id()}}, &body, result, log_context);
 }
@@ -3136,7 +3136,7 @@ void DatabaseAPI::taskInitDataGet(const Auth::DataGetRequest &a_request,
     payload["check"] = a_request.check();
   }
 
-  string body = payload.dump();
+  string body = payload.dump(-1, ' ', true);
 
   dbPost("dat/get", {}, &body, a_result, log_context);
 
@@ -3198,7 +3198,7 @@ void DatabaseAPI::taskInitDataPut(const Auth::DataPutRequest &a_request,
     payload["check"] = a_request.check();
   }
 
-  string body = payload.dump();
+  string body = payload.dump(-1, ' ', true);
 
   dbPost("dat/put", {}, &body, a_result, log_context);
 
@@ -3246,7 +3246,7 @@ void DatabaseAPI::taskInitRecordCollectionDelete(
     libjson::Value &a_result, LogContext log_context) {
   nlohmann::json payload;
   payload["ids"] = a_ids;
-  string body = payload.dump();
+  string body = payload.dump(-1, ' ', true);
 
   dbPost("dat/delete", {}, &body, a_result, log_context);
 
@@ -3271,7 +3271,7 @@ void DatabaseAPI::taskInitRecordAllocChange(
   if (a_request.has_check()) {
     payload["check"] = a_request.check();
   }
-  string body = payload.dump();
+  string body = payload.dump(-1, ' ', true);
 
   dbPost("dat/alloc_chg", {}, &body, a_result, log_context);
 
@@ -3312,7 +3312,7 @@ void DatabaseAPI::taskInitRecordOwnerChange(
   if (a_request.has_check()) {
     payload["check"] = a_request.check();
   }
-  string body = payload.dump();
+  string body = payload.dump(-1, ' ', true);
 
   dbPost("dat/owner_chg", {}, &body, a_result, log_context);
 
@@ -3349,7 +3349,7 @@ void DatabaseAPI::taskInitProjectDelete(
   }
   payload["ids"] = ids;
 
-  string body = payload.dump();
+  string body = payload.dump(-1, ' ', true);
 
   dbPost("prj/delete", {}, &body, a_result, log_context);
 
@@ -3542,7 +3542,7 @@ void DatabaseAPI::taskUpdate(const std::string &a_id, LogContext log_context,
   if (a_state) {
     payload["state"] = a_state->toString();
   }
-  string body = payload.dump();
+  string body = payload.dump(-1, ' ', true);
 
   Value result;
   dbPost("task/update", {{"task_id", a_id}}, &body, result, log_context);
@@ -3668,7 +3668,7 @@ std::string DatabaseAPI::newJsonMetricParse(
   }
 
   payload["uids"] = uids;
-  string body = payload.dump();
+  string body = payload.dump(-1, ' ', true);
   return body;
 }
 
