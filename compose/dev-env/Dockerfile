@@ -77,7 +77,7 @@ RUN <<EOF cat > /opt/entrypoint.sh
   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
 # compile protobuf files into c++ code, emit to build dir
-/opt/datafed/dependencies/bin/protoc-25.2.0 --cpp_out=build/common/proto/common/ common/proto/common/*.proto
+/opt/datafed/dependencies/bin/protoc-25.2.0 --proto_path=common/proto/common --cpp_out=build/common/proto/common/ common/proto/common/*.proto
 
 exec top -b
 EOF
