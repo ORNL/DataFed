@@ -17,20 +17,20 @@ Help()
 {
   echo "$(basename $0) Will set up the docker container scripts for the repository server"
   echo
-  echo "Syntax: $(basename $0) [-h|t|m|i|d]"
+  echo "Syntax: $(basename $0) [-h|t|v|i|d]"
   echo "options:"
-  echo "-h, --help                        Print this help message."
-  echo "-t, --docker-tag		  The tag on Savannah that the currently released containers are under"
-  echo "-m, --host-collection-mount	  The path on the host that the container volume will mount to"
-  echo "-i, --ip-address		  The public ip address of the host that the GCS container is running on"
-  echo "-d, --repo-domain		  The publicly accessible domain of the server that the host is running on"
+  echo "-h, --help                    Print this help message."
+  echo "-t, --docker-tag		          The tag on Savannah that the currently released containers are under"
+  echo "-v, --repo-volume-mounts      The extra volumes mounts to add to the repository server, comma separated"
+  echo "-i, --ip-address		          The public ip address of the host that the GCS container is running on"
+  echo "-d, --repo-domain		          The publicly accessible domain of the server that the host is running on"
   echo
 }
 
 local_DOCKER_TAG=""
-local_HOST_COLLECTION_MOUNT=""
 local_IP_ADDRESS=""
 local_REPO_DOMAIN=""
+local_REPO_VOLUME_MOUNTS=""
 
 if [ -z "${DATAFED_DOCKER_TAG}" ]
 then
@@ -39,14 +39,7 @@ else
   local_DOCKER_TAG=$(printenv DATAFED_DOCKER_TAG)
 fi
 
-if [ -z "${DATAFED_HOST_COLLECTION_MOUNT}" ]
-then
-  local_HOST_COLLECTION_MOUNT=""
-else
-  local_HOST_COLLECTION_MOUNT=$(printenv DATAFED_HOST_COLLECTION_MOUNT)
-fi
-
-VALID_ARGS=$(getopt -o ht:m:i:d: --long 'help',docker-tag:,host-collection-mount:,ip-address:,repo-domain: -- "$@")
+VALID_ARGS=$(getopt -o ht:v:i:d: --long 'help',docker-tag:,repo-volume-mounts:,ip-address:,repo-domain: -- "$@")
 if [[ $? -ne 0 ]]; then
       exit 1;
 fi
@@ -61,8 +54,8 @@ while [ : ]; do
         local_DOCKER_TAG=$2
         shift 2
         ;;
-    -m | --host-collection-mount)
-        local_HOST_COLLECTION_MOUNT=$2
+    -v | --repo-volume-mounts)
+        local_REPO_VOLUME_MOUNTS=$2
         shift 2
         ;;
     -i | --ip-address)
@@ -91,14 +84,6 @@ then
   ERROR_DETECTED=1
 fi
 
-if [ -z "$local_HOST_COLLECTION_MOUNT" ]
-then
-  echo "Error HOST_COLLECTION_MOUNT is not defined, this is a required argument"
-  echo "      This variable can be set using the command line option -m, --host-collection-mount"
-  echo "      or with the environment variable DATAFED_HOST_COLLECTION_MOUNT."
-  ERROR_DETECTED=1
-fi
-
 if [ -z "$local_IP_ADDRESS" ]
 then
   echo "Error IP_ADDRESS is not defined, this is a required argument"
@@ -118,17 +103,26 @@ then
   exit 1
 fi
 
+IFS=',' read -ra local_REPO_VOLUME_MOUNTS <<< "$local_REPO_VOLUME_MOUNTS"
+local_REPO_VOLUME_MOUNTS_EXPANDED=""
+for volume_mount in "${local_REPO_VOLUME_MOUNTS[@]}"; do
+  local_REPO_VOLUME_MOUNTS_EXPANDED+="-v \"$volume_mount\" "
+done
+
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_repo_container.sh"
 #!/bin/bash
 
 CONFIG_FILE_PATH="\$DATAFED_INSTALL_PATH/config/datafed.sh"
 source "\${CONFIG_FILE_PATH}"
 
-USER_ID=$(id -u)
+USER_ID=\$(id -u)
 
 docker run -d \\
 	--restart=always \\
-	--name "datafed-repo_$local_DOCKER_TAG" \\
+	--name "datafed-repo-$local_DOCKER_TAG" \\
+	--log-driver=json-file \\
+	--log-opt max-size=10m \\
+	--log-opt max-file=3 \\
 	-e DATAFED_GLOBUS_APP_SECRET="\$DATAFED_GLOBUS_APP_SECRET" \\
 	-e DATAFED_GLOBUS_APP_ID="\$DATAFED_GLOBUS_APP_ID" \\
 	-e DATAFED_ZEROMQ_SESSION_SECRET="\$DATAFED_ZEROMQ_SESSION_SECRET" \\
@@ -137,28 +131,29 @@ docker run -d \\
 	-e DATAFED_DOMAIN="\$DATAFED_DOMAIN" \\
 	-e DATAFED_CORE_ADDRESS_PORT_INTERNAL="\$DATAFED_DOMAIN:7513" \\
 	-e DATAFED_DEFAULT_LOG_PATH="\$DATAFED_DEFAULT_LOG_PATH" \\
-	-e DATAFED_GCS_BASE_PATH="/mnt" \\
+	-e DATAFED_GCS_BASE_PATH="\$DATAFED_GCS_COLLECTION_BASE_PATH" \\
+	-e DATAFED_GCS_COLLECTION_BASE_PATH="\$DATAFED_GCS_COLLECTION_BASE_PATH" \\
 	-e DATAFED_GCS_COLLECTION_ROOT_PATH="\$DATAFED_GCS_COLLECTION_ROOT_PATH" \\
 	-e UID="\$USER_ID" \\
 	-p 9000:9000 \\
 	-v "\$DATAFED_INSTALL_PATH/logs:/datafed/logs" \\
+  $local_REPO_VOLUME_MOUNTS_EXPANDED \\
 	-v "\$DATAFED_INSTALL_PATH/keys/datafed-repo-key.pub:/opt/datafed/keys/datafed-repo-key.pub" \\
 	-v "\$DATAFED_INSTALL_PATH/keys/datafed-repo-key.priv:/opt/datafed/keys/datafed-repo-key.priv" \\
-	-v $local_HOST_COLLECTION_MOUNT:\$DATAFED_GCS_COLLECTION_ROOT_PATH/\$DATAFED_REPO_ID_AND_DIR
-	-t "datafed-repo-prod:$local_DOCKER_TAG"
+	-t "datafed/repo:$local_DOCKER_TAG"
 EOF
 
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/stop_repo_container.sh"
 #!/bin/bash
 
-docker container stop datafed-repo_$local_DOCKER_TAG
+docker container stop datafed-repo-$local_DOCKER_TAG
 EOF
 
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/remove_repo_container.sh"
 #!/bin/bash
 
-docker container stop datafed-repo_$local_DOCKER_TAG
-docker container rm datafed-repo_$local_DOCKER_TAG
+docker container stop datafed-repo-$local_DOCKER_TAG
+docker container rm datafed-repo-$local_DOCKER_TAG
 EOF
 
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_gcs_container.sh"
@@ -167,11 +162,11 @@ cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_gcs_container.sh"
 CONFIG_FILE_PATH="\$DATAFED_INSTALL_PATH/config/datafed.sh"
 source "\${CONFIG_FILE_PATH}"
 
-USER_ID=$(id -u)
+USER_ID=\$(id -u)
 
 docker run -d \\
 	--restart=always \\
-	--name "datafed-gcs_$local_DOCKER_TAG" \\
+	--name "datafed-gcs-$local_DOCKER_TAG" \\
 	-e DATAFED_GLOBUS_APP_SECRET="\$DATAFED_GLOBUS_APP_SECRET" \\
 	-e DATAFED_GLOBUS_APP_ID="\$DATAFED_GLOBUS_APP_ID" \\
 	-e DATAFED_ZEROMQ_SESSION_SECRET="\$DATAFED_ZEROMQ_SESSION_SECRET" \\
@@ -180,7 +175,7 @@ docker run -d \\
 	-e DATAFED_DOMAIN="\$DATAFED_DOMAIN" \\
 	-e DATAFED_CORE_ADDRESS_PORT_INTERNAL="\$DATAFED_DOMAIN:7513" \\
 	-e DATAFED_DEFAULT_LOG_PATH="\$DATAFED_DEFAULT_LOG_PATH" \\
-	-e DATAFED_GCS_BASE_PATH="/mnt" \\
+	-e DATAFED_GCS_COLLECTION_BASE_PATH="\$DATAFED_GCS_COLLECTION_BASE_PATH" \\
 	-e DATAFED_GCS_COLLECTION_ROOT_PATH="\$DATAFED_GCS_COLLECTION_ROOT_PATH" \\
 	-e DATAFED_GCS_ROOT_NAME="\$DATAFED_GCS_ROOT_NAME" \\
 	-e DATAFED_GLOBUS_SUBSCRIPTION="\$DATAFED_GLOBUS_SUBSCRIPTION" \\
@@ -194,24 +189,24 @@ docker run -d \\
 	-e UID="\$USER_ID" \\
 	--network=host \\
 	-v "\$DATAFED_INSTALL_PATH/logs:/datafed/logs" \\
+  $local_REPO_VOLUME_MOUNTS_EXPANDED \\
 	-v "\$DATAFED_INSTALL_PATH/globus:/opt/datafed/globus" \\
 	-v "\$DATAFED_INSTALL_PATH/keys/datafed-repo-key.pub:/opt/datafed/keys/datafed-repo-key.pub" \\
 	-v "\$DATAFED_INSTALL_PATH/keys/datafed-repo-key.priv:/opt/datafed/keys/datafed-repo-key.priv" \\
-	-v $local_HOST_COLLECTION_MOUNT:\$DATAFED_GCS_COLLECTION_ROOT_PATH/\$DATAFED_REPO_ID_AND_DIR
-	-t "datafed-gcs-prod:$local_DOCKER_TAG"
+	-t "datafed/gcs:$local_DOCKER_TAG"
 EOF
 
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/stop_gcs_container.sh"
 #!/bin/bash
 
-docker container stop datafed-gcs_$local_DOCKER_TAG
+docker container stop datafed-gcs-$local_DOCKER_TAG
 EOF
 
 cat << EOF > "$DATAFED_INSTALL_PATH/scripts/remove_gcs_container.sh"
 #!/bin/bash
 
-docker container stop datafed-gcs_$local_DOCKER_TAG
-docker container rm datafed-gcs_$local_DOCKER_TAG
+docker container stop datafed-gcs-$local_DOCKER_TAG
+docker container rm datafed-gcs-$local_DOCKER_TAG
 EOF
 
 chmod +x "$DATAFED_INSTALL_PATH/scripts/run_repo_container.sh"
