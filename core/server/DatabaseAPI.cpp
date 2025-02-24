@@ -3136,6 +3136,13 @@ void DatabaseAPI::taskInitDataGet(const Auth::DataGetRequest &a_request,
     payload["check"] = a_request.check();
   }
 
+  if (a_request.has_collection_id()) {
+    payload["collection_id"] = a_request.collection_id();
+  }
+  if (a_request.has_collection_type()) {
+    payload["collection_type"] = a_request.collection_type();
+  }
+
   string body = payload.dump(-1, ' ', true);
 
   dbPost("dat/get", {}, &body, a_result, log_context);
