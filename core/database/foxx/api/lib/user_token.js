@@ -21,13 +21,24 @@ class DataFedOAuthToken {
 }
 
 class UserToken {
+    /** @type {UserModel} */
     #user_model;
     user;
     /** @type {Readonly<GlobusCollection>} */
     globus_collection;
-    /** @type {DataFedOAuthToken} */
+    /** @type {Readonly<DataFedOAuthToken>} */
     #working_token;
-    constructor(kwargs = {}) {
+
+    /** Creates object for accessing user tokens.
+     * Validation is handled by individual models.
+     *
+     * @param {object} kwargs - Keyword arguments for building and accessing user tokens
+     * @param {string} [kwargs.user_key] - Key for determining user model
+     * @param {string} [kwargs.user_id] - ID for determining user model
+     * @param {string} [kwargs.globus_collection_id] - UUID for determining globus collection model
+     * @returns {UserToken} - Accessor object for user token information
+     */
+    constructor(kwargs) {
         const { user_key, user_id, globus_collection_id } = kwargs;
         this.#user_model = new UserModel(user_id, user_key);
         this.user = this.#user_model.get();
@@ -36,24 +47,21 @@ class UserToken {
             this.globus_collection = globus_collection_model.get();
 
             if (globus_collection_model.exists()) {
-                // TODO: this is currently handling the validation of required fields, and I want that to be more clear
                 const globus_token_model = new GlobusTokenModel(this.user.id, this.globus_collection.id);
-                this.#working_token = globus_token_model.get();
+                this.#working_token = globus_token_model.get_oauth_token();
             }
         }
     }
 
     #fetch_token() {
-        // TODO: follow a model
         if (!this.#working_token) {
-            // TODO: ensure model is followed and existing tokens also have type: globus_default
             this.#working_token = this.#user_model.get_token();
         }
     }
 
-    /** Gets token
+    /** Gets correctly typed token for usage with OAuth APIs
      *
-     * @returns {Readonly<DataFedOAuthToken>} The token in read only form
+     * @returns {Readonly<DataFedOAuthToken>} Formatted read only OAuth token
      */
     get_token() {
         this.#fetch_token();

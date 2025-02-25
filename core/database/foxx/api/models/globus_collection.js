@@ -43,6 +43,8 @@ class GlobusCollectionModel {
         return this.#exists;
     }
 
+    /** Gets entry from database and stores in private member
+     */
     #get_database_entry() {
         if (typeof this.#database_entry !== "undefined") {
             return;
@@ -56,6 +58,8 @@ class GlobusCollectionModel {
         }
     }
 
+    /** Maps database entry to working model
+     */
     #map_entry_to_globus_collection() {
         // TODO: abstract
         this.#globus_collection.id = this.#database_entry._id;
@@ -70,6 +74,8 @@ class GlobusCollectionModel {
         this.#globus_collection.host = this.#database_entry.ha_enabled;
     }
 
+    /** Fetches database entry and maps to model(s) if not already present
+     */
     #fetch_from_db() {
         if (!this.#is_fetched) {
             this.#get_database_entry();
@@ -78,6 +84,10 @@ class GlobusCollectionModel {
         }
     }
 
+    /** Gets Globus Collection information in read only state
+     *
+     * @returns {Readonly<GlobusCollection>} Globus Collection information
+     */
     get() {
         this.#fetch_from_db();
         return Object.freeze(this.#globus_collection);
