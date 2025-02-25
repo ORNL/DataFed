@@ -216,18 +216,15 @@ class EndpointBrowser {
 
         try {
             const ep_status = await new Promise((resolve) => {
-                api.epView(this.props.endpoint.id, resolve);
+                api.epView(this.props.endpoint.id, (ok, data) => resolve(data));
             });
-            if (ep_status.entity_type.includes("mapped")) {
-                console.log("MAPPED COLLECTION!!")
-            }
             const is_mapped = ep_status.entity_type.includes("mapped");
             // Fetch directory listing
             const data = await new Promise((resolve) => {
                 api.epDirList(this.props.endpoint.id, this.state.path, false, is_mapped, this.props.endpoint.id, resolve);
             });
 
-            if (data.code) {
+            if (data.needs_consent || data.code) {
                 throw new ApiError(data);
             }
 

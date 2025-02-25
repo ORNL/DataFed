@@ -1914,11 +1914,13 @@ app.get("/ui/ep/dir/list", (a_req, a_resp) => {
     };
 
     sendMessage("UserGetAccessTokenRequest", { ...message_data }, a_req, a_resp, function (reply) {
+        let token = reply.access;
         if (reply.needsConsent) {
-            // Do something
-            a_resp.status(403);
-            a_resp.send("Globus collection needs consent. Follow: <consent link here>");
-            return;
+            // get base token and continue
+            // TODO: we may be able to instead call out to look for scopes and skip failure
+            sendMessage("UserGetAccessTokenRequest", { ...message_data }, a_req, a_resp, (base_token_reply) => {
+                token = base_token_reply.access;
+            });
         }
         const opts = {
             hostname: "transfer.api.globusonline.org",
@@ -1932,7 +1934,7 @@ app.get("/ui/ep/dir/list", (a_req, a_resp) => {
                 a_req.query.hidden,
             rejectUnauthorized: true,
             headers: {
-                Authorization: " Bearer " + reply.access,
+                Authorization: " Bearer " + token,
             },
         };
 
@@ -1943,7 +1945,9 @@ app.get("/ui/ep/dir/list", (a_req, a_resp) => {
                 data += chunk;
             });
             res.on("end", () => {
-                a_resp.json(JSON.parse(data));
+                let res_json = JSON.parse(data);
+                res_json.needs_consent = reply.needsConsent;
+                a_resp.json(res_json);
             });
         });
 
