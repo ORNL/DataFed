@@ -45,10 +45,12 @@ class UserToken {
         if (typeof globus_collection_id !== "undefined") {
             const globus_collection_model = new GlobusCollectionModel(globus_collection_id);
             this.globus_collection = globus_collection_model.get();
-
             if (globus_collection_model.exists()) {
                 const globus_token_model = new GlobusTokenModel(this.user.id, this.globus_collection.id);
                 this.#working_token = globus_token_model.get_oauth_token();
+            } else {
+                // TODO: should this state throw an error or perhaps provide reason?
+                this.#working_token = {};
             }
         }
     }
