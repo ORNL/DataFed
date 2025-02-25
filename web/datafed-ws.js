@@ -1909,8 +1909,8 @@ app.post("/ui/ep/recent/save", (a_req, a_resp) => {
 
 app.get("/ui/ep/dir/list", (a_req, a_resp) => {
     const message_data = {
-        collectionId: a_req.session.collection_id,
-        collectionType: a_req.session.collection_type,
+        collectionId: a_req.query.collection_id,
+        collectionType: a_req.query.collection_type,
     };
 
     sendMessage("UserGetAccessTokenRequest", { ...message_data }, a_req, a_resp, function (reply) {

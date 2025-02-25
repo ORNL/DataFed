@@ -988,7 +988,7 @@ export function epRecentLoad(a_cb) {
     });
 }
 
-export function epDirList(a_ep, a_path, a_show_hidden, a_cb) {
+export function epDirList(a_ep, a_path, a_show_hidden, is_mapped, collection_id, a_cb) {
     _asyncGet(
         "/ui/ep/dir/list?ep=" +
             encodeURIComponent(a_ep) +
@@ -996,7 +996,7 @@ export function epDirList(a_ep, a_path, a_show_hidden, a_cb) {
             encodeURIComponent(a_path) +
             "&hidden=" +
             (a_show_hidden ? "true" : "false"),
-        null,
+        is_mapped ? {collection_id: collection_id, collection_type: "mapped"} : null,
         function (ok, data) {
             if (a_cb) {
                 if (ok) a_cb(data);
