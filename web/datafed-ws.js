@@ -1913,15 +1913,7 @@ app.get("/ui/ep/dir/list", (a_req, a_resp) => {
         collectionType: a_req.query.collection_type,
     };
 
-    sendMessage("UserGetAccessTokenRequest", { ...message_data }, a_req, a_resp, function (reply) {
-        let token = reply.access;
-        if (reply.needsConsent) {
-            // get base token and continue
-            // TODO: we may be able to instead call out to look for scopes and skip failure
-            sendMessage("UserGetAccessTokenRequest", { ...message_data }, a_req, a_resp, (base_token_reply) => {
-                token = base_token_reply.access;
-            });
-        }
+    const get_from_globus_api = (token, original_reply) => {
         const opts = {
             hostname: "transfer.api.globusonline.org",
             method: "GET",
@@ -1946,7 +1938,7 @@ app.get("/ui/ep/dir/list", (a_req, a_resp) => {
             });
             res.on("end", () => {
                 let res_json = JSON.parse(data);
-                res_json.needs_consent = reply.needsConsent;
+                res_json.needs_consent = original_reply.needsConsent;
                 a_resp.json(res_json);
             });
         });
@@ -1957,6 +1949,17 @@ app.get("/ui/ep/dir/list", (a_req, a_resp) => {
         });
 
         req.end();
+    };
+
+    sendMessage("UserGetAccessTokenRequest", { ...message_data }, a_req, a_resp, function (reply) {
+        if (reply.needsConsent) {
+            sendMessage("UserGetAccessTokenRequest", {}, a_req, a_resp, (base_token_reply) => {
+                get_from_globus_api(base_token_reply.access, reply);
+            });
+        }
+        else {
+            get_from_globus_api(reply.access, reply)
+        }
     });
 });
 
