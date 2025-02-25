@@ -756,9 +756,9 @@ ClientWorker::procDataPutRequest(const std::string &a_uid,
 
   DL_DEBUG(log_context, "procDataPutRequest, uid: " << a_uid);
 
-  m_db_client.setClient(a_uid);
   libjson::Value result;
 
+  m_db_client.setClient(a_uid);
   m_db_client.taskInitDataPut(*request, reply, result, log_context);
   handleTaskResponse(result, log_context);
 

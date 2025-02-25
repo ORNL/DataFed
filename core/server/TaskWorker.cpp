@@ -96,8 +96,7 @@ void TaskWorker::workerThread(LogContext log_context) {
 
         cmd = (uint32_t)obj.getNumber("cmd");
 
-        const Value &params =
-            obj.getValue("params"); // TODO: params object will contain token
+        const Value &params = obj.getValue("params");
 
         if (obj.has("step")) {
           step = obj.asNumber();
@@ -211,13 +210,16 @@ TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
   string ref_tok = obj.getString("ref_tok");
   uint32_t expires_in = obj.getNumber("acc_tok_exp_in");
   uint32_t token_type =
-      obj.getNumber("token_type"); // TODO use enum if possible
+      obj.getNumber("token_type"); // TODO: use enum if possible
   string scopes = obj.getString("scopes");
   string collection_id = obj.getString("collection_id");
 
   DL_TRACE(log_context, ">>>> Token Expires in: " << expires_in);
 
   if (expires_in < 3600) {
+
+    me.m_db.setClient(uid);
+
     if (token_type ==
         AccessTokenType::GLOBUS_DEFAULT) { // TODO: this work is mostly
                                            // duplicated from ClientWorker
@@ -225,7 +227,6 @@ TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
                                 << uid << " (expires in " << expires_in << ")");
 
       me.m_glob.refreshAccessToken(ref_tok, acc_tok, expires_in);
-      me.m_db.setClient(uid);
       me.m_db.userSetAccessToken(acc_tok, expires_in, ref_tok, log_context);
     } else {
       try {
