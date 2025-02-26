@@ -1172,6 +1172,10 @@ app.get("/api/dat/get", (a_req, a_resp) => {
 
     if (a_req.query.check) par.check = a_req.query.check;
 
+    const { collection_id, collection_type } = a_req.query;
+    par.collectionId = collection_id;
+    par.collectionType = collection_type;
+
     sendMessage("DataGetRequest", par, a_req, a_resp, function (reply) {
         a_resp.send(reply);
     });
