@@ -224,7 +224,7 @@ class EndpointBrowser {
                 api.epDirList(this.props.endpoint.id, this.state.path, false, is_mapped, this.props.endpoint.id, resolve);
             });
 
-            if (data.needs_consent || data.code) {
+            if (data.needs_consent || data.code) { // TODO: needs consent flag only works first time, if base token has consent it will no longer work.
                 throw new ApiError(data);
             }
 

@@ -430,7 +430,7 @@ var tasks_func = (function () {
             // Transfer data step
 
             const token_doc = new UserToken({
-                user_id: client,
+                user_id: a_task.client,
                 globus_collection_id: state.collection_info.collection_id,
             }).get_token();
             var tokens = UserToken.formatUserTokenForTransferTask(token_doc);
