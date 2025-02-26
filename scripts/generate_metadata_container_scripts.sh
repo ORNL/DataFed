@@ -85,15 +85,29 @@ then
   exit 1
 fi
 
+CREATE_DATAFED_NETWORK_SCRIPT="$DATAFED_INSTALL_PATH/scripts/create_datafed_network.sh"
+RUN_ARANGO_SCRIPT="$DATAFED_INSTALL_PATH/scripts/run_arango_container.sh"
+STOP_ARANGO_SCRIPT="$DATAFED_INSTALL_PATH/scripts/stop_arango_container.sh"
+REMOVE_ARANGO_SCRIPT="$DATAFED_INSTALL_PATH/scripts/remove_arango_container.sh"
+RUN_CORE_SCRIPT="$DATAFED_INSTALL_PATH/scripts/run_core_container.sh"
+STOP_CORE_SCRIPT="$DATAFED_INSTALL_PATH/scripts/stop_core_container.sh"
+REMOVE_CORE_SCRIPT="$DATAFED_INSTALL_PATH/scripts/remove_core_container.sh"
+RUN_WEB_SCRIPT="$DATAFED_INSTALL_PATH/scripts/run_web_container.sh"
+STOP_WEB_SCRIPT="$DATAFED_INSTALL_PATH/scripts/stop_web_container.sh"
+REMOVE_WEB_SCRIPT="$DATAFED_INSTALL_PATH/scripts/remove_web_container.sh"
+RUN_NGINX_SCRIPT="$DATAFED_INSTALL_PATH/scripts/run_nginx_container.sh"
+STOP_NGINX_SCRIPT="$DATAFED_INSTALL_PATH/scripts/stop_nginx_container.sh"
+REMOVE_NGINX_SCRIPT="$DATAFED_INSTALL_PATH/scripts/remove_nginx_container.sh"
+
 local_DOCKER_TAG_WEB_SAFE=$(echo $local_DOCKER_TAG | sed 's/\./_/g')
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/create_datafed_network.sh"
+cat << EOF > "$CREATE_DATAFED_NETWORK_SCRIPT"
 #!/bin/bash
 
 docker network create datafed-network
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_arango_container.sh"
+cat << EOF > "$RUN_ARANGO_SCRIPT"
 #!/bin/bash
 
 CONFIG_FILE_PATH="\$DATAFED_INSTALL_PATH/config/datafed.sh"
@@ -114,20 +128,20 @@ docker run -d \\
 	-t "arangodb/enterprise:3.12" 
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/stop_arango_container.sh"
+cat << EOF > "$STOP_ARANGO_SCRIPT"
 #!/bin/bash
 
 docker container stop arangodb
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/remove_arango_container.sh"
+cat << EOF > "$REMOVE_ARANGO_SCRIPT"
 #!/bin/bash
 
 docker container stop arangodb
 docker container rm arangodb
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_core_container.sh"
+cat << EOF > "$RUN_CORE_SCRIPT"
 #!/bin/bash
 
 CONFIG_FILE_PATH="\$DATAFED_INSTALL_PATH/config/datafed.sh"
@@ -162,20 +176,20 @@ docker run -d \\
 	-t "datafed/core:$local_DOCKER_TAG" 
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/stop_core_container.sh"
+cat << EOF > "$STOP_CORE_SCRIPT"
 #!/bin/bash
 
 docker container stop datafed-core-$local_DOCKER_TAG
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/remove_core_container.sh"
+cat << EOF > "$REMOVE_CORE_SCRIPT"
 #!/bin/bash
 
 docker container stop datafed-core-$local_DOCKER_TAG
 docker container rm datafed-core-$local_DOCKER_TAG
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_web_container.sh"
+cat << EOF > "$RUN_WEB_SCRIPT"
 #!/bin/bash
 
 CONFIG_FILE_PATH="\$DATAFED_INSTALL_PATH/config/datafed.sh"
@@ -208,20 +222,20 @@ docker run -d \\
 	-t "datafed/web:$local_DOCKER_TAG"
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/stop_web_container.sh"
+cat << EOF > "$STOP_WEB_SCRIPT"
 #!/bin/bash
 
 docker container stop datafed-web-$local_DOCKER_TAG_WEB_SAFE
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/remove_web_container.sh"
+cat << EOF > "$REMOVE_WEB_SCRIPT"
 #!/bin/bash
 
 docker container stop datafed-web-$local_DOCKER_TAG_WEB_SAFE
 docker container rm datafed-web-$local_DOCKER_TAG_WEB_SAFE
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_nginx_container.sh"
+cat << EOF > "$RUN_NGINX_SCRIPT"
 #!/bin/bash
 
 CONFIG_FILE_PATH="\$DATAFED_INSTALL_PATH/config/datafed.sh"
@@ -244,33 +258,33 @@ docker run -d \\
 	nginx:latest
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/stop_nginx_container.sh"
+cat << EOF > "$STOP_NGINX_SCRIPT"
 #!/bin/bash
 
 docker container stop datafed-nginx
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/remove_nginx_container.sh"
+cat << EOF > "$REMOVE_NGINX_SCRIPT"
 #!/bin/bash
 
 docker container stop datafed-nginx
 docker container rm datafed-nginx
 EOF
 
-chmod +x "$DATAFED_INSTALL_PATH/scripts/create_datafed_network.sh"
+chmod +x "$CREATE_DATAFED_NETWORK_SCRIPT"
 
-chmod +x "$DATAFED_INSTALL_PATH/scripts/run_arango_container.sh"
-chmod +x "$DATAFED_INSTALL_PATH/scripts/stop_arango_container.sh"
-chmod +x "$DATAFED_INSTALL_PATH/scripts/remove_arango_container.sh"
+chmod +x "$RUN_ARANGO_SCRIPT"
+chmod +x "$STOP_ARANGO_SCRIPT"
+chmod +x "$REMOVE_ARANGO_SCRIPT"
 
-chmod +x "$DATAFED_INSTALL_PATH/scripts/run_core_container.sh"
-chmod +x "$DATAFED_INSTALL_PATH/scripts/stop_core_container.sh"
-chmod +x "$DATAFED_INSTALL_PATH/scripts/remove_core_container.sh"
+chmod +x "$RUN_CORE_SCRIPT"
+chmod +x "$STOP_CORE_SCRIPT"
+chmod +x "$REMOVE_CORE_SCRIPT"
 
-chmod +x "$DATAFED_INSTALL_PATH/scripts/run_web_container.sh"
-chmod +x "$DATAFED_INSTALL_PATH/scripts/stop_web_container.sh"
-chmod +x "$DATAFED_INSTALL_PATH/scripts/remove_web_container.sh"
+chmod +x "$RUN_WEB_SCRIPT"
+chmod +x "$STOP_WEB_SCRIPT"
+chmod +x "$REMOVE_WEB_SCRIPT"
 
-chmod +x "$DATAFED_INSTALL_PATH/scripts/run_nginx_container.sh"
-chmod +x "$DATAFED_INSTALL_PATH/scripts/stop_nginx_container.sh"
-chmod +x "$DATAFED_INSTALL_PATH/scripts/remove_nginx_container.sh"
+chmod +x "$RUN_NGINX_SCRIPT"
+chmod +x "$STOP_NGINX_SCRIPT"
+chmod +x "$REMOVE_NGINX_SCRIPT"
