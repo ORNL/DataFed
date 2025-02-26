@@ -11,6 +11,7 @@
 #include "common/ICommunicator.hpp"
 #include "common/IMessage.hpp"
 #include "common/MessageFactory.hpp"
+#include "common/SDMS.pb.h"
 #include "common/SocketOptions.hpp"
 
 // Standard includes
@@ -211,10 +212,13 @@ TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
   uint32_t expires_in = obj.getNumber("acc_tok_exp_in");
   uint32_t token_type =
       obj.getNumber("token_type"); // TODO: use enum if possible
-  string scopes = obj.getString("scopes");
-  string collection_id =
-      obj.getString("collection_id"); // TODO: it seems like undefined input can
-                                      // be problematic
+  string collection_id;
+  string scopes;
+  if (token_type == AccessTokenType::GLOBUS_TRANSFER) {
+    // fields must be present on transfer tokens
+    scopes = obj.getString("scopes");
+    collection_id = obj.getString("collection_id");
+  }
 
   DL_TRACE(log_context, ">>>> Token Expires in: " << expires_in);
 
