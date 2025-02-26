@@ -103,13 +103,20 @@ then
   exit 1
 fi
 
+RUN_REPO_SCRIPT="$DATAFED_INSTALL_PATH/scripts/run_repo_container.sh"
+STOP_REPO_SCRIPT="$DATAFED_INSTALL_PATH/scripts/stop_repo_container.sh"
+REMOVE_REPO_SCRIPT="$DATAFED_INSTALL_PATH/scripts/remove_repo_container.sh"
+RUN_GCS_SCRIPT="$DATAFED_INSTALL_PATH/scripts/run_gcs_container.sh"
+STOP_GCS_SCRIPT="$DATAFED_INSTALL_PATH/scripts/stop_gcs_container.sh"
+REMOVE_GCS_SCRIPT="$DATAFED_INSTALL_PATH/scripts/remove_gcs_container.sh"
+
 IFS=',' read -ra local_REPO_VOLUME_MOUNTS <<< "$local_REPO_VOLUME_MOUNTS"
 local_REPO_VOLUME_MOUNTS_EXPANDED=""
 for volume_mount in "${local_REPO_VOLUME_MOUNTS[@]}"; do
   local_REPO_VOLUME_MOUNTS_EXPANDED+="-v \"$volume_mount\" "
 done
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_repo_container.sh"
+cat << EOF > "$RUN_REPO_SCRIPT"
 #!/bin/bash
 
 CONFIG_FILE_PATH="\$DATAFED_INSTALL_PATH/config/datafed.sh"
@@ -143,20 +150,20 @@ docker run -d \\
 	-t "datafed/repo:$local_DOCKER_TAG"
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/stop_repo_container.sh"
+cat << EOF > "$STOP_REPO_SCRIPT"
 #!/bin/bash
 
 docker container stop datafed-repo-$local_DOCKER_TAG
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/remove_repo_container.sh"
+cat << EOF > "$REMOVE_REPO_SCRIPT"
 #!/bin/bash
 
 docker container stop datafed-repo-$local_DOCKER_TAG
 docker container rm datafed-repo-$local_DOCKER_TAG
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/run_gcs_container.sh"
+cat << EOF > "$RUN_GCS_SCRIPT"
 #!/bin/bash
 
 CONFIG_FILE_PATH="\$DATAFED_INSTALL_PATH/config/datafed.sh"
@@ -196,23 +203,23 @@ docker run -d \\
 	-t "datafed/gcs:$local_DOCKER_TAG"
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/stop_gcs_container.sh"
+cat << EOF > "$STOP_GCS_SCRIPT"
 #!/bin/bash
 
 docker container stop datafed-gcs-$local_DOCKER_TAG
 EOF
 
-cat << EOF > "$DATAFED_INSTALL_PATH/scripts/remove_gcs_container.sh"
+cat << EOF > "$REMOVE_GCS_SCRIPT"
 #!/bin/bash
 
 docker container stop datafed-gcs-$local_DOCKER_TAG
 docker container rm datafed-gcs-$local_DOCKER_TAG
 EOF
 
-chmod +x "$DATAFED_INSTALL_PATH/scripts/run_repo_container.sh"
-chmod +x "$DATAFED_INSTALL_PATH/scripts/stop_repo_container.sh"
-chmod +x "$DATAFED_INSTALL_PATH/scripts/remove_repo_container.sh"
+chmod +x "$RUN_REPO_SCRIPT"
+chmod +x "$STOP_REPO_SCRIPT"
+chmod +x "$REMOVE_REPO_SCRIPT"
 
-chmod +x "$DATAFED_INSTALL_PATH/scripts/run_gcs_container.sh"
-chmod +x "$DATAFED_INSTALL_PATH/scripts/stop_gcs_container.sh"
-chmod +x "$DATAFED_INSTALL_PATH/scripts/remove_gcs_container.sh"
+chmod +x "$RUN_GCS_SCRIPT"
+chmod +x "$STOP_GCS_SCRIPT"
+chmod +x "$REMOVE_GCS_SCRIPT"
