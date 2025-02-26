@@ -94,8 +94,8 @@ export function setDefaultAlloc(a_repo, a_subject, a_cb) {
 }
 
 export function xfrStart(a_ids, a_mode, a_path, a_ext, a_encrypt_mode, a_orig_fname, a_cb) {
-    // TODO: does not cover DataGet
-    epView(a_ids[0], (ok, ep_data) => {
+    const search_path = a_path.substring(0,a_path.indexOf("/"));
+    epView(search_path, (ok, ep_data) => {
         const is_mapped = ep_data.entity_type.includes("mapped");
         var url = "/api/dat/";
 
