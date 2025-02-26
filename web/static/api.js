@@ -94,35 +94,39 @@ export function setDefaultAlloc(a_repo, a_subject, a_cb) {
 }
 
 export function xfrStart(a_ids, a_mode, a_path, a_ext, a_encrypt_mode, a_orig_fname, a_cb) {
-    var url = "/api/dat/";
+    // TODO: does not cover DataGet
+    epView(a_ids[0], (ok, ep_data) => {
+        const is_mapped = ep_data.entity_type.includes("mapped");
+        var url = "/api/dat/";
 
-    if (a_mode == model.TT_DATA_GET) {
-        url +=
-            "get" +
-            "?id=" +
-            encodeURIComponent(JSON.stringify(a_ids)) +
-            (a_orig_fname ? "&orig_fname=1" : "");
-    } else if (a_mode == model.TT_DATA_PUT) {
-        url += "put" + "?id=" + encodeURIComponent(a_ids[0]);
-    } else {
-        return;
-    }
-
-    url +=
-        "&path=" +
-        encodeURIComponent(a_path) +
-        "&encrypt=" +
-        a_encrypt_mode +
-        (a_ext && a_ext.length ? "&ext=" + encodeURIComponent(a_ext) : "");
-
-    _asyncGet(url, null, function (ok, data) {
-        if (ok) {
-            epRecentLoad(function () {
-                if (a_cb) a_cb(ok, data);
-            });
+        if (a_mode == model.TT_DATA_GET) {
+            url +=
+                "get" +
+                "?id=" +
+                encodeURIComponent(JSON.stringify(a_ids)) +
+                (a_orig_fname ? "&orig_fname=1" : "");
+        } else if (a_mode == model.TT_DATA_PUT) {
+            url += "put" + "?id=" + encodeURIComponent(a_ids[0]);
         } else {
-            if (a_cb) a_cb(ok, data);
+            return;
         }
+
+        url +=
+            "&path=" +
+            encodeURIComponent(a_path) +
+            "&encrypt=" +
+            a_encrypt_mode +
+            (a_ext && a_ext.length ? "&ext=" + encodeURIComponent(a_ext) : "");
+
+        _asyncGet(url, is_mapped ? { collection_id: ep_data.id, collection_type: "mapped" } : null, function (ok, data) {
+            if (ok) {
+                epRecentLoad(function () {
+                    if (a_cb) a_cb(ok, data);
+                });
+            } else {
+                if (a_cb) a_cb(ok, data);
+            }
+        });
     });
 }
 

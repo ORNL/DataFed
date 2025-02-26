@@ -1188,6 +1188,10 @@ app.get("/api/dat/put", (a_req, a_resp) => {
 
     if (a_req.query.check) par.check = a_req.query.check;
 
+    const { collection_id, collection_type } = a_req.query;
+    par.collection_id = collection_id;
+    par.collection_type = collection_type;
+
     sendMessage("DataPutRequest", par, a_req, a_resp, function (reply) {
         a_resp.send(reply);
     });

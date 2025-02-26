@@ -212,7 +212,9 @@ TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
   uint32_t token_type =
       obj.getNumber("token_type"); // TODO: use enum if possible
   string scopes = obj.getString("scopes");
-  string collection_id = obj.getString("collection_id");
+  string collection_id =
+      obj.getString("collection_id"); // TODO: it seems like undefined input can
+                                      // be problematic
 
   DL_TRACE(log_context, ">>>> Token Expires in: " << expires_in);
 
