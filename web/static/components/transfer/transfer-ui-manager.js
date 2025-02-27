@@ -27,8 +27,7 @@ export class TransferUIManager {
         this.api = services.api; // Dependency injection
         this.dialogs = services.dialogs; // Dependency injection
 
-        this.cachedComponentData = this.loadCache();
-
+        this.cachedComponentData = sessionStorage.getItem("resumeFlow") === true && this.loadCache();
         this.inputTimer = null;
         this.state = this.cachedComponentData?.state || {
             recordTree: null,
@@ -42,12 +41,17 @@ export class TransferUIManager {
      * @returns {object | null} The cached component data
      */
     loadCache() {
-        const data = sessionStorage.getItem("transferDialogUIState");
-        return data ? JSON.parse(data) : null;
+        return sessionStorage.getItem("transferDialogUIState");
     }
 
     saveCache() {
-        sessionStorage.setItem("transferDialogUIState", this.state);
+        sessionStorage.setItem("transferDialogUIState", JSON.stringify({
+            state: {
+                recordTree: String(this.state.recordTree),
+                frame: String(this.state.frame),
+                encryptRadios: String(this.state.encryptRadios),
+            }
+        }));
     }
 
     /**
@@ -190,15 +194,18 @@ export class TransferUIManager {
         const browsePath = this.getBrowsePath(pathInput.val());
         const mode = this.#controller.model.mode === TransferMode.TT_DATA_GET ? "dir" : "file";
         // On dialog view, cache necessary data for view reconstruction
-        this.saveCache();
-        this.#controller.endpointManager.saveCache();
-        this.#controller.saveCache();
 
-        show(this.#controller.endpointManager.currentEndpoint, browsePath, mode, (selectedPath) => {
-            const fullPath = this.#controller.endpointManager.currentEndpoint.name + selectedPath;
+        show(
+          this.#controller.endpointManager.state.currentEndpoint,
+          browsePath,
+          mode,
+          this.#controller,
+          (selectedPath) => {
+            const fullPath = this.#controller.endpointManager.state.currentEndpoint.name + selectedPath;
             pathInput.val(fullPath);
             this.enableStartButton(true);
-        });
+          }
+        );
     }
 
     initializeTransferOptions() {

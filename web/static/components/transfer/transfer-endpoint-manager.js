@@ -22,7 +22,7 @@ export class TransferEndpointManager {
         this.#controller = controller;
         this.api = services.api; // Dependency injection
         this.dialogs = services.dialogs; // Dependency injection
-        const cachedComponentData = this.loadCache();
+        const cachedComponentData = sessionStorage.getItem("resumeFlow") === true && this.loadCache();
         // Search tracking mechanism to prevent race conditions:
         // Without this, out-of-order API responses could update the UI with stale data
         // Example: User types "abc" then quickly types "xyz"
@@ -44,12 +44,11 @@ export class TransferEndpointManager {
      * @returns {object | null} The cached component data
      */
     loadCache() {
-        const data = sessionStorage.getItem("transferDialogEndpointManagerState");
-        return data ? JSON.parse(data) : null;
+        return sessionStorage.getItem("transferDialogEndpointManagerState");
     }
 
     saveCache() {
-        sessionStorage.setItem("transferDialogEndpointManagerState", this.state);
+        sessionStorage.setItem("transferDialogEndpointManagerState", JSON.stringify(this.state));
     }
 
     /**

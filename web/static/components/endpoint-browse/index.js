@@ -27,8 +27,10 @@ class ApiError extends Error {
  * Handles browsing and selecting files/directories from endpoints
  */
 class EndpointBrowser {
+    #controller;
     /**
      * @param {object} props - Browser configuration
+     * @param {object} props.controller - Yea
      * @param {object} props.endpoint - Endpoint details
      * @param {string} props.path - Initial path
      * @param {string} props.mode - Browser mode ('file'/'dir')
@@ -40,8 +42,9 @@ class EndpointBrowser {
      * @param {Function} props.services.api.getGlobusConsentURL - Globus authorization URL function
      */
     constructor(props) {
-        const cachedComponentData = this.loadCache();
+        const cachedComponentData = sessionStorage.getItem("resumeFlow") === true && this.loadCache();
         this.props = cachedComponentData?.props || props;
+        this.#controller = this.props.controller;
         this.state = {
             path: cachedComponentData?.state?.path || props.path,
             loading: false,
@@ -54,8 +57,7 @@ class EndpointBrowser {
      * @returns {object | null} The cached component data
      */
     loadCache() {
-        const data = sessionStorage.getItem("endpointBrowserState");
-        return data ? JSON.parse(data) : null;
+        return sessionStorage.getItem("endpointBrowserState");
     }
 
     pathNavigator() {
@@ -300,11 +302,7 @@ class EndpointBrowser {
 
         if (error instanceof ApiError && error.code === "ConsentRequired") {
             // Save state only when consent is required to restore it later
-            // We only need the path
-            sessionStorage.setItem(
-                "endpointBrowserState",
-                JSON.stringify(this.state.path, this.props),
-            );
+
             // Generate consent URL
             const data = await new Promise((resolve) => {
                 api.getGlobusConsentURL(
@@ -313,7 +311,38 @@ class EndpointBrowser {
                     error.data.required_scopes,
                 );
             });
-            title = `<span class='ui-state-error'>Consent Required: Please provide <a href="${data.consent_url}">consent</a>.</span>`;
+            // Create a consent link with onclick handler
+            title = `<span class='ui-state-error'>Consent Required: Please provide 
+                <a href="#" id="consent-link" data-url="${data.consent_url}">consent</a>.
+            </span>`;
+
+            // Add the click handler after rendering
+            setTimeout(() => {
+                const consentLink = document.getElementById("consent-link");
+                if (consentLink) {
+                    document.getElementById("consent-link").addEventListener("click", (e) => {
+                        e.preventDefault();
+
+                        // Save state only when the link is clicked
+                        this.#controller.saveCache();
+                        this.#controller.uiManager.saveCache()
+                        this.#controller.endpointManager.saveCache()
+                        sessionStorage.setItem(
+                          "endpointBrowserState", JSON.stringify(
+                            {
+                                props: {
+                                    endpoint: this.props.endpoint,
+                                    mode: this.props.mode,
+                                    onSelect: String(this.props.onSelect)
+                                },
+                            }
+                          )
+                        );
+                        // Redirect to consent URL
+                        window.location.replace(consentLink.getAttribute("data-url"));
+                    });
+                }
+            }, 0);
         } else {
             title = `<span class='ui-state-error'>Error: ${error instanceof ApiError ? error.data.message : error.message}</span>`;
         }
@@ -342,7 +371,15 @@ class EndpointBrowser {
             (this.state.path.endsWith(CONFIG.PATH.SEPARATOR) ? "" : CONFIG.PATH.SEPARATOR) +
             (node.key === CONFIG.PATH.CURRENT ? "" : node.key);
 
-        this.props.onSelect(path);
+        if (typeof this.props.onSelect === "string") {
+            // So we can't store a function in sessionStorage, however we can store it as a string
+            // https://stackoverflow.com/questions/7650071/is-there-a-way-to-create-a-function-from-a-string-with-javascript
+            const sessionStorageCallback = Function('return' + this.props.onSelect(path));
+            sessionStorageCallback();
+        } else {
+            this.props.onSelect(path);
+        }
+
     }
 
     cleanup() {
@@ -355,16 +392,24 @@ class EndpointBrowser {
  * @param {object} endpoint - Endpoint configuration
  * @param {string} path - Initial path
  * @param {string} mode - Browser mode ('file'/'dir')
+ * @param {Object} controller - handler
  * @param {Function} callback - Selection callback
  */
-export function show(endpoint, path, mode, callback) {
+export function show(
+  endpoint,
+  path,
+  mode,
+  controller,
+  callback
+) {
     const browser = new EndpointBrowser({
         endpoint,
         path,
         mode,
+        controller,
         onSelect: callback,
     });
-
+    console.log("browser, path, mode, callback", endpoint, path, mode, callback);
     browser.render().dialog({
         title: `Browse End-Point ${endpoint.name}`,
         modal: true,

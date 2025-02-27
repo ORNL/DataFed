@@ -76,8 +76,7 @@ $(document).ready(function () {
  * with the saved state values. Removes the 'resumeFlow' flag from sessionStorage after resuming.
  */
 const resumeTransferFlow = () => {
-    const resumeFlow = sessionStorage.getItem("resumeFlow");
-    if (resumeFlow === "true") {
+    if (sessionStorage.getItem("resumeFlow") === true) {
         const savedState = sessionStorage.getItem("transferDialogState");
         if (savedState) {
             const state = JSON.parse(savedState);
