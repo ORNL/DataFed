@@ -23,8 +23,13 @@ class GlobusCollectionModel {
     #exists;
     #database_entry;
     #is_fetched = false;
-    #globus_collection = new GlobusCollection();
+    /** @type {GlobusCollection} */
+    #globus_collection;
 
+    /** Builds model for operations on Globus Collections entity within DataFed Database
+     *
+     * @param {string} globus_collection_id - UUID of Globus Collection
+     */
     constructor(globus_collection_id) {
         if (!globus_collection_id) {
             throw [
@@ -35,6 +40,9 @@ class GlobusCollectionModel {
         this.#globus_collection_uuid = globus_collection_id;
     }
 
+    /**
+     * @returns {boolean} - Whether database entry exists
+     */
     exists() {
         if (typeof this.#exists === "undefined") {
             const query = {_key: this.#globus_collection_uuid};
@@ -62,16 +70,18 @@ class GlobusCollectionModel {
      */
     #map_entry_to_globus_collection() {
         // TODO: abstract
-        this.#globus_collection.id = this.#database_entry._id;
-        this.#globus_collection.key = this.#database_entry._key;
-        this.#globus_collection.name = this.#database_entry.name;
-        this.#globus_collection.description = this.#database_entry.description;
-        this.#globus_collection.required_scopes = this.#database_entry.required_scopes;
-        this.#globus_collection.owner = this.#database_entry.owner;
-        this.#globus_collection.creation_time = this.#database_entry.ct;
-        this.#globus_collection.update_time = this.#database_entry.ut;
-        this.#globus_collection.type = this.#database_entry.type;
-        this.#globus_collection.host = this.#database_entry.ha_enabled;
+        let globus_collection = new GlobusCollection();
+        globus_collection.id = this.#database_entry._id;
+        globus_collection.key = this.#database_entry._key;
+        globus_collection.name = this.#database_entry.name;
+        globus_collection.description = this.#database_entry.description;
+        globus_collection.required_scopes = this.#database_entry.required_scopes;
+        globus_collection.owner = this.#database_entry.owner;
+        globus_collection.creation_time = this.#database_entry.ct;
+        globus_collection.update_time = this.#database_entry.ut;
+        globus_collection.type = this.#database_entry.type;
+        globus_collection.ha_enabled = this.#database_entry.ha_enabled;
+        this.#globus_collection = globus_collection;
     }
 
     /** Fetches database entry and maps to model(s) if not already present
@@ -84,8 +94,8 @@ class GlobusCollectionModel {
         }
     }
 
-    /** Gets Globus Collection information in read only state
-     *
+    /** Gets Globus Collection information in read only state.
+     * Information is cached and will not reflect updates.
      * @returns {Readonly<GlobusCollection>} Globus Collection information
      */
     get() {
@@ -94,4 +104,4 @@ class GlobusCollectionModel {
     }
 }
 
-module.exports = { GlobusCollectionModel };
+module.exports = { GlobusCollectionModel, GlobusCollection };
