@@ -371,15 +371,7 @@ class EndpointBrowser {
             (this.state.path.endsWith(CONFIG.PATH.SEPARATOR) ? "" : CONFIG.PATH.SEPARATOR) +
             (node.key === CONFIG.PATH.CURRENT ? "" : node.key);
 
-        if (typeof this.props.onSelect === "string") {
-            // So we can't store a function in sessionStorage, however we can store it as a string
-            // https://stackoverflow.com/questions/7650071/is-there-a-way-to-create-a-function-from-a-string-with-javascript
-            const sessionStorageCallback = Function('return' + this.props.onSelect(path));
-            sessionStorageCallback();
-        } else {
-            this.props.onSelect(path);
-        }
-
+        this.props.onSelect(path);
     }
 
     cleanup() {

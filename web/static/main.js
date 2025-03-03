@@ -80,11 +80,14 @@ const resumeTransferFlow = () => {
         const savedState = sessionStorage.getItem("transferDialogState");
         if (savedState) {
             const state = JSON.parse(savedState);
+            // So we can't store a function in sessionStorage, however we can store it as a string
+            // https://stackoverflow.com/questions/7650071/is-there-a-way-to-create-a-function-from-a-string-with-javascript
+            const sessionStorageCallback = Function('return' + state.callback);
 
             const transferDialogController = new TransferDialogController(
                 state.mode,
                 state.ids,
-                state.callback,
+                sessionStorageCallback(),
             );
 
             transferDialogController.show();
