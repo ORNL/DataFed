@@ -6,16 +6,16 @@ const database = require("@arangodb").db;
 const globus_collection_collection = database.globus_coll;
 
 class GlobusCollection {
-    id;
-    key;
-    name;
-    description;
-    required_scopes;
-    owner;
-    creation_time;
-    update_time;
-    type;
-    ha_enabled;
+    static id;
+    static key;
+    static name;
+    static description;
+    static required_scopes;
+    static owner;
+    static creation_time;
+    static update_time;
+    static type;
+    static ha_enabled;
 }
 
 class GlobusCollectionModel {

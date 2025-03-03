@@ -8,11 +8,11 @@
  * @property {string} [dependent_scopes] - Access token scopes, present when retrieving a collection token
  */
 class DataFedOAuthToken {
-    access;
-    refresh;
-    expiration;
-    type;
-    dependent_scopes;
+    static access;
+    static refresh;
+    static expiration;
+    static type;
+    static dependent_scopes;
 }
 
-module.exports = {DataFedOAuthToken}
+module.exports = {DataFedOAuthToken};

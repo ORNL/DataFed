@@ -7,20 +7,20 @@ const database = require("@arangodb").db;
 const user_collection = database.u;
 
 class User {
-    id;
-    key;
-    name;
-    first_name;
-    last_name;
-    is_admin;
-    maximum_collections;
-    maximum_projects;
-    maximum_saved_queries;
-    creation_time;
-    update_time;
-    password;
-    email;
-    options;
+    static id;
+    static key;
+    static name;
+    static first_name;
+    static last_name;
+    static is_admin;
+    static maximum_collections;
+    static maximum_projects;
+    static maximum_saved_queries;
+    static creation_time;
+    static update_time;
+    static password;
+    static email;
+    static options;
 }
 class UserModel {
     #user_id;

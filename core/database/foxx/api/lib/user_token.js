@@ -4,6 +4,7 @@ const g_lib = require("../support.js");
 const {UserModel} = require("../models/user");
 const {GlobusCollectionModel} = require("../models/globus_collection");
 const {GlobusTokenModel} = require("../models/globus_token");
+const { DataFedOAuthToken } = require("../models/DataFedOAuthToken");
 
 class UserToken {
     /** @type {UserModel} */
@@ -35,7 +36,7 @@ class UserToken {
                 this.#working_token = globus_token_model.get_oauth_token();
             } else {
                 // TODO: should this state throw an error or perhaps provide reason?
-                this.#working_token = {};
+                this.#working_token = new DataFedOAuthToken();
             }
         }
     }
