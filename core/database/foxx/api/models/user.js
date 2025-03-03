@@ -1,6 +1,7 @@
 "use strict";
 
 const support = require("../support");
+const { DataFedOAuthToken } = require("./DataFedOAuthToken");
 
 const database = require("@arangodb").db;
 const user_collection = database.u;
@@ -27,9 +28,27 @@ class UserModel {
     #exists;
     #database_entry;
     #is_fetched = false;
-    #user = new User();
+    /** @type {User} */
+    #user;
     /** @type {DataFedOAuthToken} */
     #token;
+    // mapping specific to DB
+    #user_database_mapping = {
+        id: "_id",
+        key: "_key",
+        name: "name",
+        first_name: "first_name",
+        last_name: "last_name",
+        is_admin: "is_admin",
+        maximum_collections: "max_coll",
+        maximum_projects: "max_proj",
+        maximum_saved_queries: "max_sav_qry",
+        creation_time: "ct",
+        update_time: "ut",
+        password: "password",
+        email: "email",
+        options: "options",
+    };
 
     constructor(id, key) {
         if (!id && !key) {
@@ -77,22 +96,11 @@ class UserModel {
     #map_entry_to_user() {
         // TODO: abstract database objects
         // NOTE: this is specific to current Arango setup
-        this.#user = {
-            id: this.#database_entry._id,
-            key: this.#database_entry._key,
-            name: this.#database_entry.name,
-            first_name: this.#database_entry.first_name,
-            last_name: this.#database_entry.last_name,
-            is_admin: this.#database_entry.is_admin,
-            maximum_collections: this.#database_entry.max_coll,
-            maximum_projects: this.#database_entry.max_proj,
-            maximum_saved_queries: this.#database_entry.max_sav_qry,
-            creation_time: this.#database_entry.ct,
-            update_time: this.#database_entry.ut,
-            password: this.#database_entry.password,
-            email: this.#database_entry.email,
-            options: this.#database_entry.options,
-        };
+        let user = new User();
+        Object.entries(this.#user_database_mapping).map(([key, value]) => {
+            user[key] = this.#database_entry[value];
+        });
+        this.#user = user;
     }
 
     /** Maps database entry to token model
@@ -100,13 +108,13 @@ class UserModel {
     #map_entry_to_token() {
         // TODO: abstract database objects
         const { access, refresh, expiration } = this.#database_entry;
-        this.#token = {
-            access: access,
-            refresh: refresh,
-            expiration: expiration,
-            type: support.AccessTokenType.GLOBUS_DEFAULT,
-            dependent_scopes: null,
-        };
+        let token = new DataFedOAuthToken();
+        token.access = access;
+        token.refresh = refresh;
+        token.expiration = expiration;
+        token.type = support.AccessTokenType.GLOBUS_DEFAULT;
+        token.dependent_scopes = "";
+        this.#token = token;
     }
 
     /** Fetches database entry and maps to model(s) if not already present
@@ -120,8 +128,8 @@ class UserModel {
         }
     }
 
-    /** Gets User information in read only state
-     *
+    /** Gets User information in read only state.
+     * Note that the database object is retrieved only once and stored.
      * @returns {Readonly<User>} User information
      */
     get() {
@@ -145,4 +153,4 @@ class UserModel {
     // TODO: setters
 }
 
-module.exports = { UserModel };
+module.exports = { UserModel, User };
