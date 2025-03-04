@@ -840,30 +840,15 @@ module.exports = (function () {
     /** Get access token based on u._id
      *
      * @param {string} a_user_id - User ID field from database
-     * @param {object} [optional_params] - Optional params to determine logic for finding token
-     * @param {string} [optional_params.collection_id] - Globus Collection ID - used for finding associated transfer tokens
-     * @param {string} [optional_params.collection_type] - Globus Collection type
      * @returns {{acc_tok: string, ref_tok: string, acc_tok_exp_in: (number|number)}} - Access and refresh tokens, access expiration
      * @throws Error - When user document does not exist, or when globus_token document does not exist
      */
-    obj.getAccessToken = function (a_user_id, optional_params = {}) {
-        const { collection_id, collection_type } = optional_params;
-        let token_doc = obj.db.u.document(a_user_id); // default to user token
-        if (collection_id && collection_type) {
-            // collection token, need different doc
-            const token_matches = obj.db.globus_token
-                .byExample({
-                    // NOTE: method will throw error when edge cannot be found
-                    _from: a_user_id,
-                    _to: "globus_coll/" + collection_id,
-                })
-                .toArray();
-            token_doc = token_matches[0]; // TODO: what happens when there are multiple docs?
-        }
-        const exp_in = token_doc.expiration - Math.floor(Date.now() / 1000);
+    obj.getAccessToken = function (a_user_id) {
+        let user = obj.db.u.document(a_user_id); // default to user token
+        const exp_in = user.expiration - Math.floor(Date.now() / 1000);
         const result = {
-            acc_tok: token_doc.access,
-            ref_tok: token_doc.refresh,
+            acc_tok: user.access,
+            ref_tok: user.refresh,
             acc_tok_exp_in: exp_in > 0 ? exp_in : 0,
         };
 
