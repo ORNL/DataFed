@@ -27,6 +27,9 @@ class UserToken {
     constructor(kwargs) {
         const { user_key, user_id, globus_collection_id } = kwargs;
         this.#user_model = new UserModel(user_id, user_key);
+        if (!this.#user_model.exists()) {
+            throw [g_lib.ERR_MISSING_REQ_PARAM, "Specified user does not exist: " + kwargs];
+        }
         this.user = this.#user_model.get();
         if (typeof globus_collection_id !== "undefined") {
             const globus_collection_model = new GlobusCollectionModel(globus_collection_id);

@@ -2,6 +2,7 @@
 
 const g_lib = require("../api/support");
 const { UserToken } = require("../api/lib/user_token");
+const { DataFedOAuthToken } = require("../api/models/DataFedOAuthToken");
 
 const { expect } = require("chai");
 
@@ -150,5 +151,185 @@ describe("unit_user_token: The user_token library module class UserToken evaluat
         expect(response_token.expires_in).to.exist;
         expect(response_token.token_type).to.equal(token_document.type);
         expect(response_token.scopes).to.equal(token_document.dependent_scopes);
+    });
+});
+
+// "magic" values from fixture files
+const user_token_user = "userTokenUser";
+const user_collection_token_user = "userCollectionTokenUser";
+const globus_collection_token_collection = "126a23d4-45ed-49fb-bde2-76b5f44d20d1";
+const globus_collection_does_not_exist = "c8f55b3b-48ef-4075-b3ea-1b16ff5f956e"; // random fake UUID
+describe("unit_user_token: calling constructor", () => {
+    it("should create a user token object when provided a user_id", () => {
+        const kwargs = { user_id: "u/" + user_token_user };
+        const user_token = new UserToken(kwargs);
+
+        expect(user_token).to.be.instanceOf(UserToken);
+    });
+    it("should create a user token object when provided a user_key", () => {
+        const kwargs = { user_key: user_token_user };
+        const user_token = new UserToken(kwargs);
+
+        expect(user_token).to.be.instanceOf(UserToken);
+    });
+    it("should create a user token object when provided a user_id and globus_collection_id", () => {
+        const kwargs = {
+            user_id: "u/" + user_token_user,
+            globus_collection_id: "9deac418-f96b-414e-a2c4-7278408c0766", // some fake UUID
+        };
+        const user_token = new UserToken(kwargs);
+
+        expect(user_token).to.be.instanceOf(UserToken);
+    });
+    it("should create a user token object when provided a user_key and globus_collection_id", () => {
+        const kwargs = {
+            user_key: user_token_user,
+            globus_collection_id: "9deac418-f96b-414e-a2c4-7278408c0766", // some fake UUID
+        };
+        const user_token = new UserToken(kwargs);
+
+        expect(user_token).to.be.instanceOf(UserToken);
+    });
+    it("should throw an error when provided a user_id for a user that does not exist", () => {
+        const kwargs = { user_id: "u/fake_user" };
+        expect(() => new UserToken(kwargs)).to.throw("Specified user does not exist: ");
+    });
+    it("should throw an error when provided a user_key for a user that does not exist", () => {
+        const kwargs = { user_key: "fake_user" };
+        expect(() => new UserToken(kwargs)).to.throw("Specified user does not exist: ");
+    });
+    it("should throw an error when provided a user and globus_collection_id, and user does not exist", () => {
+        const kwargs = {
+            user_id: "u/fake_user",
+            globus_collection_id: "9deac418-f96b-414e-a2c4-7278408c0766", // some fake UUID
+        };
+        expect(() => new UserToken(kwargs)).to.throw("Specified user does not exist: ");
+    });
+});
+
+describe("unit_user_token: calling exists", () => {
+    it("should return true when provided only user_id and user DB object has a token", () => {
+        const user_token = new UserToken({ user_id: "u/" + user_token_user });
+        const user_token_exists = user_token.exists();
+        expect(user_token_exists).to.be.true;
+    });
+    it("should return true when provided only user_key and user DB object has a token", () => {
+        const user_token = new UserToken({ user_key: user_token_user });
+        const user_token_exists = user_token.exists();
+        expect(user_token_exists).to.be.true;
+    });
+    // assuming no cases where user does not have a token, sign-up process should cover that
+    it("should return true when user and collection are provided and DB object exists for token", () => {
+        const user_token = new UserToken({
+            user_id: "u/" + user_collection_token_user,
+            globus_collection_id: globus_collection_token_collection,
+        });
+        const user_token_exists = user_token.exists();
+        expect(user_token_exists).to.be.true;
+    });
+    it("should return false when user and collection are provided and DB object does not exist for token", () => {
+        const user_token = new UserToken({
+            user_id: "u/" + user_token_user,
+            globus_collection_id: globus_collection_token_collection,
+        });
+        const user_token_exists = user_token.exists();
+        expect(user_token_exists).to.be.false;
+    });
+    it("should return false when user and collection are provided and collection does not exist", () => {
+        const user_token = new UserToken({
+            user_id: "u/" + user_token_user,
+            globus_collection_id: globus_collection_does_not_exist,
+        });
+        const user_token_exists = user_token.exists();
+        expect(user_token_exists).to.be.false;
+    });
+});
+
+describe("unit_user_token: calling get_token", () => {
+    it("should return readonly DataFedOAuthToken object when provided only user_id and user DB object has a token", () => {
+        const user_token = new UserToken({ user_id: "u/" + user_token_user });
+        const user_token_oauth_token = user_token.get_token();
+
+        expect(user_token_oauth_token).to.be.instanceOf(DataFedOAuthToken);
+        expect(user_token_oauth_token).to.be.frozen;
+        expect(user_token_oauth_token)
+            .to.have.property("access")
+            .that.includes("access for " + user_token_user);
+        expect(user_token_oauth_token)
+            .to.have.property("refresh")
+            .that.includes("refresh for " + user_token_user);
+        expect(user_token_oauth_token).to.have.property("expiration").that.is.a("number");
+        expect(user_token_oauth_token).to.include({
+            type: g_lib.AccessTokenType.GLOBUS_DEFAULT,
+            dependent_scopes: "",
+        });
+    });
+    it("should return readonly DataFedOAuthToken object when provided only user_key and user DB object has a token", () => {
+        const user_token = new UserToken({ user_key: user_token_user });
+        const user_token_oauth_token = user_token.get_token();
+
+        expect(user_token_oauth_token).to.be.instanceOf(DataFedOAuthToken);
+        expect(user_token_oauth_token).to.be.frozen;
+        expect(user_token_oauth_token)
+            .to.have.property("access")
+            .that.includes("access for " + user_token_user);
+        expect(user_token_oauth_token)
+            .to.have.property("refresh")
+            .that.includes("refresh for " + user_token_user);
+        expect(user_token_oauth_token).to.have.property("expiration").that.is.a("number");
+        expect(user_token_oauth_token).to.include({
+            type: g_lib.AccessTokenType.GLOBUS_DEFAULT,
+            dependent_scopes: "",
+        });
+    });
+    // assuming no cases where user does not have a token, sign-up process should cover that
+    it("should return readonly DataFedOAuthToken object when user and collection are provided and DB object exists for token", () => {
+        const user_token = new UserToken({
+            user_id: "u/" + user_collection_token_user,
+            globus_collection_id: globus_collection_token_collection,
+        });
+        const user_token_oauth_token = user_token.get_token();
+
+        expect(user_token_oauth_token).to.be.instanceOf(DataFedOAuthToken);
+        expect(user_token_oauth_token).to.be.frozen;
+        expect(user_token_oauth_token)
+        .to.have.property("access")
+        .that.includes("globus token access for ");
+        expect(user_token_oauth_token)
+        .to.have.property("refresh")
+        .that.includes("globus token refresh for ");
+        expect(user_token_oauth_token).to.have.property("expiration").that.is.a("number");
+        expect(user_token_oauth_token).to.include({
+            type: g_lib.AccessTokenType.GLOBUS_TRANSFER,
+            dependent_scopes: "some fake scopes",   // from fixture
+        });
+    });
+    it("should return empty readonly DataFedOAuthToken object when user and collection are provided and DB object does not exist for token", () => {
+        const user_token = new UserToken({
+            user_id: "u/" + user_token_user,
+            globus_collection_id: globus_collection_token_collection,
+        });
+        const user_token_oauth_token = user_token.get_token();
+
+        expect(user_token_oauth_token).to.be.instanceOf(DataFedOAuthToken);
+        expect(user_token_oauth_token).to.be.frozen;
+        expect(user_token_oauth_token).to.include({
+            access: undefined,
+            refresh: undefined,
+            expiration: undefined,
+            type: undefined,
+            dependent_scopes: undefined,
+        });
+    });
+    it("should return empty readonly DataFedOAuthToken object when user and collection are provided and collection does not exist", () => {
+        const user_token = new UserToken({
+            user_id: "u/" + user_token_user,
+            globus_collection_id: globus_collection_does_not_exist,
+        });
+        const user_token_oauth_token = user_token.get_token();
+
+        expect(user_token_oauth_token).to.be.instanceOf(DataFedOAuthToken);
+        expect(user_token_oauth_token).to.be.frozen;
+        expect(user_token_oauth_token).to.be.empty;
     });
 });
