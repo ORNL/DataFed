@@ -31,7 +31,7 @@ const base_user_data = {
     ut: current_time,
 };
 
-const users_needing_token = [user_token_user, user_collection_token_user]
+const users_needing_token = [user_token_user, user_collection_token_user];
 
 if (!db._collection("u")) {
     throw "This collection - u - does not exist";
@@ -49,7 +49,7 @@ if (!db._collection("u")) {
                     access: "access for " + uid,
                     refresh: "refresh for " + uid,
                     expiration: current_time + 123456789,
-                    ...minimal_user_data
+                    ...minimal_user_data,
                 };
             } else {
                 user_data = minimal_user_data;

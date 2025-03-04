@@ -15,4 +15,4 @@ class DataFedOAuthToken {
     static dependent_scopes;
 }
 
-module.exports = {DataFedOAuthToken};
+module.exports = { DataFedOAuthToken };

@@ -1,9 +1,9 @@
 "use strict";
 
 const g_lib = require("../support.js");
-const {UserModel} = require("../models/user");
-const {GlobusCollectionModel} = require("../models/globus_collection");
-const {GlobusTokenModel} = require("../models/globus_token");
+const { UserModel } = require("../models/user");
+const { GlobusCollectionModel } = require("../models/globus_collection");
+const { GlobusTokenModel } = require("../models/globus_token");
 const { DataFedOAuthToken } = require("../models/DataFedOAuthToken");
 
 class UserToken {
@@ -35,7 +35,10 @@ class UserToken {
             const globus_collection_model = new GlobusCollectionModel(globus_collection_id);
             this.globus_collection = globus_collection_model.get();
             if (globus_collection_model.exists()) {
-                const globus_token_model = new GlobusTokenModel(this.user.id, this.globus_collection.id);
+                const globus_token_model = new GlobusTokenModel(
+                    this.user.id,
+                    this.globus_collection.id,
+                );
                 this.#working_token = globus_token_model.get_oauth_token();
             } else {
                 // TODO: should this state throw an error or perhaps provide reason?
@@ -66,7 +69,11 @@ class UserToken {
     exists() {
         this.#fetch_token();
         // check that required fields are not null
-        return !!this.#working_token.access && !!this.#working_token.refresh && !!this.#working_token.expiration;
+        return (
+            !!this.#working_token.access &&
+            !!this.#working_token.refresh &&
+            !!this.#working_token.expiration
+        );
     }
 
     /**

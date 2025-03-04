@@ -221,10 +221,18 @@ class EndpointBrowser {
             const is_mapped = ep_status.entity_type.includes("mapped");
             // Fetch directory listing
             const data = await new Promise((resolve) => {
-                api.epDirList(this.props.endpoint.id, this.state.path, false, is_mapped, this.props.endpoint.id, resolve);
+                api.epDirList(
+                    this.props.endpoint.id,
+                    this.state.path,
+                    false,
+                    is_mapped,
+                    this.props.endpoint.id,
+                    resolve,
+                );
             });
 
-            if (data.needs_consent || data.code) { // TODO: needs consent flag only works first time, if base token has consent it will no longer work.
+            if (data.needs_consent || data.code) {
+                // TODO: needs consent flag only works first time, if base token has consent it will no longer work.
                 throw new ApiError(data);
             }
 

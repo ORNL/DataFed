@@ -32,10 +32,7 @@ class GlobusCollectionModel {
      */
     constructor(globus_collection_id) {
         if (!globus_collection_id) {
-            throw [
-                support.ERR_MISSING_REQ_PARAM,
-                "A Globus Collection ID must be provided"
-            ];
+            throw [support.ERR_MISSING_REQ_PARAM, "A Globus Collection ID must be provided"];
         }
         this.#globus_collection_uuid = globus_collection_id;
     }
@@ -45,7 +42,7 @@ class GlobusCollectionModel {
      */
     exists() {
         if (typeof this.#exists === "undefined") {
-            const query = {_key: this.#globus_collection_uuid};
+            const query = { _key: this.#globus_collection_uuid };
             this.#exists = !!globus_collection_collection.exists(query);
         }
         return this.#exists;
@@ -58,10 +55,9 @@ class GlobusCollectionModel {
             return;
         }
         if (this.exists()) {
-            const query = {_key: this.#globus_collection_uuid};
+            const query = { _key: this.#globus_collection_uuid };
             this.#database_entry = globus_collection_collection.document(query);
-        }
-        else {
+        } else {
             this.#database_entry = {};
         }
     }

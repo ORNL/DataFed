@@ -189,5 +189,4 @@ describe("unit_user_model: User Model tests", () => {
 
         // assuming previous update tests sufficient to prove same logic here
     });
-
 });

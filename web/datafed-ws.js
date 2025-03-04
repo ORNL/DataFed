@@ -1964,9 +1964,8 @@ app.get("/ui/ep/dir/list", (a_req, a_resp) => {
             sendMessage("UserGetAccessTokenRequest", {}, a_req, a_resp, (base_token_reply) => {
                 get_from_globus_api(base_token_reply.access, reply);
             });
-        }
-        else {
-            get_from_globus_api(reply.access, reply)
+        } else {
+            get_from_globus_api(reply.access, reply);
         }
     });
 });

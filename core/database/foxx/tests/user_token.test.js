@@ -293,15 +293,15 @@ describe("unit_user_token: calling get_token", () => {
         expect(user_token_oauth_token).to.be.instanceOf(DataFedOAuthToken);
         expect(user_token_oauth_token).to.be.frozen;
         expect(user_token_oauth_token)
-        .to.have.property("access")
-        .that.includes("globus token access for ");
+            .to.have.property("access")
+            .that.includes("globus token access for ");
         expect(user_token_oauth_token)
-        .to.have.property("refresh")
-        .that.includes("globus token refresh for ");
+            .to.have.property("refresh")
+            .that.includes("globus token refresh for ");
         expect(user_token_oauth_token).to.have.property("expiration").that.is.a("number");
         expect(user_token_oauth_token).to.include({
             type: g_lib.AccessTokenType.GLOBUS_TRANSFER,
-            dependent_scopes: "some fake scopes",   // from fixture
+            dependent_scopes: "some fake scopes", // from fixture
         });
     });
     it("should return empty readonly DataFedOAuthToken object when user and collection are provided and DB object does not exist for token", () => {

@@ -719,7 +719,10 @@ router
                 user = g_lib.getUserFromClientID(req.queryParams.client);
             }
 
-            const user_token = new UserToken({user_id: user._id, globus_collection_id: collection_id});
+            const user_token = new UserToken({
+                user_id: user._id,
+                globus_collection_id: collection_id,
+            });
             let needs_consent = false;
 
             const token_document = user_token.get_token();

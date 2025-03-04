@@ -94,7 +94,7 @@ export function setDefaultAlloc(a_repo, a_subject, a_cb) {
 }
 
 export function xfrStart(a_ids, a_mode, a_path, a_ext, a_encrypt_mode, a_orig_fname, a_cb) {
-    const search_path = a_path.substring(0,a_path.indexOf("/"));
+    const search_path = a_path.substring(0, a_path.indexOf("/"));
     epView(search_path, (ok, ep_data) => {
         const is_mapped = ep_data.entity_type.includes("mapped");
         var url = "/api/dat/";
@@ -118,15 +118,19 @@ export function xfrStart(a_ids, a_mode, a_path, a_ext, a_encrypt_mode, a_orig_fn
             a_encrypt_mode +
             (a_ext && a_ext.length ? "&ext=" + encodeURIComponent(a_ext) : "");
 
-        _asyncGet(url, is_mapped ? { collection_id: ep_data.id, collection_type: "mapped" } : null, function (ok, data) {
-            if (ok) {
-                epRecentLoad(function () {
+        _asyncGet(
+            url,
+            is_mapped ? { collection_id: ep_data.id, collection_type: "mapped" } : null,
+            function (ok, data) {
+                if (ok) {
+                    epRecentLoad(function () {
+                        if (a_cb) a_cb(ok, data);
+                    });
+                } else {
                     if (a_cb) a_cb(ok, data);
-                });
-            } else {
-                if (a_cb) a_cb(ok, data);
-            }
-        });
+                }
+            },
+        );
     });
 }
 
@@ -1000,7 +1004,7 @@ export function epDirList(a_ep, a_path, a_show_hidden, is_mapped, collection_id,
             encodeURIComponent(a_path) +
             "&hidden=" +
             (a_show_hidden ? "true" : "false"),
-        is_mapped ? {collection_id: collection_id, collection_type: "mapped"} : null,
+        is_mapped ? { collection_id: collection_id, collection_type: "mapped" } : null,
         function (ok, data) {
             if (a_cb) {
                 if (ok) a_cb(data);

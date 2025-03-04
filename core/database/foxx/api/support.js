@@ -851,11 +851,13 @@ module.exports = (function () {
         let token_doc = obj.db.u.document(a_user_id); // default to user token
         if (collection_id && collection_type) {
             // collection token, need different doc
-            const token_matches = obj.db.globus_token.byExample({
-                // NOTE: method will throw error when edge cannot be found
-                _from: a_user_id,
-                _to: "globus_coll/" + collection_id,
-            }).toArray();
+            const token_matches = obj.db.globus_token
+                .byExample({
+                    // NOTE: method will throw error when edge cannot be found
+                    _from: a_user_id,
+                    _to: "globus_coll/" + collection_id,
+                })
+                .toArray();
             token_doc = token_matches[0]; // TODO: what happens when there are multiple docs?
         }
         const exp_in = token_doc.expiration - Math.floor(Date.now() / 1000);
