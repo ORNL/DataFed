@@ -4,6 +4,7 @@ import * as api from "/api.js";
 import * as settings from "/settings.js";
 import * as dialogs from "/dialogs.js";
 import { TransferDialogController } from "./components/transfer/transfer-dialog-controller.js";
+import {TransferMode} from "./models/transfer-model.js";
 
 $(".btn-help").on("click", function () {
     window.open("https://ornl.github.io/DataFed/", "datafed-docs");
@@ -42,8 +43,9 @@ $(document).ready(function () {
         $("#devmode").show();
     }
 
-    resizeUI();
     resumeTransferFlow();
+    resizeUI();
+
 
     api.userView(tmpl_data.user_uid, true, function (ok, user) {
         if (ok && user) {
@@ -76,18 +78,20 @@ $(document).ready(function () {
  * with the saved state values. Removes the 'resumeFlow' flag from sessionStorage after resuming.
  */
 const resumeTransferFlow = () => {
-    if (sessionStorage.getItem("resumeFlow") === true) {
+    if (sessionStorage.getItem("resumeFlow") === "true") {
         const savedState = sessionStorage.getItem("transferDialogState");
         if (savedState) {
             const state = JSON.parse(savedState);
+            console.log("transferDialogState", state)
             // So we can't store a function in sessionStorage, however we can store it as a string
             // https://stackoverflow.com/questions/7650071/is-there-a-way-to-create-a-function-from-a-string-with-javascript
-            const sessionStorageCallback = Function('return' + state.callback);
+            const sessionStorageCallback = new Function('return' + state.callback)();
+            console.log("check it out,", sessionStorageCallback);
 
             const transferDialogController = new TransferDialogController(
-                state.mode,
+                TransferMode[state.mode],
                 state.ids,
-                sessionStorageCallback(),
+                sessionStorageCallback,
             );
 
             transferDialogController.show();

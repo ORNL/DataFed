@@ -192,13 +192,11 @@ export class TransferUIManager {
 
     showBrowseDialog(pathInput) {
         const browsePath = this.getBrowsePath(pathInput.val());
-        const mode = this.#controller.model.mode === TransferMode.TT_DATA_GET ? "dir" : "file";
-        // On dialog view, cache necessary data for view reconstruction
 
         show(
           this.#controller.endpointManager.state.currentEndpoint,
           browsePath,
-          mode,
+          this.#controller.model.mode,
           this.#controller,
           (selectedPath) => {
             const fullPath = this.#controller.endpointManager.state.currentEndpoint.name + selectedPath;

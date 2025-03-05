@@ -311,6 +311,7 @@ app.use(
 function storeCollectionId(req, res, next) {
     if (req.query.collection_id) {
         req.session.collection_id = req.query.collection_id;
+        req.session.collection_type = "mapped";
     }
     next();
 }

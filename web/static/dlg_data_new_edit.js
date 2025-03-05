@@ -5,6 +5,7 @@ import * as settings from "./settings.js";
 import * as dialogs from "./dialogs.js";
 import { transferDialog } from "./components/transfer/index.js";
 import * as dlgSchList from "./dlg_schema_list.js";
+import {TransferMode} from "./models/transfer-model.js";
 
 export var DLG_DATA_MODE_NEW = 0;
 export var DLG_DATA_MODE_EDIT = 1;
@@ -100,7 +101,7 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
         extern = $("#external", frame);
 
     $("#pick_source", frame).on("click", function () {
-        transferDialog.show(null, null, function (a_path, a_encrypt_mode) {
+        transferDialog.show(TransferMode.TT_DATA_PUT, null, function (a_path, a_encrypt_mode) {
             $("#source_file", frame).val(a_path);
             encrypt_mode = a_encrypt_mode;
             if (ext_auto.prop("checked")) updateAutoExt();
