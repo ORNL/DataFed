@@ -582,7 +582,7 @@ var tasks_func = (function () {
             }).get_token();
             var tokens = UserToken.formatUserTokenForTransferTask(token_doc);
             const extra_token_format = UserToken.formatUserToken(
-                state.is_collection_token_required, // TODO: assuming collection correctly assigned from earlier step
+                state.is_collection_token_required,
                 token_doc,
                 false,
             );

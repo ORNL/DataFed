@@ -104,7 +104,6 @@ class GlobusTokenModel {
     #map_entry_to_oauth_token() {
         let oauth_token = new DataFedOAuthToken();
         Object.keys(DataFedOAuthToken).map((key) => {
-            console.log("mapping key ", key);
             oauth_token[key] = this.#database_entry[key]; // mapping is currently 1:1
         });
         this.#oauth_token = oauth_token;

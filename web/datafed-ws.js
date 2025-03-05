@@ -1962,6 +1962,7 @@ app.get("/ui/ep/dir/list", (a_req, a_resp) => {
     sendMessage("UserGetAccessTokenRequest", { ...message_data }, a_req, a_resp, function (reply) {
         if (reply.needsConsent) {
             sendMessage("UserGetAccessTokenRequest", {}, a_req, a_resp, (base_token_reply) => {
+                // TODO: does a failed refresh token affect this? will base token be valid?
                 get_from_globus_api(base_token_reply.access, reply);
             });
         } else {

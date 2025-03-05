@@ -9,6 +9,7 @@
 4. [1002] - Add backoff for task worker when database fails to prevent log overflow.
 5. [1109] - Add support for Globus token association to Globus collection and user.
 6. [1215] - Add support for fetching Globus tokens associated with Globus collection and user.
+7. [1214] - Add support for mapped collections on transfer tasks
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 1. [984] - Fixes {server_default} from showing up in path.
