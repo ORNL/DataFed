@@ -215,12 +215,24 @@ class EndpointBrowser {
         $("#file_tree").fancytree("disable");
 
         try {
+            const ep_status = await new Promise((resolve) => {
+                api.epView(this.props.endpoint.id, (ok, data) => resolve(data));
+            });
+            const is_mapped = ep_status.entity_type.includes("mapped");
             // Fetch directory listing
             const data = await new Promise((resolve) => {
-                api.epDirList(this.props.endpoint.id, this.state.path, false, resolve);
+                api.epDirList(
+                    this.props.endpoint.id,
+                    this.state.path,
+                    false,
+                    is_mapped,
+                    this.props.endpoint.id,
+                    resolve,
+                );
             });
 
-            if (data.code) {
+            if (data.needs_consent || data.code) {
+                // TODO: needs consent flag only works first time, if base token has consent it will no longer work.
                 throw new ApiError(data);
             }
 

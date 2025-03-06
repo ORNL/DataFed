@@ -4,7 +4,13 @@ const { db } = require("@arangodb");
 
 const current_time = Math.floor(Date.now() / 1000);
 const collection_no_token_uuid = "94445318-2097-4ed8-8550-f73cd292b11f";
-const collection_key_list = [collection_no_token_uuid];
+const get_globus_token_model_collection = "a1067823-2598-4481-be95-712794ddd9e8";
+const globus_collection_token_collection = "126a23d4-45ed-49fb-bde2-76b5f44d20d1";
+const collection_key_list = [
+    collection_no_token_uuid,
+    get_globus_token_model_collection,
+    globus_collection_token_collection,
+];
 const end_collection_key = collection_key_list.at(-1);
 const base_globus_collection_data = {
     name: "Test fixture collection",

@@ -9,6 +9,7 @@
   "tests": "tests/**/*.js",
   "scripts": {
     "user-fixture": "tests/user_fixture.js",
-    "collection-fixture": "tests/globus_collection_fixture.js"
+    "collection-fixture": "tests/globus_collection_fixture.js",
+    "globus-token-fixture": "tests/globus_token_fixture.js"
   }
 }

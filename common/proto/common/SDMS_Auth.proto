@@ -425,11 +425,13 @@ message RecordOwnerChangeReply
 // Reply: DataGetReply on success, NackReply on error
 message DataGetRequest
 {
-    repeated string             id          = 1; // ID/alias of data records and or collections
-    optional string             path        = 2; // Globus path to download to (not required if check option is set)
-    optional Encryption         encrypt     = 3; // Optional encryption mode (none, if available, required)
-    optional bool               orig_fname  = 4; // Optional flag to download to original filenames
-    optional bool               check       = 5; // Optional flag to perform initial validation only if true
+    repeated string             id              = 1; // ID/alias of data records and or collections
+    optional string             path            = 2; // Globus path to download to (not required if check option is set)
+    optional Encryption         encrypt         = 3; // Optional encryption mode (none, if available, required)
+    optional bool               orig_fname      = 4; // Optional flag to download to original filenames
+    optional bool               check           = 5; // Optional flag to perform initial validation only if true
+    optional string             collection_id   = 6; // Globus Collection ID
+    optional string             collection_type = 7; // Globus Collection Type
 }
 
 // Request to upload raw data to a data records. Auth user must have WRITE_DATA
@@ -438,11 +440,13 @@ message DataGetRequest
 // Reply: DataPutReply on success, NackReply on error
 message DataPutRequest
 {
-    required string             id          = 1; // ID/alias of data record
-    optional string             path        = 2; // Globus path to upload from
-    optional Encryption         encrypt     = 3; // Optional encryption mode (none, if available, required)
-    optional string             ext         = 4; // Optional extension override
-    optional bool               check       = 5; // Optional flag to perform initial validation only if true
+    required string             id              = 1; // ID/alias of data record
+    optional string             path            = 2; // Globus path to upload from
+    optional Encryption         encrypt         = 3; // Optional encryption mode (none, if available, required)
+    optional string             ext             = 4; // Optional extension override
+    optional bool               check           = 5; // Optional flag to perform initial validation only if true
+    optional string             collection_id   = 6; // Globus Collection ID
+    optional string             collection_type = 7; // Globus Collection Type
 }
 
 // Reply containing data download information, including associated background task.

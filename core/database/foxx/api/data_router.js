@@ -7,6 +7,7 @@ const g_db = require("@arangodb").db;
 const g_lib = require("./support");
 const g_proc = require("./process");
 const g_tasks = require("./tasks");
+const { UserToken } = require("./lib/user_token");
 
 module.exports = router;
 
@@ -1614,6 +1615,23 @@ router
                             "Must provide path parameter if not running check.",
                         ];
 
+                    const { collection_id, collection_type } = req.body;
+                    const is_collection = UserToken.validateRequestParams(req.body);
+                    const token_exists = new UserToken({
+                        user_id: client._id,
+                        globus_collection_id: req.body.collection_id,
+                    }).exists();
+                    if (is_collection && !token_exists) {
+                        throw [
+                            g_lib.ERR_NOT_FOUND,
+                            "Globus token for mapped collection " +
+                                collection_id +
+                                " for user " +
+                                client._id +
+                                " does not exist.",
+                        ];
+                    }
+
                     for (var i in req.body.id) {
                         id = g_lib.resolveDataCollID(req.body.id[i], client);
                         res_ids.push(id);
@@ -1626,6 +1644,8 @@ router
                         res_ids,
                         req.body.orig_fname,
                         req.body.check,
+                        is_collection,
+                        { collection_id: collection_id, collection_type: collection_type },
                     );
 
                     if (!req.body.check)
@@ -1647,6 +1667,8 @@ router
                 encrypt: joi.number().optional(),
                 orig_fname: joi.boolean().optional(),
                 check: joi.boolean().optional(),
+                collection_id: joi.string().optional().guid(),
+                collection_type: joi.string().optional().valid("mapped"),
             })
             .required(),
         "Parameters",
@@ -1681,6 +1703,23 @@ router
                             "Concurrent put of multiple records no supported.",
                         ];
 
+                    const { collection_id, collection_type } = req.body;
+                    const is_collection = UserToken.validateRequestParams(req.body);
+                    const token_exists = new UserToken({
+                        user_id: client._id,
+                        globus_collection_id: req.body.collection_id,
+                    }).exists();
+                    if (is_collection && !token_exists) {
+                        throw [
+                            g_lib.ERR_NOT_FOUND,
+                            "Globus token for mapped collection " +
+                                collection_id +
+                                " for user " +
+                                client._id +
+                                " does not exist.",
+                        ];
+                    }
+
                     for (var i in req.body.id) {
                         res_ids.push(g_lib.resolveDataID(req.body.id[i], client));
                     }
@@ -1692,6 +1731,8 @@ router
                         req.body.ext,
                         res_ids,
                         req.body.check,
+                        is_collection,
+                        { collection_id: collection_id, collection_type: collection_type },
                     );
 
                     if (!req.body.check)
@@ -1713,6 +1754,8 @@ router
                 encrypt: joi.number().optional(),
                 ext: joi.string().optional(),
                 check: joi.boolean().optional(),
+                collection_id: joi.string().optional().guid(),
+                collection_type: joi.string().optional().valid("mapped"),
             })
             .required(),
         "Parameters",

@@ -1172,6 +1172,10 @@ app.get("/api/dat/get", (a_req, a_resp) => {
 
     if (a_req.query.check) par.check = a_req.query.check;
 
+    const { collection_id, collection_type } = a_req.query;
+    par.collectionId = collection_id;
+    par.collectionType = collection_type;
+
     sendMessage("DataGetRequest", par, a_req, a_resp, function (reply) {
         a_resp.send(reply);
     });
@@ -1187,6 +1191,10 @@ app.get("/api/dat/put", (a_req, a_resp) => {
     if (a_req.query.ext) par.ext = a_req.query.ext;
 
     if (a_req.query.check) par.check = a_req.query.check;
+
+    const { collection_id, collection_type } = a_req.query;
+    par.collectionId = collection_id;
+    par.collectionType = collection_type;
 
     sendMessage("DataPutRequest", par, a_req, a_resp, function (reply) {
         a_resp.send(reply);
@@ -1909,17 +1917,11 @@ app.post("/ui/ep/recent/save", (a_req, a_resp) => {
 
 app.get("/ui/ep/dir/list", (a_req, a_resp) => {
     const message_data = {
-        collectionId: a_req.session.collection_id,
-        collectionType: a_req.session.collection_type,
+        collectionId: a_req.query.collection_id,
+        collectionType: a_req.query.collection_type,
     };
 
-    sendMessage("UserGetAccessTokenRequest", { ...message_data }, a_req, a_resp, function (reply) {
-        if (reply.needsConsent) {
-            // Do something
-            a_resp.status(403);
-            a_resp.send("Globus collection needs consent. Follow: <consent link here>");
-            return;
-        }
+    const get_from_globus_api = (token, original_reply) => {
         const opts = {
             hostname: "transfer.api.globusonline.org",
             method: "GET",
@@ -1932,7 +1934,7 @@ app.get("/ui/ep/dir/list", (a_req, a_resp) => {
                 a_req.query.hidden,
             rejectUnauthorized: true,
             headers: {
-                Authorization: " Bearer " + reply.access,
+                Authorization: " Bearer " + token,
             },
         };
 
@@ -1943,7 +1945,9 @@ app.get("/ui/ep/dir/list", (a_req, a_resp) => {
                 data += chunk;
             });
             res.on("end", () => {
-                a_resp.json(JSON.parse(data));
+                let res_json = JSON.parse(data);
+                res_json.needs_consent = original_reply.needsConsent;
+                a_resp.json(res_json);
             });
         });
 
@@ -1953,6 +1957,17 @@ app.get("/ui/ep/dir/list", (a_req, a_resp) => {
         });
 
         req.end();
+    };
+
+    sendMessage("UserGetAccessTokenRequest", { ...message_data }, a_req, a_resp, function (reply) {
+        if (reply.needsConsent) {
+            sendMessage("UserGetAccessTokenRequest", {}, a_req, a_resp, (base_token_reply) => {
+                // TODO: does a failed refresh token affect this? will base token be valid?
+                get_from_globus_api(base_token_reply.access, reply);
+            });
+        } else {
+            get_from_globus_api(reply.access, reply);
+        }
     });
 });
 

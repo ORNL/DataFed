@@ -9,6 +9,7 @@ const g_db = require("@arangodb").db;
 const g_graph = require("@arangodb/general-graph")._graph("sdmsg");
 const g_lib = require("./support");
 const { UserToken } = require("./lib/user_token");
+const { UserModel } = require("./models/user");
 
 module.exports = router;
 
@@ -718,37 +719,15 @@ router
                 user = g_lib.getUserFromClientID(req.queryParams.client);
             }
 
-            let token_document = user;
+            const user_token = new UserToken({
+                user_id: user._id,
+                globus_collection_id: collection_id,
+            });
             let needs_consent = false;
-            if (collection_token) {
-                // Default - conditions not met for: no collection, no tokens, and no matches - all require consent flow
-                token_document = {};
-                needs_consent = true;
 
-                const globus_collection = g_db.globus_coll.exists({ _key: collection_id });
-                if (globus_collection) {
-                    const token_matches = g_db.globus_token
-                        .byExample({
-                            _from: user._id,
-                            _to: globus_collection._id,
-                        })
-                        .toArray();
-                    if (token_matches.length > 0) {
-                        if (token_matches.length > 1) {
-                            // Relationship should be unique based on AccessTokenType
-                            throw [
-                                g_lib.ERR_INTERNAL_FAULT,
-                                "Too many matching tokens for user: " +
-                                    user._id +
-                                    " to collection: " +
-                                    globus_collection._id,
-                            ];
-                        }
-                        // TODO: account for AccessTokenType; currently only GLOBUS_DEFAULT and GLOBUS_TRANSFER are supported
-                        token_document = token_matches[0];
-                        needs_consent = false;
-                    }
-                }
+            const token_document = user_token.get_token();
+            if (!user_token.exists()) {
+                needs_consent = true;
             }
             const result = UserToken.formatUserToken(
                 collection_token,
