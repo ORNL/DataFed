@@ -74,6 +74,21 @@ export const updateUIState = (state) => {
 };
 
 /**
+ * Updates the endpoint state in the store
+ * @param {Object} state - The endpoint state to save
+ */
+export const updateEndpointState = (state) => {
+    try {
+        transferStore.dispatch({
+            type: ActionTypes.UPDATE_ENDPOINT_STATE,
+            payload: state
+        });
+    } catch (error) {
+        console.error("Failed to update endpoint state:", error);
+    }
+};
+
+/**
  * Clears transfer state from the store and persistence
  */
 export const clearTransferState = () => {

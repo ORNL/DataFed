@@ -1,4 +1,5 @@
 import { createMatchesHtml } from "./transfer-templates.js";
+import { transferStore, updateEndpointState } from "../../store/store.js";
 
 /**
  * @class TransferEndpointManager
@@ -22,7 +23,9 @@ export class TransferEndpointManager {
         this.#controller = controller;
         this.api = services.api; // Dependency injection
         this.dialogs = services.dialogs; // Dependency injection
-        const cachedComponentData = sessionStorage.getItem("resumeFlow") === true && this.loadCache();
+        
+        // Load state from Redux store
+        const state = transferStore.getState();
         // Search tracking mechanism to prevent race conditions:
         // Without this, out-of-order API responses could update the UI with stale data
         // Example: User types "abc" then quickly types "xyz"
@@ -30,7 +33,7 @@ export class TransferEndpointManager {
         //  - "xyz" search starts (token: 2)
         //  - "abc" results return (ignored, token mismatch)
         //  - "xyz" results return (processed, matching token)
-        this.state = cachedComponentData || {
+        this.state = state.endpointState || {
             currentEndpoint: null,
             endpointManagerList: null, // List of endpoint matches
             currentSearchToken: null, // Tracks the latest valid search request
@@ -39,17 +42,6 @@ export class TransferEndpointManager {
         };
     }
 
-    /**
-     * Save component state to cache
-     * @returns {object | null} The cached component data
-     */
-    loadCache() {
-        return sessionStorage.getItem("transferDialogEndpointManagerState");
-    }
-
-    saveCache() {
-        sessionStorage.setItem("transferDialogEndpointManagerState", JSON.stringify(this.state));
-    }
 
     /**
      * Performs autocomplete search for endpoints
@@ -72,6 +64,7 @@ export class TransferEndpointManager {
                     ep.name = ep.canonical_name || ep.id;
                 });
                 this.updateMatchesList(data.DATA);
+                this.saveState(); // Save state to Redux store
             } else {
                 console.warn("No matches found");
                 this.state.endpointManagerList = null;
@@ -104,6 +97,7 @@ export class TransferEndpointManager {
                     console.info("Direct endpoint match found:", data);
                     this.#controller.uiManager.enableBrowseButton(true);
                     this.#controller.uiManager.handleSelectedEndpoint(data);
+                    this.saveState(); // Save state to Redux store
                 } else {
                     console.warn("No direct match, trying autocomplete");
                     this.searchEndpointAutocomplete(endpoint, searchToken);
@@ -168,6 +162,7 @@ export class TransferEndpointManager {
             this.updateMatchesList([]);
             this.#controller.uiManager.enableStartButton(false);
             this.#controller.uiManager.enableBrowseButton(false);
+            this.saveState(); // Save state to Redux store
             return;
         }
 
@@ -187,5 +182,12 @@ export class TransferEndpointManager {
             console.info("Endpoint changed or not set - searching for new endpoint");
             this.searchEndpoint(endpoint, searchToken);
         }
+    }
+    
+    /**
+     * Saves the current state to the Redux store
+     */
+    saveState() {
+        updateEndpointState(this.state);
     }
 }

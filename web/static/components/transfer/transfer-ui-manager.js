@@ -3,7 +3,7 @@ import { TransferMode } from "../../models/transfer-model.js";
 import { show } from "../endpoint-browse/index.js";
 import { inputDisable, inputEnable, inputTheme, setStatusText } from "../../util.js";
 import { createMatchesHtml, formatRecordTitle, getDialogTemplate } from "./transfer-templates.js";
-import { transferStore } from "../../store/store.js"; // Import the Redux store
+import { transferStore, updateUIState } from "../../store/store.js";
 
 /**
  * @class TransferUIManager
@@ -36,24 +36,22 @@ export class TransferUIManager {
             frame: null,
             encryptRadios: null,
         };
-        
+
         // Save initial UI state to Redux
         this.saveUIState();
     }
-    
+
     /**
      * Saves the current UI state to Redux store
      */
     saveUIState() {
-        const { updateUIState } = require("../../store/store.js");
-        
         // Only save serializable parts of the state
         const stateToSave = {
             ...this.state,
             recordTree: null, // Don't try to serialize the tree object
             frame: null, // Don't try to serialize DOM elements
         };
-        
+
         updateUIState(stateToSave);
     }
 
@@ -81,7 +79,7 @@ export class TransferUIManager {
         this.initializeEndpointInput();
         this.initializeTransferOptions();
         this.initializeBrowseButton();
-        
+
         // Save UI state after initialization
         this.saveUIState();
     }
@@ -203,15 +201,16 @@ export class TransferUIManager {
         const browsePath = this.getBrowsePath(pathInput.val());
 
         show(
-          this.#controller.endpointManager.state.currentEndpoint,
-          browsePath,
-          this.#controller.model.mode,
-          this.#controller,
-          (selectedPath) => {
-            const fullPath = this.#controller.endpointManager.state.currentEndpoint.name + selectedPath;
-            pathInput.val(fullPath);
-            this.enableStartButton(true);
-          }
+            this.#controller.endpointManager.state.currentEndpoint,
+            browsePath,
+            this.#controller.model.mode,
+            this.#controller,
+            (selectedPath) => {
+                const fullPath =
+                    this.#controller.endpointManager.state.currentEndpoint.name + selectedPath;
+                pathInput.val(fullPath);
+                this.enableStartButton(true);
+            },
         );
     }
 
@@ -338,12 +337,6 @@ export class TransferUIManager {
         matches.prop("disabled", false);
         this.enableBrowseButton(true);
         this.updateEndpointOptions(endpoint);
-        
-        // Update endpoint state in Redux store
-        const { updateEndpointState } = require("../../store/store.js");
-        updateEndpointState(this.#controller.endpointManager.state);
-        
-        // Save UI state after endpoint selection
         this.saveUIState();
     }
 

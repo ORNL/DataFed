@@ -13,7 +13,7 @@ import { saveTransferState, clearTransferState } from "../../store/reducers/tran
  */
 export class TransferDialogController {
     /**
-     * @param {number|TransferMode[keyof TransferMode]} mode - Transfer mode (GET/PUT)
+     * @param {TransferMode[keyof TransferMode]} mode - Transfer mode (GET/PUT)
      * @param {Array<object>} ids - Records to transfer
      * @param {Function} callback - Completion callback
      * @param {object} services - The service objects to use for API and dialog operations

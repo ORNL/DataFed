@@ -69,21 +69,9 @@ class EndpointBrowser {
      * @returns {object | null} The cached component data
      */
     loadCache() {
-        // First try to get from Redux store
         const state = transferStore.getState();
         if (state.resumeData && state.resumeData.endpointBrowserState) {
             return state.resumeData.endpointBrowserState;
-        }
-
-        // Fallback to sessionStorage for backward compatibility
-        const cachedData = sessionStorage.getItem("endpointBrowserState");
-        if (cachedData) {
-            try {
-                return JSON.parse(cachedData);
-            } catch (error) {
-                console.error("Failed to parse cached endpoint browser state:", error);
-                return null;
-            }
         }
         return null;
     }
@@ -96,7 +84,7 @@ class EndpointBrowser {
             props: {
                 endpoint: this.props.endpoint,
                 mode: this.props.mode,
-                onSelect: String(this.props.onSelect),
+                onSelect: this.props.onSelect,
             },
             state: {
                 path: this.state.path,
