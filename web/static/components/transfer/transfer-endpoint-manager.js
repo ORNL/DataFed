@@ -23,7 +23,7 @@ export class TransferEndpointManager {
         this.#controller = controller;
         this.api = services.api; // Dependency injection
         this.dialogs = services.dialogs; // Dependency injection
-        
+
         // Load state from Redux store
         const state = transferStore.getState();
         // Search tracking mechanism to prevent race conditions:
@@ -41,7 +41,6 @@ export class TransferEndpointManager {
             initialized: false, // Flag to indicate that the dialog is initialized
         };
     }
-
 
     /**
      * Performs autocomplete search for endpoints
@@ -183,7 +182,7 @@ export class TransferEndpointManager {
             this.searchEndpoint(endpoint, searchToken);
         }
     }
-    
+
     /**
      * Saves the current state to the Redux store
      */

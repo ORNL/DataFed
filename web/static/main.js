@@ -5,7 +5,7 @@ import * as settings from "/settings.js";
 import * as dialogs from "/dialogs.js";
 import { TransferDialogController } from "./components/transfer/transfer-dialog-controller.js";
 import { TransferMode } from "./models/transfer-model.js";
-import { transferStore, persistor, loadTransferState, clearTransferState } from "./store/store.js";
+import { transferStore, persistor, loadTransferState, clearTransferState, isPersistedStateValid } from "./store/store.js";
 import { PersistGate } from "redux-persist/integration/react";
 
 $(".btn-help").on("click", function () {
@@ -15,11 +15,27 @@ $(".btn-help").on("click", function () {
 $(".btn-logout").on("click", function () {
     // Clear all application state before logout
     try {
+        // Show a loading indicator
+        util.setStatusText("Logging out...");
+        
+        // Clear application state
         settings.clearUser();
+        
+        // Clear transfer state with a more thorough approach
         clearTransferState();
         
         // Clear any additional session storage items
         sessionStorage.removeItem('resumeFlow');
+        
+        // Clear any localStorage items that might be related to the app state
+        const localStorageKeys = Object.keys(localStorage);
+        localStorageKeys.forEach(key => {
+            if (key.startsWith('persist:') || key.includes('transfer') || key.includes('datafed')) {
+                localStorage.removeItem(key);
+            }
+        });
+        
+        console.info("Application state cleared successfully");
         
         // Redirect to logout page
         window.location = "/ui/logout";
@@ -101,6 +117,15 @@ const resumeTransferFlow = () => {
             try {
                 // Check if resumeFlow flag is set in sessionStorage
                 const shouldResumeFlow = sessionStorage.getItem('resumeFlow') === 'true';
+                
+                // Validate the persisted state before using it
+                if (!isPersistedStateValid()) {
+                    console.warn("Persisted state is invalid or expired, clearing it");
+                    clearTransferState();
+                    sessionStorage.removeItem('resumeFlow');
+                    return;
+                }
+                
                 const savedState = loadTransferState();
                 const storeState = transferStore.getState();
                 
@@ -118,12 +143,19 @@ const resumeTransferFlow = () => {
                                 sessionStorageCallback = new Function('return ' + savedState.callback)();
                             } catch (callbackError) {
                                 console.warn("Could not restore callback function:", callbackError);
-                                sessionStorageCallback = () => console.log("Restored transfer completed");
+                                sessionStorageCallback = () => {
+                                    console.log("Restored transfer completed");
+                                    util.setStatusText("Transfer session restored successfully");
+                                };
                             }
                         } else {
-                            sessionStorageCallback = () => console.log("Restored transfer completed");
+                            sessionStorageCallback = () => {
+                                console.log("Restored transfer completed");
+                                util.setStatusText("Transfer session restored successfully");
+                            };
                         }
                         
+                        // Create a new controller with the saved state
                         const transferDialogController = new TransferDialogController(
                             TransferMode[savedState.mode] || savedState.mode,
                             savedState.ids || [],
@@ -134,6 +166,7 @@ const resumeTransferFlow = () => {
                         // Restore UI state if available
                         if (storeState.uiState) {
                             console.info("Restoring UI state:", storeState.uiState);
+                            util.setStatusText("Restoring previous transfer session...");
                         }
                         
                         // Restore endpoint state if available
@@ -141,14 +174,18 @@ const resumeTransferFlow = () => {
                             console.info("Restoring endpoint state:", storeState.endpointState);
                         }
 
-                        transferDialogController.show();
-                        
-                        // Clear the resumeFlow flag after successful restoration
-                        if (shouldResumeFlow) {
-                            sessionStorage.removeItem('resumeFlow');
-                        }
+                        // Show the dialog with restored state
+                        setTimeout(() => {
+                            transferDialogController.show();
+                            
+                            // Clear the resumeFlow flag after successful restoration
+                            if (shouldResumeFlow) {
+                                sessionStorage.removeItem('resumeFlow');
+                            }
+                        }, 500); // Small delay to ensure UI is ready
                     } catch (error) {
                         console.error("Failed to resume transfer flow:", error);
+                        dialogs.dlgAlert("Resume Error", "Failed to resume previous transfer session. Starting fresh.");
                         clearTransferState();
                         sessionStorage.removeItem('resumeFlow');
                     }
@@ -156,12 +193,14 @@ const resumeTransferFlow = () => {
                     // If we have the flag but no state, clear the flag
                     console.warn("Resume flow flag was set but no state was found");
                     sessionStorage.removeItem('resumeFlow');
+                    dialogs.dlgAlert("Session Expired", "Your previous transfer session has expired or was not found.");
                 }
             } catch (error) {
                 console.error("Error in resumeTransferFlow:", error);
                 // Attempt recovery by clearing potentially corrupted state
                 clearTransferState();
                 sessionStorage.removeItem('resumeFlow');
+                dialogs.dlgAlert("Error", "An error occurred while trying to resume your previous session.");
             }
         }
     });
