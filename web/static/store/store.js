@@ -12,7 +12,7 @@ import { transferReducer, initialState as transferInitialState } from "./reducer
 const persistConfig = {
     key: 'transfer',
     storage: sessionStorage,
-    whitelist: ['resumeData'] // Only persist resumeData slice
+    whitelist: ['resumeData', 'transferUIState'] // Persist both resumeData and transferUIState
 };
 
 // Create a persisted reducer

@@ -3,6 +3,7 @@ import { TransferMode } from "../../models/transfer-model.js";
 import { show } from "../endpoint-browse/index.js";
 import { inputDisable, inputEnable, inputTheme, setStatusText } from "../../util.js";
 import { createMatchesHtml, formatRecordTitle, getDialogTemplate } from "./transfer-templates.js";
+import { transferStore } from "../../store/store.js"; // Import the Redux store
 
 /**
  * @class TransferUIManager
@@ -27,31 +28,14 @@ export class TransferUIManager {
         this.api = services.api; // Dependency injection
         this.dialogs = services.dialogs; // Dependency injection
 
-        this.cachedComponentData = sessionStorage.getItem("resumeFlow") === true && this.loadCache();
+        // Load state from Redux store
+        const state = transferStore.getState();
         this.inputTimer = null;
-        this.state = this.cachedComponentData?.state || {
+        this.state = state.transferUIState || {
             recordTree: null,
             frame: null,
             encryptRadios: null,
         };
-    }
-
-    /**
-     * Save component state to cache
-     * @returns {object | null} The cached component data
-     */
-    loadCache() {
-        return sessionStorage.getItem("transferDialogUIState");
-    }
-
-    saveCache() {
-        sessionStorage.setItem("transferDialogUIState", JSON.stringify({
-            state: {
-                recordTree: String(this.state.recordTree),
-                frame: String(this.state.frame),
-                encryptRadios: String(this.state.encryptRadios),
-            }
-        }));
     }
 
     /**
@@ -129,10 +113,12 @@ export class TransferUIManager {
          * Set initial value from cached state if available.
          * If there were multiple endpoints, the first one is selected and the rest are ignored
          */
-        this.cachedComponentData &&
+        const state = transferStore.getState();
+        if (state.transferUIState) {
             this.#controller.endpointManager.handlePathInput(
                 this.#controller.endpointManager.state.currentSearchToken,
             );
+        }
 
         /**
          * Adds an input event listener to the path input element.
@@ -179,7 +165,8 @@ export class TransferUIManager {
     initializeBrowseButton() {
         const pathInput = $("#path", this.state.frame);
 
-        if (this.cachedComponentData) {
+        const state = transferStore.getState();
+        if (state.transferUIState) {
             this.showBrowseDialog(pathInput);
         }
 
