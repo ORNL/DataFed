@@ -305,12 +305,16 @@ class EndpointBrowser {
             const ep_status = await new Promise((resolve) => {
                 api.epView(this.props.endpoint.id, (ok, data) => resolve(data));
             });
-            const is_mapped = ep_status.entity_type.includes("mapped");// Fetch directory listing
+            const is_mapped = ep_status.entity_type.includes("mapped"); // Fetch directory listing
             const data = await new Promise((resolve) => {
-                api.epDirList(this.props.endpoint.id, this.state.path, false,is_mapped,
+                api.epDirList(
+                    this.props.endpoint.id,
+                    this.state.path,
+                    false,
+                    is_mapped,
                     this.props.endpoint.id,
                     resolve,
-            );
+                );
             });
 
             if (data.needs_consent || data.code) {
