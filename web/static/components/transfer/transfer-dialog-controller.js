@@ -28,7 +28,7 @@ export class TransferDialogController {
         this.ids = ids;
         this.callback = callback;
         this.services = services;
-        
+
         // Generate a unique ID for this transfer session
         this.transferId = Date.now().toString();
     }
@@ -40,7 +40,7 @@ export class TransferDialogController {
     addEndpointBrowserState(endpointBrowserState) {
         this.endpointBrowserState = endpointBrowserState;
     }
-    
+
     /**
      * Saves the current transfer state to the store
      */
@@ -49,18 +49,18 @@ export class TransferDialogController {
             id: this.transferId,
             mode: this.model.mode,
             ids: this.ids,
-            callback: String(this.callback),
+            callback: this.callback,
             timestamp: Date.now(),
-            endpointBrowserState: this.endpointBrowserState
+            endpointBrowserState: this.endpointBrowserState,
         };
-        
+
         // Dispatch action to save state
         transferStore.dispatch(saveTransferState(state));
-        
+
         // Log state saving for debugging
         console.debug("Transfer state saved:", state);
     }
-    
+
     /**
      * Clears the saved transfer state
      */
@@ -76,10 +76,10 @@ export class TransferDialogController {
             this.uiManager.initializeComponents();
             this.uiManager.attachMatchesHandler();
             this.endpointManager.state.initialized = true;
-            
+
             // Save state when dialog is shown
             this.saveState();
-            
+
             this.uiManager.showDialog();
         } catch (error) {
             console.error("Failed to show transfer dialog:", error);
@@ -87,7 +87,7 @@ export class TransferDialogController {
             this.clearState();
         }
     }
-    
+
     /**
      * Closes the transfer dialog and cleans up state
      */

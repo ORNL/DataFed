@@ -1,7 +1,10 @@
 import { createStore } from "./index.js";
 import { persistStore, persistReducer } from "redux-persist";
 import sessionStorage from "redux-persist/lib/storage/session"; // Use sessionStorage
-import { transferReducer, initialState as transferInitialState } from "./reducers/transfer-reducer.js";
+import {
+    transferReducer,
+    initialState as transferInitialState,
+} from "./reducers/transfer-reducer.js";
 
 /**
  * @module AppStore
@@ -10,9 +13,9 @@ import { transferReducer, initialState as transferInitialState } from "./reducer
 
 // Configuration for redux-persist
 const persistConfig = {
-    key: 'transfer',
+    key: "transfer",
     storage: sessionStorage,
-    whitelist: ['resumeData', 'transferUIState'] // Persist both resumeData and transferUIState
+    whitelist: ["resumeData", "transferUIState"], // Persist both resumeData and transferUIState
 };
 
 // Create a persisted reducer
@@ -28,15 +31,15 @@ export const persistor = persistStore(transferStore);
  * Loads transfer state from the persisted store
  * @returns {Object|null} Loaded state or null
  */
-export function loadTransferState() {
+export const loadTransferState = () => {
     const state = transferStore.getState();
     return state.resumeData || null;
-}
+};
 
 /**
  * Clears transfer state from the store and persistence
  */
-export function clearTransferState() {
-    transferStore.dispatch({ type: 'CLEAR_TRANSFER_STATE' });
+export const clearTransferState = () => {
+    transferStore.dispatch({ type: "CLEAR_TRANSFER_STATE" });
     persistor.purge(); // Clear persisted state
-}
+};

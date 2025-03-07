@@ -9,7 +9,7 @@
  * @param {Object} initialState - The initial state
  * @returns {Object} Store object with getState, dispatch, and subscribe methods
  */
-export function createStore(reducer, initialState) {
+export const createStore = (reducer, initialState) => {
     let state = initialState;
     let listeners = [];
 
@@ -28,7 +28,7 @@ export function createStore(reducer, initialState) {
      */
     function dispatch(action) {
         state = reducer(state, action);
-        listeners.forEach(listener => listener());
+        listeners.forEach((listener) => listener());
         return action;
     }
 
@@ -40,16 +40,16 @@ export function createStore(reducer, initialState) {
     function subscribe(listener) {
         listeners.push(listener);
         return function unsubscribe() {
-            listeners = listeners.filter(l => l !== listener);
+            listeners = listeners.filter((l) => l !== listener);
         };
     }
 
     // Initialize the state
-    dispatch({ type: '@@INIT' });
+    dispatch({ type: "@@INIT" });
 
     return {
         getState,
         dispatch,
-        subscribe
+        subscribe,
     };
-}
+};
