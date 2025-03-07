@@ -47,6 +47,9 @@ export class TransferDialogController {
         
         // Dispatch action to save state
         transferStore.dispatch(saveTransferState(state));
+        
+        // Log state saving for debugging
+        console.debug("Transfer state saved:", state);
     }
     
     /**

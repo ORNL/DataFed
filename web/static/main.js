@@ -86,6 +86,8 @@ const resumeTransferFlow = () => {
         if (bootstrapped) {
             unsubscribe();
             
+            // Check if resumeFlow flag is set in sessionStorage
+            const shouldResumeFlow = sessionStorage.getItem('resumeFlow') === 'true';
             const savedState = loadTransferState();
             
             if (savedState) {
@@ -103,10 +105,20 @@ const resumeTransferFlow = () => {
                     );
 
                     transferDialogController.show();
+                    
+                    // Clear the resumeFlow flag after successful restoration
+                    if (shouldResumeFlow) {
+                        sessionStorage.removeItem('resumeFlow');
+                    }
                 } catch (error) {
                     console.error("Failed to resume transfer flow:", error);
                     clearTransferState();
+                    sessionStorage.removeItem('resumeFlow');
                 }
+            } else if (shouldResumeFlow) {
+                // If we have the flag but no state, clear the flag
+                console.warn("Resume flow flag was set but no state was found");
+                sessionStorage.removeItem('resumeFlow');
             }
         }
     });

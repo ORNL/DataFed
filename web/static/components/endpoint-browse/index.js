@@ -46,12 +46,13 @@ class EndpointBrowser {
      */
     constructor(props) {
         const cachedComponentData =
-            sessionStorage.getItem("resumeFlow") === true && this.loadCache();
+            sessionStorage.getItem("resumeFlow") === 'true' && this.loadCache();
         this.props = cachedComponentData?.props
             ? {
-                  endpoint: this.props.endpoint,
-                  mode: this.props.mode,
-                  onSelect: Function("return" + this.props.onSelect),
+                  endpoint: props.endpoint || cachedComponentData.props.endpoint,
+                  mode: props.mode || cachedComponentData.props.mode,
+                  onSelect: props.onSelect || Function("return " + cachedComponentData.props.onSelect),
+                  controller: props.controller
               }
             : props;
         this.#controller = this.props.controller;
@@ -63,27 +64,43 @@ class EndpointBrowser {
     }
 
     /**
-     * Save component state to cache
+     * Load component state from cache
      * @returns {object | null} The cached component data
      */
     loadCache() {
-        return sessionStorage.getItem("endpointBrowserState");
+        const cachedData = sessionStorage.getItem("endpointBrowserState");
+        if (cachedData) {
+            try {
+                return JSON.parse(cachedData);
+            } catch (error) {
+                console.error("Failed to parse cached endpoint browser state:", error);
+                return null;
+            }
+        }
+        return null;
     }
 
+    /**
+     * Save component state to cache
+     */
     saveCache() {
-        sessionStorage.setItem(
-            "endpointBrowserState",
-            JSON.stringify({
-                props: {
-                    endpoint: this.props.endpoint,
-                    mode: this.props.mode,
-                    onSelect: String(this.props.onSelect),
-                },
-                state: {
-                    path: this.state.path,
-                },
-            }),
-        );
+        try {
+            sessionStorage.setItem(
+                "endpointBrowserState",
+                JSON.stringify({
+                    props: {
+                        endpoint: this.props.endpoint,
+                        mode: this.props.mode,
+                        onSelect: String(this.props.onSelect),
+                    },
+                    state: {
+                        path: this.state.path,
+                    },
+                }),
+            );
+        } catch (error) {
+            console.error("Failed to save endpoint browser state to cache:", error);
+        }
     }
 
     pathNavigator() {
@@ -357,6 +374,9 @@ class EndpointBrowser {
                         // Save state to redux-persist store before redirecting
                         this.saveToStore();
                         
+                        // Set resumeFlow flag in sessionStorage
+                        sessionStorage.setItem('resumeFlow', 'true');
+                        
                         // Redirect to consent URL
                         this.openConsentIframe(consentLink.getAttribute("data-url"));
                     });
@@ -380,6 +400,9 @@ class EndpointBrowser {
      * @param {string} consentUrl - The URL for the consent page
      */
     openConsentIframe(consentUrl) {
+        // Save component state to cache before opening consent iframe
+        this.saveCache();
+        
         const iframeContainer = $(`
         <div id="consent-iframe-container" style="width:100%; height:100%;">
           <iframe id="consent-iframe" src="${consentUrl}" style="width:100%; height:100%; border:none;"></iframe>                      
@@ -400,6 +423,8 @@ class EndpointBrowser {
                 {
                     text: "Cancel",
                     click: function () {
+                        // Remove resumeFlow flag if user cancels
+                        sessionStorage.removeItem('resumeFlow');
                         window.removeEventListener("message", this.handleConsentMessage.bind(this));
                         $(this).dialog("close");
                     }.bind(this),
@@ -428,6 +453,9 @@ class EndpointBrowser {
             // Close the iframe dialog
             $("#consent-iframe-container").dialog("close");
 
+            // Set resumeFlow flag to true to indicate we should resume after page reload
+            sessionStorage.setItem('resumeFlow', 'true');
+            
             // Reload the tree with the new authorization
             this.loadTree();
         }
