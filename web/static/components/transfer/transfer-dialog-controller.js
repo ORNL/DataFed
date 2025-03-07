@@ -3,6 +3,8 @@ import { TransferModel } from "../../models/transfer-model.js";
 import { TransferUIManager } from "./transfer-ui-manager.js";
 import * as dialogs from "../../dialogs.js";
 import * as api from "../../api.js";
+import { transferStore } from "../../store/store.js";
+import { saveTransferState, clearTransferState } from "../../store/reducers/transfer-reducer.js";
 
 /**
  * @class TransferDialogController
@@ -26,27 +28,61 @@ export class TransferDialogController {
         this.ids = ids;
         this.callback = callback;
         this.services = services;
+        
+        // Generate a unique ID for this transfer session
+        this.transferId = Date.now().toString();
     }
 
-    saveCache() {
+    /**
+     * Saves the current transfer state to the store
+     */
+    saveState() {
         const state = {
+            id: this.transferId,
             mode: this.model.mode,
             ids: this.ids,
             callback: String(this.callback),
+            timestamp: Date.now()
         };
-        sessionStorage.setItem("transferDialogState", JSON.stringify(state));
-        sessionStorage.setItem("resumeFlow", true);
+        
+        // Dispatch action to save state
+        transferStore.dispatch(saveTransferState(state));
+    }
+    
+    /**
+     * Clears the saved transfer state
+     */
+    clearState() {
+        transferStore.dispatch(clearTransferState());
     }
 
+    /**
+     * Shows the transfer dialog
+     */
     show() {
         try {
             this.uiManager.initializeComponents();
             this.uiManager.attachMatchesHandler();
             this.endpointManager.state.initialized = true;
+            
+            // Save state when dialog is shown
+            this.saveState();
+            
             this.uiManager.showDialog();
         } catch (error) {
             console.error("Failed to show transfer dialog:", error);
             this.services.dialogs.dlgAlert("Error", "Failed to open transfer dialog");
+            this.clearState();
+        }
+    }
+    
+    /**
+     * Closes the transfer dialog and cleans up state
+     */
+    close() {
+        this.clearState();
+        if (this.uiManager) {
+            this.uiManager.closeDialog();
         }
     }
 }

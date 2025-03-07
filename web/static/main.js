@@ -4,7 +4,8 @@ import * as api from "/api.js";
 import * as settings from "/settings.js";
 import * as dialogs from "/dialogs.js";
 import { TransferDialogController } from "./components/transfer/transfer-dialog-controller.js";
-import {TransferMode} from "./models/transfer-model.js";
+import { TransferMode } from "./models/transfer-model.js";
+import { transferStore, loadTransferState, clearTransferState } from "./store/store.js";
 
 $(".btn-help").on("click", function () {
     window.open("https://ornl.github.io/DataFed/", "datafed-docs");
@@ -12,6 +13,7 @@ $(".btn-help").on("click", function () {
 
 $(".btn-logout").on("click", function () {
     settings.clearUser();
+    clearTransferState();
     window.location = "/ui/logout";
 });
 
@@ -46,7 +48,6 @@ $(document).ready(function () {
     resumeTransferFlow();
     resizeUI();
 
-
     api.userView(tmpl_data.user_uid, true, function (ok, user) {
         if (ok && user) {
             settings.setUser(user);
@@ -73,30 +74,30 @@ $(document).ready(function () {
 });
 
 /**
- * Resumes the transfer flow if the 'resumeFlow' flag is set in sessionStorage.
- * Retrieves the saved state from sessionStorage and initializes the TransferDialogController
- * with the saved state values. Removes the 'resumeFlow' flag from sessionStorage after resuming.
+ * Resumes the transfer flow using the Redux store
+ * Retrieves the saved state and initializes the TransferDialogController
+ * with the saved state values.
  */
 const resumeTransferFlow = () => {
-    if (sessionStorage.getItem("resumeFlow") === "true") {
-        const savedState = sessionStorage.getItem("transferDialogState");
-        if (savedState) {
-            const state = JSON.parse(savedState);
-            console.log("transferDialogState", state)
-            // So we can't store a function in sessionStorage, however we can store it as a string
-            // https://stackoverflow.com/questions/7650071/is-there-a-way-to-create-a-function-from-a-string-with-javascript
-            const sessionStorageCallback = new Function('return' + state.callback)();
-            console.log("check it out,", sessionStorageCallback);
-
+    const savedState = loadTransferState();
+    
+    if (savedState) {
+        console.info("Resuming transfer flow with saved state:", savedState);
+        
+        try {
+            // Convert the callback string back to a function
+            const sessionStorageCallback = new Function('return ' + savedState.callback)();
+            
             const transferDialogController = new TransferDialogController(
-                TransferMode[state.mode],
-                state.ids,
-                sessionStorageCallback,
+                TransferMode[savedState.mode] || savedState.mode,
+                savedState.ids || [],
+                sessionStorageCallback
             );
 
             transferDialogController.show();
+        } catch (error) {
+            console.error("Failed to resume transfer flow:", error);
+            clearTransferState();
         }
-
-        sessionStorage.removeItem("resumeFlow");
     }
 };
