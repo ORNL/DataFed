@@ -5,7 +5,8 @@ import * as settings from "/settings.js";
 import * as dialogs from "/dialogs.js";
 import { TransferDialogController } from "./components/transfer/transfer-dialog-controller.js";
 import { TransferMode } from "./models/transfer-model.js";
-import { transferStore, loadTransferState, clearTransferState } from "./store/store.js";
+import { transferStore, persistor, loadTransferState, clearTransferState } from "./store/store.js";
+import { PersistGate } from "redux-persist/integration/react";
 
 $(".btn-help").on("click", function () {
     window.open("https://ornl.github.io/DataFed/", "datafed-docs");
@@ -74,30 +75,39 @@ $(document).ready(function () {
 });
 
 /**
- * Resumes the transfer flow using the Redux store
+ * Resumes the transfer flow using the Redux store with redux-persist
  * Retrieves the saved state and initializes the TransferDialogController
  * with the saved state values.
  */
 const resumeTransferFlow = () => {
-    const savedState = loadTransferState();
-    
-    if (savedState) {
-        console.info("Resuming transfer flow with saved state:", savedState);
-        
-        try {
-            // Convert the callback string back to a function
-            const sessionStorageCallback = new Function('return ' + savedState.callback)();
+    // Wait for rehydration to complete before accessing the state
+    const unsubscribe = persistor.subscribe(() => {
+        const { bootstrapped } = persistor.getState();
+        if (bootstrapped) {
+            unsubscribe();
             
-            const transferDialogController = new TransferDialogController(
-                TransferMode[savedState.mode] || savedState.mode,
-                savedState.ids || [],
-                sessionStorageCallback
-            );
+            const savedState = loadTransferState();
+            
+            if (savedState) {
+                console.info("Resuming transfer flow with persisted state:", savedState);
+                
+                try {
+                    // Convert the callback string back to a function
+                    const sessionStorageCallback = new Function('return ' + savedState.callback)();
+                    
+                    const transferDialogController = new TransferDialogController(
+                        TransferMode[savedState.mode] || savedState.mode,
+                        savedState.ids || [],
+                        sessionStorageCallback,
+                        { dialogs, api }
+                    );
 
-            transferDialogController.show();
-        } catch (error) {
-            console.error("Failed to resume transfer flow:", error);
-            clearTransferState();
+                    transferDialogController.show();
+                } catch (error) {
+                    console.error("Failed to resume transfer flow:", error);
+                    clearTransferState();
+                }
+            }
         }
-    }
+    });
 };

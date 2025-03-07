@@ -1,46 +1,42 @@
 import { createStore } from "./index.js";
+import { persistStore, persistReducer } from "redux-persist";
+import sessionStorage from "redux-persist/lib/storage/session"; // Use sessionStorage
 import { transferReducer, initialState as transferInitialState } from "./reducers/transfer-reducer.js";
 
 /**
  * @module AppStore
- * @description Application store configuration
+ * @description Application store configuration with redux-persist
  */
 
-// Create and export the transfer store
-export const transferStore = createStore(transferReducer, transferInitialState);
+// Configuration for redux-persist
+const persistConfig = {
+    key: 'transfer',
+    storage: sessionStorage,
+    whitelist: ['resumeData'] // Only persist resumeData slice
+};
+
+// Create a persisted reducer
+const persistedReducer = persistReducer(persistConfig, transferReducer);
+
+// Create and export the transfer store with the persisted reducer
+export const transferStore = createStore(persistedReducer, transferInitialState);
+
+// Create and export the persistor
+export const persistor = persistStore(transferStore);
 
 /**
- * Persists transfer state to session storage
- * @param {Object} state - State to persist
- */
-export function persistTransferState(state) {
-    if (state) {
-        sessionStorage.setItem("transferState", JSON.stringify(state));
-    }
-}
-
-/**
- * Loads transfer state from session storage
+ * Loads transfer state from the persisted store
  * @returns {Object|null} Loaded state or null
  */
 export function loadTransferState() {
-    const savedState = sessionStorage.getItem("transferState");
-    return savedState ? JSON.parse(savedState) : null;
+    const state = transferStore.getState();
+    return state.resumeData || null;
 }
 
 /**
- * Clears transfer state from session storage
+ * Clears transfer state from the store and persistence
  */
 export function clearTransferState() {
-    sessionStorage.removeItem("transferState");
+    transferStore.dispatch({ type: 'CLEAR_TRANSFER_STATE' });
+    persistor.purge(); // Clear persisted state
 }
-
-// Subscribe to store changes to persist state
-transferStore.subscribe(() => {
-    const state = transferStore.getState();
-    if (state.resumeData) {
-        persistTransferState(state.resumeData);
-    } else {
-        clearTransferState();
-    }
-});

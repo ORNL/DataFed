@@ -209,6 +209,15 @@ class EndpointBrowser {
 
         return (dirMode || fileMode) && notUpDirInput;
     }
+    
+    /**
+     * Save component state to redux-persist store
+     */
+    saveToStore() {
+        if (this.#controller) {
+            this.#controller.saveState();
+        }
+    }
 
     /**
      * Navigate to new path
@@ -345,11 +354,9 @@ class EndpointBrowser {
                     document.getElementById("consent-link").addEventListener("click", (e) => {
                         e.preventDefault();
 
-                        // Save state only when the link is clicked
-                        // this.#controller.saveCache();
-                        // this.#controller.uiManager.saveCache();
-                        // this.#controller.endpointManager.saveCache();
-                        // this.saveCache();
+                        // Save state to redux-persist store before redirecting
+                        this.saveToStore();
+                        
                         // Redirect to consent URL
                         this.openConsentIframe(consentLink.getAttribute("data-url"));
                     });
