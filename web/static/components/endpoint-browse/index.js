@@ -1,7 +1,6 @@
 import * as util from "../../util.js";
 import * as api from "../../api.js";
 import { TransferMode } from "../../models/transfer-model.js";
-import { AUTH_URL } from "../../../services/auth/constants.js";
 import { transferStore } from "../../store/store.js";
 
 const CONFIG = {
@@ -47,13 +46,14 @@ class EndpointBrowser {
      */
     constructor(props) {
         const cachedComponentData =
-            sessionStorage.getItem("resumeFlow") === 'true' && this.loadCache();
+            sessionStorage.getItem("resumeFlow") === "true" && this.loadCache();
         this.props = cachedComponentData?.props
             ? {
                   endpoint: props.endpoint || cachedComponentData.props.endpoint,
                   mode: props.mode || cachedComponentData.props.mode,
-                  onSelect: props.onSelect || Function("return " + cachedComponentData.props.onSelect),
-                  controller: props.controller
+                  onSelect:
+                      props.onSelect || Function("return " + cachedComponentData.props.onSelect),
+                  controller: props.controller,
               }
             : props;
         this.#controller = this.props.controller;
@@ -74,7 +74,7 @@ class EndpointBrowser {
         if (state.resumeData && state.resumeData.endpointBrowserState) {
             return state.resumeData.endpointBrowserState;
         }
-        
+
         // Fallback to sessionStorage for backward compatibility
         const cachedData = sessionStorage.getItem("endpointBrowserState");
         if (cachedData) {
@@ -102,14 +102,8 @@ class EndpointBrowser {
                 path: this.state.path,
             },
         };
-        
+
         try {
-            // Save to sessionStorage for backward compatibility
-            sessionStorage.setItem(
-                "endpointBrowserState",
-                JSON.stringify(stateData)
-            );
-            
             // If controller exists, it will handle saving to Redux store
             if (this.#controller) {
                 // The controller already has a saveState method that will be called
@@ -117,8 +111,8 @@ class EndpointBrowser {
             } else {
                 // Directly dispatch to Redux store if no controller
                 transferStore.dispatch({
-                    type: 'SAVE_ENDPOINT_BROWSER_STATE',
-                    payload: stateData
+                    type: "SAVE_ENDPOINT_BROWSER_STATE",
+                    payload: stateData,
                 });
             }
         } catch (error) {
@@ -249,7 +243,7 @@ class EndpointBrowser {
 
         return (dirMode || fileMode) && notUpDirInput;
     }
-    
+
     /**
      * Save component state to redux-persist store
      */
@@ -264,9 +258,9 @@ class EndpointBrowser {
                 },
                 state: {
                     path: this.state.path,
-                }
+                },
             };
-            
+
             // Add endpoint browser state to controller state before saving
             this.#controller.addEndpointBrowserState(endpointBrowserState);
             this.#controller.saveState();
@@ -413,12 +407,11 @@ class EndpointBrowser {
 
                         // Save state to redux-persist store before redirecting
                         this.saveToStore();
-                        
+
                         // Set resumeFlow flag in sessionStorage
-                        sessionStorage.setItem('resumeFlow', 'true');
-                        
-                        // Redirect to consent URL
-                        this.openConsentIframe(consentLink.getAttribute("data-url"));
+                        sessionStorage.setItem("resumeFlow", "true");
+
+                        window.location.reload(consentLink.getAttribute("data-url"));
                     });
                 }
             }, 0);
@@ -433,73 +426,6 @@ class EndpointBrowser {
                 is_dir: true,
             },
         ];
-    }
-
-    /**
-     * Opens a modal iframe for Globus consent
-     * @param {string} consentUrl - The URL for the consent page
-     */
-    openConsentIframe(consentUrl) {
-        // Save component state to cache and Redux store before opening consent iframe
-        this.saveCache();
-        this.saveToStore();
-        
-        const iframeContainer = $(`
-        <div id="consent-iframe-container" style="width:100%; height:100%;">
-          <iframe id="consent-iframe" src="${consentUrl}" style="width:100%; height:100%; border:none;"></iframe>                      
-        </div>
-        `);
-
-        // Add message listener to detect when consent is complete
-        window.addEventListener("message", this.handleConsentMessage.bind(this), false);
-
-        // Show iframe in dialog
-        iframeContainer.dialog({
-            title: "Globus Authorization",
-            modal: true,
-            width: 800,
-            height: 600,
-            resizable: true,
-            buttons: [
-                {
-                    text: "Cancel",
-                    click: function () {
-                        // Remove resumeFlow flag if user cancels
-                        sessionStorage.removeItem('resumeFlow');
-                        window.removeEventListener("message", this.handleConsentMessage.bind(this));
-                        $(this).dialog("close");
-                    }.bind(this),
-                },
-            ],
-            close: function () {
-                window.removeEventListener("message", this.handleConsentMessage.bind(this));
-                $(this).dialog("destroy").remove();
-            }.bind(this),
-        });
-    }
-
-    /**
-     * Handles messages from the consent iframe
-     * @param {MessageEvent} event - The message event
-     */
-    handleConsentMessage(event) {
-        // Verify the origin for security
-        // You should replace this with your actual Globus domain
-        if (!event.origin.match(AUTH_URL)) {
-            return;
-        }
-
-        // Check if consent was granted
-        if (event.data && event.data.type === "globus_auth_complete") {
-            // Close the iframe dialog
-            $("#consent-iframe-container").dialog("close");
-
-            // Set resumeFlow flag to true to indicate we should resume after page reload
-            sessionStorage.setItem('resumeFlow', 'true');
-            
-            // Reload the tree with the new authorization
-            this.loadTree();
-        }
     }
 
     /**
