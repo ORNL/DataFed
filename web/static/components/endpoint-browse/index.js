@@ -2,6 +2,7 @@ import * as util from "../../util.js";
 import * as api from "../../api.js";
 import { TransferMode } from "../../models/transfer-model.js";
 import { AUTH_URL } from "../../../services/auth/constants.js";
+import { transferStore } from "../../store/store.js";
 
 const CONFIG = {
     PATH: { SEPARATOR: "/", UP: "..", CURRENT: "." },
@@ -64,10 +65,17 @@ class EndpointBrowser {
     }
 
     /**
-     * Load component state from cache
+     * Load component state from cache and Redux store
      * @returns {object | null} The cached component data
      */
     loadCache() {
+        // First try to get from Redux store
+        const state = transferStore.getState();
+        if (state.resumeData && state.resumeData.endpointBrowserState) {
+            return state.resumeData.endpointBrowserState;
+        }
+        
+        // Fallback to sessionStorage for backward compatibility
         const cachedData = sessionStorage.getItem("endpointBrowserState");
         if (cachedData) {
             try {
@@ -81,25 +89,40 @@ class EndpointBrowser {
     }
 
     /**
-     * Save component state to cache
+     * Save component state to cache and Redux store
      */
     saveCache() {
+        const stateData = {
+            props: {
+                endpoint: this.props.endpoint,
+                mode: this.props.mode,
+                onSelect: String(this.props.onSelect),
+            },
+            state: {
+                path: this.state.path,
+            },
+        };
+        
         try {
+            // Save to sessionStorage for backward compatibility
             sessionStorage.setItem(
                 "endpointBrowserState",
-                JSON.stringify({
-                    props: {
-                        endpoint: this.props.endpoint,
-                        mode: this.props.mode,
-                        onSelect: String(this.props.onSelect),
-                    },
-                    state: {
-                        path: this.state.path,
-                    },
-                }),
+                JSON.stringify(stateData)
             );
+            
+            // If controller exists, it will handle saving to Redux store
+            if (this.#controller) {
+                // The controller already has a saveState method that will be called
+                // in other methods like openConsentIframe
+            } else {
+                // Directly dispatch to Redux store if no controller
+                transferStore.dispatch({
+                    type: 'SAVE_ENDPOINT_BROWSER_STATE',
+                    payload: stateData
+                });
+            }
         } catch (error) {
-            console.error("Failed to save endpoint browser state to cache:", error);
+            console.error("Failed to save endpoint browser state:", error);
         }
     }
 
@@ -232,7 +255,24 @@ class EndpointBrowser {
      */
     saveToStore() {
         if (this.#controller) {
+            // Save endpoint browser state to the controller's state
+            const endpointBrowserState = {
+                props: {
+                    endpoint: this.props.endpoint,
+                    mode: this.props.mode,
+                    onSelect: String(this.props.onSelect),
+                },
+                state: {
+                    path: this.state.path,
+                }
+            };
+            
+            // Add endpoint browser state to controller state before saving
+            this.#controller.addEndpointBrowserState(endpointBrowserState);
             this.#controller.saveState();
+        } else {
+            // Directly save to Redux store if no controller
+            this.saveCache();
         }
     }
 
@@ -400,8 +440,9 @@ class EndpointBrowser {
      * @param {string} consentUrl - The URL for the consent page
      */
     openConsentIframe(consentUrl) {
-        // Save component state to cache before opening consent iframe
+        // Save component state to cache and Redux store before opening consent iframe
         this.saveCache();
+        this.saveToStore();
         
         const iframeContainer = $(`
         <div id="consent-iframe-container" style="width:100%; height:100%;">

@@ -34,6 +34,14 @@ export class TransferDialogController {
     }
 
     /**
+     * Adds endpoint browser state to be saved with transfer state
+     * @param {Object} endpointBrowserState - The endpoint browser state to save
+     */
+    addEndpointBrowserState(endpointBrowserState) {
+        this.endpointBrowserState = endpointBrowserState;
+    }
+    
+    /**
      * Saves the current transfer state to the store
      */
     saveState() {
@@ -42,7 +50,8 @@ export class TransferDialogController {
             mode: this.model.mode,
             ids: this.ids,
             callback: String(this.callback),
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            endpointBrowserState: this.endpointBrowserState
         };
         
         // Dispatch action to save state

@@ -21,7 +21,8 @@ export const ActionTypes = {
     SAVE_TRANSFER_STATE: 'SAVE_TRANSFER_STATE',
     CLEAR_TRANSFER_STATE: 'CLEAR_TRANSFER_STATE',
     ADD_TRANSFER: 'ADD_TRANSFER',
-    UPDATE_TRANSFER: 'UPDATE_TRANSFER'
+    UPDATE_TRANSFER: 'UPDATE_TRANSFER',
+    SAVE_ENDPOINT_BROWSER_STATE: 'SAVE_ENDPOINT_BROWSER_STATE'
 };
 
 /**
@@ -62,6 +63,18 @@ export function transferReducer(state = initialState, action) {
                 currentTransfer: state.currentTransfer?.id === action.payload.id 
                     ? { ...state.currentTransfer, ...action.payload } 
                     : state.currentTransfer
+            };
+            
+        case ActionTypes.SAVE_ENDPOINT_BROWSER_STATE:
+            return {
+                ...state,
+                resumeData: state.resumeData ? {
+                    ...state.resumeData,
+                    endpointBrowserState: action.payload
+                } : {
+                    timestamp: Date.now(),
+                    endpointBrowserState: action.payload
+                }
             };
             
         default:
@@ -112,5 +125,17 @@ export function updateTransfer(transfer) {
     return {
         type: ActionTypes.UPDATE_TRANSFER,
         payload: transfer
+    };
+}
+
+/**
+ * Action creator for saving endpoint browser state
+ * @param {Object} state - The endpoint browser state to save
+ * @returns {Object} Action object
+ */
+export function saveEndpointBrowserState(state) {
+    return {
+        type: ActionTypes.SAVE_ENDPOINT_BROWSER_STATE,
+        payload: state
     };
 }
