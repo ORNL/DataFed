@@ -11,7 +11,9 @@ import { TransferMode } from "../../models/transfer-model.js";
 export const initialState = {
     transfers: [],
     currentTransfer: null,
-    resumeData: null
+    resumeData: null,
+    uiState: null,
+    endpointState: null
 };
 
 /**
@@ -22,7 +24,9 @@ export const ActionTypes = {
     CLEAR_TRANSFER_STATE: 'CLEAR_TRANSFER_STATE',
     ADD_TRANSFER: 'ADD_TRANSFER',
     UPDATE_TRANSFER: 'UPDATE_TRANSFER',
-    SAVE_ENDPOINT_BROWSER_STATE: 'SAVE_ENDPOINT_BROWSER_STATE'
+    SAVE_ENDPOINT_BROWSER_STATE: 'SAVE_ENDPOINT_BROWSER_STATE',
+    UPDATE_UI_STATE: 'UPDATE_UI_STATE',
+    UPDATE_ENDPOINT_STATE: 'UPDATE_ENDPOINT_STATE'
 };
 
 /**
@@ -42,7 +46,9 @@ export function transferReducer(state = initialState, action) {
         case ActionTypes.CLEAR_TRANSFER_STATE:
             return { 
                 ...state, 
-                resumeData: null 
+                resumeData: null,
+                uiState: null,
+                endpointState: null
             };
             
         case ActionTypes.ADD_TRANSFER:
@@ -75,6 +81,18 @@ export function transferReducer(state = initialState, action) {
                     timestamp: Date.now(),
                     endpointBrowserState: action.payload
                 }
+            };
+            
+        case ActionTypes.UPDATE_UI_STATE:
+            return {
+                ...state,
+                uiState: action.payload
+            };
+            
+        case ActionTypes.UPDATE_ENDPOINT_STATE:
+            return {
+                ...state,
+                endpointState: action.payload
             };
             
         default:
@@ -136,6 +154,30 @@ export function updateTransfer(transfer) {
 export function saveEndpointBrowserState(state) {
     return {
         type: ActionTypes.SAVE_ENDPOINT_BROWSER_STATE,
+        payload: state
+    };
+}
+
+/**
+ * Action creator for updating UI state
+ * @param {Object} state - UI state to save
+ * @returns {Object} Action object
+ */
+export function updateUIState(state) {
+    return {
+        type: ActionTypes.UPDATE_UI_STATE,
+        payload: state
+    };
+}
+
+/**
+ * Action creator for updating endpoint state
+ * @param {Object} state - Endpoint state to save
+ * @returns {Object} Action object
+ */
+export function updateEndpointState(state) {
+    return {
+        type: ActionTypes.UPDATE_ENDPOINT_STATE,
         payload: state
     };
 }
