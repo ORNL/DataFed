@@ -35,7 +35,7 @@ export class TransferDialogController {
 
     /**
      * Adds endpoint browser state to be saved with transfer state
-     * @param {Object} endpointBrowserState - The endpoint browser state to save
+     * @param {object} endpointBrowserState - The endpoint browser state to save
      */
     addEndpointBrowserState(endpointBrowserState) {
         this.endpointBrowserState = endpointBrowserState;

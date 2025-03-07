@@ -28,7 +28,7 @@ export const persistor = persistStore(transferStore);
 
 /**
  * Loads transfer state from the persisted store
- * @returns {Object|null} Loaded state or null
+ * @returns {object | null} Loaded state or null
  */
 export const loadTransferState = () => {
     try {
@@ -42,7 +42,7 @@ export const loadTransferState = () => {
 
 /**
  * Saves the current transfer state
- * @param {Object} data - The transfer data to save
+ * @param {object} data - The transfer data to save
  */
 export const saveTransferState = (data) => {
     try {
@@ -57,7 +57,7 @@ export const saveTransferState = (data) => {
 
 /**
  * Updates the UI state in the store
- * @param {Object} state - The UI state to save
+ * @param {object} state - The UI state to save
  */
 export const updateUIState = (state) => {
     try {
@@ -72,7 +72,7 @@ export const updateUIState = (state) => {
 
 /**
  * Updates the endpoint state in the store
- * @param {Object} state - The endpoint state to save
+ * @param {object} state - The endpoint state to save
  */
 export const updateEndpointState = (state) => {
     try {

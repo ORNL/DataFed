@@ -444,7 +444,7 @@ class EndpointBrowser {
  * @param {object} endpoint - Endpoint configuration
  * @param {string} path - Initial path
  * @param {string} mode - Browser mode ('file'/'dir')
- * @param {Object} controller - handler
+ * @param {object} controller - handler
  * @param {Function} callback - Selection callback
  */
 export function show(endpoint, path, mode, controller, callback) {

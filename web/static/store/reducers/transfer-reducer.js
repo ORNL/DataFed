@@ -31,9 +31,9 @@ export const ActionTypes = {
 
 /**
  * Reducer function for transfer state
- * @param {Object} state - Current state
- * @param {Object} action - Action object with type and payload
- * @returns {Object} New state
+ * @param {object} state - Current state
+ * @param {object} action - Action object with type and payload
+ * @returns {object} New state
  */
 export function transferReducer(state = initialState, action) {
     switch (action.type) {
@@ -102,8 +102,8 @@ export function transferReducer(state = initialState, action) {
 
 /**
  * Action creator for saving transfer state
- * @param {Object} transferData - Transfer data to save
- * @returns {Object} Action object
+ * @param {object} transferData - Transfer data to save
+ * @returns {object} Action object
  */
 export function saveTransferState(transferData) {
     return {
@@ -114,7 +114,7 @@ export function saveTransferState(transferData) {
 
 /**
  * Action creator for clearing transfer state
- * @returns {Object} Action object
+ * @returns {object} Action object
  */
 export function clearTransferState() {
     return {
@@ -124,8 +124,8 @@ export function clearTransferState() {
 
 /**
  * Action creator for adding a transfer
- * @param {Object} transfer - Transfer object to add
- * @returns {Object} Action object
+ * @param {object} transfer - Transfer object to add
+ * @returns {object} Action object
  */
 export function addTransfer(transfer) {
     return {
@@ -136,8 +136,8 @@ export function addTransfer(transfer) {
 
 /**
  * Action creator for updating a transfer
- * @param {Object} transfer - Transfer object with updates
- * @returns {Object} Action object
+ * @param {object} transfer - Transfer object with updates
+ * @returns {object} Action object
  */
 export function updateTransfer(transfer) {
     return {
@@ -148,8 +148,8 @@ export function updateTransfer(transfer) {
 
 /**
  * Action creator for saving endpoint browser state
- * @param {Object} state - The endpoint browser state to save
- * @returns {Object} Action object
+ * @param {object} state - The endpoint browser state to save
+ * @returns {object} Action object
  */
 export function saveEndpointBrowserState(state) {
     return {
@@ -160,8 +160,8 @@ export function saveEndpointBrowserState(state) {
 
 /**
  * Action creator for updating UI state
- * @param {Object} state - UI state to save
- * @returns {Object} Action object
+ * @param {object} state - UI state to save
+ * @returns {object} Action object
  */
 export function updateUIState(state) {
     return {
@@ -172,8 +172,8 @@ export function updateUIState(state) {
 
 /**
  * Action creator for updating endpoint state
- * @param {Object} state - Endpoint state to save
- * @returns {Object} Action object
+ * @param {object} state - Endpoint state to save
+ * @returns {object} Action object
  */
 export function updateEndpointState(state) {
     return {

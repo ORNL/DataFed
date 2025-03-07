@@ -6,8 +6,8 @@
 /**
  * Creates a Redux-like store
  * @param {Function} reducer - The reducer function
- * @param {Object} initialState - The initial state
- * @returns {Object} Store object with getState, dispatch, and subscribe methods
+ * @param {object} initialState - The initial state
+ * @returns {object} Store object with getState, dispatch, and subscribe methods
  */
 export const createStore = (reducer, initialState) => {
     let state = initialState;
@@ -15,7 +15,7 @@ export const createStore = (reducer, initialState) => {
 
     /**
      * Gets the current state
-     * @returns {Object} The current state
+     * @returns {object} The current state
      */
     function getState() {
         return state;
@@ -23,8 +23,8 @@ export const createStore = (reducer, initialState) => {
 
     /**
      * Dispatches an action to update state
-     * @param {Object} action - The action object with type and payload
-     * @returns {Object} The action object
+     * @param {object} action - The action object with type and payload
+     * @returns {object} The action object
      */
     function dispatch(action) {
         state = reducer(state, action);
