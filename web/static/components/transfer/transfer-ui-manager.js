@@ -31,11 +31,30 @@ export class TransferUIManager {
         // Load state from Redux store
         const state = transferStore.getState();
         this.inputTimer = null;
-        this.state = state.transferUIState || {
+        this.state = state.uiState || {
             recordTree: null,
             frame: null,
             encryptRadios: null,
         };
+        
+        // Save initial UI state to Redux
+        this.saveUIState();
+    }
+    
+    /**
+     * Saves the current UI state to Redux store
+     */
+    saveUIState() {
+        const { updateUIState } = require("../../store/store.js");
+        
+        // Only save serializable parts of the state
+        const stateToSave = {
+            ...this.state,
+            recordTree: null, // Don't try to serialize the tree object
+            frame: null, // Don't try to serialize DOM elements
+        };
+        
+        updateUIState(stateToSave);
     }
 
     /**
@@ -62,6 +81,9 @@ export class TransferUIManager {
         this.initializeEndpointInput();
         this.initializeTransferOptions();
         this.initializeBrowseButton();
+        
+        // Save UI state after initialization
+        this.saveUIState();
     }
 
     initializeButtons() {
@@ -316,6 +338,13 @@ export class TransferUIManager {
         matches.prop("disabled", false);
         this.enableBrowseButton(true);
         this.updateEndpointOptions(endpoint);
+        
+        // Update endpoint state in Redux store
+        const { updateEndpointState } = require("../../store/store.js");
+        updateEndpointState(this.#controller.endpointManager.state);
+        
+        // Save UI state after endpoint selection
+        this.saveUIState();
     }
 
     updateEndpointOptions(endpoint) {

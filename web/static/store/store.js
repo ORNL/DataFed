@@ -4,6 +4,7 @@ import sessionStorage from "redux-persist/lib/storage/session"; // Use sessionSt
 import {
     transferReducer,
     initialState as transferInitialState,
+    ActionTypes
 } from "./reducers/transfer-reducer.js";
 
 /**
@@ -15,7 +16,8 @@ import {
 const persistConfig = {
     key: "transfer",
     storage: sessionStorage,
-    whitelist: ["resumeData", "transferUIState"], // Persist both resumeData and transferUIState
+    whitelist: ["resumeData", "uiState", "endpointState", "transfers", "currentTransfer"], // Persist all relevant state
+    timeout: 2000 // Increase timeout for larger state objects
 };
 
 // Create a persisted reducer
@@ -32,14 +34,55 @@ export const persistor = persistStore(transferStore);
  * @returns {Object|null} Loaded state or null
  */
 export const loadTransferState = () => {
-    const state = transferStore.getState();
-    return state.resumeData || null;
+    try {
+        const state = transferStore.getState();
+        return state.resumeData || null;
+    } catch (error) {
+        console.error("Failed to load transfer state:", error);
+        return null;
+    }
+};
+
+/**
+ * Saves the current transfer state
+ * @param {Object} data - The transfer data to save
+ */
+export const saveTransferState = (data) => {
+    try {
+        transferStore.dispatch({
+            type: ActionTypes.SAVE_TRANSFER_STATE,
+            payload: data
+        });
+    } catch (error) {
+        console.error("Failed to save transfer state:", error);
+    }
+};
+
+/**
+ * Updates the UI state in the store
+ * @param {Object} state - The UI state to save
+ */
+export const updateUIState = (state) => {
+    try {
+        transferStore.dispatch({
+            type: ActionTypes.UPDATE_UI_STATE,
+            payload: state
+        });
+    } catch (error) {
+        console.error("Failed to update UI state:", error);
+    }
 };
 
 /**
  * Clears transfer state from the store and persistence
  */
 export const clearTransferState = () => {
-    transferStore.dispatch({ type: "CLEAR_TRANSFER_STATE" });
-    persistor.purge(); // Clear persisted state
+    try {
+        transferStore.dispatch({ type: ActionTypes.CLEAR_TRANSFER_STATE });
+        persistor.purge(); // Clear persisted state
+    } catch (error) {
+        console.error("Failed to clear transfer state:", error);
+        // Attempt a more aggressive cleanup if the dispatch fails
+        sessionStorage.removeItem(`persist:${persistConfig.key}`);
+    }
 };
