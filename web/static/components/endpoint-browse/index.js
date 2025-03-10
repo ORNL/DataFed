@@ -1,5 +1,6 @@
 import * as util from "../../util.js";
 import * as api from "../../api.js";
+import { TransferMode } from "../../models/transfer-model.js";
 
 const CONFIG = {
     PATH: { SEPARATOR: "/", UP: "..", CURRENT: "." },
@@ -31,7 +32,7 @@ class EndpointBrowser {
      * @param {object} props - Browser configuration
      * @param {object} props.endpoint - Endpoint details
      * @param {string} props.path - Initial path
-     * @param {string} props.mode - Browser mode ('file'/'dir')
+     * @param {TransferMode[keyof TransferMode]} props.mode - Browser mode ('file'/'dir')
      * @param {Function} props.onSelect - Selection callback
      * @param {object} props.services - The service objects to use for API and dialog operations
      * @param {object} props.services.dialogs - Dialog service
@@ -164,11 +165,12 @@ class EndpointBrowser {
      */
     isValidSelection(node) {
         const isDir = node?.data?.is_dir;
-        const notUp = node?.key !== CONFIG.PATH.UP;
-        return (
-            ((isDir && this.props.mode === "dir") || (!isDir && this.props.mode === "file")) &&
-            notUp
-        );
+        const notUpDirInput = node?.key !== CONFIG.PATH.UP;
+
+        const dirMode = isDir && this.props.mode === TransferMode.TT_DATA_GET;
+        const fileMode = !isDir && this.props.mode === TransferMode.TT_DATA_PUT;
+
+        return (dirMode || fileMode) && notUpDirInput;
     }
 
     /**
@@ -218,8 +220,7 @@ class EndpointBrowser {
             const ep_status = await new Promise((resolve) => {
                 api.epView(this.props.endpoint.id, (ok, data) => resolve(data));
             });
-            const is_mapped = ep_status.entity_type.includes("mapped");
-            // Fetch directory listing
+            const is_mapped = ep_status?.entity_type.includes("mapped"); // Fetch directory listing
             const data = await new Promise((resolve) => {
                 api.epDirList(
                     this.props.endpoint.id,
@@ -288,6 +289,7 @@ class EndpointBrowser {
     async createErrorSource(error) {
         let title = "";
 
+        // Generate consent URL
         if (error instanceof ApiError && error.code === "ConsentRequired") {
             const data = await new Promise((resolve) => {
                 api.getGlobusConsentURL(

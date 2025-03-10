@@ -11,7 +11,7 @@ import * as api from "../../api.js";
  */
 export class TransferDialogController {
     /**
-     * @param {number} mode - Transfer mode (GET/PUT)
+     * @param {TransferMode[keyof TransferMode]} mode - Transfer mode (GET/PUT)
      * @param {Array<object>} ids - Records to transfer
      * @param {Function} callback - Completion callback
      * @param {object} services - The service objects to use for API and dialog operations
