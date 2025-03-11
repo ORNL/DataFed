@@ -163,7 +163,6 @@ export class TransferUIManager {
             this.#controller.endpointManager.state.currentEndpoint,
             browsePath,
             this.#controller.model.mode,
-            this.#controller,
             (selectedPath) => {
                 const fullPath =
                     this.#controller.endpointManager.state.currentEndpoint.name + selectedPath;
@@ -548,15 +547,27 @@ export class TransferUIManager {
         }
     }
 
+    /**
+     * Handles any select to tree checkbox view including
+     * - checkbox
+     * - source/destination path
+     * - endpoint selected
+     */
     handleSelectionChange() {
         if (!this.state.recordTree) {
             console.warn("Record tree not initialized when handling selection change");
             return;
         }
         const atLeastOneNodeSelected = this.state.recordTree.getSelectedNodes().length > 0;
+        if (!atLeastOneNodeSelected) {
+            this.enableStartButton(false);
+            return
+        }
+
         const config = this.getTransferInput();
         if (!config) {
             this.enableStartButton(false);
+            return;
         }
 
         this.enableStartButton(atLeastOneNodeSelected && !config?.path.endsWith("/"));

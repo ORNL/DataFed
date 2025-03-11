@@ -162,13 +162,15 @@ class EndpointBrowser {
     /**
      * @param {object} node - Tree node
      * @returns {boolean} Whether selection is valid
+     * @default
+     * True for fileMode IFF mode is null and not direct
      */
     isValidSelection(node) {
         const isDir = node?.data?.is_dir;
         const notUpDirInput = node?.key !== CONFIG.PATH.UP;
 
         const dirMode = isDir && this.props.mode === TransferMode.TT_DATA_GET;
-        const fileMode = !isDir && this.props.mode === TransferMode.TT_DATA_PUT;
+        const fileMode = !isDir && (this.props.mode === TransferMode.TT_DATA_PUT || this.props.mode === TransferMode.NULL);
 
         return (dirMode || fileMode) && notUpDirInput;
     }
@@ -232,8 +234,8 @@ class EndpointBrowser {
                 );
             });
 
+            // TODO: needs consent flag only works first time, if base token has consent it will no longer work.
             if (data.needs_consent || data.code) {
-                // TODO: needs consent flag only works first time, if base token has consent it will no longer work.
                 throw new ApiError(data);
             }
 

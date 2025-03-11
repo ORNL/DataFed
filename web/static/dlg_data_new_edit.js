@@ -101,7 +101,7 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
         extern = $("#external", frame);
 
     $("#pick_source", frame).on("click", function () {
-        transferDialog.show(TransferMode.TT_DATA_PUT, null, function (a_path, a_encrypt_mode) {
+        transferDialog.show(TransferMode.NULL, null, function (a_path, a_encrypt_mode) {
             $("#source_file", frame).val(a_path);
             encrypt_mode = a_encrypt_mode;
             if (ext_auto.prop("checked")) updateAutoExt();

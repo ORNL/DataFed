@@ -32,7 +32,7 @@ export class TransferDialogController {
         try {
             this.uiManager.initializeComponents();
             this.uiManager.attachMatchesHandler();
-            this.endpointManager.initialized = true;
+            this.endpointManager.state.initialized = true;
             this.uiManager.showDialog();
         } catch (error) {
             console.error("Failed to show transfer dialog:", error);
