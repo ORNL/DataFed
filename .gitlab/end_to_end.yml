@@ -426,7 +426,7 @@ end_to_end_web_test:
     - ci-datafed-client
   script:
     - cd tests/end-to-end/web-UI
-    - [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
+    - "[ -s \"$NVM_DIR/nvm.sh\" ] && . \"$NVM_DIR/nvm.sh\""  # This loads nvm
     - nvm install 18
     - nvm use 18
     - npm install
