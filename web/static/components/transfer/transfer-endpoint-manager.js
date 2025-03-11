@@ -93,6 +93,7 @@ export class TransferEndpointManager {
                     console.info("Direct endpoint match found:", data);
                     this.#controller.uiManager.enableBrowseButton(true);
                     this.#controller.uiManager.handleSelectedEndpoint(data);
+                    this.#controller.uiManager.handleSelectionChange()
                 } else {
                     console.warn("No direct match, trying autocomplete");
                     this.searchEndpointAutocomplete(endpoint, searchToken);

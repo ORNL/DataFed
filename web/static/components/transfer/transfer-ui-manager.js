@@ -144,7 +144,8 @@ export class TransferUIManager {
             });
             this.#controller.endpointManager.handlePathInput(
                 this.#controller.endpointManager.state.currentSearchToken,
-            );
+            )
+
         }
     }
 
@@ -558,10 +559,11 @@ export class TransferUIManager {
             console.warn("Record tree not initialized when handling selection change");
             return;
         }
+
         const atLeastOneNodeSelected = this.state.recordTree.getSelectedNodes().length > 0;
         if (!atLeastOneNodeSelected) {
             this.enableStartButton(false);
-            return
+            return;
         }
 
         const config = this.getTransferInput();
@@ -570,7 +572,10 @@ export class TransferUIManager {
             return;
         }
 
-        this.enableStartButton(atLeastOneNodeSelected && !config?.path.endsWith("/"));
+        const isValidDirModeState = this.#controller.model.mode === TransferMode.TT_DATA_GET && config?.path.endsWith("/")
+        const isValidFileModeState = this.#controller.model.mode === TransferMode.TT_DATA_PUT && !config?.path.endsWith("/")
+
+        this.enableStartButton(atLeastOneNodeSelected && (isValidFileModeState || isValidDirModeState));
     }
 
     /**
@@ -589,7 +594,7 @@ export class TransferUIManager {
             this.#controller.model.mode === TransferMode.TT_DATA_PUT
         ) {
             this.startTransfer(config);
-        } else {
+        } else { // Reserved for creating a new data record
             this.#controller.callback(config.path, config.encrypt);
             this.closeDialog();
         }
