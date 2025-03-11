@@ -419,12 +419,14 @@ end_to_end_web_test:
     DATAFED_WEB_TEST_USERNAME: "datafed89"
     DATAFED_WEB_TEST_PASSWORD: "${CI_DATAFED_USER89_GLOBUSID_PASSWORD}"
     DATAFED_DOMAIN: "${CI_DATAFED_DOMAIN}"
+    NVM_DIR: "/shared/install/nvm"
   stage: end-to-end-test
   needs: ["end_to_end_client-test"]
   tags:
     - ci-datafed-client
   script:
     - cd tests/end-to-end/web-UI
+    - [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
     - nvm install 18
     - nvm use 18
     - npm install
