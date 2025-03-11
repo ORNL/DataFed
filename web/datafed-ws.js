@@ -36,6 +36,7 @@ import { fileURLToPath } from "url";
 import { dirname } from "path";
 
 import OAuthTokenHandler, { AccessTokenType } from "./services/auth/TokenHandler.js";
+import { generateConsentURL } from "./services/auth/ConsentHandler.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -111,26 +112,31 @@ class Logger {
             this.log("CRIT", function_name, line_number, message, correlation_id);
         }
     }
+
     error(function_name, line_number, message, correlation_id = "") {
         if (this._level >= LogLevel.ERROR) {
             this.log("ERROR", function_name, line_number, message, correlation_id);
         }
     }
+
     warning(function_name, line_number, message, correlation_id = "") {
         if (this._level >= LogLevel.WARNING) {
             this.log("WARNING", function_name, line_number, message, correlation_id);
         }
     }
+
     info(function_name, line_number, message, correlation_id = "") {
         if (this._level >= LogLevel.INFO) {
             this.log("INFO", function_name, line_number, message, correlation_id);
         }
     }
+
     debug(function_name, line_number, message, correlation_id = "") {
         if (this._level >= LogLevel.DEBUG) {
             this.log("DEBUG", function_name, line_number, message, correlation_id);
         }
     }
+
     trace(function_name, line_number, message, correlation_id = "") {
         if (this._level >= LogLevel.TRACE) {
             this.log("TRACE", function_name, line_number, message, correlation_id);
@@ -301,6 +307,15 @@ app.use(
         },
     }),
 );
+
+function storeCollectionId(req, res, next) {
+    if (req.query.collection_id) {
+        req.session.collection_id = req.query.collection_id;
+        // TODO: assuming collection is specifically mapped and not HA/other variants
+        req.session.collection_type = "mapped";
+    }
+    next();
+}
 
 app.use(cookieParser(g_session_secret));
 app.use(
@@ -488,9 +503,9 @@ app.get("/ui/authn", (a_req, a_resp) => {
     logger.info("/ui/authn", getCurrentLineNumber(), "Globus authenticated - log in to DataFed");
 
     /* This after Globus authentication. Loads Globus tokens and identity information.
-    The user is then checked in DataFed and, if present redirected to the main page; otherwise, sent to
-    the registration page.
-    */
+The user is then checked in DataFed and, if present redirected to the main page; otherwise, sent to
+the registration page.
+*/
 
     g_globus_auth.code.getToken(a_req.originalUrl).then(
         function (client_token) {
@@ -621,6 +636,7 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                     } catch (err) {
                                         redirect_path = "/ui/error";
                                         logger.error("/ui/authn", getCurrentLineNumber(), err);
+                                        delete a_req.session.collection_id;
                                     }
 
                                     // TODO Account may be disable from SDMS (active = false)
@@ -1158,6 +1174,10 @@ app.get("/api/dat/get", (a_req, a_resp) => {
 
     if (a_req.query.check) par.check = a_req.query.check;
 
+    const { collection_id, collection_type } = a_req.query;
+    par.collectionId = collection_id;
+    par.collectionType = collection_type;
+
     sendMessage("DataGetRequest", par, a_req, a_resp, function (reply) {
         a_resp.send(reply);
     });
@@ -1173,6 +1193,10 @@ app.get("/api/dat/put", (a_req, a_resp) => {
     if (a_req.query.ext) par.ext = a_req.query.ext;
 
     if (a_req.query.check) par.check = a_req.query.check;
+
+    const { collection_id, collection_type } = a_req.query;
+    par.collectionId = collection_id;
+    par.collectionType = collection_type;
 
     sendMessage("DataPutRequest", par, a_req, a_resp, function (reply) {
         a_resp.send(reply);
@@ -1543,6 +1567,21 @@ app.post("/api/cat/search", (a_req, a_resp) => {
     });
 });
 
+app.get("/api/globus/consent_url", storeCollectionId, (a_req, a_resp) => {
+    const { requested_scopes, state, refresh_tokens, query_params } = a_req.query;
+
+    const consent_url = generateConsentURL(
+        g_oauth_credentials.clientId,
+        g_oauth_credentials.redirectUri,
+        refresh_tokens,
+        requested_scopes,
+        query_params,
+        state,
+    );
+
+    a_resp.json({ consent_url });
+});
+
 app.post("/api/col/pub/search/data", (a_req, a_resp) => {
     sendMessage("RecordSearchPublishedRequest", a_req.body, a_req, a_resp, function (reply) {
         a_resp.send(reply);
@@ -1798,6 +1837,7 @@ app.post("/api/sch/delete", (a_req, a_resp) => {
 });
 
 app.get("/ui/ep/view", (a_req, a_resp) => {
+    // TODO: include message data if needed
     sendMessage("UserGetAccessTokenRequest", {}, a_req, a_resp, function (reply) {
         const opts = {
             hostname: "transfer.api.globusonline.org",
@@ -1830,6 +1870,7 @@ app.get("/ui/ep/view", (a_req, a_resp) => {
 });
 
 app.get("/ui/ep/autocomp", (a_req, a_resp) => {
+    // TODO: include message data if needed
     sendMessage("UserGetAccessTokenRequest", {}, a_req, a_resp, function (reply) {
         const opts = {
             hostname: "transfer.api.globusonline.org",
@@ -1877,7 +1918,12 @@ app.post("/ui/ep/recent/save", (a_req, a_resp) => {
 });
 
 app.get("/ui/ep/dir/list", (a_req, a_resp) => {
-    sendMessage("UserGetAccessTokenRequest", {}, a_req, a_resp, function (reply) {
+    const message_data = {
+        collectionId: a_req.query.collection_id,
+        collectionType: a_req.query.collection_type,
+    };
+
+    const get_from_globus_api = (token, original_reply) => {
         const opts = {
             hostname: "transfer.api.globusonline.org",
             method: "GET",
@@ -1890,7 +1936,7 @@ app.get("/ui/ep/dir/list", (a_req, a_resp) => {
                 a_req.query.hidden,
             rejectUnauthorized: true,
             headers: {
-                Authorization: " Bearer " + reply.access,
+                Authorization: " Bearer " + token,
             },
         };
 
@@ -1901,7 +1947,9 @@ app.get("/ui/ep/dir/list", (a_req, a_resp) => {
                 data += chunk;
             });
             res.on("end", () => {
-                a_resp.json(JSON.parse(data));
+                let res_json = JSON.parse(data);
+                res_json.needs_consent = original_reply.needsConsent;
+                a_resp.json(res_json);
             });
         });
 
@@ -1911,6 +1959,17 @@ app.get("/ui/ep/dir/list", (a_req, a_resp) => {
         });
 
         req.end();
+    };
+
+    sendMessage("UserGetAccessTokenRequest", { ...message_data }, a_req, a_resp, function (reply) {
+        if (reply.needsConsent) {
+            sendMessage("UserGetAccessTokenRequest", {}, a_req, a_resp, (base_token_reply) => {
+                // TODO: does a failed refresh token affect this? will base token be valid?
+                get_from_globus_api(base_token_reply.access, reply);
+            });
+        } else {
+            get_from_globus_api(reply.access, reply);
+        }
     });
 });
 
