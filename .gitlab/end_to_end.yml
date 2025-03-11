@@ -426,7 +426,7 @@ end_to_end_web_test:
   script:
     - cd tests/end-to-end/web-UI
     - nvm install 18
-    = nvm use 18
+    - nvm use 18
     - npm install
     - sudo npx playwright install-deps
     - npx playwright install
