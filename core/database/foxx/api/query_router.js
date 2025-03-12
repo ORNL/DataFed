@@ -306,7 +306,6 @@ function execQuery(client, mode, published, orig_query) {
         ctxt = client._id;
     let query = {
         ...orig_query,
-        params: JSON.parse(orig_query.params),
     };
     if (!published) {
         // For searches over private data, must perform access checks based on owner field and client id
@@ -536,7 +535,12 @@ router
         try {
             const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
 
-            var results = execQuery(client, req.body.mode, req.body.published, req.body);
+            console.log("LOOK HERE - ", req.body);
+            const my_query = {
+                ...req.body,
+                params: JSON.parse(req.body.params),
+            };
+            var results = execQuery(client, req.body.mode, req.body.published, my_query);
 
             res.send(results);
         } catch (e) {
