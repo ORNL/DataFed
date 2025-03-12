@@ -1941,7 +1941,7 @@ app.get("/ui/ep/dir/list", (a_req, a_resp) => {
         };
 
         const req = https.request(opts, (res) => {
-            var data = "";
+            let data = "";
 
             res.on("data", (chunk) => {
                 data += chunk;
