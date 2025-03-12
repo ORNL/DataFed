@@ -1292,7 +1292,7 @@ void DatabaseAPI::generalSearch(const Auth::SearchRequest &a_request,
   payload["qry_begin"] = qry_begin;
   payload["qry_end"] = qry_end;
   payload["qry_filter"] = qry_filter;
-  payload["params"] = params;
+  payload["params"] = "{" + params + "}";
   payload["limit"] = to_string(cnt);
 
   string body = payload.dump(-1, ' ', true);

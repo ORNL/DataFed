@@ -101,7 +101,7 @@ function recordCreate(client, record, result) {
     }
 
     if (record.md) {
-        obj.md = record.md;
+        obj.md = JSON.parse(record.md); // parse escaped JSON string TODO: this could be dangerous
         if (Array.isArray(obj.md)) throw [g_lib.ERR_INVALID_PARAM, "Metadata cannot be an array"];
     }
 
@@ -463,7 +463,7 @@ function recordUpdate(client, record, result) {
         obj.md_err_msg = null;
         obj.md_err = false;
     } else if (record.md) {
-        obj.md = record.md;
+        obj.md = JSON.parse(record.md);
         if (Array.isArray(obj.md)) {
             throw [g_lib.ERR_INVALID_PARAM, "Metadata cannot be an array"];
         }
