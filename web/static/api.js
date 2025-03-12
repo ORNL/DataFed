@@ -1,7 +1,7 @@
 import * as model from "./model.js";
 import * as util from "./util.js";
 import * as settings from "./settings.js";
-import {TransferMode} from "./models/transfer-model.js";
+import { TransferMode } from "./models/transfer-model.js";
 
 export function _asyncGet(a_url, a_raw_json_data, a_callback, a_timeout) {
     $.ajax({

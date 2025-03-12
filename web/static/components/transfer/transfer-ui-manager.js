@@ -144,8 +144,7 @@ export class TransferUIManager {
             });
             this.#controller.endpointManager.handlePathInput(
                 this.#controller.endpointManager.state.currentSearchToken,
-            )
-
+            );
         }
     }
 
@@ -165,10 +164,21 @@ export class TransferUIManager {
             browsePath,
             this.#controller.model.mode,
             (selectedPath) => {
-                const fullPath =
+                const resultPath =
                     this.#controller.endpointManager.state.currentEndpoint.name + selectedPath;
-                pathInput.val(fullPath);
-                this.enableStartButton(true);
+                // Need to manually add / to res IFF GET mode
+                const finalPath =
+                    this.#controller.model.mode === TransferMode.TT_DATA_GET
+                        ? resultPath + "/"
+                        : resultPath;
+
+                pathInput.val(finalPath);
+
+                if (this.#controller.model.mode === TransferMode.NULL) {
+                    this.enableStartButton(true);
+                } else {
+                    this.handleSelectionChange();
+                }
             },
         );
     }
@@ -572,10 +582,14 @@ export class TransferUIManager {
             return;
         }
 
-        const isValidDirModeState = this.#controller.model.mode === TransferMode.TT_DATA_GET && config?.path.endsWith("/")
-        const isValidFileModeState = this.#controller.model.mode === TransferMode.TT_DATA_PUT && !config?.path.endsWith("/")
+        const isValidDirModeState =
+            this.#controller.model.mode === TransferMode.TT_DATA_GET && config?.path.endsWith("/");
+        const isValidFileModeState =
+            this.#controller.model.mode === TransferMode.TT_DATA_PUT && !config?.path.endsWith("/");
 
-        this.enableStartButton(atLeastOneNodeSelected && (isValidFileModeState || isValidDirModeState));
+        this.enableStartButton(
+            atLeastOneNodeSelected && (isValidFileModeState || isValidDirModeState),
+        );
     }
 
     /**
@@ -594,7 +608,8 @@ export class TransferUIManager {
             this.#controller.model.mode === TransferMode.TT_DATA_PUT
         ) {
             this.startTransfer(config);
-        } else { // Reserved for creating a new data record
+        } else {
+            // Reserved for creating a new data record
             this.#controller.callback(config.path, config.encrypt);
             this.closeDialog();
         }

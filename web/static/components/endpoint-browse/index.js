@@ -170,7 +170,9 @@ class EndpointBrowser {
         const notUpDirInput = node?.key !== CONFIG.PATH.UP;
 
         const dirMode = isDir && this.props.mode === TransferMode.TT_DATA_GET;
-        const fileMode = !isDir && (this.props.mode === TransferMode.TT_DATA_PUT || this.props.mode === TransferMode.NULL);
+        const fileMode =
+            !isDir &&
+            (this.props.mode === TransferMode.TT_DATA_PUT || this.props.mode === TransferMode.NULL);
 
         return (dirMode || fileMode) && notUpDirInput;
     }
