@@ -301,10 +301,13 @@ router
     .summary("List client saved queries")
     .description("List client saved queries");
 
-function execQuery(client, mode, published, query) {
+function execQuery(client, mode, published, orig_query) {
     var col_chk = true,
         ctxt = client._id;
-
+    let query = {
+        ...orig_query,
+        params: JSON.parse(orig_query.params),
+    };
     if (!published) {
         // For searches over private data, must perform access checks based on owner field and client id
 
@@ -549,7 +552,7 @@ router
                 qry_begin: joi.string().required(),
                 qry_end: joi.string().required(),
                 qry_filter: joi.string().optional().allow(""),
-                params: joi.object().required(),
+                params: joi.string().required(),
                 limit: joi.number().integer().required(),
             })
             .required(),
