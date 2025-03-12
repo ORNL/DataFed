@@ -24,19 +24,20 @@ export class TransferEndpointManager {
         this.api = services.api; // Dependency injection
         this.dialogs = services.dialogs; // Dependency injection
 
-        this.currentEndpoint = null;
-        this.endpointManagerList = null;
         // Search tracking mechanism to prevent race conditions:
-        //  * searchTokenIterator generates unique tokens for each search request
-        //  * currentSearchToken tracks the latest valid search request
         // Without this, out-of-order API responses could update the UI with stale data
         // Example: User types "abc" then quickly types "xyz"
         //  - "abc" search starts (token: 1)
         //  - "xyz" search starts (token: 2)
         //  - "abc" results return (ignored, token mismatch)
         //  - "xyz" results return (processed, matching token)
-        this.currentSearchToken = null;
-        this.searchTokenIterator = 0;
+        this.state = {
+            currentEndpoint: null,
+            endpointManagerList: null, // List of endpoint matches
+            currentSearchToken: null, // Tracks the latest valid search request
+            searchTokenIterator: 0, // Generates unique tokens for each search request
+            initialized: false, // Flag to indicate that the dialog is initialized
+        };
     }
 
     /**
@@ -49,12 +50,12 @@ export class TransferEndpointManager {
             // Prevent race conditions by ignoring responses from outdated searches
             // Without this check, rapid typing could cause UI flickering and incorrect results
             // as slower API responses return after newer searches
-            if (searchToken !== this.currentSearchToken) {
+            if (searchToken !== this.state.currentSearchToken) {
                 return;
             }
 
             if (ok && data.DATA && data.DATA.length) {
-                this.endpointManagerList = data.DATA;
+                this.state.endpointManagerList = data.DATA;
                 // Process endpoints and update UI
                 data.DATA.forEach((ep) => {
                     ep.name = ep.canonical_name || ep.id;
@@ -62,7 +63,7 @@ export class TransferEndpointManager {
                 this.updateMatchesList(data.DATA);
             } else {
                 console.warn("No matches found");
-                this.endpointManagerList = null;
+                this.state.endpointManagerList = null;
                 this.updateMatchesList([]);
                 if (data.code) {
                     console.error("Autocomplete error:", data);
@@ -83,7 +84,7 @@ export class TransferEndpointManager {
 
         try {
             return this.api.epView(endpoint, (ok, data) => {
-                if (searchToken !== this.currentSearchToken) {
+                if (searchToken !== this.state.currentSearchToken) {
                     console.warn("Ignoring stale epView response");
                     return;
                 }
@@ -92,6 +93,7 @@ export class TransferEndpointManager {
                     console.info("Direct endpoint match found:", data);
                     this.#controller.uiManager.enableBrowseButton(true);
                     this.#controller.uiManager.handleSelectedEndpoint(data);
+                    this.#controller.uiManager.handleSelectionChange();
                 } else {
                     console.warn("No direct match, trying autocomplete");
                     this.searchEndpointAutocomplete(endpoint, searchToken);
@@ -132,7 +134,7 @@ export class TransferEndpointManager {
      * @param {string} searchToken - Token to track current search request
      */
     handlePathInput(searchToken) {
-        if (!this.initialized) {
+        if (!this.state.initialized) {
             console.warn("Dialog not yet initialized - delaying path input handling");
             setTimeout(() => this.handlePathInput(searchToken), 100);
             return;
@@ -140,7 +142,7 @@ export class TransferEndpointManager {
 
         // Validate that we're processing the most recent search request
         // This prevents wasted API calls and UI updates for abandoned searches
-        if (searchToken !== this.currentSearchToken) {
+        if (searchToken !== this.state.currentSearchToken) {
             console.info("Token mismatch - ignoring stale request");
             return;
         }
@@ -151,8 +153,8 @@ export class TransferEndpointManager {
 
         // No input or set input to empty, reset state
         if (!path || !path.length) {
-            this.endpointManagerList = null;
-            this.currentEndpoint = null;
+            this.state.endpointManagerList = null;
+            this.state.currentEndpoint = null;
             this.updateMatchesList([]);
             this.#controller.uiManager.enableStartButton(false);
             this.#controller.uiManager.enableBrowseButton(false);
@@ -164,11 +166,14 @@ export class TransferEndpointManager {
             "Extracted endpoint:",
             endpoint,
             "Current endpoint:",
-            this.currentEndpoint?.name,
+            this.state.currentEndpoint?.name,
         );
 
         // Edge case: input is just a /. Ideally we have some middleware validation to avoid this
-        if (endpoint && (!this.currentEndpoint || endpoint !== this.currentEndpoint.name)) {
+        if (
+            endpoint &&
+            (!this.state.currentEndpoint || endpoint !== this.state.currentEndpoint.name)
+        ) {
             console.info("Endpoint changed or not set - searching for new endpoint");
             this.searchEndpoint(endpoint, searchToken);
         }

@@ -1,6 +1,7 @@
 import * as model from "./model.js";
 import * as util from "./util.js";
 import * as settings from "./settings.js";
+import { TransferMode } from "./models/transfer-model.js";
 
 export function _asyncGet(a_url, a_raw_json_data, a_callback, a_timeout) {
     $.ajax({
@@ -96,16 +97,17 @@ export function setDefaultAlloc(a_repo, a_subject, a_cb) {
 export function xfrStart(a_ids, a_mode, a_path, a_ext, a_encrypt_mode, a_orig_fname, a_cb) {
     const search_path = a_path.substring(0, a_path.indexOf("/"));
     epView(search_path, (ok, ep_data) => {
-        const is_mapped = ep_data.entity_type.includes("mapped");
-        var url = "/api/dat/";
+        // Example "entity_type": "GCSv5_guest_collection
+        const is_mapped = ep_data?.entity_type.includes("mapped");
+        let url = "/api/dat/";
 
-        if (a_mode == model.TT_DATA_GET) {
+        if (a_mode === TransferMode.TT_DATA_GET) {
             url +=
                 "get" +
                 "?id=" +
                 encodeURIComponent(JSON.stringify(a_ids)) +
                 (a_orig_fname ? "&orig_fname=1" : "");
-        } else if (a_mode == model.TT_DATA_PUT) {
+        } else if (a_mode === TransferMode.TT_DATA_PUT) {
             url += "put" + "?id=" + encodeURIComponent(a_ids[0]);
         } else {
             return;
