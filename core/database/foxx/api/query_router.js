@@ -535,12 +535,11 @@ router
         try {
             const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
 
-            console.log("LOOK HERE - ", req.body);
-            const my_query = {
+            const query = {
                 ...req.body,
                 params: JSON.parse(req.body.params),
             };
-            var results = execQuery(client, req.body.mode, req.body.published, my_query);
+            var results = execQuery(client, req.body.mode, req.body.published, query);
 
             res.send(results);
         } catch (e) {
