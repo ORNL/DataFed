@@ -14,10 +14,11 @@ import { TransferMode } from "../../models/transfer-model.js";
 export function getModeSpecificOptionsTemplate(mode) {
     let responseHTML = "";
     if (mode === TransferMode.TT_DATA_GET) {
-        responseHTML = `<br>File extension override: <input id='ext' type='text'><br>`;
-    } else if (mode === TransferMode.TT_DATA_PUT) {
         responseHTML = `<br><label for='orig_fname'>Download to original filename(s)</label>
-           <input id='orig_fname' type='checkbox'>`;
+            <input id='orig_fname' type='checkbox'>
+        `;
+    } else if (mode === TransferMode.TT_DATA_PUT) {
+        responseHTML = `<br>File extension override: <input id='ext' type='text'><br>`;
     }
 
     return responseHTML;
