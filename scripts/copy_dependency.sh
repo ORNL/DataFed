@@ -10,21 +10,27 @@ supported_libraries=("protobuf" \
   "libsodium" \
   "libzmq" \
   "boost_program_options" \
-  "boost_filesystem")
+  "boost_filesystem" \
+  "libssl" \
+  "libcrypto")
 
 library_env_variables=("DATAFED_DYNAMIC_LIBRARY_PROTOBUF_VERSION" \
   "DATAFED_DYNAMIC_LIBRARY_PROTOBUF_VERSION" \
   "DATAFED_LIB_LIBSODIUM_VERSION" \
   "DATAFED_LIB_LIBZMQ_VERSION" \
   "DATAFED_BOOST" \
-  "DATAFED_BOOST")
+  "DATAFED_BOOST" \
+  "DATAFED_OPENSSL"\
+  "DATAFED_CRYPTO_VERSION")
 
 library_names=("libprotobuf.a" \
   "libprotoc.a" \
   "libsodium.a" \
   "libzmq.a" \
   "libboost_program_options.so" \
-  "libboost_filesystem.so")
+  "libboost_filesystem.so" \
+  "libssl.a" \
+  "libcrypto.a")
 
 library_locations=("$LIB_DIR" "$LIB_DIR" "$LIB_DIR" "$LIB_DIR" "/lib/x86_64-linux-gnu" "/lib/x86_64-linux-gnu")
 
@@ -77,14 +83,22 @@ if [ "$direction" == "from" ]; then
   source_filename="$library_location/$library_name"
   destination_filename="$LIBRARIES_BASE_PATH/$library_name"
   if [[ "$library_name" == *".so" ]]; then
-    source_filename="$source_filename.$library_version"
+    if [ "${library_version}" == "" ]; then
+      source_filename="$source_filename"
+    else
+      source_filename="$source_filename.$library_version"
+    fi
   fi
 elif [ "$direction" == "to" ]; then
   # Copy from generic to versioned filename
   source_filename="$LIBRARIES_BASE_PATH/$library_name"
   destination_filename="$LIB_DIR/$library_name"
   if [[ "$library_name" == *".so" ]]; then
-    destination_filename="$destination_filename.$library_version"
+    if [ "${library_version}" == "" ]; then
+      destination_filename="$destination_filename"
+    else
+      destination_filename="$destination_filename.$library_version"
+    fi
   fi
 else
   echo "Invalid direction. Use 'to' or 'from'."
@@ -104,11 +118,14 @@ if [ $? -eq 0 ]; then
 else
   echo "Failed to copy '$source_filename' to '$destination_filename'."
 fi
-
 if [ "$direction" == "to" ]; then
-  major_version=$(echo "$library_version" | awk -F'.' '{ print $1 }')
-  ln -s "$LIB_DIR/$library_name.$library_version" "$LIB_DIR/$library_name.$major_version"
-  ln -s "$LIB_DIR/$library_name.$library_version" "$LIB_DIR/$library_name"
-  echo "linking $LIB_DIR/$library_name.$major_version -> $LIB_DIR/$library_name.$library_version"
-  echo "linking $LIB_DIR/$library_name -> $LIB_DIR/$library_name.$library_version"
+  if [ "${library_version}" == "" ]; then
+    ln -s "$LIB_DIR/$library_name" "$LIB_DIR/$library_name"
+  else
+    major_version=$(echo "$library_version" | awk -F'.' '{ print $1 }')
+    ln -s "$LIB_DIR/$library_name.$library_version" "$LIB_DIR/$library_name.$major_version"
+    ln -s "$LIB_DIR/$library_name.$library_version" "$LIB_DIR/$library_name"
+    echo "linking $LIB_DIR/$library_name.$major_version -> $LIB_DIR/$library_name.$library_version"
+    echo "linking $LIB_DIR/$library_name -> $LIB_DIR/$library_name.$library_version"
+  fi
 fi

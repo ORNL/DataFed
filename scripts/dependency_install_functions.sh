@@ -13,7 +13,7 @@ export pip_file_path="${PROJECT_ROOT}/tmp/pip_deps"
 export ext_file_path="${PROJECT_ROOT}/tmp/ext_deps"
 
 if [ ! -d "${PROJECT_ROOT}/tmp" ]; then
-    mkdir -p "${PROJECT_ROOT}/tmp" 
+    mkdir -p "${PROJECT_ROOT}/tmp"
 fi
 
 if [ ! -e "${PROJECT_ROOT}/config/datafed.sh" ]
@@ -31,8 +31,8 @@ if [ ! -e "$DATAFED_DEPENDENCIES_INSTALL_PATH" ] || [ ! -d "$DATAFED_DEPENDENCIE
     else
       echo "Sudo command $SUDO_CMD"
       "$SUDO_CMD" mkdir -p "$DATAFED_DEPENDENCIES_INSTALL_PATH"
-      user=$(whoami)  
-      "$SUDO_CMD" chown "$user" "$DATAFED_DEPENDENCIES_INSTALL_PATH" 
+      user=$(whoami)
+      "$SUDO_CMD" chown "$user" "$DATAFED_DEPENDENCIES_INSTALL_PATH"
     fi
 fi
 
@@ -115,7 +115,7 @@ install_protobuf() {
     fi
     # Here we are using clone instead of submodule update, because submodule
     # requires the .git folder exist and the current folder be considered a repo
-    # this creates problems in docker because each time a commit is made the 
+    # this creates problems in docker because each time a commit is made the
     # .git folder contents are changed causing a fresh rebuild of all containers
     git clone "https://github.com/protocolbuffers/protobuf.git" \
       "${PROJECT_ROOT}/external/protobuf"
@@ -126,7 +126,7 @@ install_protobuf() {
     # Build static library, cannot build shared library at same time apparently
     # there cannot be a shared libsodium file in the
     # DATAFED_DEPENDENCIES_INSTALL_PREFIX if you want to have everything static
-    # libzmq picks up any shared file regardless of whether you have told it to 
+    # libzmq picks up any shared file regardless of whether you have told it to
     # only use static libraries or not.
     # NOTE - static libraries must be built first
     cmake -S . -B build \
@@ -141,7 +141,7 @@ install_protobuf() {
     else
       "$SUDO_CMD" cmake --build build --target install
     fi
-    # Build Shared library 
+    # Build Shared library
     # Don't build shared, it messes up the static library linking because the
     # cmake file installed are not compatible
     # WARNING - static library will break if build with shared options on
@@ -179,7 +179,7 @@ install_libsodium() {
     fi
     # Here we are using clone instead of submodule update, because submodule
     # requires the .git folder exist and the current folder be considered a repo
-    # this creates problems in docker because each time a commit is made the 
+    # this creates problems in docker because each time a commit is made the
     # .git folder contents are changed causing a fresh rebuild of all containers
     git clone https://github.com/jedisct1/libsodium.git "${PROJECT_ROOT}/external/libsodium"
     cd "${PROJECT_ROOT}/external/libsodium"
@@ -196,7 +196,7 @@ install_libsodium() {
     else
       "$SUDO_CMD" make install
     fi
-    
+
     # Mark libsodium as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.libsodium_installed-${DATAFED_LIBSODIUM_VERSION}"
     cd "$original_dir"
@@ -216,7 +216,7 @@ install_libzmq() {
     fi
     # Here we are using clone instead of submodule update, because submodule
     # requires the .git folder exist and the current folder be considered a repo
-    # this creates problems in docker because each time a commit is made the 
+    # this creates problems in docker because each time a commit is made the
     # .git folder contents are changed causing a fresh rebuild of all containers
     git clone https://github.com/zeromq/libzmq.git "${PROJECT_ROOT}/external/libzmq"
     cd "${PROJECT_ROOT}/external/libzmq"
@@ -260,7 +260,7 @@ install_libzmq() {
     else
       "$SUDO_CMD" cmake --build build --target install
     fi
-    
+
     cd "$original_dir"
     # Mark libzmq as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.libzmq_installed-${DATAFED_LIBZMQ_VERSION}"
@@ -317,7 +317,7 @@ install_json_schema_validator() {
     git clone https://github.com/pboettch/json-schema-validator "${PROJECT_ROOT}/external/json-schema-validator"
     cd "${PROJECT_ROOT}/external/json-schema-validator"
     git checkout ${DATAFED_JSON_SCHEMA_VALIDATOR_VERSION}
-    # Build static 
+    # Build static
     cmake -S . -B build \
       -DBUILD_SHARED_LIBS=OFF \
       -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
@@ -341,14 +341,14 @@ install_gcs() {
   if [ ! -e ".gcs_installed-${DATAFED_GLOBUS_VERSION}" ]; then
     "$SUDO_CMD" apt update
     "$SUDO_CMD" apt install -y curl git gnupg
-    curl -LOs \
+    "$DATAFED_DEPENDENCIES_INSTALL_PATH/bin/"curl -LOs \
     "https://downloads.globus.org/globus-connect-server/stable/installers/repo/deb/globus-repo_${DATAFED_GLOBUS_VERSION}_all.deb"
     "$SUDO_CMD" dpkg -i "globus-repo_${DATAFED_GLOBUS_VERSION}_all.deb"
     "$SUDO_CMD" apt-key add /usr/share/globus-repo/RPM-GPG-KEY-Globus
     # Need a second update command after adding the globus GPG key
     "$SUDO_CMD" apt update
     "$SUDO_CMD" apt-get install globus-connect-server54 -y
-    
+
     # Mark gcs as installed
     touch ".gcs_installed-${DATAFED_GLOBUS_VERSION}"
   fi
@@ -357,11 +357,11 @@ install_gcs() {
 install_nvm() {
   # By default this will place NVM in $HOME/.nvm
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.nvm_installed-${DATAFED_NVM_VERSION}" ]; then
-    # By setting NVM_DIR beforehand when the scirpt is run it 
+    # By setting NVM_DIR beforehand when the scirpt is run it
     # will use it to set the install path
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
     mkdir -p "${NVM_DIR}"
-    curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${DATAFED_NVM_VERSION}/install.sh" | bash
+    "$DATAFED_DEPENDENCIES_INSTALL_PATH/bin/"curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${DATAFED_NVM_VERSION}/install.sh" | bash
     # Mark nvm as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.nvm_installed-${DATAFED_NVM_VERSION}"
   else
@@ -385,7 +385,7 @@ install_ws_node_packages() {
   fi
 
   # Configure the package.json.in file -> package.json
-  cmake -P "${PROJECT_ROOT}/cmake/Web.cmake" 
+  cmake -P "${PROJECT_ROOT}/cmake/Web.cmake"
   export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
   export NODE_VERSION="$DATAFED_NODE_VERSION"
   "$NVM_DIR/nvm-exec" npm --prefix "${PROJECT_ROOT}/web" install "${PROJECT_ROOT}/web"
@@ -404,14 +404,14 @@ install_node() {
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
 
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
-    nvm install "$DATAFED_NODE_VERSION"
+    PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/bin:$PATH" LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib:$LD_LIBRARY_PATH" nvm install "$DATAFED_NODE_VERSION"
     nvm use "$DATAFED_NODE_VERSION"
     # Mark node as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.node_installed-${DATAFED_NODE_VERSION}"
     cd "$original_dir"
   else
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
-    # Used by nvm 
+    # Used by nvm
     export NODE_VERSION="$DATAFED_NODE_VERSION"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
     nvm use "$DATAFED_NODE_VERSION"
@@ -441,7 +441,7 @@ install_foxx_cli() {
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
     export NODE_VERSION="$DATAFED_NODE_VERSION"
-    
+
     # check that foxx can be found
     if [ ! -d "${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm" ]
     then
@@ -461,7 +461,7 @@ install_foxx_cli() {
 }
 
 install_arangodb() {
-  curl -OL https://download.arangodb.com/arangodb312/DEBIAN/Release.key
+  LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib:$LD_LIBRARY_PATH" "$DATAFED_DEPENDENCIES_INSTALL_PATH/bin/"curl -OL https://download.arangodb.com/arangodb312/DEBIAN/Release.key
   "$SUDO_CMD" apt-key add - < Release.key
   echo 'deb https://download.arangodb.com/arangodb312/DEBIAN/ /' | "$SUDO_CMD" tee /etc/apt/sources.list.d/arangodb.list
   "$SUDO_CMD" apt-get install apt-transport-https
@@ -479,13 +479,14 @@ install_openssl() {
     git clone https://github.com/openssl/openssl "${PROJECT_ROOT}/external/openssl"
     cd "${PROJECT_ROOT}/external/openssl"
     git checkout "$DATAFED_OPENSSL_COMMIT"
-    ./config --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    #./config --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    ./Configure no-shared no-dso linux-x86 --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     make -j 8
 
     if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
       make install
     else
-      "$SUDO_CMD" make install 
+      "$SUDO_CMD" make install
     fi
     # Mark openssl as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.openssl_installed-${DATAFED_OPENSSL}"
@@ -529,13 +530,13 @@ install_libcurl() {
       --without-winidn --without-libpsl \
       --without-libssh2 --without-nghttp2 --without-brotli \
       --without-libidn --without-libbrotli \
-      --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}" 
+      --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     make -j 8
 
     if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
       make install
     else
-      "$SUDO_CMD" make install 
+      "$SUDO_CMD" make install
     fi
 
     # Mark libcurl as installed
@@ -561,7 +562,7 @@ install_zlib() {
     if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
       make install
     else
-      "$SUDO_CMD" make install 
+      "$SUDO_CMD" make install
     fi
 
     # Mark libcurl as installed

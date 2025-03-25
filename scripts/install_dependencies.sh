@@ -62,8 +62,8 @@ while [ : ]; do
         local_INSTALL_AUTHZ="FALSE"
         shift
         ;;
-    --) shift; 
-        break 
+    --) shift;
+        break
         ;;
     \?) # incorrect option
         echo "Error: Invalid option"
@@ -136,5 +136,6 @@ rm "$pip_file_path"
 
 if [ "$local_INSTALL_ARANGO" == "TRUE" ]
 then
+  echo "I AM RUNNING"
   install_arangodb
 fi
