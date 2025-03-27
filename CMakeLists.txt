@@ -34,7 +34,7 @@ building with static depencies is not completely possible because some system
 libraries must be shared libraries for DataFed to be interoperable. If this
 setting is turned on DataFed will build it's libraries as shared and try to
 link to shared libraries." OFF)
-OPTION(ENABLE_END_TO_END_API_TESTS "Enable end-to-end API testing" FALSE) 
+OPTION(ENABLE_END_TO_END_API_TESTS "Enable end-to-end API testing" FALSE)
 OPTION(ENABLE_END_TO_END_WEB_TESTS "Enable end-to-end web testing with Playwright" FALSE)
 OPTION(ENABLE_FOXX_TESTS "Enable Foxx testing, off by default because it
   will overwrite the test database." FALSE)
@@ -80,7 +80,7 @@ endif()
 
 set(CMAKE_PREFIX_PATH "${DEPENDENCY_INSTALL_PATH}")
 
-if ( BUILD_TESTS ) 
+if ( BUILD_TESTS )
   include(CTest)
   ENABLE_TESTING()
   set(CMAKE_CTEST_ARGUMENTS "--output-on-failure")
@@ -131,11 +131,11 @@ if( BUILD_AUTHZ_TESTS )
   include(./cmake/GlobusCommon.cmake)
 endif()
 
-if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON OR BUILD_PYTHON_CLIENT) 
+if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON OR BUILD_PYTHON_CLIENT)
   include(./cmake/Protobuf.cmake)
-endif() 
+endif()
 
-if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON) 
+if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON)
 
   include_directories( "/usr/include/globus" )
 
@@ -163,7 +163,8 @@ if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON)
 
 endif()
 
-if( BUILD_COMMON ) 
+if( BUILD_COMMON )
+  include(./cmake/OpenSSL.cmake)
   add_subdirectory( common )
 endif()
 
@@ -218,7 +219,7 @@ if( INSTALL_WEB_SERVER )
   install( FILES ${PROJECT_SOURCE_DIR}/web/version.js DESTINATION ${DATAFED_INSTALL_PATH}/web )
 endif()
 
-if( INSTALL_FOXX ) 
+if( INSTALL_FOXX )
   install(CODE "execute_process(COMMAND ${DataFed_SOURCE_DIR}/scripts/install_foxx.sh
                                 OUTPUT_VARIABLE _out
                                 ERROR_VARIABLE _err

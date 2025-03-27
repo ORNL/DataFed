@@ -135,10 +135,13 @@ int main(int a_argc, char **a_argv) {
 
       if (gen_keys) {
         string pub_key, priv_key;
+        unsigned char token_key[32];
         generateKeys(pub_key, priv_key);
+        generateEncryptionKey(token_key);
 
-        string fname = config.cred_dir + "datafed-core-key.pub";
-        ofstream outf(fname.c_str());
+
+       string fname = config.cred_dir + "datafed-core-key.pub";
+       ofstream  outf(fname.c_str());
         if (!outf.is_open() || !outf.good())
           EXCEPT_PARAM(1, "Could not open file: " << fname);
         outf << pub_key;
@@ -149,6 +152,13 @@ int main(int a_argc, char **a_argv) {
         if (!outf.is_open() || !outf.good())
           EXCEPT_PARAM(1, "Could not open file: " << fname);
         outf << priv_key;
+        outf.close();
+
+        fname = config.cred_dir + "datafed-token-key.txt";
+        outf.open(fname.c_str());
+        if (!outf.is_open() || !outf.good())
+          EXCEPT_PARAM(1, "Could not open file: " << fname);
+        outf << token_key;
         outf.close();
 
         return 0;
