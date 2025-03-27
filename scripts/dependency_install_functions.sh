@@ -361,7 +361,7 @@ install_nvm() {
     # will use it to set the install path
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
     mkdir -p "${NVM_DIR}"
-    "$DATAFED_DEPENDENCIES_INSTALL_PATH/bin/"curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${DATAFED_NVM_VERSION}/install.sh" | bash
+    PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/bin/:$PATH" "$DATAFED_DEPENDENCIES_INSTALL_PATH/bin/"curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${DATAFED_NVM_VERSION}/install.sh" | bash
     # Mark nvm as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.nvm_installed-${DATAFED_NVM_VERSION}"
   else
@@ -480,7 +480,7 @@ install_openssl() {
     cd "${PROJECT_ROOT}/external/openssl"
     git checkout "$DATAFED_OPENSSL_COMMIT"
     #./config --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
-    ./Configure no-shared no-dso linux-x86 --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    ./Configure no-shared no-dso linux-x86_64  --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     make -j 8
 
     if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
