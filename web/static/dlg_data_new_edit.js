@@ -410,7 +410,8 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
 
                             if (
                                 deps.findIndex(function (el) {
-                                    return !(dep.id !== el.id || dep.type !== el.type);
+                                    if (dep.id != el.id || dep.type != el.type) return false;
+                                    else return true;
                                 }) === -1
                             ) {
                                 obj.depRem.push(dep);
@@ -422,7 +423,8 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
 
                             if (
                                 orig_deps.findIndex(function (el) {
-                                    return !(dep.id !== el.id || dep.type !== el.type);
+                                    if (dep.id != el.id || dep.type != el.type) return false;
+                                    else return true;
                                 }) === -1
                             ) {
                                 obj.depAdd.push(dep);
@@ -431,7 +433,9 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
                             // Check for duplicate dependencies
                             if (
                                 deps.findIndex(function (el, idx) {
-                                    return !(idx === i || dep.id !== el.id || dep.type !== el.type);
+                                    if (idx == i || dep.id != el.id || dep.type != el.type)
+                                        return false;
+                                    else return true;
                                 }) !== -1
                             ) {
                                 dialogs.dlgAlert(
