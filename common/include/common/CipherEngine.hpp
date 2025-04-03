@@ -1,0 +1,36 @@
+#ifndef CIPHER_ENGINE_HPP
+#define CIPHER_ENGINE_HPP
+#pragma once
+
+//Local include
+#include <string>
+
+namespace SDMS{
+class CipherEngine
+{
+    private:
+        unsigned char key[32];
+
+        static void handleErrors(void);
+    public:
+        
+        static void generateIV(unsigned char iv[16]);
+        
+        // Constructor to set the encryption key
+        CipherEngine(const unsigned char* inputKey);
+
+        struct CipherString
+        {
+            unsigned char encrypted_msg[128];
+            unsigned char iv[16];
+            int encrypted_msg_len;
+        };
+
+        //WE NEED TO RECREATE THIS
+        CipherString encrypt(unsigned char *iv, std::string& msg);
+        CipherString encrypt(const std::string& msg);
+        
+        std::string decrypt(unsigned char *cipherText, int ciphertext_len, unsigned char *iv);
+};
+}
+#endif

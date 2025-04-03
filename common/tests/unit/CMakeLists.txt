@@ -14,7 +14,7 @@ foreach(PROG
     test_SocketFactory
     test_SocketOptions
     test_KeyGeneration
-    test_EncryptionDecryption
+    test_CipherEngine
     )
 
   include_directories(${PROJECT_SOURCE_DIR}/common/source)

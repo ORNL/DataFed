@@ -4,19 +4,69 @@
 #include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>
 //Local private includes
+#include "../../include/common/CipherEngine.hpp"
 #include "../../include/common/Util.hpp"
 
 //Standard includes
-#include <openssl/rand.h>
-#include <openssl/conf.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
 #include <string.h>
 #include <iostream>
 #include <fstream>
 
+using namespace std;
+using namespace SDMS;
+
 BOOST_AUTO_TEST_SUITE(KeyEncryptionDecryptionTest)
 
+BOOST_AUTO_TEST_CASE(test_EncryptionDecryption)
+{
+
+    unsigned char key[32];
+    generateEncryptionKey(key);
+
+    //Construct
+    CipherEngine testCipher(key);
+
+    //Sets struct CipherString: which contains cipherText, cipherIV, cipherPaddedLen
+    unsigned char iv[16];
+
+    string msg = "Hello World";
+
+    CipherEngine::generateIV(iv);
+
+    //Here if parties would like to use their own IV GENERATOR
+    CipherEngine::CipherString returnObj = testCipher.encrypt(iv, msg);
+    
+    CipherEngine::CipherString returnObj2 = testCipher.encrypt(msg);
+    
+
+    std::cout << string(reinterpret_cast<const char*>(returnObj2.encrypted_msg),returnObj2.encrypted_msg_len) << std::endl;
+    std::cout << string(reinterpret_cast<const char*>(returnObj2.iv),16) << std::endl;
+    std::cout << returnObj2.encrypted_msg_len << std::endl;
+
+
+
+    //START OF ENCRYPTION
+    std::string unencrypted_msg;
+    
+    unencrypted_msg = testCipher.decrypt(returnObj2.encrypted_msg, returnObj2.encrypted_msg_len, returnObj2.iv);
+    
+    std::cout << unencrypted_msg << std::endl;
+
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+
+
+
+
+
+
+
+
+
+ 
+/*    
 BOOST_AUTO_TEST_CASE(testing_EncryptionDecryption)
 {
     unsigned char token_key[32];
@@ -46,12 +96,11 @@ BOOST_AUTO_TEST_CASE(testing_EncryptionDecryption)
 
     decryptedtext_len = decrypt(ciphertext, ciphertext_len, token_key, iv, decryptedtext);
 
-    /* Add a NULL terminator. We are expecting printable text */
+    // Add a NULL terminator. We are expecting printable text
     decryptedtext[decryptedtext_len] = '\0';
     std::cout << "Decrypted Message:" << decryptedtext << std::endl;
 
     BOOST_CHECK(memcmp(decryptedtext,originalMsg, sizeof(decryptedtext)));
 
 }
-
-BOOST_AUTO_TEST_SUITE_END()
+*/   

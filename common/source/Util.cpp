@@ -19,6 +19,7 @@
 #include <set>
 #include <string.h>
 #include <string>
+#include <fstream>
 
 using namespace std;
 
@@ -72,6 +73,22 @@ void handleErrors(void)
     abort();
 }
 
+int readFile(std::string fileName, int arraySize, unsigned char* array)
+{
+    //Converting Key for encryption funct
+    unsigned char keyChar[arraySize];
+    //Grabbing key
+    std::ifstream keyFile(fileName, std::ios::binary);
+
+    keyFile.read(reinterpret_cast<char*>(keyChar),arraySize);
+    
+    for (int lv = 0; lv < arraySize; lv++)
+    {
+        array[lv] = keyChar[lv];    
+    }
+return 1;
+}
+
 void generateEncryptionKey(unsigned char token_key[32])
 { 
     if (RAND_bytes(token_key, 32) != 1)
@@ -79,16 +96,6 @@ void generateEncryptionKey(unsigned char token_key[32])
         handleErrors();
     }
 }
-
-void generateIV(unsigned char iv[16])
-{
-    if (RAND_bytes(iv, 16) != 1)
-    {
-        handleErrors();
-    }
-}
-
-
 
 void generateZMQKeys(std::string &a_pub_key, std::string &a_priv_key)
 {
@@ -107,7 +114,11 @@ void generateKeys(std::string &a_pub_key, std::string &a_priv_key)
     generateZMQKeys(a_pub_key, a_priv_key);
 }
 
-int encrypt(unsigned char *plaintext, int plaintext_len, unsigned char *key, unsigned char *iv, unsigned char *ciphertext)
+int encrypt(unsigned char *plaintext,
+            int plaintext_len,
+            unsigned char *key,
+            unsigned char *iv,
+            unsigned char *ciphertext)
 {
     EVP_CIPHER_CTX *ctx;
 
@@ -150,8 +161,11 @@ int encrypt(unsigned char *plaintext, int plaintext_len, unsigned char *key, uns
 
     return ciphertext_len;
 }
-int decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *key,
-            unsigned char *iv, unsigned char *plaintext)
+int decrypt(unsigned char *ciphertext,
+            int ciphertext_len,
+            unsigned char *key,
+            unsigned char *iv,
+            unsigned char *plaintext)
 {
 
     EVP_CIPHER_CTX *ctx;

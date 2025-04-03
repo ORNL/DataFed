@@ -7,6 +7,7 @@
 #include "common/SDMS.pb.h"
 #include "common/TraceException.hpp"
 #include "common/Util.hpp"
+#include "common/CipherEngine.hpp"
 
 // Third party includes
 #include <boost/algorithm/string.hpp>
@@ -364,11 +365,41 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
                                      const SDMS::AccessTokenType &token_type,
                                      const std::string &other_token_data,
                                      LogContext log_context) {
+  
+ 
+  unsigned char token_key[32];
+   
+  //grab the token_key
+  readFile("../../build/core/server/datafed-token-key.txt", 32, token_key);
+  CipherEngine cipher(token_key);
+   
+  //encrypting the access token
+  CipherEngine::CipherString access_obj = cipher.encrypt(a_acc_tok);
+
+  CipherEngine::CipherString refresh_obj = cipher.encrypt(a_ref_tok);
+
+  //converting all access token encrypted related variables to a string as is required
+  string encrypted_access_string(reinterpret_cast<char const*>(access_obj.encrypted_msg), access_obj.encrypted_msg_len);
+
+  string encrypted_refresh_string(reinterpret_cast<char const*>(refresh_obj.encrypted_msg), refresh_obj.encrypted_msg_len);
+
+  string access_iv_string(reinterpret_cast<char const*>(access_obj.iv), 16);
+
+  string refresh_iv_string(reinterpret_cast<char const*>(refresh_obj.iv), 16);
+
   string result;
   std::vector<pair<string, string>> params = {
-      {"access", a_acc_tok},
-      {"refresh", a_ref_tok},
-      {"expires_in", to_string(a_expires_in)}};
+      {"access", encrypted_access_string}, //a_acc_tok shift to encrypted_access_string
+      {"refresh", encrypted_refresh_string}, //a_ref_tok shift to encrypted_refresh_string
+      {"expires_in", to_string(a_expires_in)},
+      {"access_iv", access_iv_string},
+      {"access_len",to_string(access_obj.encrypted_msg_len)},
+      {"refresh_iv", refresh_iv_string},
+      {"refresh_len", to_string(refresh_obj.encrypted_msg_len)}
+  };
+
+//I NEED TO ENCRYPT SOMEWHERES HERE
+//I need to remember to encrypt the refresh token aswell
   if (token_type != SDMS::AccessTokenType::ACCESS_SENTINEL) {
     params.push_back({"type", to_string(token_type)});
   }
