@@ -347,6 +347,10 @@ void DatabaseAPI::userGetAccessToken(
   TRANSLATE_BEGIN()
 
   const Value::Object &obj = result.asObject();
+  
+  //DECRYPT HERE - it comes as a string and I need to convert it to unsigned
+    
+  
 
   a_acc_tok = obj.getString("access");
   a_ref_tok = obj.getString("refresh");
