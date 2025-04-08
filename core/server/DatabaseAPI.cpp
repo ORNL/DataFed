@@ -402,8 +402,7 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
       {"refresh_len", to_string(refresh_obj.encrypted_msg_len)}
   };
 
-//I NEED TO ENCRYPT SOMEWHERES HERE
-//I need to remember to encrypt the refresh token aswell
+
   if (token_type != SDMS::AccessTokenType::ACCESS_SENTINEL) {
     params.push_back({"type", to_string(token_type)});
   }

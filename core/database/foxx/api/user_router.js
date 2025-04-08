@@ -589,17 +589,16 @@ router
                         "acc:",
                         req.queryParams.access,
                         "exp:",
-                        req.queryParams.expires_in,
+                        req.queryParams.expires_in
                     );
                     var obj = {
                         access: req.queryParams.access,
                         refresh: req.queryParams.refresh,
                         expiration: Math.floor(Date.now() / 1000) + req.queryParams.expires_in,
-                        access_iv: request.queryParams.access_iv,
-                        access_len: request.queryParams.access_len,
-                        refresh_iv: request.queryParams.refresh_iv,
-                        refresh_len: request.queryParams.refresh_len
-
+                        access_iv: req.queryParams.access_iv,
+                        access_len: req.queryParams.access_len,
+                        refresh_iv: req.queryParams.refresh_iv,
+                        refresh_len: req.queryParams.refresh_len
                     };
 
                     switch (token_type) {
