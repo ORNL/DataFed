@@ -37,7 +37,7 @@ link to shared libraries." OFF)
 OPTION(ENABLE_END_TO_END_API_TESTS "Enable end-to-end API testing" FALSE)
 OPTION(ENABLE_END_TO_END_WEB_TESTS "Enable end-to-end web testing with Playwright" FALSE)
 OPTION(ENABLE_FOXX_TESTS "Enable Foxx testing, off by default because it
-will overwrite the test database." TRUE)
+will overwrite the test database." FALSE)
 
 set(INSTALL_REPO_SERVER ${BUILD_REPO_SERVER})
 set(INSTALL_AUTHZ ${BUILD_AUTHZ})
