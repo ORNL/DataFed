@@ -21,6 +21,7 @@
 #include <cctype>
 #include <memory>
 #include <unistd.h>
+#include <vector>
 
 using namespace std;
 
@@ -345,20 +346,39 @@ void DatabaseAPI::userGetAccessToken(
   dbGet("usr/token/get", params, result, log_context);
 
   TRANSLATE_BEGIN()
+  unsigned char token_key[32];
+   
+  //grab the token_key
+  readFile("../../build/core/server/datafed-token-key.txt", 32, token_key);
+  CipherEngine cipher(token_key);
+  
+
 
   const Value::Object &obj = result.asObject();
-  
-  //DECRYPT HERE - it comes as a string and I need to convert it to unsigned
-    
+
+  //Pulling variables used in the decryption process for both the encrypted refresh token and the globus access token
+  vector<unsigned char> encrypted_access_msg(obj.getString("access").begin() ,obj.getString("access").end());   
+  int access_len = obj.getNumber("access_len");
+  vector<unsigned char> access_iv(obj.getString("access_iv").begin() ,obj.getString("access_iv").end());   
   
 
-  a_acc_tok = obj.getString("access");
-  a_ref_tok = obj.getString("refresh");
+  vector<unsigned char> encrypted_refresh_msg(obj.getString("refresh").begin() ,obj.getString("refresh").end());   
+  int refresh_len = obj.getNumber("refresh_len");
+  vector<unsigned char> refresh_iv(obj.getString("refresh_iv").begin() ,obj.getString("refresh_iv").end());   
+  
+  //Decryption for acc token and ref token
+  a_acc_tok = cipher.decrypt(encrypted_access_msg.data(), access_len, access_iv.data());
+  a_ref_tok = cipher.decrypt(encrypted_refresh_msg.data(), refresh_len, refresh_iv.data());
+  //a_acc_tok = obj.getString("access");
+  //a_ref_tok = obj.getString("refresh");
   a_expires_in = (uint32_t)obj.getNumber("expires_in");
   needs_consent = obj.getBool("needs_consent");
   token_type = (int)obj.getNumber("token_type");
   // NOTE: scopes will be a blank string for token_type=GLOBUS_DEFAULT
   scopes = obj.getString("scopes");
+
+
+  DL_WARNING(log_context, "Access Token After Decryption:" << a_acc_tok);
 
   TRANSLATE_END(result, log_context)
 }
@@ -370,6 +390,7 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
                                      const std::string &other_token_data,
                                      LogContext log_context) {
   
+    DL_WARNING(log_context, "Access Token Before Encryption:" << a_acc_tok);
  
   unsigned char token_key[32];
    

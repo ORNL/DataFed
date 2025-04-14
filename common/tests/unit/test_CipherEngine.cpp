@@ -37,70 +37,25 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryption)
     CipherEngine::CipherString returnObj = testCipher.encrypt(iv, msg);
     
     CipherEngine::CipherString returnObj2 = testCipher.encrypt(msg);
-    
+ 
+    string encrypted_access_string(reinterpret_cast<char const*>(returnObj2.encrypted_msg), returnObj2.encrypted_msg_len);
 
-    std::cout << string(reinterpret_cast<const char*>(returnObj2.encrypted_msg),returnObj2.encrypted_msg_len) << std::endl;
-    std::cout << string(reinterpret_cast<const char*>(returnObj2.iv),16) << std::endl;
-    std::cout << returnObj2.encrypted_msg_len << std::endl;
+/*
+    std::cout << "Rough Test1:" << encrypted_access_string << std::endl; 
+    std::string testString;
 
-
+    std::memcpy(returnObj2.encrypted_msg, testString.c_str(), returnObj2.encrypted_msg_len);
+    std::cout << "Rough Test2:" << testString << std::endl;    
+*/
+    std::cout << "Encrypted Message:" << string(reinterpret_cast<const char*>(returnObj2.encrypted_msg),returnObj2.encrypted_msg_len) << std::endl;
+    std::cout << "IV:" << string(reinterpret_cast<const char*>(returnObj2.iv),16) << std::endl;    
+    std::cout << "Encrypted Message Len:" << returnObj2.encrypted_msg_len << std::endl;
 
     //START OF ENCRYPTION
     std::string unencrypted_msg;
-    
-    unencrypted_msg = testCipher.decrypt(returnObj2.encrypted_msg, returnObj2.encrypted_msg_len, returnObj2.iv);
-    
-    std::cout << unencrypted_msg << std::endl;
+    unencrypted_msg = testCipher.decrypt(returnObj2.encrypted_msg, returnObj2.encrypted_msg_len, returnObj2.iv); 
+    std::cout << "Unencrypted Message:" << unencrypted_msg << std::endl;
 
 }
 
-BOOST_AUTO_TEST_SUITE_END()
-
-
-
-
-
-
-
-
-
-
- 
-/*    
-BOOST_AUTO_TEST_CASE(testing_EncryptionDecryption)
-{
-    unsigned char token_key[32];
-    unsigned char iv[16];
-    unsigned char ciphertext[128];
-    int ciphertext_len;
-
-    //generate the encryption/decryption key 
-    generateEncryptionKey(token_key); 
-    std::cout << "Token Key:" << token_key << std::endl;
-
-    //generate the IV
-    generateIV(iv);
-    std::cout << "IV:" << iv << std::endl;
-    
-    //creating custom  message
-    unsigned char *originalMsg = (unsigned char *)"This is a test, beware"; 
-    std::cout << "Message:" << originalMsg << std::endl;
-    
-    //Encrypting the message and setting ciphertext_len
-    ciphertext_len = encrypt(originalMsg, strlen((char *)originalMsg), token_key, iv, ciphertext);
-    std::cout << "Cipher Text:" << ciphertext << std::endl;
-    
-    //Decrypting
-    unsigned char decryptedtext[128];
-    int decryptedtext_len;
-
-    decryptedtext_len = decrypt(ciphertext, ciphertext_len, token_key, iv, decryptedtext);
-
-    // Add a NULL terminator. We are expecting printable text
-    decryptedtext[decryptedtext_len] = '\0';
-    std::cout << "Decrypted Message:" << decryptedtext << std::endl;
-
-    BOOST_CHECK(memcmp(decryptedtext,originalMsg, sizeof(decryptedtext)));
-
-}
-*/   
+BOOST_AUTO_TEST_SUITE_END()  

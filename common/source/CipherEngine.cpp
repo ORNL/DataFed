@@ -165,17 +165,18 @@ namespace SDMS{
     }
 
     //I can have this as either cipherString or as the 3 seperate bits
-std::string CipherEngine::decrypt(unsigned char *ciphertext,
-                    int ciphertext_len,
-                    unsigned char *iv)
+std::string CipherEngine::decrypt(unsigned char *ciphertext, 
+                                  int ciphertext_len,
+                                  unsigned char *iv)
 {
 
+    std::cout << key << std::endl;
     EVP_CIPHER_CTX *ctx;
-
+    
     int len;
     unsigned char *plaintext; 
     int plaintext_len;
-    //std::string result;
+
 
     /* Create and initialise the context */
     if(!(ctx = EVP_CIPHER_CTX_new()))
@@ -188,11 +189,14 @@ std::string CipherEngine::decrypt(unsigned char *ciphertext,
      * IV size for *most* modes is the same as the block size. For AES this
      * is 128 bits
      */
+
+    std::cout << "Flag 0" << std::endl;
     if(1 != EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv))
     {
         handleErrors();
     }
-    
+   
+    std::cout << "Flag 1" << std::endl;
     /*
      * Provide the message to be decrypted, and obtain the plaintext output.
      * EVP_DecryptUpdate can be called multiple times if necessary.
@@ -203,10 +207,13 @@ std::string CipherEngine::decrypt(unsigned char *ciphertext,
     }
      plaintext_len = len;
 
+    std::cout << "Flag 2" << std::endl;
     /*
      * Finalise the decryption. Further plaintext bytes may be written at
      * this stage.
      */
+
+
 
      if(1 != EVP_DecryptFinal_ex(ctx, plaintext + len, &len))
      {
@@ -214,6 +221,7 @@ std::string CipherEngine::decrypt(unsigned char *ciphertext,
      }
     plaintext_len += len;
 
+    std::cout << "Flag 3" << std::endl;
     /* Clean up */
     EVP_CIPHER_CTX_free(ctx);
 

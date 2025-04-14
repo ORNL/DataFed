@@ -148,6 +148,10 @@ class UserToken {
         } else {
             result_token.token_type = g_lib.AccessTokenType.GLOBUS_DEFAULT;
         }
+        result_token.access_iv = token_document.access_iv;
+        result_token.access_len = token_document.access_len;
+        result_token.refresh_iv = token_document.refresh_iv;
+        result_token.refresh_len = token_document.refresh_len;
         return result_token;
     }
 
