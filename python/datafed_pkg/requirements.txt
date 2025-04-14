@@ -4,3 +4,4 @@ wget>=3
 requests>=2
 click>=7
 prompt_toolkit>=2
+setuptools>=78
