@@ -13,7 +13,8 @@ class CipherEngine
 
         static void handleErrors(void);
     public:
-        
+        static void generateEncryptionKey(unsigned char token_key[32]);
+      
         static void generateIV(unsigned char iv[16]);
         
         // Constructor to set the encryption key
@@ -26,10 +27,12 @@ class CipherEngine
             int encrypted_msg_len;
         };
 
-        //WE NEED TO RECREATE THIS
-        CipherString encrypt(unsigned char *iv, std::string& msg);
-        CipherString encrypt(const std::string& msg);
+        CipherString encrypt_algorithm(unsigned char *iv, const std::string& msg);
+   
         
+        //WE NEED TO RECREATE THIS
+        CipherString encrypt(unsigned char *iv, const std::string& msg);
+        CipherString encrypt(const std::string& msg); 
         std::string decrypt(unsigned char *cipherText, int ciphertext_len, unsigned char *iv);
 };
 }

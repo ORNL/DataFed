@@ -7,6 +7,7 @@
 #include "common/DynaLog.hpp"
 #include "common/TraceException.hpp"
 #include "common/Util.hpp"
+#include "common/CipherEngine.hpp"
 // messaging version
 #include "common/Version.pb.h"
 
@@ -136,8 +137,9 @@ int main(int a_argc, char **a_argv) {
       if (gen_keys) {
         string pub_key, priv_key;
         unsigned char token_key[32];
+
         generateKeys(pub_key, priv_key);
-        generateEncryptionKey(token_key);
+        CipherEngine::generateEncryptionKey(token_key);
 
 
        string fname = config.cred_dir + "datafed-core-key.pub";

@@ -13,7 +13,6 @@ foreach(PROG
     test_ProxyBasicZMQ
     test_SocketFactory
     test_SocketOptions
-    test_KeyGeneration
     test_CipherEngine
     )
 
