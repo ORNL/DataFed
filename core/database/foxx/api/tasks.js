@@ -446,10 +446,20 @@ var tasks_func = (function () {
                 acc_tok: tokens.acc_tok,
                 ref_tok: tokens.ref_tok,
                 acc_tok_exp_in: tokens.acc_tok_exp_in,
-                token_type: extra_token_format.token_type,
-                scopes: extra_token_format.scopes,
                 collection_id: state.collection_info.collection_id,
             };
+            
+            // Only add token_type and scopes if they exist in extra_token_format
+            if (extra_token_format && typeof extra_token_format.token_type !== 'undefined') {
+                params.token_type = extra_token_format.token_type;
+            } else {
+                // Default to GLOBUS_DEFAULT if token_type is not available
+                params.token_type = g_lib.AccessTokenType.GLOBUS_DEFAULT;
+            }
+            
+            if (extra_token_format && typeof extra_token_format.scopes !== 'undefined') {
+                params.scopes = extra_token_format.scopes;
+            }
             params = Object.assign(params, state.xfr[a_task.step - 1]);
 
             reply = {
@@ -593,10 +603,20 @@ var tasks_func = (function () {
                 acc_tok: tokens.acc_tok,
                 ref_tok: tokens.ref_tok,
                 acc_tok_exp_in: tokens.acc_tok_exp_in,
-                token_type: extra_token_format.token_type,
-                scopes: extra_token_format.scopes,
                 collection_id: state.collection_info.collection_id,
             };
+            
+            // Only add token_type and scopes if they exist in extra_token_format
+            if (extra_token_format && typeof extra_token_format.token_type !== 'undefined') {
+                params.token_type = extra_token_format.token_type;
+            } else {
+                // Default to GLOBUS_DEFAULT if token_type is not available
+                params.token_type = g_lib.AccessTokenType.GLOBUS_DEFAULT;
+            }
+            
+            if (extra_token_format && typeof extra_token_format.scopes !== 'undefined') {
+                params.scopes = extra_token_format.scopes;
+            }
             params = Object.assign(params, state.xfr[a_task.step - 1]);
             reply = {
                 cmd: g_lib.TC_RAW_DATA_TRANSFER,
@@ -1133,6 +1153,8 @@ var tasks_func = (function () {
             dst_coll_id: a_dst_coll_id,
             dst_repo_id: a_dst_repo_id,
             owner_id: owner_id,
+            is_collection_token_required: false,
+            collection_info: {},
         };
         var task = obj._createTask(a_client._id, g_lib.TT_REC_OWNER_CHG, 3, state);
         if (g_proc._lockDepsGeneral(task._id, deps)) {
@@ -1302,7 +1324,16 @@ var tasks_func = (function () {
                     //console.log("taskRunRecOwnerChg - do xfr");
                     // Transfer data step
 
-                    var tokens = g_lib.getAccessToken(a_task.client);
+                    const token_doc = new UserToken({
+                        user_id: a_task.client,
+                        globus_collection_id: state.collection_info ? state.collection_info.collection_id : undefined,
+                    }).get_token();
+                    var tokens = UserToken.formatUserTokenForTransferTask(token_doc);
+                    const extra_token_format = UserToken.formatUserToken(
+                        state.is_collection_token_required || false,
+                        token_doc,
+                        false,
+                    );
                     params = {
                         uid: a_task.client,
                         type: a_task.type,
@@ -1310,7 +1341,20 @@ var tasks_func = (function () {
                         acc_tok: tokens.acc_tok,
                         ref_tok: tokens.ref_tok,
                         acc_tok_exp_in: tokens.acc_tok_exp_in,
+                        collection_id: state.collection_info ? state.collection_info.collection_id : undefined,
                     };
+                    
+                    // Only add token_type and scopes if they exist in extra_token_format
+                    if (extra_token_format && typeof extra_token_format.token_type !== 'undefined') {
+                        params.token_type = extra_token_format.token_type;
+                    } else {
+                        // Default to GLOBUS_DEFAULT if token_type is not available
+                        params.token_type = g_lib.AccessTokenType.GLOBUS_DEFAULT;
+                    }
+                    
+                    if (extra_token_format && typeof extra_token_format.scopes !== 'undefined') {
+                        params.scopes = extra_token_format.scopes;
+                    }
                     params = Object.assign(params, xfr);
                     reply = {
                         cmd: g_lib.TC_RAW_DATA_TRANSFER,
