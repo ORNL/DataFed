@@ -194,8 +194,9 @@ class Record {
             // oweners id.
             // 2. Using the loc.uid parameter if not inflight to get the owner
             // id.
+            const new_owner_id = this.#loc.new_owner ? this.#loc.new_owner : this.#loc.uid;
             const new_alloc = g_db.alloc.firstExample({
-                _from: this.#loc.new_owner ? this.#loc.new_owner : this.#loc.uid,
+                _from: new_owner_id,
                 _to: this.#loc.new_repo,
             });
 
@@ -225,7 +226,9 @@ class Record {
                 a_path = "/" + a_path;
             }
 
-            let stored_path = this._pathToRecord(this.#loc, this.#repo.path);
+            // Create a temporary location object with the new owner ID for path generation
+            const temp_loc = { ...this.#loc, uid: new_owner_id };
+            let stored_path = this._pathToRecord(temp_loc, this.#repo.path);
 
             if (!this._comparePaths(stored_path, a_path)) {
                 return false;
