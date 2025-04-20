@@ -949,6 +949,10 @@ var tasks_func = (function () {
                         acc_tok: tokens.acc_tok,
                         ref_tok: tokens.ref_tok,
                         acc_tok_exp_in: tokens.acc_tok_exp_in,
+                        // Always include token_type parameter to avoid "Key not found: token_type" error
+                        token_type: g_lib.AccessTokenType.GLOBUS_DEFAULT,
+                        // Always include scopes parameter to ensure it exists
+                        scopes: ""
                     };
                     params = Object.assign(params, xfr);
                     reply = {
