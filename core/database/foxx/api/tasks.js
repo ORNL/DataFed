@@ -447,21 +447,21 @@ var tasks_func = (function () {
                 ref_tok: tokens.ref_tok,
                 acc_tok_exp_in: tokens.acc_tok_exp_in,
                 collection_id: state.collection_info.collection_id,
+                // Always include token_type parameter to avoid "Key not found: token_type" error
+                token_type: g_lib.AccessTokenType.GLOBUS_DEFAULT,
+                // Always include scopes parameter to ensure it exists
+                scopes: ""
             };
             
-            // Only add token_type and scopes if they exist in extra_token_format
-            if (extra_token_format && typeof extra_token_format.token_type !== 'undefined') {
-                params.token_type = extra_token_format.token_type;
-            } else {
-                // Default to GLOBUS_DEFAULT if token_type is not available
-                params.token_type = g_lib.AccessTokenType.GLOBUS_DEFAULT;
-            }
-            
-            if (extra_token_format && typeof extra_token_format.scopes !== 'undefined') {
-                params.scopes = extra_token_format.scopes;
-            } else {
-                // Add empty scopes to ensure the parameter exists
-                params.scopes = "";
+            // Override with values from extra_token_format if available
+            if (extra_token_format) {
+                if (typeof extra_token_format.token_type !== 'undefined') {
+                    params.token_type = extra_token_format.token_type;
+                }
+                
+                if (typeof extra_token_format.scopes !== 'undefined') {
+                    params.scopes = extra_token_format.scopes;
+                }
             }
             params = Object.assign(params, state.xfr[a_task.step - 1]);
 
@@ -1348,22 +1348,21 @@ var tasks_func = (function () {
                         ref_tok: tokens.ref_tok,
                         acc_tok_exp_in: tokens.acc_tok_exp_in,
                         collection_id: state.collection_info ? state.collection_info.collection_id : undefined,
+                        // Always include token_type parameter to avoid "Key not found: token_type" error
+                        token_type: g_lib.AccessTokenType.GLOBUS_DEFAULT,
+                        // Always include scopes parameter to ensure it exists
+                        scopes: ""
                     };
                     
-                    // Always include token_type parameter to avoid "Key not found: token_type" error
-                    if (extra_token_format && typeof extra_token_format.token_type !== 'undefined') {
-                        params.token_type = extra_token_format.token_type;
-                    } else {
-                        // Default to GLOBUS_DEFAULT if token_type is not available
-                        params.token_type = g_lib.AccessTokenType.GLOBUS_DEFAULT;
-                    }
-                    
-                    // Add scopes if they exist in extra_token_format
-                    if (extra_token_format && typeof extra_token_format.scopes !== 'undefined') {
-                        params.scopes = extra_token_format.scopes;
-                    } else {
-                        // Add empty scopes to ensure the parameter exists
-                        params.scopes = "";
+                    // Override with values from extra_token_format if available
+                    if (extra_token_format) {
+                        if (typeof extra_token_format.token_type !== 'undefined') {
+                            params.token_type = extra_token_format.token_type;
+                        }
+                        
+                        if (typeof extra_token_format.scopes !== 'undefined') {
+                            params.scopes = extra_token_format.scopes;
+                        }
                     }
                     params = Object.assign(params, xfr);
                     reply = {

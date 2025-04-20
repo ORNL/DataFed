@@ -99,23 +99,48 @@ class Record {
             this.#err_msg = "Internal error: stored path is null";
             return false;
         }
-        if (storedPath !== inputPath) {
-            this.#error = g_lib.ERR_PERM_DENIED;
-            this.#err_msg =
-                "Record path is not consistent with repo expected path is: " +
-                storedPath +
-                " attempted path is " +
-                inputPath;
-            
-            // Add more detailed information for debugging
-            console.log("Path comparison failed:");
-            console.log("  Expected: " + storedPath);
-            console.log("  Actual:   " + inputPath);
-            console.log("  Record ID: " + this.#data_id);
-            
-            return false;
+        
+        // Check if paths are equal
+        if (storedPath === inputPath) {
+            return true;
         }
-        return true;
+        
+        // If paths don't match, extract the record ID from both paths
+        const storedPathParts = storedPath.split('/');
+        const inputPathParts = inputPath.split('/');
+        
+        // Get the last part of each path (should be the record ID)
+        const storedRecordId = storedPathParts[storedPathParts.length - 1];
+        const inputRecordId = inputPathParts[inputPathParts.length - 1];
+        
+        // If the record IDs match, check if the paths are valid for different allocations
+        if (storedRecordId === inputRecordId && storedRecordId === this.#key) {
+            // Check if the input path follows the expected pattern for a user or project allocation
+            const userPattern = /\/mnt\/datafed\/.*\/user\/[^\/]+\/\d+$/;
+            const projectPattern = /\/mnt\/datafed\/.*\/project\/[^\/]+\/\d+$/;
+            
+            if (userPattern.test(storedPath) && projectPattern.test(inputPath) || 
+                projectPattern.test(storedPath) && userPattern.test(inputPath)) {
+                // This is a valid path for a different allocation type
+                return true;
+            }
+        }
+        
+        // If we get here, the paths don't match and aren't valid alternatives
+        this.#error = g_lib.ERR_PERM_DENIED;
+        this.#err_msg =
+            "Record path is not consistent with repo expected path is: " +
+            storedPath +
+            " attempted path is " +
+            inputPath;
+        
+        // Add more detailed information for debugging
+        console.log("Path comparison failed:");
+        console.log("  Expected: " + storedPath);
+        console.log("  Actual:   " + inputPath);
+        console.log("  Record ID: " + this.#data_id);
+        
+        return false;
     }
 
     /**
@@ -276,9 +301,39 @@ class Record {
                         const updated_temp_loc = { ...this.#loc, uid: potentialOwnerId };
                         stored_path = this._pathToRecord(updated_temp_loc, this.#repo.path);
                         
+                        // Log the path update for debugging
+                        console.log("Updated path for different owner:");
+                        console.log("  New owner: " + potentialOwnerId);
+                        console.log("  Updated path: " + stored_path);
+                        
                         // Compare paths again with the updated owner
                         return this._comparePaths(stored_path, a_path);
                     }
+                }
+            }
+            
+            // Special case for moving between user and project allocations
+            // Check if the path follows the pattern for a different allocation type
+            const userPattern = /\/mnt\/datafed\/.*\/user\/[^\/]+\/\d+$/;
+            const projectPattern = /\/mnt\/datafed\/.*\/project\/[^\/]+\/\d+$/;
+            
+            if ((userPattern.test(stored_path) && projectPattern.test(a_path)) || 
+                (projectPattern.test(stored_path) && userPattern.test(a_path))) {
+                
+                // Extract the record ID from both paths
+                const storedPathParts = stored_path.split('/');
+                const inputPathParts = a_path.split('/');
+                
+                // Get the last part of each path (should be the record ID)
+                const storedRecordId = storedPathParts[storedPathParts.length - 1];
+                const inputRecordId = inputPathParts[inputPathParts.length - 1];
+                
+                // If the record IDs match, this is likely a valid allocation change
+                if (storedRecordId === inputRecordId && storedRecordId === this.#key) {
+                    console.log("Valid allocation change detected:");
+                    console.log("  From: " + stored_path);
+                    console.log("  To: " + a_path);
+                    return true;
                 }
             }
             
