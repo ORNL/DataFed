@@ -459,6 +459,9 @@ var tasks_func = (function () {
             
             if (extra_token_format && typeof extra_token_format.scopes !== 'undefined') {
                 params.scopes = extra_token_format.scopes;
+            } else {
+                // Add empty scopes to ensure the parameter exists
+                params.scopes = "";
             }
             params = Object.assign(params, state.xfr[a_task.step - 1]);
 
@@ -616,6 +619,9 @@ var tasks_func = (function () {
             
             if (extra_token_format && typeof extra_token_format.scopes !== 'undefined') {
                 params.scopes = extra_token_format.scopes;
+            } else {
+                // Add empty scopes to ensure the parameter exists
+                params.scopes = "";
             }
             params = Object.assign(params, state.xfr[a_task.step - 1]);
             reply = {
@@ -1344,7 +1350,7 @@ var tasks_func = (function () {
                         collection_id: state.collection_info ? state.collection_info.collection_id : undefined,
                     };
                     
-                    // Only add token_type and scopes if they exist in extra_token_format
+                    // Always include token_type parameter to avoid "Key not found: token_type" error
                     if (extra_token_format && typeof extra_token_format.token_type !== 'undefined') {
                         params.token_type = extra_token_format.token_type;
                     } else {
@@ -1352,8 +1358,12 @@ var tasks_func = (function () {
                         params.token_type = g_lib.AccessTokenType.GLOBUS_DEFAULT;
                     }
                     
+                    // Add scopes if they exist in extra_token_format
                     if (extra_token_format && typeof extra_token_format.scopes !== 'undefined') {
                         params.scopes = extra_token_format.scopes;
+                    } else {
+                        // Add empty scopes to ensure the parameter exists
+                        params.scopes = "";
                     }
                     params = Object.assign(params, xfr);
                     reply = {

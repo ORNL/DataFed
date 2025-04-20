@@ -235,58 +235,58 @@ class Record {
                 a_path = "/" + a_path;
             }
 
-            // Create a temporary location object with the new owner ID for path generation
+            // First, check if the path is valid for the current owner
             const temp_loc = { ...this.#loc, uid: new_owner_id };
             let stored_path = this._pathToRecord(temp_loc, this.#repo.path);
             
-            // Check if the provided path matches the expected path
-            // If not, check if this is a valid path for the record in the new allocation
-            if (!this._comparePaths(stored_path, a_path)) {
-                // Extract the owner type and ID from the path
-                const pathParts = a_path.split('/');
-                const ownerTypeIndex = pathParts.findIndex(part => part === 'user' || part === 'project');
+            // If paths match, we're good
+            if (this._comparePaths(stored_path, a_path)) {
+                return true;
+            }
+            
+            // If paths don't match, check if this is a valid path for a different owner
+            // Extract the owner type and ID from the path
+            const pathParts = a_path.split('/');
+            const ownerTypeIndex = pathParts.findIndex(part => part === 'user' || part === 'project');
+            
+            if (ownerTypeIndex >= 0 && ownerTypeIndex + 1 < pathParts.length) {
+                const ownerType = pathParts[ownerTypeIndex];
+                const ownerId = pathParts[ownerTypeIndex + 1];
+                const recordId = pathParts[pathParts.length - 1];
                 
-                if (ownerTypeIndex >= 0 && ownerTypeIndex + 1 < pathParts.length) {
-                    const ownerType = pathParts[ownerTypeIndex];
-                    const ownerId = pathParts[ownerTypeIndex + 1];
-                    const recordId = pathParts[pathParts.length - 1];
+                // Check if this is a valid owner ID in the system
+                let ownerPrefix = ownerType === 'user' ? 'u/' : 'p/';
+                let potentialOwnerId = ownerPrefix + ownerId;
+                
+                // Check if the owner exists
+                const ownerCollection = ownerPrefix[0];
+                if (g_db._collection(ownerCollection).exists(ownerId) && recordId === this.#key) {
+                    // Check if the owner has an allocation in the target repo
+                    const ownerAlloc = g_db.alloc.firstExample({
+                        _from: potentialOwnerId,
+                        _to: this.#loc.new_repo,
+                    });
                     
-                    // Check if this is a valid owner ID in the system
-                    let ownerPrefix = ownerType === 'user' ? 'u/' : 'p/';
-                    let potentialOwnerId = ownerPrefix + ownerId;
-                    
-                    // Check if the owner exists and has an allocation in the target repo
-                    const ownerExists = g_db._collection(ownerPrefix[0]).exists(ownerId);
-                    
-                    if (ownerExists && recordId === this.#key) {
-                        // Check if the owner has an allocation in the target repo
-                        const ownerAlloc = g_db.alloc.firstExample({
-                            _from: potentialOwnerId,
-                            _to: this.#loc.new_repo,
-                        });
+                    if (ownerAlloc) {
+                        // This is a valid path for the record in a different allocation
+                        // Update the new_owner field to reflect the correct owner
+                        this.#loc.new_owner = potentialOwnerId;
                         
-                        if (ownerAlloc) {
-                            // This is a valid path for the record in a different allocation
-                            // Update the new_owner field to reflect the correct owner
-                            this.#loc.new_owner = potentialOwnerId;
-                            
-                            // Recalculate the stored path with the updated owner
-                            const updated_temp_loc = { ...this.#loc, uid: potentialOwnerId };
-                            stored_path = this._pathToRecord(updated_temp_loc, this.#repo.path);
-                            
-                            // Compare paths again with the updated owner
-                            if (!this._comparePaths(stored_path, a_path)) {
-                                return false;
-                            }
-                            
-                            return true;
-                        }
+                        // Recalculate the stored path with the updated owner
+                        const updated_temp_loc = { ...this.#loc, uid: potentialOwnerId };
+                        stored_path = this._pathToRecord(updated_temp_loc, this.#repo.path);
+                        
+                        // Compare paths again with the updated owner
+                        return this._comparePaths(stored_path, a_path);
                     }
                 }
-                
-                // If we get here, the path is not valid
-                return false;
             }
+            
+            // If we get here, the path is not valid for any owner with an allocation
+            // Reset the error message that was set by _comparePaths
+            this.#error = g_lib.ERR_PERM_DENIED;
+            this.#err_msg = "Record path is not consistent with any valid allocation path";
+            return false;
         } else {
             this.#repo = g_db._document(this.#loc._to);
 
