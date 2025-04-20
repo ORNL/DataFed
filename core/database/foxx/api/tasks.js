@@ -302,7 +302,10 @@ var tasks_func = (function () {
         a_orig_fname,
         a_check,
         is_collection_token_required = false,
-        collection_info = {},
+        collection_info = {
+            // Ensure collection_id is properly initialized to avoid undefined values
+            collection_id: undefined
+        },
     ) {
         console.log("taskInitDataGet");
 
@@ -431,7 +434,7 @@ var tasks_func = (function () {
 
             const token_doc = new UserToken({
                 user_id: a_task.client,
-                globus_collection_id: state.collection_info.collection_id,
+                globus_collection_id: state.collection_info && state.collection_info.collection_id ? state.collection_info.collection_id : undefined,
             }).get_token();
             var tokens = UserToken.formatUserTokenForTransferTask(token_doc);
             const extra_token_format = UserToken.formatUserToken(
@@ -446,7 +449,7 @@ var tasks_func = (function () {
                 acc_tok: tokens.acc_tok,
                 ref_tok: tokens.ref_tok,
                 acc_tok_exp_in: tokens.acc_tok_exp_in,
-                collection_id: state.collection_info.collection_id,
+                collection_id: state.collection_info && state.collection_info.collection_id ? state.collection_info.collection_id : undefined,
                 // Always include token_type parameter to avoid "Key not found: token_type" error
                 token_type: g_lib.AccessTokenType.GLOBUS_DEFAULT,
                 // Always include scopes parameter to ensure it exists
@@ -499,7 +502,10 @@ var tasks_func = (function () {
         a_res_ids,
         a_check,
         is_collection_token_required = false,
-        collection_info = {},
+        collection_info = {
+            // Ensure collection_id is properly initialized to avoid undefined values
+            collection_id: undefined
+        },
     ) {
         console.log("taskInitDataPut");
 
@@ -591,7 +597,7 @@ var tasks_func = (function () {
 
             const token_doc = new UserToken({
                 user_id: a_task.client,
-                globus_collection_id: state.collection_info.collection_id,
+                globus_collection_id: state.collection_info && state.collection_info.collection_id ? state.collection_info.collection_id : undefined,
             }).get_token();
             var tokens = UserToken.formatUserTokenForTransferTask(token_doc);
             const extra_token_format = UserToken.formatUserToken(
@@ -606,7 +612,7 @@ var tasks_func = (function () {
                 acc_tok: tokens.acc_tok,
                 ref_tok: tokens.ref_tok,
                 acc_tok_exp_in: tokens.acc_tok_exp_in,
-                collection_id: state.collection_info.collection_id,
+                collection_id: state.collection_info && state.collection_info.collection_id ? state.collection_info.collection_id : undefined,
             };
             
             // Only add token_type and scopes if they exist in extra_token_format
@@ -1164,7 +1170,10 @@ var tasks_func = (function () {
             dst_repo_id: a_dst_repo_id,
             owner_id: owner_id,
             is_collection_token_required: false,
-            collection_info: {},
+            collection_info: {
+                // Ensure collection_id is properly initialized to avoid undefined values
+                collection_id: undefined
+            },
         };
         var task = obj._createTask(a_client._id, g_lib.TT_REC_OWNER_CHG, 3, state);
         if (g_proc._lockDepsGeneral(task._id, deps)) {
@@ -1336,7 +1345,9 @@ var tasks_func = (function () {
 
                     const token_doc = new UserToken({
                         user_id: a_task.client,
-                        globus_collection_id: state.collection_info ? state.collection_info.collection_id : undefined,
+                        // Ensure globus_collection_id is properly handled
+                        globus_collection_id: state.collection_info && state.collection_info.collection_id ? 
+                            state.collection_info.collection_id : undefined,
                     }).get_token();
                     var tokens = UserToken.formatUserTokenForTransferTask(token_doc);
                     const extra_token_format = UserToken.formatUserToken(
@@ -1351,7 +1362,8 @@ var tasks_func = (function () {
                         acc_tok: tokens.acc_tok,
                         ref_tok: tokens.ref_tok,
                         acc_tok_exp_in: tokens.acc_tok_exp_in,
-                        collection_id: state.collection_info ? state.collection_info.collection_id : undefined,
+                        collection_id: state.collection_info && state.collection_info.collection_id ? 
+                            state.collection_info.collection_id : undefined,
                         // Always include token_type parameter to avoid "Key not found: token_type" error
                         token_type: g_lib.AccessTokenType.GLOBUS_DEFAULT,
                         // Always include scopes parameter to ensure it exists
