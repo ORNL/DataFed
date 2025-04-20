@@ -85,6 +85,10 @@ class API:
         if auth:
             self._uid = uid
             self._cur_sel = uid
+            # Clear any cached collection IDs to ensure we get fresh IDs
+            # This is needed when a Globus mapped collection is deleted and recreated
+            # with the same name but a different ID
+            self._refreshGlobusCollections()
 
         self._cur_ep = self.cfg.get("default_ep")
 
@@ -150,6 +154,75 @@ class API:
 
         self._uid = self._mapi._uid
         self._cur_sel = self._mapi._uid
+        
+        # Clear any cached collection IDs to ensure we get fresh IDs
+        # This is needed when a Globus mapped collection is deleted and recreated
+        # with the same name but a different ID
+        self._refreshGlobusCollections()
+
+    def loginByToken(self, token):
+        """
+        Manually authenticate client by Globus access token
+
+        If not authenticated, this method attempts manual authentication
+        using the supplied Globus access token.
+
+        Parameters
+        ----------
+        token : str
+            Globus access token
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        Exception : if authentication fails.
+        """
+        self.logout()
+
+        self._mapi.manualAuthByToken(token)
+
+        self._uid = self._mapi._uid
+        self._cur_sel = self._mapi._uid
+        
+        # Clear any cached collection IDs to ensure we get fresh IDs
+        # This is needed when a Globus mapped collection is deleted and recreated
+        # with the same name but a different ID
+        self._refreshGlobusCollections()
+
+    def _refreshGlobusCollections(self):
+        """
+        Refresh Globus collection IDs
+
+        This method is called after authentication to ensure that we have
+        fresh Globus collection IDs. This is needed when a Globus mapped
+        collection is deleted and recreated with the same name but a different ID.
+        
+        The issue occurs because when a Globus mapped collection is deleted and
+        recreated with the same name but a different ID, DataFed continues to use
+        the old collection ID until the user logs out and back in.
+        
+        This method forces a refresh of the Globus collection IDs by clearing
+        any cached IDs and forcing a refresh on next access.
+        """
+        # Reset the current endpoint to force a refresh
+        if self._cur_ep:
+            # Store the current endpoint
+            current_ep = self._cur_ep
+            # Clear it
+            self._cur_ep = None
+            # Set it again to force a refresh
+            self.endpointSet(current_ep)
+            
+        # Force a refresh of any cached collection data
+        try:
+            # Get the list of recent endpoints to refresh the cache
+            self.endpointListRecent()
+        except Exception:
+            # Ignore any errors - this is just to refresh the cache
+            pass
 
     def generateCredentials(self):
         """
@@ -1007,7 +1080,7 @@ class API:
     # ------------------------------------------------------ Collection Methods
     # =========================================================================
 
-    def collectionView(self, coll_id, context=None):
+    def collectionView(self, coll_id, context=None, refresh_collections=False):
         """
         View collection information
 
@@ -1019,6 +1092,10 @@ class API:
             ID/alias of Collection to view
         context : str, Optional. Default = None
             User ID or project ID to use for alias resolution.
+        refresh_collections : bool, Optional. Default = False
+            If True, refresh Globus collection IDs before viewing the collection.
+            This is useful when a Globus mapped collection is deleted and recreated
+            with the same name but a different ID.
 
         Returns
         -------
@@ -1029,11 +1106,26 @@ class API:
         ------
         Exception : On invalid options or communication / server error.
         """
+        # If refresh_collections is True, refresh Globus collection IDs
+        if refresh_collections:
+            self._refreshGlobusCollections()
+            
         msg = auth.CollViewRequest()
         msg.id = self._resolve_id(coll_id, context)
         # msg.id = self._resolve_coll_id( coll_id, context )
 
-        return self._mapi.sendRecv(msg)
+        try:
+            return self._mapi.sendRecv(msg)
+        except Exception as e:
+            # If we get an error, try refreshing the collections and try again
+            # This handles the case where a collection was deleted and recreated
+            # with the same name but a different ID
+            if not refresh_collections:
+                self._refreshGlobusCollections()
+                return self.collectionView(coll_id, context, True)
+            else:
+                # If we already tried refreshing, re-raise the exception
+                raise e
 
     def collectionCreate(
         self,
@@ -1207,7 +1299,7 @@ class API:
 
         return self._mapi.sendRecv(msg)
 
-    def collectionItemsList(self, coll_id, offset=0, count=20, context=None):
+    def collectionItemsList(self, coll_id, offset=0, count=20, context=None, refresh_collections=False):
         """
         List items in collection
 
@@ -1223,6 +1315,10 @@ class API:
             Number (limit) of listing results for (cleaner) paging
         context : str, Optional. Default = None
             User ID or project ID to use for alias resolution.
+        refresh_collections : bool, Optional. Default = False
+            If True, refresh Globus collection IDs before listing the collection.
+            This is useful when a Globus mapped collection is deleted and recreated
+            with the same name but a different ID.
 
         Returns
         -------
@@ -1234,14 +1330,29 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
+        # If refresh_collections is True, refresh Globus collection IDs
+        if refresh_collections:
+            self._refreshGlobusCollections()
+            
         msg = auth.CollReadRequest()
         msg.count = count
         msg.offset = offset
         msg.id = self._resolve_id(coll_id, context)
 
-        return self._mapi.sendRecv(msg)
+        try:
+            return self._mapi.sendRecv(msg)
+        except Exception as e:
+            # If we get an error, try refreshing the collections and try again
+            # This handles the case where a collection was deleted and recreated
+            # with the same name but a different ID
+            if not refresh_collections:
+                self._refreshGlobusCollections()
+                return self.collectionItemsList(coll_id, offset, count, context, True)
+            else:
+                # If we already tried refreshing, re-raise the exception
+                raise e
 
-    def collectionItemsUpdate(self, coll_id, add_ids=None, rem_ids=None, context=None):
+    def collectionItemsUpdate(self, coll_id, add_ids=None, rem_ids=None, context=None, refresh_collections=False):
         """
         Update (add/remove) items linked to a specified collection
 
@@ -1264,7 +1375,12 @@ class API:
             ID/alias of record(s) and/or collection(s) to add
         rem_ids : str or list of str, Optional. Default = None
             ID/alias of record(s) and/or collection(s) to remove
-        context
+        context : str, Optional. Default = None
+            User ID or project ID to use for alias resolution.
+        refresh_collections : bool, Optional. Default = False
+            If True, refresh Globus collection IDs before updating the collection.
+            This is useful when a Globus mapped collection is deleted and recreated
+            with the same name but a different ID.
 
         Returns
         -------
@@ -1276,6 +1392,10 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
+        # If refresh_collections is True, refresh Globus collection IDs
+        if refresh_collections:
+            self._refreshGlobusCollections()
+            
         msg = auth.CollWriteRequest()
         msg.id = self._resolve_id(coll_id, context)
 
@@ -1291,9 +1411,20 @@ class API:
         elif isinstance(rem_ids, str):
             msg.rem.append(self._resolve_id(rem_ids, context))
 
-        return self._mapi.sendRecv(msg)
+        try:
+            return self._mapi.sendRecv(msg)
+        except Exception as e:
+            # If we get an error, try refreshing the collections and try again
+            # This handles the case where a collection was deleted and recreated
+            # with the same name but a different ID
+            if not refresh_collections:
+                self._refreshGlobusCollections()
+                return self.collectionItemsUpdate(coll_id, add_ids, rem_ids, context, True)
+            else:
+                # If we already tried refreshing, re-raise the exception
+                raise e
 
-    def collectionGetParents(self, coll_id, inclusive=False, context=None):
+    def collectionGetParents(self, coll_id, inclusive=False, context=None, refresh_collections=False):
         """
         Get parents of specified collection up to the root collection
 
@@ -1306,6 +1437,10 @@ class API:
             Otherwise, and by default, starting collection is ignored.
         context : str, Optional. Default = None
             User ID or project ID to use for alias resolution.
+        refresh_collections : bool, Optional. Default = False
+            If True, refresh Globus collection IDs before getting the collection parents.
+            This is useful when a Globus mapped collection is deleted and recreated
+            with the same name but a different ID.
 
         Returns
         -------
@@ -1317,11 +1452,26 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
+        # If refresh_collections is True, refresh Globus collection IDs
+        if refresh_collections:
+            self._refreshGlobusCollections()
+            
         msg = auth.CollGetParentsRequest()
         msg.id = self._resolve_id(coll_id, context)
         msg.inclusive = inclusive
 
-        return self._mapi.sendRecv(msg)
+        try:
+            return self._mapi.sendRecv(msg)
+        except Exception as e:
+            # If we get an error, try refreshing the collections and try again
+            # This handles the case where a collection was deleted and recreated
+            # with the same name but a different ID
+            if not refresh_collections:
+                self._refreshGlobusCollections()
+                return self.collectionGetParents(coll_id, inclusive, context, True)
+            else:
+                # If we already tried refreshing, re-raise the exception
+                raise e
 
     # =========================================================================
     # ----------------------------------------------------------- Query Methods
