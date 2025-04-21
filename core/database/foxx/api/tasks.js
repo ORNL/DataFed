@@ -1240,7 +1240,7 @@ var tasks_func = (function () {
         }
 
         if (a_task.step == 0) {
-            //console.log("taskRunRecOwnerChg - do setup");
+            console.log("taskRunRecOwnerChg - do setup");
             obj._transact(
                 function () {
                     // Generate transfer steps
@@ -1272,7 +1272,7 @@ var tasks_func = (function () {
         }
 
         if (a_task.step === 1) {
-            //console.log("taskRunRecOwnerChg - move unmanaged records");
+            console.log("taskRunRecOwnerChg - move unmanaged records");
             obj._transact(
                 function () {
                     if (state.ext_data.length) {
@@ -1296,7 +1296,7 @@ var tasks_func = (function () {
             substep = (a_task.step - 2) % 4;
             xfrnum = Math.floor((a_task.step - 2) / 4);
             xfr = state.xfr[xfrnum];
-            //console.log("taskRunRecOwnerChg - xfr num",xfrnum,"substep",substep);
+            console.log("taskRunRecOwnerChg - xfr num",xfrnum,"substep",substep);
 
             switch (substep) {
                 case 0:
@@ -1376,7 +1376,7 @@ var tasks_func = (function () {
                     );
                 /* falls through */
                 case 1:
-                    //console.log("taskRunRecOwnerChg - do xfr");
+                    console.log("taskRunRecOwnerChg - do xfr");
                     // Transfer data step
 
                     const token_doc = new UserToken({
@@ -1385,11 +1385,14 @@ var tasks_func = (function () {
                         globus_collection_id: state.collection_info && state.collection_info.collection_id ? 
                             state.collection_info.collection_id : undefined,
                     }).get_token();
+
+                    console.log("token_doc", token_doc)
                     var tokens = UserToken.formatUserTokenForTransferTask(token_doc);
+                    console.log("tokens", tokens)
                     const extra_token_format = UserToken.formatUserToken(
                         state.is_collection_token_required || false,
                         token_doc,
-                        false,
+                        false, // TODO - Implement the ability to transfer to allocations that require consent
                     );
                     params = {
                         uid: a_task.client,
@@ -1416,7 +1419,9 @@ var tasks_func = (function () {
                             params.scopes = extra_token_format.scopes;
                         }
                     }
+                    console.log("xfr", xfr)
                     params = Object.assign(params, xfr);
+                    console.log("params", params)
                     reply = {
                         cmd: g_lib.TC_RAW_DATA_TRANSFER,
                         params: params,
@@ -1424,7 +1429,7 @@ var tasks_func = (function () {
                     };
                     break;
                 case 2:
-                    //console.log("taskRunRecOwnerChg - finalize move");
+                    console.log("taskRunRecOwnerChg - finalize move");
                     obj._transact(
                         function () {
                             // Init record move
@@ -1461,7 +1466,7 @@ var tasks_func = (function () {
                     break;
             }
         } else {
-            //console.log("taskRunRecOwnerChg - complete task");
+            console.log("taskRunRecOwnerChg - complete task");
             obj._transact(
                 function () {
                     // Last step - complete task
