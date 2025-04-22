@@ -15,7 +15,7 @@
 #include <google/protobuf/util/json_util.h>
 #include <nlohmann/json.hpp>
 #include <zmq.h>
-
+#include <openssl/bio.h>
 // Standard includes
 #include <algorithm>
 #include <cctype>
@@ -96,10 +96,23 @@ const std::string DatabaseAPI::buildSearchParamURL(
 
   for (vector<pair<string, string>>::const_iterator iparam = param_vec.begin();
        iparam != param_vec.end(); ++iparam) {
+
+
     url.append("&");
     url.append(iparam->first.c_str());
     url.append("=");
+    if(iparam->first == "access")
+    {
+      printf("Before Escape:\n");
+      BIO_dump_fp (stdout, iparam->second.c_str(), 96); //adjust to have appropriate size
+    }
     esc_txt = curl_easy_escape(m_curl, iparam->second.c_str(), 0);
+    if(iparam->first == "access")
+    {
+      printf("After Escape:\n");
+      BIO_dump_fp (stdout,esc_txt, 96); //adjust to have appropriate size
+    }
+
     url.append(esc_txt);
     curl_free(esc_txt);
   }
@@ -334,9 +347,9 @@ void DatabaseAPI::userGetAccessToken(
     const std::string collection_id, const std::string collection_type,
     bool &needs_consent, int &token_type, // TODO: use underlying type?
     std::string &scopes, LogContext log_context) {
+
   Value result;
   std::vector<std::pair<std::string, std::string>> params = {};
-
   if (!collection_id.empty()) {
     params.push_back({"collection_id", collection_id});
   }
@@ -347,37 +360,74 @@ void DatabaseAPI::userGetAccessToken(
 
   TRANSLATE_BEGIN()
   unsigned char token_key[32];
-   
+
   //grab the token_key
   readFile("../../build/core/server/datafed-token-key.txt", 32, token_key);
   CipherEngine cipher(token_key);
-  
-
+  CipherEngine::CipherString access_obj = cipher.createCipherString();
 
   const Value::Object &obj = result.asObject();
 
-  //Pulling variables used in the decryption process for both the encrypted refresh token and the globus access token
-  vector<unsigned char> encrypted_access_msg(obj.getString("access").begin() ,obj.getString("access").end());   
-  int access_len = obj.getNumber("access_len");
-  vector<unsigned char> access_iv(obj.getString("access_iv").begin() ,obj.getString("access_iv").end());   
+
+
+
+/*  //Pulling variables used in the decryption praocess for both the encrypted refresh token and the globus access token
+  access_obj.encrypted_msg = (obj.getString("access");
+  access_obj.encrypted_msg_len = obj.getNumber("access_len");
+  access_obj.iv = (obj.getString("access_iv").begin() ,obj.getString("access_iv").end());
+*/
+  std::string access = obj.getString("access");
+  access_obj.encrypted_msg_len = obj.getNumber("access_len");
+
+  // Allocate and copy to char*
+  access_obj.encrypted_msg = new char[access_obj.encrypted_msg_len + 1]; // add 1 for null terminator (if needed)
+  memcpy(access_obj.encrypted_msg, access.data(), access_obj.encrypted_msg_len);
+  access_obj.encrypted_msg[access_obj.encrypted_msg_len] = '\0'; // null terminate (optional for base64)
+
+  // Do the same for IV
+  std::string access_iv = obj.getString("access_iv");
+  access_obj.iv = new char[access_iv.size() + 1];
+  memcpy(access_obj.iv, access_iv.data(), access_iv.size());
+  access_obj.iv[access_iv.size()] = '\0';
   
 
-  vector<unsigned char> encrypted_refresh_msg(obj.getString("refresh").begin() ,obj.getString("refresh").end());   
-  int refresh_len = obj.getNumber("refresh_len");
-  vector<unsigned char> refresh_iv(obj.getString("refresh_iv").begin() ,obj.getString("refresh_iv").end());   
-  
+  printf("This may be the first time this prints:\n");
+  BIO_dump_fp (stdout, access_obj.encrypted_msg, access_obj.encrypted_msg_len);
+
+
+  //vector<unsigned char> encrypted_refresh_msg(obj.getString("refresh").begin() ,obj.getString("refresh").end());
+  //int refresh_len = obj.getNumber("refresh_len");
+  //vector<unsigned char> refresh_iv(obj.getString("refresh_iv").begin() ,obj.getString("refresh_iv").end());
+
+  //Put base64 decryption here
+
+
+  //PUT CODE HERE TO MOVE THE INFO STRAIGHT TO A FILE
+  //std::string tokstr(reinterpret_cast<const char*>(token_key), 32);
+  //std::string msgstr(encrypted_access_msg.begin(), encrypted_access_msg.end());
+  //std::cout << "Token Key:" << std::hex << token_key << std::endl;
+  //std::cout << "Access token:" << msgstr << std::endl;
+  //std::cout << "Access len:" << access_len << std::endl;
+  //std::cout << "Access IV:" << access_iv << std::endl;
+
+
+  //std::cout << "THIS IS RAN1" << std::endl;
   //Decryption for acc token and ref token
-  a_acc_tok = cipher.decrypt(encrypted_access_msg.data(), access_len, access_iv.data());
-  a_ref_tok = cipher.decrypt(encrypted_refresh_msg.data(), refresh_len, refresh_iv.data());
+  a_acc_tok = cipher.decrypt(access_obj);
+  //a_ref_tok = cipher.decrypt(encrypted_refresh_msg.data(), refresh_len, refresh_iv.data());
+  //std::cout << "This is after" << std::endl;
   //a_acc_tok = obj.getString("access");
-  //a_ref_tok = obj.getString("refresh");
+  a_ref_tok = obj.getString("refresh");
   a_expires_in = (uint32_t)obj.getNumber("expires_in");
   needs_consent = obj.getBool("needs_consent");
   token_type = (int)obj.getNumber("token_type");
   // NOTE: scopes will be a blank string for token_type=GLOBUS_DEFAULT
   scopes = obj.getString("scopes");
-
-
+    
+  //Ensuring to free up memory
+  delete[] access_obj.encrypted_msg;
+  delete[] access_obj.iv;
+  
   DL_WARNING(log_context, "Access Token After Decryption:" << a_acc_tok);
 
   TRANSLATE_END(result, log_context)
@@ -389,37 +439,34 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
                                      const SDMS::AccessTokenType &token_type,
                                      const std::string &other_token_data,
                                      LogContext log_context) {
-  
-    DL_WARNING(log_context, "Access Token Before Encryption:" << a_acc_tok);
+  string result;
+
  
+  DL_WARNING(log_context, "Access Token Before Encryption:" << a_acc_tok);
+
   unsigned char token_key[32];
-   
+
   //grab the token_key
   readFile("../../build/core/server/datafed-token-key.txt", 32, token_key);
   CipherEngine cipher(token_key);
-   
+
   //encrypting the access token
   CipherEngine::CipherString access_obj = cipher.encrypt(a_acc_tok);
 
   CipherEngine::CipherString refresh_obj = cipher.encrypt(a_ref_tok);
+  
+  printf("SetAccess Byte Code:\n");
+  BIO_dump_fp (stdout, a_acc_tok.c_str(), access_obj.encrypted_msg_len);
+ 
+  DL_WARNING(log_context, "Encrypted Base64 Msg:" << access_obj.encrypted_msg);
 
-  //converting all access token encrypted related variables to a string as is required
-  string encrypted_access_string(reinterpret_cast<char const*>(access_obj.encrypted_msg), access_obj.encrypted_msg_len);
-
-  string encrypted_refresh_string(reinterpret_cast<char const*>(refresh_obj.encrypted_msg), refresh_obj.encrypted_msg_len);
-
-  string access_iv_string(reinterpret_cast<char const*>(access_obj.iv), 16);
-
-  string refresh_iv_string(reinterpret_cast<char const*>(refresh_obj.iv), 16);
-
-  string result;
   std::vector<pair<string, string>> params = {
-      {"access", encrypted_access_string}, //a_acc_tok shift to encrypted_access_string
-      {"refresh", encrypted_refresh_string}, //a_ref_tok shift to encrypted_refresh_string
+      {"access", access_obj.encrypted_msg}, //a_acc_tok shift to encrypted_access_string
+      {"refresh", refresh_obj.encrypted_msg}, //a_ref_tok shift to encrypted_refresh_string
       {"expires_in", to_string(a_expires_in)},
-      {"access_iv", access_iv_string},
+      {"access_iv", access_obj.iv},
       {"access_len",to_string(access_obj.encrypted_msg_len)},
-      {"refresh_iv", refresh_iv_string},
+      {"refresh_iv", refresh_obj.iv},
       {"refresh_len", to_string(refresh_obj.encrypted_msg_len)}
   };
 

@@ -20,20 +20,28 @@ class CipherEngine
         // Constructor to set the encryption key
         CipherEngine(const unsigned char* inputKey);
 
-        struct CipherString
+        struct CipherBytes
         {
             unsigned char encrypted_msg[128];
             unsigned char iv[16];
             int encrypted_msg_len;
         };
 
+        struct CipherString
+        {
+            char* encrypted_msg;
+            char* iv;
+            int encrypted_msg_len;
+        };
+
+        CipherString createCipherString();
         CipherString encrypt_algorithm(unsigned char *iv, const std::string& msg);
    
         
         //WE NEED TO RECREATE THIS
         CipherString encrypt(unsigned char *iv, const std::string& msg);
         CipherString encrypt(const std::string& msg); 
-        std::string decrypt(unsigned char *cipherText, int ciphertext_len, unsigned char *iv);
+        std::string decrypt(CipherString encrypted_string);
 };
 }
 #endif

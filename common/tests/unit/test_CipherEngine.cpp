@@ -5,6 +5,7 @@
 #include <boost/test/unit_test.hpp>
 //Local private includes
 #include "../../include/common/CipherEngine.hpp"
+#include "../../include/common/Util.hpp"
 
 //Standard includes
 #include <string.h>
@@ -19,17 +20,19 @@ BOOST_AUTO_TEST_SUITE(KeyEncryptionDecryptionTest)
 BOOST_AUTO_TEST_CASE(test_EncryptionDecryption)
 {
 
+    std::cout << "THIS IS A NEW FLAG" << std::endl;
     unsigned char key[32];
-    CipherEngine::generateEncryptionKey(key);
-
+    //CipherEngine::generateEncryptionKey(key);
+    readFile("../../build/core/server/datafed-token-key.txt", 32, key);
+    
     //Construct
     CipherEngine testCipher(key);
 
     //Sets struct CipherString: which contains cipherText, cipherIV, cipherPaddedLen
     unsigned char iv[16];
 
+    //string msg = "AgdzegjlPyyoDa56Bx5yobvJYEjdGr2YpGYJybE7x4Bq42pQ3zuXCb8YQyn0EqEB7vjPx3GlNlKwkEsMnNokqfxq926";
     string msg = "Hello World";
-
     CipherEngine::generateIV(iv);
 
     //Here if parties would like to use their own IV GENERATOR
@@ -37,8 +40,6 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryption)
     
     CipherEngine::CipherString returnObj2 = testCipher.encrypt(msg);
  
-    string encrypted_access_string(reinterpret_cast<char const*>(returnObj2.encrypted_msg), returnObj2.encrypted_msg_len);
-
 /*
     std::cout << "Rough Test1:" << encrypted_access_string << std::endl; 
     std::string testString;
@@ -46,13 +47,13 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryption)
     std::memcpy(returnObj2.encrypted_msg, testString.c_str(), returnObj2.encrypted_msg_len);
     std::cout << "Rough Test2:" << testString << std::endl;    
 */
-    std::cout << "Encrypted Message:" << string(reinterpret_cast<const char*>(returnObj2.encrypted_msg),returnObj2.encrypted_msg_len) << std::endl;
-    std::cout << "IV:" << string(reinterpret_cast<const char*>(returnObj2.iv),16) << std::endl;    
-    std::cout << "Encrypted Message Len:" << returnObj2.encrypted_msg_len << std::endl;
+    std::cout << "Encrypted Message:\n" << returnObj2.encrypted_msg << std::endl;
+    std::cout << "IV:\n" << returnObj2.iv << std::endl;    
+    std::cout << "Encrypted Message Len:\n" << returnObj2.encrypted_msg_len << std::endl;
 
     //START OF ENCRYPTION
     std::string unencrypted_msg;
-    unencrypted_msg = testCipher.decrypt(returnObj2.encrypted_msg, returnObj2.encrypted_msg_len, returnObj2.iv); 
+    unencrypted_msg = testCipher.decrypt(returnObj2); 
     std::cout << "Unencrypted Message:" << unencrypted_msg << std::endl;
 
 }
