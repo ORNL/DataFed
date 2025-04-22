@@ -1,6 +1,7 @@
 import * as util from "../../util.js";
 import * as api from "../../api.js";
 import { TransferMode } from "../../models/transfer-model.js";
+import { EndpointModel, EndpointEntityType } from "../../models/endpoint-model.js";
 
 const CONFIG = {
     PATH: { SEPARATOR: "/", UP: "..", CURRENT: "." },
@@ -22,7 +23,6 @@ class ApiError extends Error {
         this.code = data.code;
     }
 }
-
 /**
  * EndpointBrowser Component
  * Handles browsing and selecting files/directories from endpoints
@@ -30,15 +30,10 @@ class ApiError extends Error {
 class EndpointBrowser {
     /**
      * @param {object} props - Browser configuration
-     * @param {object} props.endpoint - Endpoint details
+     * @param {EndpointModel} props.endpoint - Endpoint details
      * @param {string} props.path - Initial path
      * @param {TransferMode[keyof TransferMode]} props.mode - Browser mode ('file'/'dir')
      * @param {Function} props.onSelect - Selection callback
-     * @param {object} props.services - The service objects to use for API and dialog operations
-     * @param {object} props.services.dialogs - Dialog service
-     * @param {Function} props.services.dialogs.dlgAlert - Alert dialog function
-     * @param {object} props.services.api - API service
-     * @param {Function} props.services.api.getGlobusConsentURL - Globus authorization URL function
      */
     constructor(props) {
         this.props = props;
@@ -224,19 +219,31 @@ class EndpointBrowser {
             const ep_status = await new Promise((resolve) => {
                 api.epView(this.props.endpoint.id, (ok, data) => resolve(data));
             });
-            const is_mapped = ep_status?.entity_type.includes("mapped"); // Fetch directory listing
+
+            // Check if endpoint is valid and accessible
+            if (ep_status?.code) {
+                throw new ApiError({
+                    code: ep_status.code,
+                    message: ep_status.message || `Error accessing endpoint: ${this.props.endpoint.id}`
+                });
+            }
+
+            // Only GCSv5_mapped_collections require consent for data access
+            const requiresConsent = this.props.endpoint.requiresConsent;
+
+            // Fetch directory listing
             const data = await new Promise((resolve) => {
                 api.epDirList(
                     this.props.endpoint.id,
                     this.state.path,
                     false,
-                    is_mapped,
+                    requiresConsent,
                     this.props.endpoint.id,
                     resolve,
                 );
             });
 
-            // TODO: needs consent flag only works first time, if base token has consent it will no longer work.
+            // Check for consent or other errors
             if (data.needs_consent || data.code) {
                 throw new ApiError(data);
             }
@@ -291,29 +298,27 @@ class EndpointBrowser {
      * @returns {Promise<Array>} Error message source
      */
     async createErrorSource(error) {
-        let title = "";
-
-        // Generate consent URL
-        if (error instanceof ApiError && error.code === "ConsentRequired") {
-            const data = await new Promise((resolve) => {
-                api.getGlobusConsentURL(
-                    (_, data) => resolve(data),
-                    this.props.endpoint.id,
-                    error.data.required_scopes,
-                );
-            });
-            title = `<span class='ui-state-error'>Consent Required: Please provide <a href="${data.consent_url}">consent</a>.</span>`;
+        let title;
+        // Generate consent URL for consent required errors
+        if (error instanceof ApiError) {
+            if (error.code === "ConsentRequired" || error.data?.needs_consent === true) {
+                const data = await new Promise((resolve) => {
+                    api.getGlobusConsentURL(
+                      (_, data) => resolve(data),
+                      this.props.endpoint.id,
+                      error.data.required_scopes
+                    );
+                });
+                title = `<span class='ui-state-error'>Consent Required: Please provide <a href="${data.consent_url}">consent</a>.</span>`;
+            }
+            else {
+                title = `<span class='ui-state-error'>Error: ${error.data.message || "Unknown API error"}</span>`;
+            }
         } else {
-            title = `<span class='ui-state-error'>Error: ${error instanceof ApiError ? error.data.message : error.message}</span>`;
+            title = `<span class='ui-state-error'>Error: ${error.message || "Unknown error"}</span>`;
         }
 
-        return [
-            {
-                title,
-                icon: false,
-                is_dir: true,
-            },
-        ];
+        return [{ title, icon: false, is_dir: true }];
     }
 
     /**
@@ -343,12 +348,16 @@ class EndpointBrowser {
  * Show endpoint browser dialog
  * @param {object} endpoint - Endpoint configuration
  * @param {string} path - Initial path
- * @param {string} mode - Browser mode ('file'/'dir')
+ * @param {TransferMode[keyof TransferMode]} mode - Browser mode ('file'/'dir')
  * @param {Function} callback - Selection callback
  */
 export function show(endpoint, path, mode, callback) {
+    const endpointModel = endpoint instanceof EndpointModel
+      ? endpoint
+      : new EndpointModel(endpoint);
+
     const browser = new EndpointBrowser({
-        endpoint,
+        endpoint: endpointModel,
         path,
         mode,
         onSelect: callback,

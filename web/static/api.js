@@ -2,6 +2,7 @@ import * as model from "./model.js";
 import * as util from "./util.js";
 import * as settings from "./settings.js";
 import { TransferMode } from "./models/transfer-model.js";
+import { EndpointModel } from "./models/endpoint-model.js";
 
 export function _asyncGet(a_url, a_raw_json_data, a_callback, a_timeout) {
     $.ajax({
@@ -96,43 +97,37 @@ export function setDefaultAlloc(a_repo, a_subject, a_cb) {
 
 export function xfrStart(a_ids, a_mode, a_path, a_ext, a_encrypt_mode, a_orig_fname, a_cb) {
     const search_path = a_path.substring(0, a_path.indexOf("/"));
-    epView(search_path, (ok, ep_data) => {
-        // Example "entity_type": "GCSv5_guest_collection
-        const is_mapped = ep_data?.entity_type.includes("mapped");
+    epView(search_path, (ok, ep_data ) => {
+        const ep = new EndpointModel(ep_data);
         let url = "/api/dat/";
 
+        // Build the base URL based on transfer mode
         if (a_mode === TransferMode.TT_DATA_GET) {
-            url +=
-                "get" +
-                "?id=" +
-                encodeURIComponent(JSON.stringify(a_ids)) +
-                (a_orig_fname ? "&orig_fname=1" : "");
+            url += `get?id=${encodeURIComponent(JSON.stringify(a_ids))}${a_orig_fname ? "&orig_fname=1" : ""}`;
         } else if (a_mode === TransferMode.TT_DATA_PUT) {
-            url += "put" + "?id=" + encodeURIComponent(a_ids[0]);
+            url += `put?id=${encodeURIComponent(a_ids[0])}`;
         } else {
             return;
         }
 
-        url +=
-            "&path=" +
-            encodeURIComponent(a_path) +
-            "&encrypt=" +
-            a_encrypt_mode +
-            (a_ext && a_ext.length ? "&ext=" + encodeURIComponent(a_ext) : "");
+        // Add common parameters
+        url += `&path=${encodeURIComponent(a_path)}&encrypt=${a_encrypt_mode}`;
+        if (a_ext && a_ext.length) {
+            url += `&ext=${encodeURIComponent(a_ext)}`;
+        }
 
-        _asyncGet(
-            url,
-            is_mapped ? { collection_id: ep_data.id, collection_type: "mapped" } : null,
-            function (ok, data) {
-                if (ok) {
-                    epRecentLoad(function () {
-                        if (a_cb) a_cb(ok, data);
-                    });
-                } else {
+        // Make the API request with proper consent parameters if needed
+        const requestData = ep.requiresConsent ? { collection_id: ep.id, collection_type: "mapped" } : null;
+
+        _asyncGet(url, requestData, (ok, data) => {
+            if (ok) {
+                epRecentLoad(() => {
                     if (a_cb) a_cb(ok, data);
-                }
-            },
-        );
+                });
+            } else {
+                if (a_cb) a_cb(ok, data);
+            }
+        });
     });
 }
 

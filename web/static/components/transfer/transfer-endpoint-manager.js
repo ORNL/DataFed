@@ -61,12 +61,20 @@ export class TransferEndpointManager {
                     ep.name = ep.canonical_name || ep.id;
                 });
                 this.updateMatchesList(data.DATA);
+                // Ensure browse button is disabled until a selection is made from matches
+                this.#controller.uiManager.enableBrowseButton(false);
+                // Also disable start button as no endpoint is confirmed yet
+                this.#controller.uiManager.enableStartButton(false);
             } else {
-                console.warn("No matches found");
+                console.warn("No matches found via autocomplete");
                 this.state.endpointManagerList = null;
                 this.updateMatchesList([]);
+                // Disable browse/start buttons as no endpoint could be resolved
+                this.#controller.uiManager.enableBrowseButton(false);
+                this.#controller.uiManager.enableStartButton(false);
                 if (data.code) {
                     console.error("Autocomplete error:", data);
+                    // Optionally show an alert, but often just showing "No Matches" is enough
                     this.dialogs.dlgAlert("Globus Error", data.code);
                 }
             }
@@ -74,34 +82,40 @@ export class TransferEndpointManager {
     }
 
     /**
-     * Searches for a specific endpoint
-     * @param {string} endpoint - The endpoint to search for
+     * Searches for a specific endpoint by trying epView first, then falling back to autocomplete.
+     * @param {string} endpoint - The endpoint identifier (UUID, canonical name, display name, etc.)
      * @param {string} searchToken - Token to track current search request
-     * @returns {Promise|undefined} API response promise if available
      */
     searchEndpoint(endpoint, searchToken) {
         console.info("Searching for endpoint:", endpoint);
+        // Reset matches list and disable buttons initially for the new search
+        this.updateMatchesList([]);
+        this.#controller.uiManager.enableBrowseButton(false);
+        this.#controller.uiManager.enableStartButton(false);
+        this.state.currentEndpoint = null; // Clear current endpoint until resolved
 
-        try {
-            return this.api.epView(endpoint, (ok, data) => {
-                if (searchToken !== this.state.currentSearchToken) {
-                    console.warn("Ignoring stale epView response");
-                    return;
-                }
+        // 1. Try direct epView first (handles UUIDs, canonical names)
+        this.api.epView(endpoint, (ok, data) => {
+            if (searchToken !== this.state.currentSearchToken) {
+                console.warn("Ignoring stale epView response (direct attempt)");
+                return;
+            }
 
-                if (ok && !data.code) {
-                    console.info("Direct endpoint match found:", data);
-                    this.#controller.uiManager.enableBrowseButton(true);
-                    this.#controller.uiManager.handleSelectedEndpoint(data);
-                    this.#controller.uiManager.handleSelectionChange();
-                } else {
-                    console.warn("No direct match, trying autocomplete");
-                    this.searchEndpointAutocomplete(endpoint, searchToken);
-                }
-            });
-        } catch (error) {
-            this.dialogs.dlgAlert("Globus Error", error);
-        }
+            if (ok && !data.code) {
+                // Exact match found via epView
+                console.info("Direct endpoint match found via epView:", data);
+                // Update UI immediately with the single, confirmed match
+                this.#controller.uiManager.handleSelectedEndpoint(data);
+                // Enable browse button now that we have a valid endpoint
+                this.#controller.uiManager.enableBrowseButton(true);
+                // Trigger selection change check which might enable the start button
+                this.#controller.uiManager.handleSelectionChange();
+            } else {
+                // epView failed, likely not a UUID/canonical name. Try autocomplete.
+                console.warn("Direct epView failed for '"+ endpoint +"', trying autocomplete. Error:", data?.code || "N/A");
+                this.searchEndpointAutocomplete(endpoint, searchToken);
+            }
+        });
     }
 
     /**
@@ -114,15 +128,19 @@ export class TransferEndpointManager {
      */
     updateMatchesList(endpoints = []) {
         const matches = $("#matches", this.#controller.uiManager.state.frame);
+        // Ensure matches element exists before proceeding
+        if (!matches.length) {
+            console.warn("Matches dropdown element not found in UI.");
+            return;
+        }
         if (!endpoints.length) {
             matches.html("<option disabled selected>No Matches</option>");
             matches.prop("disabled", true);
-            return;
+        } else {
+            const html = createMatchesHtml(endpoints);
+            matches.html(html);
+            matches.prop("disabled", false);
         }
-
-        const html = createMatchesHtml(endpoints);
-        matches.html(html);
-        matches.prop("disabled", false);
     }
 
     /**
@@ -134,48 +152,63 @@ export class TransferEndpointManager {
      * @param {string} searchToken - Token to track current search request
      */
     handlePathInput(searchToken) {
+        // Check initialization state using the manager's own state
         if (!this.state.initialized) {
             console.warn("Dialog not yet initialized - delaying path input handling");
+            // Ensure 'this' context is preserved in setTimeout
             setTimeout(() => this.handlePathInput(searchToken), 100);
             return;
         }
 
-        // Validate that we're processing the most recent search request
-        // This prevents wasted API calls and UI updates for abandoned searches
+        // Validate search token
         if (searchToken !== this.state.currentSearchToken) {
             console.info("Token mismatch - ignoring stale request");
             return;
         }
 
-        // TODO What if the path is prepopulated to a dir and the mode is put?
         const pathElement = $("#path", this.#controller.uiManager.state.frame);
         const path = pathElement?.val()?.trim() || "";
 
-        // No input or set input to empty, reset state
-        if (!path || !path.length) {
+        // Handle empty input
+        if (!path) {
+            console.info("Path input cleared.");
             this.state.endpointManagerList = null;
             this.state.currentEndpoint = null;
             this.updateMatchesList([]);
             this.#controller.uiManager.enableStartButton(false);
             this.#controller.uiManager.enableBrowseButton(false);
+            // Clear the matches dropdown explicitly
+            const matches = $("#matches", this.#controller.uiManager.state.frame);
+            if (matches.length) {
+                matches.html("<option disabled selected>Enter Endpoint</option>");
+                matches.prop("disabled", true);
+            }
             return;
         }
 
         const endpoint = path.split("/")[0];
         console.info(
-            "Extracted endpoint:",
-            endpoint,
-            "Current endpoint:",
-            this.state.currentEndpoint?.name,
+            "Extracted endpoint:", endpoint,
+            "Current endpoint name:", this.state.currentEndpoint?.name || "None"
         );
 
-        // Edge case: input is just a /. Ideally we have some middleware validation to avoid this
-        if (
-            endpoint &&
-            (!this.state.currentEndpoint || endpoint !== this.state.currentEndpoint.name)
-        ) {
-            console.info("Endpoint changed or not set - searching for new endpoint");
+        // Trigger search if endpoint identifier is present and differs from current
+        // or if there's no current endpoint selected yet.
+        if (endpoint && (!this.state.currentEndpoint || endpoint !== this.state.currentEndpoint.name)) {
+            console.info("Endpoint identifier changed or not set - searching for:", endpoint);
             this.searchEndpoint(endpoint, searchToken);
+        } else if (endpoint && this.state.currentEndpoint && endpoint === this.state.currentEndpoint.name) {
+            // Endpoint name hasn't changed, but path might have.
+            // Ensure buttons reflect current state (e.g., if path became valid/invalid)
+            console.info("Endpoint name unchanged, re-evaluating selection state.");
+            this.#controller.uiManager.handleSelectionChange();
+        } else if (!endpoint) {
+             // This case should be caught by the `!path` check earlier, but added for robustness.
+             console.warn("Path input resulted in empty endpoint identifier.");
+             this.state.currentEndpoint = null;
+             this.updateMatchesList([]);
+             this.#controller.uiManager.enableStartButton(false);
+             this.#controller.uiManager.enableBrowseButton(false);
         }
     }
 }
