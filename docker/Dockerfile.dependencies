@@ -46,6 +46,13 @@ RUN echo "#!/bin/bash\n\$@" > /usr/bin/sudo && chmod +x /usr/bin/sudo
 # run build scripts
 RUN ${BUILD_DIR}/scripts/generate_datafed.sh
 
+# install Python 3.11
+RUN apt update
+RUN apt install software-properties-common
+RUN add-apt-repository ppa:deadsnakes/ppa
+RUN apt update
+RUN apt install python3.11 python3.11-dev python3.11-venv python3-distutils
+
 # Web dependencies
 COPY ./scripts/install_ws_dependencies.sh ${BUILD_DIR}/scripts/
 RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_dependencies.sh -a -r -z -c
