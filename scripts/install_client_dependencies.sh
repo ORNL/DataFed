@@ -10,7 +10,7 @@ PROJECT_ROOT=$(realpath "${SOURCE}/..")
 source "${PROJECT_ROOT}/scripts/utils.sh"
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
-packages=("python3-pkg-resources" "python3-pip" "pkg-config" "python3-venv")
+packages=("python3-setuptools" "python3-pip" "pkg-config" "python3-venv")
 
 sudo_command
 # This script will install all of the dependencies needed by DataFed 1.0
