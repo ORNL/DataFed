@@ -17,7 +17,7 @@ jobs:
       - name: Install Python 3.9
         run: sudo apt install python3.9 python3.9-dev python3.9-venv python3.9-distutils
       - name: Ensure pip is installed
-        run: python3.11 -m ensurepip
+        run: python3.9 -m ensurepip
       - name: Install dependencies
         run: |
           ./scripts/generate_datafed.sh
