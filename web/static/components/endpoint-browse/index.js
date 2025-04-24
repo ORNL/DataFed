@@ -230,7 +230,7 @@ class EndpointBrowser {
             }
 
             // Only GCSv5_mapped_collections require consent for data access
-            const requiresConsent = this.props.endpoint.requiresConsent;
+            const { requiresConsent } = this.props.endpoint;
 
             // Fetch directory listing
             const data = await new Promise((resolve) => {
@@ -312,10 +312,14 @@ class EndpointBrowser {
                 });
                 title = `<span class='ui-state-error'>Consent Required: Please provide <a href="${data.consent_url}">consent</a>.</span>`;
             } else {
-                title = `<span class='ui-state-error'>Error: ${error.data.message || "Unknown API error"}</span>`;
+                title = `<span class='ui-state-error'>Error: ${
+                    error.data.message || "Unknown API error"
+                }</span>`;
             }
         } else {
-            title = `<span class='ui-state-error'>Error: ${error.message || "Unknown error"}</span>`;
+            title = `<span class='ui-state-error'>Error: ${
+                error.message || "Unknown error"
+            }</span>`;
         }
 
         return [{ title, icon: false, is_dir: true }];
