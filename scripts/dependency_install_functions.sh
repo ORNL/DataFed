@@ -79,7 +79,7 @@ init_python() {
   if [ ! -e "$DATAFED_DEPENDENCIES_INSTALL_PATH" ] || [ ! -d "$DATAFED_PYTHON_DEPENDENCIES_DIR" ]; then
       mkdir -p "$DATAFED_PYTHON_DEPENDENCIES_DIR"
   fi
-  python3.11 -m venv "${DATAFED_PYTHON_ENV}"
+  "python${DATAFED_PYTHON_VERSION}" -m venv "${DATAFED_PYTHON_ENV}"
 }
 
 install_cmake() {
