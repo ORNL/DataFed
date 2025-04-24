@@ -1,7 +1,7 @@
 import * as util from "../../util.js";
 import * as api from "../../api.js";
 import { TransferMode } from "../../models/transfer-model.js";
-import { EndpointModel, EndpointEntityType } from "../../models/endpoint-model.js";
+import { EndpointModel } from "../../models/endpoint-model.js";
 
 const CONFIG = {
     PATH: { SEPARATOR: "/", UP: "..", CURRENT: "." },
@@ -224,7 +224,8 @@ class EndpointBrowser {
             if (ep_status?.code) {
                 throw new ApiError({
                     code: ep_status.code,
-                    message: ep_status.message || `Error accessing endpoint: ${this.props.endpoint.id}`
+                    message:
+                        ep_status.message || `Error accessing endpoint: ${this.props.endpoint.id}`,
                 });
             }
 
@@ -304,14 +305,13 @@ class EndpointBrowser {
             if (error.code === "ConsentRequired" || error.data?.needs_consent === true) {
                 const data = await new Promise((resolve) => {
                     api.getGlobusConsentURL(
-                      (_, data) => resolve(data),
-                      this.props.endpoint.id,
-                      error.data.required_scopes
+                        (_, data) => resolve(data),
+                        this.props.endpoint.id,
+                        error.data.required_scopes,
                     );
                 });
                 title = `<span class='ui-state-error'>Consent Required: Please provide <a href="${data.consent_url}">consent</a>.</span>`;
-            }
-            else {
+            } else {
                 title = `<span class='ui-state-error'>Error: ${error.data.message || "Unknown API error"}</span>`;
             }
         } else {
@@ -352,9 +352,8 @@ class EndpointBrowser {
  * @param {Function} callback - Selection callback
  */
 export function show(endpoint, path, mode, callback) {
-    const endpointModel = endpoint instanceof EndpointModel
-      ? endpoint
-      : new EndpointModel(endpoint);
+    const endpointModel =
+        endpoint instanceof EndpointModel ? endpoint : new EndpointModel(endpoint);
 
     const browser = new EndpointBrowser({
         endpoint: endpointModel,

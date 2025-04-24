@@ -97,7 +97,7 @@ export function setDefaultAlloc(a_repo, a_subject, a_cb) {
 
 export function xfrStart(a_ids, a_mode, a_path, a_ext, a_encrypt_mode, a_orig_fname, a_cb) {
     const search_path = a_path.substring(0, a_path.indexOf("/"));
-    epView(search_path, (ok, ep_data ) => {
+    epView(search_path, (ok, ep_data) => {
         const ep = new EndpointModel(ep_data);
         let url = "/api/dat/";
 
@@ -117,7 +117,9 @@ export function xfrStart(a_ids, a_mode, a_path, a_ext, a_encrypt_mode, a_orig_fn
         }
 
         // Make the API request with proper consent parameters if needed
-        const requestData = ep.requiresConsent ? { collection_id: ep.id, collection_type: "mapped" } : null;
+        const requestData = ep.requiresConsent
+            ? { collection_id: ep.id, collection_type: "mapped" }
+            : null;
 
         _asyncGet(url, requestData, (ok, data) => {
             if (ok) {
