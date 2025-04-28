@@ -233,7 +233,6 @@ export class TransferEndpointManager {
         } else if (!endpoint) {
             // This case should be caught by the `!path` check earlier, but added for robustness.
             console.warn("Path input resulted in empty endpoint identifier.");
-            console.warn("Path input resulted in empty endpoint identifier.");
             this.#resetUIForSearch();
         }
         // If the endpoint identifier *is* the same as current, and non-empty, we do nothing here,
