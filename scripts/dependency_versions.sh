@@ -3,7 +3,7 @@
 DATAFED_CMAKE_VERSION="3.17.5"
 DATAFED_GLOBUS_VERSION="6.0.31-1"
 DATAFED_JSON_SCHEMA_VALIDATOR_VERSION="2.1.0"
-DATAFED_NLOHMANN_JSON_VERSION="3.12.0"
+DATAFED_NLOHMANN_JSON_VERSION="3.10.2"
 DATAFED_LIBSODIUM_VERSION="1.0.18"
 # this version is different from above due to the fact libsodium names its shared library diffrently than the actual api version
 DATAFED_LIB_LIBSODIUM_VERSION="23.3.0"
