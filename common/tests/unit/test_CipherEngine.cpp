@@ -31,12 +31,12 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryption)
     //Sets struct CipherString: which contains cipherText, cipherIV, cipherPaddedLen
     unsigned char iv[16];
 
-    //string msg = "AgdzegjlPyyoDa56Bx5yobvJYEjdGr2YpGYJybE7x4Bq42pQ3zuXCb8YQyn0EqEB7vjPx3GlNlKwkEsMnNokqfxq926";
-    string msg = "Hello World";
-    CipherEngine::generateIV(iv);
+    string msg = "AgdzegjlPyyoDa56Bx5yobvJYEjdGr2YpGYJybE7x4Bq42pQ3zuXCb8YQyn0EqEB7vjPx3GlNlKwkEsMnNokqfxq926";
+    //string msg = "Hello World";
+    //CipherEngine::generateIV(iv);
 
     //Here if parties would like to use their own IV GENERATOR
-    CipherEngine::CipherString returnObj = testCipher.encrypt(iv, msg);
+    //CipherEngine::CipherString returnObj = testCipher.encrypt(iv, msg);
     
     CipherEngine::CipherString returnObj2 = testCipher.encrypt(msg);
  
@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryption)
     std::string unencrypted_msg;
     unencrypted_msg = testCipher.decrypt(returnObj2); 
     std::cout << "Unencrypted Message:" << unencrypted_msg << std::endl;
-
+    BOOST_CHECK(msg.compare(unencrypted_msg) == 0);
 }
 
 BOOST_AUTO_TEST_CASE(testing_KeyGeneration)

@@ -104,13 +104,13 @@ const std::string DatabaseAPI::buildSearchParamURL(
     if(iparam->first == "access")
     {
       printf("Before Escape:\n");
-      BIO_dump_fp (stdout, iparam->second.c_str(), 96); //adjust to have appropriate size
+      BIO_dump_fp (stdout, iparam->second.c_str(), 128); //adjust to have appropriate size
     }
     esc_txt = curl_easy_escape(m_curl, iparam->second.c_str(), 0);
     if(iparam->first == "access")
     {
       printf("After Escape:\n");
-      BIO_dump_fp (stdout,esc_txt, 96); //adjust to have appropriate size
+      BIO_dump_fp (stdout,esc_txt, 128); //adjust to have appropriate size
     }
 
     url.append(esc_txt);
@@ -392,8 +392,8 @@ void DatabaseAPI::userGetAccessToken(
   
 
   printf("This may be the first time this prints:\n");
-  BIO_dump_fp (stdout, access_obj.encrypted_msg, access_obj.encrypted_msg_len);
-
+  BIO_dump_fp (stdout, access_obj.encrypted_msg, strlen(access_obj.encrypted_msg));
+  std::cout << "BASE64LEN: " << strlen(access_obj.encrypted_msg) << std::endl;
 
   //vector<unsigned char> encrypted_refresh_msg(obj.getString("refresh").begin() ,obj.getString("refresh").end());
   //int refresh_len = obj.getNumber("refresh_len");

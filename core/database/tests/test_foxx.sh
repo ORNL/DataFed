@@ -87,8 +87,8 @@ while [ : ]; do
         TEST_TO_RUN=$2
         shift 2
         ;;
-    --) shift; 
-        break 
+    --) shift;
+        break
         ;;
     \?) # incorrect option
         echo "Error: Invalid option"
@@ -112,10 +112,10 @@ fi
 
 # There are apparently 3 different ways to deploy Foxx microservices,
 # Using curl with http requests
-# Using the Arango web ui 
+# Using the Arango web ui
 # Using node module
 #
-# The web deployment requires manual interaction, and I could not figure out the 
+# The web deployment requires manual interaction, and I could not figure out the
 # syntax for the REST http endpoints with curl so we are going to try the node module
 
 # Will only install if not already present
@@ -130,7 +130,7 @@ fi
 PATH_TO_PASSWD_FILE=${SOURCE}/database_temp.password
 if [ "$TEST_TO_RUN" == "all" ]
 then
-  # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint 
+  # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint
   "${FOXX_PREFIX}foxx" test -u "${local_DATABASE_USER}" \
    --server "tcp://${DATAFED_DATABASE_HOST}:8529" \
     -p "${PATH_TO_PASSWD_FILE}" \
@@ -138,7 +138,7 @@ then
     "/api/${local_FOXX_MAJOR_API_VERSION}" --reporter spec
 else
   echo "Test: $TEST_TO_RUN"
-  # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint 
+  # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint
   "${FOXX_PREFIX}foxx" test -u "${local_DATABASE_USER}" \
   --server "tcp://${DATAFED_DATABASE_HOST}:8529" \
     -p "${PATH_TO_PASSWD_FILE}" \

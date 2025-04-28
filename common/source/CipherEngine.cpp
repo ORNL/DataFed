@@ -14,7 +14,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
-
+#include <iomanip>
 using namespace std;
 namespace SDMS{
 
@@ -210,15 +210,22 @@ std::string CipherEngine::decrypt(CipherString encrypted_string)
     unsigned char* iv;
 
     int len;
-    unsigned char plaintext[encrypted_string.encrypted_msg_len];
+    //unsigned char plaintext[encrypted_string.encrypted_msg_len];
+    unsigned char* plaintext = new unsigned char[encrypted_string.encrypted_msg_len + EVP_MAX_BLOCK_LENGTH]();
     int plaintext_len;
 
+    //std::cout << 
     //converts the cipherstring back to a unsigned char
-    ciphertext = decode64(encrypted_string.encrypted_msg, encrypted_string.encrypted_msg_len);
-    iv = decode64(encrypted_string.iv, 16);
+    ciphertext = decode64(encrypted_string.encrypted_msg, strlen(encrypted_string.encrypted_msg));
+    iv = decode64(encrypted_string.iv, strlen(encrypted_string.iv));
 
-    printf("GetAccess Byte Code:\n");
-    std::cout << ciphertext << std::endl;
+
+    printf("Msg Len, should be 96:\n");
+    std::cout << encrypted_string.encrypted_msg_len << std::endl;
+
+
+    //printf("GetAccess Byte Code:\n"); 
+    //std::cout << ciphertext << std::endl;
 
     /* Create and initialise the context */
     if(!(ctx = EVP_CIPHER_CTX_new()))
@@ -231,6 +238,7 @@ std::string CipherEngine::decrypt(CipherString encrypted_string)
      * IV size for *most* modes is the same as the block size. For AES this
      * is 128 bits
      */
+
 
     std::cout << "Flag 0" << std::endl;
     if(1 != EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv))
@@ -250,16 +258,19 @@ std::string CipherEngine::decrypt(CipherString encrypted_string)
      plaintext_len = len;
 
     std::cout << "Flag 2" << std::endl;
+
+    printf("2nd Msg Len, should be 96i:\n");
+    std::cout << encrypted_string.encrypted_msg_len << std::endl;
     /*
      * Finalise the decryption. Further plaintext bytes may be written at
      * this stage.
      */
 
-    std::cout << "Plaintext + len: " << plaintext + len << std::endl;
-     if(1 != EVP_DecryptFinal_ex(ctx, plaintext + len, &len))
-     {
-         handleErrors();
-     }
+    //std::cout << "Plaintext + len: " << plaintext + len << std::endl;
+    if(1 != EVP_DecryptFinal_ex(ctx, plaintext + len, &len))
+    {
+        handleErrors();
+    }
     plaintext_len += len;
 
     std::cout << "Flag 3" << std::endl;
