@@ -7,7 +7,7 @@ function(find_json_library)
   set(JSON_LIBRARY_PATH "" )
 
   if(EXISTS ${DEPENDENCY_INSTALL_PATH})
-    set(JSON_LIB_CMAKE_DIR "${DEPENDENCY_INSTALL_PATH}/lib/cmake")
+    set(JSON_LIB_CMAKE_DIR "${DEPENDENCY_INSTALL_PATH}/share/cmake ${DEPENDENCY_INSTALL_PATH}/lib/cmake")
     set(JSON_INCLUDE_DIR "${DEPENDENCY_INSTALL_PATH}/include")
     set(JSON_LIB_DIR "${DEPENDENCY_INSTALL_PATH}/lib")
   endif()
