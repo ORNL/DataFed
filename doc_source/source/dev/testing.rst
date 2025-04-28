@@ -61,8 +61,8 @@ Now, run the Foxx container with the appropriate environment variables to instal
 .. code-block:: bash
 
    docker run \
-     -e DATAFED_DATABASE_PASSWORD="butterscotch" \
-     -e DATAFED_ZEROMQ_SYSTEM_SECRET="butter" \
+     -e DATAFED_DATABASE_PASSWORD="<password>" \
+     -e DATAFED_ZEROMQ_SYSTEM_SECRET="<secret>" \
      -e INSTALL_FOXX=ON \
      -e ENABLE_FOXX_TESTS=TRUE \
      --network=host \
