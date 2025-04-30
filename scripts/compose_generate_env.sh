@@ -117,7 +117,7 @@ then
   # Make the repo domain equivalent to the COMPOSE DOMAIN unless REPO_DOMAIN is
   # specified explicitly, and it is not localhost, communication between the
   # core container and the repo container will not resolve using localhost.
-  if [ "${local_DATAFED_COMPOSE_DOMAIN}" == "localhost" ]
+  if [ "${local_DATAFED_COMPOSE_DOMAIN}" = "localhost" ]
   then
     local_DATAFED_COMPOSE_REPO_DOMAIN=""
   else
