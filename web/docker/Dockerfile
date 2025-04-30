@@ -65,7 +65,7 @@ ENV          DATAFED_DIR="$DATAFED_DIR"
 ENV            BUILD_DIR="$BUILD_DIR"
 ENV          DATAFED_DEFAULT_LOG_PATH="$DATAFED_INSTALL_PATH/logs"
 
-RUN apt install -y python3 make g++
+RUN apt install -y ake g++
 
 WORKDIR ${DATAFED_DIR}
 

@@ -3,6 +3,8 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/..")
 
+source "${SOURCE}/dependency_versions.sh"
+
 # This script should be run after generating the .env file as it will pull
 # values from the .env file
 Help()
@@ -70,4 +72,4 @@ fi
 sudo globus-connect-server node cleanup
 
 DATAFED_GCS_ROOT_NAME="$DATAFED_GCS_ROOT_NAME" \
-python3 "${PROJECT_ROOT}/scripts/globus/globus_cleanup.py"
+"python${DATAFED_PYTHON_VERSION}" "${PROJECT_ROOT}/scripts/globus/globus_cleanup.py"

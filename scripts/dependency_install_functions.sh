@@ -80,6 +80,8 @@ init_python() {
       mkdir -p "$DATAFED_PYTHON_DEPENDENCIES_DIR"
   fi
   "python${DATAFED_PYTHON_VERSION}" -m venv "${DATAFED_PYTHON_ENV}"
+  # Make sure that pip is installed and upgraded
+  "python${DATAFED_PYTHON_VERSION}" -m ensurepip --upgrade
 }
 
 install_cmake() {
@@ -154,7 +156,7 @@ install_protobuf() {
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python${DATAFED_PYTHON_VERSION} setup.py test
     # Because we have activaited a venv we don't want to use the --user flag
     # with the install command
-    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python3 setup.py install
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" "python${DATAFED_PYTHON_VERSION}" setup.py install
     cd ../
     # Cleanup build file with root ownership
     if [ -f build/install_manifest.txt ]
@@ -196,7 +198,7 @@ install_libsodium() {
     else
       "$SUDO_CMD" make install
     fi
-    
+
     # Mark libsodium as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.libsodium_installed-${DATAFED_LIBSODIUM_VERSION}"
     cd "$original_dir"

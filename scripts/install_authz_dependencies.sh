@@ -11,8 +11,8 @@ source "${PROJECT_ROOT}/scripts/utils.sh"
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
 packages=("host" "libtool" "build-essential" "g++" "gcc" "autoconf"
-  "automake" "make" "git" "python3-pkg-resources" "python3-pip" "pkg-config"
-  "libglobus-common-dev" "wget" "jq" "sudo" "libboost-all-dev" "python${DATAFED_PYTHON_VERSION}-venv" "libgssapi-krb5-2")
+  "automake" "make" "git" "pkg-config"
+  "libglobus-common-dev" "wget" "jq" "sudo" "libboost-all-dev" "python${DATAFED_PYTHON_VERSION}" "python${DATAFED_PYTHON_VERSION}-venv" "libgssapi-krb5-2")
 pip_packages=("setuptools" "distro" "jwt" "globus_sdk")
 externals=("cmake" "protobuf" "libsodium" "libzmq" )
 
@@ -47,8 +47,8 @@ if [[ $local_UNIFY = false ]]; then
   "$SUDO_CMD" apt-get install -y "${packages[@]}"
   init_python
   source "${DATAFED_PYTHON_ENV}/bin/activate"
-  python${DATAFED_PYTHON_VERSION} -m pip install --upgrade pip
-  python${DATAFED_PYTHON_VERSION} -m pip install "${pip_packages[@]}"
+  "python${DATAFED_PYTHON_VERSION}" -m pip install --upgrade pip
+  "python${DATAFED_PYTHON_VERSION}" -m pip install "${pip_packages[@]}"
 
   for ext in "${externals[@]}"; do
     install_dep_by_name "$ext"
