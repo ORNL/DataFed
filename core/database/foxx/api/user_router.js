@@ -553,6 +553,7 @@ router
                     var user_id;
                     let user_doc;
 
+                    console.log("Recieved Access Token:", JSON.stringify(req.queryParams.access));
                     const { type: token_type, other_token_data } = req.queryParams;
                     // validate optional query params
                     if (
@@ -749,7 +750,7 @@ router
                 token_document,
                 needs_consent,
             );
-
+            console.log("Token Get - Result:",JSON.stringify(result));
             res.send(result);
         } catch (e) {
             g_lib.handleException(e, res);

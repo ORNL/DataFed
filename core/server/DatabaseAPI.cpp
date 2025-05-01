@@ -17,6 +17,7 @@
 #include <zmq.h>
 #include <openssl/bio.h>
 // Standard includes
+#include <typeinfo>
 #include <algorithm>
 #include <cctype>
 #include <memory>
@@ -364,7 +365,7 @@ void DatabaseAPI::userGetAccessToken(
   //grab the token_key
   readFile("../../build/core/server/datafed-token-key.txt", 32, token_key);
   CipherEngine cipher(token_key);
-  CipherEngine::CipherString access_obj = cipher.createCipherString();
+  CipherEngine::CipherString encoded_access_obj = cipher.createCipherString();
 
   const Value::Object &obj = result.asObject();
 
@@ -377,43 +378,46 @@ void DatabaseAPI::userGetAccessToken(
   access_obj.iv = (obj.getString("access_iv").begin() ,obj.getString("access_iv").end());
 */
   std::string access = obj.getString("access");
-  access_obj.encrypted_msg_len = obj.getNumber("access_len");
+  //GOES FROM DOUBLE TO INT
+  encoded_access_obj.encrypted_msg_len = obj.getNumber("access_len");
+
+  cout << "This should be a i:" << typeid(encoded_access_obj.encrypted_msg_len).name() << endl;
+
+  std::cout << "Recieved from db immediate access val:" << access << std::endl;
+  std::cout << "Access Len of imm access val:" << access.length() << std::endl;
+  
+  std::cout << "OBJ GETNUM:" <<obj.getNumber("access_len") << std::endl;
+  //THIS IS CORRECT SO FAR BOTH LEN AND ACCESS TOK
 
   // Allocate and copy to char*
-  access_obj.encrypted_msg = new char[access_obj.encrypted_msg_len + 1]; // add 1 for null terminator (if needed)
-  memcpy(access_obj.encrypted_msg, access.data(), access_obj.encrypted_msg_len);
-  access_obj.encrypted_msg[access_obj.encrypted_msg_len] = '\0'; // null terminate (optional for base64)
+  //access_obj.encrypted_msg = new char[access_obj.encrypted_msg_len + 1]; // add 1 for null terminator
+  //memcpy(access_obj.encrypted_msg, access.data(), access_obj.encrypted_msg_len);
+  //access_obj.encrypted_msg[access_obj.encrypted_msg_len] = '\0'; // null terminate
 
-  // Do the same for IV
+  encoded_access_obj.encrypted_msg = new char[129]; // add 1 for null terminator
+  memcpy(encoded_access_obj.encrypted_msg, access.c_str(), 128);
+  encoded_access_obj.encrypted_msg[128] = '\0'; // null terminate
+
+// Do the same for IV
   std::string access_iv = obj.getString("access_iv");
-  access_obj.iv = new char[access_iv.size() + 1];
-  memcpy(access_obj.iv, access_iv.data(), access_iv.size());
-  access_obj.iv[access_iv.size()] = '\0';
+  encoded_access_obj.iv = new char[25];
+  memcpy(encoded_access_obj.iv, access_iv.c_str(), 24);
+  encoded_access_obj.iv[24] = '\0';
   
+  /*
+  printf("This is the decoded Access IV:");
+  BIO_dump_fp (stdout, access_obj.iv, ((4*(16+2))/3));
 
   printf("This may be the first time this prints:\n");
-  BIO_dump_fp (stdout, access_obj.encrypted_msg, strlen(access_obj.encrypted_msg));
+  BIO_dump_fp (stdout, access_obj.encrypted_msg, 4*((strlen(access_obj.encrypted_msg)+2)/3));
   std::cout << "BASE64LEN: " << strlen(access_obj.encrypted_msg) << std::endl;
-
+*/
   //vector<unsigned char> encrypted_refresh_msg(obj.getString("refresh").begin() ,obj.getString("refresh").end());
   //int refresh_len = obj.getNumber("refresh_len");
   //vector<unsigned char> refresh_iv(obj.getString("refresh_iv").begin() ,obj.getString("refresh_iv").end());
 
-  //Put base64 decryption here
-
-
-  //PUT CODE HERE TO MOVE THE INFO STRAIGHT TO A FILE
-  //std::string tokstr(reinterpret_cast<const char*>(token_key), 32);
-  //std::string msgstr(encrypted_access_msg.begin(), encrypted_access_msg.end());
-  //std::cout << "Token Key:" << std::hex << token_key << std::endl;
-  //std::cout << "Access token:" << msgstr << std::endl;
-  //std::cout << "Access len:" << access_len << std::endl;
-  //std::cout << "Access IV:" << access_iv << std::endl;
-
-
-  //std::cout << "THIS IS RAN1" << std::endl;
   //Decryption for acc token and ref token
-  a_acc_tok = cipher.decrypt(access_obj);
+  a_acc_tok = cipher.decrypt(encoded_access_obj);
   //a_ref_tok = cipher.decrypt(encrypted_refresh_msg.data(), refresh_len, refresh_iv.data());
   //std::cout << "This is after" << std::endl;
   //a_acc_tok = obj.getString("access");
@@ -425,8 +429,8 @@ void DatabaseAPI::userGetAccessToken(
   scopes = obj.getString("scopes");
     
   //Ensuring to free up memory
-  delete[] access_obj.encrypted_msg;
-  delete[] access_obj.iv;
+  delete[] encoded_access_obj.encrypted_msg;
+  delete[] encoded_access_obj.iv;
   
   DL_WARNING(log_context, "Access Token After Decryption:" << a_acc_tok);
 
@@ -459,6 +463,9 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
   BIO_dump_fp (stdout, a_acc_tok.c_str(), access_obj.encrypted_msg_len);
  
   DL_WARNING(log_context, "Encrypted Base64 Msg:" << access_obj.encrypted_msg);
+
+  printf("Encoded 64:\n");
+  BIO_dump_fp(stdout, access_obj.iv, 24);
 
   std::vector<pair<string, string>> params = {
       {"access", access_obj.encrypted_msg}, //a_acc_tok shift to encrypted_access_string

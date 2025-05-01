@@ -42,6 +42,7 @@ class CipherEngine
         CipherString encrypt(unsigned char *iv, const std::string& msg);
         CipherString encrypt(const std::string& msg); 
         std::string decrypt(CipherString encrypted_string);
+        
 };
 }
 #endif
