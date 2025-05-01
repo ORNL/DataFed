@@ -12,8 +12,7 @@ function(find_json_library)
     set(JSON_LIB_DIR "${DEPENDENCY_INSTALL_PATH}/lib")
   endif()
 
-
-  find_package(nlohmann_json CONFIG REQUIRED PATHS "${JSON_LIB_CMAKE_DIR}")
+  find_package(nlohmann_json REQUIRED PATHS "${JSON_LIB_CMAKE_DIR}")
 
   # NOTE interfaces do not have a physical location associated with the library
   get_target_property(JSON_INCLUDE_PATH nlohmann_json::nlohmann_json INTERFACE_INCLUDE_DIRECTORIES )
