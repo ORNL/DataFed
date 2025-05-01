@@ -475,15 +475,49 @@ function GraphPanel(a_id, a_frame, a_parent) {
     function dragStarted(d) {
         //console.log("drag start",d.id);
         if (!d3.event.active) simulation.alphaTarget(0.3).restart();
-        d.fx = d3.event.x;
-        d.fy = d3.event.y;
+        
+        // If node was previously anchored, maintain that state
+        if (d.anchored) {
+            // Node is already anchored, just update position
+            d.fx = d3.event.x;
+            d.fy = d3.event.y;
+        } else {
+            // Normal behavior
+            d.fx = d3.event.x;
+            d.fy = d3.event.y;
+        }
+        
+        // Check if Alt key is pressed to drag the label independently
+        if (d3.event.sourceEvent.altKey) {
+            d.draggingLabel = true;
+            d.labelDragStartX = d3.event.x;
+            d.labelDragStartY = d3.event.y;
+        }
+        
         d3.event.sourceEvent.stopPropagation();
     }
 
     function dragged(d) {
         //console.log("drag",d3.event.x,d3.event.y);
-        d.fx = d3.event.x;
-        d.fy = d3.event.y;
+        
+        if (d.draggingLabel) {
+            // Dragging the label independently
+            if (!d.labelOffsetX) d.labelOffsetX = 0;
+            if (!d.labelOffsetY) d.labelOffsetY = 0;
+            
+            // Update the label offset based on drag movement
+            d.labelOffsetX += (d3.event.x - d.labelDragStartX);
+            d.labelOffsetY += (d3.event.y - d.labelDragStartY);
+            
+            // Update the start position for the next drag event
+            d.labelDragStartX = d3.event.x;
+            d.labelDragStartY = d3.event.y;
+        } else {
+            // Normal node dragging
+            d.fx = d3.event.x;
+            d.fy = d3.event.y;
+        }
+        
         simTick();
         d3.event.sourceEvent.stopPropagation();
     }
@@ -491,10 +525,37 @@ function GraphPanel(a_id, a_frame, a_parent) {
     function dragEnded(d) {
         //console.log("drag end",d.id);
         if (!d3.event.active) simulation.alphaTarget(0);
-        d.x = d.fx;
-        d.y = d.fy;
-        delete d.fx;
-        delete d.fy;
+        
+        if (d.draggingLabel) {
+            // End of label dragging
+            d.draggingLabel = false;
+            // Label position is already updated in the dragged function
+        } else {
+            // Check if shift key is pressed to anchor the node
+            if (d3.event.sourceEvent.shiftKey) {
+                // Keep the fixed position (anchored)
+                d.anchored = true;
+            } else if (!d.anchored) {
+                // Normal behavior - release the node if it's not anchored
+                d.x = d.fx;
+                d.y = d.fy;
+                delete d.fx;
+                delete d.fy;
+            }
+        }
+        
+        // Double-click to toggle anchor state
+        if (d3.event.sourceEvent.detail === 2 && !d.draggingLabel) {
+            d.anchored = !d.anchored;
+            if (d.anchored) {
+                d.fx = d.x;
+                d.fy = d.y;
+            } else {
+                delete d.fx;
+                delete d.fy;
+            }
+        }
+        
         //console.log("at:",d);
         d3.event.sourceEvent.stopPropagation();
     }
@@ -803,9 +864,40 @@ function GraphPanel(a_id, a_frame, a_parent) {
 
     function simTick() {
         //console.log("tick");
+        
+        // Update node positions
         nodes.attr("transform", function (d) {
             return "translate(" + d.x + "," + d.y + ")";
         });
+        
+        // Update label positions with offsets if they exist
+        nodes.selectAll("text.label")
+            .attr("x", function(d) {
+                // Base position (from original code)
+                let baseX = d.locked ? r + 12 : r;
+                
+                // Apply offset if it exists
+                if (d.labelOffsetX !== undefined) {
+                    return baseX + d.labelOffsetX;
+                }
+                return baseX;
+            })
+            .attr("y", function(d) {
+                // Base position (from original code)
+                let baseY = -r;
+                
+                // Apply offset if it exists
+                if (d.labelOffsetY !== undefined) {
+                    return baseY + d.labelOffsetY;
+                }
+                return baseY;
+            });
+            
+        // Update anchored status visual indicator
+        nodes.selectAll("circle.obj")
+            .classed("anchored", function(d) {
+                return d.anchored === true;
+            });
 
         links
             .attr("x1", function (d) {
@@ -834,6 +926,16 @@ function GraphPanel(a_id, a_frame, a_parent) {
             }),
         )
         .append("g");
+        
+    // Add tooltip to explain interaction controls
+    d3.select(a_id)
+        .append("div")
+        .attr("class", "graph-tooltip")
+        .html("<strong>Graph Controls:</strong><br>" +
+              "• Drag: Move node<br>" +
+              "• Shift+Drag: Anchor node<br>" +
+              "• Alt+Drag: Move label<br>" +
+              "• Double-click: Toggle anchor");
 
     defineArrowMarkerDeriv(svg);
     defineArrowMarkerComp(svg);
