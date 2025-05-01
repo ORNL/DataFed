@@ -201,6 +201,26 @@ ul.tagit {
     stroke: #888;
 }
 
+.nodes .anchored {
+    stroke-dasharray: 5,3;
+    stroke-width: 3px;
+}
+
+/* Tooltip for graph interaction help */
+.graph-tooltip {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #000;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 1000;
+    border: 1px solid #ccc;
+}
+
 .node .highlight {
     stroke: #088 !important;
     stroke-width: 2px !important;
@@ -460,24 +480,4 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-icon:af
 
 .data-tree-creator-self {
     color: #0040FF;
-}
-
-.nodes .anchored {
-	stroke-dasharray: 5,3;
-	stroke-width: 3px;
-}
-
-/* Tooltip for graph interaction help */
-.graph-tooltip {
-	position: absolute;
-	bottom: 10px;
-	left: 10px;
-	background: rgba(255, 255, 255, 0.9);
-	color: #000;
-	padding: 5px 10px;
-	border-radius: 3px;
-	font-size: 12px;
-	pointer-events: none;
-	z-index: 1000;
-	border: 1px solid #ccc;
 }

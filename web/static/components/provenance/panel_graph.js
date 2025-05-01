@@ -468,6 +468,10 @@ function GraphPanel(a_id, a_frame, a_parent) {
                         }),
                 )
                 .force("link", linkForce)
+                .force("collide", d3.forceCollide().radius(function(d) {
+                    // Base radius plus some extra space based on label length
+                    return r * 1.5 + (d.label ? d.label.length * 0.8 : 0);
+                }))
                 .on("tick", simTick);
         }
     }
