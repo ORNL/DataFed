@@ -84,14 +84,14 @@ init_python() {
 
 install_cmake() {
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.cmake_installed-${DATAFED_CMAKE_VERSION}" ]; then
-    wget https://github.com/Kitware/CMake/releases/download/v${DATAFED_CMAKE_VERSION}/cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz
-    tar -xzvf "cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz" >/dev/null 2>&1
-    cp -r "cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64/bin" "${DATAFED_DEPENDENCIES_INSTALL_PATH}"
-    cp -r "cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64/share" "${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    wget https://github.com/Kitware/CMake/releases/download/v${DATAFED_CMAKE_VERSION}/cmake-${DATAFED_CMAKE_VERSION}-linux-x86_64.tar.gz
+    tar -xzvf "cmake-${DATAFED_CMAKE_VERSION}-linux-x86_64.tar.gz" >/dev/null 2>&1
+    cp -r "cmake-${DATAFED_CMAKE_VERSION}-linux-x86_64/bin" "${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    cp -r "cmake-${DATAFED_CMAKE_VERSION}-linux-x86_64/share" "${DATAFED_DEPENDENCIES_INSTALL_PATH}"
 
     # Cleanup
-    rm -rf "cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64"
-    rm -rf "cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz"
+    rm -rf "cmake-${DATAFED_CMAKE_VERSION}-linux-x86_64"
+    rm -rf "cmake-${DATAFED_CMAKE_VERSION}-linux-x86_64.tar.gz"
 
     # Mark cmake as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.cmake_installed-${DATAFED_CMAKE_VERSION}"
