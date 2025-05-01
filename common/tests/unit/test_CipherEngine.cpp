@@ -26,7 +26,7 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryption)
     readFile("../../build/core/server/datafed-token-key.txt", 32, key);
     
     //Construct
-    CipherEngine testCipher(key);
+    CipherEngine encryptCipher(key);
 
     //Sets struct CipherString: which contains cipherText, cipherIV, cipherPaddedLen
     unsigned char iv[16];
@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryption)
     //Here if parties would like to use their own IV GENERATOR
     //CipherEngine::CipherString returnObj = testCipher.encrypt(iv, msg);
     
-    CipherEngine::CipherString returnObj2 = testCipher.encrypt(msg);
+    CipherEngine::CipherString returnObj2 = encryptCipher.encrypt(msg);
  
 /*
     std::cout << "Rough Test1:" << encrypted_access_string << std::endl; 
@@ -51,9 +51,17 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryption)
     std::cout << "IV:\n" << returnObj2.iv << std::endl;    
     std::cout << "Encrypted Message Len:\n" << returnObj2.encrypted_msg_len << std::endl;
 
+
+    //WRITE CODE TO MOCK PUTTING IT IN A DB
+
+
+
+
+    CipherEngine decryptCipher(key);
+
     //START OF ENCRYPTION
     std::string unencrypted_msg;
-    unencrypted_msg = testCipher.decrypt(returnObj2); 
+    unencrypted_msg = decryptCipher.decrypt(returnObj2); 
     std::cout << "Unencrypted Message:" << unencrypted_msg << std::endl;
     BOOST_CHECK(msg.compare(unencrypted_msg) == 0);
 }

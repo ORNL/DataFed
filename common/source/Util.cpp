@@ -42,7 +42,7 @@ std::string exec(const char *cmd) {
 int readFile(std::string fileName, int arraySize, unsigned char* array)
 {
     //Converting Key for encryption funct
-    unsigned char keyChar[arraySize];
+    unsigned char keyChar[arraySize] = {};
     //Grabbing key
     std::ifstream keyFile(fileName, std::ios::binary);
 

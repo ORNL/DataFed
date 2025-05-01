@@ -381,12 +381,12 @@ void DatabaseAPI::userGetAccessToken(
   //GOES FROM DOUBLE TO INT
   encoded_access_obj.encrypted_msg_len = obj.getNumber("access_len");
 
-  cout << "This should be a i:" << typeid(encoded_access_obj.encrypted_msg_len).name() << endl;
+  //cout << "This should be a i:" << typeid(encoded_access_obj.encrypted_msg_len).name() << endl;
 
-  std::cout << "Recieved from db immediate access val:" << access << std::endl;
-  std::cout << "Access Len of imm access val:" << access.length() << std::endl;
+  //std::cout << "Recieved from db immediate access val:" << access << std::endl;
+  //std::cout << "Access Len of imm access val:" << access.length() << std::endl;
   
-  std::cout << "OBJ GETNUM:" <<obj.getNumber("access_len") << std::endl;
+  //std::cout << "OBJ GETNUM:" <<obj.getNumber("access_len") << std::endl;
   //THIS IS CORRECT SO FAR BOTH LEN AND ACCESS TOK
 
   // Allocate and copy to char*
@@ -403,7 +403,10 @@ void DatabaseAPI::userGetAccessToken(
   encoded_access_obj.iv = new char[25];
   memcpy(encoded_access_obj.iv, access_iv.c_str(), 24);
   encoded_access_obj.iv[24] = '\0';
-  
+ 
+  //Debug printing the access and iv post memcpy:
+  //std::cout << "Post Memcpy Access Token:" << encoded_access_obj.encrypted_msg << std::endl;
+  //std::cout << "Post Memcpy Access IV:" << encoded_access_obj.iv << std::endl;
   /*
   printf("This is the decoded Access IV:");
   BIO_dump_fp (stdout, access_obj.iv, ((4*(16+2))/3));

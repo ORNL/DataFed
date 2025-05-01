@@ -38,14 +38,12 @@ namespace SDMS{
     } 
  
     unsigned char* decode64(const char *input, int length) {
-        printf("HELLO WORLD");
-
-        std::cout << "Length within decode64:" << length << std::endl;
+        //std::cout << "Length within decode64:" << length << std::endl;
         const int pl = ((length/4)*3);
-        std::cout << "PL:" << pl << std::endl;
+        //std::cout << "PL:" << pl << std::endl;
         unsigned char* output = reinterpret_cast<unsigned char *>(calloc(pl+1, 1));
         const int ol = EVP_DecodeBlock(output, reinterpret_cast<const unsigned char *>(input), length);
-        std::cout << "OL:" << ol << std::endl;
+        //std::cout << "OL:" << ol << std::endl;
         if (pl != ol) { std::cerr << "Whoops, decode predicted " << pl << " but we got " << ol << "\n"; }
         
         return output;
@@ -77,9 +75,10 @@ namespace SDMS{
     CipherEngine::CipherString CipherEngine::encrypt_algorithm(unsigned char *iv, const string& msg)
     {
         //SET PLAINTEXT TO something related to unsigned char*
-        EVP_CIPHER_CTX *ctx;
-        CipherString encoded_string_result;
-        CipherBytes bytes_result;
+        EVP_CIPHER_CTX *ctx = nullptr;
+        CipherString encoded_string_result = {};
+        CipherBytes bytes_result = {};
+        
         int len;   
         
         //setting IV for the resulting obj:
@@ -89,10 +88,7 @@ namespace SDMS{
         }
  
 
-        //TODO:
-        //      -Before encrypting we need to remove the null
-        //          terminator and convert to an unsigned char*
-        vector<unsigned char> msg_unsigned(msg.begin(), msg.end());
+       vector<unsigned char> msg_unsigned(msg.begin(), msg.end());
 
         /* Create and initialise the context */
         if(!(ctx = EVP_CIPHER_CTX_new()))
@@ -133,26 +129,10 @@ namespace SDMS{
         EVP_CIPHER_CTX_free(ctx);
 
 
-        //printf("Encrypted Msg Len:");
-        //std::cout << bytes_result.encrypted_msg_len << std::endl;
-        
-        //printf("Encoded base64 Cipher Text within the encrypt:\n");
-        //std::cout << std::hex << bytes_result.encrypted_msg << std::endl;
-        //std::cout << "IV Len before encode:" << static_cast<int>(strlen(bytes_result.iv)) << std::endl;
-       
-
-       
-        //std::cout << "Encoded Ciphertext:" << bytes_result.encrypted_msg << std::endl;
-
+        //Assigning values to encoded_string_result
         encoded_string_result.encrypted_msg = encode64(bytes_result.encrypted_msg, bytes_result.encrypted_msg_len);
         encoded_string_result.iv = encode64(bytes_result.iv, 16); 
         encoded_string_result.encrypted_msg_len = bytes_result.encrypted_msg_len;
-
-
-        //printf("After Encoded Base64 Len: (should be greater then 96)");
-        //std::cout << strlen(encoded_string_result.encrypted_msg) << std::endl;
-        //printf("SetAccess Base64:\n");
-        //std::cout << string_result.encrypted_msg << std::endl;
 
         return encoded_string_result;
     }
@@ -170,16 +150,16 @@ namespace SDMS{
 
     CipherEngine::CipherString CipherEngine::encrypt(const string& msg)
     {
-        unsigned char iv[16];
+        unsigned char iv[16] = {};
         generateIV(iv);
         
         CipherString result;
 
         result = encrypt_algorithm(iv, msg);
         
-        std::string debug_str = decrypt(result);
+        //std::string debug_str = decrypt(result);
 
-        std::cout << "DEBUG DECRYPT BEFORE PLACED IN DB:" << debug_str << std::endl;
+        //std::cout << "DEBUG DECRYPT BEFORE PLACED IN DB:" << debug_str << std::endl;
 
         return result;
     }
@@ -188,15 +168,14 @@ namespace SDMS{
 std::string CipherEngine::decrypt(CipherString encoded_encrypted_string)
 {
     
-    EVP_CIPHER_CTX *ctx;
+    EVP_CIPHER_CTX *ctx = nullptr;
 
     unsigned char* ciphertext;
     int ciphertext_len = encoded_encrypted_string.encrypted_msg_len;
     unsigned char* iv;
 
     int len;
-    //unsigned char plaintext[encrypted_string.encrypted_msg_len];
-    unsigned char* plaintext = new unsigned char[encoded_encrypted_string.encrypted_msg_len + EVP_MAX_BLOCK_LENGTH]();
+    unsigned char plaintext[encoded_encrypted_string.encrypted_msg_len + EVP_MAX_BLOCK_LENGTH] = {};
     int plaintext_len;
 
     //std::cout << "ENCODED CIPHERTEXT:" << encoded_encrypted_string.encrypted_msg << std::endl;
@@ -211,8 +190,8 @@ std::string CipherEngine::decrypt(CipherString encoded_encrypted_string)
    
     //std::cout << "Decoded Ciphertext:" << ciphertext << std::endl;
     
-    printf("Msg Len, should be 96:\n");
-    std::cout << encoded_encrypted_string.encrypted_msg_len << std::endl;
+    //printf("Msg Len, should be 96:\n");
+    //std::cout << encoded_encrypted_string.encrypted_msg_len << std::endl;
 
     /* Create and initialise the context */
     if(!(ctx = EVP_CIPHER_CTX_new()))
@@ -255,15 +234,6 @@ std::string CipherEngine::decrypt(CipherString encoded_encrypted_string)
      * this stage.
      */
 
-    printf("START OF DEBUG\n");
-    printf("Plaintext:");
-    std::cout << plaintext << std::endl;
-    printf("\nPlaintext + len:");
-    std::cout << plaintext + len << std::endl;
-    
-    printf("Len:");
-    std::cout << len << std::endl;
-
     //std::cout << "Plaintext + len: " << plaintext + len << std::endl;
     if(1 != EVP_DecryptFinal_ex(ctx, plaintext + len, &len))
     {
@@ -277,7 +247,6 @@ std::string CipherEngine::decrypt(CipherString encoded_encrypted_string)
 
     //Convert the plaintext back to string
     std::string result(reinterpret_cast<char const*>(plaintext), plaintext_len);
-    delete[] plaintext;
     return result;
     }
 }
