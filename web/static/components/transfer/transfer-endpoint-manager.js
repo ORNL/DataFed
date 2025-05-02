@@ -41,6 +41,75 @@ export class TransferEndpointManager {
     }
 
     /**
+     * ------------UI UPDATE HELPERS------------
+     */
+
+    #resetUIForSearch() {
+        console.debug("Resetting UI for search.");
+        this.state.currentEndpoint = null;
+        this.state.endpointManagerList = null;
+        this.#updateMatchesList([]);
+        // Also disable start button as no endpoint is confirmed yet
+        this.#controller.uiManager.enableBrowseButton(false);
+        this.#controller.uiManager.enableStartButton(false);
+    }
+
+    #updateMatchesList(endpoints = []) {
+        const matches = $("#matches", this.#controller.uiManager.state.frame);
+        if (!endpoints || !endpoints.length) {
+            matches.html("<option disabled selected>No Matches</option>");
+            matches.prop("disabled", true);
+        } else {
+            const html = createMatchesHtml(endpoints);
+            matches.html(html);
+            matches.prop("disabled", false);
+        }
+    }
+
+    #updateUIForEndpointFound(endpointData) {
+        console.info("Updating UI for directly found endpoint:", endpointData);
+        this.#updateMatchesList(endpointData);
+        this.#controller.uiManager.handleSelectedEndpoint(endpointData);
+        this.#controller.uiManager.enableBrowseButton(true);
+        this.#controller.uiManager.handleSelectionChange();
+    }
+
+    #updateUIWithMatches(endpoints) {
+        console.debug("Updating UI with autocomplete matches.");
+        this.state.endpointManagerList = endpoints;
+        endpoints.forEach((ep) => {
+            ep.name = ep.canonical_name || ep.id;
+        });
+        this.#updateMatchesList(endpoints);
+        // Buttons remain disabled until a selection is made from the list
+        this.#controller.uiManager.enableBrowseButton(false);
+        this.#controller.uiManager.enableStartButton(false);
+    }
+
+    #updateUIForNoMatches() {
+        console.warn("Updating UI for no matches found.");
+        this.state.endpointManagerList = null;
+        // Don't clear currentEndpoint here, as it might be valid from a previous selection
+        this.#updateMatchesList([]);
+        this.#controller.uiManager.enableBrowseButton(false);
+        this.#controller.uiManager.enableStartButton(false);
+    }
+
+    #updateUIForAutocompleteFailure(data) {
+        console.error("Autocomplete error:", data);
+        this.#updateUIForNoMatches();
+        if (data?.code) {
+            this.dialogs.dlgAlert("Globus Error", `Autocomplete failed: ${data.code}`);
+        } else {
+            this.dialogs.dlgAlert("Globus Error", "Autocomplete failed due to an unknown error.");
+        }
+    }
+
+    /**
+     * ------------SEARCH LOGIC------------
+     */
+
+    /**
      * Performs autocomplete search for endpoints
      * @param {string} endpoint - The endpoint search term
      * @param {string} searchToken - Token to track current search request
@@ -51,23 +120,17 @@ export class TransferEndpointManager {
             // Without this check, rapid typing could cause UI flickering and incorrect results
             // as slower API responses return after newer searches
             if (searchToken !== this.state.currentSearchToken) {
+                console.debug("Ignoring stale autocomplete response.");
                 return;
             }
 
-            if (ok && data.DATA && data.DATA.length) {
-                this.state.endpointManagerList = data.DATA;
-                // Process endpoints and update UI
-                data.DATA.forEach((ep) => {
-                    ep.name = ep.canonical_name || ep.id;
-                });
-                this.updateMatchesList(data.DATA);
+            if (ok && data?.DATA?.length) {
+                this.#updateUIWithMatches(data.DATA);
             } else {
-                console.warn("No matches found");
-                this.state.endpointManagerList = null;
-                this.updateMatchesList([]);
-                if (data.code) {
-                    console.error("Autocomplete error:", data);
-                    this.dialogs.dlgAlert("Globus Error", data.code);
+                if (!ok || data?.code) {
+                    this.#updateUIForAutocompleteFailure(data);
+                } else {
+                    this.#updateUIForNoMatches();
                 }
             }
         });
@@ -80,7 +143,9 @@ export class TransferEndpointManager {
      * @returns {Promise|undefined} API response promise if available
      */
     searchEndpoint(endpoint, searchToken) {
-        console.info("Searching for endpoint:", endpoint);
+        console.info(`Searching for endpoint: "${endpoint}" (Token: ${searchToken})`);
+        // Reset UI for the new search immediately
+        this.#resetUIForSearch();
 
         try {
             return this.api.epView(endpoint, (ok, data) => {
@@ -90,10 +155,8 @@ export class TransferEndpointManager {
                 }
 
                 if (ok && !data.code) {
-                    console.info("Direct endpoint match found:", data);
-                    this.#controller.uiManager.enableBrowseButton(true);
-                    this.#controller.uiManager.handleSelectedEndpoint(data);
-                    this.#controller.uiManager.handleSelectionChange();
+                    console.info("Direct endpoint match found:", data.id);
+                    this.#updateUIForEndpointFound(data);
                 } else {
                     console.warn("No direct match, trying autocomplete");
                     this.searchEndpointAutocomplete(endpoint, searchToken);
@@ -105,27 +168,6 @@ export class TransferEndpointManager {
     }
 
     /**
-     * ------------UPDATE------------
-     */
-
-    /**
-     * Updates the list of endpoint matches in the UI
-     * @param {Array<object>} [endpoints=[]] - Array of endpoint objects
-     */
-    updateMatchesList(endpoints = []) {
-        const matches = $("#matches", this.#controller.uiManager.state.frame);
-        if (!endpoints.length) {
-            matches.html("<option disabled selected>No Matches</option>");
-            matches.prop("disabled", true);
-            return;
-        }
-
-        const html = createMatchesHtml(endpoints);
-        matches.html(html);
-        matches.prop("disabled", false);
-    }
-
-    /**
      * ------------HANDLERS------------
      */
 
@@ -134,48 +176,67 @@ export class TransferEndpointManager {
      * @param {string} searchToken - Token to track current search request
      */
     handlePathInput(searchToken) {
+        // Check initialization state using the manager's own state
         if (!this.state.initialized) {
             console.warn("Dialog not yet initialized - delaying path input handling");
             setTimeout(() => this.handlePathInput(searchToken), 100);
             return;
         }
 
-        // Validate that we're processing the most recent search request
-        // This prevents wasted API calls and UI updates for abandoned searches
+        // Validate search token
         if (searchToken !== this.state.currentSearchToken) {
             console.info("Token mismatch - ignoring stale request");
             return;
         }
 
-        // TODO What if the path is prepopulated to a dir and the mode is put?
         const pathElement = $("#path", this.#controller.uiManager.state.frame);
         const path = pathElement?.val()?.trim() || "";
 
-        // No input or set input to empty, reset state
-        if (!path || !path.length) {
-            this.state.endpointManagerList = null;
-            this.state.currentEndpoint = null;
-            this.updateMatchesList([]);
-            this.#controller.uiManager.enableStartButton(false);
-            this.#controller.uiManager.enableBrowseButton(false);
+        // Handle empty input
+        if (!path) {
+            console.info("Path input cleared.");
+            this.#resetUIForSearch();
+            // Explicitly set placeholder for matches dropdown when input is empty
+            const matches = $("#matches", this.#controller.uiManager.state.frame);
+            if (matches.length) {
+                matches.html("<option disabled selected>Enter Endpoint</option>");
+                matches.prop("disabled", true);
+            }
             return;
         }
 
+        // Extract potential endpoint identifier (part before the first '/')
         const endpoint = path.split("/")[0];
+        const currentEndpointName =
+            this.state.currentEndpoint?.name || this.state.currentEndpoint?.id;
+
         console.info(
-            "Extracted endpoint:",
-            endpoint,
-            "Current endpoint:",
-            this.state.currentEndpoint?.name,
+            `Path input: "${path}", Extracted endpoint: "${endpoint}", Current endpoint name: "${
+                currentEndpointName || "None"
+            }"`,
         );
 
+        // Trigger search if endpoint identifier is present and differs from current
+        // or if there's no current endpoint selected yet.
         // Edge case: input is just a /. Ideally we have some middleware validation to avoid this
         if (
             endpoint &&
             (!this.state.currentEndpoint || endpoint !== this.state.currentEndpoint.name)
         ) {
-            console.info("Endpoint changed or not set - searching for new endpoint");
+            console.info("Endpoint identifier changed or not set - searching for:", endpoint);
             this.searchEndpoint(endpoint, searchToken);
+        } else if (endpoint && this.state.currentEndpoint && endpoint === currentEndpointName) {
+            // Endpoint name hasn't changed, but path might have.
+            // Ensure buttons reflect current state (e.g., if path became valid/invalid)
+            console.debug("Endpoint name unchanged, re-evaluating selection state.");
+            this.#controller.uiManager.handleSelectionChange();
+        } else if (!endpoint) {
+            // This case should be caught by the `!path` check earlier, but added for robustness.
+            console.warn("Path input resulted in empty endpoint identifier.");
+            this.#resetUIForSearch();
         }
+        // If the endpoint identifier *is* the same as current, and non-empty, we do nothing here,
+        // assuming the user is just editing the path part after the endpoint.
+        // handleSelectionChange called above covers path validity checks.
     }
 }
