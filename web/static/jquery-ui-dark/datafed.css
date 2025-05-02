@@ -216,6 +216,24 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expande
     z-index: 1000;
 }
 
+/* Graph context menu */
+.graph-context-menu {
+    background: #222;
+    border: 1px solid #444;
+    border-radius: 3px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+    bottom: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 1000;
+}
+
 .node .highlight{
         stroke:#0f0!important;
         stroke-width:2px!important;

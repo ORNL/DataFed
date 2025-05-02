@@ -8,9 +8,27 @@ import {
     defineArrowMarkerNewVer,
 } from "./assets/arrow-markers.js";
 
+// Dynamically load the graph styles CSS
+(function loadGraphStyles() {
+    if (!document.getElementById('graph-styles-css')) {
+        const link = document.createElement('link');
+        link.id = 'graph-styles-css';
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = './graph_styles.css';
+        document.head.appendChild(link);
+    }
+})();
+
 export function newGraphPanel(a_id, a_frame, a_parent) {
     return new GraphPanel(a_id, a_frame, a_parent);
 }
+
+// Default node and label styles
+const DEFAULT_NODE_SIZE = 10;
+const DEFAULT_NODE_COLOR = null; // Use CSS default
+const DEFAULT_LABEL_SIZE = 14;
+const DEFAULT_LABEL_COLOR = null; // Use CSS default
 
 function makeLabel(node, item) {
     //console.log("makeLabel",node,item);
@@ -36,7 +54,21 @@ function GraphPanel(a_id, a_frame, a_parent) {
     var sel_node = null;
     var focus_node_id,
         sel_node_id,
-        r = 10;
+        r = DEFAULT_NODE_SIZE;
+    
+    // Track selected nodes for multi-selection
+    var selected_nodes = [];
+    
+    // Context menu for node/label customization
+    var contextMenu = null;
+    
+    // State management for saving/loading graph state
+    var graphState = {
+        nodePositions: {}, // Store node positions
+        nodeStyles: {},    // Store node customizations
+        labelOffsets: {},  // Store label offsets
+        labelStyles: {}    // Store label customizations
+    };
 
     this.load = function (a_id, a_sel_node_id) {
         focus_node_id = a_id;
@@ -129,6 +161,9 @@ function GraphPanel(a_id, a_frame, a_parent) {
             renderGraph();
             panel_info.showSelectedInfo(sel_node_id, inst.checkGraphUpdate);
             a_parent.updateBtnState();
+            
+            // Initialize graph controls
+            inst.addGraphControls();
         });
     };
 
@@ -185,6 +220,320 @@ function GraphPanel(a_id, a_frame, a_parent) {
     this.getSelectedID = function () {
         if (sel_node) return sel_node.id;
     };
+    
+    // Save the current graph state
+    this.saveGraphState = function() {
+        // Clear previous state
+        graphState = {
+            nodePositions: {},
+            nodeStyles: {},
+            labelOffsets: {},
+            labelStyles: {}
+        };
+        
+        // Save state for each node
+        node_data.forEach(function(node) {
+            graphState.nodePositions[node.id] = {
+                x: node.x,
+                y: node.y,
+                anchored: node.anchored || false
+            };
+            
+            // Save node style customizations
+            if (node.nodeSize || node.nodeColor) {
+                graphState.nodeStyles[node.id] = {
+                    size: node.nodeSize || DEFAULT_NODE_SIZE,
+                    color: node.nodeColor || DEFAULT_NODE_COLOR
+                };
+            }
+            
+            // Save label offsets
+            if (node.labelOffsetX !== undefined || node.labelOffsetY !== undefined) {
+                graphState.labelOffsets[node.id] = {
+                    x: node.labelOffsetX || 0,
+                    y: node.labelOffsetY || 0
+                };
+            }
+            
+            // Save label style customizations
+            if (node.labelSize || node.labelColor) {
+                graphState.labelStyles[node.id] = {
+                    size: node.labelSize || DEFAULT_LABEL_SIZE,
+                    color: node.labelColor || DEFAULT_LABEL_COLOR
+                };
+            }
+        });
+        
+        // Store in localStorage
+        try {
+            localStorage.setItem('datafed-graph-state', JSON.stringify(graphState));
+            alert('Graph state saved successfully');
+        } catch (e) {
+            console.error('Failed to save graph state:', e);
+            alert('Failed to save graph state');
+        }
+        
+        return graphState;
+    };
+    
+    // Load a previously saved graph state
+    this.loadGraphState = function() {
+        try {
+            const savedState = localStorage.getItem('datafed-graph-state');
+            if (!savedState) {
+                alert('No saved graph state found');
+                return false;
+            }
+            
+            graphState = JSON.parse(savedState);
+            
+            // Apply saved state to current nodes
+            node_data.forEach(function(node) {
+                // Apply position and anchor state
+                if (graphState.nodePositions[node.id]) {
+                    const pos = graphState.nodePositions[node.id];
+                    node.x = pos.x;
+                    node.y = pos.y;
+                    
+                    if (pos.anchored) {
+                        node.anchored = true;
+                        node.fx = pos.x;
+                        node.fy = pos.y;
+                    }
+                }
+                
+                // Apply node style customizations
+                if (graphState.nodeStyles[node.id]) {
+                    const style = graphState.nodeStyles[node.id];
+                    node.nodeSize = style.size;
+                    node.nodeColor = style.color;
+                }
+                
+                // Apply label offsets
+                if (graphState.labelOffsets[node.id]) {
+                    const offset = graphState.labelOffsets[node.id];
+                    node.labelOffsetX = offset.x;
+                    node.labelOffsetY = offset.y;
+                }
+                
+                // Apply label style customizations
+                if (graphState.labelStyles[node.id]) {
+                    const style = graphState.labelStyles[node.id];
+                    node.labelSize = style.size;
+                    node.labelColor = style.color;
+                }
+            });
+            
+            // Restart simulation with new positions
+            if (simulation) {
+                simulation.alpha(1).restart();
+            }
+            
+            // Re-render the graph
+            renderGraph();
+            
+            alert('Graph state loaded successfully');
+            return true;
+        } catch (e) {
+            console.error('Failed to load graph state:', e);
+            alert('Failed to load graph state');
+            return false;
+        }
+    };
+    
+    // Initialize the context menu
+    function initContextMenu() {
+        // Create context menu element if it doesn't exist
+        if (!document.getElementById('graph-context-menu')) {
+            const menuDiv = document.createElement('div');
+            menuDiv.id = 'graph-context-menu';
+            menuDiv.className = 'graph-context-menu';
+            menuDiv.style.display = 'none';
+            menuDiv.style.position = 'absolute';
+            menuDiv.style.zIndex = '1000';
+            menuDiv.style.background = '#222';
+            menuDiv.style.border = '1px solid #444';
+            menuDiv.style.borderRadius = '3px';
+            menuDiv.style.padding = '5px 0';
+            menuDiv.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
+            document.body.appendChild(menuDiv);
+        }
+        
+        contextMenu = document.getElementById('graph-context-menu');
+        
+        // Close context menu when clicking elsewhere
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('#graph-context-menu') === null) {
+                contextMenu.style.display = 'none';
+            }
+        });
+    }
+    
+    // Show context menu for node customization
+    function showNodeContextMenu(node, x, y) {
+        if (!contextMenu) initContextMenu();
+        
+        // Clear previous menu items
+        contextMenu.innerHTML = '';
+        
+        // Create menu items
+        const menuItems = [
+            {
+                label: 'Anchor Node',
+                action: function() {
+                    toggleNodeAnchor(node);
+                },
+                checked: node.anchored
+            },
+            {
+                label: 'Increase Node Size',
+                action: function() {
+                    updateNodeSize(node, (node.nodeSize || DEFAULT_NODE_SIZE) * 1.2);
+                }
+            },
+            {
+                label: 'Decrease Node Size',
+                action: function() {
+                    updateNodeSize(node, (node.nodeSize || DEFAULT_NODE_SIZE) * 0.8);
+                }
+            },
+            {
+                label: 'Reset Node Size',
+                action: function() {
+                    updateNodeSize(node, DEFAULT_NODE_SIZE);
+                }
+            },
+            {
+                label: 'Change Node Color',
+                action: function() {
+                    const color = prompt('Enter a color (name, hex, rgb, etc.):', node.nodeColor || '');
+                    if (color !== null) {
+                        updateNodeColor(node, color);
+                    }
+                }
+            },
+            {
+                label: 'Reset Node Color',
+                action: function() {
+                    updateNodeColor(node, DEFAULT_NODE_COLOR);
+                }
+            },
+            {
+                label: 'Increase Label Size',
+                action: function() {
+                    updateLabelSize(node, (node.labelSize || DEFAULT_LABEL_SIZE) * 1.2);
+                }
+            },
+            {
+                label: 'Decrease Label Size',
+                action: function() {
+                    updateLabelSize(node, (node.labelSize || DEFAULT_LABEL_SIZE) * 0.8);
+                }
+            },
+            {
+                label: 'Reset Label Size',
+                action: function() {
+                    updateLabelSize(node, DEFAULT_LABEL_SIZE);
+                }
+            },
+            {
+                label: 'Change Label Color',
+                action: function() {
+                    const color = prompt('Enter a color (name, hex, rgb, etc.):', node.labelColor || '');
+                    if (color !== null) {
+                        updateLabelColor(node, color);
+                    }
+                }
+            },
+            {
+                label: 'Reset Label Color',
+                action: function() {
+                    updateLabelColor(node, DEFAULT_LABEL_COLOR);
+                }
+            }
+        ];
+        
+        // Create menu HTML
+        menuItems.forEach(function(item) {
+            const menuItem = document.createElement('div');
+            menuItem.className = 'graph-context-menu-item';
+            menuItem.style.padding = '5px 10px';
+            menuItem.style.cursor = 'pointer';
+            menuItem.style.whiteSpace = 'nowrap';
+            
+            // Add checkbox for toggle items
+            if (item.hasOwnProperty('checked')) {
+                menuItem.innerHTML = `<span style="margin-right: 5px">${item.checked ? '✓' : '☐'}</span>${item.label}`;
+            } else {
+                menuItem.textContent = item.label;
+            }
+            
+            // Hover effect
+            menuItem.addEventListener('mouseover', function() {
+                this.style.backgroundColor = '#444';
+            });
+            
+            menuItem.addEventListener('mouseout', function() {
+                this.style.backgroundColor = 'transparent';
+            });
+            
+            // Click handler
+            menuItem.addEventListener('click', function(e) {
+                e.stopPropagation();
+                contextMenu.style.display = 'none';
+                item.action();
+            });
+            
+            contextMenu.appendChild(menuItem);
+        });
+        
+        // Position and show menu
+        contextMenu.style.left = x + 'px';
+        contextMenu.style.top = y + 'px';
+        contextMenu.style.display = 'block';
+    }
+    
+    // Toggle node anchor state
+    function toggleNodeAnchor(node) {
+        node.anchored = !node.anchored;
+        
+        if (node.anchored) {
+            // Anchor the node at its current position
+            node.fx = node.x;
+            node.fy = node.y;
+        } else {
+            // Release the node
+            delete node.fx;
+            delete node.fy;
+        }
+        
+        // Update the visualization
+        renderGraph();
+    }
+    
+    // Update node size
+    function updateNodeSize(node, size) {
+        node.nodeSize = size;
+        renderGraph();
+    }
+    
+    // Update node color
+    function updateNodeColor(node, color) {
+        node.nodeColor = color;
+        renderGraph();
+    }
+    
+    // Update label size
+    function updateLabelSize(node, size) {
+        node.labelSize = size;
+        renderGraph();
+    }
+    
+    // Update label color
+    function updateLabelColor(node, color) {
+        node.labelColor = color;
+        renderGraph();
+    }
 
     this.getSelectedNodes = function () {
         var sel = [];
@@ -200,6 +549,61 @@ function GraphPanel(a_id, a_frame, a_parent) {
 
     this.getSubjectID = function () {
         if (focus_node_id) return focus_node_id;
+    };
+    
+    // Add UI buttons for saving and loading graph state
+    this.addGraphControls = function(container) {
+        // Create container for graph controls if it doesn't exist
+        if (!document.getElementById('graph-controls')) {
+            const controlsDiv = document.createElement('div');
+            controlsDiv.id = 'graph-controls';
+            controlsDiv.className = 'graph-controls';
+            controlsDiv.style.position = 'absolute';
+            controlsDiv.style.top = '10px';
+            controlsDiv.style.right = '10px';
+            controlsDiv.style.zIndex = '100';
+            controlsDiv.style.display = 'flex';
+            controlsDiv.style.gap = '5px';
+            
+            // Save button
+            const saveBtn = document.createElement('button');
+            saveBtn.textContent = 'Save Graph';
+            saveBtn.className = 'ui-button ui-widget ui-corner-all';
+            saveBtn.addEventListener('click', function() {
+                inst.saveGraphState();
+            });
+            
+            // Load button
+            const loadBtn = document.createElement('button');
+            loadBtn.textContent = 'Load Graph';
+            loadBtn.className = 'ui-button ui-widget ui-corner-all';
+            loadBtn.addEventListener('click', function() {
+                inst.loadGraphState();
+            });
+            
+            // Help tooltip
+            const helpTip = document.createElement('div');
+            helpTip.className = 'graph-tooltip';
+            helpTip.innerHTML = 
+                '<strong>Graph Controls:</strong><br>' +
+                '• Drag nodes to move them<br>' +
+                '• Shift+Drag to anchor nodes<br>' +
+                '• Drag labels to reposition them<br>' +
+                '• Right-click for customization options<br>' +
+                '• Double-click to toggle anchor';
+            
+            // Add buttons to container
+            controlsDiv.appendChild(saveBtn);
+            controlsDiv.appendChild(loadBtn);
+            
+            // Add container to the graph
+            const graphContainer = document.querySelector(container || '#' + a_id);
+            if (graphContainer) {
+                graphContainer.style.position = 'relative';
+                graphContainer.appendChild(controlsDiv);
+                graphContainer.appendChild(helpTip);
+            }
+        }
     };
 
     // NOTE: D3 changes link source and target IDs strings (in link_data) to node references (in node_data) when renderGraph runs
@@ -301,7 +705,9 @@ function GraphPanel(a_id, a_frame, a_parent) {
             .call(d3.drag().on("start", dragStarted).on("drag", dragged).on("end", dragEnded));
 
         g.append("circle")
-            .attr("r", r)
+            .attr("r", function(d) {
+                return d.nodeSize || r;
+            })
             .attr("class", function (d) {
                 var res = "obj ";
                 //console.log("node enter 1");
@@ -318,15 +724,20 @@ function GraphPanel(a_id, a_frame, a_parent) {
 
                 return res;
             })
+            .style("fill", function(d) {
+                return d.nodeColor || null; // Use CSS default if not specified
+            })
             .on("mouseover", function (d) {
                 //console.log("mouse over");
+                const nodeSize = d.nodeSize || r;
                 d3.select(this)
                     .transition()
                     .duration(150)
-                    .attr("r", r * 1.5);
+                    .attr("r", nodeSize * 1.5);
             })
             .on("mouseout", function (d) {
-                d3.select(this).transition().duration(500).attr("r", r);
+                const nodeSize = d.nodeSize || r;
+                d3.select(this).transition().duration(500).attr("r", nodeSize);
             })
             .on("dblclick", function (d, i) {
                 //console.log("dbl click");
@@ -349,6 +760,25 @@ function GraphPanel(a_id, a_frame, a_parent) {
                     else inst.expandNode();
                 }
 
+                d3.event.stopPropagation();
+            })
+            .on("contextmenu", function(d, i) {
+                // Prevent default context menu
+                d3.event.preventDefault();
+                
+                // Select the node if not already selected
+                if (sel_node != d) {
+                    d3.select(".highlight").attr("class", "select hidden");
+                    d3.select(this.parentNode).select(".select").attr("class", "select highlight");
+                    sel_node = d;
+                    sel_node_id = d.id;
+                    panel_info.showSelectedInfo(d.id, inst.checkGraphUpdate);
+                    a_parent.updateBtnState();
+                }
+                
+                // Show context menu at mouse position
+                showNodeContextMenu(d, d3.event.pageX, d3.event.pageY);
+                
                 d3.event.stopPropagation();
             });
 
@@ -405,7 +835,63 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 if (d.locked) return r + 12;
                 else return r;
             })
-            .attr("y", -r);
+            .attr("y", -r)
+            .style("font-size", function(d) {
+                return (d.labelSize || DEFAULT_LABEL_SIZE) + "px";
+            })
+            .style("fill", function(d) {
+                return d.labelColor || DEFAULT_LABEL_COLOR;
+            })
+            .on("contextmenu", function(d, i) {
+                // Prevent default context menu
+                d3.event.preventDefault();
+                
+                // Select the node if not already selected
+                if (sel_node != d) {
+                    d3.select(".highlight").attr("class", "select hidden");
+                    d3.select(this.parentNode).select(".select").attr("class", "select highlight");
+                    sel_node = d;
+                    sel_node_id = d.id;
+                    panel_info.showSelectedInfo(d.id, inst.checkGraphUpdate);
+                    a_parent.updateBtnState();
+                }
+                
+                // Show context menu at mouse position
+                showNodeContextMenu(d, d3.event.pageX, d3.event.pageY);
+                
+                d3.event.stopPropagation();
+            })
+            // Make labels draggable independently with Alt key
+            .call(d3.drag()
+                .on("start", function(d) {
+                    if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+                    d.draggingLabel = true;
+                    d.labelDragStartX = d3.event.x;
+                    d.labelDragStartY = d3.event.y;
+                    d3.event.sourceEvent.stopPropagation();
+                })
+                .on("drag", function(d) {
+                    if (!d.labelOffsetX) d.labelOffsetX = 0;
+                    if (!d.labelOffsetY) d.labelOffsetY = 0;
+                    
+                    // Update the label offset based on drag movement
+                    d.labelOffsetX += (d3.event.x - d.labelDragStartX);
+                    d.labelOffsetY += (d3.event.y - d.labelDragStartY);
+                    
+                    // Update the start position for the next drag event
+                    d.labelDragStartX = d3.event.x;
+                    d.labelDragStartY = d3.event.y;
+                    
+                    // Update the visualization
+                    simTick();
+                    d3.event.sourceEvent.stopPropagation();
+                })
+                .on("end", function(d) {
+                    if (!d3.event.active) simulation.alphaTarget(0);
+                    d.draggingLabel = false;
+                    d3.event.sourceEvent.stopPropagation();
+                })
+            );
 
         g.append("text")
             .attr("class", "locked")
@@ -895,10 +1381,23 @@ function GraphPanel(a_id, a_frame, a_parent) {
                     return baseY + d.labelOffsetY;
                 }
                 return baseY;
+            })
+            // Apply custom label styles
+            .style("font-size", function(d) {
+                return (d.labelSize || DEFAULT_LABEL_SIZE) + "px";
+            })
+            .style("fill", function(d) {
+                return d.labelColor || DEFAULT_LABEL_COLOR;
             });
             
-        // Update anchored status visual indicator
+        // Update node styles and anchored status
         nodes.selectAll("circle.obj")
+            .attr("r", function(d) {
+                return d.nodeSize || r;
+            })
+            .style("fill", function(d) {
+                return d.nodeColor || null; // Use CSS default if not specified
+            })
             .classed("anchored", function(d) {
                 return d.anchored === true;
             });
