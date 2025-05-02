@@ -1,0 +1,52 @@
+/* Graph visualization styles */
+
+/* Anchored nodes */
+.nodes .anchored {
+    stroke-dasharray: 5,3;
+    stroke-width: 3px;
+}
+
+/* Tooltip for graph interaction help */
+.graph-tooltip {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+/* Graph controls */
+.graph-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 100;
+    display: flex;
+    gap: 5px;
+}
+
+/* Graph context menu */
+.graph-context-menu {
+    position: absolute;
+    z-index: 1000;
+    background: #222;
+    border: 1px solid #444;
+    border-radius: 3px;
+    padding: 5px 0;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+.graph-context-menu-item {
+    padding: 5px 10px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.graph-context-menu-item:hover {
+    background-color: #444;
+}
