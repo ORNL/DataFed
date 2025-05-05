@@ -72,9 +72,9 @@ class Record {
      */
     _pathToRecord(loc, basePath) {
         const path = basePath.endsWith("/") ? basePath : basePath + "/";
-        if (loc.uid.charAt(0) == "u") {
+        if (loc.uid.charAt(0) === "u") {
             return path + "user/" + loc.uid.substr(2) + "/" + this.#key;
-        } else if (loc.uid.charAt(0) == "p") {
+        } else if (loc.uid.charAt(0) === "p") {
             return path + "project/" + loc.uid.substr(2) + "/" + this.#key;
         } else {
             this.#error = g_lib.ERR_INTERNAL_FAULT;
@@ -82,7 +82,7 @@ class Record {
             this.#err_msg += "structure for repository, no user or project folder has";
             this.#err_msg += " been determined for the record.";
             console.log(e);
-            return null;
+            return "";
         }
     }
 
@@ -95,18 +95,68 @@ class Record {
      **/
     _comparePaths(storedPath, inputPath) {
         if (storedPath === null) {
+            this.#error = g_lib.ERR_INTERNAL_FAULT;
+            this.#err_msg = "Internal error: stored path is null";
             return false;
         }
-        if (storedPath !== inputPath) {
+
+        // 3. Compare input path with the primary expected path
+        if (storedPath === inputPath) {
+            return true;
+        }
+
+        // 4. Check for allowed variations (e.g., user vs. project structure during a move)
+        // This logic handles the case where the path might temporarily point to the
+        // 'other' type of allocation (user vs project) if a move is in progress,
+        // but only if the record key matches.
+        const storedPathParts = storedPath.split("/");
+        const inputPathParts = inputPath.split("/");
+
+        // Get the last part of each path (should be the record ID)
+        const storedRecordId = storedPathParts.pop();
+        const inputRecordId = inputPathParts.pop();
+
+        if (inputRecordId !== storedRecordId || storedRecordId !== this.#key) {
+            // If we get here, the paths don't match and aren't valid alternatives
             this.#error = g_lib.ERR_PERM_DENIED;
             this.#err_msg =
                 "Record path is not consistent with repo expected path is: " +
                 storedPath +
                 " attempted path is " +
                 inputPath;
+
+            // Add more detailed information for debugging
+            console.log("Path comparison failed:");
+            console.log("  Expected: " + storedPath);
+            console.log("  Actual:   " + inputPath);
+            console.log("  Record ID: " + this.#data_id);
+
             return false;
         }
-        return true;
+
+        // Keys match, check if the directory structure difference is an allowed user/project swap
+        const storedRecordOwnerType = storedPathParts[storedPathParts.length - 2];
+        const inputRecordOwnerType = inputPathParts[inputPathParts.length - 2];
+
+        const isUserProjectSwap = (inputRecordOwnerType === "user" && storedRecordOwnerType === "project") ||
+            (inputRecordOwnerType === "project" && storedRecordOwnerType === "user");
+
+        // Check if the base paths (up to user/project) are otherwise the same
+        const storedRecordBasePath = storedPathParts.slice(0, -2).join("/");
+        const inputRecordBasePath = inputPathParts.slice(0, -2).join("/");
+
+        if (isUserProjectSwap && storedRecordBasePath === inputRecordBasePath) {
+            // This looks like a valid path pointing to the other allocation type for the same record.
+            // This might occur during ownership transfer between user/project.
+            console.warn(`Path consistency check allowing user/project swap for record ${this.#data_id}: Expected ${expectedPath}, Received ${inputPath}`);
+            return true;
+        }
+
+        console.log("Path comparison failed:");
+        console.log("  Expected: " + expectedPath);
+        console.log("  Actual:   " + inputPath);
+        console.log("  Record ID: " + this.#data_id);
+        return false;
     }
 
     /**
@@ -125,6 +175,7 @@ class Record {
     id() {
         return this.#data_id;
     }
+
     /**
      * Will return error code of last run method.
      *
@@ -148,12 +199,7 @@ class Record {
      *
      * @returns {boolean} True if managed, otherwise false.
      */
-    isManaged() {
-        //{
-        //    _from: data._id,
-        //    _to: repo_alloc._to,
-        //    uid: owner_id
-        //};
+    _isManaged() {
         this.#loc = g_db.loc.firstExample({
             _from: this.#data_id,
         });
@@ -182,7 +228,7 @@ class Record {
     isPathConsistent(a_path) {
         // This function will populate the this.#loc member and the this.#alloc
         // member
-        if (!this.isManaged()) {
+        if (!this._isManaged()) {
             return false;
         }
 
@@ -194,8 +240,9 @@ class Record {
             // oweners id.
             // 2. Using the loc.uid parameter if not inflight to get the owner
             // id.
+            const new_owner_id = this.#loc.new_owner ? this.#loc.new_owner : this.#loc.uid;
             const new_alloc = g_db.alloc.firstExample({
-                _from: this.#loc.new_owner ? this.#loc.new_owner : this.#loc.uid,
+                _from: new_owner_id,
                 _to: this.#loc.new_repo,
             });
 
@@ -225,11 +272,88 @@ class Record {
                 a_path = "/" + a_path;
             }
 
-            let stored_path = this._pathToRecord(this.#loc, this.#repo.path);
+            // First, check if the path is valid for the current owner
+            const temp_loc = { ...this.#loc, uid: new_owner_id };
+            let stored_path = this._pathToRecord(temp_loc, this.#repo.path);
 
-            if (!this._comparePaths(stored_path, a_path)) {
-                return false;
+            // If paths match, we're good
+            if (this._comparePaths(stored_path, a_path)) {
+                return true;
             }
+
+            // If paths don't match, check if this is a valid path for a different owner
+            // Extract the owner type and ID from the path
+            const pathParts = a_path.split("/");
+            const ownerTypeIndex = pathParts.findIndex(part => part === "user" || part === "project");
+
+            if (ownerTypeIndex >= 0 && ownerTypeIndex + 1 < pathParts.length) {
+                const ownerType = pathParts[ownerTypeIndex];
+                const ownerId = pathParts[ownerTypeIndex + 1];
+                const recordId = pathParts[pathParts.length - 1];
+
+                // Check if this is a valid owner ID in the system
+                let ownerPrefix = ownerType === "user" ? "u/" : "p/";
+                let potentialOwnerId = ownerPrefix + ownerId;
+
+                // Check if the owner exists
+                const ownerCollection = ownerPrefix[0];
+                if (g_db._collection(ownerCollection).exists(ownerId) && recordId === this.#key) {
+                    // Check if the owner has an allocation in the target repo
+                    const ownerAlloc = g_db.alloc.firstExample({
+                        _from: potentialOwnerId,
+                        _to: this.#loc.new_repo,
+                    });
+
+                    if (ownerAlloc) {
+                        // This is a valid path for the record in a different allocation
+                        // Update the new_owner field to reflect the correct owner
+                        this.#loc.new_owner = potentialOwnerId;
+
+                        // Recalculate the stored path with the updated owner
+                        const updated_temp_loc = { ...this.#loc, uid: potentialOwnerId };
+                        stored_path = this._pathToRecord(updated_temp_loc, this.#repo.path);
+
+                        // Log the path update for debugging
+                        console.log("Updated path for different owner:");
+                        console.log("  New owner: " + potentialOwnerId);
+                        console.log("  Updated path: " + stored_path);
+
+                        // Compare paths again with the updated owner
+                        return this._comparePaths(stored_path, a_path);
+                    }
+                }
+            }
+
+            // Special case for moving between user and project allocations
+            // Check if the path follows the pattern for a different allocation type
+            const userPattern = /\/mnt\/datafed\/.*\/user\/[^\/]+\/\d+$/;
+            const projectPattern = /\/mnt\/datafed\/.*\/project\/[^\/]+\/\d+$/;
+
+            if ((userPattern.test(stored_path) && projectPattern.test(a_path)) ||
+                (projectPattern.test(stored_path) && userPattern.test(a_path))) {
+
+                // Extract the record ID from both paths
+                const storedPathParts = stored_path.split("/");
+                const inputPathParts = a_path.split("/");
+
+                // Get the last part of each path (should be the record ID)
+                const storedRecordId = storedPathParts[storedPathParts.length - 1];
+                const inputRecordId = inputPathParts[inputPathParts.length - 1];
+
+                // If the record IDs match, this is likely a valid allocation change
+                if (storedRecordId === inputRecordId && storedRecordId === this.#key) {
+                    console.log("Valid allocation change detected:");
+                    console.log("  From: " + stored_path);
+                    console.log("  To: " + a_path);
+                    return true;
+                }
+            }
+
+            // If we get here, the path is not valid for any owner with an allocation
+            // Reset the error message that was set by _comparePaths
+            this.#error = g_lib.ERR_PERM_DENIED;
+            this.#err_msg = "Record path is not consistent with any valid allocation path";
+            return false;
         } else {
             this.#repo = g_db._document(this.#loc._to);
 

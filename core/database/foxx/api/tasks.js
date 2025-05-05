@@ -302,7 +302,10 @@ var tasks_func = (function () {
         a_orig_fname,
         a_check,
         is_collection_token_required = false,
-        collection_info = {},
+        collection_info = {
+            // Ensure collection_id is properly initialized to avoid undefined values
+            collection_id: undefined
+        },
     ) {
         console.log("taskInitDataGet");
 
@@ -431,7 +434,7 @@ var tasks_func = (function () {
 
             const token_doc = new UserToken({
                 user_id: a_task.client,
-                globus_collection_id: state.collection_info.collection_id,
+                globus_collection_id: state.collection_info && state.collection_info.collection_id ? state.collection_info.collection_id : undefined,
             }).get_token();
             var tokens = UserToken.formatUserTokenForTransferTask(token_doc);
             const extra_token_format = UserToken.formatUserToken(
@@ -446,10 +449,23 @@ var tasks_func = (function () {
                 acc_tok: tokens.acc_tok,
                 ref_tok: tokens.ref_tok,
                 acc_tok_exp_in: tokens.acc_tok_exp_in,
-                token_type: extra_token_format.token_type,
-                scopes: extra_token_format.scopes,
-                collection_id: state.collection_info.collection_id,
+                collection_id: state.collection_info && state.collection_info.collection_id ? state.collection_info.collection_id : undefined,
+                // Always include token_type parameter to avoid "Key not found: token_type" error
+                token_type: g_lib.AccessTokenType.GLOBUS_DEFAULT,
+                // Always include scopes parameter to ensure it exists
+                scopes: ""
             };
+            
+            // Override with values from extra_token_format if available
+            if (extra_token_format) {
+                if (typeof extra_token_format.token_type !== 'undefined') {
+                    params.token_type = extra_token_format.token_type;
+                }
+                
+                if (typeof extra_token_format.scopes !== 'undefined') {
+                    params.scopes = extra_token_format.scopes;
+                }
+            }
             params = Object.assign(params, state.xfr[a_task.step - 1]);
 
             reply = {
@@ -486,7 +502,10 @@ var tasks_func = (function () {
         a_res_ids,
         a_check,
         is_collection_token_required = false,
-        collection_info = {},
+        collection_info = {
+            // Ensure collection_id is properly initialized to avoid undefined values
+            collection_id: undefined
+        },
     ) {
         console.log("taskInitDataPut");
 
@@ -578,7 +597,7 @@ var tasks_func = (function () {
 
             const token_doc = new UserToken({
                 user_id: a_task.client,
-                globus_collection_id: state.collection_info.collection_id,
+                globus_collection_id: state.collection_info && state.collection_info.collection_id ? state.collection_info.collection_id : undefined,
             }).get_token();
             var tokens = UserToken.formatUserTokenForTransferTask(token_doc);
             const extra_token_format = UserToken.formatUserToken(
@@ -593,10 +612,23 @@ var tasks_func = (function () {
                 acc_tok: tokens.acc_tok,
                 ref_tok: tokens.ref_tok,
                 acc_tok_exp_in: tokens.acc_tok_exp_in,
-                token_type: extra_token_format.token_type,
-                scopes: extra_token_format.scopes,
-                collection_id: state.collection_info.collection_id,
+                collection_id: state.collection_info && state.collection_info.collection_id ? state.collection_info.collection_id : undefined,
             };
+            
+            // Only add token_type and scopes if they exist in extra_token_format
+            if (extra_token_format && typeof extra_token_format.token_type !== 'undefined') {
+                params.token_type = extra_token_format.token_type;
+            } else {
+                // Default to GLOBUS_DEFAULT if token_type is not available
+                params.token_type = g_lib.AccessTokenType.GLOBUS_DEFAULT;
+            }
+            
+            if (extra_token_format && typeof extra_token_format.scopes !== 'undefined') {
+                params.scopes = extra_token_format.scopes;
+            } else {
+                // Add empty scopes to ensure the parameter exists
+                params.scopes = "";
+            }
             params = Object.assign(params, state.xfr[a_task.step - 1]);
             reply = {
                 cmd: g_lib.TC_RAW_DATA_TRANSFER,
@@ -923,6 +955,10 @@ var tasks_func = (function () {
                         acc_tok: tokens.acc_tok,
                         ref_tok: tokens.ref_tok,
                         acc_tok_exp_in: tokens.acc_tok_exp_in,
+                        // Always include token_type parameter to avoid "Key not found: token_type" error
+                        token_type: g_lib.AccessTokenType.GLOBUS_DEFAULT,
+                        // Always include scopes parameter to ensure it exists
+                        scopes: ""
                     };
                     params = Object.assign(params, xfr);
                     reply = {
@@ -1133,6 +1169,11 @@ var tasks_func = (function () {
             dst_coll_id: a_dst_coll_id,
             dst_repo_id: a_dst_repo_id,
             owner_id: owner_id,
+            is_collection_token_required: false,
+            collection_info: {
+                // Ensure collection_id is properly initialized to avoid undefined values
+                collection_id: undefined
+            },
         };
         var task = obj._createTask(a_client._id, g_lib.TT_REC_OWNER_CHG, 3, state);
         if (g_proc._lockDepsGeneral(task._id, deps)) {
@@ -1199,7 +1240,7 @@ var tasks_func = (function () {
         }
 
         if (a_task.step == 0) {
-            //console.log("taskRunRecOwnerChg - do setup");
+            console.log("taskRunRecOwnerChg - do setup");
             obj._transact(
                 function () {
                     // Generate transfer steps
@@ -1231,7 +1272,7 @@ var tasks_func = (function () {
         }
 
         if (a_task.step === 1) {
-            //console.log("taskRunRecOwnerChg - move unmanaged records");
+            console.log("taskRunRecOwnerChg - move unmanaged records");
             obj._transact(
                 function () {
                     if (state.ext_data.length) {
@@ -1255,29 +1296,65 @@ var tasks_func = (function () {
             substep = (a_task.step - 2) % 4;
             xfrnum = Math.floor((a_task.step - 2) / 4);
             xfr = state.xfr[xfrnum];
-            //console.log("taskRunRecOwnerChg - xfr num",xfrnum,"substep",substep);
+            console.log("taskRunRecOwnerChg - xfr num",xfrnum,"substep",substep);
 
             switch (substep) {
                 case 0:
-                    //console.log("taskRunRecOwnerChg - init move");
+                    console.log("taskRunRecOwnerChg - init move");
                     obj._transact(
                         function () {
-                            // Ensure allocation has sufficient record and data capacity
+                            // Ensure destination owner and repo ID are valid
+                            if (!state.owner_id) {
+                                throw [
+                                    g_lib.ERR_INTERNAL_FAULT,
+                                    "Missing destination owner ID",
+                                ];
+                            }
+                            
+                            if (!state.dst_repo_id) {
+                                throw [
+                                    g_lib.ERR_INTERNAL_FAULT,
+                                    "Missing destination repository ID",
+                                ];
+                            }
+                            
+                            // Ensure allocation exists for the destination owner and repo
                             alloc = g_db.alloc.firstExample({
                                 _from: state.owner_id,
                                 _to: state.dst_repo_id,
                             });
-                            if (alloc.rec_count + xfr.files.length > alloc.rec_limit)
+                            
+                            if (!alloc) {
+                                throw [
+                                    g_lib.ERR_INTERNAL_FAULT,
+                                    "No allocation found for owner " + state.owner_id + 
+                                    " on repository " + state.dst_repo_id,
+                                ];
+                            }
+                            
+                            // Ensure allocation has sufficient record and data capacity
+                            if (alloc.rec_count + xfr.files.length > alloc.rec_limit) {
                                 throw [
                                     g_lib.ERR_PERM_DENIED,
                                     "Allocation record count limit exceeded on " +
-                                        state.dst_repo_id,
+                                        state.dst_repo_id + ". Current: " + alloc.rec_count +
+                                        ", Adding: " + xfr.files.length + 
+                                        ", Limit: " + alloc.rec_limit,
                                 ];
-                            if (alloc.data_size + xfr.size > alloc.data_limit)
+                            }
+                            
+                            if (alloc.data_size + xfr.size > alloc.data_limit) {
                                 throw [
                                     g_lib.ERR_PERM_DENIED,
-                                    "Allocation data size limit exceeded on " + state.dst_repo_id,
+                                    "Allocation data size limit exceeded on " + state.dst_repo_id +
+                                    ". Current: " + alloc.data_size +
+                                    ", Adding: " + xfr.size + 
+                                    ", Limit: " + alloc.data_limit,
                                 ];
+                            }
+                            
+                            console.log("Allocation check passed. Moving records to repo:", 
+                                        state.dst_repo_id, "owner:", state.owner_id);
 
                             // Init record move
                             obj.recMoveInit(
@@ -1299,10 +1376,24 @@ var tasks_func = (function () {
                     );
                 /* falls through */
                 case 1:
-                    //console.log("taskRunRecOwnerChg - do xfr");
+                    console.log("taskRunRecOwnerChg - do xfr");
                     // Transfer data step
 
-                    var tokens = g_lib.getAccessToken(a_task.client);
+                    const token_doc = new UserToken({
+                        user_id: a_task.client,
+                        // Ensure globus_collection_id is properly handled
+                        globus_collection_id: state.collection_info && state.collection_info.collection_id ? 
+                            state.collection_info.collection_id : undefined,
+                    }).get_token();
+
+                    console.log("token_doc", token_doc)
+                    var tokens = UserToken.formatUserTokenForTransferTask(token_doc);
+                    console.log("tokens", tokens)
+                    const extra_token_format = UserToken.formatUserToken(
+                        state.is_collection_token_required || false,
+                        token_doc,
+                        false, // TODO - Implement the ability to transfer to allocations that require consent
+                    );
                     params = {
                         uid: a_task.client,
                         type: a_task.type,
@@ -1310,8 +1401,27 @@ var tasks_func = (function () {
                         acc_tok: tokens.acc_tok,
                         ref_tok: tokens.ref_tok,
                         acc_tok_exp_in: tokens.acc_tok_exp_in,
+                        collection_id: state.collection_info && state.collection_info.collection_id ? 
+                            state.collection_info.collection_id : undefined,
+                        // Always include token_type parameter to avoid "Key not found: token_type" error
+                        token_type: g_lib.AccessTokenType.GLOBUS_DEFAULT,
+                        // Always include scopes parameter to ensure it exists
+                        scopes: ""
                     };
+                    
+                    // Override with values from extra_token_format if available
+                    if (extra_token_format) {
+                        if (typeof extra_token_format.token_type !== 'undefined') {
+                            params.token_type = extra_token_format.token_type;
+                        }
+                        
+                        if (typeof extra_token_format.scopes !== 'undefined') {
+                            params.scopes = extra_token_format.scopes;
+                        }
+                    }
+                    console.log("xfr", xfr)
                     params = Object.assign(params, xfr);
+                    console.log("params", params)
                     reply = {
                         cmd: g_lib.TC_RAW_DATA_TRANSFER,
                         params: params,
@@ -1319,7 +1429,7 @@ var tasks_func = (function () {
                     };
                     break;
                 case 2:
-                    //console.log("taskRunRecOwnerChg - finalize move");
+                    console.log("taskRunRecOwnerChg - finalize move");
                     obj._transact(
                         function () {
                             // Init record move
@@ -1356,7 +1466,7 @@ var tasks_func = (function () {
                     break;
             }
         } else {
-            //console.log("taskRunRecOwnerChg - complete task");
+            console.log("taskRunRecOwnerChg - complete task");
             obj._transact(
                 function () {
                     // Last step - complete task
@@ -1941,11 +2051,26 @@ var tasks_func = (function () {
 
             var repo = g_db.repo.document(a_remote);
             rem_ep = repo.endpoint;
-            rem_path =
-                repo.path +
-                (a_dst_owner.charAt(0) == "u" ? "user/" : "project/") +
-                a_dst_owner.substr(2) +
-                "/";
+            
+            // Ensure we have a valid owner ID for path construction
+            if (!a_dst_owner) {
+                throw [g_lib.ERR_INTERNAL_FAULT, "Missing destination owner for transfer path construction"];
+            }
+            
+            // Determine the correct path segment based on owner type (user or project)
+            var pathSegment = (a_dst_owner.charAt(0) == "u" ? "user/" : "project/");
+            
+            // Extract the numeric ID part, ensuring we handle the format correctly
+            var ownerId = a_dst_owner.substr(2);
+            
+            // Construct the full path, ensuring proper path separators
+            rem_path = repo.path;
+            if (!rem_path.endsWith('/')) {
+                rem_path += '/';
+            }
+            rem_path += pathSegment + ownerId + "/";
+            
+            console.log("Constructed destination path:", rem_path);
         }
 
         if (a_mode == g_lib.TT_DATA_GET) {
@@ -2482,29 +2607,52 @@ var tasks_func = (function () {
     obj.recMoveInit = function (a_data, a_new_repo_id, a_new_owner_id, a_new_coll_id) {
         var loc;
 
-        //console.log("recMoveInit", a_new_repo_id, a_new_owner_id, a_new_coll_id );
+        console.log("recMoveInit", a_new_repo_id, a_new_owner_id, a_new_coll_id);
+
+        // Validate inputs
+        if (!a_new_repo_id) {
+            throw [g_lib.ERR_INTERNAL_FAULT, "Missing destination repository ID"];
+        }
 
         for (var i in a_data) {
             loc = g_db.loc.firstExample({
                 _from: a_data[i].id,
             });
 
-            var obj = {};
-
-            // Skip records that are already on new allocation
-            if (!a_new_owner_id && loc._to == a_new_repo_id) continue;
-
-            obj.new_repo = a_new_repo_id;
-
-            if (a_new_owner_id) {
-                // Skip records that are have already been move to new owner
-                if (loc.uid == a_new_owner_id) continue;
-
-                obj.new_owner = a_new_owner_id;
-                obj.new_coll = a_new_coll_id;
+            if (!loc) {
+                console.log("Warning: No location found for record", a_data[i].id);
+                continue;
             }
 
-            g_db._update(loc._id, obj);
+            var updateObj = {};
+
+            // Skip records that are already on new allocation
+            if (!a_new_owner_id && loc._to == a_new_repo_id) {
+                console.log("Skipping record already on target repo:", a_data[i].id);
+                continue;
+            }
+
+            updateObj.new_repo = a_new_repo_id;
+
+            if (a_new_owner_id) {
+                // Skip records that have already been moved to new owner
+                if (loc.uid == a_new_owner_id) {
+                    console.log("Skipping record already owned by target:", a_data[i].id);
+                    continue;
+                }
+
+                updateObj.new_owner = a_new_owner_id;
+                
+                // Ensure we have a valid collection ID when changing ownership
+                if (!a_new_coll_id) {
+                    throw [g_lib.ERR_INTERNAL_FAULT, "Missing destination collection ID for ownership change"];
+                }
+                
+                updateObj.new_coll = a_new_coll_id;
+            }
+
+            console.log("Updating location for record", a_data[i].id, "with", JSON.stringify(updateObj));
+            g_db._update(loc._id, updateObj);
         }
     };
 
@@ -2535,34 +2683,50 @@ var tasks_func = (function () {
     obj.recMoveFini = function (a_data) {
         var data, loc, new_loc, alloc, coll, alias, alias_pref, a, key;
 
-        //console.log("recMoveFini" );
+        console.log("recMoveFini");
 
         for (var i in a_data) {
             data = a_data[i];
+
+            if (!data || !data.id) {
+                console.log("Warning: Invalid data entry in recMoveFini");
+                continue;
+            }
 
             loc = g_db.loc.firstExample({
                 _from: data.id,
             });
 
-            //console.log("recMoveFini, id:", data.id, "loc:", loc );
+            if (!loc) {
+                console.log("Warning: No location found for record", data.id);
+                continue;
+            }
 
-            if (!loc.new_owner && !loc.new_repo) continue;
+            console.log("recMoveFini, id:", data.id, "loc:", JSON.stringify(loc));
+
+            // Skip if no changes are needed
+            if (!loc.new_owner && !loc.new_repo) {
+                console.log("No changes needed for record", data.id);
+                continue;
+            }
 
             if (loc.new_owner) {
                 // Changing owner and repo
+                console.log("Changing owner for record", data.id, "to", loc.new_owner);
 
                 if (!alias_pref) {
                     alias_pref = loc.new_owner.charAt(0) + ":" + loc.new_owner.substr(2) + ":";
                 }
 
-                // DEV-ONLY SANITY CHECKS:
-                if (!loc.new_coll)
+                // Validate destination collection
+                if (!loc.new_coll) {
                     throw [
                         g_lib.ERR_INTERNAL_FAULT,
                         "Record '" + data.id + "' missing destination collection!",
                     ];
+                }
 
-                if (!g_db.c.exists(loc.new_coll))
+                if (!g_db.c.exists(loc.new_coll)) {
                     throw [
                         g_lib.ERR_INTERNAL_FAULT,
                         "Record '" +
@@ -2571,18 +2735,20 @@ var tasks_func = (function () {
                             loc.new_coll +
                             "' does not exist!",
                     ];
+                }
 
                 coll = g_db.c.document(loc.new_coll);
 
-                if (coll.owner != loc.new_owner)
+                if (coll.owner != loc.new_owner) {
                     throw [
                         g_lib.ERR_INTERNAL_FAULT,
                         "Record '" +
                             data.id +
                             "' destination collection '" +
                             loc.new_coll +
-                            "' not owner by new owner!",
+                            "' not owned by new owner!",
                     ];
+                }
 
                 // Clear all record ACLs
                 g_db.acl.removeByExample({
@@ -2617,6 +2783,8 @@ var tasks_func = (function () {
                     _from: data.id,
                 });
                 if (alias) {
+                    console.log("Updating alias for record", data.id);
+                    
                     // remove old alias and all edges
                     g_graph.a.remove(alias._to);
 
@@ -2629,7 +2797,7 @@ var tasks_func = (function () {
                                 _key: key,
                             })
                         ) {
-                            //console.log("try alias:",key);
+                            console.log("Creating new alias:", key);
                             g_db.a.save({
                                 _key: key,
                             });
@@ -2654,54 +2822,67 @@ var tasks_func = (function () {
                 }
             }
 
-            //rec = g_db.d.document( id );
+            // Ensure data size is valid
+            var dataSize = data.size || 0;
 
             // Update old allocation stats
             alloc = g_db.alloc.firstExample({
                 _from: loc.uid,
                 _to: loc._to,
             });
-            if (!alloc)
+            
+            if (!alloc) {
                 throw [
                     g_lib.ERR_INTERNAL_FAULT,
                     "Record '" + data.id + "' has mismatched allocation/location (cur)!",
                 ];
+            }
 
-            //console.log("alloc:", alloc );
-            //console.log("recMoveFini, adj src alloc to:", alloc.rec_count - 1, alloc.data_size - data.size );
+            console.log("Updating source allocation stats:", 
+                        "rec_count:", alloc.rec_count, "->", alloc.rec_count - 1, 
+                        "data_size:", alloc.data_size, "->", alloc.data_size - dataSize);
 
             g_db._update(alloc._id, {
-                rec_count: alloc.rec_count - 1,
-                data_size: alloc.data_size - data.size,
+                rec_count: Math.max(0, alloc.rec_count - 1),
+                data_size: Math.max(0, alloc.data_size - dataSize),
             });
-
-            //console.log("update alloc:", alloc );
 
             // Update new allocation stats
+            var newOwner = loc.new_owner ? loc.new_owner : loc.uid;
+            
             alloc = g_db.alloc.firstExample({
-                _from: loc.new_owner ? loc.new_owner : loc.uid,
+                _from: newOwner,
                 _to: loc.new_repo,
             });
-            if (!alloc)
+            
+            if (!alloc) {
                 throw [
                     g_lib.ERR_INTERNAL_FAULT,
-                    "Record '" + data.id + "' has mismatched allocation/location (new)!",
+                    "Record '" + data.id + "' has mismatched allocation/location (new)! " +
+                    "No allocation found for owner " + newOwner + " on repo " + loc.new_repo,
                 ];
+            }
 
-            //console.log("recMoveFini, adj dest alloc to:", alloc.rec_count + 1, alloc.data_size + data.size );
+            console.log("Updating destination allocation stats:", 
+                        "rec_count:", alloc.rec_count, "->", alloc.rec_count + 1, 
+                        "data_size:", alloc.data_size, "->", alloc.data_size + dataSize);
 
             g_db._update(alloc._id, {
                 rec_count: alloc.rec_count + 1,
-                data_size: alloc.data_size + data.size,
+                data_size: alloc.data_size + dataSize,
             });
 
             // Create new edge to new owner/repo, delete old
             new_loc = {
                 _from: loc._from,
                 _to: loc.new_repo,
-                uid: loc.new_owner ? loc.new_owner : loc.uid,
+                uid: newOwner,
             };
+            
+            console.log("Creating new location edge:", JSON.stringify(new_loc));
             g_db.loc.save(new_loc);
+            
+            console.log("Removing old location edge:", JSON.stringify(loc));
             g_db.loc.remove(loc);
         }
     };
