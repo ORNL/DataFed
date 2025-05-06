@@ -180,8 +180,8 @@ install_libsodium() {
       "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/libsodium"
     fi
 
-    wget "https://download.libsodium.org/libsodium/releases/libsodium-${DATAFED_LIBSODIUM_VERSION}.tar.gz" -P "./external"
-    tar -xvzf "./external/libsodium-${DATAFED_LIBSODIUM_VERSION}.tar.gz" -C "./external/"
+    wget "https://download.libsodium.org/libsodium/releases/libsodium-${DATAFED_LIBSODIUM_VERSION}.tar.gz" -P "${PROJECT_ROOT}/external"
+    tar -xvzf "${PROJECT_ROOT}/external/libsodium-${DATAFED_LIBSODIUM_VERSION}.tar.gz" -C "${PROJECT_ROOT}/external/"
     cd "${PROJECT_ROOT}/external/libsodium-${DATAFED_LIBSODIUM_VERSION}"
     # Build static ONLY!!!!
     # Note if zmq detects a shared sodium library it will grab it no matter what
