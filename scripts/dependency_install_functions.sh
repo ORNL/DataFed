@@ -79,19 +79,21 @@ init_python() {
   if [ ! -e "$DATAFED_DEPENDENCIES_INSTALL_PATH" ] || [ ! -d "$DATAFED_PYTHON_DEPENDENCIES_DIR" ]; then
       mkdir -p "$DATAFED_PYTHON_DEPENDENCIES_DIR"
   fi
-  python3 -m venv "${DATAFED_PYTHON_ENV}"
+  "python${DATAFED_PYTHON_VERSION}" -m venv "${DATAFED_PYTHON_ENV}"
+  # Make sure that pip is installed and upgraded
+  "python${DATAFED_PYTHON_VERSION}" -m ensurepip --upgrade
 }
 
 install_cmake() {
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.cmake_installed-${DATAFED_CMAKE_VERSION}" ]; then
-    wget https://github.com/Kitware/CMake/releases/download/v${DATAFED_CMAKE_VERSION}/cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz
-    tar -xzvf "cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz" >/dev/null 2>&1
-    cp -r "cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64/bin" "${DATAFED_DEPENDENCIES_INSTALL_PATH}"
-    cp -r "cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64/share" "${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    wget https://github.com/Kitware/CMake/releases/download/v${DATAFED_CMAKE_VERSION}/cmake-${DATAFED_CMAKE_VERSION}-linux-x86_64.tar.gz
+    tar -xzvf "cmake-${DATAFED_CMAKE_VERSION}-linux-x86_64.tar.gz" >/dev/null 2>&1
+    cp -r "cmake-${DATAFED_CMAKE_VERSION}-linux-x86_64/bin" "${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    cp -r "cmake-${DATAFED_CMAKE_VERSION}-linux-x86_64/share" "${DATAFED_DEPENDENCIES_INSTALL_PATH}"
 
     # Cleanup
-    rm -rf "cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64"
-    rm -rf "cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz"
+    rm -rf "cmake-${DATAFED_CMAKE_VERSION}-linux-x86_64"
+    rm -rf "cmake-${DATAFED_CMAKE_VERSION}-linux-x86_64.tar.gz"
 
     # Mark cmake as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.cmake_installed-${DATAFED_CMAKE_VERSION}"
@@ -149,12 +151,12 @@ install_protobuf() {
     cd python
     init_python
     source "${DATAFED_PYTHON_ENV}/bin/activate"
-    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python3 -m pip install numpy
-    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python3 setup.py build
-    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python3 setup.py test
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python${DATAFED_PYTHON_VERSION} -m pip install numpy
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python${DATAFED_PYTHON_VERSION} setup.py build
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python${DATAFED_PYTHON_VERSION} setup.py test
     # Because we have activaited a venv we don't want to use the --user flag
     # with the install command
-    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python3 setup.py install
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" "python${DATAFED_PYTHON_VERSION}" setup.py install
     cd ../
     # Cleanup build file with root ownership
     if [ -f build/install_manifest.txt ]
@@ -192,7 +194,7 @@ install_libsodium() {
     else
       "$SUDO_CMD" make install
     fi
-    
+
     # Mark libsodium as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.libsodium_installed-${DATAFED_LIBSODIUM_VERSION}"
     cd "$original_dir"

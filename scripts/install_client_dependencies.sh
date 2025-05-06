@@ -10,7 +10,8 @@ PROJECT_ROOT=$(realpath "${SOURCE}/..")
 source "${PROJECT_ROOT}/scripts/utils.sh"
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
-packages=("python3-pkg-resources" "python3-pip" "pkg-config" "python3-venv")
+packages=("pkg-config" "python${DATAFED_PYTHON_VERSION}" "python${DATAFED_PYTHON_VERSION}-venv")
+pip_packages=("setuptools")
 
 sudo_command
 # This script will install all of the dependencies needed by DataFed 1.0
@@ -20,7 +21,8 @@ sudo_command
 
 init_python
 source "${DATAFED_PYTHON_ENV}/bin/activate"
-python3 -m pip install -r "${PROJECT_ROOT}/python/datafed_pkg/requirements.txt"
+"python${DATAFED_PYTHON_VERSION}" -m pip install "${pip_packages[@]}"
+"python${DATAFED_PYTHON_VERSION}" -m pip install -r "${PROJECT_ROOT}/python/datafed_pkg/requirements.txt"
 
 install_protobuf
 cd ~

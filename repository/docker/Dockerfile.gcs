@@ -13,6 +13,7 @@ ARG                           NVM_DIR="$DATAFED_DIR/.nvm"
 ARG                           NVM_INC="$DATAFED_DIR/.nvm/versions/node/v13.14.0/include/node"
 ARG                           NVM_BIN="$DATAFED_DIR/.nvm/versions/node/v13.14.0/bin"
 ARG                           LIB_DIR="/usr/local/lib"
+ARG            DATAFED_PYTHON_VERSION="3.9"
 
 FROM ${DEPENDENCIES} AS dependencies
 
@@ -23,6 +24,7 @@ ARG BUILD_DIR
 ARG DATAFED_INSTALL_PATH
 ARG DATAFED_DEPENDENCIES_INSTALL_PATH
 ARG LIB_DIR
+ARG DATAFED_PYTHON_VERSION
 
 ENV DATAFED_DEPENDENCIES_INSTALL_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH"
 ENV  DATAFED_GCS_COLLECTION_BASE_PATH="/mnt/datafed"
@@ -39,6 +41,7 @@ ENV                              TERM="xterm"
 ENV                    DATAFED_GCS_IP=""
 ENV      BUILD_WITH_METADATA_SERVICES="TRUE"
 ENV                    DATAFED_DOMAIN="localhost"
+ENV            DATAFED_PYTHON_VERSION="$DATAFED_PYTHON_VERSION"
 
 RUN mkdir -p ${BUILD_DIR}
 RUN mkdir -p ${DATAFED_INSTALL_PATH}/logs
@@ -65,8 +68,15 @@ COPY ./scripts/dependency_install_functions.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/install_authz_dependencies.sh   ${BUILD_DIR}/scripts/
 COPY ./scripts/copy_dependency.sh              ${BUILD_DIR}/scripts/
 
+# install Python 3.11
+RUN apt update
+RUN apt install -y software-properties-common
+RUN add-apt-repository ppa:deadsnakes/ppa
+RUN apt update
+RUN apt install -y "python${DATAFED_PYTHON_VERSION}" "python${DATAFED_PYTHON_VERSION}-dev" "python${DATAFED_PYTHON_VERSION}-venv" "python${DATAFED_PYTHON_VERSION}-distutils"
+
 RUN ${BUILD_DIR}/scripts/generate_datafed.sh
-RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_authz_dependencies.sh unify
+RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_authz_dependencies.sh
 
 COPY --chown=datafed:root ./scripts/dependency_versions.sh            ${BUILD_DIR}/scripts/
 COPY --chown=datafed:root ./scripts/generate_authz_config.sh          ${BUILD_DIR}/scripts/generate_authz_config.sh

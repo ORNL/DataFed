@@ -5,6 +5,7 @@ ARG            GCS_IMAGE="code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
 ARG            BUILD_DIR="$DATAFED_DIR/source"
 ARG              LIB_DIR="/opt/datafed/dependencies/lib"
 ARG           BASE_IMAGE="ubuntu:focal"
+ARG	DATAFED_PYTHON_VERSION="3.9"
 
 FROM ${BASE_IMAGE} AS base
 
@@ -15,11 +16,13 @@ ARG DATAFED_INSTALL_PATH
 ARG DEBIAN_FRONTEND=noninteractive
 ARG LIB_DIR
 ARG DATAFED_DEPENDENCIES_INSTALL_PATH
+ARG DATAFED_PYTHON_VERSION
 
 ENV BUILD_DIR="${BUILD_DIR}"
 ENV DATAFED_DIR="${DATAFED_DIR}"
 ENV DATAFED_DEPENDENCIES_INSTALL_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
 ENV LIB_DIR="${LIB_DIR}"
+ENV DATAFED_PYTHON_VERSION="$DATAFED_PYTHON_VERSION"
 
 RUN mkdir -p ${BUILD_DIR}
 RUN mkdir -p ${BUILD_DIR}/logs
@@ -45,6 +48,13 @@ RUN echo "#!/bin/bash\n\$@" > /usr/bin/sudo && chmod +x /usr/bin/sudo
 
 # run build scripts
 RUN ${BUILD_DIR}/scripts/generate_datafed.sh
+
+# install Python 3.11
+RUN apt update
+RUN apt install -y software-properties-common
+RUN add-apt-repository ppa:deadsnakes/ppa
+RUN apt update
+RUN apt install -y "python${DATAFED_PYTHON_VERSION}" "python${DATAFED_PYTHON_VERSION}-dev" "python${DATAFED_PYTHON_VERSION}-venv" "python${DATAFED_PYTHON_VERSION}-distutils"
 
 # Web dependencies
 COPY ./scripts/install_ws_dependencies.sh ${BUILD_DIR}/scripts/
