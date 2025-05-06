@@ -181,7 +181,7 @@ install_libsodium() {
     fi
 
     wget "https://download.libsodium.org/libsodium/releases/libsodium-${DATAFED_LIBSODIUM_VERSION}.tar.gz" -P "./external"
-    tar -xvzf "./external/libsodium-${DATAFED_PROTOBUF_VERSION}.tar.gz" -C "./external/"
+    tar -xvzf "./external/libsodium-${DATAFED_LIBSODIUM_VERSION}.tar.gz" -C "./external/"
     cd "${PROJECT_ROOT}/external/libsodium"
     # Build static ONLY!!!!
     # Note if zmq detects a shared sodium library it will grab it no matter what
