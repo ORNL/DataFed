@@ -177,14 +177,10 @@ install_libsodium() {
       # sudo required because of egg file
       "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/libsodium"
     fi
-    # Here we are using clone instead of submodule update, because submodule
-    # requires the .git folder exist and the current folder be considered a repo
-    # this creates problems in docker because each time a commit is made the 
-    # .git folder contents are changed causing a fresh rebuild of all containers
-    git clone https://github.com/jedisct1/libsodium.git "${PROJECT_ROOT}/external/libsodium"
+
+    wget "https://download.libsodium.org/libsodium/releases/libsodium-${DATAFED_PROTOBUF_VERSION}.tar.gz" -C "./external"
+    tar -xvzf "./external/libsodium-${DATAFED_PROTOBUF_VERSION}.tar.gz" -C "./external/"
     cd "${PROJECT_ROOT}/external/libsodium"
-    git checkout "$DATAFED_LIBSODIUM_VERSION"
-    ./autogen.sh
     # Build static ONLY!!!!
     # Note if zmq detects a shared sodium library it will grab it no matter what
     # --enable-shared=no must be set here
