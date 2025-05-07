@@ -86,6 +86,8 @@ init_python() {
 
 install_cmake() {
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.cmake_installed-${DATAFED_CMAKE_VERSION}" ]; then
+    # Version 3.20 of cmake and onwards starting using all lower case in the package names, previos versions use a
+    # a capital L in the name.
     wget https://github.com/Kitware/CMake/releases/download/v${DATAFED_CMAKE_VERSION}/cmake-${DATAFED_CMAKE_VERSION}-linux-x86_64.tar.gz
     tar -xzvf "cmake-${DATAFED_CMAKE_VERSION}-linux-x86_64.tar.gz" >/dev/null 2>&1
     cp -r "cmake-${DATAFED_CMAKE_VERSION}-linux-x86_64/bin" "${DATAFED_DEPENDENCIES_INSTALL_PATH}"
