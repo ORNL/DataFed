@@ -66,11 +66,11 @@ fi
 
 install_python() {
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.python_installed-${DATAFED_PYTHON_VERSION}" ]; then
-    apt update
-    apt install -y software-properties-common
-    add-apt-repository ppa:deadsnakes/ppa
-    apt update
-    apt install -y "python${DATAFED_PYTHON_VERSION}" "python${DATAFED_PYTHON_VERSION}-dev" "python${DATAFED_PYTHON_VERSION}-venv" "python${DATAFED_PYTHON_VERSION}-distutils"
+    "$SUDO_CMD" apt update
+    "$SUDO_CMD" apt install -y software-properties-common
+    "$SUDO_CMD" add-apt-repository ppa:deadsnakes/ppa
+    "$SUDO_CMD" apt update
+    "$SUDO_CMD" apt install -y "python${DATAFED_PYTHON_VERSION}" "python${DATAFED_PYTHON_VERSION}-dev" "python${DATAFED_PYTHON_VERSION}-venv" "python${DATAFED_PYTHON_VERSION}-distutils"
 
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.python_installed-${DATAFED_PYTHON_VERSION}"
   fi
