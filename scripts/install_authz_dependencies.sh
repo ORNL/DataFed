@@ -47,7 +47,6 @@ if [[ $local_UNIFY = false ]]; then
   "$SUDO_CMD" apt-get install -y "${packages[@]}"
   init_python
   source "${DATAFED_PYTHON_ENV}/bin/activate"
-  "python${DATAFED_PYTHON_VERSION}" -m pip install --upgrade pip
   "python${DATAFED_PYTHON_VERSION}" -m pip install "${pip_packages[@]}"
 
   for ext in "${externals[@]}"; do

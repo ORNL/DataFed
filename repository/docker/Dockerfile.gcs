@@ -13,7 +13,6 @@ ARG                           NVM_DIR="$DATAFED_DIR/.nvm"
 ARG                           NVM_INC="$DATAFED_DIR/.nvm/versions/node/v13.14.0/include/node"
 ARG                           NVM_BIN="$DATAFED_DIR/.nvm/versions/node/v13.14.0/bin"
 ARG                           LIB_DIR="/usr/local/lib"
-ARG            DATAFED_PYTHON_VERSION="3.9"
 
 FROM ${DEPENDENCIES} AS dependencies
 
@@ -24,7 +23,6 @@ ARG BUILD_DIR
 ARG DATAFED_INSTALL_PATH
 ARG DATAFED_DEPENDENCIES_INSTALL_PATH
 ARG LIB_DIR
-ARG DATAFED_PYTHON_VERSION
 
 ENV DATAFED_DEPENDENCIES_INSTALL_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH"
 ENV  DATAFED_GCS_COLLECTION_BASE_PATH="/mnt/datafed"
@@ -41,7 +39,6 @@ ENV                              TERM="xterm"
 ENV                    DATAFED_GCS_IP=""
 ENV      BUILD_WITH_METADATA_SERVICES="TRUE"
 ENV                    DATAFED_DOMAIN="localhost"
-ENV            DATAFED_PYTHON_VERSION="$DATAFED_PYTHON_VERSION"
 
 RUN mkdir -p ${BUILD_DIR}
 RUN mkdir -p ${DATAFED_INSTALL_PATH}/logs
