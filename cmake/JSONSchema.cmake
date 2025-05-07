@@ -4,7 +4,6 @@ function(find_json_schema_library)
   set(JSON_SCHEMA_LIB_DIR "" )
   set(JSON_SCHEMA_LIB_CMAKE_DIR "" )
   set(JSON_SCHEMA_LIBRARY_PATH "" )
-  
   if(EXISTS ${DEPENDENCY_INSTALL_PATH})
     set(JSON_SCHEMA_LIB_CMAKE_DIR "${DEPENDENCY_INSTALL_PATH}/lib/cmake")
     set(JSON_SCHEMA_INCLUDE_DIR "${DEPENDENCY_INSTALL_PATH}/include")
