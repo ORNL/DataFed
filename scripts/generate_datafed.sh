@@ -58,6 +58,14 @@ else
   local_DATAFED_DATABASE_HOST=$(printenv DATAFED_DATABASE_HOST)
 fi
 
+local_DATAFED_DATABASE_PORT=""
+if [[ -z "$DATAFED_DATABASE_PORT" ]]
+then
+  # Empty
+  local_DATAFED_DATABASE_PORT="8529"
+else
+  local_DATAFED_DATABASE_PORT=$(printenv DATAFED_DATABASE_PORT)
+fi
 
 local_DATAFED_ZEROMQ_SESSION_SECRET=""
 if [ -z "${DATAFED_ZEROMQ_SESSION_SECRET}" ]
@@ -275,6 +283,8 @@ export DATAFED_DATABASE_PASSWORD="$local_DATAFED_DATABASE_PASSWORD"
 # Host of the metadata database, can be a domain name
 # or an IP address.
 export DATAFED_DATABASE_HOST="$local_DATAFED_DATABASE_HOST"
+# i.e. 8529 - Arango port
+export DATAFED_DATABASE_PORT="$local_DATAFED_DATABASE_PORT"
 # The user account the datafed core application will run under
 export DATAFED_CORE_USER="$local_DATAFED_CORE_USER"
 
