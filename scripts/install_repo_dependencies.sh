@@ -14,6 +14,8 @@ packages=("libtool" "wget" "build-essential" "g++" "gcc" "libboost-all-dev" "pkg
 pip_packages=("setuptools")
 externals=("cmake" "protobuf" "libsodium" "libzmq")
 
+install_python
+
 local_UNIFY=false
 
 if [ $# -eq 1 ]; then
