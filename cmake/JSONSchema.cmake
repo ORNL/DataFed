@@ -10,7 +10,8 @@ function(find_json_schema_library)
     set(JSON_SCHEMA_INCLUDE_DIR "${DEPENDENCY_INSTALL_PATH}/include")
     set(JSON_SCHEMA_LIB_DIR "${DEPENDENCY_INSTALL_PATH}/lib")
   endif()
-
+    # Specifying the VERSION with find_package commands since updating the json schema version from
+    # version "2.1.0" to "2.3.0" is no longer supported.
   find_package(nlohmann_json_schema_validator REQUIRED  PATHS "${JSON_SCHEMA_LIB_CMAKE_DIR}")
 
   # NOTE interfaces do not have a physical location associated with the library
