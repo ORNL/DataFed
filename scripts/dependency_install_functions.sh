@@ -179,7 +179,9 @@ install_libsodium() {
       # sudo required because of egg file
       "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/libsodium"
     fi
-
+    # Official documentation for libsodium indicates this is the preferred way to build libsodium.
+    # Using the git repo directly results in build instability because of additional network calls when running
+    # autogen.sh.
     wget "https://download.libsodium.org/libsodium/releases/libsodium-${DATAFED_LIBSODIUM_VERSION}.tar.gz" -P "${PROJECT_ROOT}/external"
     tar -xvzf "${PROJECT_ROOT}/external/libsodium-${DATAFED_LIBSODIUM_VERSION}.tar.gz" -C "${PROJECT_ROOT}/external/"
     cd "${PROJECT_ROOT}/external/libsodium-${DATAFED_LIBSODIUM_VERSION}"
