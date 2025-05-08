@@ -8,6 +8,7 @@
 // Standard includes
 #include <optional>
 #include <string>
+#include <cstdint>
 
 namespace SDMS {
 
