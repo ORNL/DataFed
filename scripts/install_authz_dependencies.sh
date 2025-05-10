@@ -14,7 +14,7 @@ packages=("host" "libtool" "build-essential" "g++" "gcc" "autoconf"
   "automake" "make" "git" "python3-pkg-resources" "python3-pip" "pkg-config"
   "libglobus-common-dev" "wget" "jq" "sudo" "libboost-all-dev" "python3-venv" "libgssapi-krb5-2")
 pip_packages=("setuptools" "distro" "jwt" "globus_sdk")
-externals=("cmake" "protobuf" "libsodium" "libzmq" )
+externals=("cmake" "protobuf" "libsodium" "libzmq" "libopenssl")
 
 local_UNIFY=false
 
