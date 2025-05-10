@@ -1,6 +1,4 @@
 # NOTE this image must be built with respect to the base of the project i.e.
-# cd ${PROJECT_ROOT} or cd DataFed
-# docker build -f repository/docker/Dockerfile.gcs .
 ARG                        BUILD_BASE="debian:bookworm-slim"
 ARG                      DEPENDENCIES="dependencies"
 ARG                           RUNTIME="runtime"
@@ -148,39 +146,6 @@ RUN apt-get reinstall globus-connect-server54 -y
 
 RUN ${BUILD_DIR}/scripts/generate_gsi-authz_config.sh
 # Don't build with syslog the container does not seem to support syslog
-# RUN ${BUILD_DIR}/scripts/generate_authz_config.sh &&  \
-#   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake -S. -B build  \
-#     -DBUILD_REPO_SERVER=False         \
-#     -DBUILD_AUTHZ_TESTS=True          \
-#     -DBUILD_AUTHZ=True                \
-#     -DBUILD_AUTHZ_WITH_SYSLOG=False   \
-#     -DBUILD_CORE_SERVER=False         \
-#     -DBUILD_WEB_SERVER=False          \
-#     -DBUILD_DOCS=False                \
-#     -DBUILD_PYTHON_CLIENT=False       \
-#     -DBUILD_FOXX=False
-# RUN  ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build -j 8
-# RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build --target install
-#
-# # Get the file that is not a link and give it the right permissions
-# RUN chmod 755 ${DATAFED_INSTALL_PATH}/authz/$(ls -l /opt/datafed/authz/ | grep -v "^l" | grep libdatafed-authz | awk '{print  $9}')
-#
-# COPY --chown=datafed:root ./scripts/globus/setup_globus.sh        ${BUILD_DIR}/scripts/globus/setup_globus.sh
-# COPY --chown=datafed:root ./scripts/globus/generate_repo_form.sh  ${BUILD_DIR}/scripts/globus/generate_repo_form.sh
-# COPY --chown=datafed:root ./repository/docker/entrypoint_authz.sh ${BUILD_DIR}/repository/docker/entrypoint_authz.sh
-#
-# USER root
-#
-# ENV LD_LIBRARY_PATH=/opt/datafed/dependencies/lib/
-#
-# # Remove --client-id from command because it was deprecated
-# RUN sed -i '/--client-id/d' /entrypoint.sh
-#
-# WORKDIR ${DATAFED_INSTALL_PATH}/authz
-#
-# # NOTE If you do not overwrite the entrypoint file it will use the GCS instance
-# # provided one
-# ENTRYPOINT ["/datafed/source/repository/docker/entrypoint_authz.sh"]
 
 COPY --from=dependencies --chown=datafed:root ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/curl ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/curl
 COPY --from=dependencies --chown=datafed:root ${DATAFED_INSTALL_PATH}/authz/ ${DATAFED_INSTALL_PATH}/authz/

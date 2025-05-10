@@ -60,15 +60,7 @@ RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_depen
 
 # Authz dependencies
 COPY ./scripts/install_authz_dependencies.sh ${BUILD_DIR}/scripts/
-RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_dependencies.sh -a -w -c -r 
-
-# COPY ./scripts/copy_dependency.sh ${BUILD_DIR}/scripts/
-# RUN ${BUILD_DIR}/scripts/copy_dependency.sh protobuf from
-# RUN ${BUILD_DIR}/scripts/copy_dependency.sh protoc from
-# RUN ${BUILD_DIR}/scripts/copy_dependency.sh libzmq from
-# RUN ${BUILD_DIR}/scripts/copy_dependency.sh libsodium from
-# RUN ${BUILD_DIR}/scripts/copy_dependency.sh boost_program_options from
-# RUN ${BUILD_DIR}/scripts/copy_dependency.sh boost_filesystem from
+RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_dependencies.sh -a -w -c -r
 
 RUN mkdir -p ${DATAFED_INSTALL_PATH}
 RUN mkdir -p ${DATAFED_INSTALL_PATH}/keys
