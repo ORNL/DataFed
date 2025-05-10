@@ -2,6 +2,7 @@ import * as util from "../../util.js";
 import * as model from "../../model.js";
 import * as api from "../../api.js";
 import * as panel_info from "../../panel_item_info.js";
+import { defineArrowMarkerComp, defineArrowMarkerDeriv, defineArrowMarkerNewVer } from "./assets/arrow-markers.js";
 
 // Dynamically load the graph styles CSS
 (function loadGraphStyles() {
