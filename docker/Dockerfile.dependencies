@@ -46,13 +46,6 @@ RUN echo "#!/bin/bash\n\$@" > /usr/bin/sudo && chmod +x /usr/bin/sudo
 # run build scripts
 RUN ${BUILD_DIR}/scripts/generate_datafed.sh
 
-# Install the configured Python version
-RUN apt update
-RUN apt install -y software-properties-common
-RUN add-apt-repository ppa:deadsnakes/ppa
-RUN apt update
-RUN apt install -y "python${DATAFED_PYTHON_VERSION}" "python${DATAFED_PYTHON_VERSION}-dev" "python${DATAFED_PYTHON_VERSION}-venv" "python${DATAFED_PYTHON_VERSION}-distutils"
-
 # Web dependencies
 COPY ./scripts/install_ws_dependencies.sh ${BUILD_DIR}/scripts/
 RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_dependencies.sh -a -r -z -c

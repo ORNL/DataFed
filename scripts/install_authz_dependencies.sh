@@ -16,6 +16,8 @@ packages=("host" "libtool" "build-essential" "g++" "gcc" "autoconf"
 pip_packages=("setuptools" "distro" "jwt" "globus_sdk")
 externals=("cmake" "protobuf" "libsodium" "libzmq" )
 
+install_python
+
 local_UNIFY=false
 
 if [ $# -eq 1 ]; then
