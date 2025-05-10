@@ -72,8 +72,6 @@ WORKDIR /datafed
 
 COPY --from=repo-build /usr/lib/x86_64-linux-gnu/libboost_program_options.so /usr/lib/x86_64-linux-gnu/libboost_program_options.so
 COPY --from=repo-build /usr/lib/x86_64-linux-gnu/libboost_filesystem.so      /usr/lib/x86_64-linux-gnu/libboost_filesystem.so
-# RUN ${BUILD_DIR}/scripts/copy_dependency.sh boost_program_options to
-# RUN ${BUILD_DIR}/scripts/copy_dependency.sh boost_filesystem to
 
 RUN ldconfig
 
