@@ -13,6 +13,8 @@ source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 packages=("pkg-config" "python${DATAFED_PYTHON_VERSION}" "python${DATAFED_PYTHON_VERSION}-venv")
 pip_packages=("setuptools")
 
+install_python
+
 sudo_command
 # This script will install all of the dependencies needed by DataFed 1.0
 "$SUDO_CMD" apt-get update
