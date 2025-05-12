@@ -9,10 +9,12 @@ Unit Testing with Foxx Microservices
 
 ArangoDB supports running small applications called *Foxx microservices*. You can run unit tests for these services without standing up the full DataFed application by using a standalone ArangoDB instance.
 
-Start an ArangoDB Container
+1. Start an ArangoDB Container
 ---------------------------
 
 First, pull the official ArangoDB Docker image:
+
+NOTE: the use of 3.12.4 is what has been tested, other minor versions changes of ArangoDB should also work.
 
 .. code-block:: bash
 
@@ -29,7 +31,7 @@ Next, run the container, specifying a root password for the database:
 
 You now have a running ArangoDB instance to install Foxx services and run tests against.
 
-Build Docker Images
+2. Build Docker Images
 -------------------
 
 To run Foxx tests, you'll need two images:
@@ -53,10 +55,12 @@ Assuming you're at the root of the DataFed repository:
      -f ./docker/Dockerfile.foxx . \
      -t datafed-foxx:latest
 
-Run Unit Tests
+3. Run Unit Tests
 --------------
 
 Now, run the Foxx container with the appropriate environment variables to install the services and enable testing:
+
+DATAFED_DATABASE_PASSWORD, and DATAFED_ZEROMQ_SYSTEM_SECRET can be anything but they should be consistent with what is in the config/datafed.sh file.
 
 .. code-block:: bash
 
