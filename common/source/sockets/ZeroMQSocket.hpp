@@ -31,6 +31,7 @@ public:
 
   ZeroMQSocket(const SocketOptions &socket_options);
 
+  ~ZeroMQSocket() {};
   /*********************************************************
    * Getters
    *********************************************************/
