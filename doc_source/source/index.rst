@@ -75,6 +75,7 @@ by subsequent documents on this site.
 
    dev/project
    dev/design
+   dev/testing
    dev/release
    dev/roadmap
 
