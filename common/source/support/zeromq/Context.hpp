@@ -28,10 +28,7 @@ public:
 
     static void *getContext() {
       if (context == nullptr) {
-        std::cout << "Creating new context" << std::endl;
         context = zmq_ctx_new();
-      } else {
-        std::cout << "Returning old context" << std::endl;
       }
       return context;
     }
