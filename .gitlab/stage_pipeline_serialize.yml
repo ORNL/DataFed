@@ -22,6 +22,6 @@ wait:
     #
     # By sleeping for some random amount of seconds it gives the GitLab database
     # a moment to update the number of active pipelines.
-    - sleep $((RANDOM % 6 + 5))
+    - sleep $((RANDOM % 30 + 5))
     - chmod +x ./scripts/ci_pipeline_serializer.sh && ./scripts/ci_pipeline_serializer.sh
   resource_group: pipeline_serializer
