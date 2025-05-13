@@ -58,6 +58,10 @@ public:
     return ProtocolType::ZQTP;
   };
 
+  virtual URIScheme getSocketScheme() const noexcept final {
+    return m_scheme;
+  }
+
   virtual std::string getAddress() const noexcept final;
 
   virtual std::string get(const CredentialType credential_type) const final;
