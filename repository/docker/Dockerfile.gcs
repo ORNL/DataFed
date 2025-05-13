@@ -119,6 +119,8 @@ COPY ./scripts/utils.sh                        ${BUILD_DIR}/scripts/utils.sh
 
 RUN ${BUILD_DIR}/scripts/generate_datafed.sh
 
+RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_authz_dependencies.sh
+
 COPY --chown=datafed:root ./scripts/dependency_versions.sh            ${BUILD_DIR}/scripts/
 COPY --chown=datafed:root ./scripts/generate_authz_config.sh          ${BUILD_DIR}/scripts/generate_authz_config.sh
 COPY --chown=datafed:root ./scripts/utils.sh                          ${BUILD_DIR}/scripts/utils.sh
