@@ -1122,20 +1122,21 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 svg.attr("transform", d3.event.transform);
             }),
         )
-        .append("g")
-        .on("dblclick", function () {
-            // Clear selection when double-clicking on empty space
-            if (sel_node) {
-                d3.select(".highlight").attr("class", "select hidden");
-                sel_node = null;
-                sel_node_id = null;
-                panel_info.showSelectedInfo(null);
-                a_parent.updateBtnState();
-            }
-
-            // Stop event propagation
-            d3.event.stopPropagation();
-        });
+        .append("g");
+    // TODO add deselect selected node highlight on double-click
+    // .on("dblclick", function () {
+    //     // Clear selection when double-clicking on empty space
+    //     if (sel_node) {
+    //         d3.select(".highlight").attr("class", "select hidden");
+    //         sel_node = null;
+    //         sel_node_id = null;
+    //         panel_info.showSelectedInfo(null);
+    //         a_parent.updateBtnState();
+    //     }
+    //
+    //     // Stop event propagation
+    //     d3.event.stopPropagation();
+    // });
 
     defineArrowMarkerDeriv(svg);
     defineArrowMarkerComp(svg);
