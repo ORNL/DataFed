@@ -1,6 +1,91 @@
 import { DEFAULTS } from "./state.js";
 
-export function createCustomizationModal() {
+function showCustomizationModal(node, x, y, currentCustomizationNode, renderGraph) {
+    const modal = document.getElementById("customization-modal");
+    if (!modal) return;
+
+    // Set the current node being customized
+    currentCustomizationNode = node;
+
+    const nodeColorInput = document.getElementById("node-color-input");
+    // Get the actual current node color, either from custom setting or from computed style
+    if (node.nodeColor) {
+        nodeColorInput.value = node.nodeColor;
+    } else {
+        // Try to get the default color from CSS if possible
+        const nodeElement = d3.select(`[id="${node.id}"] circle.obj`).node();
+        if (nodeElement) {
+            const computedStyle = window.getComputedStyle(nodeElement);
+            const fillColor = computedStyle.fill;
+            if (fillColor && fillColor !== "none") {
+                // Convert RGB to hex if needed
+                if (fillColor.startsWith("rgb")) {
+                    const rgb = fillColor.match(/\d+/g);
+                    if (rgb && rgb.length === 3) {
+                        // Hex value
+                        nodeColorInput.value = "#" + rgb.map(x => {
+                            const hexValue = parseInt(x).toString(16);
+                            return hexValue.padStart(2, "0");
+                        }).join("");
+                    } else {
+                        nodeColorInput.value = "#6baed6"; // Default blue
+                    }
+                } else {
+                    nodeColorInput.value = fillColor;
+                }
+            } else {
+                nodeColorInput.value = "#6baed6"; // Default blue
+            }
+        } else {
+            nodeColorInput.value = "#6baed6"; // Default blue
+        }
+    }
+
+    const labelSizeSlider = document.getElementById("label-size-slider");
+    const labelSizeValue = labelSizeSlider.nextElementSibling;
+    labelSizeSlider.value = node.labelSize || DEFAULTS.LABEL_SIZE;
+    labelSizeValue.textContent = `${labelSizeSlider.value}px`;
+
+    const labelColorInput = document.getElementById("label-color-input");
+    labelColorInput.value = node.labelColor || "#333333";
+
+    const anchorCheckbox = document.getElementById("anchor-checkbox");
+    anchorCheckbox.checked = node.anchored || false;
+
+    // Position and show modal
+    modal.style.left = `${x}px`;
+    modal.style.top = `${y}px`;
+    modal.style.display = "block";
+
+    // Return the current node for reference
+    return currentCustomizationNode;
+}
+
+// Function to make the customization modal draggable
+function makeModalDraggable(modal) {
+    let offsetX, offsetY, isDragging = false;
+    const header = modal.querySelector(".modal-header") || modal;
+
+    header.addEventListener("mousedown", function(e) {
+        isDragging = true;
+        offsetX = e.clientX - modal.offsetLeft;
+        offsetY = e.clientY - modal.offsetTop;
+        e.preventDefault();
+    });
+
+    document.addEventListener("mousemove", function(e) {
+        if (isDragging) {
+            modal.style.left = `${e.clientX - offsetX}px`;
+            modal.style.top = `${e.clientY - offsetY}px`;
+        }
+    });
+
+    document.addEventListener("mouseup", function() {
+        isDragging = false;
+    });
+}
+
+function createCustomizationModal() {
     // Remove existing modal if it exists
     const existingModal = document.getElementById("customization-modal");
     if (existingModal) {
@@ -141,26 +226,7 @@ export function createCustomizationModal() {
     return modal;
 }
 
-// Function to make the customization modal draggable
-function makeModalDraggable(modal) {
-    let offsetX, offsetY, isDragging = false;
-    const header = modal.querySelector(".modal-header") || modal;
-
-    header.addEventListener("mousedown", function(e) {
-        isDragging = true;
-        offsetX = e.clientX - modal.offsetLeft;
-        offsetY = e.clientY - modal.offsetTop;
-        e.preventDefault();
-    });
-
-    document.addEventListener("mousemove", function(e) {
-        if (isDragging) {
-            modal.style.left = `${e.clientX - offsetX}px`;
-            modal.style.top = `${e.clientY - offsetY}px`;
-        }
-    });
-
-    document.addEventListener("mouseup", function() {
-        isDragging = false;
-    });
+export {
+    showCustomizationModal,
+    createCustomizationModal
 }

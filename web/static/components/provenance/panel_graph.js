@@ -4,8 +4,8 @@ import * as api from "../../api.js";
 import * as panel_info from "../../panel_item_info.js";
 import { defineArrowMarkerComp, defineArrowMarkerDeriv, defineArrowMarkerNewVer } from "./assets/arrow-markers.js";
 import { DEFAULTS, GraphState } from "./state.js";
-import { createCustomizationModal } from "./customization_modal.js";
-import { graphPruneCalc } from "./utils.js";
+import { createCustomizationModal, showCustomizationModal as showModal } from "./customization_modal.js";
+import { graphPruneCalc, makeLabel, createNode, graphPrune, graphPruneReset, graphCountConnected } from "./utils.js";
 
 // Dynamically load the graph styles CSS
 (function loadGraphStyles() {
@@ -30,38 +30,6 @@ import { graphPruneCalc } from "./utils.js";
 
 export function newGraphPanel(a_id, a_frame, a_parent) {
     return new GraphPanel(a_id, a_frame, a_parent);
-}
-
-// Factory function for creating nodes
-function createNode(item) {
-    const node = {
-        id: item.id,
-        doi: item.doi,
-        size: item.size,
-        notes: item.notes,
-        inhErr: item.inhErr,
-        locked: item.locked,
-        links: [],
-        nodeSize: DEFAULTS.NODE_SIZE,
-        labelSize: DEFAULTS.LABEL_SIZE,
-    };
-
-    makeLabel(node, item);
-
-    if (item.gen !== undefined) {
-        node.row = item.gen;
-        node.col = 0;
-    }
-
-    return node;
-}
-
-function makeLabel(node, item) {
-    if (item.alias) {
-        node.label = item.alias;
-    } else node.label = item.id;
-
-    node.label += util.generateNoteSpan(item, true);
 }
 
 function GraphPanel(a_id, a_frame, a_parent) {
@@ -103,11 +71,11 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 const item = a_data.item[i];
                 const node = createNode(item);
 
-                if (item.id == a_id) {
+                if (item.id === a_id) {
                     node.comp = true;
                 }
 
-                if (item.id == sel_node_id) {
+                if (item.id === sel_node_id) {
                     sel_node = node;
                 }
 
@@ -193,18 +161,6 @@ function GraphPanel(a_id, a_frame, a_parent) {
         const modal = document.getElementById("customization-modal");
         if (!modal) return;
 
-        // Node size slider
-        const nodeSizeSlider = document.getElementById("node-size-slider");
-        const nodeSizeValue = nodeSizeSlider.nextElementSibling;
-
-        nodeSizeSlider.addEventListener("input", function() {
-            nodeSizeValue.textContent = this.value;
-            if (currentCustomizationNode) {
-                currentCustomizationNode.nodeSize = parseInt(this.value);
-                renderGraph();
-            }
-        });
-
         // Node color input
         const nodeColorInput = document.getElementById("node-color-input");
         nodeColorInput.addEventListener("input", function() {
@@ -271,72 +227,6 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 modal.style.display = "none";
             }
         });
-    }
-
-    // Show customization modal for a node
-    function showCustomizationModal(node, x, y) {
-        if (!customizationModal) {
-            customizationModal = createCustomizationModal();
-            setupCustomizationModalEvents();
-        }
-
-        currentCustomizationNode = node;
-
-        // Update modal controls to reflect current node state
-        const nodeSizeSlider = document.getElementById("node-size-slider");
-        const nodeSizeValue = nodeSizeSlider.nextElementSibling;
-        nodeSizeSlider.value = node.nodeSize || DEFAULTS.NODE_SIZE;
-        nodeSizeValue.textContent = `${nodeSizeSlider.value}px`;
-
-        const nodeColorInput = document.getElementById("node-color-input");
-        // Get the actual current node color, either from custom setting or from computed style
-        if (node.nodeColor) {
-            nodeColorInput.value = node.nodeColor;
-        } else {
-            // Try to get the default color from CSS if possible
-            const nodeElement = d3.select(`[id="${node.id}"] circle.obj`).node();
-            if (nodeElement) {
-                const computedStyle = window.getComputedStyle(nodeElement);
-                const fillColor = computedStyle.fill;
-                if (fillColor && fillColor !== "none") {
-                    // Convert RGB to hex if needed
-                    if (fillColor.startsWith("rgb")) {
-                        const rgb = fillColor.match(/\d+/g);
-                        if (rgb && rgb.length === 3) {
-                            // Hex value
-                            nodeColorInput.value = "#" + rgb.map(x => {
-                                const hexValue = parseInt(x).toString(16);
-                                return hexValue.padStart(2, "0");
-                            }).join("");
-                        } else {
-                            nodeColorInput.value = "#6baed6"; // Default blue
-                        }
-                    } else {
-                        nodeColorInput.value = fillColor;
-                    }
-                } else {
-                    nodeColorInput.value = "#6baed6"; // Default blue
-                }
-            } else {
-                nodeColorInput.value = "#6baed6"; // Default blue
-            }
-        }
-
-        const labelSizeSlider = document.getElementById("label-size-slider");
-        const labelSizeValue = labelSizeSlider.nextElementSibling;
-        labelSizeSlider.value = node.labelSize || DEFAULTS.LABEL_SIZE;
-        labelSizeValue.textContent = `${labelSizeSlider.value}px`;
-
-        const labelColorInput = document.getElementById("label-color-input");
-        labelColorInput.value = node.labelColor || "#333333";
-
-        const anchorCheckbox = document.getElementById("anchor-checkbox");
-        anchorCheckbox.checked = node.anchored || false;
-
-        // Position and show modal
-        customizationModal.style.left = `${x}px`;
-        customizationModal.style.top = `${y}px`;
-        customizationModal.style.display = "block";
     }
 
     this.checkGraphUpdate = function(a_data, a_source) {
@@ -459,6 +349,18 @@ function GraphPanel(a_id, a_frame, a_parent) {
         }
     };
 
+    function selNode (d, parentNode) {
+        if (sel_node !== d) {
+            d3.select(".highlight").attr("class", "select hidden");
+            d3.select(parentNode).select(".select").attr("class", "select highlight");
+            sel_node = d;
+            sel_node_id = d.id;
+            panel_info.showSelectedInfo(d.id, inst.checkGraphUpdate);
+            a_parent.updateBtnState();
+        }
+    }
+
+
     // NOTE: D3 changes link source and target IDs strings (in link_data) to node references (in node_data) when renderGraph runs
     function renderGraph() {
         let g;
@@ -506,7 +408,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
         nodes.select("circle.obj").attr("class", function(d) {
             let res = "obj ";
 
-            if (d.id == focus_node_id) res += "main";
+            if (d.id === focus_node_id) res += "main";
             else if (d.row !== undefined) res += "prov";
             else {
                 res += "other";
@@ -534,8 +436,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
         });
 
         nodes.selectAll(".node > circle.select").attr("class", function(d) {
-            if (d.id == sel_node_id) {
-                //sel_node = d;
+            if (d.id === sel_node_id) {
                 return "select highlight";
             } else return "select hidden";
         });
@@ -554,7 +455,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 let res = "obj ";
                 //console.log("node enter 1");
 
-                if (d.id == focus_node_id) res += "main";
+                if (d.id === focus_node_id) res += "main";
                 else if (d.row !== undefined) res += "prov";
                 else {
                     res += "other";
@@ -582,20 +483,13 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 d3.select(this).transition().duration(500).attr("r", nodeSize);
             })
             .on("dblclick", function(d, i) {
-                //console.log("dbl click");
+
                 if (d.comp) inst.collapseNode();
                 else inst.expandNode();
                 d3.event.stopPropagation();
             })
             .on("click", function(d, i) {
-                if (sel_node !== d) {
-                    d3.select(".highlight").attr("class", "select hidden");
-                    d3.select(this.parentNode).select(".select").attr("class", "select highlight");
-                    sel_node = d;
-                    sel_node_id = d.id;
-                    panel_info.showSelectedInfo(d.id, inst.checkGraphUpdate);
-                    a_parent.updateBtnState();
-                }
+                selNode(d, this.parentNode);
 
                 if (d3.event.ctrlKey) {
                     if (d.comp) inst.collapseNode();
@@ -609,17 +503,10 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 d3.event.preventDefault();
 
                 // Select the node if not already selected
-                if (sel_node !== d) {
-                    d3.select(".highlight").attr("class", "select hidden");
-                    d3.select(this.parentNode).select(".select").attr("class", "select highlight");
-                    sel_node = d;
-                    sel_node_id = d.id;
-                    panel_info.showSelectedInfo(d.id, inst.checkGraphUpdate);
-                    a_parent.updateBtnState();
-                }
+                selNode(d, this.parentNode);
 
                 // Show customization modal at mouse position
-                showCustomizationModal(d, d3.event.pageX, d3.event.pageY);
+                currentCustomizationNode = showModal(d, d3.event.pageX, d3.event.pageY, currentCustomizationNode, renderGraph);
 
                 d3.event.stopPropagation();
             });
@@ -630,10 +517,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 return (d.nodeSize || r) * 1.5;
             })
             .attr("class", function(d) {
-                //console.log("node enter 3");
-
-                if (d.id == sel_node_id) {
-                    //sel_node = d;
+                if (d.id === sel_node_id) {
                     return "select highlight";
                 } else return "select hidden";
             });
@@ -686,17 +570,10 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 d3.event.preventDefault();
 
                 // Select the node if not already selected
-                if (sel_node !== d) {
-                    d3.select(".highlight").attr("class", "select hidden");
-                    d3.select(this.parentNode).select(".select").attr("class", "select highlight");
-                    sel_node = d;
-                    sel_node_id = d.id;
-                    panel_info.showSelectedInfo(d.id, inst.checkGraphUpdate);
-                    a_parent.updateBtnState();
-                }
+                selNode(d, this.parentNode);
 
                 // Show customization modal at mouse position
-                showCustomizationModal(d, d3.event.pageX, d3.event.pageY);
+                currentCustomizationNode = showModal(d, d3.event.pageX, d3.event.pageY, currentCustomizationNode, renderGraph);
 
                 d3.event.stopPropagation();
             })
@@ -859,6 +736,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
             d.draggingLabel = false;
             // Label position is already updated in the dragged function
         } else {
+            // TODO - remove this
             // Check if shift key is pressed to anchor the node
             if (d3.event.sourceEvent && d3.event.sourceEvent.shiftKey) {
                 // Keep the fixed position (anchored)
@@ -902,13 +780,13 @@ function GraphPanel(a_id, a_frame, a_parent) {
 
     function findNode(a_id) {
         for (let i in node_data) {
-            if (node_data[i].id == a_id) return node_data[i];
+            if (node_data[i].id === a_id) return node_data[i];
         }
     }
 
     function findLink(a_id) {
         for (let i in link_data) {
-            if (link_data[i].id == a_id) return link_data[i];
+            if (link_data[i].id === a_id) return link_data[i];
         }
     }
 
@@ -925,16 +803,15 @@ function GraphPanel(a_id, a_frame, a_parent) {
 
                     for (i in rec.deps) {
                         dep = rec.deps[i];
-                        //console.log("dep:",dep);
 
-                        if (dep.dir == "DEP_IN") id = dep.id + "-" + rec.id;
+                        if (dep.dir === "DEP_IN") id = dep.id + "-" + rec.id;
                         else id = rec.id + "-" + dep.id;
 
                         link = findLink(id);
                         if (link) continue;
 
                         link = { id: id, ty: model.DepTypeFromString[dep.type] };
-                        if (dep.dir == "DEP_IN") {
+                        if (dep.dir === "DEP_IN") {
                             link.source = dep.id;
                             link.target = rec.id;
                         } else {
@@ -968,7 +845,6 @@ function GraphPanel(a_id, a_frame, a_parent) {
     };
 
     this.collapseNode = function() {
-        //console.log("collapse node");
         if (sel_node) {
             let i,
                 link,
@@ -979,11 +855,10 @@ function GraphPanel(a_id, a_frame, a_parent) {
 
             for (i = sel_node.links.length - 1; i >= 0; i--) {
                 link = sel_node.links[i];
-                //console.log("lev 0 link:",link);
                 dest = link.source !== sel_node ? link.source : link.target;
                 graphPruneCalc(dest, [sel_node.id], sel_node);
 
-                if (!dest.prune && dest.row == undefined) {
+                if (!dest.prune && dest.row === undefined) {
                     graphPruneReset(-1);
                     link.prune += 1;
                     //graphPrune();
@@ -992,7 +867,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 if (dest.prune) {
                     //console.log("PRUNE ALL");
                     graphPrune();
-                } else if (dest.row == undefined) {
+                } else if (dest.row === undefined) {
                     //console.log("PRUNE LOCAL EDGE ONLY");
                     graphPruneReset();
                     loc_trim.push(link);
@@ -1023,7 +898,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
             // Check for disconnection of the graph
             console.log("hide", sel_node.id);
             let start =
-                sel_node.links[0].source == sel_node
+                sel_node.links[0].source === sel_node
                     ? sel_node.links[0].target
                     : sel_node.links[0].source;
             console.log("start", start);
@@ -1075,14 +950,14 @@ function GraphPanel(a_id, a_frame, a_parent) {
                     l1 = {};
                     for (j in node.links) {
                         l = node.links[j];
-                        if (l.source.id == i) l1[l.target.id] = l.ty;
+                        if (l.source.id === i) l1[l.target.id] = l.ty;
                     }
 
                     same = true;
                     dep_cnt = 0;
                     for (j in item.dep) {
                         l = item.dep[j];
-                        if (l.dir == "DEP_OUT") {
+                        if (l.dir === "DEP_OUT") {
                             if (l1[l.id] !== model.DepTypeFromString[l.type]) {
                                 same = false;
                                 break;
@@ -1107,12 +982,12 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 node.notes = item.notes;
                 node.size = item.size;
                 makeLabel(node, item);
-                if (node == sel_node) panel_info.showSelectedInfo(sel_node_id);
+                if (node === sel_node) panel_info.showSelectedInfo(sel_node_id);
             } else if (item.depsAvail) {
                 // See if this node might need to be added to graph
                 for (j in item.dep) {
                     l = item.dep[j];
-                    if (l.dir == "DEP_OUT" && findNode(l.id)) {
+                    if (l.dir === "DEP_OUT" && findNode(l.id)) {
                         //console.log("must reload graph (new ext deps)");
                         inst.load(focus_node_id, sel_node_id);
                         return;
@@ -1126,73 +1001,6 @@ function GraphPanel(a_id, a_frame, a_parent) {
             a_parent.updateBtnState();
         }
     };
-
-    function graphCountConnected(a_node, a_visited, a_from) {
-        let count = 0;
-
-        if (a_visited.indexOf(a_node.id) < 0 && !a_node.prune) {
-            a_visited.push(a_node.id);
-            count++;
-            let link, dest;
-            for (let i in a_node.links) {
-                link = a_node.links[i];
-                if (link !== a_from) {
-                    dest = link.source == a_node ? link.target : link.source;
-                    count += graphCountConnected(dest, a_visited, link);
-                }
-            }
-        }
-
-        return count;
-    }
-
-    function graphPrune() {
-        let i, j, item;
-
-        for (i = link_data.length - 1; i >= 0; i--) {
-            item = link_data[i];
-            if (item.prune) {
-                //console.log("pruning link:",item);
-                if (!item.source.prune) {
-                    item.source.comp = false;
-                    j = item.source.links.indexOf(item);
-                    if (j !== -1) {
-                        item.source.links.splice(j, 1);
-                    } else {
-                        console.log("BAD INDEX IN SOURCE LINKS!");
-                    }
-                }
-                if (!item.target.prune) {
-                    item.target.comp = false;
-                    j = item.target.links.indexOf(item);
-                    if (j !== -1) {
-                        item.target.links.splice(j, 1);
-                    } else {
-                        console.log("BAD INDEX IN TARGET LINKS!");
-                    }
-                }
-                link_data.splice(i, 1);
-            }
-        }
-
-        for (i = node_data.length - 1; i >= 0; i--) {
-            item = node_data[i];
-            if (item.prune) {
-                //console.log("pruning node:",item);
-                node_data.splice(i, 1);
-            }
-        }
-    }
-
-    function graphPruneReset() {
-        let i;
-        for (i in node_data) {
-            node_data[i].prune = false;
-        }
-        for (i in link_data) {
-            link_data[i].prune = false;
-        }
-    }
 
     function simTick() {
         // Update node positions
@@ -1254,27 +1062,6 @@ function GraphPanel(a_id, a_frame, a_parent) {
             }
         });
 
-        // Define the helper function in the enclosing scope
-        const calculateEndpoint = (d, isXComponent) => {
-            // Get a target node size
-            const targetSize = d.target.nodeSize;
-
-            // Calculate the direction vector and normalize it
-            const dx = d.target.x - d.source.x;
-            const dy = d.target.y - d.source.y;
-            const length = Math.sqrt(dx * dx + dy * dy);
-            d;
-
-            // Normalize direction and calculate endpoint
-            const dirX = dx / length;
-            const dirY = dy / length;
-
-            // Return either x or y component based on the parameter
-            return isXComponent ?
-                d.target.x - dirX * targetSize :
-                d.target.y - dirY * targetSize;
-        };
-
         links
             .attr("x1", function(d) {
                 return d.source.x;
@@ -1283,10 +1070,10 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 return d.source.y;
             })
             .attr("x2", function(d) {
-                return calculateEndpoint(d, true);
+                return d.target.x;
             })
             .attr("y2", function(d) {
-                return calculateEndpoint(d, false);
+                return d.target.y;
             });
     }
 
@@ -1301,7 +1088,21 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 svg.attr("transform", d3.event.transform);
             }),
         )
-        .append("g");
+        .append("g")
+        .on("dblclick", function() {
+            // Clear selection when double-clicking on empty space
+            if (sel_node) {
+                d3.select(".highlight").attr("class", "select hidden");
+                sel_node = null;
+                sel_node_id = null;
+                panel_info.showSelectedInfo(null);
+                a_parent.updateBtnState();
+            }
+
+            // Stop event propagation
+            d3.event.stopPropagation();
+        });
+
 
     defineArrowMarkerDeriv(svg);
     defineArrowMarkerComp(svg);

@@ -68,6 +68,7 @@ class GraphState {
         });
 
         // Store in localStorage
+        // TODO - Consider saving graph to file to export to another program or 1 graph
         try {
             localStorage.setItem("datafed-graph-state", JSON.stringify(this.state));
             this.notifyObservers();
