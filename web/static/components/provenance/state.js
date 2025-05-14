@@ -1,8 +1,8 @@
 const DEFAULTS = {
     NODE_SIZE: 10,
-    NODE_COLOR: null, // Use CSS default
+    NODE_COLOR: "#6baed6", // Use CSS default
     LABEL_SIZE: 14,
-    LABEL_COLOR: null, // Use CSS default
+    LABEL_COLOR: "#333333", // Use CSS default
 };
 
 // Observer pattern for state management

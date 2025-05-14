@@ -275,7 +275,6 @@ describe("utils", function () {
             const nodeData = [node1, node2];
             const linkData = [link1];
 
-            // To check for modifications, store original states
             const originalNodeData = [...nodeData];
             const originalLinkData = [...linkData];
             const originalNode1Links = [...node1.links];

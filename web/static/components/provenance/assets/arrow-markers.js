@@ -29,7 +29,7 @@ function defineArrowMarkerComp(a_svg) {
 }
 
 // New version marker at 'end'
-function defineArrowMarkerNewVer(a_svg, a_name) {
+function defineArrowMarkerNewVer(a_svg) {
     a_svg
         .append("defs")
         .append("marker")

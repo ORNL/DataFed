@@ -67,8 +67,7 @@ select#matches {
 */
 
 .fancytree-container {
-
-        background: transparent !important;
+    background: transparent !important;
     border: none !important;
     font-family: inherit !important;
 }
@@ -157,8 +156,7 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expande
 }
 
 .arrow-path {
-
-        stroke: none;
+    stroke: none;
 }
 
 .arrow-path.derivation {
@@ -414,14 +412,12 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-icon:af
 }
 
 .pick-hl {
-
-        background: #ffc73d !important;
+    background: #ffc73d !important;
     color: #111111 !important;
 }
 
 mark {
-
-        background: #ffc73d;
+    background: #ffc73d;
     color: #111111;
 }
 
@@ -460,8 +456,7 @@ span.fancytree-node {
 }
 
 .shadowed {
-
-        position: relative;
+    position: relative;
     z-index: 10;
     box-shadow: .2em .4em 5px #202020;
 }
@@ -476,8 +471,7 @@ span.fancytree-node {
 }
 
 ::-webkit-scrollbar-thumb {
-
-        background: #444;
+    background: #444;
 }
 
 ::-webkit-scrollbar-thumb:hover {

@@ -202,7 +202,7 @@ ul.tagit {
 }
 
 .nodes .anchored {
-    stroke-dasharray: 5,3;
+    stroke-dasharray: 5, 3;
     stroke-width: 3px;
 }
 

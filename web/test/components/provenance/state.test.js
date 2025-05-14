@@ -6,9 +6,9 @@ describe("state", function () {
         it("should have the expected default values", function () {
             expect(DEFAULTS).to.be.an("object");
             expect(DEFAULTS.NODE_SIZE).to.equal(10);
-            expect(DEFAULTS.NODE_COLOR).to.be.null;
+            expect(DEFAULTS.NODE_COLOR).to.equal("#6baed6");
             expect(DEFAULTS.LABEL_SIZE).to.equal(14);
-            expect(DEFAULTS.LABEL_COLOR).to.be.null;
+            expect(DEFAULTS.LABEL_COLOR).to.be.equal("#333333");
         });
     });
 
@@ -16,10 +16,8 @@ describe("state", function () {
         let graphState;
 
         beforeEach(function () {
-            // Create a fresh GraphState instance before each test
             graphState = new GraphState();
 
-            // Mock localStorage
             global.localStorage = {
                 items: {},
                 getItem: function (key) {
@@ -30,7 +28,6 @@ describe("state", function () {
                 },
             };
 
-            // Mock console.error
             global.console.error = function () {};
         });
 
@@ -87,8 +84,8 @@ describe("state", function () {
             const nodeData = [
                 {
                     id: "node1",
-                    nodeSize: 20, // Different from default
-                    nodeColor: "red", // Different from default
+                    nodeSize: 20,
+                    nodeColor: "red",
                 },
             ];
 
@@ -104,14 +101,21 @@ describe("state", function () {
             const nodeData = [
                 {
                     id: "node1",
-                    nodeSize: DEFAULTS.NODE_SIZE, // Same as default
-                    nodeColor: DEFAULTS.NODE_COLOR, // Same as default
+                    nodeSize: DEFAULTS.NODE_SIZE,
+                    nodeColor: DEFAULTS.NODE_COLOR,
                 },
             ];
 
             graphState.saveState(nodeData);
 
-            expect(graphState.state.nodeStyles).to.be.an("object").that.is.empty;
+            expect(graphState.state.nodeStyles)
+                .to.be.an("object")
+                .to.deep.equal({
+                    [nodeData[0].id]: {
+                        size: nodeData[0].nodeSize,
+                        color: nodeData[0].nodeColor,
+                    },
+                });
         });
 
         it("should save label offsets correctly", function () {
@@ -129,8 +133,8 @@ describe("state", function () {
             const nodeData = [
                 {
                     id: "node1",
-                    labelSize: 20, // Different from default
-                    labelColor: "blue", // Different from default
+                    labelSize: 20,
+                    labelColor: "blue",
                 },
             ];
 
@@ -146,14 +150,21 @@ describe("state", function () {
             const nodeData = [
                 {
                     id: "node1",
-                    labelSize: DEFAULTS.LABEL_SIZE, // Same as default
-                    labelColor: DEFAULTS.LABEL_COLOR, // Same as default
+                    labelSize: DEFAULTS.LABEL_SIZE,
+                    labelColor: DEFAULTS.LABEL_COLOR,
                 },
             ];
 
             graphState.saveState(nodeData);
 
-            expect(graphState.state.labelStyles).to.be.an("object").that.is.empty;
+            expect(graphState.state.labelStyles)
+                .to.be.an("object")
+                .to.deep.equal({
+                    [nodeData[0].id]: {
+                        size: nodeData[0].labelSize,
+                        color: nodeData[0].labelColor,
+                    },
+                });
         });
 
         it("should store state in localStorage", function () {
@@ -174,7 +185,6 @@ describe("state", function () {
         });
 
         it("should handle errors when saving state", function () {
-            // Mock localStorage to throw an error
             global.localStorage.setItem = function () {
                 throw new Error("Storage error");
             };

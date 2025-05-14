@@ -32,16 +32,16 @@ function showCustomizationModal(node, x, y, currentCustomizationNode, renderGrap
                                 })
                                 .join("");
                     } else {
-                        nodeColorInput.value = "#6baed6"; // Default blue
+                        nodeColorInput.value = DEFAULTS.NODE_COLOR;
                     }
                 } else {
                     nodeColorInput.value = fillColor;
                 }
             } else {
-                nodeColorInput.value = "#6baed6"; // Default blue
+                nodeColorInput.value = DEFAULTS.NODE_COLOR;
             }
         } else {
-            nodeColorInput.value = "#6baed6"; // Default blue
+            nodeColorInput.value = DEFAULTS.NODE_COLOR;
         }
     }
 
@@ -51,7 +51,7 @@ function showCustomizationModal(node, x, y, currentCustomizationNode, renderGrap
     labelSizeValue.textContent = `${labelSizeSlider.value}px`;
 
     const labelColorInput = document.getElementById("label-color-input");
-    labelColorInput.value = node.labelColor || "#333333";
+    labelColorInput.value = node.labelColor || DEFAULTS.LABEL_COLOR;
 
     const anchorCheckbox = document.getElementById("anchor-checkbox");
     anchorCheckbox.checked = node.anchored || false;
@@ -136,7 +136,7 @@ function createCustomizationModal() {
     const nodeColorInput = document.createElement("input");
     nodeColorInput.type = "color";
     nodeColorInput.id = "node-color-input";
-    nodeColorInput.value = "#6baed6"; // Default blue color
+    nodeColorInput.value = DEFAULTS.NODE_COLOR;
 
     nodeColorRow.appendChild(nodeColorInput);
     nodeSection.appendChild(nodeColorRow);
@@ -180,7 +180,7 @@ function createCustomizationModal() {
     const labelColorInput = document.createElement("input");
     labelColorInput.type = "color";
     labelColorInput.id = "label-color-input";
-    labelColorInput.value = "#333333"; // Default text color
+    labelColorInput.value = DEFAULTS.LABEL_COLOR; // Default text color
 
     labelColorRow.appendChild(labelColorInput);
     labelSection.appendChild(labelColorRow);

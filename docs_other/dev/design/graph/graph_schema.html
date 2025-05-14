@@ -157,54 +157,15 @@
 
         function simTick() {
             //console.log("tick");
-
-            // Update node positions
-            nodes.attr("transform", function (d) {
-                return "translate(" + d.x + "," + d.y + ")";
-            });
-
-            // Update label positions with offsets if they exist
-            nodes.selectAll("text.label")
-                .attr("x", function(d) {
-                    // Base position (from original code)
-                    let baseX = d.locked ? r + 12 : r;
-
-                    // Apply offset if it exists
-                    if (d.labelOffsetX !== undefined) {
-                        return baseX + d.labelOffsetX;
-                    }
-                    return baseX;
-                })
-                .attr("y", function(d) {
-                    // Base position (from original code)
-                    let baseY = -r;
-
-                    // Apply offset if it exists
-                    if (d.labelOffsetY !== undefined) {
-                        return baseY + d.labelOffsetY;
-                    }
-                    return baseY;
-                });
-
-            // Update anchored status visual indicator
-            nodes.selectAll("circle.obj")
-                .classed("anchored", function(d) {
-                    return d.anchored === true;
-                });
+            nodes
+                .attr("transform", function(d) {
+                    return "translate(" + d.x + "," + d.y + ")"; });
 
             links
-                .attr("x1", function (d) {
-                    return d.source.x;
-                })
-                .attr("y1", function (d) {
-                    return d.source.y;
-                })
-                .attr("x2", function (d) {
-                    return d.target.x;
-                })
-                .attr("y2", function (d) {
-                    return d.target.y;
-                });
+                .attr("x1", function(d) { return d.source.x; })
+                .attr("y1", function(d) { return d.source.y; })
+                .attr("x2", function(d) { return d.target.x; })
+                .attr("y2", function(d) { return d.target.y; });
         }
 
         var r = 15;

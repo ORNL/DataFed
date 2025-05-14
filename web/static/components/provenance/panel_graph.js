@@ -329,41 +329,93 @@ function GraphPanel(a_id, a_frame, a_parent) {
     };
 
     // Add UI buttons for saving and loading graph state
-    this.addGraphControls = function (container) {
+    this.addGraphControls = function (containerSelector) {
+        const controlsId = "graph-controls";
+        const helpTipId = "graph-help-tooltip";
+        let controlsDiv = document.getElementById(controlsId);
+        let helpTip = document.getElementById(helpTipId);
+
         // Create container for graph controls if it doesn't exist
-        if (!document.getElementById("graph-controls")) {
-            const controlsDiv = document.createElement("div");
-            controlsDiv.id = "graph-controls";
+        if (!controlsDiv) {
+            controlsDiv = document.createElement("div");
+            controlsDiv.id = controlsId;
             controlsDiv.className = "graph-controls";
 
-            // Help tooltip
-            const helpTip = document.createElement("div");
+            // "Show Help" button
+            const showHelpButton = document.createElement("button");
+            showHelpButton.textContent = "Show Help";
+            showHelpButton.id = "show-graph-help-button";
+            showHelpButton.addEventListener("click", function () {
+                const tipElement = document.getElementById(helpTipId);
+                if (tipElement) {
+                    tipElement.style.display = "block";
+                }
+            });
+            controlsDiv.appendChild(showHelpButton);
+        }
+
+        // Create help tooltip if it doesn't exist
+        if (!helpTip) {
+            helpTip = document.createElement("div");
+            helpTip.id = helpTipId;
             helpTip.className = "graph-tooltip";
-            helpTip.innerHTML =
+
+            const closeButton = document.createElement("span");
+            closeButton.innerHTML = "&times;"; // X button
+            closeButton.className = "graph-tooltip-close";
+            closeButton.style.position = "absolute";
+            closeButton.style.top = "5px";
+            closeButton.style.right = "10px";
+            closeButton.style.cursor = "pointer";
+            closeButton.style.pointerEvents = "all";
+            closeButton.style.fontSize = "20px";
+            closeButton.addEventListener("click", function () {
+                const tipElement = document.getElementById(helpTipId);
+                if (tipElement) {
+                    tipElement.style.display = "none";
+                }
+            });
+            helpTip.appendChild(closeButton);
+
+            const helpText = document.createElement("div");
+            helpText.innerHTML =
                 "<strong>Graph Controls:</strong><br>" +
                 "• Drag nodes to move them<br>" +
                 "• Shift+Drag to anchor nodes<br>" +
                 "• Alt+Drag to move label<br>" +
                 "• Right-click for customization options<br>" +
                 "• Double-click to toggle anchor";
+            helpTip.appendChild(helpText);
+            helpTip.style.display = "block"; // Initially visible
+        }
 
-            // Add container to the graph
-            let graphContainer;
-            if (container) {
-                graphContainer = document.querySelector(container);
-            } else {
-                // Make sure we don't double-prefix with #
-                const selector = a_id.startsWith("#") ? a_id : "#" + a_id;
-                graphContainer = document.querySelector(selector);
+        // Add controls and tooltip to the graph container's parent
+        let graphContainerParent;
+        if (containerSelector) {
+            graphContainerParent = document.querySelector(containerSelector);
+        } else {
+            const selector = a_id.startsWith("#") ? a_id : "#" + a_id;
+            const svgElement = document.querySelector(selector);
+            if (svgElement && svgElement.parentElement) {
+                graphContainerParent = svgElement.parentElement;
             }
+        }
 
-            if (graphContainer) {
-                graphContainer.style.position = "relative";
-                graphContainer.appendChild(controlsDiv);
-                graphContainer.appendChild(helpTip);
-            } else {
-                console.error("Graph container not found:", container || "#" + a_id);
+        if (graphContainerParent) {
+            graphContainerParent.style.position = "relative"; // Important for absolute positioning of tooltip
+            if (!document.getElementById(controlsId) && controlsDiv) {
+                // Append only if not already there
+                graphContainerParent.appendChild(controlsDiv);
             }
+            if (!document.getElementById(helpTipId) && helpTip) {
+                // Append only if not already there
+                graphContainerParent.appendChild(helpTip);
+            }
+        } else {
+            console.error(
+                "Graph container parent not found for controls:",
+                containerSelector || a_id,
+            );
         }
     };
 
@@ -901,7 +953,6 @@ function GraphPanel(a_id, a_frame, a_parent) {
                     //console.log("PRUNE ALL");
                     graphPrune(node_data, link_data, dest);
                 } else if (dest.row === undefined) {
-                    //console.log("PRUNE LOCAL EDGE ONLY");
                     graphPruneReset(link_data, node_data);
                     loc_trim.push(link);
                     //link.prune = true;
@@ -918,9 +969,6 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 }
                 graphPrune(link_data, node_data);
             }
-
-            //graphPruneReset();
-
             renderGraph();
         }
     };
@@ -956,8 +1004,6 @@ function GraphPanel(a_id, a_frame, a_parent) {
 
     // Called automatically from API module when data records are impacted by edits or annotations
     this.updateData = function (a_data) {
-        //console.log( "graph updating:", a_data );
-
         let j,
             node,
             item,
@@ -966,9 +1012,6 @@ function GraphPanel(a_id, a_frame, a_parent) {
             same,
             dep_cnt,
             render = false;
-
-        //if ( focus_node_id )
-        //    inst.load( focus_node_id, sel_node_id );
 
         // Scan updates for dependency changes that impact current graph,
         // if found, reload entire graph from DB
@@ -1124,19 +1167,6 @@ function GraphPanel(a_id, a_frame, a_parent) {
         )
         .append("g");
     // TODO add deselect selected node highlight on double-click
-    // .on("dblclick", function () {
-    //     // Clear selection when double-clicking on empty space
-    //     if (sel_node) {
-    //         d3.select(".highlight").attr("class", "select hidden");
-    //         sel_node = null;
-    //         sel_node_id = null;
-    //         panel_info.showSelectedInfo(null);
-    //         a_parent.updateBtnState();
-    //     }
-    //
-    //     // Stop event propagation
-    //     d3.event.stopPropagation();
-    // });
 
     defineArrowMarkerDeriv(svg);
     defineArrowMarkerComp(svg);
