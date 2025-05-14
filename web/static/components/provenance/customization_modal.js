@@ -23,10 +23,14 @@ function showCustomizationModal(node, x, y, currentCustomizationNode, renderGrap
                     const rgb = fillColor.match(/\d+/g);
                     if (rgb && rgb.length === 3) {
                         // Hex value
-                        nodeColorInput.value = "#" + rgb.map(x => {
-                            const hexValue = parseInt(x).toString(16);
-                            return hexValue.padStart(2, "0");
-                        }).join("");
+                        nodeColorInput.value =
+                            "#" +
+                            rgb
+                                .map((x) => {
+                                    const hexValue = parseInt(x).toString(16);
+                                    return hexValue.padStart(2, "0");
+                                })
+                                .join("");
                     } else {
                         nodeColorInput.value = "#6baed6"; // Default blue
                     }
@@ -63,24 +67,26 @@ function showCustomizationModal(node, x, y, currentCustomizationNode, renderGrap
 
 // Function to make the customization modal draggable
 function makeModalDraggable(modal) {
-    let offsetX, offsetY, isDragging = false;
+    let offsetX,
+        offsetY,
+        isDragging = false;
     const header = modal.querySelector(".modal-header") || modal;
 
-    header.addEventListener("mousedown", function(e) {
+    header.addEventListener("mousedown", function (e) {
         isDragging = true;
         offsetX = e.clientX - modal.offsetLeft;
         offsetY = e.clientY - modal.offsetTop;
         e.preventDefault();
     });
 
-    document.addEventListener("mousemove", function(e) {
+    document.addEventListener("mousemove", function (e) {
         if (isDragging) {
             modal.style.left = `${e.clientX - offsetX}px`;
             modal.style.top = `${e.clientY - offsetY}px`;
         }
     });
 
-    document.addEventListener("mouseup", function() {
+    document.addEventListener("mouseup", function () {
         isDragging = false;
     });
 }
@@ -226,7 +232,4 @@ function createCustomizationModal() {
     return modal;
 }
 
-export {
-    showCustomizationModal,
-    createCustomizationModal
-}
+export { showCustomizationModal, createCustomizationModal };

@@ -11,9 +11,9 @@ class GraphState {
         this.observers = [];
         this.state = {
             nodePositions: {}, // Store node positions
-            nodeStyles: {},    // Store node customizations
-            labelOffsets: {},  // Store label offsets
-            labelStyles: {},    // Store label customizations
+            nodeStyles: {}, // Store node customizations
+            labelOffsets: {}, // Store label offsets
+            labelStyles: {}, // Store label customizations
         };
     }
 
@@ -22,7 +22,7 @@ class GraphState {
     }
 
     notifyObservers() {
-        this.observers.forEach(observer => observer.update(this.state));
+        this.observers.forEach((observer) => observer.update(this.state));
     }
 
     saveState(nodeData) {
@@ -35,7 +35,7 @@ class GraphState {
         };
 
         // Save state for each node
-        nodeData.forEach(node => {
+        nodeData.forEach((node) => {
             this.state.nodePositions[node.id] = {
                 x: node.x,
                 y: node.y,
@@ -80,7 +80,4 @@ class GraphState {
     }
 }
 
-export {
-    GraphState,
-    DEFAULTS,
-};
+export { GraphState, DEFAULTS };

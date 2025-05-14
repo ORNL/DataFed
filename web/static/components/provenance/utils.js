@@ -132,7 +132,7 @@ function graphPrune(link_data, node_data) {
     }
 }
 
-function graphPruneReset(node_data) {
+function graphPruneReset(link_data, node_data) {
     let i;
     for (i in node_data) {
         node_data[i].prune = false;
@@ -142,11 +142,4 @@ function graphPruneReset(node_data) {
     }
 }
 
-export {
-    createNode,
-    makeLabel,
-    graphPruneCalc,
-    graphPrune,
-    graphPruneReset,
-    graphCountConnected
-}
+export { createNode, makeLabel, graphPruneCalc, graphPrune, graphPruneReset, graphCountConnected };

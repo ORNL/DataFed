@@ -2,10 +2,24 @@ import * as util from "../../util.js";
 import * as model from "../../model.js";
 import * as api from "../../api.js";
 import * as panel_info from "../../panel_item_info.js";
-import { defineArrowMarkerComp, defineArrowMarkerDeriv, defineArrowMarkerNewVer } from "./assets/arrow-markers.js";
+import {
+    defineArrowMarkerComp,
+    defineArrowMarkerDeriv,
+    defineArrowMarkerNewVer,
+} from "./assets/arrow-markers.js";
 import { DEFAULTS, GraphState } from "./state.js";
-import { createCustomizationModal, showCustomizationModal as showModal } from "./customization_modal.js";
-import { graphPruneCalc, makeLabel, createNode, graphPrune, graphPruneReset, graphCountConnected } from "./utils.js";
+import {
+    createCustomizationModal,
+    showCustomizationModal as showModal,
+} from "./customization_modal.js";
+import {
+    graphPruneCalc,
+    makeLabel,
+    createNode,
+    graphPrune,
+    graphPruneReset,
+    graphCountConnected,
+} from "./utils.js";
 
 // Dynamically load the graph styles CSS
 (function loadGraphStyles() {
@@ -55,12 +69,12 @@ function GraphPanel(a_id, a_frame, a_parent) {
     // State management using observer pattern
     let graphStateManager = new GraphState();
 
-    this.load = function(a_id, a_sel_node_id) {
+    this.load = function (a_id, a_sel_node_id) {
         focus_node_id = a_id;
         sel_node_id = a_sel_node_id ? a_sel_node_id : a_id;
         sel_node = null;
 
-        api.dataGetDepGraph(a_id, function(a_data) {
+        api.dataGetDepGraph(a_id, function (a_data) {
             link_data = [];
             let new_node_data = [];
             let id_map = {};
@@ -163,7 +177,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
 
         // Node color input
         const nodeColorInput = document.getElementById("node-color-input");
-        nodeColorInput.addEventListener("input", function() {
+        nodeColorInput.addEventListener("input", function () {
             if (currentCustomizationNode) {
                 currentCustomizationNode.nodeColor = this.value;
                 renderGraph();
@@ -174,7 +188,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
         const labelSizeSlider = document.getElementById("label-size-slider");
         const labelSizeValue = labelSizeSlider.nextElementSibling;
 
-        labelSizeSlider.addEventListener("input", function() {
+        labelSizeSlider.addEventListener("input", function () {
             labelSizeValue.textContent = this.value;
             if (currentCustomizationNode) {
                 currentCustomizationNode.labelSize = parseInt(this.value);
@@ -184,7 +198,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
 
         // Label color input
         const labelColorInput = document.getElementById("label-color-input");
-        labelColorInput.addEventListener("input", function() {
+        labelColorInput.addEventListener("input", function () {
             if (currentCustomizationNode) {
                 currentCustomizationNode.labelColor = this.value;
                 renderGraph();
@@ -193,7 +207,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
 
         // Anchor checkbox
         const anchorCheckbox = document.getElementById("anchor-checkbox");
-        anchorCheckbox.addEventListener("change", function() {
+        anchorCheckbox.addEventListener("change", function () {
             if (currentCustomizationNode) {
                 currentCustomizationNode.anchored = this.checked;
                 if (this.checked) {
@@ -209,27 +223,31 @@ function GraphPanel(a_id, a_frame, a_parent) {
 
         // Close button
         const closeButton = document.getElementById("close-customization");
-        closeButton.addEventListener("click", function() {
+        closeButton.addEventListener("click", function () {
             modal.style.display = "none";
         });
 
         // Apply button
         const applyButton = document.getElementById("apply-customization");
-        applyButton.addEventListener("click", function() {
+        applyButton.addEventListener("click", function () {
             modal.style.display = "none";
             // Save state automatically when applying changes
             inst.saveGraphState();
         });
 
         // Close modal when clicking outside
-        document.addEventListener("click", function(e) {
-            if (modal.style.display === "block" && !modal.contains(e.target) && !e.target.closest(".node")) {
+        document.addEventListener("click", function (e) {
+            if (
+                modal.style.display === "block" &&
+                !modal.contains(e.target) &&
+                !e.target.closest(".node")
+            ) {
                 modal.style.display = "none";
             }
         });
     }
 
-    this.checkGraphUpdate = function(a_data, a_source) {
+    this.checkGraphUpdate = function (a_data, a_source) {
         console.log("graph check updates", a_data, a_source);
         console.log("sel node", sel_node);
         // source is sel_node_id, so check sel_node
@@ -241,7 +259,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
 
     // TODO Why are IDs separate from data?
 
-    this.update = function(a_ids, a_data) {
+    this.update = function (a_ids, a_data) {
         // Only updates locked and alias of impacted nodes
 
         let ids = Array.isArray(a_ids) ? a_ids : [a_ids];
@@ -268,23 +286,23 @@ function GraphPanel(a_id, a_frame, a_parent) {
         if (render) renderGraph();
     };
 
-    this.clear = function() {
+    this.clear = function () {
         links_grp.selectAll("*").remove();
         nodes_grp.selectAll("*").remove();
         node_data = [];
         link_data = [];
     };
 
-    this.resized = function(a_width, a_height) {
+    this.resized = function (a_width, a_height) {
         graph_center_x = a_width / 2;
     };
 
-    this.getSelectedID = function() {
+    this.getSelectedID = function () {
         if (sel_node) return sel_node.id;
     };
 
     // Save the current graph state
-    this.saveGraphState = function() {
+    this.saveGraphState = function () {
         if (graphStateManager.saveState(node_data)) {
             alert("Graph state saved successfully");
             return true;
@@ -294,7 +312,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
         }
     };
 
-    this.getSelectedNodes = function() {
+    this.getSelectedNodes = function () {
         let sel = [];
         if (sel_node) {
             sel.push({
@@ -306,12 +324,12 @@ function GraphPanel(a_id, a_frame, a_parent) {
         return sel;
     };
 
-    this.getSubjectID = function() {
+    this.getSubjectID = function () {
         if (focus_node_id) return focus_node_id;
     };
 
     // Add UI buttons for saving and loading graph state
-    this.addGraphControls = function(container) {
+    this.addGraphControls = function (container) {
         // Create container for graph controls if it doesn't exist
         if (!document.getElementById("graph-controls")) {
             const controlsDiv = document.createElement("div");
@@ -349,7 +367,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
         }
     };
 
-    function selNode (d, parentNode) {
+    function selNode(d, parentNode) {
         if (sel_node !== d) {
             d3.select(".highlight").attr("class", "select hidden");
             d3.select(parentNode).select(".select").attr("class", "select highlight");
@@ -360,19 +378,18 @@ function GraphPanel(a_id, a_frame, a_parent) {
         }
     }
 
-
     // NOTE: D3 changes link source and target IDs strings (in link_data) to node references (in node_data) when renderGraph runs
     function renderGraph() {
         let g;
 
-        links = links_grp.selectAll("line").data(link_data, function(d) {
+        links = links_grp.selectAll("line").data(link_data, function (d) {
             return d.id;
         });
 
         links
             .enter()
             .append("line")
-            .attr("marker-start", function(d) {
+            .attr("marker-start", function (d) {
                 switch (d.ty) {
                     case 0:
                         return "url(#arrow-derivation)";
@@ -385,7 +402,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 }
             })
 
-            .attr("class", function(d) {
+            .attr("class", function (d) {
                 switch (d.ty) {
                     case 0:
                         return "link derivation";
@@ -400,12 +417,12 @@ function GraphPanel(a_id, a_frame, a_parent) {
 
         links = links_grp.selectAll("line");
 
-        nodes = nodes_grp.selectAll("g").data(node_data, function(d) {
+        nodes = nodes_grp.selectAll("g").data(node_data, function (d) {
             return d.id;
         });
 
         // Update
-        nodes.select("circle.obj").attr("class", function(d) {
+        nodes.select("circle.obj").attr("class", function (d) {
             let res = "obj ";
 
             if (d.id === focus_node_id) res += "main";
@@ -422,20 +439,20 @@ function GraphPanel(a_id, a_frame, a_parent) {
 
         nodes
             .select("text.label")
-            .html(function(d) {
+            .html(function (d) {
                 return d.label;
             })
-            .attr("x", function(d) {
+            .attr("x", function (d) {
                 if (d.locked) return r + 12;
                 else return r;
             });
 
-        nodes.select("text.locked").html(function(d) {
+        nodes.select("text.locked").html(function (d) {
             if (d.locked) return "&#xe6bb";
             else return "";
         });
 
-        nodes.selectAll(".node > circle.select").attr("class", function(d) {
+        nodes.selectAll(".node > circle.select").attr("class", function (d) {
             if (d.id === sel_node_id) {
                 return "select highlight";
             } else return "select hidden";
@@ -448,10 +465,10 @@ function GraphPanel(a_id, a_frame, a_parent) {
             .call(d3.drag().on("start", dragStarted).on("drag", dragged).on("end", dragEnded));
 
         g.append("circle")
-            .attr("r", function(d) {
+            .attr("r", function (d) {
                 return d.nodeSize || r;
             })
-            .attr("class", function(d) {
+            .attr("class", function (d) {
                 let res = "obj ";
                 //console.log("node enter 1");
 
@@ -467,10 +484,10 @@ function GraphPanel(a_id, a_frame, a_parent) {
 
                 return res;
             })
-            .style("fill", function(d) {
+            .style("fill", function (d) {
                 return d.nodeColor || null; // Use CSS default if not specified
             })
-            .on("mouseover", function(d) {
+            .on("mouseover", function (d) {
                 //console.log("mouse over");
                 const nodeSize = d.nodeSize || r;
                 d3.select(this)
@@ -478,17 +495,16 @@ function GraphPanel(a_id, a_frame, a_parent) {
                     .duration(150)
                     .attr("r", nodeSize * 1.5);
             })
-            .on("mouseout", function(d) {
+            .on("mouseout", function (d) {
                 const nodeSize = d.nodeSize || r;
                 d3.select(this).transition().duration(500).attr("r", nodeSize);
             })
-            .on("dblclick", function(d, i) {
-
+            .on("dblclick", function (d, i) {
                 if (d.comp) inst.collapseNode();
                 else inst.expandNode();
                 d3.event.stopPropagation();
             })
-            .on("click", function(d, i) {
+            .on("click", function (d, i) {
                 selNode(d, this.parentNode);
 
                 if (d3.event.ctrlKey) {
@@ -498,7 +514,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
 
                 d3.event.stopPropagation();
             })
-            .on("contextmenu", function(d, i) {
+            .on("contextmenu", function (d, i) {
                 // Prevent default context menu
                 d3.event.preventDefault();
 
@@ -506,23 +522,29 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 selNode(d, this.parentNode);
 
                 // Show customization modal at mouse position
-                currentCustomizationNode = showModal(d, d3.event.pageX, d3.event.pageY, currentCustomizationNode, renderGraph);
+                currentCustomizationNode = showModal(
+                    d,
+                    d3.event.pageX,
+                    d3.event.pageY,
+                    currentCustomizationNode,
+                    renderGraph,
+                );
 
                 d3.event.stopPropagation();
             });
 
         g.append("circle")
-            .attr("r", function(d) {
+            .attr("r", function (d) {
                 // Scale the selection circle based on the node size
                 return (d.nodeSize || r) * 1.5;
             })
-            .attr("class", function(d) {
+            .attr("class", function (d) {
                 if (d.id === sel_node_id) {
                     return "select highlight";
                 } else return "select hidden";
             });
 
-        let n2 = g.filter(function(d) {
+        let n2 = g.filter(function (d) {
             return d.size;
         });
         n2.append("line")
@@ -551,21 +573,21 @@ function GraphPanel(a_id, a_frame, a_parent) {
 
         g.append("text")
             .attr("class", "label")
-            .html(function(d) {
+            .html(function (d) {
                 return d.label;
             })
-            .attr("x", function(d) {
+            .attr("x", function (d) {
                 if (d.locked) return r + 12;
                 else return r;
             })
             .attr("y", -r)
-            .style("font-size", function(d) {
+            .style("font-size", function (d) {
                 return (d.labelSize || DEFAULTS.LABEL_SIZE) + "px";
             })
-            .style("fill", function(d) {
+            .style("fill", function (d) {
                 return d.labelColor || DEFAULTS.LABEL_COLOR;
             })
-            .on("contextmenu", function(d, i) {
+            .on("contextmenu", function (d, i) {
                 // Prevent default context menu
                 d3.event.preventDefault();
 
@@ -573,45 +595,53 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 selNode(d, this.parentNode);
 
                 // Show customization modal at mouse position
-                currentCustomizationNode = showModal(d, d3.event.pageX, d3.event.pageY, currentCustomizationNode, renderGraph);
+                currentCustomizationNode = showModal(
+                    d,
+                    d3.event.pageX,
+                    d3.event.pageY,
+                    currentCustomizationNode,
+                    renderGraph,
+                );
 
                 d3.event.stopPropagation();
             })
             // Make labels draggable independently with Alt key
-            .call(d3.drag()
-                .on("start", function(d) {
-                    if (!d3.event.active) simulation.alphaTarget(0.3).restart();
-                    d.draggingLabel = true;
-                    d.labelDragStartX = d3.event.x;
-                    d.labelDragStartY = d3.event.y;
-                    d3.event.sourceEvent.stopPropagation();
-                })
-                .on("drag", function(d) {
-                    if (!d.labelOffsetX) d.labelOffsetX = 0;
-                    if (!d.labelOffsetY) d.labelOffsetY = 0;
+            .call(
+                d3
+                    .drag()
+                    .on("start", function (d) {
+                        if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+                        d.draggingLabel = true;
+                        d.labelDragStartX = d3.event.x;
+                        d.labelDragStartY = d3.event.y;
+                        d3.event.sourceEvent.stopPropagation();
+                    })
+                    .on("drag", function (d) {
+                        if (!d.labelOffsetX) d.labelOffsetX = 0;
+                        if (!d.labelOffsetY) d.labelOffsetY = 0;
 
-                    // Update the label offset based on drag movement
-                    d.labelOffsetX += (d3.event.x - d.labelDragStartX);
-                    d.labelOffsetY += (d3.event.y - d.labelDragStartY);
+                        // Update the label offset based on drag movement
+                        d.labelOffsetX += d3.event.x - d.labelDragStartX;
+                        d.labelOffsetY += d3.event.y - d.labelDragStartY;
 
-                    // Update the start position for the next drag event
-                    d.labelDragStartX = d3.event.x;
-                    d.labelDragStartY = d3.event.y;
+                        // Update the start position for the next drag event
+                        d.labelDragStartX = d3.event.x;
+                        d.labelDragStartY = d3.event.y;
 
-                    // Update the visualization
-                    simTick();
-                    d3.event.sourceEvent.stopPropagation();
-                })
-                .on("end", function(d) {
-                    if (!d3.event.active) simulation.alphaTarget(0);
-                    d.draggingLabel = false;
-                    d3.event.sourceEvent.stopPropagation();
-                }),
+                        // Update the visualization
+                        simTick();
+                        d3.event.sourceEvent.stopPropagation();
+                    })
+                    .on("end", function (d) {
+                        if (!d3.event.active) simulation.alphaTarget(0);
+                        d.draggingLabel = false;
+                        d3.event.sourceEvent.stopPropagation();
+                    }),
             );
 
         g.append("text")
             .attr("class", "locked")
-            .html(function(d) {
+            .html(function (d) {
                 if (d.locked) return "&#xe6bb";
                 else return "";
             })
@@ -630,7 +660,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
         } else {
             let linkForce = d3
                 .forceLink(link_data)
-                .strength(function(d) {
+                .strength(function (d) {
                     switch (d.ty) {
                         case 0:
                             return 0.1;
@@ -640,7 +670,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
                             return 0.1;
                     }
                 })
-                .id(function(d) {
+                .id(function (d) {
                     return d.id;
                 });
 
@@ -652,28 +682,31 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 .force(
                     "row",
                     d3
-                        .forceY(function(d, i) {
+                        .forceY(function (d, i) {
                             return d.row !== undefined ? 75 + d.row * 75 : 0;
                         })
-                        .strength(function(d) {
+                        .strength(function (d) {
                             return d.row !== undefined ? 0.05 : 0;
                         }),
                 )
                 .force(
                     "col",
                     d3
-                        .forceX(function(d, i) {
+                        .forceX(function (d, i) {
                             return d.col !== undefined ? graph_center_x : 0;
                         })
-                        .strength(function(d) {
+                        .strength(function (d) {
                             return d.col !== undefined ? 0.05 : 0;
                         }),
                 )
                 .force("link", linkForce)
-                .force("collide", d3.forceCollide().radius(function(d) {
-                    // Base radius plus some extra space based on label length
-                    return r * 1.5 + (d.label ? d.label.length * 0.8 : 0);
-                }))
+                .force(
+                    "collide",
+                    d3.forceCollide().radius(function (d) {
+                        // Base radius plus some extra space based on label length
+                        return r * 1.5 + (d.label ? d.label.length * 0.8 : 0);
+                    }),
+                )
                 .on("tick", simTick);
         }
     }
@@ -711,8 +744,8 @@ function GraphPanel(a_id, a_frame, a_parent) {
         if (d.draggingLabel) {
             // Dragging the label independently
             // Update the label offset based on drag movement
-            d.labelOffsetX += (d3.event.x - d.labelDragStartX);
-            d.labelOffsetY += (d3.event.y - d.labelDragStartY);
+            d.labelOffsetX += d3.event.x - d.labelDragStartX;
+            d.labelOffsetY += d3.event.y - d.labelDragStartY;
 
             // Update the start position for the next drag event
             d.labelDragStartX = d3.event.x;
@@ -790,9 +823,9 @@ function GraphPanel(a_id, a_frame, a_parent) {
         }
     }
 
-    this.expandNode = function() {
+    this.expandNode = function () {
         if (sel_node && !sel_node.comp) {
-            api.dataView(sel_node_id, function(data) {
+            api.dataView(sel_node_id, function (data) {
                 console.log("expand node data:", data);
                 if (data) {
                     let rec = data;
@@ -844,7 +877,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
         }
     };
 
-    this.collapseNode = function() {
+    this.collapseNode = function () {
         if (sel_node) {
             let i,
                 link,
@@ -859,23 +892,23 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 graphPruneCalc(dest, [sel_node.id], sel_node);
 
                 if (!dest.prune && dest.row === undefined) {
-                    graphPruneReset(-1);
+                    graphPruneReset(link_data, node_data);
                     link.prune += 1;
                     //graphPrune();
                 }
 
                 if (dest.prune) {
                     //console.log("PRUNE ALL");
-                    graphPrune();
+                    graphPrune(node_data, link_data, dest);
                 } else if (dest.row === undefined) {
                     //console.log("PRUNE LOCAL EDGE ONLY");
-                    graphPruneReset();
+                    graphPruneReset(link_data, node_data);
                     loc_trim.push(link);
                     //link.prune = true;
                     //graphPrune();
                 } else {
                     //console.log("PRUNE NONE");
-                    graphPruneReset();
+                    graphPruneReset(link_data, node_data);
                 }
             }
 
@@ -883,7 +916,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 for (i in loc_trim) {
                     loc_trim[i].prune = true;
                 }
-                graphPrune();
+                graphPrune(link_data, node_data);
             }
 
             //graphPruneReset();
@@ -892,7 +925,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
         }
     };
 
-    this.hideNode = function() {
+    this.hideNode = function () {
         if (sel_node && sel_node.id !== focus_node_id && node_data.length > 1) {
             sel_node.prune = true;
             // Check for disconnection of the graph
@@ -922,7 +955,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
     };
 
     // Called automatically from API module when data records are impacted by edits or annotations
-    this.updateData = function(a_data) {
+    this.updateData = function (a_data) {
         //console.log( "graph updating:", a_data );
 
         let j,
@@ -1004,50 +1037,51 @@ function GraphPanel(a_id, a_frame, a_parent) {
 
     function simTick() {
         // Update node positions
-        nodes.attr("transform", function(d) {
+        nodes.attr("transform", function (d) {
             return "translate(" + d.x + "," + d.y + ")";
         });
 
         // Update label positions with offsets if they exist
-        nodes.selectAll("text.label")
-            .attr("x", function(d) {
+        nodes
+            .selectAll("text.label")
+            .attr("x", function (d) {
                 // Base position
                 let baseX = d.locked ? r + 12 : r;
                 // Apply offset if it exists
                 return baseX + (d.labelOffsetX || 0);
             })
-            .attr("y", function(d) {
+            .attr("y", function (d) {
                 // Apply offset if it exists
                 return -r + (d.labelOffsetY || 0);
             })
             // Apply custom label styles
-            .style("font-size", function(d) {
+            .style("font-size", function (d) {
                 return (d.labelSize || DEFAULTS.LABEL_SIZE) + "px";
             })
-            .style("fill", function(d) {
+            .style("fill", function (d) {
                 return d.labelColor || DEFAULTS.LABEL_COLOR;
             });
 
         // Update node styles and anchored status
-        nodes.selectAll("circle.obj")
-            .attr("r", function(d) {
+        nodes
+            .selectAll("circle.obj")
+            .attr("r", function (d) {
                 return d.nodeSize || r;
             })
-            .style("fill", function(d) {
+            .style("fill", function (d) {
                 return d.nodeColor || null; // Use CSS default if not specified
             })
-            .classed("anchored", function(d) {
+            .classed("anchored", function (d) {
                 return d.anchored === true;
             });
 
         // Update selection highlight circles to match node size
-        nodes.selectAll("circle.select")
-            .attr("r", function(d) {
-                return (d.nodeSize || r) * 1.5;
-            });
+        nodes.selectAll("circle.select").attr("r", function (d) {
+            return (d.nodeSize || r) * 1.5;
+        });
 
         // Add a visual indicator for anchored nodes
-        nodes.selectAll("circle.obj").each(function(d) {
+        nodes.selectAll("circle.obj").each(function (d) {
             // Remove any existing anchor indicator
             d3.select(this.parentNode).selectAll(".anchor-indicator").remove();
 
@@ -1063,16 +1097,16 @@ function GraphPanel(a_id, a_frame, a_parent) {
         });
 
         links
-            .attr("x1", function(d) {
+            .attr("x1", function (d) {
                 return d.source.x;
             })
-            .attr("y1", function(d) {
+            .attr("y1", function (d) {
                 return d.source.y;
             })
-            .attr("x2", function(d) {
+            .attr("x2", function (d) {
                 return d.target.x;
             })
-            .attr("y2", function(d) {
+            .attr("y2", function (d) {
                 return d.target.y;
             });
     }
@@ -1084,12 +1118,12 @@ function GraphPanel(a_id, a_frame, a_parent) {
     svg = d3
         .select(a_id)
         .call(
-            zoom.on("zoom", function() {
+            zoom.on("zoom", function () {
                 svg.attr("transform", d3.event.transform);
             }),
         )
         .append("g")
-        .on("dblclick", function() {
+        .on("dblclick", function () {
             // Clear selection when double-clicking on empty space
             if (sel_node) {
                 d3.select(".highlight").attr("class", "select hidden");
@@ -1102,7 +1136,6 @@ function GraphPanel(a_id, a_frame, a_parent) {
             // Stop event propagation
             d3.event.stopPropagation();
         });
-
 
     defineArrowMarkerDeriv(svg);
     defineArrowMarkerComp(svg);
