@@ -1,0 +1,104 @@
+.customization-modal {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    color: #333;
+    font-family: sans-serif;
+    padding: 20px;
+    position: fixed;
+    z-index: 1000;
+    width: 300px;
+}
+
+.customization-modal h3 {
+    margin-top: 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+}
+
+.customization-modal .section {
+    margin-bottom: 15px;
+}
+
+.customization-modal label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.customization-modal .control-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.customization-modal .control-row input[type="range"] {
+    flex: 1;
+    margin-right: 10px;
+}
+
+.customization-modal .control-row .value {
+    width: 40px;
+    text-align: right;
+}
+
+.customization-modal .buttons {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 15px;
+    gap: 10px;
+}
+
+.customization-modal button {
+    padding: 5px 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    background: #f5f5f5;
+    cursor: pointer;
+}
+
+.customization-modal button:hover {
+    background: #e5e5e5;
+}
+
+.customization-modal button.primary {
+    background: #4a90e2;
+    color: white;
+    border-color: #3a80d2;
+}
+
+.customization-modal button.primary:hover {
+    background: #3a80d2;
+}
+
+.anchored {
+    stroke: #ffcc00;
+    stroke-width: 2px;
+}
+
+.anchor-indicator {
+    fill: #fff;
+    stroke: #000;
+    stroke-width: 1px;
+    pointer-events: none;
+}
+
+.graph-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 100;
+    display: flex;
+    gap: 5px;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.graph-controls button {
+    margin: 0 2px;
+    font-size: 12px;
+    padding: 4px 8px;
+}

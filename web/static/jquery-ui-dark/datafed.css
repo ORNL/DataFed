@@ -68,9 +68,9 @@ select#matches {
 
 .fancytree-container {
 
-        background:transparent!important;
-    border:none!important;
-    font-family:inherit!important;
+        background: transparent !important;
+    border: none !important;
+    font-family: inherit !important;
 }
 
 .fancytree-title {
@@ -140,20 +140,20 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expande
 
 /* Dependency Graph Styles */
 
-.links{
-        stroke-width: 3px;
+.links {
+    stroke-width: 3px;
 }
 
 .links .derivation {
-        stroke: #06C;
+    stroke: #06C;
 }
 
 .links .component {
-        stroke: #aaa;
+    stroke: #aaa;
 }
 
 .links .new-version {
-        stroke: #E00;
+    stroke: #E00;
 }
 
 .arrow-path {
@@ -162,44 +162,44 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expande
 }
 
 .arrow-path.derivation {
-        fill: #06C;
+    fill: #06C;
 }
 
 .arrow-path.component {
-        fill: #aaa;
+    fill: #aaa;
 }
 
 .arrow-path.new-version {
-        fill: #E00;
+    fill: #E00;
 }
 
 .nodes {
-        stroke-width:2.5px;
+    stroke-width: 2.5px;
 }
 
 .nodes .main {
-        fill: #090;
+    fill: #090;
 }
 
 .nodes .prov {
-        fill: #06C;
+    fill: #06C;
 }
 
 .nodes .other {
-        fill: #555;
+    fill: #555;
 }
 
 .nodes .comp {
-        stroke: #fff;
+    stroke: #fff;
 }
 
 .nodes .part {
-        stroke: #777;
+    stroke: #777;
 }
 
 .nodes .anchored {
-        stroke-dasharray: 5,3;
-        stroke-width: 3px;
+    stroke-dasharray: 5, 3;
+    stroke-width: 3px;
 }
 
 /* Tooltip for graph interaction help */
@@ -216,45 +216,29 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expande
     z-index: 1000;
 }
 
-/* Graph context menu */
-.graph-context-menu {
-    background: #222;
-    border: 1px solid #444;
-    border-radius: 3px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.5);
-    bottom: 10px;
-    left: 10px;
-    background: rgba(0, 0, 0, 0.7);
-    color: #fff;
-    padding: 5px 10px;
-    font-size: 12px;
-    pointer-events: none;
-    z-index: 1000;
+.node .highlight {
+    stroke: #0f0 !important;
+    stroke-width: 2px !important;
+    fill: none !important;
 }
 
-.node .highlight{
-        stroke:#0f0!important;
-        stroke-width:2px!important;
-        fill:none!important;
+.node .hidden {
+    display: none !important;
 }
 
-.node .hidden{
-        display:none!important;
+.node .data {
+    stroke: #ccc;
+    stroke-width: 2;
 }
 
-.node .data{
-        stroke: #ccc;
-        stroke-width: 2;
+.node text {
+    font-size: 14px;
+    fill: #fff;
 }
 
-.node text{
-        font-size: 14px;
-        fill: #fff;
-}
-
-.node text.locked{
-        font-size: 14px;
-        fill: #FF6040;
+.node text.locked {
+    font-size: 14px;
+    fill: #FF6040;
 }
 
 .note {
@@ -262,12 +246,12 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expande
     font-size: smaller;
 }
 
-.inh-err-title{
-        color: #AF0000!important;
+.inh-err-title {
+    color: #AF0000 !important;
 }
 
-.inh-warn-title{
-        color: #cf7f00!important;
+.inh-warn-title {
+    color: #cf7f00 !important;
 }
 
 .ui-icon-notice {
@@ -389,16 +373,16 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-expande
 }
 
 .ui-draggable-handle {
-        -ms-touch-action: none;
-        touch-action: none;
+    -ms-touch-action: none;
+    touch-action: none;
 }
 
 span.fancytree-node.fancytree-folder > span.fancytree-custom-icon:hover {
-        cursor: pointer;
+    cursor: pointer;
 }
 
 span.fancytree-node.fancytree-folder > span.fancytree-icon:hover:after {
-        cursor: pointer;
+    cursor: pointer;
 }
 
 span.fancytree-node.fancytree-folder > span.fancytree-icon:after {
@@ -431,14 +415,14 @@ span.fancytree-node.fancytree-folder.fancytree-expanded > span.fancytree-icon:af
 
 .pick-hl {
 
-        background:#ffc73d!important;
-        color:#111111!important;
+        background: #ffc73d !important;
+    color: #111111 !important;
 }
 
 mark {
 
-        background:#ffc73d;
-        color:#111111;
+        background: #ffc73d;
+    color: #111111;
 }
 
 span.fancytree-node {
@@ -446,40 +430,40 @@ span.fancytree-node {
 }
 
 .fancytree-ext-filter-dimm span.fancytree-node span.fancytree-title {
-        color: #aaa!important;
-        font-weight: lighter!important;
+    color: #aaa !important;
+    font-weight: lighter !important;
 }
 
 .fancytree-ext-filter-dimm tr.fancytree-submatch span.fancytree-title,
 .fancytree-ext-filter-dimm span.fancytree-node.fancytree-submatch span.fancytree-title {
-        color: #fff!important;
-        font-weight: bold!important;
+    color: #fff !important;
+    font-weight: bold !important;
 }
 
 .fancytree-ext-filter-hide tr.fancytree-submatch span.fancytree-title,
 .fancytree-ext-filter-hide span.fancytree-node.fancytree-submatch span.fancytree-title {
-        color: #aaa!important;
-        font-weight: lighter!important;
+    color: #aaa !important;
+    font-weight: lighter !important;
 }
 
 
 .fancytree-ext-filter-dimm tr.fancytree-match span.fancytree-title,
 .fancytree-ext-filter-dimm span.fancytree-node.fancytree-match span.fancytree-title {
-        color: #fff!important;
-        font-weight: bold!important;
+    color: #fff !important;
+    font-weight: bold !important;
 }
 
 .fancytree-ext-filter-hide tr.fancytree-match span.fancytree-title,
 .fancytree-ext-filter-hide span.fancytree-node.fancytree-match span.fancytree-title {
-        color: #fff!important;
-        font-weight: normal!important;
+    color: #fff !important;
+    font-weight: normal !important;
 }
 
 .shadowed {
 
-        position:relative;
-        z-index:10;
-        box-shadow: .2em .4em 5px #202020;
+        position: relative;
+    z-index: 10;
+    box-shadow: .2em .4em 5px #202020;
 }
 
 
