@@ -63,6 +63,22 @@ else
   fi
 fi
 
+install_python() {
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.python_installed-${DATAFED_PYTHON_VERSION}" ]; then
+    # Check if the deadsnakes repository has already been added to avoid issues with gpg
+    if ! grep -qr '^deb .\+deadsnakes' /etc/apt/sources.list.d/; then
+	"$SUDO_CMD" apt update
+	"$SUDO_CMD" apt install -y software-properties-common
+	"$SUDO_CMD" add-apt-repository -y ppa:deadsnakes/ppa
+	"$SUDO_CMD" apt update
+    fi
+
+    "$SUDO_CMD" apt install -y "python${DATAFED_PYTHON_VERSION}" "python${DATAFED_PYTHON_VERSION}-dev" "python${DATAFED_PYTHON_VERSION}-venv" "python${DATAFED_PYTHON_VERSION}-distutils"
+
+    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.python_installed-${DATAFED_PYTHON_VERSION}"
+  fi
+}
+
 init_python() {
 
   if [[ ! -v DATAFED_PYTHON_DEPENDENCIES_DIR ]]; then
@@ -78,19 +94,23 @@ init_python() {
   if [ ! -e "$DATAFED_DEPENDENCIES_INSTALL_PATH" ] || [ ! -d "$DATAFED_PYTHON_DEPENDENCIES_DIR" ]; then
     mkdir -p "$DATAFED_PYTHON_DEPENDENCIES_DIR"
   fi
-  python3 -m venv "${DATAFED_PYTHON_ENV}"
+  "python${DATAFED_PYTHON_VERSION}" -m venv "${DATAFED_PYTHON_ENV}"
+  # Make sure that pip is installed and upgraded
+  "python${DATAFED_PYTHON_VERSION}" -m ensurepip --upgrade
 }
 
 install_cmake() {
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.cmake_installed-${DATAFED_CMAKE_VERSION}" ]; then
-    wget https://github.com/Kitware/CMake/releases/download/v${DATAFED_CMAKE_VERSION}/cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz
-    tar -xzvf "cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz" >/dev/null 2>&1
-    cp -r "cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64/bin" "${DATAFED_DEPENDENCIES_INSTALL_PATH}"
-    cp -r "cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64/share" "${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    # Version 3.20 of cmake and onwards starting using all lower case in the package names, previos versions use a
+    # a capital L in the name.
+    wget https://github.com/Kitware/CMake/releases/download/v${DATAFED_CMAKE_VERSION}/cmake-${DATAFED_CMAKE_VERSION}-linux-x86_64.tar.gz
+    tar -xzvf "cmake-${DATAFED_CMAKE_VERSION}-linux-x86_64.tar.gz" >/dev/null 2>&1
+    cp -r "cmake-${DATAFED_CMAKE_VERSION}-linux-x86_64/bin" "${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    cp -r "cmake-${DATAFED_CMAKE_VERSION}-linux-x86_64/share" "${DATAFED_DEPENDENCIES_INSTALL_PATH}"
 
     # Cleanup
-    rm -rf "cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64"
-    rm -rf "cmake-${DATAFED_CMAKE_VERSION}-Linux-x86_64.tar.gz"
+    rm -rf "cmake-${DATAFED_CMAKE_VERSION}-linux-x86_64"
+    rm -rf "cmake-${DATAFED_CMAKE_VERSION}-linux-x86_64.tar.gz"
 
     # Mark cmake as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.cmake_installed-${DATAFED_CMAKE_VERSION}"
@@ -147,12 +167,12 @@ install_protobuf() {
     cd python
     init_python
     source "${DATAFED_PYTHON_ENV}/bin/activate"
-    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python3 -m pip install numpy
-    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python3 setup.py build
-    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python3 setup.py test
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python${DATAFED_PYTHON_VERSION} -m pip install numpy tzdata
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python${DATAFED_PYTHON_VERSION} setup.py build
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python${DATAFED_PYTHON_VERSION} setup.py test
     # Because we have activaited a venv we don't want to use the --user flag
     # with the install command
-    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" python3 setup.py install
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" "python${DATAFED_PYTHON_VERSION}" setup.py install
     cd ../
     # Cleanup build file with root ownership
     if [ -f build/install_manifest.txt ]; then
@@ -173,6 +193,9 @@ install_libsodium() {
       # sudo required because of egg file
       "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/libsodium"
     fi
+
+
+#<<<<<< HEAD
     # Here we are using clone instead of submodule update, because submodule
     # requires the .git folder exist and the current folder be considered a repo
     # this creates problems in docker because each time a commit is made the
@@ -181,6 +204,14 @@ install_libsodium() {
     cd "${PROJECT_ROOT}/external/libsodium"
     git checkout "$DATAFED_LIBSODIUM_VERSION"
     ./autogen.sh
+    #=======
+    # Official documentation for libsodium indicates this is the preferred way to build libsodium.
+    # Using the git repo directly results in build instability because of additional network calls when running
+    # autogen.sh.
+    wget "https://download.libsodium.org/libsodium/releases/libsodium-${DATAFED_LIBSODIUM_VERSION}.tar.gz" -P "${PROJECT_ROOT}/external"
+    tar -xvzf "${PROJECT_ROOT}/external/libsodium-${DATAFED_LIBSODIUM_VERSION}.tar.gz" -C "${PROJECT_ROOT}/external/"
+    cd "${PROJECT_ROOT}/external/libsodium-${DATAFED_LIBSODIUM_VERSION}"
+    #>>>>>>
     # Build static ONLY!!!!
     # Note if zmq detects a shared sodium library it will grab it no matter what
     # --enable-shared=no must be set here

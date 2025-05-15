@@ -4,6 +4,7 @@
 
 // Standard includes
 #include <string>
+#include <cstdint>
 
 namespace SDMS {
 
