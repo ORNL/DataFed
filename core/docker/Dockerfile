@@ -45,7 +45,8 @@ RUN ${BUILD_DIR}/scripts/generate_datafed.sh && \
 		-DBUILD_WEB_SERVER=False		\
 		-DBUILD_DOCS=False					\
 		-DBUILD_PYTHON_CLIENT=False	\
-		-DBUILD_FOXX=False
+		-DBUILD_FOXX=False \
+        -DCMAKE_BUILD_TYPE=Debug
 RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build -j 8
 RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build --target install
 
@@ -83,6 +84,9 @@ USER root
 RUN chown -R datafed:root /datafed
 RUN chown -R datafed:root /opt
 
+#Delete later:
+RUN apt-get install -y valgrind
+
 # NOTE docker does not recognize curly braces around variables in entrypoint
 # and CMD
-ENTRYPOINT [ "/datafed/source/core/docker/entrypoint.sh", "/opt/datafed/core/datafed-core","--cfg", "/opt/datafed/core/datafed-core.cfg"]
+ENTRYPOINT [ "/datafed/source/core/docker/entrypoint.sh", "valgrind", "--track-origins=yes", "--leak-check=full", "--show-leak-kinds=all", "-s", "/opt/datafed/core/datafed-core","--cfg", "/opt/datafed/core/datafed-core.cfg"]

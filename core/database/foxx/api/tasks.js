@@ -449,6 +449,10 @@ var tasks_func = (function () {
                 token_type: extra_token_format.token_type,
                 scopes: extra_token_format.scopes,
                 collection_id: state.collection_info.collection_id,
+                acc_tok_iv: tokens.acc_tok_iv,
+                acc_tok_len: tokens.acc_tok_len,
+                ref_tok_iv: tokens.ref_tok_iv,
+                ref_tok_len: tokens.ref_tok_len,
             };
             params = Object.assign(params, state.xfr[a_task.step - 1]);
 
@@ -596,6 +600,11 @@ var tasks_func = (function () {
                 token_type: extra_token_format.token_type,
                 scopes: extra_token_format.scopes,
                 collection_id: state.collection_info.collection_id,
+                acc_tok_iv: tokens.acc_tok_iv,
+                acc_tok_len: tokens.acc_tok_len,
+                ref_tok_iv: tokens.ref_tok_iv,
+                ref_tok_len: tokens.ref_tok_len,
+
             };
             params = Object.assign(params, state.xfr[a_task.step - 1]);
             reply = {
@@ -923,6 +932,10 @@ var tasks_func = (function () {
                         acc_tok: tokens.acc_tok,
                         ref_tok: tokens.ref_tok,
                         acc_tok_exp_in: tokens.acc_tok_exp_in,
+                        acc_tok_iv: tokens.acc_tok_iv,
+                        acc_tok_len: tokens.acc_tok_len,
+                        ref_tok_iv: tokens.ref_tok_iv,
+                        ref_tok_len: tokens.ref_tok_len,
                     };
                     params = Object.assign(params, xfr);
                     reply = {
@@ -1310,6 +1323,10 @@ var tasks_func = (function () {
                         acc_tok: tokens.acc_tok,
                         ref_tok: tokens.ref_tok,
                         acc_tok_exp_in: tokens.acc_tok_exp_in,
+                        acc_tok_iv: tokens.acc_tok_iv,
+                        acc_tok_len: tokens.acc_tok_len,
+                        ref_tok_iv: tokens.ref_tok_iv,
+                        ref_tok_len: tokens.ref_tok_len,
                     };
                     params = Object.assign(params, xfr);
                     reply = {

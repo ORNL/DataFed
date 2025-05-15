@@ -117,7 +117,6 @@ router
                         ct: time,
                         ut: time,
                     };
-
                     if (req.queryParams.password) {
                         g_lib.validatePassword(req.queryParams.password);
                         user_data.password = auth.create(req.queryParams.password);
@@ -553,6 +552,7 @@ router
                     var user_id;
                     let user_doc;
 
+                    console.log("Recieved Access Token:", JSON.stringify(req.queryParams.access));
                     const { type: token_type, other_token_data } = req.queryParams;
                     // validate optional query params
                     if (
@@ -589,7 +589,15 @@ router
                         "acc:",
                         req.queryParams.access,
                         "exp:",
-                        req.queryParams.expires_in
+                        req.queryParams.expires_in,
+                        "access_len:",
+                        req.queryParams.access_len,
+                        "access_iv",
+                        req.queryParams.access_iv,
+                        "refresh_len",
+                        req.queryParams.refresh_len,
+                        "refresh_iv",
+                        req.queryParams.refresh_iv,
                     );
                     var obj = {
                         access: req.queryParams.access,
@@ -697,9 +705,9 @@ router
         joi.string().optional(),
         "Other data associated with token, currently only supported as Globus Collection UUID e.g. other_token_data=1cbaaee5-b938-4a4e-87a8-f1ec4d5d92f9",
     )
-    .queryParam("access_len", joi.number().integer().required(), "Access Token Length")
+    .queryParam("access_len", joi.number().integer().required().options({ convert: true }), "Access Token Length")
     .queryParam("access_iv", joi.string().required(), "Access Token Initilization Value")
-    .queryParam("refresh_len", joi.number().integer().required(), "Refresh Token Length")
+    .queryParam("refresh_len", joi.number().integer().required().options({ convert: true }), "Refresh Token Length")
     .queryParam("refresh_iv", joi.string().required(), "Refresh Token Initilization Value")
     .summary("Set user tokens")
     .description("Set user tokens");
@@ -741,7 +749,7 @@ router
                 token_document,
                 needs_consent,
             );
-
+            console.log("Token Get - Result:",JSON.stringify(result));
             res.send(result);
         } catch (e) {
             g_lib.handleException(e, res);

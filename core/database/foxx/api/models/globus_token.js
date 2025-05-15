@@ -96,6 +96,11 @@ class GlobusTokenModel {
         globus_token.access = this.#database_entry.access;
         globus_token.refresh = this.#database_entry.refresh;
         globus_token.expiration = this.#database_entry.expiration;
+        globus_token.access_iv = this.#database_entry.access_iv;
+        globus_token.access_len = this.#database_entry.access_len;
+        globus_token.refresh_iv = this.#database_entry.refresh_iv;
+        globus_token.refresh_len = this.#database_entry.refresh_len;
+
         this.#globus_token = globus_token;
     }
 

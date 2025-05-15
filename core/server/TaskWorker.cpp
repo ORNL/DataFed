@@ -5,14 +5,17 @@
 #include "ITaskMgr.hpp"
 
 // Common public includes
+#include "common/CipherEngine.hpp"
 #include "common/CommunicatorFactory.hpp"
 #include "common/CredentialFactory.hpp"
+#include "DatabaseAPI.hpp"
 #include "common/DynaLog.hpp"
 #include "common/ICommunicator.hpp"
 #include "common/IMessage.hpp"
 #include "common/MessageFactory.hpp"
 #include "common/SDMS.pb.h"
 #include "common/SocketOptions.hpp"
+#include "common/Util.hpp"
 
 // Standard includes
 #include "common/TraceException.hpp"
@@ -190,11 +193,82 @@ void TaskWorker::workerThread(LogContext log_context) {
   } // End of outer while loop
 }
 
+
+
+std::string
+TaskWorker::prepToken(const Value::Object &obj,std::string token, bool needs_update, LogContext log_context)
+{
+    //1.Detect if tokens are encrypted
+    string string_tok = obj.getString(token);
+    
+    //if the token's encryption already exists
+    if(!needs_update)
+    {
+        //TOKEN IS ENCRYPTED
+        unsigned char token_key[32];
+        readFile("../../build/core/server/datafed-token-key.txt", 32, token_key);
+        CipherEngine cipher(token_key);
+
+        CipherEngine::CipherString encoded_obj = cipher.createCipherString();
+       
+        //Prep Token into a char[]
+        string tok_str = obj.getString(token);  // assume known size
+        encoded_obj.encrypted_msg = std::unique_ptr<char[]>(new char[tok_str.size() + 1]);  // +1 for null terminator
+        std::memcpy(encoded_obj.encrypted_msg.get(), tok_str.c_str(), tok_str.size() + 1);     // copy including '\0' 
+        
+        encoded_obj.encrypted_msg_len = obj.getNumber(token+"_len");
+
+        //Prep IV into a char[]
+        string iv_str = obj.getString(token + "_iv");  // assume known size
+        encoded_obj.iv = std::unique_ptr<char[]>(new char[iv_str.size() + 1]);  // +1 for null terminator
+        std::memcpy(encoded_obj.iv.get(), iv_str.c_str(), iv_str.size() + 1);     // copy including '\0' 
+        
+
+        //Decrypt it:
+        string decrypted_token = cipher.decrypt(encoded_obj);
+        
+        return decrypted_token;
+    }
+    else
+    {
+        DL_WARNING(log_context, "Token Isn't Encrypted, starting encryption and refresh process"); 
+
+        return string_tok;
+    }
+return string_tok;
+}
+
+bool
+TaskWorker::tokenNeedsUpdate(const Value::Object &obj)
+{        
+   //If encrypted:
+    if(obj.getString("acc_tok_iv") != "")
+    {
+        //Return false we dont need to update
+        return false;
+    }
+    else
+    {
+        //Return true we do need to update
+        return true;
+    }
+}
+
+
 ICommunicator::Response
 TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
                                LogContext log_context) {
 
+  bool needs_update = false;
   const Value::Object &obj = a_task_params.asObject();
+
+  //TokenPrepFuncs:
+  needs_update = tokenNeedsUpdate(obj);
+  
+  //Update the tokens to be unencrypted
+  string acc_tok = prepToken(obj, "acc_tok", needs_update, log_context);
+  string ref_tok = prepToken(obj, "ref_tok", needs_update, log_context);
+ 
 
   const string &uid = obj.getString("uid");
   TaskType type = (TaskType)obj.getNumber("type");
@@ -207,8 +281,9 @@ TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
   bool encrypted = true;
   GlobusAPI::EndpointInfo ep_info;
 
-  string acc_tok = obj.getString("acc_tok");
-  string ref_tok = obj.getString("ref_tok");
+  //string acc_tok = obj.getString("acc_tok");
+  //string ref_tok = obj.getString("ref_tok");
+
   uint32_t expires_in = obj.getNumber("acc_tok_exp_in");
   uint32_t token_type =
       obj.getNumber("token_type"); // TODO: use enum if possible
@@ -222,7 +297,7 @@ TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
 
   DL_TRACE(log_context, ">>>> Token Expires in: " << expires_in);
 
-  if (expires_in < 3600) {
+  if ((expires_in < 3600) | needs_update/*Add an or its missing certain fields*/) {
 
     me.m_db.setClient(uid);
 
@@ -427,6 +502,8 @@ ICommunicator::Response TaskWorker::cmdAllocCreate(TaskWorker &me,
                                                    LogContext log_context) {
   const Value::Object &obj = a_task_params.asObject();
 
+  DL_DEBUG(log_context, "Testing to see what thisll output");
+  DL_DEBUG(log_context, a_task_params.asString());
   const string &repo_id = obj.getString("repo_id");
   const string &path = obj.getString("repo_path");
 

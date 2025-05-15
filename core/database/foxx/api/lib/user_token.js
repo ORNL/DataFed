@@ -128,6 +128,11 @@ class UserToken {
             expires_in: 0,
             token_type: g_lib.AccessTokenType.ACCESS_SENTINEL,
             scopes: "",
+            access_iv: "",
+            access_len: 0,
+            refresh_iv: "",
+            refresh_len: 0,
+
         };
         if (needs_consent) {
             // short circuit when consent flow is required
@@ -161,6 +166,10 @@ class UserToken {
             acc_tok: token_doc.access,
             ref_tok: token_doc.refresh,
             acc_tok_exp_in: exp_in > 0 ? exp_in : 0,
+            acc_tok_iv: token_doc.access_iv,
+            acc_tok_len: token_doc.access_len,
+            ref_tok_iv: token_doc.refresh_iv,
+            ref_tok_len: token_doc. refresh_len,
         });
     }
 }

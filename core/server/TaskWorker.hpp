@@ -23,12 +23,15 @@ namespace SDMS {
 namespace Core {
 
 class TaskWorker : public ITaskWorker {
+protected:
+    static bool tokenNeedsUpdate(const libjson::Value::Object &obj);
+    static std::string prepToken(const libjson::Value::Object &obj, std::string token, bool needs_update, LogContext log_context);
 public:
   TaskWorker(ITaskMgr &a_mgr, uint32_t a_id, LogContext log_context);
   ~TaskWorker();
 
 private:
-  typedef ICommunicator::Response (*task_function_t)(
+    typedef ICommunicator::Response (*task_function_t)(
       TaskWorker &me, const libjson::Value &a_task_params,
       LogContext log_context);
 
