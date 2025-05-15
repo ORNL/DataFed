@@ -30,7 +30,20 @@ public:
     static std::string prepToken(const libjson::Value::Object &obj, const std::string &token, bool needs_update, SDMS::LogContext log_context) {
         return TaskWorker::prepToken(obj, token, needs_update, log_context);
     }
+
 };
+struct GlobalProtobufTeardown {
+    ~GlobalProtobufTeardown() {
+        // This is the teardown function that runs once at the end
+        google::protobuf::ShutdownProtobufLibrary();
+    }
+};
+
+// Declare a global fixture instance
+BOOST_GLOBAL_FIXTURE(GlobalProtobufTeardown);
+
+
+
 
 BOOST_AUTO_TEST_SUITE(TaskWorkerTest)
 

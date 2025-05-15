@@ -131,8 +131,11 @@ BOOST_AUTO_TEST_CASE(testing_KeyGeneration)
     CipherEngine::generateEncryptionKey(token_key);
 
     std::string fname = "datafed-token-key.txt";
-    std::ofstream  outf(fname.c_str());   
-    outf << token_key;
+    //std::ofstream  outf(fname.c_str());   
+    //outf << token_key;
+    
+    std::ofstream outf(fname, std::ios::binary);
+    outf.write(reinterpret_cast<const char*>(token_key), 32);
     outf.close();
 
     //Grabbing key
