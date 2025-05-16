@@ -1,0 +1,5 @@
+{
+  "verbose": true,
+  "watch": ["src", "configs", "common"],
+  "ignore": ["*.test.js"]
+}

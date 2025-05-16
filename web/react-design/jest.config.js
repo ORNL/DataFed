@@ -1,5 +1,6 @@
 export default {
     preset: 'ts-jest',
+    modulePathIgnorePatterns: ['<rootDir>/build'],
     testEnvironment: 'jsdom',
     moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1'
