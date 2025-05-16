@@ -52,7 +52,6 @@ scripts/globus/mapping.json
 scripts/admin_datafed_backup.sh
 scripts/admin_refresh_certs.sh
 scripts/globus/__pycache__
-services/
 tmp/
 web/SDMS.proto
 web/SDMS_Anon.proto
