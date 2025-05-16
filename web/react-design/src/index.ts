@@ -25,7 +25,7 @@ const requestLogger = (req: Request, res: Response, next: NextFunction): void =>
 
 // Probably can just keep this as NODE_ENV
 type AppEnvironment = "development" | "production" | "ci";
-const APP_ENV: AppEnvironment = (process.env.APP_ENV as AppEnvironment) || "development";
+const APP_ENV: AppEnvironment = (process.env.APP_ENV as AppEnvironment) ?? "development";
 const isDevelopment: boolean = APP_ENV === "development";
 const isProduction: boolean = APP_ENV === "production";
 const isCI: boolean = APP_ENV === "ci";
@@ -51,7 +51,7 @@ appRouter.use(bodyParser.urlencoded({ extended: true, limit: "5mb" }));
 
 appRouter.use((req: Request, res: Response, next: NextFunction) => {
     const existingId = req.get("X-Request-Id");
-    const id = existingId === undefined ? uuidv4() : existingId;
+    const id = existingId ?? uuidv4();
     res.set("X-Request-Id", id);
     (req as any).id = id;
     next();
@@ -62,8 +62,8 @@ appRouter.use(requestLogger);
 const apiRoutes: Router = express.Router();
 apiRoutes.get("/_version", (req: Request, res: Response) => {
     res.json({
-        version: process.env.APP_VERSION || "N/A",
-        gitHash: process.env.APP_GIT_HASH || "N/A",
+        version: process.env.APP_VERSION ?? "N/A",
+        gitHash: process.env.APP_GIT_HASH ?? "N/A",
         environment: APP_ENV,
     });
 });
@@ -72,12 +72,12 @@ appRouter.use("/api", apiRoutes);
 
 // --- Static Asset Serving & SPA Fallback ---
 if (isProduction) {
-    const staticPath: string = process.env.STATIC_PATH || path.join(__dirname, "../client/build");
+    const staticPath: string = process.env.STATIC_PATH ?? path.join(__dirname, "../client/build");
     log.info(`Serving static files from: ${staticPath}`);
 
     appRouter.use(express.static(staticPath));
 
-    appRouter.get("*", (req: Request, res: Response) => {
+    appRouter.get(".", (req: Request, res: Response) => {
         res.sendFile(path.resolve(staticPath, "index.html"));
     });
 }
@@ -100,7 +100,7 @@ if (isDevelopment) {
     try {
         webpackDevMiddleware = require("webpack-dev-middleware");
         webpackHotMiddleware = require("webpack-hot-middleware");
-        const webpackConfigPath = process.env.WEBPACK_CONFIG_PATH || path.join(__dirname, "../webpack.config.js");
+        const webpackConfigPath = process.env.WEBPACK_CONFIG_PATH ?? path.join(__dirname, "../webpack.config.js");
         webpackConfig = require(webpackConfigPath);
 
         if (!webpackConfig.output?.publicPath) {
@@ -124,8 +124,8 @@ if (isDevelopment) {
 
     serverApp.use(webpackHotMiddleware(compiler));
 
-    serverApp.use("*", (req: Request, res: Response, next: NextFunction) => {
-        const filename = path.join(compiler.outputPath!, "index.html");
+    serverApp.use(".", (req: Request, res: Response, next: NextFunction) => {
+        const filename = path.join(compiler.outputPath, "index.html");
         (compiler.outputFileSystem as any).readFile(filename, (err: Error | null, result: Buffer) => {
             if (err) {
                 return next(err);
@@ -142,8 +142,8 @@ interface HttpError extends Error {
 }
 
 serverApp.use((err: HttpError, req: Request, res: Response, next: NextFunction) => {
-    log.error("Unhandled error:", err.stack || err.message);
-    const statusCode = err.status || httpCodes.INTERNAL_SERVER_ERROR;
+    log.error("Unhandled error:", err.stack ?? err.message);
+    const statusCode = err.status ?? httpCodes.INTERNAL_SERVER_ERROR;
     res.status(statusCode).json({
         error: {
             message: isDevelopment && err.message ? err.message : "An unexpected error occurred.",
@@ -177,8 +177,8 @@ const gracefulShutdown = (serverInstance: http.Server | https.Server, signal: st
 };
 
 const startServer = (): void => {
-    const PORT: number = parseInt(process.env.PORT || "3000", 10);
-    const SSL_PORT: number = parseInt(process.env.SSL_PORT || "443", 10);
+    const PORT: number = parseInt(process.env.PORT ?? "3000", 10);
+    const SSL_PORT: number = parseInt(process.env.SSL_PORT ?? "443", 10);
 
     const httpServer: http.Server = http.createServer(serverApp);
 

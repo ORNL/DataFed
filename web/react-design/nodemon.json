@@ -1,5 +1,6 @@
 {
   "verbose": true,
-  "watch": ["src", "configs", "common"],
-  "ignore": ["*.test.js"]
+  "watch": ["src"],
+  "ignore": ["*.test.js", "*.test.ts", "*.test.tsx"],
+  "ext": "ts,tsx"
 }

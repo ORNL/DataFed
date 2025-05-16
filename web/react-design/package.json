@@ -5,7 +5,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "npx nodemon src/index.ts --exec babel-node --ignore app/ | bunyan -o short",
+    "dev": "npx nodemon --exec babel-node --extensions \".ts,.tsx,.js,.jsx\" src/index.ts | bunyan -o short",
     "start:dev": "APP_ENV=development NODE_ENV=development node server/server.js",
     "start": "APP_ENV=production NODE_ENV=production node server/server.js",
     "build:client": "webpack --config webpack.config.js --mode production"
@@ -47,6 +47,8 @@
     "mini-css-extract-plugin": "^2.9.2",
     "nodemon": "3.1.10",
     "terser-webpack-plugin": "^5.3.14",
+    "ts-node": "10.9.2",
+    "typescript": "5.8.3",
     "webpack": "^5.99.8",
     "webpack-cli": "6.0.1",
     "webpack-dev-middleware": "^7.4.2",
