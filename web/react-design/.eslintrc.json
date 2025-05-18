@@ -1,15 +1,4 @@
 {
-  "env": {
-    "browser": true,
-    "es2021": true,
-    "jest": true
-  },
-  "extends": [
-    "eslint:recommended",
-    "plugin:react/recommended",
-    "plugin:react-hooks/recommended",
-    "plugin:@typescript-eslint/recommended"
-  ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaFeatures": {
@@ -18,9 +7,19 @@
     "ecmaVersion": "latest",
     "sourceType": "module"
   },
+  "env": {
+    "browser": true,
+    "amd": true,
+    "es6": true,
+    "node": true,
+    "jest": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "prettier"
+  ],
   "plugins": [
-    "react",
-    "react-hooks",
     "@typescript-eslint"
   ],
   "rules": {
@@ -29,13 +28,23 @@
     "@typescript-eslint/explicit-module-boundary-types": "off",
     "@typescript-eslint/no-explicit-any": "warn",
     "no-unused-vars": "off",
-    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
-    "react-hooks/rules-of-hooks": "error",
-    "react-hooks/exhaustive-deps": "warn"
+    "no-console": "error",
+    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }]
   },
   "settings": {
-    "react": {
-      "version": "detect"
+    "import/resolver": [
+      {
+        "webpack": {
+          "config": "./webpack.config.js"
+        }
+      },
+      "node"
+    ],
+    "import/ignore": [
+      "node_modules"
+    ],
+    "flowtype": {
+      "onlyFilesWithFlowAnnotation": true
     }
   }
 }
