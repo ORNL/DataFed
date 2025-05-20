@@ -1,3 +1,4 @@
+#!/bin/bash
 
 # Versions
 DATAFED_CMAKE_VERSION="3.31.6"

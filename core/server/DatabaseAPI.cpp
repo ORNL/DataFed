@@ -354,8 +354,14 @@ void DatabaseAPI::userGetAccessToken(
   //grab the token_key
   readFile("../../build/core/server/datafed-token-key.txt", 32, token_key);
   CipherEngine cipher(token_key);
+  //CipherEngine::CipherString encoded_refresh_obj = cipher.createCipherString();
+  //CipherEngine::CipherString encoded_access_obj = cipher.createCipherString();
+    
   CipherEngine::CipherString encoded_refresh_obj = cipher.createCipherString();
   CipherEngine::CipherString encoded_access_obj = cipher.createCipherString();
+
+  //CipherEngine::CipherString cipher.cs;
+    
 
   const Value::Object &obj = result.asObject();
 
@@ -388,15 +394,14 @@ void DatabaseAPI::userGetAccessToken(
   encoded_refresh_obj.iv[24] = '\0';
  
   //Decryption for acc token and ref token 
-  a_acc_tok = cipher.decrypt(encoded_access_obj);
-  a_ref_tok = cipher.decrypt(encoded_refresh_obj); 
+  a_acc_tok = cipher.decrypt(encoded_access_obj, log_context);
+  a_ref_tok = cipher.decrypt(encoded_refresh_obj, log_context); 
   a_expires_in = (uint32_t)obj.getNumber("expires_in");
   needs_consent = obj.getBool("needs_consent");
   token_type = (int)obj.getNumber("token_type");
   // NOTE: scopes will be a blank string for token_type=GLOBUS_DEFAULT
   scopes = obj.getString("scopes");
     
-  //Ensuring to free up memory
   DL_WARNING(log_context, "Access Token After Decryption:" << a_acc_tok);
 
   TRANSLATE_END(result, log_context)
@@ -420,9 +425,9 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
   CipherEngine cipher(token_key);
 
   //encrypting the access token
-  CipherEngine::CipherString access_obj = cipher.encrypt(a_acc_tok);
+  CipherEngine::CipherString access_obj = cipher.encrypt(a_acc_tok, log_context);
 
-  CipherEngine::CipherString refresh_obj = cipher.encrypt(a_ref_tok);
+  CipherEngine::CipherString refresh_obj = cipher.encrypt(a_ref_tok, log_context);
 
   DL_WARNING(log_context, "Encrypted Base64 Msg:" << access_obj.encrypted_msg.get());
 

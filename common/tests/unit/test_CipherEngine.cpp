@@ -6,6 +6,7 @@
 //Local private includes
 #include "../../include/common/CipherEngine.hpp"
 #include "../../include/common/Util.hpp"
+#include "../../include/common/DynaLog.hpp"
 
 #include "common/libjson.hpp"
 
@@ -22,7 +23,7 @@ BOOST_AUTO_TEST_SUITE(KeyEncryptionDecryptionTest)
 BOOST_AUTO_TEST_CASE(test_EncryptionDecryption)
 {
 
-    std::cout << "THIS IS A NEW FLAG" << std::endl;
+    LogContext log_context;
     unsigned char key[32];
     //CipherEngine::generateEncryptionKey(key);
     readFile("../../build/core/server/datafed-token-key.txt", 32, key);
@@ -39,15 +40,8 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryption)
     //Here if parties would like to use their own IV GENERATOR
     //CipherEngine::CipherString returnObj = testCipher.encrypt(iv, msg);
     
-    CipherEngine::CipherString returnObj2 = encryptCipher.encrypt(msg);
+    CipherEngine::CipherString returnObj2 = encryptCipher.encrypt(msg,log_context);
  
-/*
-    std::cout << "Rough Test1:" << encrypted_access_string << std::endl; 
-    std::string testString;
-
-    std::memcpy(returnObj2.encrypted_msg, testString.c_str(), returnObj2.encrypted_msg_len);
-    std::cout << "Rough Test2:" << testString << std::endl;    
-*/
     std::cout << "Encrypted Message:\n" << returnObj2.encrypted_msg.get() << std::endl;
     std::cout << "IV:\n" << returnObj2.iv.get() << std::endl;    
     std::cout << "Encrypted Message Len:\n" << returnObj2.encrypted_msg_len << std::endl;
@@ -62,7 +56,7 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryption)
 
     //START OF ENCRYPTION
     std::string unencrypted_msg;
-    unencrypted_msg = decryptCipher.decrypt(returnObj2); 
+    unencrypted_msg = decryptCipher.decrypt(returnObj2, log_context); 
     std::cout << "Unencrypted Message:" << unencrypted_msg << std::endl;
     BOOST_CHECK(msg.compare(unencrypted_msg) == 0);
 }
@@ -71,7 +65,7 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryption)
 BOOST_AUTO_TEST_CASE(test_EncryptionDecryptionJSONValue)
 {
 
-    std::cout << "THIS IS A NEW FLAG" << std::endl;
+    LogContext log_context;
     unsigned char key[32];
     //CipherEngine::generateEncryptionKey(key);
     readFile("../../build/core/server/datafed-token-key.txt", 32, key);
@@ -88,7 +82,7 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryptionJSONValue)
     //Here if parties would like to use their own IV GENERATOR
     //CipherEngine::CipherString returnObj = testCipher.encrypt(iv, msg);
     
-    CipherEngine::CipherString returnObj2 = testCipher.encrypt(msg);
+    CipherEngine::CipherString returnObj2 = testCipher.encrypt(msg, log_context);
  
     std::cout << "Encrypted Message:\n" << returnObj2.encrypted_msg.get() << std::endl;
     std::cout << "IV:\n" << returnObj2.iv.get() << std::endl;    
@@ -118,7 +112,7 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryptionJSONValue)
     encoded_access_obj.iv[24] = '\0';
 
     std::string unencrypted_msg;
-    unencrypted_msg = testCipher.decrypt(encoded_access_obj); 
+    unencrypted_msg = testCipher.decrypt(encoded_access_obj, log_context); 
     std::cout << "Unencrypted Message:" << unencrypted_msg << std::endl;
     BOOST_CHECK(msg.compare(unencrypted_msg) == 0);
 }

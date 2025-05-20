@@ -208,7 +208,7 @@ fi
 
 if [ -z "${DATAFED_GLOBUS_SUBSCRIPTION}" ]
 then
-  # For compose will set by default to run on a port other than 443 because 
+  # For compose will set by default to run on a port other than 443 because
   # the core metadata services use 443 for the web server
   local_DATAFED_GLOBUS_SUBSCRIPTION=""
 else
@@ -283,7 +283,7 @@ export DATAFED_CORE_USER="$local_DATAFED_CORE_USER"
 # ************************************************
 export DATAFED_ZEROMQ_SESSION_SECRET="$local_DATAFED_ZEROMQ_SESSION_SECRET"
 export DATAFED_ZEROMQ_SYSTEM_SECRET="$local_DATAFED_ZEROMQ_SYSTEM_SECRET"
-# An email address is required by LEGO when 
+# An email address is required by LEGO when
 # requesting certificates for the domain
 export DATAFED_LEGO_EMAIL="$local_DATAFED_LEGO_EMAIL"
 # Path to the private key - needed for https
@@ -300,7 +300,7 @@ export DATAFED_CORE_ADDRESS_PORT_INTERNAL="$local_DATAFED_CORE_ADDRESS_PORT_INTE
 export DATAFED_GOOGLE_ANALYTICS_TAG="$local_DATAFED_GOOGLE_ANALYTICS_TAG"
 
 # ****************************************************************************
-# Env Variables for DataFed Core server administrative and operational scripts 
+# Env Variables for DataFed Core server administrative and operational scripts
 # ****************************************************************************
 # The admin should who should be receiving emails about the backups
 export DATAFED_ADMIN_EMAIL=""
@@ -319,10 +319,10 @@ export DATAFED_DATABASE_BACKUP_PATH=""
 # i.e. DATAFED_GCS_ROOT_NAME="CADES GCS Test"
 #
 # This will be used to define the following items
-# 
+#
 # DATAFED_GCS_COLLECTION_MAPPED="\$DATAFED_GCS_ROOT_NAME Collection Mapped"
 # DATAFED_GCS_STORAGE_GATEWAY="\$DATAFED_GCS_ROOT_NAME Storage Gateway"
-# 
+#
 # So using the example above these would be defined as:
 #
 # DATAFED_GCS_COLLECTION_MAPPED="CADES GCS Test Collection Mapped"
@@ -333,14 +333,14 @@ export DATAFED_GCS_ROOT_NAME="$local_DATAFED_GCS_ROOT_NAME"
 # i.e. /home/cades/collections/mapped
 #
 # The path will be created if it does not exist
-# 
+#
 # \$DATAFED_GCS_COLLECTION_ROOT_PATH/\$DATAFED_REPO_ID_AND_DIR"
 #
 # So if these variables are defined as:
 # DATAFED_GCS_ROOT_NAME="datafed-home"
 # DATAFED_GCS_COLLECTION_ROOT_PATH="/home/cades/collections/mapped/"
-# 
-# A folder named 
+#
+# A folder named
 #
 # "/home/cades/collections/mapped/datafed-home"
 #
@@ -348,7 +348,7 @@ export DATAFED_GCS_ROOT_NAME="$local_DATAFED_GCS_ROOT_NAME"
 export DATAFED_GCS_COLLECTION_BASE_PATH="$local_DATAFED_GCS_COLLECTION_BASE_PATH"
 export DATAFED_GCS_COLLECTION_ROOT_PATH="$local_DATAFED_GCS_COLLECTION_ROOT_PATH"
 # The DataFed repo id, this also must be the name
-# of the directory that will be placed in Globus 
+# of the directory that will be placed in Globus
 # collection, avoid using spaces in the name.
 # i.e. DATAFED_REPO_ID_AND_DIR="datafed-home"
 export DATAFED_REPO_ID_AND_DIR="$local_DATAFED_REPO_ID_AND_DIR"

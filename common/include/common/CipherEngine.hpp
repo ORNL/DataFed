@@ -2,6 +2,9 @@
 #define CIPHER_ENGINE_HPP
 #pragma once
 
+//Local public includes
+#include "DynaLog.hpp"
+
 //Local include
 #include <string>
 #include <memory>
@@ -19,7 +22,7 @@ class CipherEngine
         static void generateIV(unsigned char iv[16]);
         
         // Constructor to set the encryption key
-        CipherEngine(const unsigned char* inputKey);
+        explicit CipherEngine(const unsigned char* inputKey);
 
         struct CipherBytes
         {
@@ -36,13 +39,13 @@ class CipherEngine
         };
 
         CipherString createCipherString();
-        CipherString encrypt_algorithm(unsigned char *iv, const std::string& msg);
+        CipherString encryptAlgorithm(unsigned char *iv, const std::string& msg, LogContext log_context);
    
         
         //WE NEED TO RECREATE THIS
-        CipherString encrypt(unsigned char *iv, const std::string& msg);
-        CipherString encrypt(const std::string& msg); 
-        std::string decrypt(const CipherString& encrypted_string);
+        CipherString encrypt(unsigned char *iv, const std::string& msg, LogContext log_context);
+        CipherString encrypt(const std::string& msg, LogContext log_context); 
+        std::string decrypt(const CipherString& encrypted_string, LogContext log_context);
         
 };
 }

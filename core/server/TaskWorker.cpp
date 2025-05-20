@@ -225,7 +225,7 @@ TaskWorker::prepToken(const Value::Object &obj,std::string token, bool needs_upd
         
 
         //Decrypt it:
-        string decrypted_token = cipher.decrypt(encoded_obj);
+        string decrypted_token = cipher.decrypt(encoded_obj, log_context);
         
         return decrypted_token;
     }

@@ -1,6 +1,10 @@
 //Local Include
 #include "common/CipherEngine.hpp"
 
+// Local Public includes
+#include "common/TraceException.hpp"
+#include "common/DynaLog.hpp"
+
 // Third party includes
 #include <openssl/conf.h>
 #include <openssl/evp.h>
@@ -9,6 +13,7 @@
 
 // Standard includes
 #include <iostream>
+#include <exception>
 #include <memory>
 #include <string.h>
 #include <string>
@@ -17,12 +22,19 @@
 #include <iomanip>
 using namespace std;
 namespace SDMS{
+    namespace
+    {
+       const int BASE64_ENCODED_BLOCK_SIZE = 4;
+       const int BASE64_INPUT_BLOCK_SIZE = 3;
+       const int NULL_TERMINATOR_SIZE = 1;
 
+    }
     void CipherEngine::handleErrors(void)
     {
         ERR_print_errors_fp(stderr);
         abort();
     }
+   
     
     CipherEngine::CipherString CipherEngine::createCipherString()
     {
@@ -30,24 +42,28 @@ namespace SDMS{
         return cs;
     }
     
-    std::unique_ptr<char[]> encode64(const unsigned char* input, int length)
+    std::unique_ptr<char[]> encode64(const unsigned char* input, int length, LogContext log_context)
     {
-        const int pl = 4*((length+2)/3);
-        auto output = std::make_unique<char[]>(pl+1);
-        std::fill_n(output.get(), pl+1, 0);  // manually zero-initialize 
-        //char* output = reinterpret_cast<char *>(calloc(pl+1, 1)); //+1 for the terminating null that EVP_EncodeBlock adds on
-        const int ol = EVP_EncodeBlock(reinterpret_cast<unsigned char*>(output.get()), input, length);
-        if (pl != ol) { std::cerr << "Whoops, encode predicted " << pl << " but we got " << ol << "\n"; } 
+        // Calculate the padded length based on the input length:
+        // (length + 2) / 3 gives the number of 3-byte blocks (rounded up), multiplied by 4 gives the number of base64 characters required.
+        const int paddedLength = BASE64_ENCODED_BLOCK_SIZE*((length + (BASE64_INPUT_BLOCK_SIZE-1))/BASE64_INPUT_BLOCK_SIZE);
+        auto output = std::make_unique<char[]>(paddedLength+NULL_TERMINATOR_SIZE);
+        std::fill_n(output.get(), paddedLength+NULL_TERMINATOR_SIZE, 0);  // manually zero-initialize 
+        const int outputLength = EVP_EncodeBlock(reinterpret_cast<unsigned char*>(output.get()), input, length);
+        if (paddedLength != outputLength) 
+        {  DL_ERROR(log_context, "Output Length (" << outputLength <<") and Predicted Padded Length ("<< paddedLength <<" ) of encoded bytes not equal!"); } 
         return std::move(output);
     } 
  
-    std::unique_ptr<unsigned char[]> decode64(const char *input, int length) {
-        const int pl = ((length/4)*3);
-        auto output = std::make_unique<unsigned char[]>(pl+1);
-        std::fill_n(output.get(), pl+1, 0);
-        //unsigned char* output = reinterpret_cast<unsigned char *>(calloc(pl+1, 1));
-        const int ol = EVP_DecodeBlock(output.get(), reinterpret_cast<const unsigned char*>(input), length);
-        if (pl != ol) { std::cerr << "Whoops, decode predicted " << pl << " but we got " << ol << "\n"; } 
+    std::unique_ptr<unsigned char[]> decode64(const char *input, int length, LogContext log_context) {   
+        // Calculate the padded length, the number of original decoded bytes
+        // (length / 4) gives the number of 4-byte blocks of base64 data, multiplied by 3 gives the decoded byte length
+        const int paddedLength = ((length/BASE64_ENCODED_BLOCK_SIZE)*BASE64_INPUT_BLOCK_SIZE);
+        auto output = std::make_unique<unsigned char[]>(paddedLength+NULL_TERMINATOR_SIZE);
+        std::fill_n(output.get(), paddedLength+NULL_TERMINATOR_SIZE, 0);
+        const int outputLength = EVP_DecodeBlock(output.get(), reinterpret_cast<const unsigned char*>(input), length);
+        if (paddedLength != outputLength) 
+        { DL_ERROR(log_context, "Output Length (" << outputLength <<") and Predicted Padded Length ("<< paddedLength <<" ) of decoded bytes not equal!"); } 
         return std::move(output);
     }
     void CipherEngine::generateIV(unsigned char *iv)
@@ -74,7 +90,7 @@ namespace SDMS{
     }
 
 
-    CipherEngine::CipherString CipherEngine::encrypt_algorithm(unsigned char *iv, const string& msg)
+    CipherEngine::CipherString CipherEngine::encryptAlgorithm(unsigned char *iv, const string& msg, LogContext log_context)
     {
         EVP_CIPHER_CTX *ctx = nullptr;
         CipherString encoded_string_result = {};
@@ -131,36 +147,36 @@ namespace SDMS{
 
 
         //Assigning values to encoded_string_result
-        encoded_string_result.encrypted_msg = encode64(bytes_result.encrypted_msg, bytes_result.encrypted_msg_len);
-        encoded_string_result.iv = encode64(bytes_result.iv, 16); 
+        encoded_string_result.encrypted_msg = encode64(bytes_result.encrypted_msg, bytes_result.encrypted_msg_len, log_context);
+        encoded_string_result.iv = encode64(bytes_result.iv, 16, log_context); 
         encoded_string_result.encrypted_msg_len = bytes_result.encrypted_msg_len;
     
         return encoded_string_result;
     }
 
-    CipherEngine::CipherString CipherEngine::encrypt(unsigned char *iv,const string& msg)
-    { 
+    CipherEngine::CipherString CipherEngine::encrypt(unsigned char *iv,const string& msg, LogContext log_context)
+    {
        CipherString result; 
 
-       result = encrypt_algorithm(iv, msg);
+       result = encryptAlgorithm(iv, msg, log_context);
 
        return result;
     }
 
 
-    CipherEngine::CipherString CipherEngine::encrypt(const string& msg)
+    CipherEngine::CipherString CipherEngine::encrypt(const string& msg, LogContext log_context)
     {
         unsigned char iv[16] = {};
         generateIV(iv);
         
         CipherString result;
 
-        result = encrypt_algorithm(iv, msg);
+        result = encryptAlgorithm(iv, msg, log_context);
         
         return result;
     }
 
-    std::string CipherEngine::decrypt(const CipherString& encoded_encrypted_string)
+    std::string CipherEngine::decrypt(const CipherString& encoded_encrypted_string, LogContext log_context)
     {
     
     EVP_CIPHER_CTX *ctx = nullptr;
@@ -174,8 +190,8 @@ namespace SDMS{
     int plaintext_len;
 
     //converts the cipherstring back to a unsigned char
-    std::unique_ptr<unsigned char[]> ciphertext = decode64(encoded_encrypted_string.encrypted_msg.get(), static_cast<int>(strlen(encoded_encrypted_string.encrypted_msg.get())));
-    std::unique_ptr<unsigned char[]> iv = decode64(encoded_encrypted_string.iv.get(), static_cast<int>(strlen(encoded_encrypted_string.iv.get())));
+    std::unique_ptr<unsigned char[]> ciphertext = decode64(encoded_encrypted_string.encrypted_msg.get(), static_cast<int>(strlen(encoded_encrypted_string.encrypted_msg.get())), log_context);
+    std::unique_ptr<unsigned char[]> iv = decode64(encoded_encrypted_string.iv.get(), static_cast<int>(strlen(encoded_encrypted_string.iv.get())), log_context);
    
     /* Create and initialise the context */
     if(!(ctx = EVP_CIPHER_CTX_new()))

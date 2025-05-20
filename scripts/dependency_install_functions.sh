@@ -195,7 +195,6 @@ install_libsodium() {
     fi
 
 
-#<<<<<< HEAD
     # Here we are using clone instead of submodule update, because submodule
     # requires the .git folder exist and the current folder be considered a repo
     # this creates problems in docker because each time a commit is made the
@@ -204,6 +203,7 @@ install_libsodium() {
     cd "${PROJECT_ROOT}/external/libsodium"
     git checkout "$DATAFED_LIBSODIUM_VERSION"
     ./autogen.sh
+
     #=======
     # Official documentation for libsodium indicates this is the preferred way to build libsodium.
     # Using the git repo directly results in build instability because of additional network calls when running
@@ -211,7 +211,7 @@ install_libsodium() {
     wget "https://download.libsodium.org/libsodium/releases/libsodium-${DATAFED_LIBSODIUM_VERSION}.tar.gz" -P "${PROJECT_ROOT}/external"
     tar -xvzf "${PROJECT_ROOT}/external/libsodium-${DATAFED_LIBSODIUM_VERSION}.tar.gz" -C "${PROJECT_ROOT}/external/"
     cd "${PROJECT_ROOT}/external/libsodium-${DATAFED_LIBSODIUM_VERSION}"
-    #>>>>>>
+
     # Build static ONLY!!!!
     # Note if zmq detects a shared sodium library it will grab it no matter what
     # --enable-shared=no must be set here
