@@ -38,7 +38,6 @@ class CipherEngine
             int encrypted_msg_len;
         };
 
-        CipherString createCipherString();
         CipherString encryptAlgorithm(unsigned char *iv, const std::string& msg, LogContext log_context);
    
         

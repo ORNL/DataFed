@@ -209,7 +209,7 @@ TaskWorker::prepToken(const Value::Object &obj,std::string token, bool needs_upd
         readFile("../../build/core/server/datafed-token-key.txt", 32, token_key);
         CipherEngine cipher(token_key);
 
-        CipherEngine::CipherString encoded_obj = cipher.createCipherString();
+        CipherEngine::CipherString encoded_obj;
        
         //Prep Token into a char[]
         string tok_str = obj.getString(token);  // assume known size

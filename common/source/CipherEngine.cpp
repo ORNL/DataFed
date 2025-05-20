@@ -33,14 +33,7 @@ namespace SDMS{
     {
         ERR_print_errors_fp(stderr);
         abort();
-    }
-   
-    
-    CipherEngine::CipherString CipherEngine::createCipherString()
-    {
-        CipherString cs;
-        return cs;
-    }
+    } 
     
     std::unique_ptr<char[]> encode64(const unsigned char* input, int length, LogContext log_context)
     {

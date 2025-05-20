@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryptionJSONValue)
     //
     //
     CipherEngine testCipher2(key);
-    CipherEngine::CipherString encoded_access_obj = testCipher2.createCipherString();
+    CipherEngine::CipherString encoded_access_obj;
     encoded_access_obj.encrypted_msg_len = obj.getNumber("access_len");
     encoded_access_obj.encrypted_msg = std::make_unique<char[]>(129); // add 1 for null terminator
 

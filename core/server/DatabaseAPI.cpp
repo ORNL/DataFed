@@ -354,14 +354,9 @@ void DatabaseAPI::userGetAccessToken(
   //grab the token_key
   readFile("../../build/core/server/datafed-token-key.txt", 32, token_key);
   CipherEngine cipher(token_key);
-  //CipherEngine::CipherString encoded_refresh_obj = cipher.createCipherString();
-  //CipherEngine::CipherString encoded_access_obj = cipher.createCipherString();
-    
-  CipherEngine::CipherString encoded_refresh_obj = cipher.createCipherString();
-  CipherEngine::CipherString encoded_access_obj = cipher.createCipherString();
-
-  //CipherEngine::CipherString cipher.cs;
-    
+ 
+  CipherEngine::CipherString encoded_refresh_obj;
+  CipherEngine::CipherString encoded_access_obj;
 
   const Value::Object &obj = result.asObject();
 
