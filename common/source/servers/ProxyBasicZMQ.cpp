@@ -274,7 +274,7 @@ void ProxyBasicZMQ::run() {
 
   // Backend socket talks to workers over inproc
   void *dealer_backend_socket = zmq_socket(ctx, ZMQ_DEALER);
-  if (not router_backend_socket) {
+  if (not dealer_backend_socket) {
     EXCEPT(1, "Problem creating backend DEALER socket");
   }
   int dealer_linger = 100;
