@@ -11,6 +11,7 @@
 #include <openssl/err.h>
 
 // Standard includes
+#include <algorithm>
 #include <array>
 #include <cstdio>
 #include <iomanip>
@@ -39,7 +40,7 @@ std::string exec(const char *cmd) {
   return result;
 }
 
-int readFile(std::string fileName, int arraySize, unsigned char* array)
+void readFile(const std::string fileName,const int arraySize, unsigned char* array)
 {
     //Converting Key for encryption funct
     unsigned char keyChar[arraySize] = {};
@@ -48,11 +49,7 @@ int readFile(std::string fileName, int arraySize, unsigned char* array)
 
     keyFile.read(reinterpret_cast<char*>(keyChar),arraySize);
 
-    for (int lv = 0; lv < arraySize; lv++)
-    {
-        array[lv] = keyChar[lv];
-    }
-return 1;
+    std::copy(keyChar, keyChar + arraySize, array);
 }
 size_t curlResponseWriteCB(char *ptr, size_t size, size_t nmemb,
                            void *userdata) {

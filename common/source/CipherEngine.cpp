@@ -79,11 +79,8 @@ namespace SDMS{
 
     CipherEngine::CipherString CipherEngine::encryptAlgorithm(unsigned char *iv, const string& msg, LogContext log_context)
     {
-        EVP_CIPHER_CTX *ctx = nullptr;
-        CipherString encoded_string_result = {};
+        EVP_CIPHER_CTX *ctx = nullptr; 
         CipherBytes bytes_result = {};
-        
-        int len;   
         
         //setting IV for the resulting obj:
         for(int i = 0; i < SDMS::CipherEngine::IV_LENGTH; i++)
@@ -111,6 +108,7 @@ namespace SDMS{
         if(1 != EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv))
             handleErrors();
 
+        int len;   
         /*
          * Provide the message to be encrypted, and obtain
          * the encrypted output.
@@ -132,7 +130,7 @@ namespace SDMS{
         /* Clean up */
         EVP_CIPHER_CTX_free(ctx);
 
-
+        CipherString encoded_string_result = {};
         //Assigning values to encoded_string_result
         encoded_string_result.encrypted_msg = encode64(bytes_result.encrypted_msg, bytes_result.encrypted_msg_len, log_context);
         encoded_string_result.iv = encode64(bytes_result.iv, SDMS::CipherEngine::IV_LENGTH, log_context); 
@@ -152,23 +150,13 @@ namespace SDMS{
         unsigned char iv[SDMS::CipherEngine::IV_LENGTH] = {};
         generateIV(iv);
         
-        CipherString result;
-
-        result = encryptAlgorithm(iv, msg, log_context);
-        
-        return result;
+        return encryptAlgorithm(iv, msg, log_context);
     }
 
     std::string CipherEngine::decrypt(const CipherString& encoded_encrypted_string, LogContext log_context)
     {
     
     EVP_CIPHER_CTX *ctx = nullptr;
-
-    const int ciphertext_len = encoded_encrypted_string.encrypted_msg_len;
-
-    int len;
-    unsigned char plaintext[encoded_encrypted_string.encrypted_msg_len + EVP_MAX_BLOCK_LENGTH] = {};
-    int plaintext_len;
 
     //converts the cipherstring back to a unsigned char
     std::unique_ptr<unsigned char[]> ciphertext = decode64(encoded_encrypted_string.encrypted_msg.get(), static_cast<int>(strlen(encoded_encrypted_string.encrypted_msg.get())), log_context);
@@ -191,6 +179,10 @@ namespace SDMS{
         handleErrors();
     }
     
+    int plaintext_len;
+    unsigned char plaintext[encoded_encrypted_string.encrypted_msg_len + EVP_MAX_BLOCK_LENGTH] = {};
+    const int ciphertext_len = encoded_encrypted_string.encrypted_msg_len;
+    int len;
     /*
      * Provide the message to be decrypted, and obtain the plaintext output.
      * EVP_DecryptUpdate can be called multiple times if necessary.
@@ -217,8 +209,7 @@ namespace SDMS{
     EVP_CIPHER_CTX_free(ctx);
 
     //Convert the plaintext back to string
-    std::string result(reinterpret_cast<char const*>(plaintext), plaintext_len);
        
-    return result;
+    return std::string(reinterpret_cast<char const*>(plaintext), plaintext_len);
     }
 }
