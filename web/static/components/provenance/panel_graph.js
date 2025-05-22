@@ -7,7 +7,7 @@ import {
     defineArrowMarkerDeriv,
     defineArrowMarkerNewVer,
 } from "./assets/arrow-markers.js";
-import { DEFAULTS, GraphState } from "./state.js";
+import { DEFAULTS, GraphState, ThemeObserver } from "./state.js";
 import {
     createCustomizationModal,
     showCustomizationModal as showModal,
@@ -22,24 +22,29 @@ import {
     isLeafNode,
 } from "./utils.js";
 
-// Dynamically load the graph styles CSS
-(function loadGraphStyles() {
+// Dynamically load the styles CSS
+(function loadStyles() {
     if (!document.getElementById("graph-styles-css")) {
         const link = document.createElement("link");
         link.id = "graph-styles-css";
         link.rel = "stylesheet";
         link.type = "text/css";
-        link.href = "./graph_styles.css";
+        link.href = "./styles/graph_styles.css";
         document.head.appendChild(link);
     }
-    // Add custom styles for the customization modal and anchored nodes
+    // Add custom styles for the customization modal
     if (!document.getElementById("customization-modal-css")) {
         const link = document.createElement("link");
         link.id = "customization-modal-css";
         link.rel = "stylesheet";
         link.type = "text/css";
-        link.href = "./customization_modal.css";
+        link.href = "./styles/customization_modal.css";
         document.head.appendChild(link);
+    }
+    
+    // Apply initial theme class from settings if available
+    if (window.settings && window.settings.theme) {
+        document.body.classList.add('theme-' + window.settings.theme);
     }
 })();
 
@@ -69,6 +74,26 @@ function GraphPanel(a_id, a_frame, a_parent) {
 
     // State management using observer pattern
     let graphStateManager = new GraphState();
+    
+    // Register theme observer to manage theme changes
+    const themeObserver = new ThemeObserver();
+    graphStateManager.addObserver(themeObserver);
+    
+    // Set initial theme from settings if available
+    if (window.settings && window.settings.theme) {
+        graphStateManager.setTheme(window.settings.theme);
+        
+        // Hook into the global theme setting to keep in sync
+        if (typeof window.settings.setTheme === 'function') {
+            const originalSetTheme = window.settings.setTheme;
+            window.settings.setTheme = function(theme) {
+                // Call original function
+                originalSetTheme(theme);
+                // Update our graph state
+                graphStateManager.setTheme(theme);
+            };
+        }
+    }
 
     this.load = function (a_id, a_sel_node_id) {
         focus_node_id = a_id;
@@ -176,14 +201,58 @@ function GraphPanel(a_id, a_frame, a_parent) {
         const modal = document.getElementById("customization-modal");
         if (!modal) return;
 
-        // Store temporary changes that will be applied on "Apply" button click
+        // Store original and temporary changes
+        let originalValues = {};
         let tempChanges = {};
+        
+        // Function to save original values when the modal opens
+        window.saveOriginalValues = function(node) {
+            if (!node) return;
+            
+            // Save all original values that can be modified
+            originalValues = {
+                nodeColor: node.nodeColor,
+                labelSize: node.labelSize,
+                labelColor: node.labelColor,
+                anchored: node.anchored,
+                fx: node.fx,
+                fy: node.fy
+            };
+        };
+        
+        // Function to restore original values when cancelling
+        function restoreOriginalValues() {
+            if (!currentCustomizationNode) return;
+            
+            // Restore all original values
+            if (originalValues.nodeColor !== undefined) {
+                currentCustomizationNode.nodeColor = originalValues.nodeColor;
+            } else {
+                delete currentCustomizationNode.nodeColor;
+            }
+            
+            if (originalValues.labelSize !== undefined) {
+                currentCustomizationNode.labelSize = originalValues.labelSize;
+            } else {
+                delete currentCustomizationNode.labelSize;
+            }
+            
+            if (originalValues.labelColor !== undefined) {
+                currentCustomizationNode.labelColor = originalValues.labelColor;
+            } else {
+                delete currentCustomizationNode.labelColor;
+            }
+            
+            // Render to show original values
+            renderGraph();
+        }
 
         // Node color input
         const nodeColorInput = document.getElementById("node-color-input");
         nodeColorInput.addEventListener("input", function () {
             if (currentCustomizationNode) {
-                // Apply color change immediately for preview
+                // Store in temp changes and apply for preview only
+                tempChanges.nodeColor = this.value;
                 currentCustomizationNode.nodeColor = this.value;
                 renderGraph();
             }
@@ -194,9 +263,10 @@ function GraphPanel(a_id, a_frame, a_parent) {
         const labelSizeValue = labelSizeSlider.nextElementSibling;
 
         labelSizeSlider.addEventListener("input", function () {
-            labelSizeValue.textContent = this.value;
+            labelSizeValue.textContent = `${this.value}px`;
             if (currentCustomizationNode) {
-                // Apply size change immediately for preview
+                // Store in temp changes and apply for preview only
+                tempChanges.labelSize = parseInt(this.value);
                 currentCustomizationNode.labelSize = parseInt(this.value);
                 renderGraph();
             }
@@ -206,7 +276,8 @@ function GraphPanel(a_id, a_frame, a_parent) {
         const labelColorInput = document.getElementById("label-color-input");
         labelColorInput.addEventListener("input", function () {
             if (currentCustomizationNode) {
-                // Apply color change immediately for preview
+                // Store in temp changes and apply for preview only
+                tempChanges.labelColor = this.value;
                 currentCustomizationNode.labelColor = this.value;
                 renderGraph();
             }
@@ -232,26 +303,48 @@ function GraphPanel(a_id, a_frame, a_parent) {
         // Close button - discard changes
         const closeButton = document.getElementById("close-customization");
         closeButton.addEventListener("click", function () {
-            // Revert any anchor preview changes
-            if (tempChanges.hasOwnProperty('anchorChecked') && 
-                currentCustomizationNode.anchored !== tempChanges.anchorChecked) {
-                // Reset to original state
-                const previewClass = document.querySelector(".anchor-preview");
-                if (previewClass) {
-                    previewClass.style.display = "none";
-                }
+            // Revert any preview changes back to original values
+            restoreOriginalValues();
+            
+            // Hide anchor preview if showing
+            const previewClass = document.querySelector(".anchor-preview");
+            if (previewClass) {
+                previewClass.style.display = "none";
             }
             
             // Clear temporary changes
             tempChanges = {};
             modal.style.display = "none";
+            currentCustomizationNode = null;
         });
 
         // Apply button - commit all changes
         const applyButton = document.getElementById("apply-customization");
         applyButton.addEventListener("click", function () {
+            if (!currentCustomizationNode) {
+                modal.style.display = "none";
+                return;
+            }
+            
+            // Apply all changes permanently
+            
+            // Node color change
+            if (tempChanges.hasOwnProperty('nodeColor')) {
+                currentCustomizationNode.nodeColor = tempChanges.nodeColor;
+            }
+            
+            // Label size change
+            if (tempChanges.hasOwnProperty('labelSize')) {
+                currentCustomizationNode.labelSize = tempChanges.labelSize;
+            }
+            
+            // Label color change
+            if (tempChanges.hasOwnProperty('labelColor')) {
+                currentCustomizationNode.labelColor = tempChanges.labelColor;
+            }
+            
             // Apply the anchoring change if it was made
-            if (tempChanges.hasOwnProperty('anchorChecked') && currentCustomizationNode) {
+            if (tempChanges.hasOwnProperty('anchorChecked')) {
                 currentCustomizationNode.anchored = tempChanges.anchorChecked;
                 
                 if (tempChanges.anchorChecked) {
@@ -263,17 +356,20 @@ function GraphPanel(a_id, a_frame, a_parent) {
                     delete currentCustomizationNode.fx;
                     delete currentCustomizationNode.fy;
                 }
-                
-                // Update the visualization
-                renderGraph();
             }
+            
+            // Save changes to persistent state if state manager exists
+            if (graphStateManager) {
+                graphStateManager.saveState(node_data);
+            }
+            
+            // Update the visualization
+            renderGraph();
             
             // Clear temporary changes
             tempChanges = {};
             modal.style.display = "none";
-            
-            // Save state automatically when applying changes
-            inst.saveGraphState();
+            currentCustomizationNode = null;
         });
 
         // Close modal when clicking outside
@@ -297,8 +393,6 @@ function GraphPanel(a_id, a_frame, a_parent) {
             model.update([a_data]);
         }
     };
-
-    // TODO Why are IDs separate from data?
 
     this.update = function (a_ids, a_data) {
         // Only updates locked and alias of impacted nodes
@@ -342,17 +436,6 @@ function GraphPanel(a_id, a_frame, a_parent) {
         if (sel_node) return sel_node.id;
     };
 
-    // Save the current graph state
-    this.saveGraphState = function () {
-        if (graphStateManager.saveState(node_data)) {
-            alert("Graph state saved successfully");
-            return true;
-        } else {
-            alert("Failed to save graph state");
-            return false;
-        }
-    };
-
     this.getSelectedNodes = function () {
         let sel = [];
         if (sel_node) {
@@ -389,7 +472,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
             showHelpButton.addEventListener("click", function () {
                 const tipElement = document.getElementById(helpTipId);
                 if (tipElement) {
-                    tipElement.style.display = "block";
+                    tipElement.classList.add("visible");
                 }
             });
             controlsDiv.appendChild(showHelpButton);
@@ -404,16 +487,10 @@ function GraphPanel(a_id, a_frame, a_parent) {
             const closeButton = document.createElement("span");
             closeButton.innerHTML = "&times;"; // X button
             closeButton.className = "graph-tooltip-close";
-            closeButton.style.position = "absolute";
-            closeButton.style.top = "5px";
-            closeButton.style.right = "10px";
-            closeButton.style.cursor = "pointer";
-            closeButton.style.pointerEvents = "all";
-            closeButton.style.fontSize = "20px";
             closeButton.addEventListener("click", function () {
                 const tipElement = document.getElementById(helpTipId);
                 if (tipElement) {
-                    tipElement.style.display = "none";
+                    tipElement.classList.remove("visible");
                 }
             });
             helpTip.appendChild(closeButton);
@@ -427,7 +504,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 "• Right-click for customization options<br>" +
                 "• Double-click to toggle anchor";
             helpTip.appendChild(helpText);
-            helpTip.style.display = "block"; // Initially visible
+            helpTip.classList.add("visible"); // Initially visible
         }
 
         // Add controls and tooltip to the graph container's parent
@@ -471,7 +548,17 @@ function GraphPanel(a_id, a_frame, a_parent) {
         }
     }
 
-    // NOTE: D3 changes link source and target IDs strings (in link_data) to node references (in node_data) when renderGraph runs
+    /**
+     * Renders the graph using D3.js force layout
+     * 
+     * IMPORTANT: D3.js force layout automatically converts link source and target properties.
+     * Before rendering: source and target are string IDs
+     * After rendering: source and target become references to the actual node objects
+     * 
+     * This transformation happens as part of D3's internal processing and is essential
+     * for the force-directed layout to work correctly. However, it means the structure
+     * of link objects changes during the application lifecycle.
+     */
     function renderGraph() {
         let g;
 
@@ -894,16 +981,45 @@ function GraphPanel(a_id, a_frame, a_parent) {
         if (d3.event.sourceEvent) d3.event.sourceEvent.stopPropagation();
     }
 
+    /**
+     * Finds a node by its ID in the node_data array
+     * 
+     * @param {string} a_id - The ID of the node to find
+     * @returns {Object|undefined} - The node object if found, undefined otherwise
+     */
     function findNode(a_id) {
-        for (let i in node_data) {
-            if (node_data[i].id === a_id) return node_data[i];
-        }
+        return node_data.find(node => node.id === a_id);
     }
 
+    /**
+     * Finds a link by its ID in the link_data array
+     * 
+     * IMPORTANT: Link objects have a dynamic structure that changes during the D3 force layout process:
+     * 
+     * When initially created:
+     * {
+     *   id: string,       // Unique identifier for the link (usually "sourceId-targetId")
+     *   source: string,    // ID of the source node
+     *   target: string,    // ID of the target node
+     *   ty: number        // Type of dependency relationship
+     * }
+     * 
+     * After D3 force layout processing:
+     * {
+     *   id: string,       // Unique identifier for the link
+     *   source: Object,    // Reference to the source node object
+     *   target: Object,    // Reference to the target node object
+     *   ty: number        // Type of dependency relationship
+     * }
+     * 
+     * This transformation happens automatically when D3.js processes the links for
+     * force-directed layout, as noted in the comment above renderGraph().
+     * 
+     * @param {string} a_id - The ID of the link to find
+     * @returns {Object|undefined} - The link object if found, undefined otherwise
+     */
     function findLink(a_id) {
-        for (let i in link_data) {
-            if (link_data[i].id === a_id) return link_data[i];
-        }
+        return link_data.find(link => link.id === a_id);
     }
 
     this.expandNode = function () {
@@ -961,6 +1077,16 @@ function GraphPanel(a_id, a_frame, a_parent) {
         }
     };
 
+    /**
+     * Collapses the selected node by removing its connected nodes
+     * while maintaining the overall graph structure
+     * 
+     * The collapse operation works by:
+     * 1. Identifying nodes connected to the selected node
+     * 2. Marking nodes for pruning that aren't needed for the graph structure
+     * 3. Removing those nodes and their links from the visualization
+     * 4. Updating the graph to maintain the core relationships
+     */
     this.collapseNode = function () {
         // Only collapse nodes that are marked as composite and selected
         if (sel_node && sel_node.comp) {
@@ -1017,10 +1143,25 @@ function GraphPanel(a_id, a_frame, a_parent) {
         }
     };
 
+    /**
+     * Hides the selected node by removing it from the visualization
+     * 
+     * The hide operation only works on leaf nodes (nodes with only one connection)
+     * to preserve the overall graph structure. Hide differs from collapse in that:
+     * - Hide: Completely removes a node (only works on leaf nodes)
+     * - Collapse: Simplifies a part of the graph while maintaining relationships
+     */
     this.hideNode = function () {
         if (sel_node && sel_node.id !== focus_node_id && node_data.length > 1) {
-            // Check if this is a leaf node using the utility function
             if (isLeafNode(sel_node)) {
+                // Additional check to verify removing this node won't disconnect the graph
+                // Get the node at the other end of the single connection
+                const connectedNode = sel_node.links[0].source === sel_node
+                    ? sel_node.links[0].target
+                    : sel_node.links[0].source;
+                
+                // Ensure all other nodes can still be reached after removal
+                if (graphCountConnected(connectedNode, [sel_node.id]) === node_data.length - 1) {
                 sel_node.prune = true;
 
                 for (let i in sel_node.links) {
@@ -1034,6 +1175,10 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 sel_node = node_data[0];
                 sel_node_id = sel_node.id;
                 renderGraph();
+                } else { // We should never really reach here since we can't hide a leaf-node
+                    sel_node.prune = false;
+                    util.setStatusText("Cannot hide this node as it would disconnect the graph");
+                }
             } else {
                 sel_node.prune = false;
                 util.setStatusText("Cannot hide non-leaf nodes (try collapsing)");

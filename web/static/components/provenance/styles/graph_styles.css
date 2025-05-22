@@ -1,4 +1,62 @@
 /* Graph visualization styles */
+@import url('./theme-variables.css');
+
+/* Graph controls */
+.graph-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.graph-controls button {
+    background-color: var(--controls-button-bg);
+    border: 1px solid var(--controls-button-border);
+    border-radius: 3px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--controls-button-text);
+}
+
+.graph-controls button:hover {
+    background-color: var(--controls-button-hover-bg);
+}
+
+/* Graph tooltip */
+.graph-tooltip {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: var(--tooltip-bg);
+    color: var(--tooltip-text);
+    border: 1px solid var(--tooltip-border);
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 1000;
+    max-width: 300px;
+    padding: 15px;
+    display: none; /* Hidden by default */
+}
+
+.graph-tooltip.visible {
+    display: block;
+}
+
+.graph-tooltip-close {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    cursor: pointer;
+    pointer-events: all;
+    font-size: 20px;
+    color: var(--tooltip-close);
+}
 
 /* Graph container */
 .graph-container {
@@ -6,7 +64,7 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background-color: #f9f9f9;
+    background-color: var(--graph-bg);
 }
 
 /* Node styles */
@@ -90,8 +148,8 @@
 /* Node tooltip */
 .node-tooltip {
     position: absolute;
-    background: white;
-    border: 1px solid #ccc;
+    background: var(--node-tooltip-bg);
+    border: 1px solid var(--node-tooltip-border);
     border-radius: 4px;
     padding: 10px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
@@ -99,12 +157,13 @@
     z-index: 1000;
     max-width: 300px;
     font-size: 12px;
+    color: var(--node-tooltip-text);
 }
 
 .node-tooltip h4 {
     margin: 0 0 5px 0;
     font-size: 14px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--node-tooltip-heading-border);
     padding-bottom: 3px;
 }
 
@@ -115,18 +174,19 @@
 .node-tooltip .metadata {
     margin-top: 5px;
     font-style: italic;
-    color: #666;
+    color: var(--node-tooltip-meta);
 }
 
 /* Graph context menu */
 .node-context-menu {
     position: absolute;
-    background: white;
-    border: 1px solid #ccc;
+    background: var(--context-menu-bg);
+    border: 1px solid var(--context-menu-border);
     border-radius: 4px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
     padding: 5px 0;
     z-index: 1000;
+    color: var(--context-menu-text);
 }
 
 .node-context-menu ul {
@@ -141,12 +201,12 @@
 }
 
 .node-context-menu li:hover {
-    background: #f5f5f5;
+    background: var(--context-menu-item-hover);
 }
 
 .node-context-menu li.separator {
     height: 1px;
-    background: #e5e5e5;
+    background: var(--context-menu-separator);
     padding: 0;
     margin: 5px 0;
 }

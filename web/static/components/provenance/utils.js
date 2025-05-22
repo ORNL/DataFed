@@ -102,11 +102,16 @@ function makeLabel(node, item) {
 }
 
 /**
- * Counts the number of connected nodes in the graph
- * @param {Node} a_node - The starting node
- * @param {Array<string>} a_visited - Array of already visited node IDs
+ * Counts the number of connected nodes in the graph that can be reached from a starting node
+ * 
+ * Critical for the "hide" operation to ensure removing a node won't disconnect the graph.
+ * Used to verify that all nodes (except the one being hidden) remain connected
+ * after removing a particular node.
+ * 
+ * @param {Node} a_node - The starting node to begin the traversal from
+ * @param {Array<string>} a_visited - Array of already visited node IDs (to exclude from count)
  * @param {NodeLink} [a_from] - The link that led to this node (to avoid backtracking)
- * @returns {number} - Count of connected nodes
+ * @returns {number} - Count of connected nodes reachable from the starting node
  */
 function graphCountConnected(a_node, a_visited, a_from) {
     let count = 0;
@@ -132,6 +137,9 @@ function graphCountConnected(a_node, a_visited, a_from) {
 
 /**
  * Calculates which nodes should be pruned using depth-first search
+ * This function is used as part of the "collapse" functionality in the graph,
+ * which removes less important nodes while maintaining key relationships.
+ * 
  * @param {Node} a_node - The node to evaluate for pruning
  * @param {Array<string>} a_visited - Array of already visited node IDs
  * @param {Node} a_source - The source node that led to this node
@@ -174,75 +182,97 @@ function graphPruneCalc(a_node, a_visited, a_source) {
 }
 
 /**
- * Removes links and nodes that are marked for pruning
+ * Detaches a link from a given node.
+ * This involves marking the node as not a composition ('comp = false')
+ * and removing the link from the node's 'links' array.
+ *
+ * @param {object} node - The node object (e.g., link.source or link.target)
+ * from which the link will be detached. Expected to have 'prune', 'comp',
+ * and 'links' properties.
+ * @param {object} linkToDetach - The link object to detach from the node.
+ * @param {string} nodeName - A string identifier for the node (e.g., "source" or "target")
+ * used for logging purposes.
+ */
+function detachLinkFromNode(node, linkToDetach, nodeName) {
+    // Check if the node exists and is not marked for pruning
+    if (node && !node.prune) {
+        node.comp = false; // Mark node as not a composition (part of detachment logic)
+
+        // Find the index of the link in the node's links array
+        const linkIndex = node.links.indexOf(linkToDetach);
+
+        if (linkIndex !== -1) {
+            // If found, remove the link from the array
+            node.links.splice(linkIndex, 1);
+        } else {
+            // If not found, log an error message
+            console.log(`BAD INDEX IN ${nodeName.toUpperCase()} LINKS! Link not found when trying to detach.`);
+        }
+    }
+}
+
+/**
+ * Removes links and nodes that are marked for pruning using a more functional approach
+ * 
+ * This function is used for both the "collapse" and "hide" functionality:
+ * - Collapse: Removes less important nodes while maintaining the overall graph structure
+ * - Hide: Removes leaf nodes that the user wants to hide from the visualization
+ * 
  * @param {Array<NodeLink>} link_data - Array of link objects
- * @param {Array<Node>} node_data - Array of node objects
+ * @param {Array<Node>} node_data - Array of node objects 
+ * @returns {void} - Modifies the arrays in place
  */
 function graphPrune(link_data, node_data) {
-    let i, j, item;
-
-    // Prune links
-    // Iterate backwards to safely remove items from the array
-    for (i = link_data.length - 1; i >= 0; i--) {
-        item = link_data[i];
-        if (item.prune) {
-            //console.log("pruning link:",item);
-            // If the source node of the link exists and is not marked for pruning,
-            // update its 'comp' status and remove this link from its 'links' array.
-            if (item.source && !item.source.prune) {
-                item.source.comp = false; // Mark source node as not a composition
-                j = item.source.links.indexOf(item);
-                if (j !== -1) {
-                    item.source.links.splice(j, 1);
-                } else {
-                    console.log("BAD INDEX IN SOURCE LINKS!");
-                }
-            }
-            // If the target node of the link exists and is not marked for pruning,
-            // update its 'comp' status and remove this link from its 'links' array.
-            if (item.target && !item.target.prune) {
-                item.target.comp = false; // Mark target node as not a composition
-                j = item.target.links.indexOf(item);
-                if (j !== -1) {
-                    item.target.links.splice(j, 1);
-                } else {
-                    console.log("BAD INDEX IN TARGET LINKS!");
-                }
-            }
-            // Remove the link from the global link_data array.
-            link_data.splice(i, 1);
-        }
-    }
-
-    // Prune nodes
-    // Iterate backwards to safely remove items from the array
-    for (i = node_data.length - 1; i >= 0; i--) {
-        item = node_data[i];
-        if (item.prune) {
-            //console.log("pruning node:",item);
-            // Remove the node from the global node_data array.
-            node_data.splice(i, 1);
-        }
-    }
+    // First, process any link cleanup for nodes that will remain
+    // This needs to be done before filtering to maintain references
+    const prunedLinks = link_data.filter(item => item.prune);
+    
+    // For each pruned link, update the references in its connected nodes
+    // (but only for nodes that aren't being pruned themselves)
+    prunedLinks.forEach(link => {
+        // Handle source node if it exists and won't be pruned
+        detachLinkFromNode(link.source, link, "source");
+        // Handle target node if it exists and won't be pruned
+        detachLinkFromNode(link.target, link, "target");
+    });
+    
+    // Filter out pruned links + nodes from the main array
+    const filteredLinks = link_data.filter(item => !item.prune);
+    const filteredNodes = node_data.filter(item => !item.prune);
+    // Clear the array
+    node_data.length = 0;
+    link_data.length = 0;
+    // Refill with filtered items
+    link_data.push(...filteredLinks);
+    node_data.push(...filteredNodes);
 }
 
 /**
  * Resets all prune flags in the graph
+ * Used during graph manipulation to clear previous pruning states
+ * before calculating new ones during collapse and hide operations
+ * 
  * @param {Array<NodeLink>} link_data - Array of link objects
  * @param {Array<Node>} node_data - Array of node objects
  */
 function graphPruneReset(link_data, node_data) {
-    let i;
-    for (i in node_data) {
-        node_data[i].prune = false;
-    }
-    for (i in link_data) {
-        link_data[i].prune = false;
-    }
+    node_data.forEach(node => {
+        node.prune = false;
+    });
+    link_data.forEach(link => {
+        link.prune = false;
+    });
 }
 
 /**
  * Checks if a node is a leaf node (has only one connection)
+ * Used as an initial quick check for the hide functionality - only leaf nodes can be hidden
+ * to preserve the graph's connectivity and structure
+ * 
+ * Note: This is a necessary but not sufficient condition for safe removal.
+ * After confirming a node is a leaf, we still need to use graphCountConnected
+ * to verify that removing it won't disconnect the graph.
+ * 
  * @param {Node} node - The node to check
  * @returns {boolean} - True if this is a leaf node, false otherwise
  */

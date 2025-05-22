@@ -1,11 +1,16 @@
 import { DEFAULTS } from "./state.js";
 
-function showCustomizationModal(node, x, y, currentCustomizationNode, renderGraph) {
+function showCustomizationModal(node, x, y, currentCustomizationNode) {
     const modal = document.getElementById("customization-modal");
     if (!modal) return;
 
     // Set the current node being customized
     currentCustomizationNode = node;
+    
+    // Save original values for reverting if cancelled
+    if (window.saveOriginalValues) {
+        window.saveOriginalValues(node);
+    }
 
     const nodeColorInput = document.getElementById("node-color-input");
     // Helper function to convert RGB to hex format
@@ -59,29 +64,39 @@ function showCustomizationModal(node, x, y, currentCustomizationNode, renderGrap
     return currentCustomizationNode;
 }
 
-// Function to make the customization modal draggable
+/**
+ * Makes a modal element draggable by its header
+ * Optimized to only attach document listeners during drag operations
+ * @param {HTMLElement} modal - The modal element to make draggable
+ */
 function makeModalDraggable(modal) {
-    let offsetX,
-        offsetY,
-        isDragging = false;
+    let offsetX, offsetY;
     const header = modal.querySelector(".modal-header") || modal;
-
-    header.addEventListener("mousedown", function (e) {
-        isDragging = true;
+    
+    // Handle mouse movement during drag
+    function handleMouseMove(e) {
+        modal.style.left = `${e.clientX - offsetX}px`;
+        modal.style.top = `${e.clientY - offsetY}px`;
+    }
+    
+    // Handle end of drag operation
+    function handleMouseUp() {
+        // Remove event listeners when dragging ends to improve performance
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+    }
+    
+    // Start dragging when mousedown on header
+    header.addEventListener("mousedown", function(e) {
+        // Calculate initial offset
         offsetX = e.clientX - modal.offsetLeft;
         offsetY = e.clientY - modal.offsetTop;
+        
+        // Add event listeners for dragging only when needed
+        document.addEventListener("mousemove", handleMouseMove);
+        document.addEventListener("mouseup", handleMouseUp);
+        
         e.preventDefault();
-    });
-
-    document.addEventListener("mousemove", function (e) {
-        if (isDragging) {
-            modal.style.left = `${e.clientX - offsetX}px`;
-            modal.style.top = `${e.clientY - offsetY}px`;
-        }
-    });
-
-    document.addEventListener("mouseup", function () {
-        isDragging = false;
     });
 }
 
@@ -100,18 +115,10 @@ function createCustomizationModal() {
     // Add a draggable header
     const modalHeader = document.createElement("div");
     modalHeader.className = "modal-header";
-    modalHeader.style.cursor = "move";
-    modalHeader.style.padding = "5px";
-    modalHeader.style.marginBottom = "10px";
-    modalHeader.style.backgroundColor = "#f5f5f5";
-    modalHeader.style.borderBottom = "1px solid #ddd";
-    modalHeader.style.borderRadius = "8px 8px 0 0";
 
     // Title in the draggable header
     const title = document.createElement("h3");
     title.textContent = "Customize Node & Label";
-    title.style.margin = "0";
-    title.style.padding = "5px";
     modalHeader.appendChild(title);
     modal.appendChild(modalHeader);
 
@@ -184,19 +191,22 @@ function createCustomizationModal() {
     // Anchor controls
     const anchorSection = document.createElement("div");
     anchorSection.className = "section";
-
+    
+    const anchorRow = document.createElement("div");
+    anchorRow.className = "control-row checkbox-row";
+    
     const anchorCheckbox = document.createElement("input");
     anchorCheckbox.type = "checkbox";
     anchorCheckbox.id = "anchor-checkbox";
-
+    
     const anchorLabel = document.createElement("label");
     anchorLabel.htmlFor = "anchor-checkbox";
     anchorLabel.textContent = "Anchor Node";
-    anchorLabel.style.display = "inline";
-    anchorLabel.style.marginLeft = "5px";
-
-    anchorSection.appendChild(anchorCheckbox);
-    anchorSection.appendChild(anchorLabel);
+    anchorLabel.classList.add("inline-label");
+    
+    anchorRow.appendChild(anchorCheckbox);
+    anchorRow.appendChild(anchorLabel);
+    anchorSection.appendChild(anchorRow);
 
     modal.appendChild(anchorSection);
 
