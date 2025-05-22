@@ -60,14 +60,25 @@ Proxy::Proxy(
 
   CommunicatorFactory communication_factory(m_log_context);
 
-  m_communicators[SocketRole::CLIENT] = communication_factory.create(
-      socket_options.at(SocketRole::CLIENT),
-      *socket_credentials.at(SocketRole::CLIENT),
-      m_timeout_on_receive_milliseconds, m_timeout_on_poll_milliseconds);
-
+  // WARNING: Do not reorder the communication creation order, the server and a call to bind
+  // when using INPROC must occur before a client connect call can be
+  // made.
+  //
+  // https://zguide.zeromq.org/docs/chapter2/
+  //
+  // > The inter-thread transport, inproc, is a connected signaling transport.
+  // > It is much faster than tcp or ipc. This transport has a specific
+  // > limitation compared to tcp and ipc: the server must issue a bind before
+  // > any client issues a connect. This was fixed in ZeroMQ v4.0 and later
+  // > versions.
   m_communicators[SocketRole::SERVER] = communication_factory.create(
       socket_options.at(SocketRole::SERVER),
       *socket_credentials.at(SocketRole::SERVER),
+      m_timeout_on_receive_milliseconds, m_timeout_on_poll_milliseconds);
+
+  m_communicators[SocketRole::CLIENT] = communication_factory.create(
+      socket_options.at(SocketRole::CLIENT),
+      *socket_credentials.at(SocketRole::CLIENT),
       m_timeout_on_receive_milliseconds, m_timeout_on_poll_milliseconds);
 
   m_addresses[SocketRole::CLIENT] =

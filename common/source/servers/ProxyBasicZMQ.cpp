@@ -140,45 +140,38 @@ void ProxyBasicZMQ::run() {
   void *ctx = getContext();
 
   /**
-   * Control socket receives terminate command from main over inproc
+   * WARNING: Best practice is to bind sockets before creating connections
+   * Specifically for INPROC channels.
    *
-   * In the case that we need to exit early or run the proxy for a fixed
-   * amount of time.
+   * https://zguide.zeromq.org/docs/chapter2/
    *
-   * WARNING the order matters the SUB only works for sockets bind and or
-   * connects made to it after it has been created and connected
+   * > The inter-thread transport, inproc, is a connected signaling transport.
+   * > It is much faster than tcp or ipc. This transport has a specific
+   * > limitation compared to tcp and ipc: the server must issue a bind before
+   * > any client issues a connect. This was fixed in ZeroMQ v4.0 and later
+   * > versions.
    **/
-  void *control_socket = nullptr;
-  if (m_run_infinite_loop == false) {
-    control_socket = zmq_socket(ctx, ZMQ_SUB);
-    if (not control_socket) {
-      EXCEPT(1, "Problem creating control socket");
-    }
-    int rc = zmq_setsockopt(control_socket, ZMQ_SUBSCRIBE, "", 0);
-    if (rc) {
-      EXCEPT(1, "Problem subscribing control socket");
-    }
-    rc = zmq_connect(control_socket, m_addresses[SocketRole::CONTROL].c_str());
-    if (rc) {
-      EXCEPT(1, "Problem connecting control socket");
-    }
-    int linger = 100;
-    zmq_setsockopt(control_socket, ZMQ_LINGER, &linger, sizeof(linger));
+  void *router_frontend_socket = zmq_socket(ctx, ZMQ_ROUTER);
+  if (not router_frontend_socket) {
+    EXCEPT(1, "Problem creating frontend ROUTER socket");
   }
-
-  void *capture_socket = nullptr;
-  if (m_debug_output) {
-    capture_socket = zmq_socket(ctx, ZMQ_PUB);
-    if (not capture_socket) {
-      EXCEPT(1, "Problem creating capture socket");
-    }
-    int rc =
-        zmq_connect(capture_socket, m_addresses[SocketRole::MONITOR].c_str());
-    if (rc) {
-      EXCEPT(1, "Problem connecting capture socket");
-    }
-    int linger = 100;
-    zmq_setsockopt(capture_socket, ZMQ_LINGER, &linger, sizeof(linger));
+  int router_linger = 100;
+  zmq_setsockopt(router_frontend_socket, ZMQ_LINGER, &router_linger,
+                 sizeof(int));
+  /**
+   * NOTE
+   *
+   * The socket on the proxy that will connect with the frontend is a
+   * server socket. The proxy serves the frontend.
+   **/
+  DL_DEBUG(m_log_context,
+           "Binding ROUTER to address: " << m_server_socket->getAddress());
+  int rc =
+      zmq_bind(router_frontend_socket, m_server_socket->getAddress().c_str());
+  if (rc) {
+    EXCEPT_PARAM(1, "Problem binding frontend ROUTER socket, address: "
+                        << m_server_socket->getAddress()
+                        << " zmq_error: " << zmq_strerror(zmq_errno()));
   }
 
   /**
@@ -205,6 +198,14 @@ void ProxyBasicZMQ::run() {
       EXCEPT(1, "Problem closing control socket from PUBLISHING thread");
     }
   };
+
+  std::thread control_thread;
+  if (m_run_infinite_loop == false) {
+    control_thread = std::thread(terminate_call, m_run_duration,
+                                 m_addresses[SocketRole::CONTROL],
+                                 m_thread_count, m_log_context);
+    ++m_thread_count;
+  }
 
   /**
    * Thread is for debugging purposes mostly, for logging the messages
@@ -256,19 +257,12 @@ void ProxyBasicZMQ::run() {
         }
       }
     }
+
     int rc_local = zmq_close(capture_local);
     if (rc_local) {
       EXCEPT(1, "Problem closing capture socket from SUBSCRIBING thread");
     }
   };
-
-  std::thread control_thread;
-  if (m_run_infinite_loop == false) {
-    control_thread = std::thread(terminate_call, m_run_duration,
-                                 m_addresses[SocketRole::CONTROL],
-                                 m_thread_count, m_log_context);
-    ++m_thread_count;
-  }
 
   std::thread capture_thread;
   if (m_debug_output) {
@@ -278,32 +272,9 @@ void ProxyBasicZMQ::run() {
     ++m_thread_count;
   }
 
-  void *router_frontend_socket = zmq_socket(ctx, ZMQ_ROUTER);
-  if (not router_frontend_socket) {
-    EXCEPT(1, "Problem creating frontend ROUTER socket");
-  }
-  int router_linger = 100;
-  zmq_setsockopt(router_frontend_socket, ZMQ_LINGER, &router_linger,
-                 sizeof(int));
-  /**
-   * NOTE
-   *
-   * The socket on the proxy that will connect with the frontend is a
-   * server socket. The proxy serves the frontend.
-   **/
-  DL_DEBUG(m_log_context,
-           "Binding ROUTER to address: " << m_server_socket->getAddress());
-  int rc =
-      zmq_bind(router_frontend_socket, m_server_socket->getAddress().c_str());
-  if (rc) {
-    EXCEPT_PARAM(1, "Problem binding frontend ROUTER socket, address: "
-                        << m_server_socket->getAddress()
-                        << " zmq_error: " << zmq_strerror(zmq_errno()));
-  }
-
   // Backend socket talks to workers over inproc
   void *dealer_backend_socket = zmq_socket(ctx, ZMQ_DEALER);
-  if (not router_frontend_socket) {
+  if (not dealer_backend_socket) {
     EXCEPT(1, "Problem creating backend DEALER socket");
   }
   int dealer_linger = 100;
@@ -321,6 +292,48 @@ void ProxyBasicZMQ::run() {
   if (rc) {
     EXCEPT_PARAM(1, "Problem binding backend DEALER socket, address: "
                         << m_client_socket->getAddress());
+  }
+
+  /**
+   * Control socket receives terminate command from main over inproc
+   *
+   * In the case that we need to exit early or run the proxy for a fixed
+   * amount of time.
+   *
+   * WARNING the order matters the SUB only works for sockets bind and or
+   * connects made to it after it has been created and connected
+   **/
+  void *control_socket = nullptr;
+  if (m_run_infinite_loop == false) {
+    control_socket = zmq_socket(ctx, ZMQ_SUB);
+    if (not control_socket) {
+      EXCEPT(1, "Problem creating control socket");
+    }
+    int rc = zmq_setsockopt(control_socket, ZMQ_SUBSCRIBE, "", 0);
+    if (rc) {
+      EXCEPT(1, "Problem subscribing control socket");
+    }
+    rc = zmq_connect(control_socket, m_addresses[SocketRole::CONTROL].c_str());
+    if (rc) {
+      EXCEPT(1, "Problem connecting control socket");
+    }
+    int linger = 100;
+    zmq_setsockopt(control_socket, ZMQ_LINGER, &linger, sizeof(linger));
+  }
+
+  void *capture_socket = nullptr;
+  if (m_debug_output) {
+    capture_socket = zmq_socket(ctx, ZMQ_PUB);
+    if (not capture_socket) {
+      EXCEPT(1, "Problem creating capture socket");
+    }
+    int rc =
+        zmq_connect(capture_socket, m_addresses[SocketRole::MONITOR].c_str());
+    if (rc) {
+      EXCEPT(1, "Problem connecting capture socket");
+    }
+    int linger = 100;
+    zmq_setsockopt(capture_socket, ZMQ_LINGER, &linger, sizeof(linger));
   }
 
   // Connect backend to frontend via a proxy
