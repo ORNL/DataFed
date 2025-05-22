@@ -89,4 +89,4 @@ RUN apt-get install -y valgrind
 
 # NOTE docker does not recognize curly braces around variables in entrypoint
 # and CMD
-ENTRYPOINT [ "/datafed/source/core/docker/entrypoint.sh", "valgrind", "--track-origins=yes", "--leak-check=full", "--show-leak-kinds=all", "-s", "/opt/datafed/core/datafed-core","--cfg", "/opt/datafed/core/datafed-core.cfg"]
+ENTRYPOINT [ "/datafed/source/core/docker/entrypoint.sh", "/opt/datafed/core/datafed-core","--cfg", "/opt/datafed/core/datafed-core.cfg"]

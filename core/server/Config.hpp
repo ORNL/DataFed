@@ -62,6 +62,7 @@ public:
   std::string glob_xfr_url;
   std::string client_id;
   std::string client_secret;
+  std::string cipher_key_path;
   uint32_t port;
   uint32_t timeout;
   uint32_t num_client_worker_threads;

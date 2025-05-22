@@ -34,9 +34,6 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryption)
     //Sets struct CipherString: which contains cipherText, cipherIV, cipherPaddedLen
     string msg = "1234567890yoDa56Bx5yobvJYEjdGr2YpGYJybE7x4Bq42pQ3zuXCb8YQyn0EqEB7vjPx3GlNlKwkEsMn1234567890";
 
-    //string msg = "Hello World";
-    //CipherEngine::generateIV(iv);
-
     //Here if parties would like to use their own IV GENERATOR
     //CipherEngine::CipherString returnObj = testCipher.encrypt(iv, msg);
     
@@ -45,12 +42,6 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryption)
     std::cout << "Encrypted Message:\n" << returnObj2.encrypted_msg.get() << std::endl;
     std::cout << "IV:\n" << returnObj2.iv.get() << std::endl;    
     std::cout << "Encrypted Message Len:\n" << returnObj2.encrypted_msg_len << std::endl;
-
-
-    //WRITE CODE TO MOCK PUTTING IT IN A DB
-
-
-
 
     CipherEngine decryptCipher(key);
 
@@ -61,13 +52,44 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryption)
     BOOST_CHECK(msg.compare(unencrypted_msg) == 0);
 }
 
+BOOST_AUTO_TEST_CASE(test_EncryptionDecryption_KeyGen)
+{
+
+    LogContext log_context;
+    unsigned char key[32];
+    CipherEngine::generateEncryptionKey(key);
+    
+    //Construct
+    CipherEngine encryptCipher(key);
+
+    //Sets struct CipherString: which contains cipherText, cipherIV, cipherPaddedLen
+    string msg = "1234567890yoDa56Bx5yobvJYEjdGr2YpGYJybE7x4Bq42pQ3zuXCb8YQyn0EqEB7vjPx3GlNlKwkEsMn1234567890";
+
+
+    //Here if parties would like to use their own IV GENERATOR
+    //CipherEngine::CipherString returnObj = testCipher.encrypt(iv, msg); 
+    
+    //Start of Encryption
+    CipherEngine::CipherString returnObj2 = encryptCipher.encrypt(msg,log_context);
+ 
+    std::cout << "Encrypted Message:\n" << returnObj2.encrypted_msg.get() << std::endl;
+    std::cout << "IV:\n" << returnObj2.iv.get() << std::endl;    
+    std::cout << "Encrypted Message Len:\n" << returnObj2.encrypted_msg_len << std::endl;
+
+    CipherEngine decryptCipher(key);
+
+    //START OF DECRYPTION
+    std::string unencrypted_msg;
+    unencrypted_msg = decryptCipher.decrypt(returnObj2, log_context); 
+    std::cout << "Unencrypted Message:" << unencrypted_msg << std::endl;
+    BOOST_CHECK(msg.compare(unencrypted_msg) == 0);
+}
 
 BOOST_AUTO_TEST_CASE(test_EncryptionDecryptionJSONValue)
 {
 
     LogContext log_context;
     unsigned char key[32];
-    //CipherEngine::generateEncryptionKey(key);
     readFile("../../build/core/server/datafed-token-key.txt", 32, key);
     
     //Construct
@@ -76,12 +98,7 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryptionJSONValue)
     //Sets struct CipherString: which contains cipherText, cipherIV, cipherPaddedLen
     string msg = "1234567890yoDa56Bx5yobvJYEjdGr2YpGYJybE7x4Bq42pQ3zuXCb8YQyn0EqEB7vjPx3GlNlKwkEsMn1234567890";
 
-    //string msg = "Hello World";
-    //CipherEngine::generateIV(iv);
-
-    //Here if parties would like to use their own IV GENERATOR
-    //CipherEngine::CipherString returnObj = testCipher.encrypt(iv, msg);
-    
+    //Start of Encryption
     CipherEngine::CipherString returnObj2 = testCipher.encrypt(msg, log_context);
  
     std::cout << "Encrypted Message:\n" << returnObj2.encrypted_msg.get() << std::endl;
@@ -93,9 +110,8 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryptionJSONValue)
 
     value.fromString(json_document);
     libjson::Value::Object &obj = value.asObject();
-    //START OF ENCRYPTION
-    //
-    //
+
+    //Start of Decryption
     CipherEngine testCipher2(key);
     CipherEngine::CipherString encoded_access_obj;
     encoded_access_obj.encrypted_msg_len = obj.getNumber("access_len");

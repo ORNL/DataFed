@@ -349,10 +349,10 @@ void DatabaseAPI::userGetAccessToken(
   dbGet("usr/token/get", params, result, log_context);
 
   TRANSLATE_BEGIN()
-  unsigned char token_key[32];
+  unsigned char token_key[KEY_LENGTH];
 
   //grab the token_key
-  readFile("../../build/core/server/datafed-token-key.txt", 32, token_key);
+  readFile("datafed-token-key.txt", KEY_LENGTH, token_key);
   CipherEngine cipher(token_key);
  
   CipherEngine::CipherString encoded_refresh_obj;
@@ -367,27 +367,28 @@ void DatabaseAPI::userGetAccessToken(
   encoded_refresh_obj.encrypted_msg_len = obj.getNumber("refresh_len");
  
   // Allocate and copy to char*
-  encoded_access_obj.encrypted_msg = std::make_unique<char[]>(129); // add 1 for null terminator
-  memcpy(encoded_access_obj.encrypted_msg.get(), access.c_str(), 128);
-  encoded_access_obj.encrypted_msg[128] = '\0'; // null terminate
+  
+  encoded_access_obj.encrypted_msg = std::make_unique<char[]>(ENCODED_MSG_LENGTH + 1); // add 1 for null terminator
+  memcpy(encoded_access_obj.encrypted_msg.get(), access.c_str(), ENCODED_MSG_LENGTH);
+  encoded_access_obj.encrypted_msg[ENCODED_MSG_LENGTH] = '\0'; // null terminate
 
   // Do the same for IV
   std::string access_iv = obj.getString("access_iv");
-  encoded_access_obj.iv = std::make_unique<char[]>(25);
-  memcpy(encoded_access_obj.iv.get(), access_iv.c_str(), 24);
-  encoded_access_obj.iv[24] = '\0';
+  encoded_access_obj.iv = std::make_unique<char[]>(ENCODED_IV_LENGTH+1); // add 1 for null terminator
+  memcpy(encoded_access_obj.iv.get(), access_iv.c_str(), ENCODED_IV_LENGTH);
+  encoded_access_obj.iv[ENCODED_IV_LENGTH] = '\0'; //null terminate
  
   // Allocate and copy to char*
-  encoded_refresh_obj.encrypted_msg = std::make_unique<char[]>(129); // add 1 for null terminator
-  memcpy(encoded_refresh_obj.encrypted_msg.get(), refresh.c_str(), 128);
-  encoded_refresh_obj.encrypted_msg[128] = '\0'; // null terminate
+  encoded_refresh_obj.encrypted_msg = std::make_unique<char[]>(ENCODED_MSG_LENGTH+1); // add 1 for null terminator
+  memcpy(encoded_refresh_obj.encrypted_msg.get(), refresh.c_str(), ENCODED_MSG_LENGTH);
+  encoded_refresh_obj.encrypted_msg[ENCODED_MSG_LENGTH] = '\0'; // null terminate
 
   // Do the same for IV
   std::string refresh_iv = obj.getString("refresh_iv");
-  encoded_refresh_obj.iv = std::make_unique<char[]>(25);
-  memcpy(encoded_refresh_obj.iv.get(), refresh_iv.c_str(), 24);
-  encoded_refresh_obj.iv[24] = '\0';
- 
+  encoded_refresh_obj.iv = std::make_unique<char[]>(ENCODED_IV_LENGTH + 1); //add 1 for null terminator
+  memcpy(encoded_refresh_obj.iv.get(), refresh_iv.c_str(), ENCODED_IV_LENGTH);
+  encoded_refresh_obj.iv[ENCODED_IV_LENGTH] = '\0'; // null terminate
+     
   //Decryption for acc token and ref token 
   a_acc_tok = cipher.decrypt(encoded_access_obj, log_context);
   a_ref_tok = cipher.decrypt(encoded_refresh_obj, log_context); 
@@ -413,10 +414,10 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
  
   DL_WARNING(log_context, "Access Token Before Encryption:" << a_acc_tok);
 
-  unsigned char token_key[32];
+  unsigned char token_key[KEY_LENGTH];
 
   //grab the token_key
-  readFile("../../build/core/server/datafed-token-key.txt", 32, token_key);
+  readFile("../../build/core/server/datafed-token-key.txt", KEY_LENGTH, token_key);
   CipherEngine cipher(token_key);
 
   //encrypting the access token

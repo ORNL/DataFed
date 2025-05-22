@@ -88,7 +88,8 @@ int main(int a_argc, char **a_argv) {
         "gen-keys", po::bool_switch(&gen_keys),
         "Generate new server keys then exit")(
         "log-level", po::value<unsigned int>(&cfg_log_level), "Set log level");
-
+        //"cipher-key-path,C", po::value<string>(&config.cipher_key_path), "Cipher key file path");
+        
     try {
       po::variables_map opt_map;
       po::store(po::command_line_parser(a_argc, a_argv).options(opts).run(),

@@ -22,6 +22,11 @@ namespace Core {
 
 class DatabaseAPI {
 public:
+  static const int KEY_LENGTH = 32;
+  static const int ENCODED_MSG_LENGTH = 128;
+  static const int ENCODED_IV_LENGTH = 24;
+
+
   struct UserTokenInfo {
     std::string uid;
     std::string access_token;

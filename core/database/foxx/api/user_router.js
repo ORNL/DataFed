@@ -552,7 +552,6 @@ router
                     var user_id;
                     let user_doc;
 
-                    console.log("Recieved Access Token:", JSON.stringify(req.queryParams.access));
                     const { type: token_type, other_token_data } = req.queryParams;
                     // validate optional query params
                     if (
@@ -706,9 +705,9 @@ router
         "Other data associated with token, currently only supported as Globus Collection UUID e.g. other_token_data=1cbaaee5-b938-4a4e-87a8-f1ec4d5d92f9",
     )
     .queryParam("access_len", joi.number().integer().required().options({ convert: true }), "Access Token Length")
-    .queryParam("access_iv", joi.string().required(), "Access Token Initilization Value")
+    .queryParam("access_iv", joi.string().required(), "Access Token Initialization Value")
     .queryParam("refresh_len", joi.number().integer().required().options({ convert: true }), "Refresh Token Length")
-    .queryParam("refresh_iv", joi.string().required(), "Refresh Token Initilization Value")
+    .queryParam("refresh_iv", joi.string().required(), "Refresh Token Initialization Value")
     .summary("Set user tokens")
     .description("Set user tokens");
 router

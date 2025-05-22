@@ -47,6 +47,11 @@ void readFile(const std::string fileName,const int arraySize, unsigned char* arr
     //Grabbing key
     std::ifstream keyFile(fileName, std::ios::binary);
 
+    if(!keyFile.is_open())
+    {
+        ceer << "Error: Unable to open file" << fileName << endl;
+    }
+
     keyFile.read(reinterpret_cast<char*>(keyChar),arraySize);
 
     std::copy(keyChar, keyChar + arraySize, array);
