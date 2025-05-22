@@ -989,7 +989,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
      * Finds a node by its ID in the node_data array
      *
      * @param {string} a_id - The ID of the node to find
-     * @returns {Object|undefined} - The node object if found, undefined otherwise
+     * @returns {object|undefined} - The node object if found, undefined otherwise
      */
     function findNode(a_id) {
         return node_data.find((node) => node.id === a_id);
@@ -999,28 +999,11 @@ function GraphPanel(a_id, a_frame, a_parent) {
      * Finds a link by its ID in the link_data array
      *
      * IMPORTANT: Link objects have a dynamic structure that changes during the D3 force layout process:
-     *
-     * When initially created:
-     * {
-     *   id: string,       // Unique identifier for the link (usually "sourceId-targetId")
-     *   source: string,    // ID of the source node
-     *   target: string,    // ID of the target node
-     *   ty: number        // Type of dependency relationship
-     * }
-     *
-     * After D3 force layout processing:
-     * {
-     *   id: string,       // Unique identifier for the link
-     *   source: Object,    // Reference to the source node object
-     *   target: Object,    // Reference to the target node object
-     *   ty: number        // Type of dependency relationship
-     * }
-     *
      * This transformation happens automatically when D3.js processes the links for
      * force-directed layout, as noted in the comment above renderGraph().
      *
      * @param {string} a_id - The ID of the link to find
-     * @returns {Object|undefined} - The link object if found, undefined otherwise
+     * @returns {object|undefined} - The link object if found, undefined otherwise
      */
     function findLink(a_id) {
         return link_data.find((link) => link.id === a_id);

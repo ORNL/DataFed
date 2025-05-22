@@ -20,8 +20,8 @@ import { DEFAULTS } from "./state.js";
  * @property {boolean} [locked] - Flag indicating if the item is locked
  * @property {string} [alias] - Display name/alias for the item
  * @property {number} [gen] - Generation number (for hierarchical layout)
- * @property {Array<Object>} [dep] - Dependencies for the item
- * @property {Array<Object>} [deps] - Extended dependency information for the item
+ * @property {Array<object>} [dep] - Dependencies for the item
+ * @property {Array<object>} [deps] - Extended dependency information for the item
  */
 
 /**

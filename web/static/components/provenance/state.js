@@ -13,7 +13,7 @@ const DEFAULTS = {
  * 1. Persist user customizations of the graph layout (node positions, anchoring)
  * 2. Maintain visual styling choices (colors, sizes) between sessions
  * 3. Enable real-time updates when customizations are made in one view (e.g., modal dialog)
- *    to be reflected in another view (the graph itself)
+ * to be reflected in another view (the graph itself)
  *
  * Potential future uses:
  * - Synchronizing graph changes with underlying data records
