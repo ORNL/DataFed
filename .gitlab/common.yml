@@ -296,7 +296,8 @@
       # different names. Or one image was built on top of another and share the
       # same base.
     - MATCHING_CONTAINERS=$( echo "$ANCESTOR_CONTAINERS" | grep "${COMPONENT}-${BRANCH_LOWER}" || echo "")
-    - if [ -z "$MATCHING_CONTAINERS" ]; then
+    - >
+      if [ -z "$MATCHING_CONTAINERS" ]; then
         echo "No matching containers found for image ${FULL_IMAGE_NAME} and component ${COMPONENT}-${BRANCH_LOWER}";
       else
         echo "Getting log output for the following.";
