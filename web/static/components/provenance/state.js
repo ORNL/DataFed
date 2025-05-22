@@ -20,7 +20,7 @@ const DEFAULTS = {
  * - Broadcasting updates when relationship data changes
  * - Enabling multiple views of the same graph data to stay in sync
  * - Supporting undo/redo functionality by tracking state changes
- * 
+ *
  * How to use:
  * - Components that need to observe state changes should implement an update(state) method
  * - Then register with graphStateManager.addObserver(observerComponent)
@@ -36,22 +36,22 @@ class GraphState {
             labelStyles: {}, // Store label customizations
             theme: DEFAULTS.THEME, // Current theme
         };
-        
+
         // Load saved state from localStorage if available
         try {
             const savedState = localStorage.getItem("datafed-graph-state");
-            
+
             // Try to detect system theme from settings if available
             if (window.settings && window.settings.theme) {
                 this.state.theme = window.settings.theme;
             }
-            
+
             // Hook into settings.setTheme to keep our state in sync
-            if (window.settings && typeof window.settings.setTheme === 'function') {
+            if (window.settings && typeof window.settings.setTheme === "function") {
                 const originalSetTheme = window.settings.setTheme;
                 const graphState = this;
-                
-                window.settings.setTheme = function(theme) {
+
+                window.settings.setTheme = function (theme) {
                     // Call original function
                     originalSetTheme(theme);
                     // Update our state and notify observers
@@ -75,29 +75,24 @@ class GraphState {
     }
 
     /**
-     * Saves the current state of all nodes to localStorage
-     * Only saves non-default values to reduce storage footprint
-     * @param {Array} nodeData - Array of node objects with current state
-     * @returns {boolean} - Success status of the save operation
-     */
-    /**
      * Sets the current theme and notifies observers
      * @param {string} theme - The theme to set ('light' or 'dark')
+     * @returns {boolean} - Success status of the save operation
      */
     setTheme(theme) {
-        if (theme === 'light' || theme === 'dark') {
+        if (theme === "light" || theme === "dark") {
             this.state.theme = theme;
             this.notifyObservers();
-            
+
             // Update body class for CSS variables
-            document.body.classList.remove('theme-light', 'theme-dark');
-            document.body.classList.add('theme-' + theme);
-            
+            document.body.classList.remove("theme-light", "theme-dark");
+            document.body.classList.add("theme-" + theme);
+
             return true;
         }
         return false;
     }
-    
+
     /**
      * Gets the current theme
      * @returns {string} - The current theme ('light' or 'dark')
@@ -105,7 +100,7 @@ class GraphState {
     getTheme() {
         return this.state.theme;
     }
-    
+
     /**
      * Saves the current state of all nodes to localStorage
      * Only saves non-default values to reduce storage footprint
@@ -115,7 +110,7 @@ class GraphState {
     saveState(nodeData) {
         // Save current theme and preserve it
         const currentTheme = this.state.theme;
-        
+
         // Reset the state
         this.state = {
             nodePositions: {},
@@ -130,12 +125,12 @@ class GraphState {
             // Only save position if node is anchored or has a position
             if (node.anchored || (node.x !== undefined && node.y !== undefined)) {
                 const positionData = {};
-                
+
                 // Only add properties that are different from defaults
                 if (node.x !== undefined) positionData.x = node.x;
                 if (node.y !== undefined) positionData.y = node.y;
                 if (node.anchored) positionData.anchored = true;
-                
+
                 // Only save if we have actual data to store
                 if (Object.keys(positionData).length > 0) {
                     this.state.nodePositions[node.id] = positionData;
@@ -159,7 +154,7 @@ class GraphState {
                 const offsetData = {};
                 if (node.labelOffsetX) offsetData.x = node.labelOffsetX;
                 if (node.labelOffsetY) offsetData.y = node.labelOffsetY;
-                
+
                 if (Object.keys(offsetData).length > 0) {
                     this.state.labelOffsets[node.id] = offsetData;
                 }
@@ -197,13 +192,13 @@ class GraphState {
 class ThemeObserver {
     /**
      * Called by GraphState when state changes
-     * @param {Object} state - The updated state object
+     * @param {object} state - The updated state object
      */
     update(state) {
         if (state && state.theme) {
             // Apply theme class to body
-            document.body.classList.remove('theme-light', 'theme-dark');
-            document.body.classList.add('theme-' + state.theme);
+            document.body.classList.remove("theme-light", "theme-dark");
+            document.body.classList.add("theme-" + state.theme);
         }
     }
 }

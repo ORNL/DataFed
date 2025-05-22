@@ -6,7 +6,7 @@ function showCustomizationModal(node, x, y, currentCustomizationNode) {
 
     // Set the current node being customized
     currentCustomizationNode = node;
-    
+
     // Save original values for reverting if cancelled
     if (window.saveOriginalValues) {
         window.saveOriginalValues(node);
@@ -15,9 +15,7 @@ function showCustomizationModal(node, x, y, currentCustomizationNode) {
     const nodeColorInput = document.getElementById("node-color-input");
     // Helper function to convert RGB to hex format
     const rgbToHex = (rgb) => {
-        return "#" + rgb
-            .map(x => parseInt(x).toString(16).padStart(2, "0"))
-            .join("");
+        return "#" + rgb.map((x) => parseInt(x).toString(16).padStart(2, "0")).join("");
     };
 
     // Helper function to get the default color from CSS
@@ -26,7 +24,7 @@ function showCustomizationModal(node, x, y, currentCustomizationNode) {
         if (!nodeElement) {
             return DEFAULTS.NODE_COLOR;
         }
-        
+
         const computedStyle = window.getComputedStyle(nodeElement);
         const fillColor = computedStyle.fill;
 
@@ -72,30 +70,30 @@ function showCustomizationModal(node, x, y, currentCustomizationNode) {
 function makeModalDraggable(modal) {
     let offsetX, offsetY;
     const header = modal.querySelector(".modal-header") || modal;
-    
+
     // Handle mouse movement during drag
     function handleMouseMove(e) {
         modal.style.left = `${e.clientX - offsetX}px`;
         modal.style.top = `${e.clientY - offsetY}px`;
     }
-    
+
     // Handle end of drag operation
     function handleMouseUp() {
         // Remove event listeners when dragging ends to improve performance
         document.removeEventListener("mousemove", handleMouseMove);
         document.removeEventListener("mouseup", handleMouseUp);
     }
-    
+
     // Start dragging when mousedown on header
-    header.addEventListener("mousedown", function(e) {
+    header.addEventListener("mousedown", function (e) {
         // Calculate initial offset
         offsetX = e.clientX - modal.offsetLeft;
         offsetY = e.clientY - modal.offsetTop;
-        
+
         // Add event listeners for dragging only when needed
         document.addEventListener("mousemove", handleMouseMove);
         document.addEventListener("mouseup", handleMouseUp);
-        
+
         e.preventDefault();
     });
 }
@@ -191,19 +189,19 @@ function createCustomizationModal() {
     // Anchor controls
     const anchorSection = document.createElement("div");
     anchorSection.className = "section";
-    
+
     const anchorRow = document.createElement("div");
     anchorRow.className = "control-row checkbox-row";
-    
+
     const anchorCheckbox = document.createElement("input");
     anchorCheckbox.type = "checkbox";
     anchorCheckbox.id = "anchor-checkbox";
-    
+
     const anchorLabel = document.createElement("label");
     anchorLabel.htmlFor = "anchor-checkbox";
     anchorLabel.textContent = "Anchor Node";
     anchorLabel.classList.add("inline-label");
-    
+
     anchorRow.appendChild(anchorCheckbox);
     anchorRow.appendChild(anchorLabel);
     anchorSection.appendChild(anchorRow);

@@ -13,13 +13,13 @@ import {
     showCustomizationModal as showModal,
 } from "./customization_modal.js";
 import {
-    graphPruneCalc,
-    makeLabel,
     createNode,
-    graphPrune,
-    graphPruneReset,
     graphCountConnected,
+    graphPrune,
+    graphPruneCalc,
+    graphPruneReset,
     isLeafNode,
+    makeLabel,
 } from "./utils.js";
 
 // Dynamically load the styles CSS
@@ -41,10 +41,10 @@ import {
         link.href = "./styles/customization_modal.css";
         document.head.appendChild(link);
     }
-    
+
     // Apply initial theme class from settings if available
     if (window.settings && window.settings.theme) {
-        document.body.classList.add('theme-' + window.settings.theme);
+        document.body.classList.add("theme-" + window.settings.theme);
     }
 })();
 
@@ -74,19 +74,19 @@ function GraphPanel(a_id, a_frame, a_parent) {
 
     // State management using observer pattern
     let graphStateManager = new GraphState();
-    
+
     // Register theme observer to manage theme changes
     const themeObserver = new ThemeObserver();
     graphStateManager.addObserver(themeObserver);
-    
+
     // Set initial theme from settings if available
     if (window.settings && window.settings.theme) {
         graphStateManager.setTheme(window.settings.theme);
-        
+
         // Hook into the global theme setting to keep in sync
-        if (typeof window.settings.setTheme === 'function') {
+        if (typeof window.settings.setTheme === "function") {
             const originalSetTheme = window.settings.setTheme;
-            window.settings.setTheme = function(theme) {
+            window.settings.setTheme = function (theme) {
                 // Call original function
                 originalSetTheme(theme);
                 // Update our graph state
@@ -204,11 +204,11 @@ function GraphPanel(a_id, a_frame, a_parent) {
         // Store original and temporary changes
         let originalValues = {};
         let tempChanges = {};
-        
+
         // Function to save original values when the modal opens
-        window.saveOriginalValues = function(node) {
+        window.saveOriginalValues = function (node) {
             if (!node) return;
-            
+
             // Save all original values that can be modified
             originalValues = {
                 nodeColor: node.nodeColor,
@@ -216,33 +216,33 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 labelColor: node.labelColor,
                 anchored: node.anchored,
                 fx: node.fx,
-                fy: node.fy
+                fy: node.fy,
             };
         };
-        
+
         // Function to restore original values when cancelling
         function restoreOriginalValues() {
             if (!currentCustomizationNode) return;
-            
+
             // Restore all original values
             if (originalValues.nodeColor !== undefined) {
                 currentCustomizationNode.nodeColor = originalValues.nodeColor;
             } else {
                 delete currentCustomizationNode.nodeColor;
             }
-            
+
             if (originalValues.labelSize !== undefined) {
                 currentCustomizationNode.labelSize = originalValues.labelSize;
             } else {
                 delete currentCustomizationNode.labelSize;
             }
-            
+
             if (originalValues.labelColor !== undefined) {
                 currentCustomizationNode.labelColor = originalValues.labelColor;
             } else {
                 delete currentCustomizationNode.labelColor;
             }
-            
+
             // Render to show original values
             renderGraph();
         }
@@ -291,7 +291,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 tempChanges.anchorChecked = this.checked;
                 tempChanges.nodeX = currentCustomizationNode.x;
                 tempChanges.nodeY = currentCustomizationNode.y;
-                
+
                 // Just preview the change without actually fixing the position
                 const previewClass = document.querySelector(".anchor-preview");
                 if (previewClass) {
@@ -305,13 +305,13 @@ function GraphPanel(a_id, a_frame, a_parent) {
         closeButton.addEventListener("click", function () {
             // Revert any preview changes back to original values
             restoreOriginalValues();
-            
+
             // Hide anchor preview if showing
             const previewClass = document.querySelector(".anchor-preview");
             if (previewClass) {
                 previewClass.style.display = "none";
             }
-            
+
             // Clear temporary changes
             tempChanges = {};
             modal.style.display = "none";
@@ -325,28 +325,28 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 modal.style.display = "none";
                 return;
             }
-            
+
             // Apply all changes permanently
-            
+
             // Node color change
-            if (tempChanges.hasOwnProperty('nodeColor')) {
+            if (tempChanges.hasOwnProperty("nodeColor")) {
                 currentCustomizationNode.nodeColor = tempChanges.nodeColor;
             }
-            
+
             // Label size change
-            if (tempChanges.hasOwnProperty('labelSize')) {
+            if (tempChanges.hasOwnProperty("labelSize")) {
                 currentCustomizationNode.labelSize = tempChanges.labelSize;
             }
-            
+
             // Label color change
-            if (tempChanges.hasOwnProperty('labelColor')) {
+            if (tempChanges.hasOwnProperty("labelColor")) {
                 currentCustomizationNode.labelColor = tempChanges.labelColor;
             }
-            
+
             // Apply the anchoring change if it was made
-            if (tempChanges.hasOwnProperty('anchorChecked')) {
+            if (tempChanges.hasOwnProperty("anchorChecked")) {
                 currentCustomizationNode.anchored = tempChanges.anchorChecked;
-                
+
                 if (tempChanges.anchorChecked) {
                     // Fix the node position
                     currentCustomizationNode.fx = tempChanges.nodeX;
@@ -357,15 +357,15 @@ function GraphPanel(a_id, a_frame, a_parent) {
                     delete currentCustomizationNode.fy;
                 }
             }
-            
+
             // Save changes to persistent state if state manager exists
             if (graphStateManager) {
                 graphStateManager.saveState(node_data);
             }
-            
+
             // Update the visualization
             renderGraph();
-            
+
             // Clear temporary changes
             tempChanges = {};
             modal.style.display = "none";
@@ -550,11 +550,11 @@ function GraphPanel(a_id, a_frame, a_parent) {
 
     /**
      * Renders the graph using D3.js force layout
-     * 
+     *
      * IMPORTANT: D3.js force layout automatically converts link source and target properties.
      * Before rendering: source and target are string IDs
      * After rendering: source and target become references to the actual node objects
-     * 
+     *
      * This transformation happens as part of D3's internal processing and is essential
      * for the force-directed layout to work correctly. However, it means the structure
      * of link objects changes during the application lifecycle.
@@ -678,7 +678,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 const nodeSize = d.nodeSize || r;
                 d3.select(this).transition().duration(500).attr("r", nodeSize);
             })
-            .on("click", function(d) {
+            .on("click", function (d) {
                 // Select the node when clicked
                 selNode(d, this.parentNode);
                 d3.event.stopPropagation();
@@ -956,6 +956,10 @@ function GraphPanel(a_id, a_frame, a_parent) {
 
         // Double-click to toggle anchor state
         if (d3.event.sourceEvent && d3.event.sourceEvent.detail === 2 && !d.draggingLabel) {
+            // Prevent the double-click from triggering zoom
+            d3.event.sourceEvent.preventDefault();
+            d3.event.sourceEvent.stopPropagation();
+
             d.anchored = !d.anchored;
             if (d.anchored) {
                 d.fx = d.x;
@@ -972,7 +976,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
                     .select("circle.obj")
                     .classed("anchored", false);
             }
-            
+
             // We're using double-click for anchoring, so don't also use it for expand/collapse
             return;
         }
@@ -983,19 +987,19 @@ function GraphPanel(a_id, a_frame, a_parent) {
 
     /**
      * Finds a node by its ID in the node_data array
-     * 
+     *
      * @param {string} a_id - The ID of the node to find
      * @returns {Object|undefined} - The node object if found, undefined otherwise
      */
     function findNode(a_id) {
-        return node_data.find(node => node.id === a_id);
+        return node_data.find((node) => node.id === a_id);
     }
 
     /**
      * Finds a link by its ID in the link_data array
-     * 
+     *
      * IMPORTANT: Link objects have a dynamic structure that changes during the D3 force layout process:
-     * 
+     *
      * When initially created:
      * {
      *   id: string,       // Unique identifier for the link (usually "sourceId-targetId")
@@ -1003,7 +1007,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
      *   target: string,    // ID of the target node
      *   ty: number        // Type of dependency relationship
      * }
-     * 
+     *
      * After D3 force layout processing:
      * {
      *   id: string,       // Unique identifier for the link
@@ -1011,15 +1015,15 @@ function GraphPanel(a_id, a_frame, a_parent) {
      *   target: Object,    // Reference to the target node object
      *   ty: number        // Type of dependency relationship
      * }
-     * 
+     *
      * This transformation happens automatically when D3.js processes the links for
      * force-directed layout, as noted in the comment above renderGraph().
-     * 
+     *
      * @param {string} a_id - The ID of the link to find
      * @returns {Object|undefined} - The link object if found, undefined otherwise
      */
     function findLink(a_id) {
-        return link_data.find(link => link.id === a_id);
+        return link_data.find((link) => link.id === a_id);
     }
 
     this.expandNode = function () {
@@ -1080,7 +1084,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
     /**
      * Collapses the selected node by removing its connected nodes
      * while maintaining the overall graph structure
-     * 
+     *
      * The collapse operation works by:
      * 1. Identifying nodes connected to the selected node
      * 2. Marking nodes for pruning that aren't needed for the graph structure
@@ -1103,7 +1107,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 link = sel_node.links[i];
                 // Get the node at the other end of the link
                 dest = link.source !== sel_node ? link.source : link.target;
-                
+
                 // Calculate which nodes should be pruned (removed) based on connectivity
                 graphPruneCalc(dest, [sel_node.id], sel_node);
 
@@ -1137,7 +1141,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 }
                 graphPrune(link_data, node_data);
             }
-            
+
             // Update the visualization with the changes
             renderGraph();
         }
@@ -1145,7 +1149,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
 
     /**
      * Hides the selected node by removing it from the visualization
-     * 
+     *
      * The hide operation only works on leaf nodes (nodes with only one connection)
      * to preserve the overall graph structure. Hide differs from collapse in that:
      * - Hide: Completely removes a node (only works on leaf nodes)
@@ -1156,26 +1160,28 @@ function GraphPanel(a_id, a_frame, a_parent) {
             if (isLeafNode(sel_node)) {
                 // Additional check to verify removing this node won't disconnect the graph
                 // Get the node at the other end of the single connection
-                const connectedNode = sel_node.links[0].source === sel_node
-                    ? sel_node.links[0].target
-                    : sel_node.links[0].source;
-                
+                const connectedNode =
+                    sel_node.links[0].source === sel_node
+                        ? sel_node.links[0].target
+                        : sel_node.links[0].source;
+
                 // Ensure all other nodes can still be reached after removal
                 if (graphCountConnected(connectedNode, [sel_node.id]) === node_data.length - 1) {
-                sel_node.prune = true;
+                    sel_node.prune = true;
 
-                for (let i in sel_node.links) {
-                    sel_node.links[i].prune = true;
-                }
-                
-                // Must use full link_data array (not just sel_node.links) so that 
-                // all connections are properly removed from the visualization
-                graphPrune(link_data, node_data);
+                    for (let i in sel_node.links) {
+                        sel_node.links[i].prune = true;
+                    }
 
-                sel_node = node_data[0];
-                sel_node_id = sel_node.id;
-                renderGraph();
-                } else { // We should never really reach here since we can't hide a leaf-node
+                    // Must use full link_data array (not just sel_node.links) so that
+                    // all connections are properly removed from the visualization
+                    graphPrune(link_data, node_data);
+
+                    sel_node = node_data[0];
+                    sel_node_id = sel_node.id;
+                    renderGraph();
+                } else {
+                    // We should never really reach here since we can't hide a leaf-node
                     sel_node.prune = false;
                     util.setStatusText("Cannot hide this node as it would disconnect the graph");
                 }
@@ -1341,17 +1347,18 @@ function GraphPanel(a_id, a_frame, a_parent) {
     }
 
     // Graph Init
-    let zoom = d3.zoom();
+    let zoom = d3
+        .zoom()
+        .on("zoom", function () {
+            svg.attr("transform", d3.event.transform);
+        })
+        .filter(function () {
+            // Disable zoom on double-click to prevent conflicts with node anchoring
+            return !d3.event.button && d3.event.detail < 2;
+        });
 
     // TODO Select in our frame only
-    svg = d3
-        .select(a_id)
-        .call(
-            zoom.on("zoom", function () {
-                svg.attr("transform", d3.event.transform);
-            }),
-        )
-        .append("g");
+    svg = d3.select(a_id).call(zoom).append("g");
     // TODO add deselect selected node highlight on double-click
 
     defineArrowMarkerDeriv(svg);

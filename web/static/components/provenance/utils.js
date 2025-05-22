@@ -2,7 +2,7 @@ import * as util from "../../util.js";
 import { DEFAULTS } from "./state.js";
 
 /**
- * @typedef {Object} NodeLink
+ * @typedef {object} NodeLink
  * @property {string} id - Unique identifier for the link
  * @property {Node|string} source - Source node or node ID
  * @property {Node|string} target - Target node or node ID
@@ -11,7 +11,7 @@ import { DEFAULTS } from "./state.js";
  */
 
 /**
- * @typedef {Object} DataItem
+ * @typedef {object} DataItem
  * @property {string} id - Unique identifier for the data item
  * @property {string} [doi] - Digital Object Identifier, if available
  * @property {number} [size] - Size of the data item
@@ -25,7 +25,7 @@ import { DEFAULTS } from "./state.js";
  */
 
 /**
- * @typedef {Object} Node
+ * @typedef {object} Node
  * @property {string} id - Unique identifier for the node
  * @property {string} [doi] - Digital Object Identifier, if available
  * @property {number} [size] - Size of data associated with this node
@@ -38,14 +38,14 @@ import { DEFAULTS } from "./state.js";
  * @property {number} [col] - Column position in hierarchical layout
  * @property {boolean} [comp] - Flag indicating if this is a composite node
  * @property {boolean} [prune] - Flag indicating if this node should be pruned (removed)
- * 
+ *
  * // Position and physics properties
  * @property {number} x - X-coordinate position
  * @property {number} y - Y-coordinate position
  * @property {number} [fx] - Fixed X-coordinate (when node is anchored)
  * @property {number} [fy] - Fixed Y-coordinate (when node is anchored)
  * @property {boolean} [anchored] - Flag indicating if the node position is fixed/anchored
- * 
+ *
  * // Visual customization properties
  * @property {number} [nodeSize] - Custom size of the node
  * @property {string} [nodeColor] - Custom color of the node
@@ -53,7 +53,7 @@ import { DEFAULTS } from "./state.js";
  * @property {string} [labelColor] - Custom color of the node label
  * @property {number} [labelOffsetX] - X-offset for the label position
  * @property {number} [labelOffsetY] - Y-offset for the label position
- * 
+ *
  * // Interaction state
  * @property {boolean} [draggingLabel] - Flag indicating if the label is being dragged
  * @property {number} [labelDragStartX] - Starting X position for label dragging
@@ -103,11 +103,11 @@ function makeLabel(node, item) {
 
 /**
  * Counts the number of connected nodes in the graph that can be reached from a starting node
- * 
+ *
  * Critical for the "hide" operation to ensure removing a node won't disconnect the graph.
  * Used to verify that all nodes (except the one being hidden) remain connected
  * after removing a particular node.
- * 
+ *
  * @param {Node} a_node - The starting node to begin the traversal from
  * @param {Array<string>} a_visited - Array of already visited node IDs (to exclude from count)
  * @param {NodeLink} [a_from] - The link that led to this node (to avoid backtracking)
@@ -121,7 +121,7 @@ function graphCountConnected(a_node, a_visited, a_from) {
         a_visited.push(a_node.id);
         count++;
         let link, dest;
-        
+
         // Recursively count connected nodes
         for (let i in a_node.links) {
             link = a_node.links[i];
@@ -139,7 +139,7 @@ function graphCountConnected(a_node, a_visited, a_from) {
  * Calculates which nodes should be pruned using depth-first search
  * This function is used as part of the "collapse" functionality in the graph,
  * which removes less important nodes while maintaining key relationships.
- * 
+ *
  * @param {Node} a_node - The node to evaluate for pruning
  * @param {Array<string>} a_visited - Array of already visited node IDs
  * @param {Node} a_source - The source node that led to this node
@@ -206,39 +206,41 @@ function detachLinkFromNode(node, linkToDetach, nodeName) {
             node.links.splice(linkIndex, 1);
         } else {
             // If not found, log an error message
-            console.log(`BAD INDEX IN ${nodeName.toUpperCase()} LINKS! Link not found when trying to detach.`);
+            console.log(
+                `BAD INDEX IN ${nodeName.toUpperCase()} LINKS! Link not found when trying to detach.`,
+            );
         }
     }
 }
 
 /**
  * Removes links and nodes that are marked for pruning using a more functional approach
- * 
+ *
  * This function is used for both the "collapse" and "hide" functionality:
  * - Collapse: Removes less important nodes while maintaining the overall graph structure
  * - Hide: Removes leaf nodes that the user wants to hide from the visualization
- * 
+ *
  * @param {Array<NodeLink>} link_data - Array of link objects
- * @param {Array<Node>} node_data - Array of node objects 
+ * @param {Array<Node>} node_data - Array of node objects
  * @returns {void} - Modifies the arrays in place
  */
 function graphPrune(link_data, node_data) {
     // First, process any link cleanup for nodes that will remain
     // This needs to be done before filtering to maintain references
-    const prunedLinks = link_data.filter(item => item.prune);
-    
+    const prunedLinks = link_data.filter((item) => item.prune);
+
     // For each pruned link, update the references in its connected nodes
     // (but only for nodes that aren't being pruned themselves)
-    prunedLinks.forEach(link => {
+    prunedLinks.forEach((link) => {
         // Handle source node if it exists and won't be pruned
         detachLinkFromNode(link.source, link, "source");
         // Handle target node if it exists and won't be pruned
         detachLinkFromNode(link.target, link, "target");
     });
-    
+
     // Filter out pruned links + nodes from the main array
-    const filteredLinks = link_data.filter(item => !item.prune);
-    const filteredNodes = node_data.filter(item => !item.prune);
+    const filteredLinks = link_data.filter((item) => !item.prune);
+    const filteredNodes = node_data.filter((item) => !item.prune);
     // Clear the array
     node_data.length = 0;
     link_data.length = 0;
@@ -251,15 +253,15 @@ function graphPrune(link_data, node_data) {
  * Resets all prune flags in the graph
  * Used during graph manipulation to clear previous pruning states
  * before calculating new ones during collapse and hide operations
- * 
+ *
  * @param {Array<NodeLink>} link_data - Array of link objects
  * @param {Array<Node>} node_data - Array of node objects
  */
 function graphPruneReset(link_data, node_data) {
-    node_data.forEach(node => {
+    node_data.forEach((node) => {
         node.prune = false;
     });
-    link_data.forEach(link => {
+    link_data.forEach((link) => {
         link.prune = false;
     });
 }
@@ -268,11 +270,11 @@ function graphPruneReset(link_data, node_data) {
  * Checks if a node is a leaf node (has only one connection)
  * Used as an initial quick check for the hide functionality - only leaf nodes can be hidden
  * to preserve the graph's connectivity and structure
- * 
+ *
  * Note: This is a necessary but not sufficient condition for safe removal.
  * After confirming a node is a leaf, we still need to use graphCountConnected
  * to verify that removing it won't disconnect the graph.
- * 
+ *
  * @param {Node} node - The node to check
  * @returns {boolean} - True if this is a leaf node, false otherwise
  */
@@ -281,4 +283,12 @@ function isLeafNode(node) {
     return node.links.length === 1;
 }
 
-export { createNode, makeLabel, graphPruneCalc, graphPrune, graphPruneReset, graphCountConnected, isLeafNode };
+export {
+    createNode,
+    makeLabel,
+    graphPruneCalc,
+    graphPrune,
+    graphPruneReset,
+    graphCountConnected,
+    isLeafNode,
+};
