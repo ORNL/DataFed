@@ -1,0 +1,245 @@
+/* Graph visualization styles */
+@import url('./theme-variables.css');
+
+/* Graph controls */
+.graph-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.graph-controls button {
+    background-color: var(--controls-button-bg);
+    border: 1px solid var(--controls-button-border);
+    border-radius: 3px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--controls-button-text);
+}
+
+.graph-controls button:hover {
+    background-color: var(--controls-button-hover-bg);
+}
+
+/* Graph tooltip */
+.graph-tooltip {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: var(--tooltip-bg);
+    color: var(--tooltip-text);
+    border: 1px solid var(--tooltip-border);
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 1000;
+    max-width: 300px;
+    padding: 15px;
+    display: none; /* Hidden by default */
+}
+
+.graph-tooltip.visible {
+    display: block;
+}
+
+.graph-tooltip-close {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    cursor: pointer;
+    pointer-events: all;
+    font-size: 20px;
+    color: var(--tooltip-close);
+}
+
+/* Graph container */
+.graph-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--graph-bg);
+}
+
+/* Node styles */
+.node {
+    cursor: pointer;
+}
+
+.node circle.obj {
+    stroke-width: 1.5px;
+    transition: r 0.3s, fill 0.3s, stroke-width 0.3s;
+}
+
+.node circle.obj.main {
+    fill: #ff7f0e;
+}
+
+.node circle.obj.prov {
+    fill: #1f77b4;
+}
+
+.node circle.obj.other {
+    fill: #2ca02c;
+}
+
+.node circle.obj.comp {
+    stroke: #000;
+}
+
+.node circle.obj.part {
+    stroke: #666;
+}
+
+/* Anchored nodes */
+.node circle.obj.anchored,
+.nodes .anchored {
+    stroke: #ffcc00;
+    stroke-width: 2px;
+    stroke-dasharray: 5, 3;
+}
+
+.node circle.select {
+    fill: none;
+    stroke: #ff0000;
+    stroke-width: 2px;
+    pointer-events: none;
+}
+
+/* Highlighting selected nodes */
+.node circle.select.highlight {
+    stroke-dasharray: 5, 5;
+    animation: dash 1s linear infinite;
+}
+
+.node circle.select.hidden {
+    display: none;
+}
+
+@keyframes dash {
+    to {
+        stroke-dashoffset: -10;
+    }
+}
+
+.node text.label {
+    font-family: sans-serif;
+    pointer-events: none;
+    text-anchor: start;
+    dominant-baseline: central;
+    font-weight: bold;
+    transition: font-size 0.3s, fill 0.3s;
+}
+
+.node text.locked {
+    font-family: sans-serif;
+    text-anchor: middle;
+    dominant-baseline: central;
+    font-size: 10px;
+    fill: #d62728;
+}
+
+/* Node tooltip */
+.node-tooltip {
+    position: absolute;
+    background: var(--node-tooltip-bg);
+    border: 1px solid var(--node-tooltip-border);
+    border-radius: 4px;
+    padding: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    pointer-events: none;
+    z-index: 1000;
+    max-width: 300px;
+    font-size: 12px;
+    color: var(--node-tooltip-text);
+}
+
+.node-tooltip h4 {
+    margin: 0 0 5px 0;
+    font-size: 14px;
+    border-bottom: 1px solid var(--node-tooltip-heading-border);
+    padding-bottom: 3px;
+}
+
+.node-tooltip p {
+    margin: 5px 0;
+}
+
+.node-tooltip .metadata {
+    margin-top: 5px;
+    font-style: italic;
+    color: var(--node-tooltip-meta);
+}
+
+/* Graph context menu */
+.node-context-menu {
+    position: absolute;
+    background: var(--context-menu-bg);
+    border: 1px solid var(--context-menu-border);
+    border-radius: 4px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    padding: 5px 0;
+    z-index: 1000;
+    color: var(--context-menu-text);
+}
+
+.node-context-menu ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.node-context-menu li {
+    padding: 8px 15px;
+    cursor: pointer;
+}
+
+.node-context-menu li:hover {
+    background: var(--context-menu-item-hover);
+}
+
+.node-context-menu li.separator {
+    height: 1px;
+    background: var(--context-menu-separator);
+    padding: 0;
+    margin: 5px 0;
+}
+
+/* Loading indicator */
+.graph-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.8);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    text-align: center;
+}
+
+.graph-loading .spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 2s linear infinite;
+    margin: 0 auto 10px;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
