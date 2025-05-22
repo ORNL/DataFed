@@ -19,6 +19,7 @@ import {
     graphPrune,
     graphPruneReset,
     graphCountConnected,
+    isLeafNode,
 } from "./utils.js";
 
 // Dynamically load the graph styles CSS
@@ -175,10 +176,14 @@ function GraphPanel(a_id, a_frame, a_parent) {
         const modal = document.getElementById("customization-modal");
         if (!modal) return;
 
+        // Store temporary changes that will be applied on "Apply" button click
+        let tempChanges = {};
+
         // Node color input
         const nodeColorInput = document.getElementById("node-color-input");
         nodeColorInput.addEventListener("input", function () {
             if (currentCustomizationNode) {
+                // Apply color change immediately for preview
                 currentCustomizationNode.nodeColor = this.value;
                 renderGraph();
             }
@@ -191,6 +196,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
         labelSizeSlider.addEventListener("input", function () {
             labelSizeValue.textContent = this.value;
             if (currentCustomizationNode) {
+                // Apply size change immediately for preview
                 currentCustomizationNode.labelSize = parseInt(this.value);
                 renderGraph();
             }
@@ -200,37 +206,72 @@ function GraphPanel(a_id, a_frame, a_parent) {
         const labelColorInput = document.getElementById("label-color-input");
         labelColorInput.addEventListener("input", function () {
             if (currentCustomizationNode) {
+                // Apply color change immediately for preview
                 currentCustomizationNode.labelColor = this.value;
                 renderGraph();
             }
         });
 
-        // Anchor checkbox
+        // Anchor checkbox - store change but don't apply until "Apply" button is clicked
         const anchorCheckbox = document.getElementById("anchor-checkbox");
         anchorCheckbox.addEventListener("change", function () {
             if (currentCustomizationNode) {
-                currentCustomizationNode.anchored = this.checked;
-                if (this.checked) {
-                    currentCustomizationNode.fx = currentCustomizationNode.x;
-                    currentCustomizationNode.fy = currentCustomizationNode.y;
-                } else {
-                    delete currentCustomizationNode.fx;
-                    delete currentCustomizationNode.fy;
+                // Store the anchoring state in temporary changes
+                tempChanges.anchorChecked = this.checked;
+                tempChanges.nodeX = currentCustomizationNode.x;
+                tempChanges.nodeY = currentCustomizationNode.y;
+                
+                // Just preview the change without actually fixing the position
+                const previewClass = document.querySelector(".anchor-preview");
+                if (previewClass) {
+                    previewClass.style.display = this.checked ? "block" : "none";
                 }
-                renderGraph();
             }
         });
 
-        // Close button
+        // Close button - discard changes
         const closeButton = document.getElementById("close-customization");
         closeButton.addEventListener("click", function () {
+            // Revert any anchor preview changes
+            if (tempChanges.hasOwnProperty('anchorChecked') && 
+                currentCustomizationNode.anchored !== tempChanges.anchorChecked) {
+                // Reset to original state
+                const previewClass = document.querySelector(".anchor-preview");
+                if (previewClass) {
+                    previewClass.style.display = "none";
+                }
+            }
+            
+            // Clear temporary changes
+            tempChanges = {};
             modal.style.display = "none";
         });
 
-        // Apply button
+        // Apply button - commit all changes
         const applyButton = document.getElementById("apply-customization");
         applyButton.addEventListener("click", function () {
+            // Apply the anchoring change if it was made
+            if (tempChanges.hasOwnProperty('anchorChecked') && currentCustomizationNode) {
+                currentCustomizationNode.anchored = tempChanges.anchorChecked;
+                
+                if (tempChanges.anchorChecked) {
+                    // Fix the node position
+                    currentCustomizationNode.fx = tempChanges.nodeX;
+                    currentCustomizationNode.fy = tempChanges.nodeY;
+                } else {
+                    // Release the fixed position
+                    delete currentCustomizationNode.fx;
+                    delete currentCustomizationNode.fy;
+                }
+                
+                // Update the visualization
+                renderGraph();
+            }
+            
+            // Clear temporary changes
+            tempChanges = {};
             modal.style.display = "none";
+            
             // Save state automatically when applying changes
             inst.saveGraphState();
         });
@@ -242,7 +283,8 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 !modal.contains(e.target) &&
                 !e.target.closest(".node")
             ) {
-                modal.style.display = "none";
+                // Handle the same way as clicking Close button
+                closeButton.click();
             }
         });
     }
@@ -250,7 +292,6 @@ function GraphPanel(a_id, a_frame, a_parent) {
     this.checkGraphUpdate = function (a_data, a_source) {
         console.log("graph check updates", a_data, a_source);
         console.log("sel node", sel_node);
-        // source is sel_node_id, so check sel_node
         if (a_data.size !== sel_node.size) {
             console.log("size diff, update!");
             model.update([a_data]);
@@ -381,8 +422,8 @@ function GraphPanel(a_id, a_frame, a_parent) {
             helpText.innerHTML =
                 "<strong>Graph Controls:</strong><br>" +
                 "• Drag nodes to move them<br>" +
-                "• Shift+Drag to anchor nodes<br>" +
-                "• Alt+Drag to move label<br>" +
+                "• Shift+Drag From node to anchor nodes<br>" +
+                "• Alt+Drag From node to move label<br>" +
                 "• Right-click for customization options<br>" +
                 "• Double-click to toggle anchor";
             helpTip.appendChild(helpText);
@@ -540,7 +581,6 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 return d.nodeColor || null; // Use CSS default if not specified
             })
             .on("mouseover", function (d) {
-                //console.log("mouse over");
                 const nodeSize = d.nodeSize || r;
                 d3.select(this)
                     .transition()
@@ -551,19 +591,9 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 const nodeSize = d.nodeSize || r;
                 d3.select(this).transition().duration(500).attr("r", nodeSize);
             })
-            .on("dblclick", function (d, i) {
-                if (d.comp) inst.collapseNode();
-                else inst.expandNode();
-                d3.event.stopPropagation();
-            })
-            .on("click", function (d, i) {
+            .on("click", function(d) {
+                // Select the node when clicked
                 selNode(d, this.parentNode);
-
-                if (d3.event.ctrlKey) {
-                    if (d.comp) inst.collapseNode();
-                    else inst.expandNode();
-                }
-
                 d3.event.stopPropagation();
             })
             .on("contextmenu", function (d, i) {
@@ -705,7 +735,6 @@ function GraphPanel(a_id, a_frame, a_parent) {
         nodes = nodes_grp.selectAll("g");
 
         if (simulation) {
-            //console.log("restart sim");
             simulation.nodes(node_data).force("link").links(link_data);
 
             simulation.alpha(1).restart();
@@ -821,7 +850,6 @@ function GraphPanel(a_id, a_frame, a_parent) {
             d.draggingLabel = false;
             // Label position is already updated in the dragged function
         } else {
-            // TODO - remove this
             // Check if shift key is pressed to anchor the node
             if (d3.event.sourceEvent && d3.event.sourceEvent.shiftKey) {
                 // Keep the fixed position (anchored)
@@ -857,6 +885,9 @@ function GraphPanel(a_id, a_frame, a_parent) {
                     .select("circle.obj")
                     .classed("anchored", false);
             }
+            
+            // We're using double-click for anchoring, so don't also use it for expand/collapse
+            return;
         }
 
         //console.log("at:",d);
@@ -908,6 +939,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
 
                         new_node = findNode(dep.id);
                         if (!new_node) {
+                            // Create the new node
                             new_node = {
                                 id: dep.id,
                                 notes: dep.notes,
@@ -930,65 +962,74 @@ function GraphPanel(a_id, a_frame, a_parent) {
     };
 
     this.collapseNode = function () {
-        if (sel_node) {
+        // Only collapse nodes that are marked as composite and selected
+        if (sel_node && sel_node.comp) {
             let i,
                 link,
                 dest,
                 loc_trim = [];
 
+            // Mark node as no longer a composite
             sel_node.comp = false;
 
+            // Process each link connected to the selected node
             for (i = sel_node.links.length - 1; i >= 0; i--) {
                 link = sel_node.links[i];
+                // Get the node at the other end of the link
                 dest = link.source !== sel_node ? link.source : link.target;
+                
+                // Calculate which nodes should be pruned (removed) based on connectivity
                 graphPruneCalc(dest, [sel_node.id], sel_node);
 
+                // If the destination node shouldn't be pruned and isn't a root node
                 if (!dest.prune && dest.row === undefined) {
+                    // Reset prune flags and mark this link for pruning
                     graphPruneReset(link_data, node_data);
-                    link.prune += 1;
-                    //graphPrune();
+                    link.prune = true;
+                    loc_trim.push(link);
                 }
 
+                // Handle nodes marked for pruning
                 if (dest.prune) {
-                    //console.log("PRUNE ALL");
-                    graphPrune(node_data, link_data, dest);
+                    // Remove this node and its links from the visualization
+                    graphPrune(link_data, node_data);
                 } else if (dest.row === undefined) {
+                    // For non-root nodes that aren't being pruned,
+                    // reset flags and track the link for potential pruning
                     graphPruneReset(link_data, node_data);
                     loc_trim.push(link);
-                    //link.prune = true;
-                    //graphPrune();
                 } else {
-                    //console.log("PRUNE NONE");
+                    // For root nodes, just reset prune flags
                     graphPruneReset(link_data, node_data);
                 }
             }
 
-            if (loc_trim.length < sel_node.links.length) {
+            // If we have links to prune, mark them and remove them
+            if (loc_trim.length > 0) {
                 for (i in loc_trim) {
                     loc_trim[i].prune = true;
                 }
                 graphPrune(link_data, node_data);
             }
+            
+            // Update the visualization with the changes
             renderGraph();
         }
     };
 
     this.hideNode = function () {
         if (sel_node && sel_node.id !== focus_node_id && node_data.length > 1) {
-            sel_node.prune = true;
-            // Check for disconnection of the graph
-            console.log("hide", sel_node.id);
-            let start =
-                sel_node.links[0].source === sel_node
-                    ? sel_node.links[0].target
-                    : sel_node.links[0].source;
-            console.log("start", start);
-            if (graphCountConnected(start, []) === node_data.length - 1) {
+            // Check if this is a leaf node using the utility function
+            if (isLeafNode(sel_node)) {
+                sel_node.prune = true;
+
                 for (let i in sel_node.links) {
-                    console.log("prune", i, sel_node.links[i]);
                     sel_node.links[i].prune = true;
                 }
-                graphPrune();
+                
+                // Must use full link_data array (not just sel_node.links) so that 
+                // all connections are properly removed from the visualization
+                graphPrune(link_data, node_data);
 
                 sel_node = node_data[0];
                 sel_node_id = sel_node.id;

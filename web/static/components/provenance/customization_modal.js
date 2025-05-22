@@ -8,42 +8,36 @@ function showCustomizationModal(node, x, y, currentCustomizationNode, renderGrap
     currentCustomizationNode = node;
 
     const nodeColorInput = document.getElementById("node-color-input");
-    // Get the actual current node color, either from custom setting or from computed style
-    if (node.nodeColor) {
-        nodeColorInput.value = node.nodeColor;
-    } else {
-        // Try to get the default color from CSS if possible
+    // Helper function to convert RGB to hex format
+    const rgbToHex = (rgb) => {
+        return "#" + rgb
+            .map(x => parseInt(x).toString(16).padStart(2, "0"))
+            .join("");
+    };
+
+    // Helper function to get the default color from CSS
+    const getDefaultColor = (node) => {
         const nodeElement = d3.select(`[id="${node.id}"] circle.obj`).node();
-        if (nodeElement) {
-            const computedStyle = window.getComputedStyle(nodeElement);
-            const fillColor = computedStyle.fill;
-            if (fillColor && fillColor !== "none") {
-                // Convert RGB to hex if needed
-                if (fillColor.startsWith("rgb")) {
-                    const rgb = fillColor.match(/\d+/g);
-                    if (rgb && rgb.length === 3) {
-                        // Hex value
-                        nodeColorInput.value =
-                            "#" +
-                            rgb
-                                .map((x) => {
-                                    const hexValue = parseInt(x).toString(16);
-                                    return hexValue.padStart(2, "0");
-                                })
-                                .join("");
-                    } else {
-                        nodeColorInput.value = DEFAULTS.NODE_COLOR;
-                    }
-                } else {
-                    nodeColorInput.value = fillColor;
-                }
-            } else {
-                nodeColorInput.value = DEFAULTS.NODE_COLOR;
-            }
-        } else {
-            nodeColorInput.value = DEFAULTS.NODE_COLOR;
+        if (!nodeElement) {
+            return DEFAULTS.NODE_COLOR;
         }
-    }
+        
+        const computedStyle = window.getComputedStyle(nodeElement);
+        const fillColor = computedStyle.fill;
+
+        if (fillColor && fillColor !== "none") {
+            if (fillColor.startsWith("rgb")) {
+                const rgb = fillColor.match(/\d+/g);
+                return rgb && rgb.length === 3 ? rgbToHex(rgb) : DEFAULTS.NODE_COLOR;
+            }
+            return fillColor;
+        }
+
+        return DEFAULTS.NODE_COLOR;
+    };
+
+    // Get the actual current node color
+    nodeColorInput.value = node.nodeColor || getDefaultColor(node);
 
     const labelSizeSlider = document.getElementById("label-size-slider");
     const labelSizeValue = labelSizeSlider.nextElementSibling;

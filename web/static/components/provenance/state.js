@@ -15,6 +15,16 @@ class GraphState {
             labelOffsets: {}, // Store label offsets
             labelStyles: {}, // Store label customizations
         };
+        
+        // Load saved state from localStorage if available
+        try {
+            const savedState = localStorage.getItem("datafed-graph-state");
+            if (savedState) {
+                this.state = JSON.parse(savedState);
+            }
+        } catch (e) {
+            console.error("Failed to load graph state:", e);
+        }
     }
 
     addObserver(observer) {
@@ -26,7 +36,6 @@ class GraphState {
     }
 
     saveState(nodeData) {
-        // Clear previous state
         this.state = {
             nodePositions: {},
             nodeStyles: {},
@@ -68,7 +77,6 @@ class GraphState {
         });
 
         // Store in localStorage
-        // TODO - Consider saving graph to file to export to another program or 1 graph
         try {
             localStorage.setItem("datafed-graph-state", JSON.stringify(this.state));
             this.notifyObservers();
