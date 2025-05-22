@@ -38,24 +38,24 @@ void sendDelimiter(void *outgoing_zmq_socket) {
   // Send NULL delimiter
   zmq_msg_t zmq_msg;
   zmq_msg_init(&zmq_msg);
-  int number_of_bytes = 0;
-  if ((number_of_bytes =
-           zmq_msg_send(&zmq_msg, outgoing_zmq_socket, ZMQ_SNDMORE)) < 0) {
+  int number_of_bytes = zmq_msg_send(&zmq_msg, outgoing_zmq_socket, ZMQ_SNDMORE);
+
+  zmq_msg_close(&zmq_msg);
+  if(number_of_bytes < 0) {
     EXCEPT(1, "zmq_msg_send (delimiter) failed.");
   }
-  zmq_msg_close(&zmq_msg);
 }
 
 void sendFinalDelimiter(void *outgoing_zmq_socket) {
   // Send NULL delimiter
   zmq_msg_t zmq_msg;
   zmq_msg_init(&zmq_msg);
-  int number_of_bytes = 0;
-  // INDICATES no more parts
-  if ((number_of_bytes = zmq_msg_send(&zmq_msg, outgoing_zmq_socket, 0)) < 0) {
+  int number_of_bytes = zmq_msg_send(&zmq_msg, outgoing_zmq_socket, 0);
+
+  zmq_msg_close(&zmq_msg);
+  if( number_of_bytes < 0 ) {
     EXCEPT(1, "zmq_msg_send (delimiter) failed.");
   }
-  zmq_msg_close(&zmq_msg);
 }
 
 /**
@@ -118,11 +118,13 @@ void receiveRoute(IMessage &msg, void *incoming_zmq_socket,
     int number_of_bytes = 0;
     if ((number_of_bytes =
              zmq_msg_recv(&zmq_msg, incoming_zmq_socket, ZMQ_DONTWAIT)) < 0) {
+      zmq_msg_close(&zmq_msg);
       EXCEPT(1, "receiveRoute zmq_msg_recv (route) failed.");
     }
     size_t len = zmq_msg_size(&zmq_msg);
     if (len) {
       if (len > 255) {
+        zmq_msg_close(&zmq_msg);
         EXCEPT(1, "Message route segment exceeds max allowed length.");
       }
       received_part =
@@ -146,11 +148,13 @@ void receiveRoute(IMessage &msg, void *incoming_zmq_socket,
     int number_of_bytes = 0;
     if ((number_of_bytes =
              zmq_msg_recv(&zmq_msg, incoming_zmq_socket, ZMQ_DONTWAIT)) < 0) {
+      zmq_msg_close(&zmq_msg);
       EXCEPT(1, "receiveRoute zmq_msg_recv (route) failed.");
     }
     size_t len = zmq_msg_size(&zmq_msg);
 
     if (len != sizeof(uint32_t)) {
+      zmq_msg_close(&zmq_msg);
       EXCEPT(1, "Expected a number indicating the number of routes to follow "
                 "but nothing was provided.");
     }
@@ -169,16 +173,19 @@ void receiveRoute(IMessage &msg, void *incoming_zmq_socket,
     int number_of_bytes = 0;
     if ((number_of_bytes =
              zmq_msg_recv(&zmq_msg, incoming_zmq_socket, ZMQ_DONTWAIT)) < 0) {
+      zmq_msg_close(&zmq_msg);
       EXCEPT(1, "receiveRoute zmq_msg_recv (route) failed.");
     }
     size_t len = zmq_msg_size(&zmq_msg);
 
     // Stop when delimiter is read
     if (len == 0) {
+      zmq_msg_close(&zmq_msg);
       EXCEPT(1, "Message route should not be an empty message.");
     }
 
     if (len > 255) {
+      zmq_msg_close(&zmq_msg);
       EXCEPT(1, "Message route segment exceeds max allowed length.");
     }
 
@@ -199,10 +206,12 @@ void receiveRoute(IMessage &msg, void *incoming_zmq_socket,
     int number_of_bytes = 0;
     if ((number_of_bytes =
              zmq_msg_recv(&zmq_msg, incoming_zmq_socket, ZMQ_DONTWAIT)) < 0) {
+      zmq_msg_close(&zmq_msg);
       EXCEPT(1, "receiveRoute zmq_msg_recv (route) failed.");
     }
     size_t len = zmq_msg_size(&zmq_msg);
     if (len != 0) {
+      zmq_msg_close(&zmq_msg);
       EXCEPT(1, "Expected a null frame following route section.");
     }
     zmq_msg_close(&zmq_msg);
@@ -227,13 +236,14 @@ void sendRoute(IMessage &msg, void *outgoing_zmq_socket,
       zmq_msg_init_size(&zmq_msg, route.size());
 
       memcpy(zmq_msg_data(&zmq_msg), route.data(), route.size());
-      int number_of_bytes = 0;
-      if ((number_of_bytes =
-               zmq_msg_send(&zmq_msg, outgoing_zmq_socket, ZMQ_SNDMORE)) < 0) {
-        EXCEPT(1, "sendRoute zmq_msg_send (route) failed.");
-      }
+      int number_of_bytes =
+               zmq_msg_send(&zmq_msg, outgoing_zmq_socket, ZMQ_SNDMORE);
 
       zmq_msg_close(&zmq_msg);
+
+      if ( number_of_bytes < 0 ) {
+        EXCEPT(1, "sendRoute zmq_msg_send (route) failed.");
+      }
       routes.pop_front();
     }
   }
@@ -244,12 +254,12 @@ void sendRoute(IMessage &msg, void *outgoing_zmq_socket,
     std::string header = "BEGIN_DATAFED";
     zmq_msg_init_size(&zmq_msg, header.size());
     memcpy(zmq_msg_data(&zmq_msg), header.data(), header.size());
-    int number_of_bytes = 0;
-    if ((number_of_bytes =
-             zmq_msg_send(&zmq_msg, outgoing_zmq_socket, ZMQ_SNDMORE)) < 0) {
+    int number_of_bytes =
+             zmq_msg_send(&zmq_msg, outgoing_zmq_socket, ZMQ_SNDMORE);
+    zmq_msg_close(&zmq_msg);
+    if ( number_of_bytes < 0 ) {
       EXCEPT(1, "sendRoute count zmq_msg_send (route) failed.");
     }
-    zmq_msg_close(&zmq_msg);
   }
 
   { // Send number of routes
@@ -260,12 +270,12 @@ void sendRoute(IMessage &msg, void *outgoing_zmq_socket,
         (unsigned char *)zmq_msg_data(&zmq_msg);
     *((uint32_t *)msg_route_count_allocation) = htonl(number_of_routes);
 
-    int number_of_bytes = 0;
-    if ((number_of_bytes =
-             zmq_msg_send(&zmq_msg, outgoing_zmq_socket, ZMQ_SNDMORE)) < 0) {
+    int number_of_bytes =
+             zmq_msg_send(&zmq_msg, outgoing_zmq_socket, ZMQ_SNDMORE);
+    zmq_msg_close(&zmq_msg);
+    if ( number_of_bytes < 0 ) {
       EXCEPT(1, "sendRoute count zmq_msg_send (route) failed.");
     }
-    zmq_msg_close(&zmq_msg);
   }
 
   for (auto &route : routes) {
@@ -278,12 +288,12 @@ void sendRoute(IMessage &msg, void *outgoing_zmq_socket,
     zmq_msg_init_size(&zmq_msg, route.size());
 
     memcpy(zmq_msg_data(&zmq_msg), route.data(), route.size());
-    int number_of_bytes = 0;
-    if ((number_of_bytes =
-             zmq_msg_send(&zmq_msg, outgoing_zmq_socket, ZMQ_SNDMORE)) < 0) {
+    int number_of_bytes = 
+             zmq_msg_send(&zmq_msg, outgoing_zmq_socket, ZMQ_SNDMORE);
+    zmq_msg_close(&zmq_msg);
+    if ( number_of_bytes < 0 ) {
       EXCEPT(1, "sendRoute zmq_msg_send (route) failed.");
     }
-    zmq_msg_close(&zmq_msg);
   }
 
   sendDelimiter(outgoing_zmq_socket);
@@ -300,6 +310,7 @@ void receiveFrame(IMessage &msg, void *incoming_zmq_socket,
     zmq_msg_init_size(&zmq_msg, 8);
     if ((number_of_bytes =
              zmq_msg_recv(&zmq_msg, incoming_zmq_socket, ZMQ_DONTWAIT)) < 0) {
+      zmq_msg_close(&zmq_msg);
       EXCEPT_PARAM(
           1, "RCV zmq_msg_recv (frame) failed: " << zmq_strerror(zmq_errno()));
     } else if (number_of_bytes == 8) {
@@ -334,14 +345,12 @@ void sendFrame(IMessage &msg, void *outgoing_zmq_socket) {
   // Convert host binary to network (endian) format
   converter.copy(FrameConverter::CopyDirection::FROM_FRAME, zmq_msg, frame);
 
-  int number_of_bytes = 0;
-
-  // Should always be sending a key
-  if ((number_of_bytes =
-           zmq_msg_send(&zmq_msg, outgoing_zmq_socket, ZMQ_SNDMORE)) < 0) {
+  int number_of_bytes =
+           zmq_msg_send(&zmq_msg, outgoing_zmq_socket, ZMQ_SNDMORE);
+  zmq_msg_close(&zmq_msg);
+  if ( number_of_bytes < 0 ) {
     EXCEPT(1, "zmq_msg_send (frame) failed.");
   }
-  zmq_msg_close(&zmq_msg);
 }
 
 /**
@@ -360,6 +369,7 @@ void receiveBody(IMessage &msg, Buffer &buffer, ProtoBufFactory &factory,
     int number_of_bytes = 0;
     if ((number_of_bytes =
              zmq_msg_recv(&zmq_msg, incoming_zmq_socket, ZMQ_DONTWAIT)) < 0) {
+      zmq_msg_close(&zmq_msg);
       EXCEPT_PARAM(1, "RCV zmq_msg_recv (body) failed. Frame size: "
                           << frame_size << " received " << number_of_bytes);
     }
@@ -368,6 +378,7 @@ void receiveBody(IMessage &msg, Buffer &buffer, ProtoBufFactory &factory,
     if (frame_size > 0) {
 
       if (zmq_msg_size(&zmq_msg) != frame_size) {
+        zmq_msg_close(&zmq_msg);
         EXCEPT_PARAM(1, "RCV Invalid message body received. Expected: "
                             << frame_size
                             << ", got: " << zmq_msg_size(&zmq_msg));
@@ -377,6 +388,7 @@ void receiveBody(IMessage &msg, Buffer &buffer, ProtoBufFactory &factory,
       uint16_t desc_type = std::get<uint16_t>(msg.get(MSG_TYPE));
       std::unique_ptr<proto::Message> payload = factory.create(desc_type);
       if (payload == nullptr) {
+        zmq_msg_close(&zmq_msg);
         EXCEPT(1, "No payload was assigned something is wrong");
       }
       copyFromBuffer(payload.get(), buffer);
@@ -395,12 +407,14 @@ void receiveBody(IMessage &msg, Buffer &buffer, ProtoBufFactory &factory,
         std::unique_ptr<proto::Message> payload = factory.create(msg_type);
         msg.setPayload(std::move(payload));
       } else {
+        zmq_msg_close(&zmq_msg);
         EXCEPT(1, "Unrecognized message type specified unable to identify "
                   "message body/payload");
       }
     }
 
     if (zmq_msg_more(&zmq_msg)) {
+      zmq_msg_close(&zmq_msg);
       EXCEPT(1, "There should not be additional messages after the body has "
                 "been sent but there are...!");
     }
@@ -428,6 +442,7 @@ void sendBody(IMessage &msg, Buffer &buffer, void *outgoing_zmq_socket) {
       if (payload) {
         auto size = payload->ByteSizeLong();
         if (size != frame_size) {
+          zmq_msg_close(&zmq_msg);
           EXCEPT_PARAM(1, "Frame and message sizes differ message size: "
                               << size << " frame size: " << frame_size);
         }
@@ -437,9 +452,11 @@ void sendBody(IMessage &msg, Buffer &buffer, void *outgoing_zmq_socket) {
         int number_of_bytes = 0;
         if ((number_of_bytes = zmq_msg_send(&zmq_msg, outgoing_zmq_socket, 0)) <
             0) {
+          zmq_msg_close(&zmq_msg);
           EXCEPT(1, "zmq_msg_send (body) failed.");
         }
       } else {
+        zmq_msg_close(&zmq_msg);
         EXCEPT(1, "Payload not defined... something went wrong");
       }
 
@@ -461,6 +478,7 @@ void receiveCorrelationID(IMessage &msg, void *incoming_zmq_socket,
   int number_of_bytes = 0;
   if ((number_of_bytes =
            zmq_msg_recv(&zmq_msg, incoming_zmq_socket, ZMQ_DONTWAIT)) < 0) {
+    zmq_msg_close(&zmq_msg);
     EXCEPT(1, "RCV zmq_msg_recv (correlation id) failed.");
   }
 
@@ -474,6 +492,7 @@ void receiveCorrelationID(IMessage &msg, void *incoming_zmq_socket,
   // Check to see if there are more parts if there are we are not currently set
   // up to handle it so you should throw an error
   if (!zmq_msg_more(&zmq_msg)) {
+    zmq_msg_close(&zmq_msg);
     EXCEPT(1, "Should be receiving messages after correlation id. The key "
               "should follow but is not.");
   }
@@ -488,6 +507,7 @@ void receiveKey(IMessage &msg, void *incoming_zmq_socket,
   int number_of_bytes = 0;
   if ((number_of_bytes =
            zmq_msg_recv(&zmq_msg, incoming_zmq_socket, ZMQ_DONTWAIT)) < 0) {
+    zmq_msg_close(&zmq_msg);
     EXCEPT(1, "RCV zmq_msg_recv (key) failed.");
   }
 
@@ -501,6 +521,7 @@ void receiveKey(IMessage &msg, void *incoming_zmq_socket,
   // Check to see if there are more parts if there are we are not currently set
   // up to handle it so you should throw an error
   if (!zmq_msg_more(&zmq_msg)) {
+    zmq_msg_close(&zmq_msg);
     EXCEPT(1, "Should be receiving messages after key. The user ID should "
               "follow but is not.");
   }
@@ -516,6 +537,7 @@ void sendCorrelationID(IMessage &msg, void *outgoing_zmq_socket) {
     memcpy(zmq_msg_data(&zmq_msg), correlation_id.c_str(),
            correlation_id.size());
   } else {
+    zmq_msg_close(&zmq_msg);
     EXCEPT(1, "zmq_msg_send (correlation id) failed. Message missing "
               "correlation id, something is really wrong.");
   }
@@ -523,6 +545,7 @@ void sendCorrelationID(IMessage &msg, void *outgoing_zmq_socket) {
   int number_of_bytes = 0;
   if ((number_of_bytes =
            zmq_msg_send(&zmq_msg, outgoing_zmq_socket, ZMQ_SNDMORE)) < 0) {
+    zmq_msg_close(&zmq_msg);
     EXCEPT(1, "zmq_msg_send (correlation_id) failed.");
   }
 
@@ -543,13 +566,13 @@ void sendKey(IMessage &msg, void *outgoing_zmq_socket) {
     memcpy(zmq_msg_data(&zmq_msg), no_key.c_str(), no_key.size());
   }
 
-  int number_of_bytes = 0;
-  if ((number_of_bytes =
-           zmq_msg_send(&zmq_msg, outgoing_zmq_socket, ZMQ_SNDMORE)) < 0) {
-    EXCEPT(1, "zmq_msg_send (uid) failed.");
-  }
+  int number_of_bytes =
+           zmq_msg_send(&zmq_msg, outgoing_zmq_socket, ZMQ_SNDMORE);
 
   zmq_msg_close(&zmq_msg);
+  if( number_of_bytes < 0 ) {
+    EXCEPT(1, "zmq_msg_send (uid) failed.");
+  }
 }
 
 void receiveID(IMessage &msg, void *incoming_zmq_socket,
@@ -560,6 +583,7 @@ void receiveID(IMessage &msg, void *incoming_zmq_socket,
   int number_of_bytes = 0;
   if ((number_of_bytes =
            zmq_msg_recv(&zmq_msg, incoming_zmq_socket, ZMQ_DONTWAIT)) < 0) {
+    zmq_msg_close(&zmq_msg);
     EXCEPT(1, "RCV zmq_msg_recv (uid) failed.");
   }
   if (zmq_msg_size(&zmq_msg)) {
@@ -572,6 +596,7 @@ void receiveID(IMessage &msg, void *incoming_zmq_socket,
   // Check to see if there are more parts if there are we are not currently set
   // up to handle it so you should throw an error
   if (!zmq_msg_more(&zmq_msg)) {
+    zmq_msg_close(&zmq_msg);
     EXCEPT(1, "Should be receiving messages after id. The frame should follow "
               "but is not.");
   }
@@ -591,12 +616,12 @@ void sendID(IMessage &msg, void *outgoing_zmq_socket) {
     memcpy(zmq_msg_data(&zmq_msg), no_id.c_str(), no_id.size());
   }
 
-  int number_of_bytes = 0;
-  if ((number_of_bytes =
-           zmq_msg_send(&zmq_msg, outgoing_zmq_socket, ZMQ_SNDMORE)) < 0) {
+  int number_of_bytes =
+           zmq_msg_send(&zmq_msg, outgoing_zmq_socket, ZMQ_SNDMORE);
+  zmq_msg_close(&zmq_msg);
+  if( number_of_bytes < 0 ) {
     EXCEPT(1, "zmq_msg_send (uid) failed.");
   }
-  zmq_msg_close(&zmq_msg);
 }
 
 } // namespace
