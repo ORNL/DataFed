@@ -45,6 +45,16 @@ SocketOptions generateCommonOptions(const std::string channel) {
   return socket_options;
 }
 
+struct GlobalProtobufTeardown {
+    ~GlobalProtobufTeardown() {
+        // This is the teardown function that runs once at the end
+        google::protobuf::ShutdownProtobufLibrary();
+    }
+};
+
+// Declare a global fixture instance
+BOOST_GLOBAL_FIXTURE(GlobalProtobufTeardown);
+
 BOOST_AUTO_TEST_SUITE(CommunicatorFactoryTest)
 
 BOOST_AUTO_TEST_CASE(testing_CommunicatorFactory) {

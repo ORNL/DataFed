@@ -52,6 +52,8 @@ const std::string CONTEXT = "context";
 
 class IMessage {
 public:
+
+  virtual ~IMessage() {};
   virtual bool exists(MessageAttribute) const = 0;
   virtual bool exists(const std::string &) const = 0;
 

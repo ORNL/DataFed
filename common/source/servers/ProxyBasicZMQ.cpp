@@ -137,7 +137,7 @@ void ProxyBasicZMQ::setRunDuration(std::chrono::duration<double> duration) {
 
 void ProxyBasicZMQ::run() {
 
-  void *ctx = getContext();
+  void *ctx = InprocContext::getContext();
 
   /**
    * WARNING: Best practice is to bind sockets before creating connections
@@ -185,7 +185,7 @@ void ProxyBasicZMQ::run() {
     log_context.thread_id = thread_id;
     DL_INFO(log_context,
             "Launching control thread for duration: " << duration.count());
-    void *context = getContext();
+    void *context = InprocContext::getContext();
     auto control_local = zmq_socket(context, ZMQ_PUB);
     DL_INFO(log_context, "CONTROL: Sleeping");
     std::this_thread::sleep_for(duration);
@@ -215,7 +215,7 @@ void ProxyBasicZMQ::run() {
                            LogContext log_context) {
     log_context.thread_name += "-capture_thread";
     log_context.thread_id = thread_id;
-    void *context = getContext();
+    void *context = InprocContext::getContext();
     auto capture_local = zmq_socket(context, ZMQ_SUB);
     zmq_bind(capture_local, address.c_str());
     zmq_setsockopt(capture_local, ZMQ_SUBSCRIBE, "", 0);

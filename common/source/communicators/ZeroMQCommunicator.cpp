@@ -669,7 +669,15 @@ ZeroMQCommunicator::ZeroMQCommunicator(const SocketOptions &socket_options,
   m_log_context = log_context;
   auto socket_factory = SocketFactory();
   m_socket = socket_factory.create(socket_options, credentials);
-  m_zmq_ctx = getContext();
+
+  // If running INPROC, each ZeroMQ socket should use the same context, other
+  // wise they should use a different context.
+  if ( socket_options.scheme == URIScheme::INPROC ) {
+    m_zmq_ctx = InprocContext::getContext();
+    InprocContext::increment();
+  } else {
+    m_zmq_ctx = zmq_ctx_new();
+  }
   m_zmq_socket_type = translateToZMQSocket(m_socket.get());
   m_zmq_socket = zmq_socket(m_zmq_ctx, m_zmq_socket_type);
 
@@ -756,6 +764,24 @@ ZeroMQCommunicator::~ZeroMQCommunicator() {
     err_message += m_socket->getAddress().c_str();
     DL_WARNING(m_log_context, err_message);
   }
+
+  rc = 0;
+  if ( m_socket->getSocketScheme() == URIScheme::INPROC ) {
+    InprocContext::decrement();
+    // Only call terminate if counter is at 0;
+    if( InprocContext::get() == 0 ) {
+      rc = InprocContext::resetContext();
+    }
+  } else {
+    rc = zmq_ctx_term(m_zmq_ctx);
+  }
+  if (rc) {
+    std::string err_message =
+        "Problem closing zmq context in Communicator destruct. Socket address: ";
+    err_message += m_socket->getAddress().c_str();
+    DL_WARNING(m_log_context, err_message);
+  }
+
 }
 
 ICommunicator::Response
