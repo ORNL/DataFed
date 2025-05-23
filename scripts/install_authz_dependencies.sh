@@ -14,7 +14,7 @@ packages=("host" "libtool" "build-essential" "g++" "gcc" "autoconf"
   "automake" "make" "git" "pkg-config"
   "libglobus-common-dev" "wget" "jq" "sudo" "libboost-all-dev" "python${DATAFED_PYTHON_VERSION}" "python${DATAFED_PYTHON_VERSION}-venv" "libgssapi-krb5-2")
 pip_packages=("setuptools" "distro" "jwt" "globus_sdk")
-externals=("cmake" "protobuf" "libsodium" "libzmq" )
+externals=("cmake" "protobuf" "libsodium" "libzmq" "libopenssl")
 
 install_python
 
