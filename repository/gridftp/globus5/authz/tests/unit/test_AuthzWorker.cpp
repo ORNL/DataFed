@@ -7,6 +7,9 @@
 // Private includes
 #include "AuthzWorker.hpp"
 
+// Third party includes
+#include <google/protobuf/stubs/common.h>
+
 // Public includes
 #include "common/DynaLog.hpp"
 #include "common/ICommunicator.hpp"
@@ -55,6 +58,16 @@ public:
 
 private:
 };
+
+struct GlobalProtobufTeardown {
+    ~GlobalProtobufTeardown() {
+        // This is the teardown function that runs once at the end
+        google::protobuf::ShutdownProtobufLibrary();
+    }
+};
+
+// Declare a global fixture instance
+BOOST_GLOBAL_FIXTURE(GlobalProtobufTeardown);
 
 BOOST_FIXTURE_TEST_SUITE(AuthzTest, ConfigFixture)
 

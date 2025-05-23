@@ -1,5 +1,6 @@
-// TODO: convert to protobufjs read of enum
+import { AUTH_PREFIX } from "./constants.js";
 
+// TODO: convert to protobufjs read of enum
 export const AccessTokenType = Object.freeze({
     GENERIC: 1,
     GLOBUS: 2,
@@ -46,6 +47,7 @@ export default class OAuthTokenHandler {
             }
         },
     };
+
     /**
      * @param {object} client_token - OAuth token object from which to extract relevant information
      * @param {OAuthTransferToken} client_token.data - Raw data object for OAuth token
@@ -110,7 +112,7 @@ export default class OAuthTokenHandler {
         switch (
             resource_server // TODO: exhaustive coverage of types
         ) {
-            case "auth.globus.org": {
+            case AUTH_PREFIX: {
                 if (this.#other_tokens_exist) {
                     return AccessTokenType.GLOBUS_DEFAULT;
                 }

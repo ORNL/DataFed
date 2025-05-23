@@ -95,7 +95,7 @@ export class TransferModel {
      */
     getRecordInfo(item) {
         if (item.size === 0) {
-            return { info: "(empty)", selectable: false };
+            return { info: "(empty)", selectable: true };
         } else if (item.locked) {
             return { info: "(locked)", selectable: false };
         } else {

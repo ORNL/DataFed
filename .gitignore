@@ -1,4 +1,5 @@
 /.idea/
+.venv/
 build
 cmake/sodium_version
 cmake/curl_version

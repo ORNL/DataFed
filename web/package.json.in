@@ -18,7 +18,7 @@
     "sanitize-html": "^2.11.0"
   },
   "scripts": {
-    "test": "mocha"
+    "test": "mocha test/**/*.test.js"
   },
   "repository": {
     "type": "git",
@@ -39,7 +39,8 @@
     "chai": "^4",
     "esm": "^3.2.25",
     "mocha": "^10.8.2",
-    "pug": "^3.0.3"
+    "pug": "^3.0.3",
+    "sinon": "17.0.0"
   },
   "type": "module"
 }

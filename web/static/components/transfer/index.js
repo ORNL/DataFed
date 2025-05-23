@@ -8,7 +8,7 @@ export class TransferDialog {
 
     /**
      * Show transfer dialog
-     * @param {number|null} mode - Transfer mode (GET/PUT)
+     * @param {TransferMode[keyof TransferMode]} mode - Transfer mode (GET/PUT)
      * @param {Array<object>|null} records - Data records
      * @param {Function} callback - Completion callback
      */

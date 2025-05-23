@@ -11,12 +11,25 @@
 #include "common/OperatorFactory.hpp"
 #include "common/OperatorTypes.hpp"
 
+// Third party includes
+#include <google/protobuf/stubs/common.h>
+
 // Standard includes
 #include <iostream>
 #include <string>
 #include <unordered_map>
 
 using namespace SDMS;
+
+struct GlobalProtobufTeardown {
+    ~GlobalProtobufTeardown() {
+        // This is the teardown function that runs once at the end
+        google::protobuf::ShutdownProtobufLibrary();
+    }
+};
+
+// Declare a global fixture instance
+BOOST_GLOBAL_FIXTURE(GlobalProtobufTeardown);
 
 class DummyAuthManager : public IAuthenticationManager {
 private:

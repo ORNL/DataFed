@@ -117,7 +117,7 @@ if [ ${#all_pip_packages_array[@]} -gt 0 ]; then
   echo "DEPENDENCIES (${all_pip_packages_array[@]})"
   init_python
   source "${DATAFED_PYTHON_ENV}/bin/activate"
-  python3 -m pip install "${all_pip_packages_array[@]}"
+  "python${DATAFED_PYTHON_VERSION}" -m pip install "${all_pip_packages_array[@]}"
 fi
 
 all_externals=$(cat "$ext_file_path")

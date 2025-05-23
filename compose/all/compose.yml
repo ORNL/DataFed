@@ -117,6 +117,8 @@ services:
       - ${DATAFED_HOST_COLLECTION_MOUNT}:${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}
     ports:
       - 9000:9000 # Communication core server
+    networks:
+      - datafed-internal
 
 # Needs host port 80 for apache
 # Needs ports 50000 - 51000 for GridFTP

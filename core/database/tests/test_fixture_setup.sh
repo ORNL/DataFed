@@ -129,4 +129,17 @@ PATH_TO_PASSWD_FILE=${SOURCE}/database_temp.password
     --database "${local_DATABASE_NAME}" \
     "/api/${local_FOXX_MAJOR_API_VERSION}" user-fixture
 
+# set up test globus collection fixtures, this script should be idempotent, this script is described in the manifest
+"${FOXX_PREFIX}foxx" script -u "${local_DATABASE_USER}" \
+   --server "tcp://${local_DATAFED_DATABASE_HOST}:8529" \
+    -p "${PATH_TO_PASSWD_FILE}" \
+    --database "${local_DATABASE_NAME}" \
+    "/api/${local_FOXX_MAJOR_API_VERSION}" collection-fixture
 
+# set up test globus token fixtures, this script should be idempotent, this script is described in the manifest
+# order matters, must follow user and collection fixtures
+"${FOXX_PREFIX}foxx" script -u "${local_DATABASE_USER}" \
+   --server "tcp://${local_DATAFED_DATABASE_HOST}:8529" \
+    -p "${PATH_TO_PASSWD_FILE}" \
+    --database "${local_DATABASE_NAME}" \
+    "/api/${local_FOXX_MAJOR_API_VERSION}" globus-token-fixture

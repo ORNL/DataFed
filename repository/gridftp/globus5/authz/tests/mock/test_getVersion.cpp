@@ -19,6 +19,9 @@
 #include "common/SDMS.pb.h"
 #include "common/SDMS_Anon.pb.h"
 
+// Standard includes
+#include <fstream>
+
 using namespace SDMS;
 
 extern "C" {

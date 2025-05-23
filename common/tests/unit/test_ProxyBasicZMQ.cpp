@@ -60,6 +60,16 @@ const std::string secret_key =
 const std::string server_key =
     "AX0D+@G+P$Wv.<W^bu05y<4I++lKN!4<j+=wxe}0"; // 40 chars
 
+struct GlobalProtobufTeardown {
+    ~GlobalProtobufTeardown() {
+        // This is the teardown function that runs once at the end
+        google::protobuf::ShutdownProtobufLibrary();
+    }
+};
+
+// Declare a global fixture instance
+BOOST_GLOBAL_FIXTURE(GlobalProtobufTeardown);
+
 BOOST_AUTO_TEST_SUITE(ProxyBasicZMQTest)
 
 BOOST_AUTO_TEST_CASE(testing_ProxyBasicZMQ) {
@@ -287,9 +297,6 @@ BOOST_AUTO_TEST_CASE(testing_ProxyBasicZMQ) {
     } // Server receive
     proxy_thread->join();
   }
-  // std::cout << "GET CONTEXT and exit" << std::endl;
-  // auto context = getContext();
-  // zmq_ctx_destroy(context);
 }
 
 BOOST_AUTO_TEST_CASE(testing_ProxyBasicZMQ_Reply) {
@@ -534,10 +541,6 @@ BOOST_AUTO_TEST_CASE(testing_ProxyBasicZMQ_Reply) {
     proxy_thread->join();
     std::cout << __FILE__ << ":" << __LINE__ << std::endl;
   }
-  // std::cout << "GET CONTEXT and exit" << std::endl;
-
-  // auto context = getContext();
-  // zmq_ctx_destroy(context);
 }
 
 BOOST_AUTO_TEST_CASE(testing_ProxyBasicZMQ_TCPServer_Reply) {
@@ -823,8 +826,5 @@ BOOST_AUTO_TEST_CASE(testing_ProxyBasicZMQ_TCPServer_Reply) {
     std::cout << __FILE__ << ":" << __LINE__ << std::endl;
   }
   std::cout << "GET CONTEXT and exit" << std::endl;
-
-  auto context = getContext();
-  zmq_ctx_destroy(context);
 }
 BOOST_AUTO_TEST_SUITE_END()

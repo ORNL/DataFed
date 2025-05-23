@@ -14,10 +14,11 @@ import { TransferMode } from "../../models/transfer-model.js";
 export function getModeSpecificOptionsTemplate(mode) {
     let responseHTML = "";
     if (mode === TransferMode.TT_DATA_GET) {
-        responseHTML = `<br>File extension override: <input id='ext' type='text'><br>`;
-    } else if (mode === TransferMode.TT_DATA_PUT) {
         responseHTML = `<br><label for='orig_fname'>Download to original filename(s)</label>
-           <input id='orig_fname' type='checkbox'>`;
+            <input id='orig_fname' type='checkbox'>
+        `;
+    } else if (mode === TransferMode.TT_DATA_PUT) {
+        responseHTML = `<br>File extension override: <input id='ext' type='text'><br>`;
     }
 
     return responseHTML;
@@ -62,13 +63,13 @@ export function getDialogTemplate(labels, mode) {
                     <div style='display: flex; align-items: flex-start;'>
                         <textarea class='ui-widget-content' id='path' rows=3
                                  style='width:100%;resize:none;'></textarea>
-                        <button class='btn small' id='browse'
-                                style='margin-left:10px; line-height:1.5; vertical-align: top;'
-                                disabled>Browse</button>
+                        <button class='btn small' id='browse' style='margin-left:10px; line-height:1.5; 
+                        vertical-align: top;' disabled>
+                            Browse
+                        </button>
                     </div>
                     <br>
-                    <select class='ui-widget-content ui-widget' id='matches'
-                            size='7' style='width: 100%;' disabled>
+                    <select class='ui-widget-content ui-widget' id='matches' size='7' style='width: 100%;' disabled>
                         <option disabled selected>No Matches</option>
                     </select>
                     ${getTransferOptionsTemplate(mode)}

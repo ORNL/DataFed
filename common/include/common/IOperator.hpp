@@ -11,6 +11,8 @@ class IMessage;
 
 class IOperator {
 public:
+
+  virtual ~IOperator() {};
   virtual OperatorType type() const noexcept = 0;
   virtual void execute(IMessage &message) = 0;
 };

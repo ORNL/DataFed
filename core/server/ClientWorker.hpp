@@ -198,7 +198,7 @@ private:
   void schemaLoader(const nlohmann::json_uri &a_uri, nlohmann::json &a_value,
                     LogContext log_context);
 
-  void error(const nlohmann::json_pointer<nlohmann::basic_json<>> &a_ptr,
+  void error(const nlohmann::json::json_pointer &a_ptr,
              const nlohmann::json &a_inst,
              const std::string &a_err_msg) override {
     (void)a_ptr;

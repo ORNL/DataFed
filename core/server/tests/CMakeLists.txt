@@ -1,3 +1,3 @@
-if( ENABLE_UNIT_TESTS )
+if( ENABLE_UNIT_TESTS OR ENABLE_MEMORY_TESTS )
   add_subdirectory(unit)
-endif()
+endif( ENABLE_UNIT_TESTS OR ENABLE_MEMORY_TESTS )

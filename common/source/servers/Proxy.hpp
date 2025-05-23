@@ -44,6 +44,8 @@ public:
       std::vector<std::unique_ptr<IOperator>> incoming_operators,
       LogContext log_context);
 
+  virtual ~Proxy() {};
+
   virtual ServerType type() const noexcept final {
     return ServerType::PROXY_CUSTOM;
   }

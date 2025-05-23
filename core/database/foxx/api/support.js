@@ -309,6 +309,7 @@ module.exports = (function () {
         GLOBUS_AUTH: 3,
         GLOBUS_TRANSFER: 4,
         GLOBUS_DEFAULT: 5,
+        ACCESS_SENTINEL: 255,
     };
 
     obj.procInputParam = function (a_in, a_field, a_update, a_out) {
@@ -836,10 +837,16 @@ module.exports = (function () {
         return result[0];
     };
 
+    /** Get access token based on u._id
+     *
+     * @param {string} a_user_id - User ID field from database
+     * @returns {{acc_tok: string, ref_tok: string, acc_tok_exp_in: (number|number)}} - Access and refresh tokens, access expiration
+     * @throws Error - When user document does not exist, or when globus_token document does not exist
+     */
     obj.getAccessToken = function (a_user_id) {
-        var user = obj.db.u.document(a_user_id);
-        var exp_in = user.expiration - Math.floor(Date.now() / 1000);
-        var result = {
+        let user = obj.db.u.document(a_user_id); // default to user token
+        const exp_in = user.expiration - Math.floor(Date.now() / 1000);
+        const result = {
             acc_tok: user.access,
             ref_tok: user.refresh,
             acc_tok_exp_in: exp_in > 0 ? exp_in : 0,
