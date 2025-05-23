@@ -7,6 +7,9 @@
 // Private includes
 #include "AuthzWorker.hpp"
 
+// Third party includes
+#include <google/protobuf/stubs/common.h>
+
 // Public includes
 #include "common/DynaLog.hpp"
 #include "common/ICommunicator.hpp"
@@ -32,19 +35,40 @@ public:
     std::string server_key = "a.r)OeoL=?/rHaK1-ow<xOd7YxM/6)A&Kdu]*<)3";
     std::string user = "vader";
     std::string test_path = "";
-    std::string log_path = "./";
+    std::string log_path = "./file.log";
     std::string globus_collection_path = "/globus/root";
-    //
-    std::strcpy(config.repo_id, repo_id.c_str());
-    std::strcpy(config.server_addr, server_addr.c_str());
-    std::strcpy(config.pub_key, pub_key.c_str());
-    std::strcpy(config.priv_key, priv_key.c_str());
-    std::strcpy(config.server_key, server_key.c_str());
-    std::strcpy(config.user, user.c_str());
-    std::strcpy(config.test_path, test_path.c_str());
-    std::strcpy(config.log_path, log_path.c_str());
-    std::strcpy(config.globus_collection_path, globus_collection_path.c_str());
+
+    // Safely copy strings
+    std::strncpy(config.repo_id, repo_id.c_str(), MAX_ID_LEN - 1);
+    config.repo_id[MAX_ID_LEN - 1] = '\0';
+
+    std::strncpy(config.server_addr, server_addr.c_str(), MAX_ADDR_LEN - 1);
+    config.server_addr[MAX_ADDR_LEN - 1] = '\0';
+
+    std::strncpy(config.pub_key, pub_key.c_str(), MAX_KEY_LEN - 1);
+    config.pub_key[MAX_KEY_LEN - 1] = '\0';
+
+    std::strncpy(config.priv_key, priv_key.c_str(), MAX_KEY_LEN - 1);
+    config.priv_key[MAX_KEY_LEN - 1] = '\0';
+
+    std::strncpy(config.server_key, server_key.c_str(), MAX_KEY_LEN - 1);
+    config.server_key[MAX_KEY_LEN - 1] = '\0';
+
+    std::strncpy(config.user, user.c_str(), MAX_ID_LEN - 1);
+    config.user[MAX_ID_LEN - 1] = '\0';
+
+    std::strncpy(config.test_path, test_path.c_str(), MAX_PATH_LEN - 1);
+    config.test_path[MAX_PATH_LEN - 1] = '\0';
+
+    std::strncpy(config.log_path, log_path.c_str(), MAX_PATH_LEN - 1);
+    config.log_path[MAX_PATH_LEN - 1] = '\0';
+
+    std::strncpy(config.globus_collection_path, globus_collection_path.c_str(), MAX_PATH_LEN - 1);
+    config.globus_collection_path[MAX_PATH_LEN - 1] = '\0';
+
   }
+
+
 
   // Teardown: clean up after each test case
   ~ConfigFixture() {}
@@ -55,6 +79,16 @@ public:
 
 private:
 };
+
+struct GlobalProtobufTeardown {
+    ~GlobalProtobufTeardown() {
+        // This is the teardown function that runs once at the end
+        google::protobuf::ShutdownProtobufLibrary();
+    }
+};
+
+// Declare a global fixture instance
+BOOST_GLOBAL_FIXTURE(GlobalProtobufTeardown);
 
 BOOST_FIXTURE_TEST_SUITE(AuthzTest, ConfigFixture)
 
@@ -179,6 +213,18 @@ BOOST_AUTO_TEST_CASE(InvalidURLMissingSchemeTest) {
   BOOST_CHECK(worker.isURLValid(invalid_url) == false);
 }
 
+BOOST_AUTO_TEST_CASE(GetAuthzPathGlobusBaseSetToRoot) {
+  // Test a valid full FTP path when the globus_collection_path is /
+  SDMS::LogContext log_context;
+  config.globus_collection_path[0] = '/';
+  config.globus_collection_path[1] = '\0';
+  SDMS::AuthzWorker worker(&config, log_context);
+  char deep_path[] = "ftp://hostname/globus/root/a/b/c/d/e.txt";
+  std::string expected_result = "/globus/root/a/b/c/d/e.txt";
+
+  BOOST_CHECK_EQUAL(worker.getAuthzPath(deep_path), expected_result);
+}
+
 BOOST_AUTO_TEST_CASE(InvalidURLTooFewSlashesTest) {
   SDMS::LogContext log_context;
   SDMS::AuthzWorker worker(&config, log_context);
@@ -209,6 +255,18 @@ BOOST_AUTO_TEST_CASE(URLWithoutHostnameTest) {
   // Test an FTP URL missing the hostname but still has "ftp://"
   char no_hostname_url[] = "ftp:///path/to/file.txt";
   BOOST_CHECK(worker.isURLValid(no_hostname_url) == false);
+}
+
+BOOST_AUTO_TEST_CASE(RemoveOriginGlobusBaseSetToRoot) {
+  // Test a valid full FTP path when the globus_collection_path is /
+  SDMS::LogContext log_context;
+  config.globus_collection_path[0] = '/';
+  config.globus_collection_path[1] = '\0';
+  SDMS::AuthzWorker worker(&config, log_context);
+  char deep_path[] = "ftp://hostname/globus/root/a/b/c/d/e.txt";
+  std::string expected_result = "/globus/root/a/b/c/d/e.txt";
+
+  BOOST_CHECK_EQUAL(worker.removeOrigin(deep_path), expected_result);
 }
 
 BOOST_AUTO_TEST_CASE(RemoveOriginValidURLTest) {

@@ -1,0 +1,151 @@
+/* Import theme variables */
+@import url('./theme-variables.css');
+
+.customization-modal {
+    position: absolute;
+    background-color: var(--modal-bg-color);
+    border: 1px solid var(--modal-border-color);
+    border-radius: 8px;
+    padding: 0; /* Remove padding to control it better in children */
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    color: var(--modal-text-color);
+    width: 260px;
+    z-index: 1000;
+    font-family: sans-serif;
+}
+
+.modal-header {
+    cursor: move;
+    padding: 5px;
+    margin-bottom: 10px;
+    background-color: var(--modal-header-bg);
+    border-bottom: 1px solid var(--modal-header-border);
+    border-radius: 8px 8px 0 0;
+}
+
+.modal-header h3 {
+    margin: 0;
+    padding: 5px;
+    color: var(--modal-header-text);
+}
+
+.customization-modal .section {
+    margin-bottom: 15px;
+    padding: 0 15px;
+}
+
+.customization-modal label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--modal-label-color);
+}
+
+.customization-modal .control-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Distribute space evenly */
+    margin-bottom: 8px;
+    width: 100%; /* Ensure it takes full width */
+}
+
+.customization-modal input[type="color"] {
+    width: 40px;
+    height: 30px;
+    border: 1px solid var(--modal-input-border);
+    border-radius: 3px;
+    background: none;
+    cursor: pointer;
+    margin-right: auto;  /* Push to the left */
+    padding: 2px;
+}
+
+.customization-modal input[type="range"] {
+    flex: 1;
+    margin-right: 10px;
+    height: 5px;
+    -webkit-appearance: none;
+    background: var(--modal-slider-bg);
+    border-radius: 5px;
+    outline: none;
+}
+
+/* Browser-specific thumb styling */
+.customization-modal input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: var(--modal-slider-thumb);
+    cursor: pointer;
+}
+
+.customization-modal input[type="range"]::-moz-range-thumb {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: var(--modal-slider-thumb);
+    cursor: pointer;
+    border: none;
+}
+
+.customization-modal input[type="range"]::-ms-thumb {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: var(--modal-slider-thumb);
+    cursor: pointer;
+}
+
+.customization-modal .value {
+    min-width: 40px;
+    text-align: right;
+    color: var(--modal-value-color);
+    padding-left: 5px;
+}
+
+.customization-modal .buttons {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 15px;
+    padding: 10px 15px 15px;
+    border-top: 1px solid var(--modal-section-border);
+}
+
+.customization-modal button {
+    padding: 6px 12px;
+    margin-left: 8px;
+    background-color: var(--modal-button-bg);
+    color: var(--modal-button-text);
+    border: 1px solid var(--modal-button-border);
+    border-radius: 3px;
+    cursor: pointer;
+    min-width: 70px;
+    font-size: 13px;
+}
+
+.customization-modal button:hover {
+    background-color: var(--modal-button-hover-bg);
+}
+
+.customization-modal button.primary {
+    background-color: var(--modal-primary-button-bg);
+    border-color: var(--modal-primary-button-bg);
+}
+
+.customization-modal button.primary:hover {
+    background-color: var(--modal-primary-button-hover-bg);
+}
+
+.inline-label {
+    display: inline;
+    margin-left: 5px;
+}
+
+/* Checkbox specific styles */
+.customization-modal .checkbox-row {
+    justify-content: flex-start; /* Align items to the left */
+}
+
+.customization-modal .checkbox-row input[type="checkbox"] {
+    margin-right: 8px;
+}

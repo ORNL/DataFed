@@ -3,8 +3,9 @@ import * as model from "./model.js";
 import * as util from "./util.js";
 import * as settings from "./settings.js";
 import * as dialogs from "./dialogs.js";
-import * as dlgStartXfer from "./dlg_start_xfer.js";
+import { transferDialog } from "./components/transfer/index.js";
 import * as dlgSchList from "./dlg_schema_list.js";
+import { TransferMode } from "./models/transfer-model.js";
 
 export var DLG_DATA_MODE_NEW = 0;
 export var DLG_DATA_MODE_EDIT = 1;
@@ -89,9 +90,9 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
     );
 
     var dlg_title;
-    if (a_data && (a_mode == DLG_DATA_MODE_EDIT || a_mode == DLG_DATA_MODE_DUP))
+    if (a_data && (a_mode === DLG_DATA_MODE_EDIT || a_mode === DLG_DATA_MODE_DUP))
         dlg_title = DLG_DATA_LABEL[a_mode] + " Data Record " + a_data.id;
-    else if (a_mode == DLG_DATA_MODE_NEW) dlg_title = "New Data Record";
+    else if (a_mode === DLG_DATA_MODE_NEW) dlg_title = "New Data Record";
     else return;
 
     var tag_el = $("#tags", frame),
@@ -100,7 +101,7 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
         extern = $("#external", frame);
 
     $("#pick_source", frame).on("click", function () {
-        dlgStartXfer.show(null, null, function (a_path, a_encrypt_mode) {
+        transferDialog.show(TransferMode.NULL, null, function (a_path, a_encrypt_mode) {
             $("#source_file", frame).val(a_path);
             encrypt_mode = a_encrypt_mode;
             if (ext_auto.prop("checked")) updateAutoExt();
@@ -193,7 +194,7 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
             var html;
             var have_cap = false;
             if (ok) {
-                if (data.length == 0) {
+                if (data.length === 0) {
                     html = "<option value='bad'>(no allocations)</option>";
                     dialogs.dlgAlert(
                         "Allocation Error",
@@ -251,9 +252,9 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
             ext = "";
         if (src) {
             var p = src.indexOf("/");
-            if (p != -1) {
+            if (p !== -1) {
                 p = src.indexOf(".", p);
-                if (p != -1) {
+                if (p !== -1) {
                     ext = src.substr(p) + " ";
                 }
             }
@@ -266,7 +267,7 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
             if ((a_data && !a_data.external) || (!a_data && !extern.prop("checked"))) {
                 // Start transfer if source changed
                 var tmp = $("#source_file").val().trim();
-                if (tmp && (!a_data || tmp != a_data.source || a_mode == DLG_DATA_MODE_DUP)) {
+                if (tmp && (!a_data || tmp !== a_data.source || a_mode === DLG_DATA_MODE_DUP)) {
                     api.xfrStart(
                         [reply.data[0].id],
                         model.TT_DATA_PUT,
@@ -345,7 +346,7 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
                         obj.schValidate = true;
                     }
 
-                    if (a_data && a_mode == DLG_DATA_MODE_EDIT) {
+                    if (a_data && a_mode === DLG_DATA_MODE_EDIT) {
                         util.getUpdatedValue($("#title", frame).val(), a_data, obj, "title");
                         util.getUpdatedValue($("#alias", frame).val(), a_data, obj, "alias");
                         util.getUpdatedValue($("#desc", frame).val(), a_data, obj, "desc");
@@ -355,7 +356,7 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
                         obj.tags = tag_el.tagit("assignedTags");
 
                         if (
-                            (!obj.tags || obj.tags.length == 0) &&
+                            (!obj.tags || obj.tags.length === 0) &&
                             a_data.tags &&
                             a_data.tags.length
                         ) {
@@ -363,13 +364,13 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
                         } else if (
                             obj.tags &&
                             a_data.tags &&
-                            obj.tags.length == a_data.tags.length
+                            obj.tags.length === a_data.tags.length
                         ) {
                             // TODO Only send tags if changed
 
                             var same = true;
                             for (i in obj.tags) {
-                                if (a_data.tags.indexOf(obj.tags[i]) == -1) {
+                                if (a_data.tags.indexOf(obj.tags[i]) === -1) {
                                     same = false;
                                     break;
                                 }
@@ -392,8 +393,8 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
                         }
 
                         if (
-                            obj.metadata != undefined &&
-                            $("input[name=md_mode]:checked", frame).val() == "set"
+                            obj.metadata !== undefined &&
+                            $("input[name=md_mode]:checked", frame).val() === "set"
                         )
                             obj.mdset = true;
 
@@ -411,7 +412,7 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
                                 deps.findIndex(function (el) {
                                     if (dep.id != el.id || dep.type != el.type) return false;
                                     else return true;
-                                }) == -1
+                                }) === -1
                             ) {
                                 obj.depRem.push(dep);
                             }
@@ -424,7 +425,7 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
                                 orig_deps.findIndex(function (el) {
                                     if (dep.id != el.id || dep.type != el.type) return false;
                                     else return true;
-                                }) == -1
+                                }) === -1
                             ) {
                                 obj.depAdd.push(dep);
                             }
@@ -435,7 +436,7 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
                                     if (idx == i || dep.id != el.id || dep.type != el.type)
                                         return false;
                                     else return true;
-                                }) != -1
+                                }) !== -1
                             ) {
                                 dialogs.dlgAlert(
                                     "Data Entry Error",
@@ -465,13 +466,13 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
                             util.getUpdatedValue($("#source_file").val(), {}, obj, "source");
                         } else {
                             var repo_id = $("#alloc").val();
-                            if (repo_id == "bad") {
+                            if (repo_id === "bad") {
                                 dialogs.dlgAlert(
                                     "Data Entry Error",
                                     "Parent collection is invalid",
                                 );
                                 return;
-                            } else if (repo_id != "default") obj.repoId = repo_id;
+                            } else if (repo_id !== "default") obj.repoId = repo_id;
 
                             if (ext_auto.prop("checked")) {
                                 obj.extAuto = true;
@@ -518,14 +519,11 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
                     source: "/api/tag/autocomp",
                 },
                 caseSensitive: false,
-                readOnly:
-                    a_mode == DLG_DATA_MODE_EDIT && (a_upd_perms & model.PERM_WR_REC) == 0
-                        ? true
-                        : false,
+                readOnly: a_mode === DLG_DATA_MODE_EDIT && (a_upd_perms & model.PERM_WR_REC) === 0,
             });
 
             jsoned = ace.edit($("#md", frame).get(0), {
-                theme: settings.theme == "light" ? "ace/theme/light" : "ace/theme/dark",
+                theme: settings.theme === "light" ? "ace/theme/light" : "ace/theme/dark",
                 mode: "ace/mode/json",
                 fontSize: 16,
                 autoScrollEditorIntoView: true,
@@ -541,7 +539,7 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
                 $("#title", frame).val(a_data.title);
                 if (a_data.alias) {
                     var idx = a_data.alias.lastIndexOf(":");
-                    a_data.alias = idx == -1 ? a_data.alias : a_data.alias.substr(idx + 1);
+                    a_data.alias = idx === -1 ? a_data.alias : a_data.alias.substr(idx + 1);
                     $("#alias", frame).val(a_data.alias);
                 }
 
@@ -567,7 +565,7 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
                     var i, dep, row;
                     for (i in a_data.deps) {
                         dep = a_data.deps[i];
-                        if (dep.dir == "DEP_OUT") {
+                        if (dep.dir === "DEP_OUT") {
                             orig_deps.push({
                                 id: dep.alias ? dep.alias : dep.id,
                                 type: model.DepTypeFromString[dep.type],
@@ -582,10 +580,10 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
                     }
                 }
 
-                if (a_mode == DLG_DATA_MODE_EDIT) {
+                if (a_mode === DLG_DATA_MODE_EDIT) {
                     $("#published", frame).prop("disabled", true);
 
-                    if ((a_upd_perms & model.PERM_WR_META) == 0) {
+                    if ((a_upd_perms & model.PERM_WR_META) === 0) {
                         jsoned.setReadOnly(true);
                         jsoned.container.style.opacity = 0.45;
                         $("#md_status").text("(read only)");
@@ -600,7 +598,7 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
                         $("#md_err_msg", frame).hide();
                     }
 
-                    if ((a_upd_perms & model.PERM_WR_REC) == 0) {
+                    if ((a_upd_perms & model.PERM_WR_REC) === 0) {
                         util.inputDisable($("#title,#desc,#alias", frame));
                         util.inputDisable($(".add-ref,.rem-ref,.ref-row input", frame));
                         $(".ref-row select", frame).selectmenu("disable");
@@ -608,7 +606,7 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
                         $(".ui-widget-content", tag_el).addClass("ui-state-disabled");
                     }
 
-                    if ((a_upd_perms & model.PERM_WR_DATA) == 0) {
+                    if ((a_upd_perms & model.PERM_WR_DATA) === 0) {
                         util.inputDisable($("#extension,#pick_source", frame));
                         ext_auto.prop("disabled", true);
                     }
@@ -670,7 +668,7 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
             });
 
             var changetimer;
-            if (a_mode == DLG_DATA_MODE_NEW) $("#do_it").button("disable");
+            if (a_mode === DLG_DATA_MODE_NEW) $("#do_it").button("disable");
 
             $("#coll", frame)
                 .val(parent)

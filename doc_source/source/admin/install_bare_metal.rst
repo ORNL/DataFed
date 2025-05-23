@@ -132,10 +132,14 @@ Steps to deploy DataFed Database:
 
 1. Download and install the latest ArangoDB server package for your host operating system. (see example, below)
 
-Example download/install of ArangoDB 3.7 for Ubuntu::
+Example download/install of ArangoDB 3.12.4 for Ubuntu::
 
-    wget https://download.arangodb.com/arangodb37/Community/Linux/arangodb3_3.7.10-1_amd64.deb
-    sudo apt install ./arangodb3_3.7.10-1_amd64.deb
+    curl -OL https://download.arangodb.com/arangodb312/DEBIAN/Release.key
+    sudo apt-key add - < Release.key
+    echo 'deb https://download.arangodb.com/arangodb312/DEBIAN/ /' | sudo tee /etc/apt/sources.list.d/arangodb.list
+    sudo apt-get install apt-transport-https
+    sudo apt-get update
+    sudo apt-get install arangodb3
 
 It should start automatically with an install but to run the arangodb service, you
 can also interact with it via systemctl::

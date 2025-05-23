@@ -20,6 +20,9 @@ class RouterBookKeepingOperator : public IOperator {
    * combination is not being used
    **/
 public:
+
+  virtual ~RouterBookKeepingOperator(){};
+
   explicit RouterBookKeepingOperator(std::any options);
 
   static std::unique_ptr<IOperator> create(std::any options);

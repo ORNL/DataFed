@@ -1,0 +1,24 @@
+#ifndef CORE_VERSION_HPP
+#define CORE_VERSION_HPP
+#pragma once
+
+namespace SDMS {
+  namespace MockCore {
+    namespace version {
+      constexpr int MAJOR = @DATAFED_CORE_MAJOR@;
+      constexpr int MINOR = @DATAFED_CORE_MINOR@;
+      constexpr int PATCH = @DATAFED_CORE_PATCH@;
+    }
+  }
+
+  namespace foxx_api {
+    namespace version {
+      constexpr int MAJOR = @DATAFED_FOXX_API_MAJOR@;
+      constexpr int MINOR = @DATAFED_FOXX_API_MINOR@;
+      constexpr int PATCH = @DATAFED_FOXX_API_PATCH@;
+    }
+  }
+}
+
+#endif // CORE_VERSION_HPP
+

@@ -11,6 +11,8 @@
 #include "common/ICredentials.hpp"
 
 // Standard includes
+#include <fstream>
+#include <iostream>
 #include <memory>
 #include <string>
 
@@ -42,7 +44,7 @@ class AuthzWorker {
 public:
   AuthzWorker(struct Config *a_config, LogContext log_context);
 
-  ~AuthzWorker() {}
+  ~AuthzWorker();
 
   AuthzWorker &operator=(const AuthzWorker &) = delete;
 
@@ -58,11 +60,14 @@ public:
 
 private:
   void initCommunicator();
-  struct Config *m_config;
+  struct std::unique_ptr<Config> m_config;
   std::string m_test_path;
   std::string m_local_globus_path_root;
   LogContext m_log_context;
 
+  // Used to remove from Log structure on destruction
+  std::list<Logger::StreamEntry>::iterator stream_it;
+  std::ofstream m_log_file_worker;
   std::unique_ptr<ICredentials> m_sec_ctx;
   std::unique_ptr<ICommunicator> m_comm;
   std::unordered_map<CredentialType, std::string> m_cred_options;

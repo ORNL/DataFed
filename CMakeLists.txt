@@ -27,6 +27,7 @@ OPTION(BUILD_PYTHON_CLIENT "Build python client" TRUE)
 OPTION(BUILD_TESTS "Build Tests" TRUE)
 OPTION(BUILD_WEB_SERVER "Build DataFed Web Server" TRUE)
 OPTION(ENABLE_UNIT_TESTS "Enable unit tests" TRUE)
+OPTION(ENABLE_MEMORY_TESTS "Enable memory tests" FALSE)
 OPTION(BUILD_SHARED_LIBS "By default DataFed tries to build static libraries
 with the exception of libdatafed-authz which must always be a shared library,
 it will also try to link with as many static libraries as possible. However,

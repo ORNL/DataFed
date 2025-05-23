@@ -35,6 +35,9 @@ import { v4 as uuidv4 } from "uuid";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 
+import OAuthTokenHandler, { AccessTokenType } from "./services/auth/TokenHandler.js";
+import { generateConsentURL } from "./services/auth/ConsentHandler.js";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -80,12 +83,12 @@ const nullfr = Buffer.from([]);
 g_ctx.fill(null);
 
 const LogLevel = {
-    TRACE: 0,
-    DEBUG: 1,
-    INFO: 2,
-    WARNING: 3,
-    ERROR: 4,
-    CRITICAL: 5,
+    CRITICAL: 0,
+    ERROR: 1,
+    WARNING: 2,
+    INFO: 3,
+    DEBUG: 4,
+    TRACE: 5,
 };
 
 class Logger {
@@ -109,26 +112,31 @@ class Logger {
             this.log("CRIT", function_name, line_number, message, correlation_id);
         }
     }
+
     error(function_name, line_number, message, correlation_id = "") {
         if (this._level >= LogLevel.ERROR) {
             this.log("ERROR", function_name, line_number, message, correlation_id);
         }
     }
+
     warning(function_name, line_number, message, correlation_id = "") {
         if (this._level >= LogLevel.WARNING) {
             this.log("WARNING", function_name, line_number, message, correlation_id);
         }
     }
+
     info(function_name, line_number, message, correlation_id = "") {
         if (this._level >= LogLevel.INFO) {
             this.log("INFO", function_name, line_number, message, correlation_id);
         }
     }
+
     debug(function_name, line_number, message, correlation_id = "") {
         if (this._level >= LogLevel.DEBUG) {
             this.log("DEBUG", function_name, line_number, message, correlation_id);
         }
     }
+
     trace(function_name, line_number, message, correlation_id = "") {
         if (this._level >= LogLevel.TRACE) {
             this.log("TRACE", function_name, line_number, message, correlation_id);
@@ -299,6 +307,15 @@ app.use(
         },
     }),
 );
+
+function storeCollectionId(req, res, next) {
+    if (req.query.collection_id) {
+        req.session.collection_id = req.query.collection_id;
+        // TODO: assuming collection is specifically mapped and not HA/other variants
+        req.session.collection_type = "mapped";
+    }
+    next();
+}
 
 app.use(cookieParser(g_session_secret));
 app.use(
@@ -486,13 +503,21 @@ app.get("/ui/authn", (a_req, a_resp) => {
     logger.info("/ui/authn", getCurrentLineNumber(), "Globus authenticated - log in to DataFed");
 
     /* This after Globus authentication. Loads Globus tokens and identity information.
-    The user is then checked in DataFed and, if present redirected to the main page; otherwise, sent to
-    the registration page.
-    */
+The user is then checked in DataFed and, if present redirected to the main page; otherwise, sent to
+the registration page.
+*/
 
     g_globus_auth.code.getToken(a_req.originalUrl).then(
         function (client_token) {
-            var xfr_token = client_token.data.other_tokens[0];
+            let token_handler;
+            try {
+                token_handler = new OAuthTokenHandler(client_token);
+            } catch (err) {
+                a_resp.redirect("/ui/error");
+                logger.error("/ui/authn", getCurrentLineNumber(), err);
+                throw err;
+            }
+            let xfr_token = token_handler.extractTransferToken();
 
             const opts = {
                 hostname: "auth.globus.org",
@@ -516,8 +541,8 @@ app.get("/ui/authn", (a_req, a_resp) => {
 
                 res.on("end", () => {
                     if (res.statusCode >= 200 && res.statusCode < 300) {
-                        var userinfo = JSON.parse(data),
-                            uid = userinfo.username.substr(0, userinfo.username.indexOf("@"));
+                        const userinfo = JSON.parse(data);
+                        const uid = userinfo.username.substring(0, userinfo.username.indexOf("@"));
 
                         logger.info(
                             "/ui/authn",
@@ -543,6 +568,19 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                         getCurrentLineNumber(),
                                         "User: " + uid + "not registered",
                                     );
+
+                                    if (
+                                        token_handler.getTokenType() ===
+                                        AccessTokenType.GLOBUS_TRANSFER
+                                    ) {
+                                        // Log error and do not register user in case of non-auth token
+                                        logger.error(
+                                            "/ui/authn",
+                                            getCurrentLineNumber(),
+                                            "Transfer token received for non-existent user.",
+                                        );
+                                        a_resp.redirect("/ui/error");
+                                    }
 
                                     // Store all data need for registration in session (temporarily)
                                     a_req.session.uid = uid;
@@ -572,16 +610,37 @@ app.get("/ui/authn", (a_req, a_resp) => {
                                     a_req.session.uid = uid;
                                     a_req.session.reg = true;
 
-                                    // Refresh Globus access & refresh tokens to Core/DB
-                                    setAccessToken(
-                                        uid,
-                                        xfr_token.access_token,
-                                        xfr_token.refresh_token,
-                                        xfr_token.expires_in,
-                                    );
+                                    let redirect_path = "/ui/main";
+
+                                    // Note: context/optional params for arbitrary input
+                                    const token_context = {
+                                        // passed values are mutable
+                                        resource_server: client_token.data.resource_sever,
+                                        collection_id: a_req.session.collection_id,
+                                        scope: xfr_token.scope,
+                                    };
+                                    try {
+                                        const optional_data =
+                                            token_handler.constructOptionalData(token_context);
+
+                                        // Refresh Globus access & refresh tokens to Core/DB
+                                        // NOTE: core services seem entirely in charge of refreshing tokens once they are set (ClientWorker.cpp).
+                                        // This should only be triggered when new tokens are coming in, like when a token expires or a transfer token is created.
+                                        setAccessToken(
+                                            a_req.session.uid,
+                                            xfr_token.access_token,
+                                            xfr_token.refresh_token,
+                                            xfr_token.expires_in,
+                                            optional_data,
+                                        );
+                                    } catch (err) {
+                                        redirect_path = "/ui/error";
+                                        logger.error("/ui/authn", getCurrentLineNumber(), err);
+                                        delete a_req.session.collection_id;
+                                    }
 
                                     // TODO Account may be disable from SDMS (active = false)
-                                    a_resp.redirect("/ui/main");
+                                    a_resp.redirect(redirect_path);
                                 }
                             },
                         );
@@ -678,24 +737,29 @@ app.get("/api/usr/register", (a_req, a_resp) => {
                     }
                 } else {
                     // Save access token
-                    setAccessToken(
-                        a_req.session.uid,
-                        a_req.session.acc_tok,
-                        a_req.session.ref_tok,
-                        a_req.session.acc_tok_ttl,
-                    );
+                    try {
+                        setAccessToken(
+                            a_req.session.uid,
+                            a_req.session.acc_tok,
+                            a_req.session.ref_tok,
+                            a_req.session.acc_tok_ttl,
+                        );
+                    } catch (err) {
+                        logger.error("/api/usr/register", getCurrentLineNumber(), err);
+                        throw err;
+                    } finally {
+                        // Remove data not needed for active session
+                        delete a_req.session.name;
+                        delete a_req.session.email;
+                        delete a_req.session.uuids;
+                        delete a_req.session.acc_tok;
+                        delete a_req.session.acc_tok_ttl;
+                        delete a_req.session.ref_tok;
+                        delete a_req.session.uuids;
+                    }
 
                     // Set session as registered user
                     a_req.session.reg = true;
-
-                    // Remove data not needed for active session
-                    delete a_req.session.name;
-                    delete a_req.session.email;
-                    delete a_req.session.uuids;
-                    delete a_req.session.acc_tok;
-                    delete a_req.session.acc_tok_ttl;
-                    delete a_req.session.ref_tok;
-                    delete a_req.session.uuids;
 
                     a_resp.send(reply);
                 }
@@ -1110,6 +1174,10 @@ app.get("/api/dat/get", (a_req, a_resp) => {
 
     if (a_req.query.check) par.check = a_req.query.check;
 
+    const { collection_id, collection_type } = a_req.query;
+    par.collectionId = collection_id;
+    par.collectionType = collection_type;
+
     sendMessage("DataGetRequest", par, a_req, a_resp, function (reply) {
         a_resp.send(reply);
     });
@@ -1125,6 +1193,10 @@ app.get("/api/dat/put", (a_req, a_resp) => {
     if (a_req.query.ext) par.ext = a_req.query.ext;
 
     if (a_req.query.check) par.check = a_req.query.check;
+
+    const { collection_id, collection_type } = a_req.query;
+    par.collectionId = collection_id;
+    par.collectionType = collection_type;
 
     sendMessage("DataPutRequest", par, a_req, a_resp, function (reply) {
         a_resp.send(reply);
@@ -1495,6 +1567,21 @@ app.post("/api/cat/search", (a_req, a_resp) => {
     });
 });
 
+app.get("/api/globus/consent_url", storeCollectionId, (a_req, a_resp) => {
+    const { requested_scopes, state, refresh_tokens, query_params } = a_req.query;
+
+    const consent_url = generateConsentURL(
+        g_oauth_credentials.clientId,
+        g_oauth_credentials.redirectUri,
+        refresh_tokens,
+        requested_scopes,
+        query_params,
+        state,
+    );
+
+    a_resp.json({ consent_url });
+});
+
 app.post("/api/col/pub/search/data", (a_req, a_resp) => {
     sendMessage("RecordSearchPublishedRequest", a_req.body, a_req, a_resp, function (reply) {
         a_resp.send(reply);
@@ -1750,6 +1837,7 @@ app.post("/api/sch/delete", (a_req, a_resp) => {
 });
 
 app.get("/ui/ep/view", (a_req, a_resp) => {
+    // TODO: include message data if needed
     sendMessage("UserGetAccessTokenRequest", {}, a_req, a_resp, function (reply) {
         const opts = {
             hostname: "transfer.api.globusonline.org",
@@ -1782,6 +1870,7 @@ app.get("/ui/ep/view", (a_req, a_resp) => {
 });
 
 app.get("/ui/ep/autocomp", (a_req, a_resp) => {
+    // TODO: include message data if needed
     sendMessage("UserGetAccessTokenRequest", {}, a_req, a_resp, function (reply) {
         const opts = {
             hostname: "transfer.api.globusonline.org",
@@ -1829,7 +1918,12 @@ app.post("/ui/ep/recent/save", (a_req, a_resp) => {
 });
 
 app.get("/ui/ep/dir/list", (a_req, a_resp) => {
-    sendMessage("UserGetAccessTokenRequest", {}, a_req, a_resp, function (reply) {
+    const message_data = {
+        collectionId: a_req.query.collection_id,
+        collectionType: a_req.query.collection_type,
+    };
+
+    const get_from_globus_api = (token, original_reply) => {
         const opts = {
             hostname: "transfer.api.globusonline.org",
             method: "GET",
@@ -1842,18 +1936,20 @@ app.get("/ui/ep/dir/list", (a_req, a_resp) => {
                 a_req.query.hidden,
             rejectUnauthorized: true,
             headers: {
-                Authorization: " Bearer " + reply.access,
+                Authorization: " Bearer " + token,
             },
         };
 
         const req = https.request(opts, (res) => {
-            var data = "";
+            let data = "";
 
             res.on("data", (chunk) => {
                 data += chunk;
             });
             res.on("end", () => {
-                a_resp.json(JSON.parse(data));
+                let res_json = JSON.parse(data);
+                res_json.needs_consent = original_reply.needsConsent;
+                a_resp.json(res_json);
             });
         });
 
@@ -1863,6 +1959,17 @@ app.get("/ui/ep/dir/list", (a_req, a_resp) => {
         });
 
         req.end();
+    };
+
+    sendMessage("UserGetAccessTokenRequest", { ...message_data }, a_req, a_resp, function (reply) {
+        if (reply.needsConsent) {
+            sendMessage("UserGetAccessTokenRequest", {}, a_req, a_resp, (base_token_reply) => {
+                // TODO: does a failed refresh token affect this? will base token be valid?
+                get_from_globus_api(base_token_reply.access, reply);
+            });
+        } else {
+            get_from_globus_api(reply.access, reply);
+        }
     });
 });
 
@@ -1880,20 +1987,33 @@ app.get("/ui/theme/save", (a_req, a_resp) => {
     a_resp.send('{"ok":true}');
 });
 
-function setAccessToken(a_uid, a_acc_tok, a_ref_tok, a_expires_sec) {
+/** Puts message on ZeroMQ to set a user access token
+ *
+ * @param {string} a_uid - UID to which the access token belongs
+ * @param {string} a_acc_tok - Access token to be associated with user
+ * @param {string} a_ref_tok - Refresh token for access token
+ * @param {number} a_expires_sec - Time until expiration of access token
+ * @param {OptionalData} [token_optional_params] - Optional params for DataFed to process access token accordingly
+ *
+ * @throws Error - When a reply is not received from sendMessageDirect
+ */
+function setAccessToken(a_uid, a_acc_tok, a_ref_tok, a_expires_sec, token_optional_params = {}) {
     logger.info(
         setAccessToken.name,
         getCurrentLineNumber(),
         "setAccessToken uid: " + a_uid + " expires in: " + a_expires_sec,
     );
-    sendMessageDirect(
-        "UserSetAccessTokenRequest",
-        a_uid,
-        { access: a_acc_tok, refresh: a_ref_tok, expiresIn: a_expires_sec },
-        function (reply) {
-            // Should be an AckReply
-        },
-    );
+    let message_data = { access: a_acc_tok, refresh: a_ref_tok, expiresIn: a_expires_sec };
+    if (token_optional_params && Object.keys(token_optional_params).length > 0) {
+        message_data = { ...token_optional_params, ...message_data };
+    }
+    sendMessageDirect("UserSetAccessTokenRequest", a_uid, message_data, function (reply) {
+        // Should be an AckReply
+        if (!reply) {
+            logger.error("setAccessToken", getCurrentLineNumber(), "failed.");
+            throw new Error("setAccessToken failed");
+        }
+    });
 }
 
 function allocRequestContext(a_resp, a_callback) {

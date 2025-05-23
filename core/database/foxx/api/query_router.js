@@ -301,10 +301,12 @@ router
     .summary("List client saved queries")
     .description("List client saved queries");
 
-function execQuery(client, mode, published, query) {
+function execQuery(client, mode, published, orig_query) {
     var col_chk = true,
         ctxt = client._id;
-
+    let query = {
+        ...orig_query,
+    };
     if (!published) {
         // For searches over private data, must perform access checks based on owner field and client id
 
@@ -533,7 +535,11 @@ router
         try {
             const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
 
-            var results = execQuery(client, req.body.mode, req.body.published, req.body);
+            const query = {
+                ...req.body,
+                params: JSON.parse(req.body.params),
+            };
+            var results = execQuery(client, req.body.mode, req.body.published, query);
 
             res.send(results);
         } catch (e) {
@@ -549,7 +555,7 @@ router
                 qry_begin: joi.string().required(),
                 qry_end: joi.string().required(),
                 qry_filter: joi.string().optional().allow(""),
-                params: joi.object().required(),
+                params: joi.string().required(),
                 limit: joi.number().integer().required(),
             })
             .required(),

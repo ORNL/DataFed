@@ -2,7 +2,7 @@
 
 const chai = require("chai");
 const expect = chai.expect;
-const Record = require("../api/record");
+const Record = require("../api/models/record");
 const g_db = require("@arangodb").db;
 const g_lib = require("../api/support");
 const arangodb = require("@arangodb");
@@ -15,7 +15,10 @@ function recordRepoAndUserSetup(record_key, user_id, repo_data) {
             _id: record_id,
         });
     }
-    g_db.repo.save(repo_data);
+
+    if (!g_db._exists(repo_data._id)) {
+        g_db.repo.save(repo_data);
+    }
 
     if (!g_db._exists(user_id)) {
         g_db.u.save({
@@ -30,6 +33,7 @@ describe("Record Class", () => {
         g_db.alloc.truncate();
         g_db.loc.truncate();
         g_db.repo.truncate();
+        g_db.u.truncate();
     });
 
     it("unit_record: should initialize correctly and check record existence is invalid", () => {
@@ -46,6 +50,7 @@ describe("Record Class", () => {
         const owner_id = "u/bob";
         const repo_id = "repo/datafed-at-com";
         const repo_data = {
+            _id: repo_id,
             _key: "datafed-at-com",
         };
         // Create nodes
@@ -75,6 +80,7 @@ describe("Record Class", () => {
         const repo_id = "repo/datafed-at-org";
         // Create nodes
         const repo_data = {
+            _id: repo_id,
             _key: "datafed-at-org",
         };
         recordRepoAndUserSetup(valid_key, owner_id, repo_data);
@@ -95,6 +101,7 @@ describe("Record Class", () => {
         const repo_id = "repo/datafed-banana-com";
         // Create nodes
         const repo_data = {
+            _id: repo_id,
             _key: "datafed-banana-com",
         };
         recordRepoAndUserSetup(valid_key, owner_id, repo_data);
@@ -120,6 +127,7 @@ describe("Record Class", () => {
         const repo_id = "repo/datafed-best-com";
         // Create nodes
         const repo_data = {
+            _id: repo_id,
             _key: "datafed-best-com",
         };
         recordRepoAndUserSetup(valid_key, owner_id, repo_data);
@@ -177,6 +185,7 @@ describe("Record Class", () => {
         const repo_id = "repo/datafed-fine-com";
         // Create nodes
         const repo_data = {
+            _id: repo_id,
             _key: "datafed-fine-com",
             path: "/correct/file/path",
         };
@@ -208,6 +217,7 @@ describe("Record Class", () => {
         const repo_id = "repo/datafed-cool-com";
         // Create nodes
         const repo_data = {
+            _id: repo_id,
             _key: "datafed-cool-com",
             path: "/correct/file/path",
         };
@@ -242,10 +252,12 @@ describe("Record Class", () => {
         // Create nodes
 
         const repo_data = {
+            _id: repo_id,
             _key: "orange-at-org",
             path: "/old/file/path",
         };
         const repo_data_new = {
+            _id: "repo/watermelon-at-org",
             _key: "watermelon-at-org",
             path: "/correct/file/path",
         };
@@ -282,10 +294,12 @@ describe("Record Class", () => {
         const new_repo_id = "repo/hamburger";
         // Create nodes
         const repo_data = {
+            _id: "repo/passionfruit",
             _key: "passionfruit",
             path: "/old/file/path",
         };
         const repo_data_new = {
+            _id: "repo/hamburger",
             _key: "hamburger",
             path: "/new/file/path",
         };

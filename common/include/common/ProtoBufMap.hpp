@@ -12,6 +12,7 @@
 // Standard includes
 #include <map>
 #include <unordered_map>
+#include <cstdint>
 
 namespace SDMS {
 

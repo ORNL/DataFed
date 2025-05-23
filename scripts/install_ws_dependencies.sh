@@ -11,8 +11,10 @@ source "${PROJECT_ROOT}/scripts/utils.sh"
 source "${SOURCE}/dependency_versions.sh"
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
-packages=("curl" "python3" "g++" "make" "wget")
+packages=("curl" "python${DATAFED_PYTHON_VERSION}" "g++" "make" "wget")
 externals=("cmake" "nvm" "node" "ws_node_packages")
+
+install_python
 
 Help()
 {

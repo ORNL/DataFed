@@ -1,7 +1,7 @@
 "use strict";
 
 const g_db = require("@arangodb").db;
-const g_lib = require("./support");
+const g_lib = require("../support");
 const { errors } = require("@arangodb");
 
 /**
@@ -95,6 +95,8 @@ class Record {
      **/
     _comparePaths(storedPath, inputPath) {
         if (storedPath === null) {
+            this.#error = g_lib.ERR_INTERNAL_FAULT;
+            this.#err_msg = "Stored path for repo is null.";
             return false;
         }
         if (storedPath !== inputPath) {
@@ -180,70 +182,53 @@ class Record {
      * @returns {boolean} True if consistent, otherwise false.
      */
     isPathConsistent(a_path) {
-        // This function will populate the this.#loc member and the this.#alloc
-        // member
         if (!this.isManaged()) {
             return false;
         }
 
-        // If there is a new repo we need to check the path there and use that
-        if (this.#loc.hasOwnProperty("new_repo") && this.#loc.new_repo) {
-            // Below we get the allocation associated with data item by
-            // 1. Checking if the data item is in flight, is in the process
-            // of being moved to a new location or new owner and using that
-            // oweners id.
-            // 2. Using the loc.uid parameter if not inflight to get the owner
-            // id.
-            const new_alloc = g_db.alloc.firstExample({
-                _from: this.#loc.new_owner ? this.#loc.new_owner : this.#loc.uid,
-                _to: this.#loc.new_repo,
-            });
+        const handleError = (errorCode, errorMessage) => {
+            this.#error = errorCode;
+            this.#err_msg = errorMessage;
+            return false;
+        };
 
-            // If no allocation is found for the item throw an error
-            // if the paths do not align also throw an error.
-            if (!new_alloc) {
-                this.#error = g_lib.ERR_PERM_DENIED;
-                this.#err_msg =
-                    "Permission denied, '" + this.#key + "' is not part of an allocation '";
-                return false;
-            }
+        const getRepo = (repoId) =>
+            g_db._document(repoId) ||
+            handleError(
+                g_lib.ERR_INTERNAL_FAULT,
+                `Unable to find repo for allocation: '${repoId}', record: '${this.#data_id}'`,
+            );
 
-            this.#repo = g_db._document(this.#loc.new_repo);
+        const formatPath = (path, repoPath) =>
+            !path.startsWith("/") && repoPath.startsWith("/") ? `/${path}` : path;
 
+        const validatePath = (loc, repoPath, inputPath) =>
+            this._comparePaths(this._pathToRecord(loc, repoPath), inputPath);
+
+        const processRepo = (repoId, loc, inputPath) => {
+            this.#repo = getRepo(repoId);
             if (!this.#repo) {
-                this.#error = g_lib.ERR_INTERNAL_FAULT;
-                this.#err_msg =
-                    "Unable to find repo that record is meant to be allocated too, '" +
-                    this.#loc.new_repo +
-                    "' record '" +
-                    this.#data_id;
                 return false;
             }
 
-            // If path is missing the starting "/" add it back in
-            if (!a_path.startsWith("/") && this.#repo.path.startsWith("/")) {
-                a_path = "/" + a_path;
-            }
+            inputPath = formatPath(inputPath, this.#repo.path);
+            return validatePath(loc, this.#repo.path, inputPath);
+        };
 
-            let stored_path = this._pathToRecord(this.#loc, this.#repo.path);
+        if (this.#loc.new_repo) {
+            const ownerId = this.#loc.new_owner || this.#loc.uid;
+            const newAlloc = g_db.alloc.firstExample({ _from: ownerId, _to: this.#loc.new_repo });
 
-            if (!this._comparePaths(stored_path, a_path)) {
-                return false;
+            if (!newAlloc) {
+                return handleError(
+                    g_lib.ERR_PERM_DENIED,
+                    `Permission denied, '${this.#key}' is not part of an allocation.`,
+                );
             }
-        } else {
-            this.#repo = g_db._document(this.#loc._to);
-
-            if (!a_path.startsWith("/") && this.#repo.path.startsWith("/")) {
-                a_path = "/" + a_path;
-            }
-            let stored_path = this._pathToRecord(this.#loc, this.#repo.path);
-
-            // If there is no new repo check that the paths align
-            if (!this._comparePaths(stored_path, a_path)) {
-                return false;
-            }
+            return processRepo(this.#loc.new_repo, this.#loc, a_path);
         }
-        return true;
+
+        return processRepo(this.#loc._to, this.#loc, a_path);
     }
 }
 

@@ -22,6 +22,8 @@ private:
   LogContext m_log_context;
 
 public:
+  virtual ~ZeroMQCommunicatorSecure() {};
+
   ZeroMQCommunicatorSecure(const SocketOptions &socket_options,
                            const ICredentials &credentials,
                            uint32_t timeout_on_receive_milliseconds,
