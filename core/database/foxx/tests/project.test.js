@@ -7,7 +7,7 @@ const g_db = require("@arangodb").db;
 const g_lib = require("../api/support");
 const arangodb = require("@arangodb");
 
-describe("Project Class", () => {
+describe("Project", () => {
     beforeEach(() => {
         g_db.p.truncate();
         g_db.alloc.truncate();

@@ -1,7 +1,7 @@
 "use strict";
 const chai = require("chai");
 const expect = chai.expect;
-const authzModule = require("../api/controllers/authz"); // Replace with the actual file name
+const authzModule = require("../api/controllers/authz");
 const g_db = require("@arangodb").db;
 const g_lib = require("../api/support");
 const arangodb = require("@arangodb");
