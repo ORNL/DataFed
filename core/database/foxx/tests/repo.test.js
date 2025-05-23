@@ -2,7 +2,7 @@
 
 const chai = require("chai");
 const { expect } = chai;
-const { Repo, PathType } = require("../api/controllers/repo");
+const { Repo, PathType } = require("../api/models/repo");
 const g_db = require("@arangodb").db;
 const g_lib = require("../api/support");
 const arangodb = require("@arangodb");

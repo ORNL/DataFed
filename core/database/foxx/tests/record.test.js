@@ -2,7 +2,7 @@
 
 const chai = require("chai");
 const expect = chai.expect;
-const Record = require("../api/controllers/record");
+const Record = require("../api/models/record");
 const g_db = require("@arangodb").db;
 const g_lib = require("../api/support");
 const arangodb = require("@arangodb");

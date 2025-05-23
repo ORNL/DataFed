@@ -1,7 +1,7 @@
 "use strict";
 const chai = require("chai");
 const expect = chai.expect;
-const authzModule = require("../api/controllers/authz");
+const authzModule = require("../api/models/authz");
 const g_db = require("@arangodb").db;
 const g_lib = require("../api/support");
 const arangodb = require("@arangodb");
