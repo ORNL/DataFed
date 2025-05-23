@@ -17,6 +17,7 @@ enum class SocketRole;
 class IServer {
 
 public:
+  virtual ~IServer() {};
   virtual ServerType type() const noexcept = 0;
   /**
    * By default will run forever you can specify a time to run the for instead

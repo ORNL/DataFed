@@ -144,7 +144,7 @@ class Repo {
             throw [g_lib.ERR_INTERNAL_FAULT, "Repo document is missing path: " + this.#repo_id];
         }
 
-        // Get and sanitize the repo root path
+        // Get and sanitize the repo root path by removing the trailing slash if one exists
         let repo_root_path = repo.path.replace(/\/$/, "");
         let sanitized_path = a_path.replace(/\/$/, "");
 

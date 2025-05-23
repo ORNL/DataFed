@@ -211,6 +211,11 @@ bool clearContext(globus_gsi_authz_handle_t a_handle) {
 // points to the configuration file used for DataFed comm settings
 static struct Config g_config;
 
+// Function to access g_config for testing
+struct Config getConfig() {
+  return g_config;
+}
+
 bool setConfigVal(const char *a_label, char *a_dest, char *a_src,
                   size_t a_max_len) {
   size_t len = strlen(a_src);
@@ -256,6 +261,8 @@ bool loadKeyFile(char *a_dest, char *a_filename) {
 }
 
 bool loadConfig() {
+  AUTHZ_LOG_DEBUG("loadConfig\n");
+  const bool error = true;
   memset(&g_config, 0, sizeof(struct Config));
 
   const char *cfg_file = getenv("DATAFED_AUTHZ_CFG_FILE");
@@ -268,7 +275,7 @@ bool loadConfig() {
       AUTHZ_LOG_ERROR("DataFed - DATAFED_AUTHZ_CFG_FILE env variable not set, "
                       "and datafed-authz.cfg is not located in default "
                       "location /opt/datafed/authz\n");
-      return true;
+      return error;
     }
   } else {
     AUTHZ_LOG_INFO("DataFed - Loading authz config file: %s\n", cfg_file);
@@ -283,7 +290,17 @@ bool loadConfig() {
     char buf[MAX_BUF];
     int lc = -1;
     char *val;
-    bool err;
+
+    // Default values must be outside the while
+    g_config.timeout = 10000;
+    g_config.log_path[0] = '\0';
+    g_config.user[0] = '\0';
+    g_config.repo_id[0] = '\0';
+    g_config.server_addr[0] = '\0';
+    g_config.pub_key[0] = '\0';
+    g_config.globus_collection_path[0] = '\0';
+    g_config.priv_key[0] = '\0';
+    g_config.server_key[0] = '\0';
 
     while (1) {
       lc++;
@@ -308,7 +325,7 @@ bool loadConfig() {
       if (!val) {
         AUTHZ_LOG_ERROR(
             "DataFed - Syntax error in authz config file at line %i.\n", lc);
-        return true;
+        return error;
       } else {
         *val = 0;
         val++;
@@ -318,6 +335,7 @@ bool loadConfig() {
       g_config.timeout = 10000;
       g_config.log_path[0] = '\0';
 
+      bool err;
       if (strcmp(buf, "repo_id") == 0) {
         err = setConfigVal("repo_id", g_config.repo_id, val, MAX_ID_LEN);
       } else if (strcmp(buf, "server_address") == 0) {
@@ -352,40 +370,44 @@ bool loadConfig() {
       if (err) {
         AUTHZ_LOG_ERROR("Error encountered while reading authz config file: %s\n", buf);
         fclose(inf);
-        return true;
+        return error;
       }
     }
 
     fclose(inf);
 
     char miss[1024];
-    miss[0] = 0;
+    miss[0] = '\0';
 
-    if (g_config.user[0] == 0)
+    if (g_config.user[0] == '\0')
       strcat(miss, " user");
-    if (g_config.repo_id[0] == 0)
+    if (g_config.repo_id[0] == '\0')
       strcat(miss, " repo_id");
-    if (g_config.server_addr[0] == 0)
+    if (g_config.server_addr[0] == '\0')
       strcat(miss, " server_address");
-    if (g_config.pub_key[0] == 0)
+    if (g_config.pub_key[0] == '\0')
       strcat(miss, " pub_key");
-    if (g_config.globus_collection_path[0] == 0)
+    if (g_config.globus_collection_path[0] == '\0')
       strcat(miss, " globus-collection-path");
-    if (g_config.priv_key[0] == 0)
+    if (g_config.priv_key[0] == '\0')
       strcat(miss, " priv_key");
-    if (g_config.server_key[0] == 0)
+    if (g_config.server_key[0] == '\0')
       strcat(miss, " server_key");
 
-    if (miss[0] != 0) {
+    // If any of the parameters are missing then there is an error somewhere
+    // So if miss is anything other than 0 something is missing.
+    if (miss[0] != '\0') {
 
-        AUTHZ_LOG_INFO("DataFed Authz module started, version %s\n", getVersion());
-        AUTHZ_LOG_INFO("                         API, version %s\n",
-                getAPIVersion());
-        AUTHZ_LOG_INFO("                     Release, version %s\n",
-                getReleaseVersion());
-        AUTHZ_LOG_ERROR("DataFed - Missing required authz config items:%s\n",
-                miss);
-        return true;
+      AUTHZ_LOG_INFO("DataFed Authz module started, version %s\n",
+                     getVersion());
+      AUTHZ_LOG_INFO("                         API, version %s\n",
+                     getAPIVersion());
+      AUTHZ_LOG_INFO("                     Release, version %s\n",
+                     getReleaseVersion());
+
+      AUTHZ_LOG_ERROR("DataFed - Missing required authz config items:%s\n",
+                      miss);
+      return error;
     }
   } else {
 
@@ -396,7 +418,7 @@ bool loadConfig() {
                    getReleaseVersion());
     AUTHZ_LOG_ERROR("DataFed - Could not open authz config file.\n");
 
-    return true;
+    return error;
   }
 
   AUTHZ_LOG_INFO("DataFed Authz module started, version %s\n", getVersion());
@@ -404,17 +426,18 @@ bool loadConfig() {
   AUTHZ_LOG_INFO("                     Release, version %s\n",
                  getReleaseVersion());
 
-  return false;
+  return !error;
 }
 
 // The same
 globus_result_t gsi_authz_init() {
-  // openlog("gsi_authz", 0, LOG_AUTH);
+  AUTHZ_LOG_DEBUG("gsi_authz_init\n");
   memset(g_active_contexts, 0, sizeof(g_active_contexts));
 
   // This line is different
-  if (loadConfig())
+  if (loadConfig()) {
     return GLOBUS_FAILURE;
+  }
 
   return GLOBUS_SUCCESS;
 }

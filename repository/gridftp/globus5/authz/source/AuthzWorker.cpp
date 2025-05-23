@@ -479,10 +479,19 @@ std::string AuthzWorker::getAuthzPath(char *full_ftp_path) {
   std::string local_path = removeOrigin(full_ftp_path);
 
   if (isPathValid(local_path) == false) {
-    EXCEPT(1, "Invalid POSIX path.");
+    EXCEPT(1, "Invalid POSIX path: " + std::string(full_ftp_path) +
+                  " local_path: " + local_path);
   }
-  auto prefix = local_path.substr(0, m_local_globus_path_root.length());
 
+  std::string prefix = local_path.substr(0, m_local_globus_path_root.length());
+  if (prefix.length() == 1) {
+    if (prefix.compare("/") == 0) {
+      return local_path;
+    } else {
+      EXCEPT(1, "Invalid POSIX path: " + std::string(full_ftp_path) +
+                    " local_path: " + local_path + " prefix: " + prefix);
+    }
+  }
   return local_path.substr(prefix.length());
 }
 

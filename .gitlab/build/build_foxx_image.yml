@@ -21,6 +21,7 @@ build-foxx:
     - changes:
         - docker/**/*
         - scripts/**/*
+        - cmake/**/*
         - core/database/**/*
         - core/CMakeLists.txt
         - common/proto/**/*
@@ -43,6 +44,7 @@ retag-image:
     - changes:
         - docker/**/*
         - scripts/**/*
+        - cmake/**/*
         - core/database/**/*
         - core/CMakeLists.txt
         - common/proto/**/*

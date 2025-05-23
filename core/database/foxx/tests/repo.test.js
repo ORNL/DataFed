@@ -540,4 +540,16 @@ describe("Testing Repo class", () => {
         expect(repo2.exists()).to.be.true;
         expect(repo2.hasAccess(user_id)).to.be.false; // should return false, no allocation to this repo
     });
+    it("unit_repo: should handle a user record path.", () => {
+        const path = "/mnt/datafed/compose-home/";
+        g_db.repo.save({
+            _id: "repo/foo",
+            _key: "foo",
+            path: path,
+        });
+        const repo = new Repo("foo");
+        expect(repo.pathType("/mnt/datafed/compose-home/user/tim/1135")).to.equal(
+            PathType.USER_RECORD_PATH,
+        );
+    });
 });
