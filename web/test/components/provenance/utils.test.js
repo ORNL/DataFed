@@ -340,7 +340,7 @@ describe("utils", function () {
 
             const nodeData = [node1, node2];
 
-            graphPruneReset(nodeData);
+            graphPruneReset(nodeData, []);
 
             expect(node1.prune).to.be.false;
             expect(node2.prune).to.be.false;

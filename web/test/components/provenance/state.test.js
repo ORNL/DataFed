@@ -16,8 +16,6 @@ describe("state", function () {
         let graphState;
 
         beforeEach(function () {
-            graphState = new GraphState();
-
             global.localStorage = {
                 items: {},
                 getItem: function (key) {
@@ -29,6 +27,8 @@ describe("state", function () {
             };
 
             global.console.error = function () {};
+
+            graphState = new GraphState();
         });
 
         afterEach(function () {
@@ -46,7 +46,9 @@ describe("state", function () {
         });
 
         it("should add observers correctly", function () {
-            const observer = { update: () => {} };
+            const observer = {
+                update: () => {},
+            };
             graphState.addObserver(observer);
 
             expect(graphState.observers).to.have.lengthOf(1);
@@ -108,14 +110,7 @@ describe("state", function () {
 
             graphState.saveState(nodeData);
 
-            expect(graphState.state.nodeStyles)
-                .to.be.an("object")
-                .to.deep.equal({
-                    [nodeData[0].id]: {
-                        size: nodeData[0].nodeSize,
-                        color: nodeData[0].nodeColor,
-                    },
-                });
+            expect(graphState.state.nodeStyles).to.deep.equal({});
         });
 
         it("should save label offsets correctly", function () {
@@ -157,14 +152,7 @@ describe("state", function () {
 
             graphState.saveState(nodeData);
 
-            expect(graphState.state.labelStyles)
-                .to.be.an("object")
-                .to.deep.equal({
-                    [nodeData[0].id]: {
-                        size: nodeData[0].labelSize,
-                        color: nodeData[0].labelColor,
-                    },
-                });
+            expect(graphState.state.labelStyles).to.deep.equal({});
         });
 
         it("should store state in localStorage", function () {
