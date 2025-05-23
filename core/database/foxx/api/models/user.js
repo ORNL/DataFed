@@ -23,6 +23,10 @@ class User {
     static options;
 }
 class UserModel {
+    // ERROR code
+    #error = null;
+    // Error message should be a string if defined
+    #err_msg = null;
     #user_id;
     #user_key;
     #exists;
@@ -53,9 +57,21 @@ class UserModel {
     constructor(id, key) {
         if (!id && !key) {
             throw [support.ERR_MISSING_REQ_PARAM, "User ID or Key must be provided"];
+        } else if (typeof id !== "undefined" && typeof key !== "undefined") {
+          if( id !== "u/" + key ) {
+          // If both values are provided for some reason they must be equivalent.
+            throw [support.ERR_INTERNAL_FAULT, "Both id and key provided to user model, but they have conflicting values. id must equal 'u/' + key"];
+          } else {
+            this.#user_id = id;
+            this.#user_key = key;
+          }
+        } else if ( typeof id === "undefined" ) {
+          this.#user_id = "u/" + key;
+          this.#user_key = key;
+        } else if ( typeof key == "undefined" ) {
+          this.#user_id = id;
+          this.#user_key = id.slice("u/".length);
         }
-        this.#user_id = id;
-        this.#user_key = key;
     }
 
     /** Checks database for existence of user
@@ -148,6 +164,44 @@ class UserModel {
             this.#fetch_from_db();
         }
         return Object.freeze(this.#token);
+    }
+
+    getGroupIds() {
+        const qry = "FOR edge IN mem FILTER edge._to == @user_id RETURN edge._from";
+        const cursor = database._query(qry, { user_id: this.#user_id });
+        return cursor.toArray();
+    }
+
+    getProjectIds() {
+        const group_ids = this.getGroupIds();
+        const qry = "FOR group IN g FILTER group._id IN @group_ids RETURN DISTINCT group.uid";
+        const cursor = database._query(qry, { group_ids: group_ids });
+        return cursor.toArray();
+    }
+
+    /**
+     * Get all the repos the user has access too.
+     *
+     * @returns {Set} of all repo ids associated with the user.
+     **/
+    getRepos() {
+        // Grab all projects associated with the user
+        const project_ids = getProjectIds();
+        const qry = "FOR edge IN alloc FILTER edge._from IN @project_ids RETURN DISTINCT edge._to";
+        const cursor = database._query(qry, { group_ids: group_ids });
+        const project_repos = cursor.toArray();
+
+        // Grab the allocations that the user has access too
+        const user_allocs = database.alloc
+            .byExample({
+                _from: this.#user_id,
+            })
+            .toArray();
+
+        const repo_ids = [...new Set(user_allocs.map((obj) => obj._to))];
+
+        project_repos.forEach((repo) => repo_ids.add(item));
+        return repo_ids;
     }
 
     // TODO: setters

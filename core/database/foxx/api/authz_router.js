@@ -5,8 +5,8 @@ const router = createRouter();
 const joi = require("joi");
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
-const authzModule = require("./controllers/authz");
-const { Repo, PathType } = require("./controllers/repo");
+const authzModule = require("./models/authz");
+const { Repo, PathType } = require("./models/repo");
 
 module.exports = router;
 
