@@ -66,17 +66,24 @@ fi
 
 install_python() {
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.python_installed-${DATAFED_PYTHON_VERSION}" ]; then
-    # Check if the deadsnakes repository has already been added to avoid issues with gpg
-    if ! grep -qr '^deb .\+deadsnakes' /etc/apt/sources.list.d/; then
-	"$SUDO_CMD" apt update
-	"$SUDO_CMD" apt install -y software-properties-common
-	"$SUDO_CMD" add-apt-repository -y ppa:deadsnakes/ppa
-	"$SUDO_CMD" apt update
-    fi
+    local original_dir=$(pwd)
+    cd "${PROJECT_ROOT}"
+    "$SUDO_CMD" apt update
+    "$SUDO_CMD" apt install -y build-essential libreadline-dev zlib1g-dev
 
-    "$SUDO_CMD" apt install -y "python${DATAFED_PYTHON_VERSION}" "python${DATAFED_PYTHON_VERSION}-dev" "python${DATAFED_PYTHON_VERSION}-venv" "python${DATAFED_PYTHON_VERSION}-distutils"
+    "$SUDO_CMD" curl -O "https://www.python.org/ftp/python/${DATAFED_PYTHON_VERSION_FULL}/Python-${DATAFED_PYTHON_VERSION_FULL}.tgz"
+    "$SUDO_CMD" tar -xf "Python-${DATAFED_PYTHON_VERSION_FULL}.tgz"
+    cd "Python-${DATAFED_PYTHON_VERSION_FULL}" 
+
+    "$SUDO_CMD" ./configure --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}/python"
+    "$SUDO_CMD" make -j$(nproc)
+    "$SUDO_CMD" make altinstall
+
+    export PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/python/bin:$PATH"
+    export PYTHON="${DATAFED_DEPENDENCIES_INSTALL_PATH}/python/bin/python${DATAFED_PYTHON_VERSION}"
 
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.python_installed-${DATAFED_PYTHON_VERSION}"
+    cd "$original_dir"
   fi
 }
 

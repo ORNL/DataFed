@@ -43,13 +43,15 @@ fi
 
 if [[ $local_UNIFY = false ]]; then
   sudo_command
+  echo "GOT HERE 1"
   "$SUDO_CMD" apt-get update
   "$SUDO_CMD" dpkg --configure -a
   "$SUDO_CMD" apt-get install -y "${packages[@]}"
+  echo "GOT HERE 2"
   init_python
   source "${DATAFED_PYTHON_ENV}/bin/activate"
-  "python${DATAFED_PYTHON_VERSION}" -m pip install --upgrade pip
   "python${DATAFED_PYTHON_VERSION}" -m pip install "${pip_packages[@]}"
+  echo "GOT HERE 3"
 
   for ext in "${externals[@]}"; do
     install_dep_by_name "$ext"
