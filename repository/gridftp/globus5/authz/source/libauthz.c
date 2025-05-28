@@ -331,10 +331,6 @@ bool loadConfig() {
         val++;
       }
 
-      // Default values
-      g_config.timeout = 10000;
-      g_config.log_path[0] = '\0';
-
       bool err;
       if (strcmp(buf, "repo_id") == 0) {
         err = setConfigVal("repo_id", g_config.repo_id, val, MAX_ID_LEN);
