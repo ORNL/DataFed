@@ -566,7 +566,7 @@ install_openssl() {
     fi
 
     "$SUDO_CMD" apt update
-    "$SUDO_CMD" apt install -y build-essential
+    "$SUDO_CMD" apt install -y build-essential git
 
     git clone https://github.com/openssl/openssl "${PROJECT_ROOT}/external/openssl"
     cd "${PROJECT_ROOT}/external/openssl"
