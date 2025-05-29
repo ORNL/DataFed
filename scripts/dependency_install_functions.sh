@@ -105,9 +105,9 @@ install_python() {
     local original_dir=$(pwd)
     cd "${PROJECT_ROOT}"
     "$SUDO_CMD" apt update
-    "$SUDO_CMD" apt install -y build-essential libreadline-dev zlib1g-dev libffi-dev
+    "$SUDO_CMD" apt install -y build-essential libreadline-dev zlib1g-dev libffi-dev wget
 
-    "$SUDO_CMD" curl -O "https://www.python.org/ftp/python/${DATAFED_PYTHON_VERSION_FULL}/Python-${DATAFED_PYTHON_VERSION_FULL}.tgz"
+    "$SUDO_CMD" wget "https://www.python.org/ftp/python/${DATAFED_PYTHON_VERSION_FULL}/Python-${DATAFED_PYTHON_VERSION_FULL}.tgz"
     "$SUDO_CMD" tar -xf "Python-${DATAFED_PYTHON_VERSION_FULL}.tgz"
     cd "Python-${DATAFED_PYTHON_VERSION_FULL}" 
 
