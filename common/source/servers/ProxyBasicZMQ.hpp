@@ -40,6 +40,8 @@ public:
       const std::unordered_map<SocketRole, ICredentials *> &socket_credentials,
       LogContext log_context);
 
+  virtual ~ProxyBasicZMQ() {};
+  
   virtual ServerType type() const noexcept final {
     return ServerType::PROXY_BASIC_ZMQ;
   }

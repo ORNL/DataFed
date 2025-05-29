@@ -149,11 +149,28 @@ ZeroMQCommunicatorSecure::ZeroMQCommunicatorSecure(
 
   auto socket_factory = SocketFactory();
   m_socket = socket_factory.create(socket_options, credentials);
-  m_zmq_ctx = getContext();
+
+  // If running INPROC, each ZeroMQ socket should use the same context, other
+  // wise they should a different context.
+  if ( socket_options.scheme == URIScheme::INPROC ) {
+    m_zmq_ctx = InprocContext::getContext();
+    InprocContext::increment();
+  } else {
+    m_zmq_ctx = zmq_ctx_new();
+  }
+
   m_zmq_socket_type = translateToZMQSocket(m_socket.get());
   m_zmq_socket = zmq_socket(m_zmq_ctx, m_zmq_socket_type);
 
-  // Order matters must occur after m_zmq_socket has be been created
+  if (m_zmq_socket == nullptr) {
+      int err = zmq_errno();
+      std::string error_message = zmq_strerror(err);
+      EXCEPT_PARAM(1, "Error creating ZeroMQ socket (type: "
+                << zmqSocketTypeToString(m_zmq_socket_type)
+                << "): [" << err << "] " << error_message);
+  }
+
+  // Order matters must occur after m_zmq_socket has been created
   zmqCurveSetup(credentials);
   // -1 - Leave to OS
   // Not sure what 0 and 1 do other than mean you are going to overide

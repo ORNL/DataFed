@@ -6,9 +6,22 @@
 
 #include "Version.hpp"
 
+// Third party includes
+#include <google/protobuf/stubs/common.h>
+
 extern "C" {
 #include "AuthzWorker.h"
 }
+
+struct GlobalProtobufTeardown {
+    ~GlobalProtobufTeardown() {
+        // This is the teardown function that runs once at the end
+        google::protobuf::ShutdownProtobufLibrary();
+    }
+};
+
+// Declare a global fixture instance
+BOOST_GLOBAL_FIXTURE(GlobalProtobufTeardown);
 
 BOOST_AUTO_TEST_SUITE(get_version)
 

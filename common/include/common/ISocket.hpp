@@ -15,9 +15,13 @@ namespace SDMS {
 class ISocket {
 
 public:
+
+  virtual ~ISocket() {};
   /*********************************************************
    * Getters
    *********************************************************/
+
+  virtual URIScheme getSocketScheme() const noexcept = 0;
   virtual SocketClassType getSocketClassType() const noexcept = 0;
   virtual SocketCommunicationType
   getSocketCommunicationType() const noexcept = 0;

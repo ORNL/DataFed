@@ -1,6 +1,8 @@
 import * as model from "./model.js";
 import * as util from "./util.js";
 import * as settings from "./settings.js";
+import { TransferMode } from "./models/transfer-model.js";
+import { EndpointModel } from "./models/endpoint-model.js";
 
 export function _asyncGet(a_url, a_raw_json_data, a_callback, a_timeout) {
     $.ajax({
@@ -94,35 +96,40 @@ export function setDefaultAlloc(a_repo, a_subject, a_cb) {
 }
 
 export function xfrStart(a_ids, a_mode, a_path, a_ext, a_encrypt_mode, a_orig_fname, a_cb) {
-    var url = "/api/dat/";
+    const search_path = a_path.substring(0, a_path.indexOf("/"));
+    epView(search_path, (ok, ep_data) => {
+        const ep = new EndpointModel(ep_data);
+        let url = "/api/dat/";
 
-    if (a_mode == model.TT_DATA_GET) {
-        url +=
-            "get" +
-            "?id=" +
-            encodeURIComponent(JSON.stringify(a_ids)) +
-            (a_orig_fname ? "&orig_fname=1" : "");
-    } else if (a_mode == model.TT_DATA_PUT) {
-        url += "put" + "?id=" + encodeURIComponent(a_ids[0]);
-    } else {
-        return;
-    }
-
-    url +=
-        "&path=" +
-        encodeURIComponent(a_path) +
-        "&encrypt=" +
-        a_encrypt_mode +
-        (a_ext && a_ext.length ? "&ext=" + encodeURIComponent(a_ext) : "");
-
-    _asyncGet(url, null, function (ok, data) {
-        if (ok) {
-            epRecentLoad(function () {
-                if (a_cb) a_cb(ok, data);
-            });
+        // Build the base URL based on transfer mode
+        if (a_mode === TransferMode.TT_DATA_GET) {
+            url += `get?id=${encodeURIComponent(JSON.stringify(a_ids))}${a_orig_fname ? "&orig_fname=1" : ""}`;
+        } else if (a_mode === TransferMode.TT_DATA_PUT) {
+            url += `put?id=${encodeURIComponent(a_ids[0])}`;
         } else {
-            if (a_cb) a_cb(ok, data);
+            return;
         }
+
+        // Add common parameters
+        url += `&path=${encodeURIComponent(a_path)}&encrypt=${a_encrypt_mode}`;
+        if (a_ext && a_ext.length) {
+            url += `&ext=${encodeURIComponent(a_ext)}`;
+        }
+
+        // Make the API request with proper consent parameters if needed
+        const requestData = ep.requiresConsent
+            ? { collection_id: ep.id, collection_type: "mapped" }
+            : null;
+
+        _asyncGet(url, requestData, (ok, data) => {
+            if (ok) {
+                epRecentLoad(() => {
+                    if (a_cb) a_cb(ok, data);
+                });
+            } else {
+                if (a_cb) a_cb(ok, data);
+            }
+        });
     });
 }
 
@@ -988,7 +995,7 @@ export function epRecentLoad(a_cb) {
     });
 }
 
-export function epDirList(a_ep, a_path, a_show_hidden, a_cb) {
+export function epDirList(a_ep, a_path, a_show_hidden, is_mapped, collection_id, a_cb) {
     _asyncGet(
         "/ui/ep/dir/list?ep=" +
             encodeURIComponent(a_ep) +
@@ -996,7 +1003,7 @@ export function epDirList(a_ep, a_path, a_show_hidden, a_cb) {
             encodeURIComponent(a_path) +
             "&hidden=" +
             (a_show_hidden ? "true" : "false"),
-        null,
+        is_mapped ? { collection_id: collection_id, collection_type: "mapped" } : null,
         function (ok, data) {
             if (a_cb) {
                 if (ok) a_cb(data);
@@ -1010,6 +1017,27 @@ export function epDirList(a_ep, a_path, a_show_hidden, a_cb) {
 
 export function themeSave(a_theme, a_cb) {
     _asyncGet("/ui/theme/save?theme=" + encodeURIComponent(a_theme), null, a_cb);
+}
+
+export function getGlobusConsentURL(
+    a_cb,
+    collection_id,
+    requested_scopes,
+    refresh_tokens = false,
+    query_params = {},
+    state = "_default",
+) {
+    _asyncGet(
+        "/api/globus/consent_url",
+        {
+            collection_id,
+            refresh_tokens,
+            requested_scopes,
+            query_params: JSON.stringify(query_params),
+            state,
+        },
+        a_cb,
+    );
 }
 
 export function taskList_url(a_since) {

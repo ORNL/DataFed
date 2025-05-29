@@ -19,6 +19,16 @@
 
 using namespace SDMS;
 
+struct GlobalProtobufTeardown {
+    ~GlobalProtobufTeardown() {
+        // This is the teardown function that runs once at the end
+        google::protobuf::ShutdownProtobufLibrary();
+    }
+};
+
+// Declare a global fixture instance
+BOOST_GLOBAL_FIXTURE(GlobalProtobufTeardown);
+
 BOOST_AUTO_TEST_SUITE(FrameTest)
 
 BOOST_AUTO_TEST_CASE(testing_Frame) {
