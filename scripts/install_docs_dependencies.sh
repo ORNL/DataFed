@@ -10,11 +10,12 @@ PROJECT_ROOT=$(realpath ${SOURCE}/..)
 source "${PROJECT_ROOT}/scripts/utils.sh"
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
-packages=("g++" "gcc" "make" "pkg-config" "python${DATAFED_PYTHON_VERSION}" "python${DATAFED_PYTHON_VERSION}-venv")
+packages=("g++" "gcc" "make" "pkg-config")
 externals=("cmake" "protobuf")
 pip_packages=("setuptools" "sphinx" "sphinx-rtd-theme" "sphinx-autoapi")
 
 local_UNIFY=false
+install_python
 
 if [ $# -eq 1 ]; then
   case "$1" in

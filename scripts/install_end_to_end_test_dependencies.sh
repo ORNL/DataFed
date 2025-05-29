@@ -11,7 +11,7 @@ source "${PROJECT_ROOT}/scripts/utils.sh"
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
 packages=("libtool" "build-essential" "g++" "gcc" "make" "libboost-all-dev" "pkg-config" "autoconf" "automake" "unzip" "libcurl4-openssl-dev" "wget"
-	"rapidjson-dev" "libkrb5-dev" "git" "python${DATAFED_PYTHON_VERSION}" "python${DATAFED_PYTHON_VERSION}-venv" "libssl-dev")
+	"rapidjson-dev" "libkrb5-dev" "git" "libssl-dev")
 
 	
 pip_packages=("setuptools")
@@ -19,6 +19,8 @@ pip_packages=("setuptools")
 externals=("cmake" "protobuf" "nvm" "node" "foxx")
 
 local_UNIFY=false
+
+install_python
 
 if [ $# -eq 1 ]; then
   case "$1" in

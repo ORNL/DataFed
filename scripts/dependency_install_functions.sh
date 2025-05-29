@@ -49,6 +49,16 @@ else
   fi
 fi
 
+if [[ ! -v PKG_CONFIG_PATH ]]; then
+  PKG_CONFIG_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/lib/pkgconfig"
+else
+  if [[ -n "$PKG_CONFIG_PATH" ]]; then
+    PKG_CONFIG_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/lib/pkgconfig:$PKG_CONFIG_PATH"
+  else
+    PKG_CONFIG_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/lib/pkgconfig"
+  fi
+fi
+
 # WARNING: overwriting PATH can be very dangerous
 #   In Docker builds this must follow the pattern:
 #     PATH="<desired addition to path>:$PATH"
@@ -90,20 +100,25 @@ install_python() {
   local PYTHON_FLAG_PREFIX=".python_installed-"
   clean_install_flags "$PYTHON_FLAG_PREFIX"
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${PYTHON_FLAG_PREFIX}${DATAFED_PYTHON_VERSION}" ]; then
+    install_openssl
+
     local original_dir=$(pwd)
     cd "${PROJECT_ROOT}"
     "$SUDO_CMD" apt update
-    "$SUDO_CMD" apt install -y build-essential libreadline-dev zlib1g-dev
+    "$SUDO_CMD" apt install -y build-essential libreadline-dev zlib1g-dev libffi-dev
 
     "$SUDO_CMD" curl -O "https://www.python.org/ftp/python/${DATAFED_PYTHON_VERSION_FULL}/Python-${DATAFED_PYTHON_VERSION_FULL}.tgz"
     "$SUDO_CMD" tar -xf "Python-${DATAFED_PYTHON_VERSION_FULL}.tgz"
     cd "Python-${DATAFED_PYTHON_VERSION_FULL}" 
 
-    "$SUDO_CMD" ./configure --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}/python"
+    export CPPFLAGS="-I${DATAFED_DEPENDENCIES_INSTALL_PATH}/include $CPPFLAGS"
+    export LDFLAGS="-L${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib -Wl,-rpath,${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib $LDFLAGS"
+    "$SUDO_CMD" ./configure --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}/python" --with-openssl="${DATAFED_DEPENDENCIES_INSTALL_PATH}" --with-openssl-rpath=auto
     "$SUDO_CMD" make -j$(nproc)
     "$SUDO_CMD" make altinstall
 
-    export PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/python/bin:$PATH"
+    "$SUDO_CMD" mkdir -p "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin"
+    "$SUDO_CMD" ln -s "${DATAFED_DEPENDENCIES_INSTALL_PATH}/python/bin/python${DATAFED_PYTHON_VERSION}" "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/python${DATAFED_PYTHON_VERSION}"
     export PYTHON="${DATAFED_DEPENDENCIES_INSTALL_PATH}/python/bin/python${DATAFED_PYTHON_VERSION}"
 
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${PYTHON_FLAG_PREFIX}${DATAFED_PYTHON_VERSION}"
@@ -126,6 +141,7 @@ init_python() {
   if [ ! -e "$DATAFED_DEPENDENCIES_INSTALL_PATH" ] || [ ! -d "$DATAFED_PYTHON_DEPENDENCIES_DIR" ]; then
       mkdir -p "$DATAFED_PYTHON_DEPENDENCIES_DIR"
   fi
+
   "python${DATAFED_PYTHON_VERSION}" -m venv "${DATAFED_PYTHON_ENV}"
   # Make sure that pip is installed and upgraded
   "python${DATAFED_PYTHON_VERSION}" -m ensurepip --upgrade
@@ -548,6 +564,10 @@ install_openssl() {
     then
       "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/openssl"
     fi
+
+    "$SUDO_CMD" apt update
+    "$SUDO_CMD" apt install -y build-essential
+
     git clone https://github.com/openssl/openssl "${PROJECT_ROOT}/external/openssl"
     cd "${PROJECT_ROOT}/external/openssl"
     git checkout "$DATAFED_OPENSSL_COMMIT"
@@ -559,6 +579,7 @@ install_openssl() {
     else
       "$SUDO_CMD" make install 
     fi
+
     # Mark openssl as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${OPENSSL_FLAG_PREFIX}${DATAFED_OPENSSL}"
     cd "$original_dir"
