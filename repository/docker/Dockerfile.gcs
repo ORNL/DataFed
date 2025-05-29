@@ -103,6 +103,7 @@ COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libcrypto.so.1
 
 # Needed for tests
 COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake
+ADD /datafed/source /datafed/source
 
 # For communicating with public
 EXPOSE 443
