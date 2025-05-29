@@ -10,7 +10,7 @@ PROJECT_ROOT=$(realpath "${SOURCE}/..")
 source "${PROJECT_ROOT}/scripts/utils.sh"
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
-packages=("pkg-config" "python${DATAFED_PYTHON_VERSION}" "python${DATAFED_PYTHON_VERSION}-venv")
+packages=("pkg-config")
 pip_packages=("setuptools")
 
 install_python
