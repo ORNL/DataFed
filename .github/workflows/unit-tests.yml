@@ -9,10 +9,6 @@ jobs:
       - uses: actions/checkout@v2
       - name: Update debian
         run: apt update
-      - name: Install Python
-        run: bash -c "source ./scripts/dependency_install_functions.sh && install_python"
-      - name: Ensure pip is installed
-        run: python3.9 -m ensurepip
       - name: Install dependencies
         run: |
           ./scripts/generate_datafed.sh
