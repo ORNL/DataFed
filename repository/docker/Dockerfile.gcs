@@ -145,7 +145,7 @@ COPY --chown=datafed:root ./scripts/globus/__init__.py                ${BUILD_DI
 # runtime depedencies
 
 RUN apt update
-RUN apt-get install wget jq bind9-host -y
+RUN apt-get install wget jq bind9-host build-essential -y
 RUN apt-get reinstall globus-connect-server54 -y
 
 RUN ${BUILD_DIR}/scripts/generate_gsi-authz_config.sh
