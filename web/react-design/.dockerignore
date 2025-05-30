@@ -6,6 +6,6 @@ docker-compose.yml
 .coverage.*
 .git
 .gitignore
-
+coverage
 node_modules
 dist

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useUser } from "./contexts/UserContext";
 import DataRecordView from "./components/DataRecord/DataRecordView";
+import { logger } from "./utils/logger";
 import "./App.css";
 
 /**
@@ -92,9 +93,9 @@ const App: React.FC = () => {
             <h2>Record Details</h2>
             <DataRecordView
               recordId={recordId}
-              onEdit={(record) => console.log("Edit record:", record)}
+              onEdit={(record) => logger.info("Edit record:", record)}
               onDelete={(id) => {
-                console.log("Delete record:", id);
+                logger.info("Delete record:", id);
                 handleReset();
               }}
             />

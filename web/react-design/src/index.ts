@@ -13,23 +13,13 @@ import path from "path";
 import http from "http";
 import https from "https";
 import httpCodes from "http-codes";
-
-interface Logger {
-  info: (message: string, ...args: any[]) => void;
-  warn: (message: string, ...args: any[]) => void;
-  error: (message: string, ...args: any[]) => void;
-}
-const log: Logger = {
-  info: console.log,
-  warn: console.warn,
-  error: console.error,
-};
+import { logger } from "./utils/logger";
 const requestLogger = (
   req: Request,
   res: Response,
   next: NextFunction,
 ): void => {
-  log.info(`${req.method} ${req.originalUrl}`);
+  logger.info(`${req.method} ${req.originalUrl}`);
   next();
 };
 
@@ -51,7 +41,7 @@ if (isProduction && internalKey && internalCert) {
   const cert: string = internalCert.replace(/\\n/g, "\n");
   httpsOptions = { key, cert };
 } else if (isProduction) {
-  log.warn(
+  logger.warn(
     "SSL Key or Certificate not provided for production. HTTPS will not be enabled.",
   );
 }
@@ -66,7 +56,7 @@ appRouter.use((req: Request, res: Response, next: NextFunction) => {
   const existingId = req.get("X-Request-Id");
   const id = existingId ?? uuidv4();
   res.set("X-Request-Id", id);
-  (req as any).id = id;
+  (req as Request & { id: string }).id = id;
   next();
 });
 
@@ -87,7 +77,7 @@ appRouter.use("/api", apiRoutes);
 if (isProduction) {
   const staticPath: string =
     process.env.STATIC_PATH ?? path.join(__dirname, "../build");
-  log.info(`Serving static files from: ${staticPath}`);
+  logger.info(`Serving static files from: ${staticPath}`);
 
   appRouter.use(express.static(staticPath));
 
@@ -120,23 +110,27 @@ if (isDevelopment) {
   let webpackConfig: webpack.Configuration;
 
   try {
+    // Dynamic imports for development-only dependencies
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     webpackDevMiddleware = require("webpack-dev-middleware");
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     webpackHotMiddleware = require("webpack-hot-middleware");
     const webpackConfigPath =
       process.env.WEBPACK_CONFIG_PATH ??
       path.join(__dirname, "../webpack.config.js");
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     webpackConfig = require(webpackConfigPath);
 
     if (!webpackConfig.output?.publicPath) {
-      log.error(
+      logger.error(
         'Webpack configuration must have "output.publicPath" defined for dev server.',
       );
       process.exit(1);
     }
   } catch (e) {
-    log.error(
+    logger.error(
       "Webpack dev dependencies or config not found. Make sure to install them for development.",
-      e,
+      e as Error,
     );
     process.exit(1);
   }
@@ -155,7 +149,7 @@ if (isDevelopment) {
   serverApp.use((req: Request, res: Response, next: NextFunction) => {
     if (req.method === "GET" && req.accepts("html")) {
       const filename = path.join(compiler.outputPath, "index.html");
-      (compiler.outputFileSystem as any).readFile(
+      (compiler.outputFileSystem as typeof import("fs")).readFile(
         filename,
         (err: Error | null, result: Buffer) => {
           if (err) {
@@ -177,8 +171,8 @@ interface HttpError extends Error {
 }
 
 serverApp.use(
-  (err: HttpError, req: Request, res: Response, next: NextFunction) => {
-    log.error("Unhandled error:", err.stack ?? err.message);
+  (err: HttpError, req: Request, res: Response, _next: NextFunction) => {
+    logger.error("Unhandled error:", err);
     const statusCode = err.status ?? httpCodes.INTERNAL_SERVER_ERROR;
     res.status(statusCode).json({
       error: {
@@ -198,23 +192,23 @@ const gracefulShutdown = (
   serverInstance: http.Server | https.Server,
   signal: string,
 ) => {
-  log.info(`Received ${signal}. Starting graceful shutdown...`);
+  logger.info(`Received ${signal}. Starting graceful shutdown...`);
 
   activeConnections.forEach((conn) => conn.destroy());
-  log.info(`Drained ${activeConnections.size} active connections.`);
+  logger.info(`Drained ${activeConnections.size} active connections.`);
   activeConnections.clear();
 
   serverInstance.close((err?: Error) => {
     if (err) {
-      log.error("Error during server close:", err);
+      logger.error("Error during server close:", err);
       process.exit(1);
     }
-    log.info("HTTP(S) server closed.");
+    logger.info("HTTP(S) server closed.");
     process.exit(0);
   });
 
-  setTimeout(() => {
-    log.warn("Graceful shutdown timeout. Forcing exit.");
+  global.setTimeout(() => {
+    logger.warn("Graceful shutdown timeout. Forcing exit.");
     process.exit(1);
   }, 10000); // 10-seconds timeout
 };
@@ -231,7 +225,7 @@ const startServer = (): void => {
   });
 
   httpServer.listen(PORT, () => {
-    log.info(`HTTP Server running on port ${PORT} in ${APP_ENV} mode.`);
+    logger.info(`HTTP Server running on port ${PORT} in ${APP_ENV} mode.`);
   });
 
   let httpsServerInstance: https.Server | undefined;
@@ -244,11 +238,14 @@ const startServer = (): void => {
     });
 
     httpsServerInstance.listen(SSL_PORT, () => {
-      log.info(`HTTPS Server running on port ${SSL_PORT} in ${APP_ENV} mode.`);
+      logger.info(
+        `HTTPS Server running on port ${SSL_PORT} in ${APP_ENV} mode.`,
+      );
     });
   }
 
-  const signals: NodeJS.Signals[] = ["SIGINT", "SIGTERM", "SIGHUP"];
+  type SignalType = "SIGINT" | "SIGTERM" | "SIGHUP";
+  const signals: SignalType[] = ["SIGINT", "SIGTERM", "SIGHUP"];
   signals.forEach((signal) => {
     process.on(signal, () => {
       gracefulShutdown(httpServer, signal);
@@ -258,14 +255,12 @@ const startServer = (): void => {
     });
   });
 
-  process.on("unhandledRejection", (reason: any, promise: Promise<any>) => {
-    log.error(
-      "Unhandled Rejection at:",
-      promise,
-      "reason:",
-      reason instanceof Error ? reason.stack : reason,
-    );
-  });
+  process.on(
+    "unhandledRejection",
+    (reason: unknown, promise: Promise<unknown>) => {
+      logger.error(`Unhandled Rejection at: ${promise}`, reason as Error);
+    },
+  );
 };
 
 if (!isCI) {

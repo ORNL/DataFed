@@ -6,7 +6,7 @@ This directory contains the React+TypeScript implementation of the DataFed web U
 
 ```
 web/react-design/
-├── jest.config.js          # Jest configuration
+├── jest.configs.js          # Jest configuration
 ├── tsconfig.json           # TypeScript configuration
 └── src/
     ├── components/         # React components
@@ -102,7 +102,6 @@ npm run format
 
 - Use CSS modules for component-specific styles
 - Use a consistent naming convention for CSS classes
-
 
 ## Project Dependencies
 

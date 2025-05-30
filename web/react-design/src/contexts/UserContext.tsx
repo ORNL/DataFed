@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { User } from "../types/models";
 import dataFedApi from "../services/api";
+import { logger } from "../utils/logger";
 
 interface UserContextType {
   user: User | null;
@@ -104,7 +105,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         setUser(response.data);
       }
     } catch (err) {
-      console.error("Failed to refresh user:", err);
+      logger.error("Failed to refresh user:", err as Error);
     }
   };
 

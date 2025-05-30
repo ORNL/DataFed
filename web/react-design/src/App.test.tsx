@@ -1,7 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import App from "./App";
-import { UserProvider } from "./contexts/UserContext";
 import * as UserContext from "./contexts/UserContext";
 
 // Mock the useUser hook
@@ -63,7 +62,7 @@ describe("App Component", () => {
     expect(
       screen.getByText(/please log in to access datafed/i),
     ).toBeInTheDocument();
-    expect(screen.getByText(/log in/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /log in/i })).toBeInTheDocument();
   });
 
   test("renders main app when user is authenticated", () => {

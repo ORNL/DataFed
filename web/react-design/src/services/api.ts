@@ -4,7 +4,6 @@
  */
 
 import {
-  BaseRecord,
   DataRecord,
   CollectionRecord,
   ProjectRecord,
@@ -34,19 +33,27 @@ class ApiService {
    */
   async get<T>(
     url: string,
-    params?: Record<string, any>,
+    params?: Record<string, string | number | boolean>,
   ): Promise<ApiResponse<T>> {
     try {
       const queryString = params
-        ? `?${new URLSearchParams(params).toString()}`
+        ? `?${new globalThis.URLSearchParams(
+            Object.entries(params).reduce(
+              (acc, [key, value]) => ({ ...acc, [key]: String(value) }),
+              {} as Record<string, string>,
+            ),
+          ).toString()}`
         : "";
-      const response = await fetch(`${this.baseUrl}${url}${queryString}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await globalThis.fetch(
+        `${this.baseUrl}${url}${queryString}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
         },
-        credentials: "include",
-      });
+      );
 
       const data = await response.json();
       return data as ApiResponse<T>;
@@ -64,9 +71,9 @@ class ApiService {
    * @param body The request body
    * @returns Promise with the response data
    */
-  async post<T>(url: string, body: any): Promise<ApiResponse<T>> {
+  async post<T>(url: string, body: unknown): Promise<ApiResponse<T>> {
     try {
-      const response = await fetch(`${this.baseUrl}${url}`, {
+      const response = await globalThis.fetch(`${this.baseUrl}${url}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

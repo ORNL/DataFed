@@ -1,5 +1,7 @@
 # Ignore artifacts:
 build/
 node_modules/
-assets/
 idea/
+coverage/
+src/__mocks__/
+.jest.config.js

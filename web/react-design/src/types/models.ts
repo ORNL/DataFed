@@ -71,7 +71,7 @@ export interface BaseRecord {
 export interface DataRecord extends BaseRecord {
   size?: number;
   dataType?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   allocId?: string;
   hasData?: boolean;
 }
@@ -125,7 +125,7 @@ export interface SearchQuery {
   owner?: string;
   keywords?: string[];
   dataType?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   mode?: SearchMode;
   sort?: SortType;
   limit?: number;
@@ -166,7 +166,12 @@ export interface Endpoint {
   isConnected: boolean;
   isBusy: boolean;
   ownerString: string;
-  collections?: any[];
+  collections?: Array<{
+    id: string;
+    name: string;
+    path: string;
+    type: string;
+  }>;
 }
 
 /**
