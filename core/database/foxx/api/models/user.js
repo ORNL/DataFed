@@ -57,18 +57,18 @@ class UserModel {
     constructor(id, key) {
         if (!id && !key) {
             throw [support.ERR_MISSING_REQ_PARAM, "User ID or Key must be provided"];
-        } else if (typeof id !== "undefined" && typeof key !== "undefined") {
-          if( id !== "u/" + key ) {
+        } else if ((typeof id !== "undefined" || id !== null) && (typeof key !== "undefined" || key !== null)) {
+          if( id !== "u/" ) {
           // If both values are provided for some reason they must be equivalent.
             throw [support.ERR_INTERNAL_FAULT, "Both id and key provided to user model, but they have conflicting values. id must equal 'u/' + key"];
           } else {
             this.#user_id = id;
             this.#user_key = key;
           }
-        } else if ( typeof id === "undefined" ) {
+        } else if ( (typeof id === "undefined" || id === null) ) {
           this.#user_id = "u/" + key;
           this.#user_key = key;
-        } else if ( typeof key == "undefined" ) {
+        } else if ( (typeof key == "undefined" || key === null) ) {
           this.#user_id = id;
           this.#user_key = id.slice("u/".length);
         }
