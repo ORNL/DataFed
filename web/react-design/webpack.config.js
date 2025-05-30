@@ -16,9 +16,8 @@ const envName = process.env.APP_ENV || 'development';
 const isLocal = envName === 'development';
 
 const buildPath = isLocal ? path.join(__dirname, 'build/static') : path.join(__dirname, '/build/static');
-const imgPath = path.join(__dirname, './app/assets/img'); // Assuming 'app' is your source folder
-const sourcePath = path.join(__dirname, './app'); // Assuming 'app' is your source folder
-const viewPath = path.join(__dirname, './app/views'); // Assuming 'app/views' contains your HTML template
+const imgPath = path.join(__dirname, './src/assets/img'); // Assuming 'app' is your source folder
+const sourcePath = path.join(__dirname, './src'); // Assuming 'app' is your source folder
 // We need to pass each design system package's node_modules directory to
 // node-sass in order for nested package dependencies to work
 // See: github.com/webpack-contrib/sass-loader/issues/466
@@ -30,11 +29,11 @@ const plugins = [
   new webpack.DefinePlugin({
     'process.env': {
       APP_ENV: JSON.stringify(envName),
-      NODE_ENV: JSON.stringify(process.env.NODE_ENV), // NODE_ENV is standard
+      // NODE_ENV is automatically set by webpack based on mode
     },
   }),
   new HtmlWebpackPlugin({
-    template: path.join(viewPath, 'index.hbs'), // Adjust if your template is different
+    template: path.join(sourcePath, 'index.html'), // Adjust if your template is different
     path: buildPath,
     filename: 'index.html',
     // tealiumOn: !isLocal, // Example custom option, remove if not needed
@@ -50,13 +49,34 @@ const plugins = [
 // Common rules
 const rules = [
   {
-    test: /\.hbs$/, // If you use Handlebars templates
-    loader: 'handlebars-loader',
+    test: /\.(ts|tsx)$/,
+    exclude: /node_modules/,
+    use: [
+      {
+        loader: 'babel-loader',
+        options: {
+          plugins: isLocal ? [require.resolve('react-refresh/babel')] : [],
+        },
+      },
+      {
+        loader: 'ts-loader',
+        options: {
+          transpileOnly: isLocal, // Skip type checking in development for faster builds
+        },
+      },
+    ],
   },
   {
     test: /^(?!.*\.spec\.(js|jsx)$).*\.(js|jsx)$/,
     exclude: /node_modules/,
-    use: ['babel-loader'], // Ensure Babel is set up for React
+    use: [
+      {
+        loader: 'babel-loader',
+        options: {
+          plugins: isLocal ? [require.resolve('react-refresh/babel')] : [],
+        },
+      },
+    ],
   },
   {
     test: /\.(png|gif|jpg|svg)$/,
@@ -78,10 +98,18 @@ const rules = [
       filename: 'assets/[name]-[contenthash][ext]',
     },
   },
+  {
+    test: /\.css$/,
+    use: [
+      isLocal ? 'style-loader' : MiniCssExtractPlugin.loader,
+      'css-loader',
+      'postcss-loader',
+    ],
+  },
 ];
 
 const entry = {
-  main: ['./index.js'], // Changed 'js' to 'main' for clarity, adjust your entry point as needed
+  main: ['./main.tsx'], // Client-side React entry point
 };
 
 if (!isLocal) {
@@ -107,7 +135,9 @@ if (!isLocal) {
   entry.main.push('webpack-hot-middleware/client'); // If using webpack-hot-middleware
   // Development plugins
   plugins.push(new webpack.HotModuleReplacementPlugin());
-  plugins.push(new ReactRefreshWebpackPlugin());
+  plugins.push(new ReactRefreshWebpackPlugin({
+    overlay: false, // Disable the error overlay since we're not using webpack-dev-server
+  }));
 
   // Development rules
   rules.push({
@@ -158,7 +188,7 @@ module.exports = {
     ],
     moduleIds: 'named', // 'deterministic' is often preferred for long-term caching
   },
-  context: sourcePath, // Assuming 'app' is your source folder (e.g., where index.js is)
+  context: sourcePath, // Assuming 'app' is your source folder (e.g., where index.ts is)
   entry,
   output: {
     path: buildPath,
