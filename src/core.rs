@@ -1,4 +1,5 @@
 use datafed_core_api::AppConfig;
+#[cfg(feature = "loki")]
 use tracing_loki::url::Url;
 use tracing_subscriber::{EnvFilter, Registry, fmt, layer::SubscriberExt};
 
@@ -18,8 +19,8 @@ async fn main() -> anyhow::Result<()> {
 
     // Set up a tracing subscriber that will output logs to a Loki endpoint if the config is specified
     // otherwise, set the default stdout subscriber
-    let mut loki_task_controller = None;
-    if let Some(ref config) = app_config.loki {
+    #[cfg(feature = "loki")]
+    let loki_task_controller = if let Some(ref config) = app_config.loki {
         let (loki_layer, controller, task) = tracing_loki::builder()
             .label("service_name", &config.service_name)?
             .build_controller_url(Url::parse(&config.url).unwrap())?;
@@ -28,15 +29,21 @@ async fn main() -> anyhow::Result<()> {
 
         tracing::subscriber::set_global_default(subscriber.with(loki_layer))?;
 
-        loki_task_controller = Some(controller);
-
         tracing::debug!("started loki task");
+
+        Some(controller)
     } else {
         tracing::subscriber::set_global_default(subscriber)?;
+
+        None
     };
+
+    #[cfg(not(feature = "loki"))]
+    tracing::subscriber::set_global_default(subscriber)?;
 
     datafed_core_api::start(app_config).await?;
 
+    #[cfg(feature = "loki")]
     if let Some(controller) = loki_task_controller {
         controller.shutdown().await;
     }

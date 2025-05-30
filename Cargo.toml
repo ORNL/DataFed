@@ -13,13 +13,13 @@ default-run = "datafed-core"
 members = ["crates/*"]
 
 [dependencies]
-datafed-core-api = { path = "crates/core-api", features = ["metrics"] }
+datafed-core-api = { path = "crates/core-api" }
 datafed-database = { path = "crates/database" }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 tokio = { version = "1.45.1", features = ["full"] }
 toml = "0.8.22"
-tracing-loki = { version = "0.2.6", default-features = false, features = [
+tracing-loki = { version = "0.2.6", optional = true, default-features = false, features = [
     "rustls",
     "compat-0-2-1",
 ] }
@@ -27,6 +27,8 @@ anyhow = "1.0.98"
 
 [features]
 migrations = ["datafed-database/migrations"]
+metrics = ["datafed-core-api/metrics"]
+loki = ["tracing-loki"]
 
 [[bin]]
 name = "datafed-core"

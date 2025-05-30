@@ -16,7 +16,7 @@ services:
     depends_on:
       - prometheus
       - loki
-      - tempo
+      # - tempo
     volumes:
       - grafana-data:/var/lib/grafana
       - ./grafana.ini:/etc/grafana/grafana.ini
