@@ -3,6 +3,15 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+/**
+ * You will notice that these structs are the same as the ones in the database crate,
+ * the reason they are redefined, is that they may not always be the same,
+ * I.E. an api user could have a list of settings but in the database that would encompass
+ * multiple types/tables so the api will split them up before inserting them into the database,
+ * AND defining them separately for the API and database will avoid any problems with progressive
+ * schema changes.
+ */
+
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct User {
     pub id: Uuid,

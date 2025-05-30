@@ -4,9 +4,9 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum ApiError {
-    #[error("not found")]
+    #[error("not found")] // this is what will be printed in the log/http response
     NotFound,
-    #[error("internal ierver error")]
+    #[error("internal server error")]
     InternalServerError,
     #[error("bad request")]
     BadRequest,
@@ -16,6 +16,7 @@ pub enum ApiError {
 
 impl IntoResponse for ApiError {
     fn into_response(self) -> axum::response::Response {
+        // Mappings from Rust errors to standard HTTP status codes
         match self {
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,

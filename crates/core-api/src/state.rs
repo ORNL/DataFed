@@ -1,6 +1,8 @@
 use axum::extract::FromRef;
 use std::sync::Arc;
 
+// Re-define complex state types here so they do not clog up
+// the function signatures for routes
 pub type Database = Arc<datafed_database::Database>;
 
 #[derive(Clone)]

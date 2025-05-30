@@ -15,6 +15,7 @@ pub struct DatabaseConfig {
     pub port: u16,
     pub username: String,
     pub password: String,
+    pub database: String,
 }
 
 #[derive(Debug)]
@@ -27,8 +28,8 @@ impl Database {
         Ok(Self {
             conn: match conn {
                 DatabaseConnection::Postgres(config) => sea_orm::Database::connect(format!(
-                    "postgres://{}:{}@{}:{}/kraken",
-                    config.username, config.password, config.url, config.port
+                    "postgres://{}:{}@{}:{}/{}",
+                    config.username, config.password, config.url, config.port, config.database
                 ))
                 .await
                 .map_err(|_| DatabaseError::ConnectionError)?,

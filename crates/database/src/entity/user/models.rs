@@ -2,6 +2,7 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+// The main model used throughout the application
 #[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "user")]
 pub struct Model {
@@ -13,6 +14,7 @@ pub struct Model {
     pub username: Option<String>,
 }
 
+// This model is to be used for creating new database rows
 pub struct NewModel {
     pub email: String,
     pub first_name: Option<String>,
@@ -20,6 +22,8 @@ pub struct NewModel {
     pub username: Option<String>,
 }
 
+// This model is to be used for updating database rows,
+// with all fields marked as optional to fit with PATCH queries
 #[derive(Default)]
 pub struct UpdateModel {
     pub email: Option<String>,

@@ -1,12 +1,21 @@
 use datafed_database::DatabaseConfig;
 use serde::Deserialize;
 
+#[cfg(feature = "metrics")]
+use crate::metrics::MetricsConfig;
+
+// This is what the AppSettings.toml file is parsed into,
+// any configuration that you would like to add can be added
+// to one of these structs or imported and added as another field
+// as long as they #[derive(Deserialize)]
 #[derive(Deserialize)]
 pub struct AppConfig {
     pub rust_log: String,
     pub api: ApiConfig,
     pub database: DatabaseConfig,
     pub loki: Option<LokiConfig>,
+    #[cfg(feature = "metrics")]
+    pub metrics: MetricsConfig,
 }
 
 #[derive(Deserialize)]

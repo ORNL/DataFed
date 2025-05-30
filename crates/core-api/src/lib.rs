@@ -1,5 +1,7 @@
 mod app_config;
 mod errors;
+#[cfg(feature = "metrics")]
+mod metrics;
 mod middleware;
 mod router;
 pub mod services;
@@ -18,6 +20,10 @@ use datafed_database::{DatabaseConnection, create_database};
 pub use errors::*;
 pub use state::*;
 
+// This will allow the application to shut down gracefully,
+// and finish executing whatever tasks are currently active,
+// which will work for restarting containers in docker/k8s
+// as they send a SIGKILL signal when they restart
 async fn shutdown_signal(message: impl AsRef<str>) {
     let ctrl_c = async {
         signal::ctrl_c()
@@ -47,10 +53,12 @@ async fn shutdown_signal(message: impl AsRef<str>) {
 pub async fn start(app_config: AppConfig) -> anyhow::Result<()> {
     let router = router::create_router();
 
+    // Form the state object that will be available in any route
     let state = ApiState {
         db: Arc::new(create_database(DatabaseConnection::Postgres(app_config.database)).await?),
     };
 
+    // Add relevant request information to logs
     let trace_layer =
         TraceLayer::new_for_http().make_span_with(|request: &axum::http::Request<_>| {
             tracing::info_span!(
@@ -62,6 +70,7 @@ pub async fn start(app_config: AppConfig) -> anyhow::Result<()> {
             )
         });
 
+    // Compress http bodies if they are over a certain size
     let compression_layer =
         CompressionLayer::new().compress_when(DefaultPredicate::new().and(SizeAbove::new(1024)));
 
@@ -77,6 +86,10 @@ pub async fn start(app_config: AppConfig) -> anyhow::Result<()> {
         .with_state(state)
         .layer(trace_layer)
         .layer(compression_layer);
+
+    // Start the metrics http server separately
+    #[cfg(feature = "metrics")]
+    metrics::serve_metrics_server(app_config.metrics);
 
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal("Shutting down API server"))

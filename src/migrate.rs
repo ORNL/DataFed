@@ -11,11 +11,12 @@ async fn main() -> anyhow::Result<()> {
     )?;
 
     let db = Database::connect(format!(
-        "postgres://{}:{}@{}:{}/kraken",
+        "postgres://{}:{}@{}:{}/{}",
         app_config.database.username,
         app_config.database.password,
         app_config.database.url,
-        app_config.database.port
+        app_config.database.port,
+        app_config.database.database
     ))
     .await?;
 

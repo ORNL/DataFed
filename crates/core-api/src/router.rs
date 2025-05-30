@@ -6,7 +6,7 @@ use utoipa_swagger_ui::SwaggerUi;
 use crate::{ApiState, services};
 
 #[derive(OpenApi)]
-#[openapi(info(title = "kraken_auth", description = "My Api description"))]
+#[openapi(info(title = "DataFed", description = "DataFed Core API"))]
 struct ApiDoc;
 
 pub fn create_router() -> Router<ApiState> {
@@ -14,6 +14,6 @@ pub fn create_router() -> Router<ApiState> {
         .merge(services::router())
         .split_for_parts();
 
+    // If you need api routes that you do not want to include in the OpenAPI spec, you will need to nest there router here
     router.merge(SwaggerUi::new("/swagger-ui").url("/api-docs/open-api.json", openapi))
-    // .nest("/oauth2", oauth2::create_router())
 }

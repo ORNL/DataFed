@@ -11,12 +11,13 @@ async fn main() -> anyhow::Result<()> {
             .as_str(),
     )?;
 
+    // Set filters for tracing output from config
     let fmt_layer = fmt::layer().with_level(true);
-
     let env_filter = EnvFilter::from(app_config.rust_log.clone());
-
     let subscriber = Registry::default().with(env_filter).with(fmt_layer);
 
+    // Set up a tracing subscriber that will output logs to a Loki endpoint if the config is specified
+    // otherwise, set the default stdout subscriber
     let mut loki_task_controller = None;
     if let Some(ref config) = app_config.loki {
         let (loki_layer, controller, task) = tracing_loki::builder()
