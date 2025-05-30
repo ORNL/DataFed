@@ -15,7 +15,7 @@ const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin'
 const envName = process.env.APP_ENV || 'development';
 const isLocal = envName === 'development';
 
-const buildPath = isLocal ? path.join(__dirname, 'build/static') : path.join(__dirname, '/build/static');
+const buildPath = path.join(__dirname, 'build');
 const imgPath = path.join(__dirname, './src/assets/img'); // Assuming 'app' is your source folder
 const sourcePath = path.join(__dirname, './src'); // Assuming 'app' is your source folder
 // We need to pass each design system package's node_modules directory to
@@ -192,7 +192,7 @@ module.exports = {
   entry,
   output: {
     path: buildPath,
-    publicPath: '/static/', // Generic public path, adjust to your server setup
+    publicPath: '/', // Serve from root
     filename: '[name]-[fullhash].js', // Use [name] to reflect entry point names
   },
   module: {
@@ -222,7 +222,7 @@ module.exports = {
       },
     },
     devMiddleware: { // Standard way to define publicPath for devServer
-      publicPath: '/static/', // Should match output.publicPath
+      publicPath: '/', // Should match output.publicPath
     },
     stats: { // Deprecated, use infrastructureLogging in webpack-dev-server v4+ for similar control
       assets: true,

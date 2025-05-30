@@ -8,7 +8,10 @@
     "dev": "npx nodemon --exec babel-node --extensions \".ts,.tsx,.js,.jsx\" src/index.ts | bunyan -o short",
     "start:dev": "APP_ENV=development NODE_ENV=development node server/server.js",
     "start": "APP_ENV=production NODE_ENV=production node server/server.js",
-    "build:client": "webpack --config webpack.config.js --mode production"
+    "build:client": "webpack --config webpack.config.js --mode production",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "prettier": "prettier --check \"src/**/*.{ts,tsx,js,jsx}\"",
+    "prettier:fix": "prettier --write \"src/**/*.{ts,tsx,js,jsx}\""
   },
   "dependencies": {
     "body-parser": "^2.2.0",
@@ -33,11 +36,15 @@
     "@babel/preset-typescript": "^7.27.1",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.6.0",
     "@types/body-parser": "1.19.5",
-    "@types/express": "5.0.1",
+    "@types/express": "^4.17.21",
     "@types/http-codes": "1.0.4",
     "@types/node": "22.15.18",
+    "eslint-scope": "8.3.0",
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.5",
     "@types/webpack-hot-middleware": "^2.25.9",
     "@typescript-eslint/eslint-plugin": "^8.32.1",
+    "@typescript-eslint/parser": "^8.33.0",
     "autoprefixer": "^10.4.21",
     "babel-jest": "29.7.0",
     "babel-loader": "10.0.0",
@@ -64,7 +71,7 @@
     "webpack-hot-middleware": "^2.26.1"
   },
   "lint-staged": {
-    "*.{js,jsx}": [
+    "*.{ts,js,tsx,jsx}": [
       "eslint --fix",
       "npx prettier --write"
     ]

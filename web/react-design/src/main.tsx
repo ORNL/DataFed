@@ -9,5 +9,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <UserProvider>
       <App />
     </UserProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );
