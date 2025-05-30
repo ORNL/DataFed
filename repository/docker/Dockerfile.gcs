@@ -53,15 +53,15 @@ RUN ${BUILD_DIR}/scripts/generate_gsi-authz_config.sh
 # Don't build with syslog the container does not seem to support syslog
 RUN ${BUILD_DIR}/scripts/generate_authz_config.sh &&  \
   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake -S. -B build  \
-    -DBUILD_REPO_SERVER=False         \
-    -DBUILD_AUTHZ_TESTS=True          \
-    -DBUILD_AUTHZ=True                \
-    -DBUILD_AUTHZ_WITH_SYSLOG=False   \
-    -DBUILD_CORE_SERVER=False         \
-    -DBUILD_WEB_SERVER=False          \
-    -DBUILD_DOCS=False                \
-    -DBUILD_PYTHON_CLIENT=False       \
-    -DBUILD_FOXX=False
+  -DBUILD_REPO_SERVER=False         \
+  -DBUILD_AUTHZ_TESTS=True          \
+  -DBUILD_AUTHZ=True                \
+  -DBUILD_AUTHZ_WITH_SYSLOG=False   \
+  -DBUILD_CORE_SERVER=False         \
+  -DBUILD_WEB_SERVER=False          \
+  -DBUILD_DOCS=False                \
+  -DBUILD_PYTHON_CLIENT=False       \
+  -DBUILD_FOXX=False
 RUN  ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build -j 8
 RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build --target install
 
@@ -103,7 +103,7 @@ COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libcrypto.so.1
 
 # Needed for tests
 COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake
-ADD . /datafed/source
+COPY --from=dependencies ${BUILD_DIR}/ ${BUILD_DIR}/
 
 # For communicating with public
 EXPOSE 443
