@@ -1,0 +1,27 @@
+[package]
+name = "datafed-database"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+tracing = "0.1.41"
+sea-orm = { version = "1.1.12", features = ["sqlx-postgres", "runtime-tokio"] }
+uuid = { version = "1.17.0", features = ["v4", "v7"] }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
+thiserror = "2.0.12"
+sea-orm-migration = { version = "1.1.12", optional = true }
+chrono = "0.4.41"
+tokio = { version = "1.45.1", features = ["full"] }
+zeroize = { version = "1.8.1", features = ["derive"] }
+
+[dev-dependencies]
+sea-orm = { version = "1.1.12", features = [
+    "sqlx-postgres",
+    "sqlx-sqlite",
+    "runtime-tokio",
+] }
+
+[features]
+migrations = ["sea-orm-migration"]

@@ -1,0 +1,29 @@
+[package]
+name = "datafed-core-api"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+tracing = "0.1.41"
+axum = { version = "0.8.4", features = ["http2"] }
+axum-extra = { version = "0.10.1", features = ["cookie"] }
+utoipa = { version = "5.3.1", features = ["uuid", "chrono", "axum_extras"] }
+utoipa-axum = "0.2.0"
+utoipa-swagger-ui = { version = "9.0.2", features = ["axum"] }
+tokio = "1.45.1"
+uuid = { version = "1.17.0", features = ["v4", "v7"] }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
+serde_urlencoded = "0.7.1"
+datafed-database = { path = "../database" }
+chrono = "0.4.41"
+thiserror = "2.0.12"
+tower-http = { version = "0.6.4", features = [
+    "trace",
+    "compression-full",
+    "cors",
+] }
+tower = "0.5.2"
+anyhow = "1.0.98"
+zeroize = "1.8.1"

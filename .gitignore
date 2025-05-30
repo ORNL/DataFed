@@ -50,7 +50,6 @@ scripts/globus/mapping.json
 scripts/admin_datafed_backup.sh
 scripts/admin_refresh_certs.sh
 scripts/globus/__pycache__
-services/
 tmp/
 web/SDMS.proto
 web/SDMS_Anon.proto
@@ -74,3 +73,8 @@ tests/end-to-end/web-UI/tests-examples
 tests/end-to-end/web-UI/.auth
 tests/end-to-end/web-UI/.env
 tests/end-to-end/web-UI/auth.setup.js
+
+
+# Added by cargo
+
+/target
