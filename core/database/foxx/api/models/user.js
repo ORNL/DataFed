@@ -57,7 +57,7 @@ class UserModel {
     constructor(id, key) {
         if (!id && !key) {
             throw [support.ERR_MISSING_REQ_PARAM, "User ID or Key must be provided"];
-        } else if ((typeof id !== "undefined" || id !== null) && (typeof key !== "undefined" || key !== null)) {
+        } else if ((typeof id !== "undefined" && id !== null) && (typeof key !== "undefined" && key !== null)) {
           if( id !== "u/" ) {
           // If both values are provided for some reason they must be equivalent.
             throw [support.ERR_INTERNAL_FAULT, "Both id and key provided to user model, but they have conflicting values. id must equal 'u/' + key"];
