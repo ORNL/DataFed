@@ -163,7 +163,8 @@ if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON)
 
 endif()
 
-if( BUILD_COMMON ) 
+if( BUILD_COMMON )
+  include(./cmake/OpenSSL.cmake)
   add_subdirectory( common )
 endif()
 
