@@ -155,17 +155,48 @@ authorizer = globus_sdk.ClientCredentialsAuthorizer(confidential_client, scopes=
 client = globus_sdk.GCSClient(DATAFED_GCS_URL, authorizer=authorizer)
 
 guest_collection_found = False
+guest_collection_id = None
+existing_base_path = None
 
 for item in collection_list["data"]:
     print(item["display_name"])
     if item["display_name"] == guest_collection_name:
         guest_collection_found = True
         guest_collection_id = item["id"]
+        # Try to get the existing base path from the collection list
+        existing_base_path = item.get("collection_base_path")
         break
 
+# Only delete and recreate the guest collection if the base path has changed
+should_recreate_collection = False
 if guest_collection_found:
+    if existing_base_path is None:
+        # If we can't get the base path from the list, try to get collection details
+        try:
+            collection_details = client.get_collection(guest_collection_id)
+            existing_base_path = collection_details.get("collection_base_path")
+        except Exception as e:
+            print(f"Warning: Could not retrieve existing collection details: {e}")
+            # If we can't get the existing base path, we'll recreate to be safe
+            existing_base_path = None
+    
+    if existing_base_path is None:
+        print(f"Unable to determine existing base path for guest collection {guest_collection_id}")
+        print("Recreating collection to ensure correct configuration")
+        should_recreate_collection = True
+    elif existing_base_path != BASE_PATH:
+        print(f"Base path changed from '{existing_base_path}' to '{BASE_PATH}'")
+        print(f"Recreating guest collection {guest_collection_id}")
+        should_recreate_collection = True
+    else:
+        print(f"Base path unchanged ('{existing_base_path}'), keeping existing guest collection {guest_collection_id}")
+        should_recreate_collection = False
+
+if should_recreate_collection:
     print(f"Removing current guest collection {guest_collection_id}")
     response = client.delete_collection(guest_collection_id)
+    # Reset the flag so we create a new collection below
+    guest_collection_found = False
 
 user_credential_list = client.get_user_credential_list(storage_gateway_id)
 user_credential_found = False
@@ -185,18 +216,23 @@ if user_credential_found is False:
     )
     client.create_user_credential(credential_document)
 
-# We are recreating the collection from scratch because we are unable to update
-# the base path once the collection has been made this is a limitation of Globus
-# Create the collection
-collection_document = globus_sdk.GuestCollectionDocument(
-    public="True",
-    collection_base_path=BASE_PATH,
-    display_name=guest_collection_name,
-    mapped_collection_id=mapped_collection_id,
-)
-response = client.create_collection(collection_document)
-guest_collection_id = response["id"]
-print(f"guest collection {guest_collection_id} created")
+# Only create a new collection if we don't have an existing one
+# (either it never existed or we deleted it due to base path change)
+if not guest_collection_found:
+    # We are recreating the collection from scratch because we are unable to update
+    # the base path once the collection has been made this is a limitation of Globus
+    # Create the collection
+    collection_document = globus_sdk.GuestCollectionDocument(
+        public="True",
+        collection_base_path=BASE_PATH,
+        display_name=guest_collection_name,
+        mapped_collection_id=mapped_collection_id,
+    )
+    response = client.create_collection(collection_document)
+    guest_collection_id = response["id"]
+    print(f"guest collection {guest_collection_id} created")
+else:
+    print(f"Using existing guest collection {guest_collection_id}")
 
 # Create ACL rule for Guest anonymous access
 acl_list = tc.endpoint_acl_list(endpoint_id=guest_collection_id)
