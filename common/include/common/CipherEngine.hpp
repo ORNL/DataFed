@@ -24,7 +24,8 @@ class CipherEngine
         static const int IV_LENGTH = 16;
         static const int KEY_LENGTH = 32;
         static const int MAX_MSG_LENGTH = 128;
-
+        static const int ENCODED_IV_LENGTH = 24;
+        static const int ENCODED_MSG_LENGTH = 32;
 
         static void generateEncryptionKey(unsigned char token_key[KEY_LENGTH]);
       
@@ -47,10 +48,9 @@ class CipherEngine
             int encrypted_msg_len;
         };
 
-        CipherString encryptAlgorithm(unsigned char *iv, const std::string& msg, LogContext log_context);
+        CipherBytes encryptAlgorithm(unsigned char *iv, const std::string& msg, LogContext log_context);
    
-        
-        //WE NEED TO RECREATE THIS
+        CipherString encodeBytes(CipherBytes unencoded_bytes, LogContext log_context);
         CipherString encrypt(unsigned char *iv, const std::string& msg, LogContext log_context);
         CipherString encrypt(const std::string& msg, LogContext log_context); 
         std::string decrypt(const CipherString& encrypted_string, LogContext log_context);

@@ -77,7 +77,7 @@ namespace SDMS{
     }
 
 
-    CipherEngine::CipherString CipherEngine::encryptAlgorithm(unsigned char *iv, const string& msg, LogContext log_context)
+    CipherEngine::CipherBytes CipherEngine::encryptAlgorithm(unsigned char *iv, const string& msg, LogContext log_context)
     {
         EVP_CIPHER_CTX *ctx = nullptr; 
         CipherBytes bytes_result = {};
@@ -130,18 +130,26 @@ namespace SDMS{
         /* Clean up */
         EVP_CIPHER_CTX_free(ctx);
 
-        CipherString encoded_string_result = {};
+        return bytes_result;
+    }
+
+    CipherEngine::CipherString CipherEngine::encodeBytes(CipherEngine::CipherBytes unencoded_bytes, LogContext log_context)
+    {
+        CipherString encoded_string_result;
+
         //Assigning values to encoded_string_result
-        encoded_string_result.encrypted_msg = encode64(bytes_result.encrypted_msg, bytes_result.encrypted_msg_len, log_context);
-        encoded_string_result.iv = encode64(bytes_result.iv, SDMS::CipherEngine::IV_LENGTH, log_context); 
-        encoded_string_result.encrypted_msg_len = bytes_result.encrypted_msg_len;
-    
+        encoded_string_result.encrypted_msg = encode64(unencoded_bytes.encrypted_msg, unencoded_bytes.encrypted_msg_len, log_context);
+        encoded_string_result.iv = encode64(unencoded_bytes.iv, SDMS::CipherEngine::IV_LENGTH, log_context);
+        encoded_string_result.encrypted_msg_len = unencoded_bytes.encrypted_msg_len;
+
         return encoded_string_result;
     }
 
     CipherEngine::CipherString CipherEngine::encrypt(unsigned char *iv,const string& msg, LogContext log_context)
     {
-       return encryptAlgorithm(iv, msg, log_context); 
+        CipherEngine::CipherBytes unencoded_bytes;
+        unencoded_bytes = encryptAlgorithm(iv, msg, log_context);
+        return encodeBytes(unencoded_bytes, log_context);
     }
 
 
@@ -149,8 +157,10 @@ namespace SDMS{
     {
         unsigned char iv[SDMS::CipherEngine::IV_LENGTH] = {};
         generateIV(iv);
-        
-        return encryptAlgorithm(iv, msg, log_context);
+        CipherEngine::CipherBytes unencoded_bytes;
+        unencoded_bytes = encryptAlgorithm(iv, msg, log_context);
+        return encodeBytes(unencoded_bytes, log_context);
+
     }
 
     std::string CipherEngine::decrypt(const CipherString& encoded_encrypted_string, LogContext log_context)
