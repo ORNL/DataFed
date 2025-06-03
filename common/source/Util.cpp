@@ -49,7 +49,8 @@ void readFile(const std::string fileName,const int arraySize, unsigned char* arr
 
     if(!keyFile.is_open())
     {
-        ceer << "Error: Unable to open file" << fileName << endl;
+        cerr << "Error: Unable to open file" << fileName << endl;
+        return;
     }
 
     keyFile.read(reinterpret_cast<char*>(keyChar),arraySize);
