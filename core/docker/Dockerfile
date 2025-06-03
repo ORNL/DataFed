@@ -84,9 +84,6 @@ USER root
 RUN chown -R datafed:root /datafed
 RUN chown -R datafed:root /opt
 
-#Delete later:
-RUN apt-get install -y valgrind
-
 # NOTE docker does not recognize curly braces around variables in entrypoint
 # and CMD
 ENTRYPOINT [ "/datafed/source/core/docker/entrypoint.sh", "/opt/datafed/core/datafed-core","--cfg", "/opt/datafed/core/datafed-core.cfg"]
