@@ -582,22 +582,6 @@ router
                         user_id = client._id;
                         user_doc = client;
                     }
-                    console.log(
-                        "updating tokens for",
-                        user_id,
-                        "acc:",
-                        req.queryParams.access,
-                        "exp:",
-                        req.queryParams.expires_in,
-                        "access_len:",
-                        req.queryParams.access_len,
-                        "access_iv",
-                        req.queryParams.access_iv,
-                        "refresh_len",
-                        req.queryParams.refresh_len,
-                        "refresh_iv",
-                        req.queryParams.refresh_iv,
-                    );
                     var obj = {
                         access: req.queryParams.access,
                         refresh: req.queryParams.refresh,
@@ -704,9 +688,9 @@ router
         joi.string().optional(),
         "Other data associated with token, currently only supported as Globus Collection UUID e.g. other_token_data=1cbaaee5-b938-4a4e-87a8-f1ec4d5d92f9",
     )
-    .queryParam("access_len", joi.number().integer().required().options({ convert: true }), "Access Token Length")
+    .queryParam("access_len", joi.number().integer().required(), "Access Token Length")
     .queryParam("access_iv", joi.string().required(), "Access Token Initialization Value")
-    .queryParam("refresh_len", joi.number().integer().required().options({ convert: true }), "Refresh Token Length")
+    .queryParam("refresh_len", joi.number().integer().required(), "Refresh Token Length")
     .queryParam("refresh_iv", joi.string().required(), "Refresh Token Initialization Value")
     .summary("Set user tokens")
     .description("Set user tokens");
@@ -748,7 +732,6 @@ router
                 token_document,
                 needs_consent,
             );
-            console.log("Token Get - Result:",JSON.stringify(result));
             res.send(result);
         } catch (e) {
             g_lib.handleException(e, res);
