@@ -349,10 +349,10 @@ void DatabaseAPI::userGetAccessToken(
   dbGet("usr/token/get", params, result, log_context);
 
   TRANSLATE_BEGIN()
-  unsigned char token_key[KEY_LENGTH];
+  unsigned char token_key[CipherEngine::KEY_LENGTH];
 
   //grab the token_key
-  readFile("datafed-token-key.txt", KEY_LENGTH, token_key);
+  readFile("datafed-token-key.txt", CipherEngine::KEY_LENGTH, token_key);
   CipherEngine cipher(token_key);
  
   CipherEngine::CipherString encoded_refresh_obj;
@@ -368,26 +368,26 @@ void DatabaseAPI::userGetAccessToken(
  
   // Allocate and copy to char*
   
-  encoded_access_obj.encrypted_msg = std::make_unique<char[]>(ENCODED_MSG_LENGTH + 1); // add 1 for null terminator
-  memcpy(encoded_access_obj.encrypted_msg.get(), access.c_str(), ENCODED_MSG_LENGTH);
-  encoded_access_obj.encrypted_msg[ENCODED_MSG_LENGTH] = '\0'; // null terminate
+  encoded_access_obj.encrypted_msg = std::make_unique<char[]>(CipherEngine::ENCODED_MSG_LENGTH + 1); // add 1 for null terminator
+  memcpy(encoded_access_obj.encrypted_msg.get(), access.c_str(), CipherEngine::ENCODED_MSG_LENGTH);
+  encoded_access_obj.encrypted_msg[CipherEngine::ENCODED_MSG_LENGTH] = '\0'; // null terminate
 
   // Do the same for IV
   std::string access_iv = obj.getString("access_iv");
-  encoded_access_obj.iv = std::make_unique<char[]>(ENCODED_IV_LENGTH+1); // add 1 for null terminator
-  memcpy(encoded_access_obj.iv.get(), access_iv.c_str(), ENCODED_IV_LENGTH);
-  encoded_access_obj.iv[ENCODED_IV_LENGTH] = '\0'; //null terminate
+  encoded_access_obj.iv = std::make_unique<char[]>(CipherEngine::ENCODED_IV_LENGTH+1); // add 1 for null terminator
+  memcpy(encoded_access_obj.iv.get(), access_iv.c_str(), CipherEngine::ENCODED_IV_LENGTH);
+  encoded_access_obj.iv[CipherEngine::ENCODED_IV_LENGTH] = '\0'; //null terminate
  
   // Allocate and copy to char*
-  encoded_refresh_obj.encrypted_msg = std::make_unique<char[]>(ENCODED_MSG_LENGTH+1); // add 1 for null terminator
-  memcpy(encoded_refresh_obj.encrypted_msg.get(), refresh.c_str(), ENCODED_MSG_LENGTH);
-  encoded_refresh_obj.encrypted_msg[ENCODED_MSG_LENGTH] = '\0'; // null terminate
+  encoded_refresh_obj.encrypted_msg = std::make_unique<char[]>(CipherEngine::ENCODED_MSG_LENGTH+1); // add 1 for null terminator
+  memcpy(encoded_refresh_obj.encrypted_msg.get(), refresh.c_str(), CipherEngine::ENCODED_MSG_LENGTH);
+  encoded_refresh_obj.encrypted_msg[CipherEngine::ENCODED_MSG_LENGTH] = '\0'; // null terminate
 
   // Do the same for IV
   std::string refresh_iv = obj.getString("refresh_iv");
-  encoded_refresh_obj.iv = std::make_unique<char[]>(ENCODED_IV_LENGTH + 1); //add 1 for null terminator
-  memcpy(encoded_refresh_obj.iv.get(), refresh_iv.c_str(), ENCODED_IV_LENGTH);
-  encoded_refresh_obj.iv[ENCODED_IV_LENGTH] = '\0'; // null terminate
+  encoded_refresh_obj.iv = std::make_unique<char[]>(CipherEngine::ENCODED_IV_LENGTH + 1); //add 1 for null terminator
+  memcpy(encoded_refresh_obj.iv.get(), refresh_iv.c_str(), CipherEngine::ENCODED_IV_LENGTH);
+  encoded_refresh_obj.iv[CipherEngine::ENCODED_IV_LENGTH] = '\0'; // null terminate
      
   //Decryption for acc token and ref token 
   a_acc_tok = cipher.decrypt(encoded_access_obj, log_context);
@@ -398,8 +398,6 @@ void DatabaseAPI::userGetAccessToken(
   // NOTE: scopes will be a blank string for token_type=GLOBUS_DEFAULT
   scopes = obj.getString("scopes");
     
-  DL_WARNING(log_context, "Access Token After Decryption:" << a_acc_tok);
-
   TRANSLATE_END(result, log_context)
 }
 
@@ -411,21 +409,16 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
                                      LogContext log_context) {
   string result;
 
- 
-  DL_WARNING(log_context, "Access Token Before Encryption:" << a_acc_tok);
-
-  unsigned char token_key[KEY_LENGTH];
+  unsigned char token_key[CipherEngine::KEY_LENGTH];
 
   //grab the token_key
-  readFile("../../build/core/server/datafed-token-key.txt", KEY_LENGTH, token_key);
+  readFile("../../build/core/server/datafed-token-key.txt", CipherEngine::KEY_LENGTH, token_key);
   CipherEngine cipher(token_key);
 
   //encrypting the access token
   CipherEngine::CipherString access_obj = cipher.encrypt(a_acc_tok, log_context);
 
   CipherEngine::CipherString refresh_obj = cipher.encrypt(a_ref_tok, log_context);
-
-  DL_WARNING(log_context, "Encrypted Base64 Msg:" << access_obj.encrypted_msg.get());
 
   std::vector<pair<string, string>> params = {
       {"access", std::string(access_obj.encrypted_msg.get())}, //a_acc_tok shift to encrypted_access_string
