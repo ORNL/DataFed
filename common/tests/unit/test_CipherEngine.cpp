@@ -22,11 +22,18 @@ BOOST_AUTO_TEST_SUITE(KeyEncryptionDecryptionTest)
 
 BOOST_AUTO_TEST_CASE(test_EncryptionDecryption)
 {
-
     LogContext log_context;
-    unsigned char key[32];
-    //CipherEngine::generateEncryptionKey(key);
-    readFile("../../build/core/server/datafed-token-key.txt", 32, key);
+    unsigned char key[SDMS::CipherEngine::KEY_LENGTH];
+
+    string fname = "datafed-token-key.txt";
+    std::ofstream outf;
+    outf.open(fname.c_str());
+    if (!outf.is_open() || !outf.good())
+    EXCEPT_PARAM(1, "Could not open file: " << fname);
+    outf << key;
+    outf.close();
+
+    readFile("datafed-token-key.txt", SDMS::CipherEngine::KEY_LENGTH, key);
     
     //Construct
     CipherEngine encryptCipher(key);
@@ -56,7 +63,7 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryption_KeyGen)
 {
 
     LogContext log_context;
-    unsigned char key[32];
+    unsigned char key[SDMS::CipherEngine::KEY_LENGTH];
     CipherEngine::generateEncryptionKey(key);
     
     //Construct
@@ -89,8 +96,8 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryptionJSONValue)
 {
 
     LogContext log_context;
-    unsigned char key[32];
-    readFile("../../build/core/server/datafed-token-key.txt", 32, key);
+    unsigned char key[SDMS::CipherEngine::KEY_LENGTH];
+    readFile("datafed-token-key.txt", SDMS::CipherEngine::KEY_LENGTH, key);
     
     //Construct
     CipherEngine testCipher(key);
@@ -115,17 +122,17 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryptionJSONValue)
     CipherEngine testCipher2(key);
     CipherEngine::CipherString encoded_access_obj;
     encoded_access_obj.encrypted_msg_len = obj.getNumber("access_len");
-    encoded_access_obj.encrypted_msg = std::make_unique<char[]>(129); // add 1 for null terminator
+    encoded_access_obj.encrypted_msg = std::make_unique<char[]>(SDMS::CipherEngine::MAX_MSG_LENGTH + 1); // add 1 for null terminator
 
     std::string access = obj.getString("access");
-    memcpy(encoded_access_obj.encrypted_msg.get(), access.c_str(), 128);
-    encoded_access_obj.encrypted_msg[128] = '\0'; // null terminate
+    memcpy(encoded_access_obj.encrypted_msg.get(), access.c_str(), SDMS::CipherEngine::MAX_MSG_LENGTH);
+    encoded_access_obj.encrypted_msg[SDMS::CipherEngine::MAX_MSG_LENGTH] = '\0'; // null terminate
   
   // Do the same for IV
     std::string access_iv = obj.getString("access_iv");
-    encoded_access_obj.iv = std::make_unique<char[]>(25);
-    memcpy(encoded_access_obj.iv.get(), access_iv.c_str(), 24);
-    encoded_access_obj.iv[24] = '\0';
+    encoded_access_obj.iv = std::make_unique<char[]>(SDMS::CipherEngine::ENCODED_IV_LENGTH + 1);
+    memcpy(encoded_access_obj.iv.get(), access_iv.c_str(), SDMS::CipherEngine::ENCODED_IV_LENGTH);
+    encoded_access_obj.iv[SDMS::CipherEngine::ENCODED_IV_LENGTH] = '\0';
 
     std::string unencrypted_msg;
     unencrypted_msg = testCipher.decrypt(encoded_access_obj, log_context); 
@@ -135,27 +142,25 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryptionJSONValue)
 
 BOOST_AUTO_TEST_CASE(testing_KeyGeneration)
 {
-    unsigned char token_key[32];
-    unsigned char keyArray[32];
-    unsigned char finalArray[32];
+    unsigned char token_key[SDMS::CipherEngine::KEY_LENGTH];
+    unsigned char keyArray[SDMS::CipherEngine::KEY_LENGTH];
+    unsigned char finalArray[SDMS::CipherEngine::KEY_LENGTH];
     CipherEngine::generateEncryptionKey(token_key);
 
     std::string fname = "datafed-token-key.txt";
-    //std::ofstream  outf(fname.c_str());   
-    //outf << token_key;
     
     std::ofstream outf(fname, std::ios::binary);
-    outf.write(reinterpret_cast<const char*>(token_key), 32);
+    outf.write(reinterpret_cast<const char*>(token_key), SDMS::CipherEngine::KEY_LENGTH);
     outf.close();
 
     //Grabbing key
     std::ifstream keyFile("datafed-token-key.txt", std::ios::binary);
 
-    keyFile.read(reinterpret_cast<char*>(keyArray),32);
-    for (int lv = 0; lv < 32; lv++)
+    keyFile.read(reinterpret_cast<char*>(keyArray),SDMS::CipherEngine::KEY_LENGTH);
+    for (int lv = 0; lv < SDMS::CipherEngine::KEY_LENGTH; lv++)
     {
             finalArray[lv] = keyArray[lv];
     } 
-    BOOST_CHECK(sizeof(finalArray)==32);
+    BOOST_CHECK(sizeof(finalArray)==SDMS::CipherEngine::KEY_LENGTH);
 }
 BOOST_AUTO_TEST_SUITE_END()  
