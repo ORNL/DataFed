@@ -163,13 +163,13 @@ class UserToken {
     static formatUserTokenForTransferTask(token_doc) {
         const exp_in = token_doc.expiration - Math.floor(Date.now() / 1000);
         return Object.freeze({
-            acc_tok: token_doc.access,
-            ref_tok: token_doc.refresh,
-            acc_tok_exp_in: exp_in > 0 ? exp_in : 0,
-            acc_tok_iv: token_doc.access_iv,
-            acc_tok_len: token_doc.access_len,
-            ref_tok_iv: token_doc.refresh_iv,
-            ref_tok_len: token_doc. refresh_len,
+            access_token: token_doc.access,
+            refresh_token: token_doc.refresh,
+            access_exp_in: exp_in > 0 ? exp_in : 0,
+            access_iv: token_doc.access_iv,
+            access_len: token_doc.access_len,
+            refresh_iv: token_doc.refresh_iv,
+            refresh_len: token_doc. refresh_len,
         });
     }
 }
