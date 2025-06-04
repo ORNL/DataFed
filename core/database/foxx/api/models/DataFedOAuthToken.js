@@ -7,9 +7,9 @@
  * @property {g_lib.AccessTokenType | number} [type] - Access token type, present when retrieving a collection token
  * @property {string} [dependent_scopes] - Access token scopes, present when retrieving a collection token
  * @property {string} [access_iv] - Access token iv for decrypting the encrypted token
- * @property {string} [access_len] - Access token len for decrypting the encrypted token
+ * @property {number} [access_len] - Access token len for decrypting the encrypted token
  * @property {string} [refresh_iv] - Access token iv for decrypting the encrypted token
- * @property {string} [refresh_len] - Refresh token len for decrypting the encrypted token
+ * @property {number} [refresh_len] - Refresh token len for decrypting the encrypted token
  */
 class DataFedOAuthToken {
     static access;
