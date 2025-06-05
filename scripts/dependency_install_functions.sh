@@ -94,6 +94,8 @@ install_python() {
     make altinstall
 
     mkdir -p "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin"
+    # Delete link if it exists
+    rm -rf "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/python${DATAFED_PYTHON_VERSION}"
     ln -s "${DATAFED_PYTHON_DEPENDENCIES_DIR}/bin/python${DATAFED_PYTHON_VERSION}" "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/python${DATAFED_PYTHON_VERSION}"
     export PYTHON="${DATAFED_PYTHON_DEPENDENCIES_DIR}/bin/python${DATAFED_PYTHON_VERSION}"
 
