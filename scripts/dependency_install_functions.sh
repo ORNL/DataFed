@@ -99,6 +99,8 @@ install_python() {
 
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.python_installed-${DATAFED_PYTHON_VERSION}"
     cd "$original_dir"
+  else
+    echo "Python already installed, skipping..."
   fi
 }
 
@@ -536,6 +538,8 @@ install_openssl() {
     # Mark openssl as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.openssl_installed-${DATAFED_OPENSSL}"
     cd "$original_dir"
+  else
+    echo "OpenSSL already installed, skipping..."
   fi
 }
 
