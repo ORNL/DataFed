@@ -77,7 +77,7 @@ fi
 install_python() {
   install_openssl
 
-  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.python_installed-${DATAFED_PYTHON_VERSION}" ]; then
+  if [ ! -e "${DATAFED_PYTHON_DEPENDENCIES_DIR}/.python_installed-${DATAFED_PYTHON_VERSION}" ]; then
     local original_dir=$(pwd)
     cd "${PROJECT_ROOT}"
     "$SUDO_CMD" apt update
@@ -97,7 +97,7 @@ install_python() {
     ln -s "${DATAFED_PYTHON_DEPENDENCIES_DIR}/bin/python${DATAFED_PYTHON_VERSION}" "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/python${DATAFED_PYTHON_VERSION}"
     export PYTHON="${DATAFED_PYTHON_DEPENDENCIES_DIR}/bin/python${DATAFED_PYTHON_VERSION}"
 
-    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.python_installed-${DATAFED_PYTHON_VERSION}"
+    touch "${DATAFED_PYTHON_DEPENDENCIES_DIR}/.python_installed-${DATAFED_PYTHON_VERSION}"
     cd "$original_dir"
   else
     echo "Python already installed, skipping..."
