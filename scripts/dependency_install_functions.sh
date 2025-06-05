@@ -107,18 +107,18 @@ install_python() {
     "$SUDO_CMD" apt update
     "$SUDO_CMD" apt install -y build-essential libreadline-dev zlib1g-dev libffi-dev wget
 
-    "$SUDO_CMD" wget "https://www.python.org/ftp/python/${DATAFED_PYTHON_VERSION_FULL}/Python-${DATAFED_PYTHON_VERSION_FULL}.tgz"
-    "$SUDO_CMD" tar -xf "Python-${DATAFED_PYTHON_VERSION_FULL}.tgz"
+    wget "https://www.python.org/ftp/python/${DATAFED_PYTHON_VERSION_FULL}/Python-${DATAFED_PYTHON_VERSION_FULL}.tgz"
+    tar -xf "Python-${DATAFED_PYTHON_VERSION_FULL}.tgz"
     cd "Python-${DATAFED_PYTHON_VERSION_FULL}" 
 
     export CPPFLAGS="-I${DATAFED_DEPENDENCIES_INSTALL_PATH}/include $CPPFLAGS"
     export LDFLAGS="-L${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib -Wl,-rpath,${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib $LDFLAGS"
-    "$SUDO_CMD" ./configure --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}/python" --with-openssl="${DATAFED_DEPENDENCIES_INSTALL_PATH}" --with-openssl-rpath=auto
-    "$SUDO_CMD" make -j$(nproc)
-    "$SUDO_CMD" make altinstall
+    ./configure --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}/python" --with-openssl="${DATAFED_DEPENDENCIES_INSTALL_PATH}" --with-openssl-rpath=auto
+    make -j$(nproc)
+    make altinstall
 
-    "$SUDO_CMD" mkdir -p "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin"
-    "$SUDO_CMD" ln -s "${DATAFED_DEPENDENCIES_INSTALL_PATH}/python/bin/python${DATAFED_PYTHON_VERSION}" "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/python${DATAFED_PYTHON_VERSION}"
+    mkdir -p "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin"
+    ln -s "${DATAFED_DEPENDENCIES_INSTALL_PATH}/python/bin/python${DATAFED_PYTHON_VERSION}" "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/python${DATAFED_PYTHON_VERSION}"
     export PYTHON="${DATAFED_DEPENDENCIES_INSTALL_PATH}/python/bin/python${DATAFED_PYTHON_VERSION}"
 
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${PYTHON_FLAG_PREFIX}${DATAFED_PYTHON_VERSION}"
@@ -502,6 +502,7 @@ install_node() {
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
     nvm use "$DATAFED_NODE_VERSION"
   fi
+  echo "NODE VERSION USED/INSTALLED $DATAFED_NODE_VERSION"
 }
 
 install_foxx_cli() {
