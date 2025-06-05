@@ -7,7 +7,7 @@ provision-client:
   needs: ["signal"]
   variables:
     GIT_STRATEGY: clone
-    DATAFED_PYTHON_DEPENDENCIES_DIR: /opt/datafed/dependencies/python
+    DATAFED_PYTHON_DEPENDENCIES_DIR: "${CI_PROJECT_DIR}/dependencies/python"
   stage: provision-client
   tags:
     - ci-datafed-client
