@@ -163,38 +163,55 @@ for item in collection_list["data"]:
     if item["display_name"] == guest_collection_name:
         guest_collection_found = True
         guest_collection_id = item["id"]
-        # Try to get the existing base path from the collection list
-        existing_base_path = item.get("collection_base_path")
+        # The collection list doesn't contain base path information
+        # We'll need to get it from collection details
+        existing_base_path = None
+        print(f"Found existing guest collection {guest_collection_id}")
+        print(f"Collection data keys: {list(item.keys())}")
         break
 
-# Only delete and recreate the guest collection if the base path has changed
+# Check if we should recreate the guest collection
 should_recreate_collection = False
 if guest_collection_found:
-    if existing_base_path is None:
-        # If we can't get the base path from the list, try to get collection details
-        try:
-            collection_details = client.get_collection(guest_collection_id)
-            existing_base_path = collection_details.get("collection_base_path")
-        except Exception as e:
-            print(f"Warning: Could not retrieve existing collection details: {e}")
-            # If we can't get the existing base path, we'll recreate to be safe
-            existing_base_path = None
+    # Since we can't retrieve the base path from the Globus API for guest collections,
+    # we'll use a local cache file to track the last known base path
+    cache_dir = os.path.dirname(CRED_FILE_PATH)
+    existing_base_path = utils.get_cached_base_path(guest_collection_id, cache_dir)
     
+    if existing_base_path:
+        print(f"Found cached base path: {existing_base_path}")
+    else:
+        print("No cached base path found")
+    
+    print(f"Found existing guest collection {guest_collection_id}")
+    print(f"Current BASE_PATH environment variable: {BASE_PATH}")
+    
+    # Compare the cached base path with the current one
     if existing_base_path is None:
-        print(f"Unable to determine existing base path for guest collection {guest_collection_id}")
-        print("Recreating collection to ensure correct configuration")
-        should_recreate_collection = True
+        print("No cached base path available, keeping existing collection to avoid unnecessary recreation")
+        should_recreate_collection = False
     elif existing_base_path != BASE_PATH:
         print(f"Base path changed from '{existing_base_path}' to '{BASE_PATH}'")
-        print(f"Recreating guest collection {guest_collection_id}")
+        print("Recreating guest collection due to base path change")
         should_recreate_collection = True
     else:
-        print(f"Base path unchanged ('{existing_base_path}'), keeping existing guest collection {guest_collection_id}")
+        print(f"Base path unchanged ('{existing_base_path}'), keeping existing guest collection")
         should_recreate_collection = False
+    
+    # Allow manual override
+    force_recreate = os.getenv("DATAFED_FORCE_RECREATE_GUEST_COLLECTION", "false").lower() == "true"
+    if force_recreate:
+        print("DATAFED_FORCE_RECREATE_GUEST_COLLECTION is set, forcing recreation")
+        should_recreate_collection = True
 
 if should_recreate_collection:
     print(f"Removing current guest collection {guest_collection_id}")
     response = client.delete_collection(guest_collection_id)
+    
+    # Clean up the old cache file
+    cache_dir = os.path.dirname(CRED_FILE_PATH)
+    utils.remove_cached_base_path(guest_collection_id, cache_dir)
+    
     # Reset the flag so we create a new collection below
     guest_collection_found = False
 
@@ -233,6 +250,10 @@ if not guest_collection_found:
     print(f"guest collection {guest_collection_id} created")
 else:
     print(f"Using existing guest collection {guest_collection_id}")
+
+# Cache the current base path for future comparisons
+cache_dir = os.path.dirname(CRED_FILE_PATH)
+utils.cache_base_path(guest_collection_id, BASE_PATH, cache_dir)
 
 # Create ACL rule for Guest anonymous access
 acl_list = tc.endpoint_acl_list(endpoint_id=guest_collection_id)
