@@ -89,13 +89,13 @@ install_python() {
 
     export CPPFLAGS="-I${DATAFED_DEPENDENCIES_INSTALL_PATH}/include $CPPFLAGS"
     export LDFLAGS="-L${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib -Wl,-rpath,${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib $LDFLAGS"
-    ./configure --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}/python" --with-openssl="${DATAFED_DEPENDENCIES_INSTALL_PATH}" --with-openssl-rpath=auto
+    ./configure --prefix="${DATAFED_PYTHON_DEPENDENCIES_DIR}" --with-openssl="${DATAFED_DEPENDENCIES_INSTALL_PATH}" --with-openssl-rpath=auto
     make -j$(nproc)
     make altinstall
 
     mkdir -p "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin"
-    ln -s "${DATAFED_DEPENDENCIES_INSTALL_PATH}/python/bin/python${DATAFED_PYTHON_VERSION}" "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/python${DATAFED_PYTHON_VERSION}"
-    export PYTHON="${DATAFED_DEPENDENCIES_INSTALL_PATH}/python/bin/python${DATAFED_PYTHON_VERSION}"
+    ln -s "${DATAFED_PYTHON_DEPENDENCIES_DIR}/bin/python${DATAFED_PYTHON_VERSION}" "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/python${DATAFED_PYTHON_VERSION}"
+    export PYTHON="${DATAFED_PYTHON_DEPENDENCIES_DIR}/bin/python${DATAFED_PYTHON_VERSION}"
 
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.python_installed-${DATAFED_PYTHON_VERSION}"
     cd "$original_dir"
