@@ -203,7 +203,7 @@ def should_recreate_guest_collection(collection_id, current_base_path, cache_dir
     
     # Compare base paths
     if cached_base_path is None:
-        return False, "No cached base path available, keeping existing collection to avoid unnecessary recreation"
+        return True, "No cached base path available, recreating collection to ensure consistency"
     elif cached_base_path != current_base_path:
         return True, f"Base path changed from '{cached_base_path}' to '{current_base_path}'"
     else:
