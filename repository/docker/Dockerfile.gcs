@@ -103,6 +103,8 @@ COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libcrypto.so.1
 
 # Needed for tests
 COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake
+COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/ctest   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/ctest
+COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/share/   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/share/
 COPY --from=dependencies ${BUILD_DIR}/ ${BUILD_DIR}/
 
 # For communicating with public
