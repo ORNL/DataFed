@@ -125,6 +125,6 @@ run-authz-unit-job:
     - echo "-v \"${DATAFED_HOST_COLLECTION_MOUNT}:/mnt/datafed\" \\" >> run_globus.sh
     - echo "--entrypoint bash \\" >> run_globus.sh
     - echo "-t \"${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:${CI_COMMIT_SHA}\" \\" >> run_globus.sh
-    - echo "-c 'cd /datafed/source; /opt/datafed/dependencies/bin/cmake --build build --target test'" >> run_globus.sh
+    - echo "-c 'cd /datafed/source; /opt/datafed/dependencies/bin/cmake --build build --target test && python3 /datafed/source/scripts/globus/tests/test_create_guest_collection.py'" >> run_globus.sh
     - chmod +x run_globus.sh
     - ./run_globus.sh

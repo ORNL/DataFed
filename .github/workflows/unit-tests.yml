@@ -30,3 +30,6 @@ jobs:
       - name: Run tests
         run: |
           cmake --build build --target test
+      - name: Run Python unit tests
+        run: |
+          python3.9 scripts/globus/tests/test_create_guest_collection.py
