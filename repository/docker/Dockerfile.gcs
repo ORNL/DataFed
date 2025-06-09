@@ -152,6 +152,7 @@ RUN ${BUILD_DIR}/scripts/generate_gsi-authz_config.sh
 # Don't build with syslog the container does not seem to support syslog
 
 COPY --from=dependencies --chown=datafed:root ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/curl ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/curl
+COPY --from=dependencies --chown=datafed:root ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/ctest ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/ctest
 COPY --from=dependencies --chown=datafed:root ${DATAFED_INSTALL_PATH}/authz/ ${DATAFED_INSTALL_PATH}/authz/
 COPY --from=dependencies --chown=datafed:root ${DATAFED_DEPENDENCIES_INSTALL_PATH}/python/datafed ${DATAFED_DEPENDENCIES_INSTALL_PATH}/python/datafed
 
