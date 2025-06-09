@@ -10,6 +10,7 @@ build-gcs-base:
     GIT_SUBMODULE_STRATEGY: recursive
     GIT_STRATEGY: clone
     DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
+    GCS_BASE_IMAGE_DISTRO: "debian-12"
   tags:
     - ci-datafed-globus
     - docker
@@ -20,7 +21,7 @@ build-gcs-base:
     - cd "external/globus-connect-server-deploy/docker"
     - git checkout "$DATAFED_GCS_SUBMODULE_VERSION"
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
-    - docker build --no-cache --progress plain -t "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" - < "./docker-files/Dockerfile.ubuntu-20.04"
+    - docker build --no-cache --progress plain -t "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" - < "./docker-files/Dockerfile.${GCS_BASE_IMAGE_DISTRO}"
     - docker tag "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
     - export DATAFED_HARBOR_REPOSITORY="${COMPONENT}-${BRANCH_LOWER}"
     - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
