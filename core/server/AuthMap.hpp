@@ -49,16 +49,17 @@ private:
   std::string m_db_url;
   std::string m_db_user;
   std::string m_db_pass;
+  std::string m_cred_dir;
 
 public:
   AuthMap(){};
 
   AuthMap(time_t trans_active_inc, time_t session_active_inc,
           const std::string &db_url, const std::string &db_user,
-          const std::string &db_pass)
+          const std::string &db_pass, const std::string &cred_dir)
       : m_trans_active_increment(trans_active_inc),
         m_session_active_increment(session_active_inc), m_db_url(db_url),
-        m_db_user(db_user), m_db_pass(db_pass){};
+        m_db_user(db_user), m_db_pass(db_pass), m_cred_dir(cred_dir){};
 
   AuthMap(const AuthMap &);
 

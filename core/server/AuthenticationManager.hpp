@@ -43,7 +43,7 @@ public:
       std::map<PublicKeyType, std::vector<std::unique_ptr<Condition>>>
           &&purge_conditions,
       const std::string &db_url, const std::string &db_user,
-      const std::string &db_pass);
+      const std::string &db_pass, const std::string &cred_dir);
   /**
    * Increments the number of times that the key has been accessed, this is used
    *by the transient key to know when it needs to be converted to a session key.

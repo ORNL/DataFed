@@ -16,12 +16,12 @@ AuthenticationManager::AuthenticationManager(
     std::map<PublicKeyType, std::vector<std::unique_ptr<Condition>>>
         &&purge_conditions,
     const std::string &db_url, const std::string &db_user,
-    const std::string &db_pass)
+    const std::string &db_pass, const std::string &cred_dir)
     : m_purge_interval(purge_intervals),
       m_purge_conditions(std::move(purge_conditions)) {
   m_auth_mapper = std::move(AuthMap(m_purge_interval[PublicKeyType::TRANSIENT],
                                     m_purge_interval[PublicKeyType::SESSION],
-                                    db_url, db_user, db_pass));
+                                    db_url, db_user, db_pass, cred_dir));
 
   for (const auto &purge_int : m_purge_interval) {
     m_next_purge[purge_int.first] = time(0) + purge_int.second;
