@@ -43,8 +43,9 @@ using namespace libjson;
 
 DatabaseAPI::DatabaseAPI(const std::string &a_db_url,
                          const std::string &a_db_user,
-                         const std::string &a_db_pass)
-    : m_client(0), m_db_url(a_db_url) {
+                         const std::string &a_db_pass,
+                         const std::string &cipher_key_file_path)
+    : m_client(0), m_db_url(a_db_url), cipher_key_file_path(cipher_key_file_path){
   m_curl = curl_easy_init();
   if (!m_curl)
     EXCEPT(ID_INTERNAL_ERROR, "libcurl init failed");
@@ -338,6 +339,8 @@ void DatabaseAPI::userGetAccessToken(
     bool &needs_consent, int &token_type, // TODO: use underlying type?
     std::string &scopes, LogContext log_context) {
 
+  DL_DEBUG(log_context, "User Get Access Token");
+
   Value result;
   std::vector<std::pair<std::string, std::string>> params = {};
   if (!collection_id.empty()) {
@@ -351,10 +354,11 @@ void DatabaseAPI::userGetAccessToken(
   TRANSLATE_BEGIN()
   unsigned char token_key[CipherEngine::KEY_LENGTH];
 
+  DL_DEBUG(log_context, "Attempting to grab token key");
   //grab the token_key
-  readFile("datafed-token-key.txt", CipherEngine::KEY_LENGTH, token_key);
+  readFile(cipher_key_file_path + "datafed-token-key.txt", CipherEngine::KEY_LENGTH, token_key);
   CipherEngine cipher(token_key);
- 
+
   CipherEngine::CipherString encoded_refresh_obj;
   CipherEngine::CipherString encoded_access_obj;
 
@@ -365,9 +369,8 @@ void DatabaseAPI::userGetAccessToken(
 
   std::string refresh = obj.getString("refresh");
   encoded_refresh_obj.encrypted_msg_len = obj.getNumber("refresh_len");
- 
+
   // Allocate and copy to char*
-  
   encoded_access_obj.encrypted_msg = std::make_unique<char[]>(CipherEngine::ENCODED_MSG_LENGTH + 1); // add 1 for null terminator
   memcpy(encoded_access_obj.encrypted_msg.get(), access.c_str(), CipherEngine::ENCODED_MSG_LENGTH);
   encoded_access_obj.encrypted_msg[CipherEngine::ENCODED_MSG_LENGTH] = '\0'; // null terminate
@@ -377,7 +380,7 @@ void DatabaseAPI::userGetAccessToken(
   encoded_access_obj.iv = std::make_unique<char[]>(CipherEngine::ENCODED_IV_LENGTH+1); // add 1 for null terminator
   memcpy(encoded_access_obj.iv.get(), access_iv.c_str(), CipherEngine::ENCODED_IV_LENGTH);
   encoded_access_obj.iv[CipherEngine::ENCODED_IV_LENGTH] = '\0'; //null terminate
- 
+
   // Allocate and copy to char*
   encoded_refresh_obj.encrypted_msg = std::make_unique<char[]>(CipherEngine::ENCODED_MSG_LENGTH+1); // add 1 for null terminator
   memcpy(encoded_refresh_obj.encrypted_msg.get(), refresh.c_str(), CipherEngine::ENCODED_MSG_LENGTH);
@@ -388,16 +391,16 @@ void DatabaseAPI::userGetAccessToken(
   encoded_refresh_obj.iv = std::make_unique<char[]>(CipherEngine::ENCODED_IV_LENGTH + 1); //add 1 for null terminator
   memcpy(encoded_refresh_obj.iv.get(), refresh_iv.c_str(), CipherEngine::ENCODED_IV_LENGTH);
   encoded_refresh_obj.iv[CipherEngine::ENCODED_IV_LENGTH] = '\0'; // null terminate
-     
-  //Decryption for acc token and ref token 
+
+  //Decryption for acc token and ref token
   a_acc_tok = cipher.decrypt(encoded_access_obj, log_context);
-  a_ref_tok = cipher.decrypt(encoded_refresh_obj, log_context); 
+  a_ref_tok = cipher.decrypt(encoded_refresh_obj, log_context);
   a_expires_in = (uint32_t)obj.getNumber("expires_in");
   needs_consent = obj.getBool("needs_consent");
   token_type = (int)obj.getNumber("token_type");
   // NOTE: scopes will be a blank string for token_type=GLOBUS_DEFAULT
   scopes = obj.getString("scopes");
-    
+
   TRANSLATE_END(result, log_context)
 }
 
@@ -411,8 +414,9 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
 
   unsigned char token_key[CipherEngine::KEY_LENGTH];
 
+  DL_DEBUG(log_context, "Setting Access Token");
   //grab the token_key
-  readFile("../../build/core/server/datafed-token-key.txt", CipherEngine::KEY_LENGTH, token_key);
+  readFile(cipher_key_file_path + "datafed-token-key.txt", CipherEngine::KEY_LENGTH, token_key);
   CipherEngine cipher(token_key);
 
   //encrypting the access token
