@@ -34,7 +34,6 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryption)
     outf.close();
 
     readFile("datafed-token-key.txt", SDMS::CipherEngine::KEY_LENGTH, key);
-    
     //Construct
     CipherEngine encryptCipher(key);
 
