@@ -98,12 +98,10 @@ const std::string DatabaseAPI::buildSearchParamURL(
 
   for (vector<pair<string, string>>::const_iterator iparam = param_vec.begin();
        iparam != param_vec.end(); ++iparam) {
-
-
     url.append("&");
     url.append(iparam->first.c_str());
-    url.append("="); 
-    esc_txt = curl_easy_escape(m_curl, iparam->second.c_str(), 0); 
+    url.append("=");
+    esc_txt = curl_easy_escape(m_curl, iparam->second.c_str(), 0);
     url.append(esc_txt);
     curl_free(esc_txt);
   }
