@@ -22,6 +22,10 @@ build-gcs:
         - scripts/**/*
         - common/**/*
         - .gitlab-ci.yml
+        - .gitlab/build/build_gcs_base_image.sh
+        - .gitlab/build/build_gcs_image.sh
+        - .gitlab/stage_build_base.sh
+        - external/globus-connect-server/**/*
         - CMakeLists.txt
         - cmake/**/*
         - repository/docker/entrypoint_authz.sh
@@ -68,6 +72,10 @@ retag-image:
         - scripts/**/*
         - common/**/*
         - .gitlab-ci.yml
+        - .gitlab/build/build_gcs_base_image.sh
+        - .gitlab/build/build_gcs_image.sh
+        - .gitlab/stage_build_base.sh
+        - external/globus-connect-server/**/*
         - CMakeLists.txt
         - cmake/**/*
         - repository/docker/entrypoint_authz.sh
