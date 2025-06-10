@@ -2,17 +2,15 @@
 # cd ${PROJECT_ROOT} or cd DataFed
 # docker build -f core/docker/Dockerfile .
 
-ARG                        BUILD_BASE="ubuntu:focal"
 ARG                      DEPENDENCIES="dependencies"
 ARG                           RUNTIME="runtime"
 ARG                       DATAFED_DIR="/datafed"
 ARG              DATAFED_INSTALL_PATH="/opt/datafed"
 ARG DATAFED_DEPENDENCIES_INSTALL_PATH="/opt/datafed/dependencies"
-ARG                         GCS_IMAGE="code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
 ARG                         BUILD_DIR="$DATAFED_DIR/source"
 ARG                           NVM_DIR="$DATAFED_DIR/.nvm"
-ARG                           NVM_INC="$DATAFED_DIR/.nvm/versions/node/v13.14.0/include/node"
-ARG                           NVM_BIN="$DATAFED_DIR/.nvm/versions/node/v13.14.0/bin"
+ARG                           NVM_INC="$DATAFED_DIR/.nvm/versions/node/v20.18.2/include/node"
+ARG                           NVM_BIN="$DATAFED_DIR/.nvm/versions/node/v20.18.2/bin"
 ARG                           LIB_DIR="/usr/local/lib"
 
 FROM ${DEPENDENCIES} AS foxx-build
@@ -57,7 +55,7 @@ RUN curl -OL https://download.arangodb.com/arangodb312/DEBIAN/Release.key; apt-k
 
 # RUN echo 'deb https://download.arangodb.com/arangodb311/DEBIAN/ /' | tee /etc/apt/sources.list.d/arangodb.list
 # If trust the site but the gpg key has expired can add [trusted=yes]
-# i.e.
+
 RUN echo 'deb [trusted=yes] https://download.arangodb.com/arangodb312/DEBIAN/ /' | tee /etc/apt/sources.list.d/arangodb.list
 RUN apt update
 RUN apt install arangodb3-client -y

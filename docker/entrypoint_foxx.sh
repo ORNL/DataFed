@@ -33,6 +33,9 @@ then
   # Check to see if foxx has previously been installed
   "${PROJECT_ROOT}/scripts/generate_datafed.sh"
 
+  export LD_LIBRARY_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/lib"
+  ldconfig
+
 	# Define common CMake options
 	cmake_options=(
 		-S. -B build
