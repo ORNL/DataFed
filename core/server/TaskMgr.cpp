@@ -80,7 +80,7 @@ void TaskMgr::initialize(LogContext log_context) {
   // Load ready & running tasks and schedule workers
   // TODO This will break if there are too many tasks - must implement a paging
   // system to load chunks of tasks.
-  DatabaseAPI db(m_config.db_url, m_config.db_user, m_config.db_pass);
+  DatabaseAPI db(m_config.db_url, m_config.db_user, m_config.db_pass, m_config.cred_dir);
   libjson::Value tasks;
   db.taskLoadReady(tasks, m_log_context);
   newTasks(tasks, m_log_context);
@@ -218,7 +218,7 @@ void TaskMgr::maintenanceThread(LogContext log_context, int thread_id) {
 
 void TaskMgr::purgeTaskHistory(LogContext log_context) const {
   try {
-    DatabaseAPI db(m_config.db_url, m_config.db_user, m_config.db_pass);
+    DatabaseAPI db(m_config.db_url, m_config.db_user, m_config.db_pass, m_config.cred_dir);
 
     db.taskPurge(m_config.task_purge_age, log_context);
   } catch (TraceException &e) {

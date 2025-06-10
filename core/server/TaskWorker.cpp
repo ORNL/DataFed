@@ -36,7 +36,7 @@ TaskWorker::TaskWorker(ITaskMgr &a_mgr, uint32_t a_worker_id,
                        LogContext log_context)
     : ITaskWorker(a_worker_id, log_context), m_mgr(a_mgr),
       m_db(Config::getInstance().db_url, Config::getInstance().db_user,
-           Config::getInstance().db_pass) {
+           Config::getInstance().db_pass, Config::getInstance().cred_dir) {
 
   log_context.thread_name += "-TaskWorker";
   log_context.thread_id = a_worker_id;
@@ -194,9 +194,9 @@ void TaskWorker::workerThread(LogContext log_context) {
 }
 
 
-
+//Checks if the tokens are encrypted, if not then it returns the token, if it is encrypted it unencrypts it and returns the unencrypted token
 std::string
-TaskWorker::prepToken(const Value::Object &obj,std::string token, bool needs_update, LogContext log_context)
+TaskWorker::prepToken(const Value::Object &obj,std::string token, const std::string& cipher_key_path,bool needs_update, LogContext log_context)
 {
     //1.Detect if tokens are encrypted
     string string_tok = obj.getString(token);
@@ -205,8 +205,8 @@ TaskWorker::prepToken(const Value::Object &obj,std::string token, bool needs_upd
     if(!needs_update)
     {
         //TOKEN IS ENCRYPTED
-        unsigned char token_key[32];
-        readFile("../../build/core/server/datafed-token-key.txt", 32, token_key);
+        unsigned char token_key[SDMS::CipherEngine::KEY_LENGTH];
+        readFile(cipher_key_path + "datafed-token-key.txt", SDMS::CipherEngine::KEY_LENGTH, token_key);
         CipherEngine cipher(token_key);
 
         CipherEngine::CipherString encoded_obj;
@@ -262,12 +262,12 @@ TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
   bool needs_update = false;
   const Value::Object &obj = a_task_params.asObject();
 
-  //TokenPrepFuncs:
+  //TokenPrepFuncs
   needs_update = tokenNeedsUpdate(obj);
   
   //Update the tokens to be unencrypted
-  string acc_tok = prepToken(obj, "acc_tok", needs_update, log_context);
-  string ref_tok = prepToken(obj, "ref_tok", needs_update, log_context);
+  string acc_tok = prepToken(obj, "acc_tok", me.m_db.cipher_key_file_path, needs_update, log_context);
+  string ref_tok = prepToken(obj, "ref_tok", me.m_db.cipher_key_file_path, needs_update, log_context);
  
 
   const string &uid = obj.getString("uid");
@@ -280,9 +280,6 @@ TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
   const Value::Array &files = obj.getArray("files");
   bool encrypted = true;
   GlobusAPI::EndpointInfo ep_info;
-
-  //string acc_tok = obj.getString("acc_tok");
-  //string ref_tok = obj.getString("ref_tok");
 
   uint32_t expires_in = obj.getNumber("acc_tok_exp_in");
   uint32_t token_type =

@@ -28,7 +28,7 @@ void Config::loadRepositoryConfig(AuthenticationManager &auth_manager,
     m_repos_mtx.unlock();
   }
 
-  DatabaseAPI db_client(db_url, db_user, db_pass);
+  DatabaseAPI db_client(db_url, db_user, db_pass, cred_dir);
 
   std::vector<RepoData> temp_repos;
 
