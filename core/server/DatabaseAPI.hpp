@@ -22,9 +22,6 @@ namespace Core {
 
 class DatabaseAPI {
 public:
-  static const int KEY_LENGTH = 32;
-  static const int ENCODED_MSG_LENGTH = 128;
-  static const int ENCODED_IV_LENGTH = 24;
 
 
   struct UserTokenInfo {
@@ -34,8 +31,7 @@ public:
     uint32_t expiration;
   };
 
-  DatabaseAPI(const std::string &a_db_url, const std::string &a_db_user,
-              const std::string &a_db_pass);
+  DatabaseAPI(const std::string &a_db_url, const std::string &a_db_user, const std::string &a_db_pass, const std::string &cipher_key_file_path);
   ~DatabaseAPI();
 
   void serverPing(LogContext log_context);
@@ -338,6 +334,7 @@ public:
       LogContext);
   void metricsPurge(uint32_t a_timestamp, LogContext);
 
+  std::string cipher_key_file_path;
 private:
   long dbGet(const char *a_url_path,
              const std::vector<std::pair<std::string, std::string>> &a_params,
