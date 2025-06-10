@@ -87,9 +87,7 @@ int main(int a_argc, char **a_argv) {
                                          "Use config file for options")(
         "gen-keys", po::bool_switch(&gen_keys),
         "Generate new server keys then exit")(
-        "log-level", po::value<unsigned int>(&cfg_log_level), "Set log level");
-        //"cipher-key-path,C", po::value<string>(&config.cipher_key_path), "Cipher key file path");
-        
+        "log-level", po::value<unsigned int>(&cfg_log_level), "Set log level"); 
     try {
       po::variables_map opt_map;
       po::store(po::command_line_parser(a_argc, a_argv).options(opts).run(),
@@ -137,7 +135,7 @@ int main(int a_argc, char **a_argv) {
 
       if (gen_keys) {
         string pub_key, priv_key;
-        unsigned char token_key[32];
+        unsigned char token_key[KEY_LENGTH];
 
         generateKeys(pub_key, priv_key);
         CipherEngine::generateEncryptionKey(token_key);
