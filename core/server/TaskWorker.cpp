@@ -241,17 +241,7 @@ return string_tok;
 bool
 TaskWorker::tokenNeedsUpdate(const Value::Object &obj)
 {        
-   //If encrypted:
-    if(obj.getString("acc_tok_iv") != "")
-    {
-        //Return false we dont need to update
-        return false;
-    }
-    else
-    {
-        //Return true we do need to update
-        return true;
-    }
+    return !task_object.getString("acc_tok_iv").empty();
 }
 
 
