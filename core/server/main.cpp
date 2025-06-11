@@ -87,7 +87,8 @@ int main(int a_argc, char **a_argv) {
                                          "Use config file for options")(
         "gen-keys", po::bool_switch(&gen_keys),
         "Generate new server keys then exit")(
-        "log-level", po::value<unsigned int>(&cfg_log_level), "Set log level"); 
+        "log-level", po::value<unsigned int>(&cfg_log_level), "Set log level");
+
     try {
       po::variables_map opt_map;
       po::store(po::command_line_parser(a_argc, a_argv).options(opts).run(),
@@ -136,29 +137,27 @@ int main(int a_argc, char **a_argv) {
       if (gen_keys) {
         string pub_key, priv_key;
         unsigned char token_key[KEY_LENGTH];
-
         generateKeys(pub_key, priv_key);
         CipherEngine::generateEncryptionKey(token_key);
 
-
-       string fname = config.cred_dir + "datafed-core-key.pub";
-       ofstream  outf(fname.c_str());
+        string public_key_file = config.cred_dir + "datafed-core-key.pub";
+        ofstream outf(public_key_file.c_str());
         if (!outf.is_open() || !outf.good())
-          EXCEPT_PARAM(1, "Could not open file: " << fname);
+          EXCEPT_PARAM(1, "Could not open file: " << public_key_file);
         outf << pub_key;
         outf.close();
 
-        fname = config.cred_dir + "datafed-core-key.priv";
-        outf.open(fname.c_str());
+        string private_key_file = config.cred_dir + "datafed-core-key.priv";
+        outf.open(private_key_file.c_str());
         if (!outf.is_open() || !outf.good())
-          EXCEPT_PARAM(1, "Could not open file: " << fname);
+          EXCEPT_PARAM(1, "Could not open file: " << private_key_file);
         outf << priv_key;
         outf.close();
 
-        fname = config.cred_dir + "datafed-token-key.txt";
-        outf.open(fname.c_str());
+        string token_key_file = config.cred_dir + "datafed-token-key.txt";
+        outf.open(token_key_file.c_str());
         if (!outf.is_open() || !outf.good())
-          EXCEPT_PARAM(1, "Could not open file: " << fname);
+          EXCEPT_PARAM(1, "Could not open file: " << token_key_file);
         outf << token_key;
         outf.close();
 
