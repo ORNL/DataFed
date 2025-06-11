@@ -198,8 +198,6 @@ void TaskWorker::workerThread(LogContext log_context) {
 std::string
 TaskWorker::prepToken(const Value::Object &obj,std::string token, const std::string& cipher_key_path,bool needs_update, LogContext log_context)
 {
-    //1.Detect if tokens are encrypted
-    string string_tok = obj.getString(token);
     
     //if the token's encryption already exists
     if(!needs_update)
@@ -212,9 +210,9 @@ TaskWorker::prepToken(const Value::Object &obj,std::string token, const std::str
         CipherEngine::CipherString encoded_obj;
        
         //Prep Token into a char[]
-        string tok_str = obj.getString(token);  // assume known size
-        encoded_obj.encrypted_msg = std::unique_ptr<char[]>(new char[tok_str.size() + 1]);  // +1 for null terminator
-        std::memcpy(encoded_obj.encrypted_msg.get(), tok_str.c_str(), tok_str.size() + 1);     // copy including '\0' 
+        string token_str = obj.getString(token);  // assume known size
+        encoded_obj.encrypted_msg = std::unique_ptr<char[]>(new char[token_str.size() + 1]);  // +1 for null terminator
+        std::memcpy(encoded_obj.encrypted_msg.get(), token_str.c_str(), token_str.size() + 1);     // copy including '\0' 
         
         encoded_obj.encrypted_msg_len = obj.getNumber(token+"_len");
 
@@ -233,9 +231,9 @@ TaskWorker::prepToken(const Value::Object &obj,std::string token, const std::str
     {
         DL_WARNING(log_context, "Token Isn't Encrypted, starting encryption and refresh process"); 
 
-        return string_tok;
+        return obj.getString(token);
     }
-return string_tok;
+return obj.getString(token);
 }
 
 bool
@@ -284,7 +282,8 @@ TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
 
   DL_TRACE(log_context, ">>>> Token Expires in: " << expires_in);
 
-  if ((expires_in < 3600) | needs_update/*Add an or its missing certain fields*/) {
+  //if the token expired or needs to be updated
+  if ((expires_in < 3600) || needs_update) {
 
     me.m_db.setClient(uid);
 
@@ -488,9 +487,6 @@ ICommunicator::Response TaskWorker::cmdAllocCreate(TaskWorker &me,
                                                    const Value &a_task_params,
                                                    LogContext log_context) {
   const Value::Object &obj = a_task_params.asObject();
-
-  DL_DEBUG(log_context, "Testing to see what thisll output");
-  DL_DEBUG(log_context, a_task_params.asString());
   const string &repo_id = obj.getString("repo_id");
   const string &path = obj.getString("repo_path");
 
@@ -691,7 +687,6 @@ TaskWorker::repoSendRecv(const string &a_repo_id,
           long timeout_on_poll = Config::getInstance().repo_timeout;
 
           // When creating a communication channel with a server application we
-          // need to locally have a client socket. So though we have specified a
           // client socket we will actually be communicating with the server.
           CommunicatorFactory communicator_factory(log_context);
           return communicator_factory.create(socket_options, *credentials,
