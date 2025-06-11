@@ -54,16 +54,14 @@ BOOST_AUTO_TEST_CASE(testing_encrypted_token)
     SDMS::LogContext log_context;
     bool needs_update = false;
 
-    
     unsigned char token_key[SDMS::CipherEngine::KEY_LENGTH];
     unsigned char key[SDMS::CipherEngine::KEY_LENGTH];
-    
+
     //Generate key
     SDMS::CipherEngine::generateEncryptionKey(token_key);
 
-
     std::string fname = "datafed-token-key.txt";
-    
+
     //Create key file
     std::ofstream outf(fname, std::ios::binary);
     outf.write(reinterpret_cast<const char*>(token_key), SDMS::CipherEngine::KEY_LENGTH);
@@ -78,7 +76,7 @@ BOOST_AUTO_TEST_CASE(testing_encrypted_token)
     std::string cipher_key_path = "";
     std::string test_token = "1234567890yoDa56Bx5yobvJYEjdGr2YpGYJybE7x4Bq42pQ3zuXCb8YQyn0EqEB7vjPx3GlNlKwkEsMn1234567890";
     SDMS::CipherEngine testCipher(key);
-    
+
     SDMS::CipherEngine::CipherString returnObj = testCipher.encrypt(test_token, log_context);
 
     test_params.fromString("{\"acc_tok\":\"" + std::string(returnObj.encrypted_msg.get()) + "\",\"acc_tok_iv\":\"" + std::string(returnObj.iv.get()) + "\",\"acc_tok_len\":96}");
@@ -92,18 +90,19 @@ BOOST_AUTO_TEST_CASE(testing_encrypted_token)
 
 BOOST_AUTO_TEST_CASE(testing_unencrypted_token)
 {
+
     SDMS::LogContext log_context;
     bool needs_update = false;
 
     //setting up test params
     libjson::Value test_params;
-    test_params.fromString("{\"acc_tok\":\"unencrypted\",\"acc_tok_iv\":\"\",\"acc_tok_len\":0}");
+    test_params.fromString("{\"acc_tok\":\"1234567890yoDa56Bx5yobvJYEjdGr2YpGYJybE7x4Bq42pQ3zuXCb8YQyn0EqEB7vjPx3GlNlKwkEsMn1234567890\",\"acc_tok_iv\":\"\",\"acc_tok_len\":0}");
     const libjson::Value::Object &obj = test_params.asObject();
     std::string cipher_key_path = "";
 
     needs_update = TaskWorkerTestAccess::tokenNeedsUpdate(obj);
-    std::string acc_tok = TaskWorkerTestAccess::prepToken(obj, "acc_tok", cipher_key_path, needs_update, log_context);
 
+    std::string acc_tok = TaskWorkerTestAccess::prepToken(obj, "acc_tok", cipher_key_path, needs_update, log_context);
 
     BOOST_CHECK(needs_update == true);
 
