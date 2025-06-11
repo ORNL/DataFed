@@ -31,7 +31,7 @@ public:
   ~TaskWorker();
 
 private:
-    typedef ICommunicator::Response (*task_function_t)(
+  typedef ICommunicator::Response (*task_function_t)(
       TaskWorker &me, const libjson::Value &a_task_params,
       LogContext log_context);
 
