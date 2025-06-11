@@ -1,13 +1,14 @@
 import { expect } from "chai";
 import {
     createNode,
-    makeLabel,
-    graphPruneCalc,
-    graphPrune,
-    graphPruneReset,
     graphCountConnected,
+    graphPrune,
+    graphPruneCalc,
+    graphPruneReset,
+    makeLabel,
 } from "../../../static/components/provenance/utils.js";
 import { DEFAULTS } from "../../../static/components/provenance/state.js";
+import * as model from "../../../static/model.js";
 
 describe("utils", function () {
     describe("createNode", function () {
@@ -82,6 +83,79 @@ describe("utils", function () {
             makeLabel(node, item);
 
             expect(node.label).to.include(item.id);
+        });
+
+        it("should generate HTML span elements for notes instead of entity codes", function () {
+            const node = {};
+            const item = {
+                id: "test-id",
+                notes: model.NOTE_MASK_LOC_INFO,
+            };
+
+            makeLabel(node, item);
+
+            // Should contain HTML span elements, not entity codes
+            expect(node.label).to.include("<span class='ui-icon ui-icon-circle-info'></span>");
+            expect(node.label).to.not.include("&#xe665;");
+        });
+
+        it("should generate HTML span elements for error notes", function () {
+            const node = {};
+            const item = {
+                id: "test-id",
+                notes: model.NOTE_MASK_LOC_ERR,
+            };
+
+            makeLabel(node, item);
+
+            // Should contain HTML span elements for error flags
+            expect(node.label).to.include("<span class='ui-icon ui-icon-flag'></span>");
+            expect(node.label).to.not.include("&#xe6e9;");
+        });
+
+        it("should generate HTML span elements for warning notes", function () {
+            const node = {};
+            const item = {
+                id: "test-id",
+                notes: model.NOTE_MASK_LOC_WARN,
+            };
+
+            makeLabel(node, item);
+
+            // Should contain HTML span elements for warning alerts
+            expect(node.label).to.include("<span class='ui-icon ui-icon-alert'></span>");
+            expect(node.label).to.not.include("&#xe65f;");
+        });
+
+        it("should generate HTML span elements for inherited error notes", function () {
+            const node = {};
+            const item = {
+                id: "test-id",
+                notes: model.NOTE_MASK_INH_ERR,
+            };
+
+            makeLabel(node, item);
+
+            // Should contain HTML span elements for inherited errors
+            expect(node.label).to.include(
+                "(<span class='ui-icon ui-icon-flag inh-err-title'></span>)",
+            );
+            expect(node.label).to.not.include("(&#xe6e9;)");
+        });
+
+        it("should handle items with no notes", function () {
+            const node = {};
+            const item = {
+                id: "test-id",
+                // no notes property
+            };
+
+            makeLabel(node, item);
+
+            // Should only contain the ID, no icon spans or entity codes
+            expect(node.label).to.equal(item.id);
+            expect(node.label).to.not.include("&#x");
+            expect(node.label).to.not.include("<span");
         });
     });
 
