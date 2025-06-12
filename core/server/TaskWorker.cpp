@@ -198,7 +198,7 @@ void TaskWorker::workerThread(LogContext log_context) {
 std::string
 TaskWorker::prepToken(const Value::Object &obj,std::string token, const std::string& cipher_key_path,bool needs_update, LogContext log_context)
 {
-    
+
     //if the token's encryption already exists
     if(!needs_update)
     {
@@ -208,28 +208,27 @@ TaskWorker::prepToken(const Value::Object &obj,std::string token, const std::str
         CipherEngine cipher(token_key);
 
         CipherEngine::CipherString encoded_obj;
-       
+
         //Prep Token into a char[]
         string token_str = obj.getString(token);  // assume known size
         encoded_obj.encrypted_msg = std::unique_ptr<char[]>(new char[token_str.size() + 1]);  // +1 for null terminator
-        std::memcpy(encoded_obj.encrypted_msg.get(), token_str.c_str(), token_str.size() + 1);     // copy including '\0' 
-        
+        std::memcpy(encoded_obj.encrypted_msg.get(), token_str.c_str(), token_str.size() + 1);     // copy including '\0'
+
         encoded_obj.encrypted_msg_len = obj.getNumber(token+"_len");
 
         //Prep IV into a char[]
         string iv_str = obj.getString(token + "_iv");  // assume known size
         encoded_obj.iv = std::unique_ptr<char[]>(new char[iv_str.size() + 1]);  // +1 for null terminator
-        std::memcpy(encoded_obj.iv.get(), iv_str.c_str(), iv_str.size() + 1);     // copy including '\0' 
-        
+        std::memcpy(encoded_obj.iv.get(), iv_str.c_str(), iv_str.size() + 1);     // copy including '\0'
 
         //Decrypt it:
         string decrypted_token = cipher.decrypt(encoded_obj, log_context);
-        
+
         return decrypted_token;
     }
     else
     {
-        DL_WARNING(log_context, "Token Isn't Encrypted, starting encryption and refresh process"); 
+        DL_WARNING(log_context, "Token Isn't Encrypted, starting encryption and refresh process");
 
         return obj.getString(token);
     }
@@ -238,7 +237,7 @@ return obj.getString(token);
 
 bool
 TaskWorker::tokenNeedsUpdate(const Value::Object &obj)
-{        
+{
     return obj.getString("acc_tok_iv").empty();
 }
 
@@ -252,11 +251,10 @@ TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
 
   //TokenPrepFuncs
   needs_update = tokenNeedsUpdate(obj);
-  
+
   //Update the tokens to be unencrypted
   string acc_tok = prepToken(obj, "acc_tok", me.m_db.cipher_key_file_path, needs_update, log_context);
   string ref_tok = prepToken(obj, "ref_tok", me.m_db.cipher_key_file_path, needs_update, log_context);
- 
 
   const string &uid = obj.getString("uid");
   TaskType type = (TaskType)obj.getNumber("type");
@@ -487,6 +485,7 @@ ICommunicator::Response TaskWorker::cmdAllocCreate(TaskWorker &me,
                                                    const Value &a_task_params,
                                                    LogContext log_context) {
   const Value::Object &obj = a_task_params.asObject();
+
   const string &repo_id = obj.getString("repo_id");
   const string &path = obj.getString("repo_path");
 
@@ -687,6 +686,7 @@ TaskWorker::repoSendRecv(const string &a_repo_id,
           long timeout_on_poll = Config::getInstance().repo_timeout;
 
           // When creating a communication channel with a server application we
+          // need to locally have a client socket. So though we have specified a
           // client socket we will actually be communicating with the server.
           CommunicatorFactory communicator_factory(log_context);
           return communicator_factory.create(socket_options, *credentials,
