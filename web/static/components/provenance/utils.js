@@ -98,7 +98,7 @@ function makeLabel(node, item) {
         node.label = item.alias;
     } else node.label = item.id;
 
-    node.label += util.generateNoteSpan(item, true);
+    node.label += util.generateNoteSpan(item, false);
 }
 
 /**
