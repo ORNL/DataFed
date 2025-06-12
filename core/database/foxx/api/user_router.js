@@ -117,6 +117,7 @@ router
                         ct: time,
                         ut: time,
                     };
+
                     if (req.queryParams.password) {
                         g_lib.validatePassword(req.queryParams.password);
                         user_data.password = auth.create(req.queryParams.password);
@@ -694,6 +695,7 @@ router
     .queryParam("refresh_iv", joi.string().required(), "Refresh Token Initialization Value")
     .summary("Set user tokens")
     .description("Set user tokens");
+
 router
     .get("/token/get", function (req, res) {
         try {
@@ -732,6 +734,7 @@ router
                 token_document,
                 needs_consent,
             );
+
             res.send(result);
         } catch (e) {
             g_lib.handleException(e, res);
