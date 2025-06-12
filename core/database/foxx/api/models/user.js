@@ -63,7 +63,7 @@ class UserModel {
      * @returns {boolean} Whether or not user exists on database
      */
     exists() {
-       if (typeof this.#exists === "undefined") {
+        if (typeof this.#exists === "undefined") {
             let query = { _id: this.#user_id };
             if (this.#user_key) {
                 query = { _key: this.#user_key };
