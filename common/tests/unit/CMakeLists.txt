@@ -14,7 +14,7 @@ foreach(PROG
     test_SocketFactory
     test_SocketOptions
     test_CipherEngine
-    )
+)
 
   include_directories(${PROJECT_SOURCE_DIR}/common/source)
   file(GLOB ${PROG}_SOURCES ${PROG}.cpp)
@@ -29,6 +29,5 @@ foreach(PROG
   endif()
   # Only want this if using shared boost libraries
   add_test(unit_${PROG} unit_${PROG})
-
 endforeach(PROG)
 
