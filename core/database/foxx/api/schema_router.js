@@ -1,25 +1,24 @@
-'use strict';
+"use strict";
 
-const createRouter = require('@arangodb/foxx/router');
+const createRouter = require("@arangodb/foxx/router");
 const router = createRouter();
-const joi = require('joi');
+const joi = require("joi");
 
-const g_db = require('@arangodb').db;
-const g_lib = require('./support');
-const g_graph = require('@arangodb/general-graph')._graph('sdmsg');
+const g_db = require("@arangodb").db;
+const g_lib = require("./support");
+const g_graph = require("@arangodb/general-graph")._graph("sdmsg");
 
 module.exports = router;
 
 function fixSchOwnNm(a_sch) {
-    if (!a_sch.own_nm)
-        return;
+    if (!a_sch.own_nm) return;
 
-    var j, nm = "",
+    var j,
+        nm = "",
         tmp = a_sch.own_nm.split(" ");
 
     for (j = 0; j < tmp.length - 1; j++) {
-        if (j)
-            nm += " ";
+        if (j) nm += " ";
         nm += tmp[j].charAt(0).toUpperCase() + tmp[j].substr(1);
     }
 
@@ -30,13 +29,11 @@ function fixSchOwnNmAr(a_sch) {
     var sch, tmp, j, nm;
     for (var i in a_sch) {
         sch = a_sch[i];
-        if (!sch.own_nm)
-            continue;
+        if (!sch.own_nm) continue;
         tmp = sch.own_nm.split(" ");
         nm = "";
         for (j = 0; j < tmp.length - 1; j++) {
-            if (j)
-                nm += " ";
+            if (j) nm += " ";
             nm += tmp[j].charAt(0).toUpperCase() + tmp[j].substr(1);
         }
         sch.own_nm = nm;
@@ -46,7 +43,10 @@ function fixSchOwnNmAr(a_sch) {
 // Find all references (internal and external), load them, then place in refs param (object)
 // This allows preloading schema dependencies for schema processing on client side
 function _resolveDeps(a_sch_id, a_refs) {
-    var res, dep, id, cur = new Set(),
+    var res,
+        dep,
+        id,
+        cur = new Set(),
         nxt;
 
     cur.add(a_sch_id);
@@ -54,9 +54,9 @@ function _resolveDeps(a_sch_id, a_refs) {
     while (cur.size) {
         nxt = new Set();
 
-        cur.forEach(function(a_id) {
+        cur.forEach(function (a_id) {
             res = g_db._query("for v in 1..1 outbound @id sch_dep return v", {
-                id: a_id
+                id: a_id,
             });
 
             while (res.hasNext()) {
@@ -73,18 +73,18 @@ function _resolveDeps(a_sch_id, a_refs) {
     }
 }
 
-
 //==================== SCHEMA API FUNCTIONS
 
-router.post('/create', function(req, res) {
+router
+    .post("/create", function (req, res) {
         try {
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn"],
-                    write: ["sch", "sch_dep"]
+                    write: ["sch", "sch_dep"],
                 },
                 waitForSync: true,
-                action: function() {
+                action: function () {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
 
                     // Schema validator has already been run at this point; however, DataFed further restricts
@@ -95,12 +95,15 @@ router.post('/create', function(req, res) {
                         cnt: 0,
                         ver: 0,
                         pub: req.body.pub,
-                        def: req.body.def
+                        def: req.body.def,
                     };
 
                     if (req.body.sys) {
                         if (!client.is_admin)
-                            throw [g_lib.ERR_PERM_DENIED, "Creating a system schema requires admin privileges."];
+                            throw [
+                                g_lib.ERR_PERM_DENIED,
+                                "Creating a system schema requires admin privileges.",
+                            ];
                         if (!req.body.pub)
                             throw [g_lib.ERR_INVALID_PARAM, "System schemas cannot be private."];
                     } else {
@@ -112,7 +115,7 @@ router.post('/create', function(req, res) {
                     g_lib.procInputParam(req.body, "desc", false, obj);
 
                     var sch = g_db.sch.save(obj, {
-                        returnNew: true
+                        returnNew: true,
                     }).new;
 
                     updateSchemaRefs(sch);
@@ -123,33 +126,38 @@ router.post('/create', function(req, res) {
                     delete sch._rev;
 
                     res.send([sch]);
-                }
+                },
             });
         } catch (e) {
             g_lib.handleException(e, res);
         }
     })
-    .queryParam('client', joi.string().optional(), "Client ID")
-    .body(joi.object({
-        id: joi.string().required(),
-        desc: joi.string().required(),
-        def: joi.object().required(),
-        pub: joi.boolean().optional().default(true),
-        sys: joi.boolean().optional().default(false)
-    }).required(), 'Schema fields')
-    .summary('Create schema')
-    .description('Create schema');
+    .queryParam("client", joi.string().optional(), "Client ID")
+    .body(
+        joi
+            .object({
+                id: joi.string().required(),
+                desc: joi.string().required(),
+                def: joi.object().required(),
+                pub: joi.boolean().optional().default(true),
+                sys: joi.boolean().optional().default(false),
+            })
+            .required(),
+        "Schema fields",
+    )
+    .summary("Create schema")
+    .description("Create schema");
 
-
-router.post('/update', function(req, res) {
+router
+    .post("/update", function (req, res) {
         try {
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn"],
-                    write: ["sch", "sch_dep"]
+                    write: ["sch", "sch_dep"],
                 },
                 waitForSync: true,
-                action: function() {
+                action: function () {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
                     var idx = req.queryParams.id.indexOf(":");
                     if (idx < 0) {
@@ -159,23 +167,34 @@ router.post('/update', function(req, res) {
                         sch_ver = parseInt(req.queryParams.id.substr(idx + 1)),
                         sch_old = g_db.sch.firstExample({
                             id: sch_id,
-                            ver: sch_ver
+                            ver: sch_ver,
                         });
 
                     if (!sch_old) {
-                        throw [g_lib.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found."];
+                        throw [
+                            g_lib.ERR_NOT_FOUND,
+                            "Schema '" + req.queryParams.id + "' not found.",
+                        ];
                     }
 
                     // Cannot modify schemas that are in use
                     if (sch_old.cnt) {
-                        throw [g_lib.ERR_PERM_DENIED, "Schema is associated with data records - cannot update."];
+                        throw [
+                            g_lib.ERR_PERM_DENIED,
+                            "Schema is associated with data records - cannot update.",
+                        ];
                     }
 
                     // Cannot modify schemas that are referenced by other schemas
-                    if (g_db.sch_dep.firstExample({
-                            _to: sch_old._id
-                        })) {
-                        throw [g_lib.ERR_PERM_DENIED, "Schema is referenced by another schema - cannot update."];
+                    if (
+                        g_db.sch_dep.firstExample({
+                            _to: sch_old._id,
+                        })
+                    ) {
+                        throw [
+                            g_lib.ERR_PERM_DENIED,
+                            "Schema is referenced by another schema - cannot update.",
+                        ];
                     }
 
                     if (sch_old.own_id != client._id && !client.is_admin)
@@ -189,7 +208,10 @@ router.post('/update', function(req, res) {
 
                     if (req.body.sys) {
                         if (!client.is_admin)
-                            throw [g_lib.ERR_PERM_DENIED, "Changing to a system schema requires admin privileges."];
+                            throw [
+                                g_lib.ERR_PERM_DENIED,
+                                "Changing to a system schema requires admin privileges.",
+                            ];
 
                         if (!sch_old.pub && !req.body.pub)
                             throw [g_lib.ERR_INVALID_PARAM, "System schemas cannot be private."];
@@ -200,10 +222,17 @@ router.post('/update', function(req, res) {
 
                     g_lib.procInputParam(req.body, "_sch_id", true, obj);
 
-                    if (obj.id && (sch_old.ver || g_db.sch_ver.firstExample({
-                            _from: sch_old._id
-                        }))) {
-                        throw [g_lib.ERR_PERM_DENIED, "Cannot change schema ID once revisions exist."];
+                    if (
+                        obj.id &&
+                        (sch_old.ver ||
+                            g_db.sch_ver.firstExample({
+                                _from: sch_old._id,
+                            }))
+                    ) {
+                        throw [
+                            g_lib.ERR_PERM_DENIED,
+                            "Cannot change schema ID once revisions exist.",
+                        ];
                     }
 
                     g_lib.procInputParam(req.body, "desc", true, obj);
@@ -216,7 +245,7 @@ router.post('/update', function(req, res) {
                     var sch_new = g_db.sch.update(sch_old._id, obj, {
                         returnNew: true,
                         mergeObjects: false,
-                        keepNull: false
+                        keepNull: false,
                     }).new;
 
                     updateSchemaRefs(sch_new);
@@ -227,33 +256,39 @@ router.post('/update', function(req, res) {
                     delete sch_new._rev;
 
                     res.send([sch_new]);
-                }
+                },
             });
         } catch (e) {
             g_lib.handleException(e, res);
         }
     })
-    .queryParam('client', joi.string().optional(), "Client ID")
-    .queryParam('id', joi.string().required(), "Schema ID (with version suffix)")
-    .body(joi.object({
-        id: joi.string().optional(),
-        desc: joi.string().optional(),
-        def: joi.object().optional(),
-        pub: joi.boolean().optional(),
-        sys: joi.boolean().optional()
-    }).required(), 'Schema fields')
-    .summary('Update schema')
-    .description('Update schema');
+    .queryParam("client", joi.string().optional(), "Client ID")
+    .queryParam("id", joi.string().required(), "Schema ID (with version suffix)")
+    .body(
+        joi
+            .object({
+                id: joi.string().optional(),
+                desc: joi.string().optional(),
+                def: joi.object().optional(),
+                pub: joi.boolean().optional(),
+                sys: joi.boolean().optional(),
+            })
+            .required(),
+        "Schema fields",
+    )
+    .summary("Update schema")
+    .description("Update schema");
 
-router.post('/revise', function(req, res) {
+router
+    .post("/revise", function (req, res) {
         try {
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn"],
-                    write: ["sch", "sch_dep", "sch_ver"]
+                    write: ["sch", "sch_dep", "sch_ver"],
                 },
                 waitForSync: true,
-                action: function() {
+                action: function () {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
                     var idx = req.queryParams.id.indexOf(":");
                     if (idx < 0) {
@@ -263,22 +298,32 @@ router.post('/revise', function(req, res) {
                         sch_ver = parseInt(req.queryParams.id.substr(idx + 1)),
                         sch = g_db.sch.firstExample({
                             id: sch_id,
-                            ver: sch_ver
+                            ver: sch_ver,
                         });
 
                     if (!sch)
-                        throw [g_lib.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found."];
+                        throw [
+                            g_lib.ERR_NOT_FOUND,
+                            "Schema '" + req.queryParams.id + "' not found.",
+                        ];
 
-                    if (sch.own_id != client._id && !client.is_admin)
-                        throw g_lib.ERR_PERM_DENIED;
+                    if (sch.own_id != client._id && !client.is_admin) throw g_lib.ERR_PERM_DENIED;
 
-                    if (g_db.sch_ver.firstExample({
-                            _from: sch._id
-                        }))
-                        throw [g_lib.ERR_PERM_DENIED, "A revision of schema '" + req.queryParams.id + "' already exists."];
+                    if (
+                        g_db.sch_ver.firstExample({
+                            _from: sch._id,
+                        })
+                    )
+                        throw [
+                            g_lib.ERR_PERM_DENIED,
+                            "A revision of schema '" + req.queryParams.id + "' already exists.",
+                        ];
 
                     if (!sch.own_id && !client.is_admin)
-                        throw [g_lib.ERR_PERM_DENIED, "Revising a system schema requires admin privileges."];
+                        throw [
+                            g_lib.ERR_PERM_DENIED,
+                            "Revising a system schema requires admin privileges.",
+                        ];
 
                     sch.ver++;
                     sch.cnt = 0;
@@ -294,7 +339,10 @@ router.post('/revise', function(req, res) {
 
                     if (req.body.sys) {
                         if (!client.is_admin)
-                            throw [g_lib.ERR_PERM_DENIED, "Creating a system schema requires admin privileges."];
+                            throw [
+                                g_lib.ERR_PERM_DENIED,
+                                "Creating a system schema requires admin privileges.",
+                            ];
 
                         sch.own_id = null;
                         sch.own_nm = null;
@@ -316,12 +364,12 @@ router.post('/revise', function(req, res) {
                     delete sch._rev;
 
                     var sch_new = g_db.sch.save(sch, {
-                        returnNew: true
+                        returnNew: true,
                     }).new;
 
                     g_db.sch_ver.save({
                         _from: old_id,
-                        _to: sch_new._id
+                        _to: sch_new._id,
                     });
 
                     updateSchemaRefs(sch_new);
@@ -333,24 +381,30 @@ router.post('/revise', function(req, res) {
                     delete sch_new._rev;
 
                     res.send([sch_new]);
-                }
+                },
             });
         } catch (e) {
             g_lib.handleException(e, res);
         }
     })
-    .queryParam('client', joi.string().optional(), "Client ID")
-    .queryParam('id', joi.string().required(), "Schema ID")
-    .body(joi.object({
-        desc: joi.string().optional(),
-        def: joi.object().optional(),
-        pub: joi.boolean().optional(),
-        sys: joi.boolean().optional()
-    }).required(), 'Schema fields')
-    .summary('Revise schema')
-    .description('Revise schema');
+    .queryParam("client", joi.string().optional(), "Client ID")
+    .queryParam("id", joi.string().required(), "Schema ID")
+    .body(
+        joi
+            .object({
+                desc: joi.string().optional(),
+                def: joi.object().optional(),
+                pub: joi.boolean().optional(),
+                sys: joi.boolean().optional(),
+            })
+            .required(),
+        "Schema fields",
+    )
+    .summary("Revise schema")
+    .description("Revise schema");
 
-router.post('/delete', function(req, res) {
+router
+    .post("/delete", function (req, res) {
         try {
             const client = g_lib.getUserFromClientID(req.queryParams.client);
             var idx = req.queryParams.id.indexOf(":");
@@ -361,33 +415,43 @@ router.post('/delete', function(req, res) {
                 sch_ver = parseInt(req.queryParams.id.substr(idx + 1)),
                 sch_old = g_db.sch.firstExample({
                     id: sch_id,
-                    ver: sch_ver
+                    ver: sch_ver,
                 });
 
             if (!sch_old)
                 throw [g_lib.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found."];
 
-            if (sch_old.own_id != client._id && !client.is_admin)
-                throw g_lib.ERR_PERM_DENIED;
+            if (sch_old.own_id != client._id && !client.is_admin) throw g_lib.ERR_PERM_DENIED;
 
             // Cannot delete schemas that are in use
             if (sch_old.cnt) {
-                throw [g_lib.ERR_PERM_DENIED, "Schema is associated with data records - cannot update."];
+                throw [
+                    g_lib.ERR_PERM_DENIED,
+                    "Schema is associated with data records - cannot update.",
+                ];
             }
 
             // Cannot delete schemas references by other schemas
-            if (g_db.sch_dep.firstExample({
-                    _to: sch_old._id
-                })) {
-                throw [g_lib.ERR_PERM_DENIED, "Schema is referenced by another schema - cannot update."];
+            if (
+                g_db.sch_dep.firstExample({
+                    _to: sch_old._id,
+                })
+            ) {
+                throw [
+                    g_lib.ERR_PERM_DENIED,
+                    "Schema is referenced by another schema - cannot update.",
+                ];
             }
 
             // Only allow deletion of oldest and newest revisions of schemas
-            if (g_db.sch_ver.firstExample({
-                    _from: sch_old._id
-                }) && g_db.sch_ver.firstExample({
-                    _to: sch_old._id
-                })) {
+            if (
+                g_db.sch_ver.firstExample({
+                    _from: sch_old._id,
+                }) &&
+                g_db.sch_ver.firstExample({
+                    _to: sch_old._id,
+                })
+            ) {
                 throw [g_lib.ERR_PERM_DENIED, "Cannot delete intermediate schema revisions."];
             }
 
@@ -396,13 +460,13 @@ router.post('/delete', function(req, res) {
             g_lib.handleException(e, res);
         }
     })
-    .queryParam('client', joi.string().optional(), "Client ID")
-    .queryParam('id', joi.string().required(), "Schema ID")
-    .summary('Delete schema')
-    .description('Delete schema');
+    .queryParam("client", joi.string().optional(), "Client ID")
+    .queryParam("id", joi.string().required(), "Schema ID")
+    .summary("Delete schema")
+    .description("Delete schema");
 
-
-router.get('/view', function(req, res) {
+router
+    .get("/view", function (req, res) {
         try {
             const client = g_lib.getUserFromClientID(req.queryParams.client);
             var idx = req.queryParams.id.indexOf(":");
@@ -413,11 +477,10 @@ router.get('/view', function(req, res) {
                 sch_ver = parseInt(req.queryParams.id.substr(idx + 1)),
                 sch = g_db.sch.firstExample({
                     id: sch_id,
-                    ver: sch_ver
+                    ver: sch_ver,
                 });
 
-            if (!sch)
-                throw [g_lib.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found."];
+            if (!sch) throw [g_lib.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found."];
 
             if (!(sch.pub || sch.own_id == client._id || client.is_admin))
                 throw g_lib.ERR_PERM_DENIED;
@@ -429,14 +492,20 @@ router.get('/view', function(req, res) {
             }
 
             sch.depr = g_db.sch_ver.firstExample({
-                _from: sch._id
-            }) ? true : false;
-            sch.uses = g_db._query("for i in 1..1 outbound @sch sch_dep return {id:i.id,ver:i.ver}", {
-                sch: sch._id
-            }).toArray();
-            sch.used_by = g_db._query("for i in 1..1 inbound @sch sch_dep return {id:i.id,ver:i.ver}", {
-                sch: sch._id
-            }).toArray();
+                _from: sch._id,
+            })
+                ? true
+                : false;
+            sch.uses = g_db
+                ._query("for i in 1..1 outbound @sch sch_dep return {id:i.id,ver:i.ver}", {
+                    sch: sch._id,
+                })
+                .toArray();
+            sch.used_by = g_db
+                ._query("for i in 1..1 inbound @sch sch_dep return {id:i.id,ver:i.ver}", {
+                    sch: sch._id,
+                })
+                .toArray();
 
             delete sch._id;
             delete sch._key;
@@ -449,23 +518,24 @@ router.get('/view', function(req, res) {
             g_lib.handleException(e, res);
         }
     })
-    .queryParam('client', joi.string().optional(), "Client ID")
-    .queryParam('id', joi.string().required(), "ID of schema")
-    .queryParam('resolve', joi.bool().optional(), "Resolve references")
-    .summary('View schema')
-    .description('View schema');
+    .queryParam("client", joi.string().optional(), "Client ID")
+    .queryParam("id", joi.string().required(), "ID of schema")
+    .queryParam("resolve", joi.bool().optional(), "Resolve references")
+    .summary("View schema")
+    .description("View schema");
 
-
-router.get('/search', function(req, res) {
+router
+    .get("/search", function (req, res) {
         try {
             const client = g_lib.getUserFromClientID(req.queryParams.client);
-            var qry, par = {},
-                result, off = 0,
+            var qry,
+                par = {},
+                result,
+                off = 0,
                 cnt = 50,
                 doc;
 
-            if (req.queryParams.offset != undefined)
-                off = req.queryParams.offset;
+            if (req.queryParams.offset != undefined) off = req.queryParams.offset;
 
             if (req.queryParams.count != undefined && req.queryParams.count <= 100)
                 cnt = req.queryParams.count;
@@ -479,7 +549,8 @@ router.get('/search', function(req, res) {
                     qry += "(i.pub == true && i.own_id == @owner)";
                 } else {
                     //qry += "(i.pub == true && analyzer(i.own_nm in tokens(@owner,'user_name'), 'user_name'))";
-                    qry += "(analyzer(i.own_nm in tokens(@owner,'user_name'), 'user_name') && (i.pub == true || i.own_id == @client_id))";
+                    qry +=
+                        "(analyzer(i.own_nm in tokens(@owner,'user_name'), 'user_name') && (i.pub == true || i.own_id == @client_id))";
                     par.client_id = client._id;
                 }
 
@@ -500,35 +571,48 @@ router.get('/search', function(req, res) {
                 par.id = req.queryParams.id.toLowerCase();
             }
 
-            if (req.queryParams.sort == g_lib.SORT_RELEVANCE && (req.queryParams.id || req.queryParams.text)) {
+            if (
+                req.queryParams.sort == g_lib.SORT_RELEVANCE &&
+                (req.queryParams.id || req.queryParams.text)
+            ) {
                 qry += " let s = BM25(i) sort s desc";
             } else if (req.queryParams.sort == g_lib.SORT_OWNER) {
                 qry += " sort i.own_nm";
-                qry += (req.queryParams.sort_rev ? " desc" : "");
+                qry += req.queryParams.sort_rev ? " desc" : "";
             } else {
-                if (req.queryParams.sort_rev)
-                    qry += " sort i.id desc, i.ver";
-                else
-                    qry += " sort i.id,i.ver";
+                if (req.queryParams.sort_rev) qry += " sort i.id desc, i.ver";
+                else qry += " sort i.id,i.ver";
 
                 //qry += (req.queryParams.sort_rev?" desc":"");
             }
 
-            qry += " limit " + off + "," + cnt + " return {_id:i._id,id:i.id,ver:i.ver,cnt:i.cnt,pub:i.pub,own_nm:i.own_nm,own_id:i.own_id}";
+            qry +=
+                " limit " +
+                off +
+                "," +
+                cnt +
+                " return {_id:i._id,id:i.id,ver:i.ver,cnt:i.cnt,pub:i.pub,own_nm:i.own_nm,own_id:i.own_id}";
 
             //qry += " filter (i.pub == true || i.own_id == @uid) sort i.id limit " + off + "," + cnt + " return {id:i.id,ver:i.ver,cnt:i.cnt,pub:i.pub,own_nm:i.own_nm,own_id:i.own_id}";
 
-            result = g_db._query(qry, par, {}, {
-                fullCount: true
-            });
+            result = g_db._query(
+                qry,
+                par,
+                {},
+                {
+                    fullCount: true,
+                },
+            );
             var tot = result.getExtra().stats.fullCount;
             result = result.toArray();
 
             for (var i in result) {
                 doc = result[i];
-                if (g_db.sch_dep.firstExample({
-                        _to: doc._id
-                    })) {
+                if (
+                    g_db.sch_dep.firstExample({
+                        _to: doc._id,
+                    })
+                ) {
                     doc.ref = true;
                 }
             }
@@ -539,8 +623,8 @@ router.get('/search', function(req, res) {
                 paging: {
                     off: off,
                     cnt: cnt,
-                    tot: tot
-                }
+                    tot: tot,
+                },
             });
 
             res.send(result);
@@ -548,16 +632,16 @@ router.get('/search', function(req, res) {
             g_lib.handleException(e, res);
         }
     })
-    .queryParam('client', joi.string().required(), "Client ID")
-    .queryParam('id', joi.string().optional(), "ID (partial)")
-    .queryParam('text', joi.string().optional(), "Text or phrase")
-    .queryParam('owner', joi.string().optional(), "Owner ID")
-    .queryParam('sort', joi.number().integer().min(0).optional(), "Sort by")
-    .queryParam('sort_rev', joi.bool().optional(), "Sort in reverse order")
-    .queryParam('offset', joi.number().integer().min(0).optional(), "Offset")
-    .queryParam('count', joi.number().integer().min(1).optional(), "Count")
-    .summary('Search schemas')
-    .description('Search schema');
+    .queryParam("client", joi.string().required(), "Client ID")
+    .queryParam("id", joi.string().optional(), "ID (partial)")
+    .queryParam("text", joi.string().optional(), "Text or phrase")
+    .queryParam("owner", joi.string().optional(), "Owner ID")
+    .queryParam("sort", joi.number().integer().min(0).optional(), "Sort by")
+    .queryParam("sort_rev", joi.bool().optional(), "Sort in reverse order")
+    .queryParam("offset", joi.number().integer().min(0).optional(), "Offset")
+    .queryParam("count", joi.number().integer().min(1).optional(), "Count")
+    .summary("Search schemas")
+    .description("Search schema");
 
 /* AQL rules:
     - Only a-z, A-Z, 0-9, and "_" are allowed
@@ -566,7 +650,8 @@ router.get('/search', function(req, res) {
     - Can start with any number of "_", but must be followed by a-z, A-Z - not a number
 */
 function validateKey(val) {
-    var code, i = 0,
+    var code,
+        i = 0,
         len = val.length;
 
     // Skip leading "_"
@@ -581,8 +666,11 @@ function validateKey(val) {
     code = val.charCodeAt(i);
 
     // Fist char after prefix must be a letter
-    if ((code > 96 && code < 123) || // lower alpha (a-z)
-        (code > 64 && code < 91)) { // upper alpha (A-Z)
+    if (
+        (code > 96 && code < 123) || // lower alpha (a-z)
+        (code > 64 && code < 91)
+    ) {
+        // upper alpha (A-Z)
         i++;
     } else {
         throw [g_lib.ERR_INVALID_CHAR, "Malformed property '" + val + "'."];
@@ -592,10 +680,13 @@ function validateKey(val) {
     for (; i < len; i++) {
         code = val.charCodeAt(i);
 
-        if (!(code > 47 && code < 58) && // numeric (0-9)
+        if (
+            !(code > 47 && code < 58) && // numeric (0-9)
             !(code > 64 && code < 91) && // upper alpha (A-Z)
             !(code > 96 && code < 123) && // lower alpha (a-z)
-            code != 95) { // _
+            code != 95
+        ) {
+            // _
             throw [g_lib.ERR_INVALID_CHAR, "Illegal character(s) in property '" + val + "'."];
         }
     }
@@ -607,7 +698,7 @@ function validateProperties(a_props) {
         validateKey(k);
         v = a_props[k];
 
-        if (typeof v === 'object') {
+        if (typeof v === "object") {
             if (v.type === "object") {
                 validateProperties(v.properties);
             } else if (v.type == "array" && Array.isArray(v.items)) {
@@ -627,18 +718,25 @@ function updateSchemaRefs(a_sch) {
     // Find and update dependencies to other schemas (not versions)
 
     g_db.sch_dep.removeByExample({
-        _from: a_sch._id
+        _from: a_sch._id,
     });
 
-    var idx, id, ver, r, refs = new Set();
+    var idx,
+        id,
+        ver,
+        r,
+        refs = new Set();
 
     gatherRefs(a_sch.def.properties, refs);
 
-    refs.forEach(function(v) {
+    refs.forEach(function (v) {
         idx = v.indexOf(":");
 
         if (idx < 0)
-            throw [g_lib.ERR_INVALID_PARAM, "Invalid reference ID '" + v + "' in schema (expected id:ver)."];
+            throw [
+                g_lib.ERR_INVALID_PARAM,
+                "Invalid reference ID '" + v + "' in schema (expected id:ver).",
+            ];
 
         // TODO handle json pointer past #
 
@@ -647,18 +745,16 @@ function updateSchemaRefs(a_sch) {
 
         r = g_db.sch.firstExample({
             id: id,
-            ver: ver
+            ver: ver,
         });
 
-        if (!r)
-            throw [g_lib.ERR_INVALID_PARAM, "Referenced schema '" + v + "' does not exist."];
+        if (!r) throw [g_lib.ERR_INVALID_PARAM, "Referenced schema '" + v + "' does not exist."];
 
-        if (r._id == a_sch._id)
-            throw [g_lib.ERR_INVALID_PARAM, "Schema references self."];
+        if (r._id == a_sch._id) throw [g_lib.ERR_INVALID_PARAM, "Schema references self."];
 
         g_graph.sch_dep.save({
             _from: a_sch._id,
-            _to: r._id
+            _to: r._id,
         });
     });
 }
@@ -669,10 +765,10 @@ function gatherRefs(a_doc, a_refs) {
     for (var k in a_doc) {
         v = a_doc[k];
 
-        if (v !== null && (typeof v === 'object' || Array.isArray(v))) {
+        if (v !== null && (typeof v === "object" || Array.isArray(v))) {
             gatherRefs(v, a_refs);
         } else if (k == "$ref") {
-            if (typeof v !== 'string')
+            if (typeof v !== "string")
                 throw [g_lib.ERR_INVALID_PARAM, "Invalid reference type in schema."];
 
             // Add dependencies to external schemas, only once

@@ -1,13 +1,12 @@
-'use strict';
+"use strict";
 
-const joi = require('joi');
+const joi = require("joi");
 
-
-module.exports = (function() {
+module.exports = (function () {
     var obj = {};
 
-    obj.db = require('@arangodb').db;
-    obj.graph = require('@arangodb/general-graph')._graph('sdmsg');
+    obj.db = require("@arangodb").db;
+    obj.graph = require("@arangodb/general-graph")._graph("sdmsg");
 
     obj.PERM_RD_REC = 0x0001; // Read record info (description, keywords, details)
     obj.PERM_RD_META = 0x0002; // Read structured metadata
@@ -28,7 +27,7 @@ module.exports = (function() {
     obj.PERM_NONE = 0x0000;
     obj.PERM_RD_ALL = 0x0007; // Read all
     obj.PERM_WR_ALL = 0x0038; // Write all
-    obj.PERM_ALL = 0x7FFF;
+    obj.PERM_ALL = 0x7fff;
     obj.PERM_MEMBER = 0x0047; // Project record perms
     obj.PERM_MANAGER = 0x0407; // Project record perms
     obj.PERM_PUBLIC = 0x0047;
@@ -122,14 +121,14 @@ module.exports = (function() {
     obj.NOTE_MASK_INH_WARN = 0x0400; // Questions & info are not inherited
     obj.NOTE_MASK_INH_ERR = 0x0800;
     obj.NOTE_MASK_CLS_ANY = 0x1000;
-    obj.NOTE_MASK_LOC_ALL = 0x00FF;
-    obj.NOTE_MASK_INH_ALL = 0x0C00;
+    obj.NOTE_MASK_LOC_ALL = 0x00ff;
+    obj.NOTE_MASK_INH_ALL = 0x0c00;
     obj.NOTE_MASK_MD_ERR = 0x2000;
 
     obj.acl_schema = joi.object().keys({
         id: joi.string().required(),
         grant: joi.number().optional(),
-        inhgrant: joi.number().optional()
+        inhgrant: joi.number().optional(),
     });
 
     obj.ERR_INFO = [];
@@ -166,7 +165,6 @@ module.exports = (function() {
     obj.ERR_ALLOCATION_EXCEEDED = obj.ERR_COUNT++;
     obj.ERR_INFO.push([400, "Storage allocation exceeded"]);
 
-
     obj.CHARSET_ID = 0;
     obj.CHARSET_ALIAS = 1;
     obj.CHARSET_TOPIC = 2;
@@ -182,7 +180,7 @@ module.exports = (function() {
             required: true,
             update: true,
             max_len: 80,
-            label: 'title'
+            label: "title",
         },
         alias: {
             required: false,
@@ -190,13 +188,13 @@ module.exports = (function() {
             max_len: 40,
             lower: true,
             charset: obj.CHARSET_ALIAS,
-            label: 'alias'
+            label: "alias",
         },
         desc: {
             required: false,
             update: true,
             max_len: 2000,
-            label: 'description'
+            label: "description",
         },
         summary: {
             required: false,
@@ -204,7 +202,7 @@ module.exports = (function() {
             max_len: 500,
             in_field: "desc",
             out_field: "desc",
-            label: 'description'
+            label: "description",
         },
         comment: {
             required: true,
@@ -212,7 +210,7 @@ module.exports = (function() {
             max_len: 2000,
             in_field: "comment",
             out_field: "comment",
-            label: 'comment'
+            label: "comment",
         },
         topic: {
             required: false,
@@ -220,7 +218,7 @@ module.exports = (function() {
             max_len: 500,
             lower: true,
             charset: obj.CHARSET_TOPIC,
-            label: 'topic'
+            label: "topic",
         },
         domain: {
             required: false,
@@ -228,21 +226,21 @@ module.exports = (function() {
             max_len: 40,
             lower: true,
             charset: obj.CHARSET_ID,
-            label: 'domain'
+            label: "domain",
         },
         source: {
             required: false,
             update: true,
             max_len: 4096,
             lower: false,
-            label: 'source'
+            label: "source",
         },
         ext: {
             required: false,
             update: true,
             max_len: 40,
             lower: false,
-            label: 'extension'
+            label: "extension",
         },
         gid: {
             required: true,
@@ -250,7 +248,7 @@ module.exports = (function() {
             max_len: 40,
             lower: true,
             charset: obj.CHARSET_ID,
-            label: 'group ID'
+            label: "group ID",
         },
         id: {
             required: true,
@@ -259,7 +257,7 @@ module.exports = (function() {
             lower: true,
             charset: obj.CHARSET_ID,
             out_field: "_key",
-            label: 'ID'
+            label: "ID",
         },
         doi: {
             required: false,
@@ -267,7 +265,7 @@ module.exports = (function() {
             max_len: 40,
             lower: true,
             charset: obj.CHARSET_DOI,
-            label: 'doi'
+            label: "doi",
         },
         data_url: {
             required: false,
@@ -275,7 +273,7 @@ module.exports = (function() {
             max_len: 200,
             lower: false,
             charset: obj.CHARSET_URL,
-            label: 'data URL'
+            label: "data URL",
         },
         sch_id: {
             required: false,
@@ -283,7 +281,7 @@ module.exports = (function() {
             max_len: 120,
             lower: true,
             charset: obj.CHARSET_SCH_ID,
-            label: 'schema'
+            label: "schema",
         },
         _sch_id: {
             required: true,
@@ -293,8 +291,8 @@ module.exports = (function() {
             charset: obj.CHARSET_SCH_ID,
             in_field: "id",
             out_field: "id",
-            label: 'schema'
-        }
+            label: "schema",
+        },
     };
 
     obj.DEF_MAX_COLL = 50;
@@ -304,21 +302,34 @@ module.exports = (function() {
     obj.GLOB_MAX_XFR_SIZE = 10000000000; // ~10GB
     //obj.GLOB_MAX_XFR_SIZE = 2000000;
 
-    obj.procInputParam = function(a_in, a_field, a_update, a_out) {
-        var val, spec = obj.field_reqs[a_field];
+    // TODO: this will need to be updated every time the AccessTokenType enum is updated in SDMS.proto
+    obj.AccessTokenType = {
+        GENERIC: 1,
+        GLOBUS: 2,
+        GLOBUS_AUTH: 3,
+        GLOBUS_TRANSFER: 4,
+        GLOBUS_DEFAULT: 5,
+        ACCESS_SENTINEL: 255,
+    };
+
+    obj.procInputParam = function (a_in, a_field, a_update, a_out) {
+        var val,
+            spec = obj.field_reqs[a_field];
 
         //console.log("procInput",a_field,",update:",a_update);
 
         if (!spec) {
-            throw [obj.ERR_INTERNAL_FAULT, "Input specification for '" + a_field + "' not found. Please contact system administrator."];
+            throw [
+                obj.ERR_INTERNAL_FAULT,
+                "Input specification for '" +
+                    a_field +
+                    "' not found. Please contact system administrator.",
+            ];
         }
 
-        if (typeof a_in == "string")
-            val = a_in;
-        else if (spec.in_field)
-            val = a_in[spec.in_field];
-        else
-            val = a_in[a_field];
+        if (typeof a_in == "string") val = a_in;
+        else if (spec.in_field) val = a_in[spec.in_field];
+        else val = a_in[a_field];
 
         //console.log("init val",val);
 
@@ -328,16 +339,21 @@ module.exports = (function() {
             return;
         }
 
-        if (val && val.length)
-            val = val.trim();
+        if (val && val.length) val = val.trim();
 
         if (val && val.length) {
             // Check length if specified
-            if (spec.max_len && (val.length > spec.max_len))
-                throw [obj.ERR_INPUT_TOO_LONG, "'" + spec.label + "' field is too long. Maximum length is " + spec.max_len + "."];
+            if (spec.max_len && val.length > spec.max_len)
+                throw [
+                    obj.ERR_INPUT_TOO_LONG,
+                    "'" +
+                        spec.label +
+                        "' field is too long. Maximum length is " +
+                        spec.max_len +
+                        ".",
+                ];
 
-            if (spec.lower)
-                val = val.toLowerCase();
+            if (spec.lower) val = val.toLowerCase();
 
             if (spec.charset != undefined) {
                 var extra = obj.extra_chars[spec.charset];
@@ -345,51 +361,62 @@ module.exports = (function() {
 
                 for (i = 0, len = val.length; i < len; i++) {
                     code = val.charCodeAt(i);
-                    if (!(code > 47 && code < 58) && // numeric (0-9)
+                    if (
+                        !(code > 47 && code < 58) && // numeric (0-9)
                         !(code > 64 && code < 91) && // upper alpha (A-Z)
-                        !(code > 96 && code < 123)) { // lower alpha (a-z)
+                        !(code > 96 && code < 123)
+                    ) {
+                        // lower alpha (a-z)
                         if (extra.indexOf(val.charAt(i)) == -1)
-                            throw [obj.ERR_INVALID_CHAR, "Invalid character(s) in '" + spec.label + "' field."];
+                            throw [
+                                obj.ERR_INVALID_CHAR,
+                                "Invalid character(s) in '" + spec.label + "' field.",
+                            ];
                     }
                 }
             }
             //console.log("save new val:",val);
 
-            if (spec.out_field)
-                a_out[spec.out_field] = val;
-            else
-                a_out[a_field] = val;
+            if (spec.out_field) a_out[spec.out_field] = val;
+            else a_out[a_field] = val;
         } else {
             // Required params must have a value
             if (a_update) {
                 if (val === "") {
                     if (spec.required)
-                        throw [obj.ERR_MISSING_REQ_PARAM, "Required field '" + spec.label + "' cannot be deleted."];
+                        throw [
+                            obj.ERR_MISSING_REQ_PARAM,
+                            "Required field '" + spec.label + "' cannot be deleted.",
+                        ];
 
-                    if (spec.out_field)
-                        a_out[spec.out_field] = null;
-                    else
-                        a_out[a_field] = null;
+                    if (spec.out_field) a_out[spec.out_field] = null;
+                    else a_out[a_field] = null;
                 }
             } else if (spec.required)
                 throw [obj.ERR_MISSING_REQ_PARAM, "Missing required field '" + spec.label + "'."];
         }
     };
 
-    obj.isInteger = function(x) {
-        return (typeof x === 'number') && (x % 1 === 0);
+    obj.isInteger = function (x) {
+        return typeof x === "number" && x % 1 === 0;
     };
 
-    obj.validatePassword = function(pw) {
+    obj.validatePassword = function (pw) {
         if (pw.length < obj.PASSWORD_MIN_LEN) {
-            throw [obj.ERR_INVALID_PARAM, "ERROR: password must be at least " + obj.PASSWORD_MIN_LEN + " characters in length."];
+            throw [
+                obj.ERR_INVALID_PARAM,
+                "ERROR: password must be at least " +
+                    obj.PASSWORD_MIN_LEN +
+                    " characters in length.",
+            ];
         }
 
-        var i, j = 0,
+        var i,
+            j = 0,
             c;
         for (i in pw) {
             c = pw[i];
-            if (c >= '0' && c <= '9') {
+            if (c >= "0" && c <= "9") {
                 j |= 1;
             } else if (obj.pw_chars.indexOf(c) != -1) {
                 j |= 2;
@@ -400,9 +427,14 @@ module.exports = (function() {
         }
 
         if (j != 3) {
-            throw [obj.ERR_INVALID_PARAM, "ERROR: password must contain at least one number (0-9) and one special character (" + obj.pw_chars + ")."];
+            throw [
+                obj.ERR_INVALID_PARAM,
+                "ERROR: password must contain at least one number (0-9) and one special character (" +
+                    obj.pw_chars +
+                    ").",
+            ];
         }
-    }
+    };
 
     /*
     obj.isAlphaNumeric = function(str) {
@@ -419,7 +451,7 @@ module.exports = (function() {
         return true;
     };*/
 
-    obj.handleException = function(e, res) {
+    obj.handleException = function (e, res) {
         console.log("Service exception:", e);
 
         if (obj.isInteger(e) && e >= 0 && e < obj.ERR_COUNT) {
@@ -451,7 +483,7 @@ module.exports = (function() {
         }
     };
 
-    obj.isDomainAccount = function(a_client_id) {
+    obj.isDomainAccount = function (a_client_id) {
         // TODO This needs to have a test that doesn't conflict with email-style uids
 
         /*if ( a_client_id.indexOf( "." ) != -1 )
@@ -461,18 +493,16 @@ module.exports = (function() {
     };
 
     // Quick check to determine if ID looks like a UUID (does not verify)
-    obj.isUUID = function(a_client_id) {
-        if (a_client_id.length == 36 && a_client_id.charAt(8) == "-")
-            return true;
-        else
-            return false;
+    obj.isUUID = function (a_client_id) {
+        if (a_client_id.length == 36 && a_client_id.charAt(8) == "-") return true;
+        else return false;
     };
 
     // Quick check to see if a comma separated list of UUIDs has been provided
     // Must contain at least one comma
-    obj.isUUIDList = function(a_client_ids) {
-        if (a_client_ids.indexOf(',') > -1) {
-            var potential_uuids = a_client_ids.split(',')
+    obj.isUUIDList = function (a_client_ids) {
+        if (a_client_ids.indexOf(",") > -1) {
+            var potential_uuids = a_client_ids.split(",");
             for (var index in potential_uuids) {
                 if (!obj.isUUID(potential_uuids[index])) {
                     return false;
@@ -485,7 +515,7 @@ module.exports = (function() {
     };
 
     // Verify a_is is a valid UUID AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA (full check)
-    obj.isValidUUID = function(a_id) {
+    obj.isValidUUID = function (a_id) {
         if (a_id.length == 36) {
             var code;
             for (var i = 0; i < 36; i++) {
@@ -495,9 +525,12 @@ module.exports = (function() {
                     }
                 } else {
                     code = a_id.charCodeAt(i);
-                    if (!(code > 47 && code < 58) && // numeric (0-9)
+                    if (
+                        !(code > 47 && code < 58) && // numeric (0-9)
                         !(code > 64 && code < 71) && // upper alpha (A-F)
-                        !(code > 96 && code < 103)) { // lower alpha (a-F)
+                        !(code > 96 && code < 103)
+                    ) {
+                        // lower alpha (a-F)
                         return false;
                     }
                 }
@@ -509,7 +542,7 @@ module.exports = (function() {
         return false;
     };
 
-    obj.isFullGlobusPath = function(a_path, a_is_file = true) {
+    obj.isFullGlobusPath = function (a_path, a_is_file = true) {
         // Full Globus path can be UUID/<som_path> or legacy#name/<some_path>
         var idx = a_path.indexOf("/");
         if (idx > 0) {
@@ -538,53 +571,62 @@ module.exports = (function() {
         return false;
     };
 
-
-    obj.resolveUUIDsToID = function(uuid_list) {
+    obj.resolveUUIDsToID = function (uuid_list) {
         // This function will take a comma separated list of uuids as a string separate them and then either resolve them to a single uuid or
         // throw an error
-        var potential_uuids = uuid_list.split(',')
+        var potential_uuids = uuid_list.split(",");
         var uuids = [];
         for (var i in potential_uuids) {
             uuids.push("uuid/" + potential_uuids[i]);
         }
-	console.log("resolveUUIDsToID");
-	console.log("uuids: ", uuids);
-        var result = obj.db._query("for i in ident filter i._to in @ids return distinct document(i._from)", {
-            ids: uuids
-        }).toArray();
+        console.log("resolveUUIDsToID");
+        console.log("uuids: ", uuids);
+        var result = obj.db
+            ._query("for i in ident filter i._to in @ids return distinct document(i._from)", {
+                ids: uuids,
+            })
+            .toArray();
 
         if (result.length !== 1) {
             throw [obj.ERR_NOT_FOUND, "No user matching Globus IDs found"];
         }
 
-        var first_uuid = result[0]._id
+        var first_uuid = result[0]._id;
         // Next we need to make sure the provided ids are all the same if there is more than one
         for (var i = 1; i < result.length; i++) {
             if (first_uuid != result[i]._id) {
-                throw [obj.ERR_INVALID_PARAM, "uuid_list does not resolve to a single user, unable to unambiguously resolve user, it is possible that you have multiple accounts when you should have only a single one problematic ids are: " + first_uuid + " and " + array[i]];
+                throw [
+                    obj.ERR_INVALID_PARAM,
+                    "uuid_list does not resolve to a single user, unable to unambiguously resolve user, it is possible that you have multiple accounts when you should have only a single one problematic ids are: " +
+                        first_uuid +
+                        " and " +
+                        array[i],
+                ];
             }
         }
         return first_uuid;
-    }
+    };
 
-    obj.resolveUUIDsToID_noexcept = function(uuid_list) {
+    obj.resolveUUIDsToID_noexcept = function (uuid_list) {
         // This function will take a comma separated list of uuids as a string separate them and then either resolve them to a single uuid or
         // throw an error
-        var potential_uuids = uuid_list.split(',')
+        var potential_uuids = uuid_list.split(",");
         var uuids = [];
         for (var i in potential_uuids) {
             uuids.push("uuid/" + potential_uuids[i]);
         }
-	console.log("resolveUUIDsToID_noexcept");
-	console.log("uuids: ", uuids);
-        var result = obj.db._query("for i in ident filter i._to in @ids return distinct document(i._from)", {
-            ids: uuids
-        }).toArray();
+        console.log("resolveUUIDsToID_noexcept");
+        console.log("uuids: ", uuids);
+        var result = obj.db
+            ._query("for i in ident filter i._to in @ids return distinct document(i._from)", {
+                ids: uuids,
+            })
+            .toArray();
         if (result.length != 1) {
             throw [obj.ERR_NOT_FOUND, "No user matching Globus IDs found"];
         }
 
-        var first_uuid = result[0]._id
+        var first_uuid = result[0]._id;
         // Next we need to make sure the provided ids are all the same if there is more than one
         for (var i = 1; i < result.length; i++) {
             console.log("resolveUUID comparing " + first_uuid + " with " + result[i]);
@@ -593,9 +635,42 @@ module.exports = (function() {
             }
         }
         return first_uuid;
-    }
+    };
 
-    obj.getUserFromClientID = function(a_client_id) {
+    /**
+     * Retrieves user information based on the provided client ID.
+     *
+     * The return value should be a client containing the following information:
+     *
+     * "_key" : "bob",
+     * "_id" : "u/bob",
+     * "name" : "bob junior",
+     * "name_first" : "bob",
+     * "name_last" : "jones",
+     * "is_admin" : true,
+     * "max_coll" : 50,
+     * "max_proj" : 10,
+     * "max_sav_qry" : 20,
+     * "email" : "bobjones@gmail.com"
+     *
+     *
+     * The client ID can be in the following formats:
+     * - SDMS uname (e.g., "xxxxx...")
+     * - UUID (e.g., "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx")
+     * - Account (e.g., "domain.uname")
+     *
+     * UUIDs are defined by length and format, accounts have a "." (and known domains),
+     * and SDMS unames have no "." or "-" characters.
+     *
+     * @param {string} a_client_id - The client ID, which can be in various formats (SDMS uname, UUID, or Account).
+     * @throws {Array} Throws an error if the user does not exist, or the client ID is invalid.
+     * @returns {object} The user record containing details such as name, admin status, and email.
+     *
+     * @example
+     * const user = obj.getUserFromClientID('u/bob');
+     * console.log(user.name); // "bob junior"
+     */
+    obj.getUserFromClientID = function (a_client_id) {
         // Client ID can be an SDMS uname (xxxxx...), a UUID (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx), or an account (domain.uname)
         // UUID are defined by length and format, accounts have a "." (and known domains), SDMS unames have no "." or "-" characters
 
@@ -605,24 +680,24 @@ module.exports = (function() {
         if (a_client_id.startsWith("u/")) {
             if (!obj.db.u.exists(a_client_id)) {
                 throw [obj.ERR_INVALID_PARAM, "No such user '" + a_client_id + "'"];
-	    }
+            }
 
             return obj.db._document({
-                _id: a_client_id
+                _id: a_client_id,
             });
         } else if (obj.isDomainAccount(a_client_id)) {
             // Account
             params = {
-                'id': 'accn/' + a_client_id
+                id: "accn/" + a_client_id,
             };
         } else if (obj.isUUID(a_client_id)) {
             // UUID
             params = {
-                'id': 'uuid/' + a_client_id
+                id: "uuid/" + a_client_id,
             };
         } else if (obj.isUUIDList(a_client_id)) {
             // Check to make sure the UUIDs provided are all associated with the same DataFed account, if they are we can unambiguously
-            // determine the UUID, if they are not, then we will throw an error for now, 
+            // determine the UUID, if they are not, then we will throw an error for now,
             var unambiguous_id = obj.resolveUUIDsToID(a_client_id);
             if (!unambiguous_id) {
                 console.log("Undefined");
@@ -630,22 +705,22 @@ module.exports = (function() {
             }
             //params = { 'id': unambiguous_id };
             return obj.db._document({
-                _id: unambiguous_id
+                _id: unambiguous_id,
             });
-
-
         } else {
             if (!obj.db.u.exists("u/" + a_client_id)) {
                 throw [obj.ERR_INVALID_PARAM, "No such user 'u/" + a_client_id + "'"];
             }
             return obj.db._document({
-                _id: "u/" + a_client_id
+                _id: "u/" + a_client_id,
             });
         }
 
-        var result = obj.db._query("for j in inbound @id ident return j", params, {
-            cache: true
-        }).toArray();
+        var result = obj.db
+            ._query("for j in inbound @id ident return j", params, {
+                cache: true,
+            })
+            .toArray();
 
         if (result.length != 1) {
             //console.log("Client", a_client_id, "not found, params:", params );
@@ -655,32 +730,31 @@ module.exports = (function() {
         return result[0];
     };
 
-    obj.getUserFromClientID_noexcept = function(a_client_id) {
+    obj.getUserFromClientID_noexcept = function (a_client_id) {
         // Client ID can be an SDMS uname (xxxxx...), a UUID (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx), or an account (domain.uname)
         // UUID are defined by length and format, accounts have a "." (and known domains), SDMS unames have no "." or "-" characters
 
         var params;
 
         if (a_client_id.startsWith("u/")) {
-            if (!obj.db.u.exists(a_client_id))
-                return;
+            if (!obj.db.u.exists(a_client_id)) return;
 
             return obj.db._document({
-                _id: a_client_id
+                _id: a_client_id,
             });
         } else if (obj.isDomainAccount(a_client_id)) {
             // Account
             params = {
-                'id': 'accn/' + a_client_id
+                id: "accn/" + a_client_id,
             };
         } else if (obj.isUUID(a_client_id)) {
             // UUID
             params = {
-                'id': 'uuid/' + a_client_id
+                id: "uuid/" + a_client_id,
             };
         } else if (obj.isUUIDList(a_client_id)) {
             // Check to make sure the UUIDs provided are all associated with the same DataFed account, if they are we can unambiguously
-            // determine the UUID, if they are not, then we will throw an error for now, 
+            // determine the UUID, if they are not, then we will throw an error for now,
             var unambiguous_id = obj.resolveUUIDsToID_noexcept(a_client_id);
             if (!unambiguous_id) {
                 console.log("Undefined");
@@ -688,21 +762,21 @@ module.exports = (function() {
             }
             //params = { 'id': unambiguous_id };
             return obj.db._document({
-                _id: unambiguous_id
+                _id: unambiguous_id,
             });
-
         } else {
-            if (!obj.db.u.exists("u/" + a_client_id))
-                return;
+            if (!obj.db.u.exists("u/" + a_client_id)) return;
 
             return obj.db._document({
-                _id: "u/" + a_client_id
+                _id: "u/" + a_client_id,
             });
         }
 
-        var result = obj.db._query("for j in inbound @id ident return j", params, {
-            cache: true
-        }).toArray();
+        var result = obj.db
+            ._query("for j in inbound @id ident return j", params, {
+                cache: true,
+            })
+            .toArray();
 
         if (result.length != 1) {
             return;
@@ -711,37 +785,50 @@ module.exports = (function() {
         return result[0];
     };
 
-    obj.findUserFromUUIDs = function(a_uuids) {
-	console.log("findUserFromUUIDs");
-	console.log("a_uuids: ", a_uuids);
-        var result = obj.db._query("for i in ident filter i._to in @ids return distinct document(i._from)", {
-            ids: a_uuids
-        }).toArray();
+    obj.findUserFromUUIDs = function (a_uuids) {
+        console.log("findUserFromUUIDs");
+        console.log("a_uuids: ", a_uuids);
+        var result = obj.db
+            ._query("for i in ident filter i._to in @ids return distinct document(i._from)", {
+                ids: a_uuids,
+            })
+            .toArray();
 
         if (result.length === 0) {
             throw [obj.ERR_NOT_FOUND, "No user matching Globus IDs found"];
-	} else if (result.length > 1) {
-            throw [obj.ERR_NOT_FOUND, "Multiple DataFed accounts associated with the provided Globus identities" + result.toString() ];
-	}
+        } else if (result.length > 1) {
+            throw [
+                obj.ERR_NOT_FOUND,
+                "Multiple DataFed accounts associated with the provided Globus identities" +
+                    result.toString(),
+            ];
+        }
 
         return result[0];
     };
 
-    obj.uidFromPubKey = function(a_pub_key) {
+    obj.uidFromPubKey = function (a_pub_key) {
         //var result = obj.db._query( "for i in accn filter i.pub_key == @key let u = (for v in inbound i._id ident return v._key) return u[0]", { key: a_pub_key }).toArray();
-        var result = obj.db._query("for i in u filter i.pub_key == @key return i._id", {
-            key: a_pub_key
-        }).toArray();
+        var result = obj.db
+            ._query("for i in u filter i.pub_key == @key return i._id", {
+                key: a_pub_key,
+            })
+            .toArray();
         if (result.length !== 1)
             throw [obj.ERR_NOT_FOUND, "No user matching authentication key found"];
 
         return result[0];
     };
 
-    obj.findUserFromPubKey = function(a_pub_key) {
-        var result = obj.db._query("for i in accn filter i.pub_key == @key let u = (for v in inbound i._id ident return v) return u[0]", {
-            key: a_pub_key
-        }).toArray();
+    obj.findUserFromPubKey = function (a_pub_key) {
+        var result = obj.db
+            ._query(
+                "for i in accn filter i.pub_key == @key let u = (for v in inbound i._id ident return v) return u[0]",
+                {
+                    key: a_pub_key,
+                },
+            )
+            .toArray();
 
         //console.log( "key res:", result );
         if (result.length != 1)
@@ -750,62 +837,72 @@ module.exports = (function() {
         return result[0];
     };
 
-    obj.getAccessToken = function(a_user_id) {
-        var user = obj.db.u.document(a_user_id);
-        var exp_in = user.expiration - Math.floor(Date.now() / 1000);
-        var result = {
+    /** Get access token based on u._id
+     *
+     * @param {string} a_user_id - User ID field from database
+     * @returns {{acc_tok: string, ref_tok: string, acc_tok_exp_in: (number|number)}} - Access and refresh tokens, access expiration
+     * @throws Error - When user document does not exist, or when globus_token document does not exist
+     */
+    obj.getAccessToken = function (a_user_id) {
+        let user = obj.db.u.document(a_user_id); // default to user token
+        const exp_in = user.expiration - Math.floor(Date.now() / 1000);
+        const result = {
             acc_tok: user.access,
             ref_tok: user.refresh,
-            acc_tok_exp_in: (exp_in > 0 ? exp_in : 0)
+            acc_tok_exp_in: exp_in > 0 ? exp_in : 0,
         };
 
         return result;
     };
 
-    obj.getProjectRole = function(a_client_id, a_proj_id) {
-        if (obj.db.owner.firstExample({
+    obj.getProjectRole = function (a_client_id, a_proj_id) {
+        if (
+            obj.db.owner.firstExample({
                 _from: a_proj_id,
-                _to: a_client_id
-            }))
+                _to: a_client_id,
+            })
+        )
             return obj.PROJ_ADMIN;
 
-        if (obj.db.admin.firstExample({
+        if (
+            obj.db.admin.firstExample({
                 _from: a_proj_id,
-                _to: a_client_id
-            }))
+                _to: a_client_id,
+            })
+        )
             return obj.PROJ_MANAGER;
 
         var grp = obj.db.g.firstExample({
             uid: a_proj_id,
-            gid: "members"
+            gid: "members",
         });
-        if (!grp)
-            return obj.PROJ_NO_ROLE;
+        if (!grp) return obj.PROJ_NO_ROLE;
 
-        if (obj.db.member.firstExample({
+        if (
+            obj.db.member.firstExample({
                 _from: grp._id,
-                _to: a_client_id
-            }))
+                _to: a_client_id,
+            })
+        )
             return obj.PROJ_MEMBER;
-        else
-            return obj.PROJ_NO_ROLE;
+        else return obj.PROJ_NO_ROLE;
     };
 
-    obj.sortAllocations = function(allocs) {
-        allocs.sort(function(a, b) {
-            if (a.is_def)
-                return -1;
-            else if (b.is_def)
-                return 1;
-            else
-                return a._to < b._to ? -1 : 1;
+    obj.sortAllocations = function (allocs) {
+        allocs.sort(function (a, b) {
+            if (a.is_def) return -1;
+            else if (b.is_def) return 1;
+            else return a._to < b._to ? -1 : 1;
         });
     };
 
-    obj.assignRepo = function(a_user_id) {
-        var alloc, allocs = obj.db.alloc.byExample({
-            _from: a_user_id
-        }).toArray();
+    obj.assignRepo = function (a_user_id) {
+        var alloc,
+            allocs = obj.db.alloc
+                .byExample({
+                    _from: a_user_id,
+                })
+                .toArray();
 
         obj.sortAllocations(allocs);
 
@@ -820,49 +917,54 @@ module.exports = (function() {
         return null;
     };
 
-    obj.verifyRepo = function(a_user_id, a_repo_id) {
+    obj.verifyRepo = function (a_user_id, a_repo_id) {
         var alloc = obj.db.alloc.firstExample({
             _from: a_user_id,
-            _to: a_repo_id
+            _to: a_repo_id,
         });
-        if (!alloc)
-            throw [obj.ERR_NO_ALLOCATION, "No allocation on repo " + a_repo_id];
+        if (!alloc) throw [obj.ERR_NO_ALLOCATION, "No allocation on repo " + a_repo_id];
 
         if (alloc.data_size >= alloc.data_limit)
-            throw [obj.ERR_ALLOCATION_EXCEEDED, "Allocation data size exceeded (max: " + alloc.data_limit + ")"];
+            throw [
+                obj.ERR_ALLOCATION_EXCEEDED,
+                "Allocation data size exceeded (max: " + alloc.data_limit + ")",
+            ];
 
         if (alloc.rec_count >= alloc.rec_limit)
-            throw [obj.ERR_ALLOCATION_EXCEEDED, "Allocation record count exceeded (max: " + alloc.rec_limit + ")"];
+            throw [
+                obj.ERR_ALLOCATION_EXCEEDED,
+                "Allocation record count exceeded (max: " + alloc.rec_limit + ")",
+            ];
 
         return alloc;
     };
 
-    obj.getRootID = function(owner_id) {
+    obj.getRootID = function (owner_id) {
         return "c/" + owner_id[0] + "_" + owner_id.substr(2) + "_root";
     };
 
-    obj.computeDataPath = function(a_loc, a_export) {
+    obj.computeDataPath = function (a_loc, a_export) {
         var repo = obj.db._document(a_loc._to);
         var repo_path = a_export ? repo.export_path : repo.path;
 
-        if (a_loc.uid.charAt(0) == 'u') {
+        if (a_loc.uid.charAt(0) == "u") {
             return repo_path + "user" + a_loc.uid.substr(1) + a_loc._from.substr(1);
         } else {
             return repo_path + "project" + a_loc.uid.substr(1) + a_loc._from.substr(1);
         }
     };
 
-    obj.computeDataPathPrefix = function(a_repo_id, a_owner_id) {
+    obj.computeDataPathPrefix = function (a_repo_id, a_owner_id) {
         var repo = obj.db._document(a_repo_id);
 
-        if (a_owner_id.charAt(0) == 'u') {
+        if (a_owner_id.charAt(0) == "u") {
             return repo.path + "user" + a_owner_id.substr(1) + "/";
         } else {
             return repo.path + "project" + a_owner_id.substr(1) + "/";
         }
     };
 
-    obj.getObject = function(a_obj_id, a_client) {
+    obj.getObject = function (a_obj_id, a_client) {
         var id = obj.resolveID(a_obj_id, a_client);
 
         if (!obj.db._exists(id))
@@ -873,13 +975,15 @@ module.exports = (function() {
         return doc;
     };
 
-    obj.getDataCollectionLinkCount = function(id) {
-        return obj.db._query("for v in 1..1 inbound @id item return v._id", {
-            id: id
-        }).count();
+    obj.getDataCollectionLinkCount = function (id) {
+        return obj.db
+            ._query("for v in 1..1 inbound @id item return v._id", {
+                id: id,
+            })
+            .count();
     };
 
-    obj.hasAdminPermUser = function(a_client, a_user_id) {
+    obj.hasAdminPermUser = function (a_client, a_user_id) {
         //if ( a_client._id != a_user_id && !a_client.is_admin && !obj.db.owner.firstExample({ _from: a_user_id, _to: a_client._id }) && !obj.db.admin.firstExample({ _from: a_user_id, _to: a_client._id })){
         if (a_client._id != a_user_id && !a_client.is_admin) {
             return false;
@@ -888,168 +992,200 @@ module.exports = (function() {
         }
     };
 
-    obj.hasAdminPermProj = function(a_client, a_proj_id) {
-        if (!a_client.is_admin && !obj.db.owner.firstExample({
+    obj.hasAdminPermProj = function (a_client, a_proj_id) {
+        if (
+            !a_client.is_admin &&
+            !obj.db.owner.firstExample({
                 _from: a_proj_id,
-                _to: a_client._id
-            })) {
+                _to: a_client._id,
+            })
+        ) {
             return false;
         } else {
             return true;
         }
     };
 
-    obj.hasManagerPermProj = function(a_client, a_proj_id) {
-        if (!a_client.is_admin && !obj.db.owner.firstExample({
+    obj.hasManagerPermProj = function (a_client, a_proj_id) {
+        if (
+            !a_client.is_admin &&
+            !obj.db.owner.firstExample({
                 _from: a_proj_id,
-                _to: a_client._id
-            }) && !obj.db.admin.firstExample({
+                _to: a_client._id,
+            }) &&
+            !obj.db.admin.firstExample({
                 _from: a_proj_id,
-                _to: a_client._id
-            })) {
+                _to: a_client._id,
+            })
+        ) {
             return false;
         } else {
             return true;
         }
     };
 
-    obj.hasAdminPermObjectLoaded = function(a_client, a_object) {
+    obj.hasAdminPermObjectLoaded = function (a_client, a_object) {
         // TODO Should collection creator have admin rights?
         if (a_object.owner == a_client._id || a_object.creator == a_client._id || a_client.is_admin)
             return true;
 
-        if (a_object.owner.charAt(0) == 'p') {
-            if (obj.db.owner.firstExample({
+        if (a_object.owner.charAt(0) == "p") {
+            if (
+                obj.db.owner.firstExample({
                     _from: a_object.owner,
-                    _to: a_client._id
-                }))
+                    _to: a_client._id,
+                })
+            )
                 return true;
 
-            if (obj.db.admin.firstExample({
+            if (
+                obj.db.admin.firstExample({
                     _from: a_object.owner,
-                    _to: a_client._id
-                }))
+                    _to: a_client._id,
+                })
+            )
                 return true;
         }
 
         return false;
     };
 
-    obj.hasAdminPermObject = function(a_client, a_object_id) {
-        if (a_client.is_admin)
-            return true;
+    /**
+     * checks to make sure the client has admin permissions on an object
+     *
+     * @param {object} a_client - this is a user document i.e.
+     *
+     *
+     * "_key" : "bob",
+     * "_id" : "u/bob",
+     * "name" : "bob junior ",
+     * "name_first" : "bob",
+     * "name_last" : "jones",
+     * "is_admin" : true,
+     * "max_coll" : 50,
+     * "max_proj" : 10,
+     * "max_sav_qry" : 20,
+     * :
+     * "email" : "bobjones@gmail.com"
+     *
+     * @param {string} a_object_id - the identity of a record or collection or project
+     *
+     * "d/fdakjfla"
+     * "p/big_thing"
+     * "c/my_collection"
+     *
+     * @returns {boolean} - if client has admin rights on the object.
+     **/
+    obj.hasAdminPermObject = function (a_client, a_object_id) {
+        if (a_client.is_admin) return true;
 
         var first_owner = obj.db.owner.firstExample({
-            _from: a_object_id
+            _from: a_object_id,
         });
         if (first_owner !== null) {
             var owner_id = first_owner._to; // obj.db.owner.firstExample({ _from: a_object_id })._to;
         } else {
             throw [obj.ERR_NOT_FOUND, "Data record for owner not found " + a_object_id + "."];
         }
-        if (owner_id == a_client._id)
-            return true;
+        if (owner_id == a_client._id) return true;
 
         if (owner_id[0] == "p") {
             // Object owned by a project
-            if (obj.db.admin.firstExample({
+            if (
+                obj.db.admin.firstExample({
                     _from: owner_id,
-                    _to: a_client._id
-                }))
+                    _to: a_client._id,
+                })
+            )
                 return true;
 
-            if (obj.db.owner.firstExample({
+            if (
+                obj.db.owner.firstExample({
                     _from: owner_id,
-                    _to: a_client._id
-                }))
+                    _to: a_client._id,
+                })
+            )
                 return true;
         }
 
-        if (a_object_id[0] == 'd') {
+        if (a_object_id[0] == "d") {
             var data = obj.db._query("for i in d filter i._id == @id return i.creator", {
-                id: a_object_id
+                id: a_object_id,
             });
             if (!data.hasNext()) {
                 throw [obj.ERR_NOT_FOUND, "Data record " + a_object_id + " not found."];
             }
             data = data.next();
-            if (a_client._id == data)
-                return true;
+            if (a_client._id == data) return true;
         }
         return false;
     };
 
-    obj.hasAdminPermRepo = function(a_client, a_repo_id) {
-        if (!a_client.is_admin && !obj.db.admin.firstExample({
+    obj.hasAdminPermRepo = function (a_client, a_repo_id) {
+        if (
+            !a_client.is_admin &&
+            !obj.db.admin.firstExample({
                 _from: a_repo_id,
-                _to: a_client._id
-            })) {
+                _to: a_client._id,
+            })
+        ) {
             return false;
         } else {
             return true;
         }
     };
 
-    obj.ensureAdminPermUser = function(a_client, a_user_id) {
-        if (!obj.hasAdminPermUser(a_client, a_user_id))
-            throw obj.ERR_PERM_DENIED;
+    obj.ensureAdminPermUser = function (a_client, a_user_id) {
+        if (!obj.hasAdminPermUser(a_client, a_user_id)) throw obj.ERR_PERM_DENIED;
     };
 
-    obj.ensureAdminPermProj = function(a_client, a_user_id) {
-        if (!obj.hasAdminPermProj(a_client, a_user_id))
-            throw obj.ERR_PERM_DENIED;
+    obj.ensureAdminPermProj = function (a_client, a_user_id) {
+        if (!obj.hasAdminPermProj(a_client, a_user_id)) throw obj.ERR_PERM_DENIED;
     };
 
-    obj.ensureManagerPermProj = function(a_client, a_user_id) {
-        if (!obj.hasManagerPermProj(a_client, a_user_id))
-            throw obj.ERR_PERM_DENIED;
+    obj.ensureManagerPermProj = function (a_client, a_user_id) {
+        if (!obj.hasManagerPermProj(a_client, a_user_id)) throw obj.ERR_PERM_DENIED;
     };
 
-    obj.ensureAdminPermObject = function(a_client, a_object_id) {
-        if (!obj.hasAdminPermObject(a_client, a_object_id))
-            throw obj.ERR_PERM_DENIED;
+    obj.ensureAdminPermObject = function (a_client, a_object_id) {
+        if (!obj.hasAdminPermObject(a_client, a_object_id)) throw obj.ERR_PERM_DENIED;
     };
 
-    obj.ensureAdminPermRepo = function(a_client, a_repo_id) {
-        if (!obj.hasAdminPermRepo(a_client, a_repo_id))
-            throw obj.ERR_PERM_DENIED;
+    obj.ensureAdminPermRepo = function (a_client, a_repo_id) {
+        if (!obj.hasAdminPermRepo(a_client, a_repo_id)) throw obj.ERR_PERM_DENIED;
     };
 
-    obj.isSrcParentOfDest = function(a_src_id, a_dest_id) {
+    obj.isSrcParentOfDest = function (a_src_id, a_dest_id) {
         var parent;
         var child_id = a_dest_id;
         for (;;) {
             parent = obj.db.item.firstExample({
-                _to: child_id
+                _to: child_id,
             });
-            if (!parent)
-                return false;
-            if (parent._from == a_src_id)
-                return true;
+            if (!parent) return false;
+            if (parent._from == a_src_id) return true;
             child_id = parent._from;
         }
     };
 
     // Data or Collection ID or alias
-    obj.resolveID = function(a_id, a_client) {
-        var id, i = a_id.indexOf('/');
+    obj.resolveID = function (a_id, a_client) {
+        var id,
+            i = a_id.indexOf("/");
 
         if (i != -1) {
-            if (!a_id.startsWith('d/') && !a_id.startsWith('c/') && !a_id.startsWith('p/'))
+            if (!a_id.startsWith("d/") && !a_id.startsWith("c/") && !a_id.startsWith("p/"))
                 throw [obj.ERR_INVALID_PARAM, "Invalid ID '" + a_id + "'"];
             id = a_id;
         } else {
             var alias_id = "a/";
-            if (a_id.indexOf(":") == -1)
-                alias_id += "u:" + a_client._key + ":" + a_id;
-            else
-                alias_id += a_id;
+            if (a_id.indexOf(":") == -1) alias_id += "u:" + a_client._key + ":" + a_id;
+            else alias_id += a_id;
 
             var alias = obj.db.alias.firstExample({
-                _to: alias_id
+                _to: alias_id,
             });
-            if (!alias)
-                throw [obj.ERR_NOT_FOUND, "Alias '" + a_id + "' does not exist"];
+            if (!alias) throw [obj.ERR_NOT_FOUND, "Alias '" + a_id + "' does not exist"];
 
             id = alias._from;
         }
@@ -1061,30 +1197,32 @@ module.exports = (function() {
         return id;
     };
 
-    obj.resolveDataID = function(a_id, a_client) {
-        var alias, id, i = a_id.indexOf('/');
+    obj.resolveDataID = function (a_id, a_client) {
+        var alias,
+            id,
+            i = a_id.indexOf("/");
 
         if (i != -1) {
-            if (!a_id.startsWith('d/'))
+            if (!a_id.startsWith("d/"))
                 throw [obj.ERR_INVALID_PARAM, "Invalid data record ID '" + a_id + "'"];
             id = a_id;
         } else {
             var alias_id = "a/";
-            if (a_id.indexOf(":") == -1)
-                alias_id += "u:" + a_client._key + ":" + a_id;
-            else
-                alias_id += a_id;
+            if (a_id.indexOf(":") == -1) alias_id += "u:" + a_client._key + ":" + a_id;
+            else alias_id += a_id;
 
             alias = obj.db.alias.firstExample({
-                _to: alias_id
+                _to: alias_id,
             });
-            if (!alias)
-                throw [obj.ERR_NOT_FOUND, "Alias '" + a_id + "' does not exist"];
+            if (!alias) throw [obj.ERR_NOT_FOUND, "Alias '" + a_id + "' does not exist"];
 
             id = alias._from;
 
-            if (!id.startsWith('d/'))
-                throw [obj.ERR_INVALID_PARAM, "Alias '" + a_id + "' does not identify a data record"];
+            if (!id.startsWith("d/"))
+                throw [
+                    obj.ERR_INVALID_PARAM,
+                    "Alias '" + a_id + "' does not identify a data record",
+                ];
         }
 
         if (!obj.db.d.exists(id)) {
@@ -1094,30 +1232,31 @@ module.exports = (function() {
         return id;
     };
 
-    obj.resolveCollID = function(a_id, a_client) {
-        var id, i = a_id.indexOf('/');
+    obj.resolveCollID = function (a_id, a_client) {
+        var id,
+            i = a_id.indexOf("/");
 
         if (i != -1) {
-            if (!a_id.startsWith('c/'))
+            if (!a_id.startsWith("c/"))
                 throw [obj.ERR_INVALID_PARAM, "Invalid collection ID '" + a_id + "'"];
             id = a_id;
         } else {
             var alias_id = "a/";
-            if (a_client && a_id.indexOf(":") == -1)
-                alias_id += "u:" + a_client._key + ":" + a_id;
-            else
-                alias_id += a_id;
+            if (a_client && a_id.indexOf(":") == -1) alias_id += "u:" + a_client._key + ":" + a_id;
+            else alias_id += a_id;
 
             var alias = obj.db.alias.firstExample({
-                _to: alias_id
+                _to: alias_id,
             });
-            if (!alias)
-                throw [obj.ERR_NOT_FOUND, "Alias '" + a_id + "' does not exist"];
+            if (!alias) throw [obj.ERR_NOT_FOUND, "Alias '" + a_id + "' does not exist"];
 
             id = alias._from;
 
-            if (!id.startsWith('c/'))
-                throw [obj.ERR_INVALID_PARAM, "Alias '" + a_id + "' does not identify a collection"];
+            if (!id.startsWith("c/"))
+                throw [
+                    obj.ERR_INVALID_PARAM,
+                    "Alias '" + a_id + "' does not identify a collection",
+                ];
         }
 
         if (!obj.db.c.exists(id)) {
@@ -1127,30 +1266,32 @@ module.exports = (function() {
         return id;
     };
 
-    obj.resolveCollID2 = function(a_id, a_ctxt) {
-        var id, i = a_id.indexOf('/');
+    obj.resolveCollID2 = function (a_id, a_ctxt) {
+        var id,
+            i = a_id.indexOf("/");
 
         if (i != -1) {
-            if (!a_id.startsWith('c/'))
+            if (!a_id.startsWith("c/"))
                 throw [obj.ERR_INVALID_PARAM, "Invalid collection ID '" + a_id + "'"];
             id = a_id;
         } else {
             var alias_id = "a/";
             if (a_ctxt && a_id.indexOf(":") == -1)
                 alias_id += a_ctxt.charAt(0) + ":" + a_ctxt.substr(2) + ":" + a_id;
-            else
-                alias_id += a_id;
+            else alias_id += a_id;
 
             var alias = obj.db.alias.firstExample({
-                _to: alias_id
+                _to: alias_id,
             });
-            if (!alias)
-                throw [obj.ERR_NOT_FOUND, "Alias '" + alias_id + "' does not exist"];
+            if (!alias) throw [obj.ERR_NOT_FOUND, "Alias '" + alias_id + "' does not exist"];
 
             id = alias._from;
 
-            if (!id.startsWith('c/'))
-                throw [obj.ERR_INVALID_PARAM, "Alias '" + alias_id + "' does not identify a collection"];
+            if (!id.startsWith("c/"))
+                throw [
+                    obj.ERR_INVALID_PARAM,
+                    "Alias '" + alias_id + "' does not identify a collection",
+                ];
         }
 
         if (!obj.db.c.exists(id)) {
@@ -1160,31 +1301,32 @@ module.exports = (function() {
         return id;
     };
 
-    obj.resolveDataCollID = function(a_id, a_client) {
-        var id, i = a_id.indexOf('/');
+    obj.resolveDataCollID = function (a_id, a_client) {
+        var id,
+            i = a_id.indexOf("/");
 
         if (i != -1) {
-            if (!a_id.startsWith('d/') && !a_id.startsWith('c/'))
+            if (!a_id.startsWith("d/") && !a_id.startsWith("c/"))
                 throw [obj.ERR_INVALID_PARAM, "Invalid ID '" + a_id + "'"];
             id = a_id;
         } else {
             var alias_id = "a/";
-            if (a_client && a_id.indexOf(":") == -1)
-                alias_id += "u:" + a_client._key + ":" + a_id;
-            else
-                alias_id += a_id;
+            if (a_client && a_id.indexOf(":") == -1) alias_id += "u:" + a_client._key + ":" + a_id;
+            else alias_id += a_id;
 
             var alias = obj.db.alias.firstExample({
-                _to: alias_id
+                _to: alias_id,
             });
-            if (!alias)
-                throw [obj.ERR_NOT_FOUND, "Alias '" + a_id + "' does not exist"];
+            if (!alias) throw [obj.ERR_NOT_FOUND, "Alias '" + a_id + "' does not exist"];
 
             id = alias._from;
         }
 
         if (!obj.db._exists(id)) {
-            throw [obj.ERR_INVALID_PARAM, (id.charAt(0) == 'd' ? "Data record '" : "Collection '") + id + "' does not exist."];
+            throw [
+                obj.ERR_INVALID_PARAM,
+                (id.charAt(0) == "d" ? "Data record '" : "Collection '") + id + "' does not exist.",
+            ];
         }
 
         return id;
@@ -1199,22 +1341,25 @@ module.exports = (function() {
     */
 
     // For use when creating a new record
-    obj.getCollCategoryTags = function(a_coll_id) {
+    obj.getCollCategoryTags = function (a_coll_id) {
         var coll = obj.db.c.document(a_coll_id),
             ctx = obj.catalogCalcParCtxt(coll, {});
 
-        if (ctx.pub)
-            return Array.from(ctx.tags);
+        if (ctx.pub) return Array.from(ctx.tags);
     };
 
-    obj.catalogUpdateRecord = function(a_data, a_coll, a_ctx, a_visited = {}) {
-        var p, par = obj.db.item.byExample({
-                _to: a_data._id
+    obj.catalogUpdateRecord = function (a_data, a_coll, a_ctx, a_visited = {}) {
+        var p,
+            par = obj.db.item.byExample({
+                _to: a_data._id,
             }),
-            tmp, _ctx = (a_ctx ? a_ctx : {
-                pub: false,
-                tags: new Set()
-            });
+            tmp,
+            _ctx = a_ctx
+                ? a_ctx
+                : {
+                      pub: false,
+                      tags: new Set(),
+                  };
 
         while (par.hasNext()) {
             p = par.next();
@@ -1233,33 +1378,38 @@ module.exports = (function() {
                     if (_ctx === a_ctx) {
                         _ctx = {
                             pub: a_ctx.pub,
-                            tags: new Set(a_ctx.tags)
+                            tags: new Set(a_ctx.tags),
                         };
                     }
 
-                    _ctx.pub = (_ctx.pub || tmp.pub);
+                    _ctx.pub = _ctx.pub || tmp.pub;
                     tmp.tags.forEach(_ctx.tags.add, _ctx.tags);
                 }
             }
         }
 
         // Update record with pub flag & tags
-        obj.db._update(a_data._id, {
-            public: _ctx.pub,
-            cat_tags: _ctx.pub ? Array.from(_ctx.tags) : null
-        }, {
-            keepNull: false
-        });
+        obj.db._update(
+            a_data._id,
+            {
+                public: _ctx.pub,
+                cat_tags: _ctx.pub ? Array.from(_ctx.tags) : null,
+            },
+            {
+                keepNull: false,
+            },
+        );
     };
 
-    obj.catalogCalcParCtxt = function(a_coll, a_visited) {
+    obj.catalogCalcParCtxt = function (a_coll, a_visited) {
         //console.log("catalogCalcParCtxt",a_coll._id);
-        var c, ctx = {
+        var c,
+            ctx = {
                 pub: a_coll.public ? true : false,
-                tags: new Set(a_coll.cat_tags ? a_coll.cat_tags : [])
+                tags: new Set(a_coll.cat_tags ? a_coll.cat_tags : []),
             },
             item = obj.db.item.firstExample({
-                _to: a_coll._id
+                _to: a_coll._id,
             });
 
         while (item) {
@@ -1267,7 +1417,7 @@ module.exports = (function() {
             c = a_visited[item._from];
 
             if (c) {
-                ctx.pub = (ctx.pub || c.pub);
+                ctx.pub = ctx.pub || c.pub;
                 if (c.tags) {
                     c.tags.forEach(ctx.tags.add, ctx.tags);
                 }
@@ -1275,14 +1425,14 @@ module.exports = (function() {
                 break;
             } else {
                 c = obj.db.c.document(item._from);
-                ctx.pub = (ctx.pub || c.public);
+                ctx.pub = ctx.pub || c.public;
                 if (c.cat_tags) {
                     c.cat_tags.forEach(ctx.tags.add, ctx.tags);
                 }
             }
 
             item = obj.db.item.firstExample({
-                _to: item._from
+                _to: item._from,
             });
         }
         //console.log("update visited",ctx);
@@ -1297,13 +1447,13 @@ module.exports = (function() {
     calling this function. Note that the public state and category tags of child
     collections are not changed by this function.
     */
-    obj.catalogUpdateColl = function(a_coll, a_ctx, a_visited = {}) {
+    obj.catalogUpdateColl = function (a_coll, a_ctx, a_visited = {}) {
         var ctx;
 
         if (a_ctx) {
             ctx = {
-                pub: (a_coll.public || a_ctx.pub),
-                tags: new Set(a_ctx.tags)
+                pub: a_coll.public || a_ctx.pub,
+                tags: new Set(a_ctx.tags),
             };
             if (a_coll.cat_tags) {
                 a_coll.cat_tags.forEach(ctx.tags.add, ctx.tags);
@@ -1314,14 +1464,19 @@ module.exports = (function() {
             ctx = obj.catalogCalcParCtxt(a_coll, a_visited);
         }
 
-        var p, par, _ctx, tmp, item, items = obj.db.item.byExample({
-            _from: a_coll._id
-        });
+        var p,
+            par,
+            _ctx,
+            tmp,
+            item,
+            items = obj.db.item.byExample({
+                _from: a_coll._id,
+            });
 
         while (items.hasNext()) {
             item = items.next();
 
-            if (item._to.charAt(0) == 'c') {
+            if (item._to.charAt(0) == "c") {
                 par = obj.db.c.document(item._to);
                 obj.catalogUpdateColl(par, ctx, a_visited);
             } else {
@@ -1329,7 +1484,7 @@ module.exports = (function() {
 
                 // Determine if this record is published by other collections
                 par = obj.db.item.byExample({
-                    _to: item._to
+                    _to: item._to,
                 });
                 _ctx = ctx;
 
@@ -1358,11 +1513,11 @@ module.exports = (function() {
                             if (_ctx === ctx) {
                                 _ctx = {
                                     pub: ctx.pub,
-                                    tags: new Set(ctx.tags)
+                                    tags: new Set(ctx.tags),
                                 };
                             }
 
-                            _ctx.pub = (_ctx.pub || tmp.pub);
+                            _ctx.pub = _ctx.pub || tmp.pub;
                             tmp.tags.forEach(_ctx.tags.add, _ctx.tags);
                         }
                     } else {
@@ -1371,19 +1526,23 @@ module.exports = (function() {
                 }
 
                 // Update record with pub flag & tags
-                obj.db._update(item._to, {
-                    public: _ctx.pub,
-                    cat_tags: _ctx.pub ? Array.from(_ctx.tags) : null
-                }, {
-                    keepNull: false
-                });
+                obj.db._update(
+                    item._to,
+                    {
+                        public: _ctx.pub,
+                        cat_tags: _ctx.pub ? Array.from(_ctx.tags) : null,
+                    },
+                    {
+                        keepNull: false,
+                    },
+                );
             }
         }
     };
 
-
-    obj.topicCreate = function(a_topics, a_idx, a_par_id, a_owner_id) {
-        var topic, par_id = a_par_id; //, doc;
+    obj.topicCreate = function (a_topics, a_idx, a_par_id, a_owner_id) {
+        var topic,
+            par_id = a_par_id; //, doc;
 
         for (var i = a_idx; i < a_topics.length; i++) {
             topic = a_topics[i];
@@ -1394,16 +1553,19 @@ module.exports = (function() {
                 obj.db.tag.save({ _key: topic, count: 1 });
             }*/
 
-            topic = obj.db.t.save({
-                title: topic,
-                creator: a_owner_id,
-                coll_cnt: 1
-            }, {
-                returnNew: true
-            });
+            topic = obj.db.t.save(
+                {
+                    title: topic,
+                    creator: a_owner_id,
+                    coll_cnt: 1,
+                },
+                {
+                    returnNew: true,
+                },
+            );
             obj.db.top.save({
                 _from: topic._id,
-                _to: par_id
+                _to: par_id,
             });
             par_id = topic._id;
         }
@@ -1411,20 +1573,20 @@ module.exports = (function() {
         return par_id;
     };
 
-    obj.topicLink = function(a_topic, a_coll_id, a_owner_id) {
-        var i, topics = a_topic.split(".");
+    obj.topicLink = function (a_topic, a_coll_id, a_owner_id) {
+        var i,
+            topics = a_topic.split(".");
 
         // Detect misplaced topic delimiters
         for (i in topics) {
-            if (topics[i].length === 0)
-                throw [obj.ERR_INVALID_PARAM, "Invalid category"];
+            if (topics[i].length === 0) throw [obj.ERR_INVALID_PARAM, "Invalid category"];
         }
 
         var topic, parent; //,tag;
 
         // Find or create top-level topics
         parent = obj.db._query("for i in t filter i.top == true && i.title == @title return i", {
-            title: topics[0]
+            title: topics[0],
         });
 
         if (parent.hasNext()) {
@@ -1432,7 +1594,7 @@ module.exports = (function() {
 
             // Increment coll_cnt
             obj.db.t.update(parent._id, {
-                coll_cnt: parent.coll_cnt + 1
+                coll_cnt: parent.coll_cnt + 1,
             });
             parent = parent._id;
 
@@ -1443,15 +1605,18 @@ module.exports = (function() {
             }*/
 
             for (i = 1; i < topics.length; i++) {
-                topic = obj.db._query("for v in 1..1 inbound @par top filter v.title == @title filter is_same_collection('t',v) return v", {
-                    par: parent,
-                    title: topics[i]
-                });
+                topic = obj.db._query(
+                    "for v in 1..1 inbound @par top filter v.title == @title filter is_same_collection('t',v) return v",
+                    {
+                        par: parent,
+                        title: topics[i],
+                    },
+                );
                 if (topic.hasNext()) {
                     parent = topic.next();
                     // Increment coll_cnt
                     obj.db.t.update(parent._id, {
-                        coll_cnt: parent.coll_cnt + 1
+                        coll_cnt: parent.coll_cnt + 1,
                     });
 
                     /*if (( tag = obj.db.tag.firstExample({ _key: topics[i] })) != null ){
@@ -1467,40 +1632,46 @@ module.exports = (function() {
                 }
             }
         } else {
-            parent = obj.db.t.save({
-                title: topics[0],
-                top: true,
-                creator: a_owner_id,
-                coll_cnt: 1
-            }, {
-                returnNew: true
-            })._id;
+            parent = obj.db.t.save(
+                {
+                    title: topics[0],
+                    top: true,
+                    creator: a_owner_id,
+                    coll_cnt: 1,
+                },
+                {
+                    returnNew: true,
+                },
+            )._id;
 
             parent = this.topicCreate(topics, 1, parent, a_owner_id);
         }
 
-        if (!obj.db.top.firstExample({
+        if (
+            !obj.db.top.firstExample({
                 _from: a_coll_id,
-                _to: parent
-            })) {
+                _to: parent,
+            })
+        ) {
             obj.db.top.save({
                 _from: a_coll_id,
-                _to: parent
+                _to: parent,
             });
         }
     };
 
-    obj.topicUnlink = function(a_coll_id) {
+    obj.topicUnlink = function (a_coll_id) {
         //console.log("topicUnlink");
         var top_lnk = obj.db.top.firstExample({
-            _from: a_coll_id
+            _from: a_coll_id,
         });
         if (!top_lnk) {
             return;
         }
 
         // Save parent topic id, delete link from collection
-        var topic, topic_id = top_lnk._to,
+        var topic,
+            topic_id = top_lnk._to,
             dec_only = false; //, tags = [];
         //console.log("rem top lnk",top_lnk._id);
         obj.db.top.remove(top_lnk);
@@ -1511,19 +1682,23 @@ module.exports = (function() {
 
             // Decrement coll_cnt
             obj.db.t.update(topic._id, {
-                coll_cnt: topic.coll_cnt - 1
+                coll_cnt: topic.coll_cnt - 1,
             });
 
             //tags.push( topic.title );
 
             // If parent is admin controlled, or other topics are linked to parent, stop
-            if (dec_only || topic.admin || obj.db.top.firstExample({
-                    _to: topic_id
-                })) {
+            if (
+                dec_only ||
+                topic.admin ||
+                obj.db.top.firstExample({
+                    _to: topic_id,
+                })
+            ) {
                 //console.log("stop no del topic",topic);
                 dec_only = true;
                 top_lnk = obj.db.top.firstExample({
-                    _from: topic_id
+                    _from: topic_id,
                 });
                 if (top_lnk) {
                     topic_id = top_lnk._to;
@@ -1532,7 +1707,7 @@ module.exports = (function() {
                 }
             } else {
                 top_lnk = obj.db.top.firstExample({
-                    _from: topic_id
+                    _from: topic_id,
                 });
 
                 if (top_lnk) {
@@ -1550,62 +1725,59 @@ module.exports = (function() {
         //obj.removeTags( tags );
     };
 
-    obj.getParents = function(item_id) {
-        var p, idx = 0,
-            parents, results = [];
+    obj.getParents = function (item_id) {
+        var p,
+            idx = 0,
+            parents,
+            results = [];
 
         parents = obj.db.item.byExample({
-            _to: item_id
+            _to: item_id,
         });
-        if (!parents.hasNext())
-            return [
-                []
-            ];
+        if (!parents.hasNext()) return [[]];
 
         while (parents.hasNext()) {
             p = parents.next();
             p = obj.db.c.document(p._from);
 
-            results.push([{
-                id: p._id,
-                title: p.title,
-                alias: p.alias
-            }]);
+            results.push([
+                {
+                    id: p._id,
+                    title: p.title,
+                    alias: p.alias,
+                },
+            ]);
 
             p = obj.db.item.firstExample({
-                _to: p._id
+                _to: p._id,
             });
             while (p) {
                 p = obj.db.c.document(p._from);
                 results[idx].push({
                     id: p._id,
                     title: p.title,
-                    alias: p.alias
+                    alias: p.alias,
                 });
                 p = obj.db.item.firstExample({
-                    _to: p._id
+                    _to: p._id,
                 });
             }
             idx++;
         }
 
         // Sort paths alphabetically as in collection listings
-        results.sort(function(a, b) {
+        results.sort(function (a, b) {
             var i, j;
             if (a.length < b.length) {
                 for (i = a.length - 1, j = b.length - 1; i >= 0; i--, j--) {
-                    if (a[i].title < b[j].title)
-                        return -1;
-                    else if (a[i].title > b[j].title)
-                        return 1;
+                    if (a[i].title < b[j].title) return -1;
+                    else if (a[i].title > b[j].title) return 1;
                 }
                 return 1;
             } else {
                 for (i = a.length - 1, j = b.length - 1; j >= 0; i--, j--) {
-                    if (a[i].title < b[j].title)
-                        return -1;
-                    else if (a[i].title > b[j].title)
-                        return 1;
+                    if (a[i].title < b[j].title) return -1;
+                    else if (a[i].title > b[j].title) return 1;
                 }
                 return -1;
             }
@@ -1614,60 +1786,59 @@ module.exports = (function() {
         return results;
     };
 
-
-    obj.makeTitleUnique = function(a_parent_id, a_doc) {
-        var conflicts = obj.db._query("for v in 1..1 outbound @coll item filter is_same_collection(@type,v) and v.title == @title return {id:v._id}", {
-            coll: a_parent_id,
-            title: a_doc.title,
-            type: a_doc._id.charAt(0)
-        });
+    obj.makeTitleUnique = function (a_parent_id, a_doc) {
+        var conflicts = obj.db._query(
+            "for v in 1..1 outbound @coll item filter is_same_collection(@type,v) and v.title == @title return {id:v._id}",
+            {
+                coll: a_parent_id,
+                title: a_doc.title,
+                type: a_doc._id.charAt(0),
+            },
+        );
 
         if (conflicts.hasNext()) {
             obj.db._update(a_doc._id, {
-                title: a_doc.title + "_" + a_doc._key
+                title: a_doc.title + "_" + a_doc._key,
             });
         }
     };
 
-
-    obj.hasAnyCommonAccessScope = function(src_item_id, dst_coll_id) {
+    obj.hasAnyCommonAccessScope = function (src_item_id, dst_coll_id) {
         //console.log("hasAnyCommonAccessScope",src_item_id, dst_coll_id);
 
-        if (src_item_id[0] == 'c') {
+        if (src_item_id[0] == "c") {
             // Collections can only be linked in one place, can use hasCommonAccessScope on parent
             var parent = obj.db.item.firstExample({
-                _to: src_item_id
+                _to: src_item_id,
             });
-            if (!parent)
-                return false;
+            if (!parent) return false;
             else {
                 return obj.hasCommonAccessScope(parent._from, dst_coll_id);
             }
         } else {
             var parents = obj.db.item.byExample({
-                _to: src_item_id
+                _to: src_item_id,
             });
             while (parents.hasNext()) {
-                if (obj.hasCommonAccessScope(parents.next()._from, dst_coll_id))
-                    return true;
+                if (obj.hasCommonAccessScope(parents.next()._from, dst_coll_id)) return true;
             }
         }
 
         return false;
     };
 
-    obj.hasCommonAccessScope = function(src_coll_id, dst_coll_id) {
+    obj.hasCommonAccessScope = function (src_coll_id, dst_coll_id) {
         //console.log("hasCommonAccessScope",src_coll_id, dst_coll_id);
         var p1 = [src_coll_id],
             p2 = [dst_coll_id];
-        var parent, child = src_coll_id;
+        var parent,
+            child = src_coll_id;
 
         for (;;) {
             parent = obj.db.item.firstExample({
-                _to: child
+                _to: child,
             });
-            if (!parent)
-                break;
+            if (!parent) break;
             p1.unshift(parent._from);
             child = parent._from;
         }
@@ -1676,19 +1847,18 @@ module.exports = (function() {
 
         for (;;) {
             parent = obj.db.item.firstExample({
-                _to: child
+                _to: child,
             });
-            if (!parent)
-                break;
+            if (!parent) break;
             p2.unshift(parent._from);
             child = parent._from;
         }
 
-        var i, len = Math.min(p1.length, p2.length);
+        var i,
+            len = Math.min(p1.length, p2.length);
 
         for (i = 0; i < len; i++) {
-            if (p1[i] != p2[i])
-                break;
+            if (p1[i] != p2[i]) break;
         }
         //console.log("hasCommonAccessScope",p1, p2,i);
 
@@ -1700,17 +1870,21 @@ module.exports = (function() {
         var j;
 
         for (j = i; j < p1.length; j++) {
-            if (obj.db.acl.firstExample({
-                    _from: p1[j]
-                })) {
+            if (
+                obj.db.acl.firstExample({
+                    _from: p1[j],
+                })
+            ) {
                 return false;
             }
         }
 
         for (j = i; j < p2.length; j++) {
-            if (obj.db.acl.firstExample({
-                    _from: p2[j]
-                })) {
+            if (
+                obj.db.acl.firstExample({
+                    _from: p2[j],
+                })
+            ) {
                 return false;
             }
         }
@@ -1718,26 +1892,30 @@ module.exports = (function() {
         return true;
     };
 
-    obj.hasPublicRead = function(a_id) {
+    obj.hasPublicRead = function (a_id) {
         console.log("Has public read a_id is ", a_id);
         // Check for local topic on collections
         if (a_id.startsWith("c/")) {
             var col = obj.db.c.document(a_id);
-            if (col.topic)
-                return true;
+            if (col.topic) return true;
         }
 
-        var i, children = [a_id],
+        var i,
+            children = [a_id],
             parents;
 
         for (;;) {
             // Find all parent collections owned by object owner
-            parents = obj.db._query("for i in @children for v in 1..1 inbound i item return {_id:v._id,topic:v.topic}", {
-                children: children
-            }).toArray();
+            parents = obj.db
+                ._query(
+                    "for i in @children for v in 1..1 inbound i item return {_id:v._id,topic:v.topic}",
+                    {
+                        children: children,
+                    },
+                )
+                .toArray();
             console.log("children are ", children, " parents are, ", parents);
-            if (parents.length === 0)
-                return false;
+            if (parents.length === 0) return false;
 
             for (i in parents) {
                 if (parents[i].topic) {
@@ -1754,12 +1932,21 @@ module.exports = (function() {
      * known not to be owned by the client (and that the client is not an admin). In this case, those checks
      * would add performance cost for no benefit.
      */
-    obj.hasPermissions = function(a_client, a_object, a_req_perm, a_inherited = false, any = false) {
+    obj.hasPermissions = function (
+        a_client,
+        a_object,
+        a_req_perm,
+        a_inherited = false,
+        any = false,
+    ) {
         //console.log("check perm:", a_req_perm, "client:", a_client._id, "object:", a_object._id, "any:", any );
         //console.log("grant:", a_object.grant );
 
         var perm_found = 0,
-            acl, acls, result, i;
+            acl,
+            acls,
+            result,
+            i;
 
         // If object is marked "public", everyone is granted VIEW, and READ permissions
         // The current implementation allows users to be denied access to public data (maybe wrong?)
@@ -1768,50 +1955,52 @@ module.exports = (function() {
             perm_found = obj.PERM_PUBLIC;
 
             result = obj.evalPermissions(a_req_perm, perm_found, any);
-            if (result != null)
-                return result;
+            if (result != null) return result;
         }
 
         // Evaluate user permissions set directly on object
         if (a_object.acls & 1) {
-            acls = obj.db._query("for v, e in 1..1 outbound @object acl filter v._id == @client return e", {
-                object: a_object._id,
-                client: a_client._id
-            }).toArray();
+            acls = obj.db
+                ._query("for v, e in 1..1 outbound @object acl filter v._id == @client return e", {
+                    object: a_object._id,
+                    client: a_client._id,
+                })
+                .toArray();
 
             if (acls.length) {
                 for (i in acls) {
                     acl = acls[i];
                     //console.log("user_perm:",acl);
                     perm_found |= acl.grant;
-                    if (a_inherited && acl.inhgrant)
-                        perm_found |= acl.inhgrant;
+                    if (a_inherited && acl.inhgrant) perm_found |= acl.inhgrant;
                 }
 
                 result = obj.evalPermissions(a_req_perm, perm_found, any);
-                if (result != null)
-                    return result;
+                if (result != null) return result;
             }
         }
 
         // Evaluate group permissions on object
         if (a_object.acls & 2) {
-            acls = obj.db._query("for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]", {
-                object: a_object._id,
-                client: a_client._id
-            }).toArray();
+            acls = obj.db
+                ._query(
+                    "for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]",
+                    {
+                        object: a_object._id,
+                        client: a_client._id,
+                    },
+                )
+                .toArray();
             if (acls.length) {
                 for (i in acls) {
                     acl = acls[i];
                     //console.log("group_perm:",acl);
                     perm_found |= acl.grant;
-                    if (a_inherited && acl.inhgrant)
-                        perm_found |= acl.inhgrant;
+                    if (a_inherited && acl.inhgrant) perm_found |= acl.inhgrant;
                 }
 
                 result = obj.evalPermissions(a_req_perm, perm_found, any);
-                if (result != null)
-                    return result;
+                if (result != null) return result;
             }
         }
 
@@ -1825,12 +2014,16 @@ module.exports = (function() {
         for (;;) {
             // Find all parent collections owned by object owner
 
-            parents = obj.db._query("for i in @children for v in 1..1 inbound i item return {_id:v._id,topic:v.topic,acls:v.acls}", {
-                children: children
-            }).toArray();
+            parents = obj.db
+                ._query(
+                    "for i in @children for v in 1..1 inbound i item return {_id:v._id,topic:v.topic,acls:v.acls}",
+                    {
+                        children: children,
+                    },
+                )
+                .toArray();
 
-            if (parents.length == 0)
-                break;
+            if (parents.length == 0) break;
 
             for (i in parents) {
                 parent = parents[i];
@@ -1839,16 +2032,20 @@ module.exports = (function() {
                     perm_found |= obj.PERM_PUBLIC;
 
                     result = obj.evalPermissions(a_req_perm, perm_found, any);
-                    if (result != null)
-                        return result;
+                    if (result != null) return result;
                 }
 
                 // User ACL first
-                if (parent.acls && ((parent.acls & 1) !== 0)) {
-                    acls = obj.db._query("for v, e in 1..1 outbound @object acl filter v._id == @client return e", {
-                        object: parent._id,
-                        client: a_client._id
-                    }).toArray();
+                if (parent.acls && (parent.acls & 1) !== 0) {
+                    acls = obj.db
+                        ._query(
+                            "for v, e in 1..1 outbound @object acl filter v._id == @client return e",
+                            {
+                                object: parent._id,
+                                client: a_client._id,
+                            },
+                        )
+                        .toArray();
                     if (acls.length) {
                         for (i in acls) {
                             acl = acls[i];
@@ -1856,17 +2053,21 @@ module.exports = (function() {
                         }
 
                         result = obj.evalPermissions(a_req_perm, perm_found, any);
-                        if (result != null)
-                            return result;
+                        if (result != null) return result;
                     }
                 }
 
                 // Group ACL next
-                if (parent.acls && ((parent.acls & 2) !== 0)) {
-                    acls = obj.db._query("for v, e, p in 2..2 outbound @object acl, outbound member filter is_same_collection('g',p.vertices[1]) and p.vertices[2]._id == @client return p.edges[0]", {
-                        object: parent._id,
-                        client: a_client._id
-                    }).toArray();
+                if (parent.acls && (parent.acls & 2) !== 0) {
+                    acls = obj.db
+                        ._query(
+                            "for v, e, p in 2..2 outbound @object acl, outbound member filter is_same_collection('g',p.vertices[1]) and p.vertices[2]._id == @client return p.edges[0]",
+                            {
+                                object: parent._id,
+                                client: a_client._id,
+                            },
+                        )
+                        .toArray();
                     if (acls.length) {
                         for (i in acls) {
                             acl = acls[i];
@@ -1874,8 +2075,7 @@ module.exports = (function() {
                         }
 
                         result = obj.evalPermissions(a_req_perm, perm_found, any);
-                        if (result != null)
-                            return result;
+                        if (result != null) return result;
                     }
                 }
             }
@@ -1889,28 +2089,26 @@ module.exports = (function() {
         return false;
     };
 
-    obj.evalPermissions = function(a_req_perm, a_perm_found, any) {
+    obj.evalPermissions = function (a_req_perm, a_perm_found, any) {
         if (any) {
             // If any requested permission have been found, return true (granted)
-            if (a_perm_found & a_req_perm)
-                return true;
-            else
-                return null; // Else, keep looking
+            if (a_perm_found & a_req_perm) return true;
+            else return null; // Else, keep looking
         } else {
             // If not all requested permissions have been found return NULL (keep looking)
-            if ((a_perm_found & a_req_perm) != a_req_perm)
-                return null;
-            else
-                return true; // Else, permission granted
+            if ((a_perm_found & a_req_perm) != a_req_perm) return null;
+            else return true; // Else, permission granted
         }
     };
 
-    obj.getPermissions = function(a_client, a_object, a_req_perm, a_inherited = false) {
+    obj.getPermissions = function (a_client, a_object, a_req_perm, a_inherited = false) {
         //console.log("get perm:", a_req_perm, "client:", a_client._id, "object:", a_object._id, "any:", any );
         //console.log("grant:", a_object.grant );
 
         var perm_found = 0,
-            acl, acls, i;
+            acl,
+            acls,
+            i;
 
         // If object has a topic (collections only), everyone is granted VIEW, and READ permissions
         // The current implementation allows users to be denied access to public data (maybe wrong?)
@@ -1918,51 +2116,53 @@ module.exports = (function() {
         if (a_object.topic) {
             perm_found = obj.PERM_PUBLIC;
 
-            if ((a_req_perm & perm_found) == a_req_perm)
-                return a_req_perm;
+            if ((a_req_perm & perm_found) == a_req_perm) return a_req_perm;
         }
 
         // Evaluate permissions set directly on object
 
-        if (a_object.acls && ((a_object.acls & 1) !== 0)) {
-            acls = obj.db._query("for v, e in 1..1 outbound @object acl filter v._id == @client return e", {
-                object: a_object._id,
-                client: a_client._id
-            }).toArray();
+        if (a_object.acls && (a_object.acls & 1) !== 0) {
+            acls = obj.db
+                ._query("for v, e in 1..1 outbound @object acl filter v._id == @client return e", {
+                    object: a_object._id,
+                    client: a_client._id,
+                })
+                .toArray();
 
             if (acls.length) {
                 for (i in acls) {
                     acl = acls[i];
                     //console.log("user_perm:",acl);
                     perm_found |= acl.grant;
-                    if (a_inherited && acl.inhgrant)
-                        perm_found |= acl.inhgrant;
+                    if (a_inherited && acl.inhgrant) perm_found |= acl.inhgrant;
                 }
 
-                if ((a_req_perm & perm_found) == a_req_perm)
-                    return a_req_perm;
+                if ((a_req_perm & perm_found) == a_req_perm) return a_req_perm;
             }
         }
 
         // Evaluate group permissions on object
 
-        if (a_object.acls && ((a_object.acls & 2) !== 0)) {
-            acls = obj.db._query("for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]", {
-                object: a_object._id,
-                client: a_client._id
-            }).toArray();
+        if (a_object.acls && (a_object.acls & 2) !== 0) {
+            acls = obj.db
+                ._query(
+                    "for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]",
+                    {
+                        object: a_object._id,
+                        client: a_client._id,
+                    },
+                )
+                .toArray();
 
             if (acls.length) {
                 for (i in acls) {
                     acl = acls[i];
                     //console.log("group_perm:",acl);
                     perm_found |= acl.grant;
-                    if (a_inherited && acl.inhgrant)
-                        perm_found |= acl.inhgrant;
+                    if (a_inherited && acl.inhgrant) perm_found |= acl.inhgrant;
                 }
 
-                if ((a_req_perm & perm_found) == a_req_perm)
-                    return a_req_perm;
+                if ((a_req_perm & perm_found) == a_req_perm) return a_req_perm;
             }
         }
 
@@ -1975,12 +2175,16 @@ module.exports = (function() {
         for (;;) {
             // Find all parent collections owned by object owner
 
-            parents = obj.db._query("for i in @children for v in 1..1 inbound i item return {_id:v._id,topic:v.topic,acls:v.acls}", {
-                children: children
-            }).toArray();
+            parents = obj.db
+                ._query(
+                    "for i in @children for v in 1..1 inbound i item return {_id:v._id,topic:v.topic,acls:v.acls}",
+                    {
+                        children: children,
+                    },
+                )
+                .toArray();
 
-            if (parents.length == 0)
-                break;
+            if (parents.length == 0) break;
 
             for (i in parents) {
                 parent = parents[i];
@@ -1988,41 +2192,48 @@ module.exports = (function() {
                 if (parent.topic) {
                     perm_found |= obj.PERM_PUBLIC;
 
-                    if ((a_req_perm & perm_found) == a_req_perm)
-                        return a_req_perm;
+                    if ((a_req_perm & perm_found) == a_req_perm) return a_req_perm;
                 }
 
                 // User ACL
-                if (parent.acls && ((parent.acls & 1) != 0)) {
-                    acls = obj.db._query("for v, e in 1..1 outbound @object acl filter v._id == @client return e", {
-                        object: parent._id,
-                        client: a_client._id
-                    }).toArray();
+                if (parent.acls && (parent.acls & 1) != 0) {
+                    acls = obj.db
+                        ._query(
+                            "for v, e in 1..1 outbound @object acl filter v._id == @client return e",
+                            {
+                                object: parent._id,
+                                client: a_client._id,
+                            },
+                        )
+                        .toArray();
                     if (acls.length) {
                         for (i in acls) {
                             acl = acls[i];
                             perm_found |= acl.inhgrant;
                         }
 
-                        if ((a_req_perm & perm_found) == a_req_perm)
-                            return a_req_perm;
+                        if ((a_req_perm & perm_found) == a_req_perm) return a_req_perm;
                     }
                 }
 
                 // Group ACL
-                if (parent.acls && ((parent.acls & 2) != 0)) {
-                    acls = obj.db._query("for v, e, p in 2..2 outbound @object acl, outbound member filter is_same_collection('g',p.vertices[1]) and p.vertices[2]._id == @client return p.edges[0]", {
-                        object: parent._id,
-                        client: a_client._id
-                    }).toArray();
+                if (parent.acls && (parent.acls & 2) != 0) {
+                    acls = obj.db
+                        ._query(
+                            "for v, e, p in 2..2 outbound @object acl, outbound member filter is_same_collection('g',p.vertices[1]) and p.vertices[2]._id == @client return p.edges[0]",
+                            {
+                                object: parent._id,
+                                client: a_client._id,
+                            },
+                        )
+                        .toArray();
                     if (acls.length) {
                         for (i in acls) {
                             acl = acls[i];
                             perm_found |= acl.inhgrant;
                         }
 
-                        if ((a_req_perm & perm_found) == a_req_perm)
-                            return a_req_perm;
+                        if ((a_req_perm & perm_found) == a_req_perm) return a_req_perm;
                     }
                 }
             }
@@ -2035,13 +2246,15 @@ module.exports = (function() {
         return perm_found & a_req_perm;
     };
 
-    obj.getPermissionsLocal = function(a_client_id, a_object, a_get_inherited, a_req_perm) {
+    obj.getPermissionsLocal = function (a_client_id, a_object, a_get_inherited, a_req_perm) {
         var perm = {
                 grant: 0,
                 inhgrant: 0,
-                inherited: 0
+                inherited: 0,
             },
-            acl, acls, i;
+            acl,
+            acls,
+            i;
 
         //console.log("getPermissionsLocal",a_object._id);
 
@@ -2054,10 +2267,12 @@ module.exports = (function() {
         if (a_object.acls & 1) {
             //console.log("chk local user acls");
 
-            acls = obj.db._query("for v, e in 1..1 outbound @object acl filter v._id == @client return e", {
-                object: a_object._id,
-                client: a_client_id
-            }).toArray();
+            acls = obj.db
+                ._query("for v, e in 1..1 outbound @object acl filter v._id == @client return e", {
+                    object: a_object._id,
+                    client: a_client_id,
+                })
+                .toArray();
 
             for (i in acls) {
                 acl = acls[i];
@@ -2070,10 +2285,15 @@ module.exports = (function() {
         if (a_object.acls & 2) {
             //console.log("chk local group acls");
 
-            acls = obj.db._query("for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]", {
-                object: a_object._id,
-                client: a_client_id
-            }).toArray();
+            acls = obj.db
+                ._query(
+                    "for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]",
+                    {
+                        object: a_object._id,
+                        client: a_client_id,
+                    },
+                )
+                .toArray();
             for (i in acls) {
                 acl = acls[i];
                 perm.grant |= acl.grant;
@@ -2090,14 +2310,18 @@ module.exports = (function() {
             for (;;) {
                 // Find all parent collections owned by object owner
 
-                parents = obj.db._query("for i in @children for v in 1..1 inbound i item return {_id:v._id,topic:v.topic,acls:v.acls}", {
-                    children: children
-                }).toArray();
+                parents = obj.db
+                    ._query(
+                        "for i in @children for v in 1..1 inbound i item return {_id:v._id,topic:v.topic,acls:v.acls}",
+                        {
+                            children: children,
+                        },
+                    )
+                    .toArray();
 
                 //console.log("parents",parents);
 
-                if (parents.length == 0)
-                    break;
+                if (parents.length == 0) break;
 
                 for (i in parents) {
                     parent = parents[i];
@@ -2107,45 +2331,52 @@ module.exports = (function() {
 
                         perm.inherited |= obj.PERM_PUBLIC;
 
-                        if ((a_req_perm & perm.inherited) == a_req_perm)
-                            break;
+                        if ((a_req_perm & perm.inherited) == a_req_perm) break;
                     }
 
                     // User ACL
-                    if (parent.acls && ((parent.acls & 1) != 0)) {
+                    if (parent.acls && (parent.acls & 1) != 0) {
                         //console.log("chk par user acls");
 
-                        acls = obj.db._query("for v, e in 1..1 outbound @object acl filter v._id == @client return e", {
-                            object: parent._id,
-                            client: a_client_id
-                        }).toArray();
+                        acls = obj.db
+                            ._query(
+                                "for v, e in 1..1 outbound @object acl filter v._id == @client return e",
+                                {
+                                    object: parent._id,
+                                    client: a_client_id,
+                                },
+                            )
+                            .toArray();
                         if (acls.length) {
                             for (i in acls) {
                                 acl = acls[i];
                                 perm.inherited |= acl.inhgrant;
                             }
 
-                            if ((a_req_perm & perm.inherited) == a_req_perm)
-                                break;
+                            if ((a_req_perm & perm.inherited) == a_req_perm) break;
                         }
                     }
 
                     // Group ACL
-                    if (parent.acls && ((parent.acls & 2) != 0)) {
+                    if (parent.acls && (parent.acls & 2) != 0) {
                         //console.log("chk par group acls");
 
-                        acls = obj.db._query("for v, e, p in 2..2 outbound @object acl, outbound member filter is_same_collection('g',p.vertices[1]) and p.vertices[2]._id == @client return p.edges[0]", {
-                            object: parent._id,
-                            client: a_client_id
-                        }).toArray();
+                        acls = obj.db
+                            ._query(
+                                "for v, e, p in 2..2 outbound @object acl, outbound member filter is_same_collection('g',p.vertices[1]) and p.vertices[2]._id == @client return p.edges[0]",
+                                {
+                                    object: parent._id,
+                                    client: a_client_id,
+                                },
+                            )
+                            .toArray();
                         if (acls.length) {
                             for (i in acls) {
                                 acl = acls[i];
                                 perm.inherited |= acl.inhgrant;
                             }
 
-                            if ((a_req_perm & perm.inherited) == a_req_perm)
-                                break;
+                            if ((a_req_perm & perm.inherited) == a_req_perm) break;
                         }
                     }
                 }
@@ -2159,7 +2390,7 @@ module.exports = (function() {
         return perm;
     };
 
-    obj.getACLOwnersBySubject = function(subject, inc_users, inc_projects) {
+    obj.getACLOwnersBySubject = function (subject, inc_users, inc_projects) {
         var results = [];
 
         /* Get users and projects that have shared data or collections with subject:
@@ -2171,21 +2402,22 @@ module.exports = (function() {
         if (inc_users || inc_projects) {
             var ids = new Set(),
                 ignore = new Set(),
-                owner_id, acl, acls = obj.db.acl.byExample({
-                    _to: subject
+                owner_id,
+                acl,
+                acls = obj.db.acl.byExample({
+                    _to: subject,
                 });
 
             // Find direct ACLs (not through a group)
             while (acls.hasNext()) {
                 acl = acls.next();
                 owner_id = obj.db.owner.firstExample({
-                    _from: acl._from
+                    _from: acl._from,
                 })._to;
 
-                if (owner_id.charAt(0) == 'p') {
+                if (owner_id.charAt(0) == "p") {
                     if (inc_projects) {
-                        if (ids.has(owner_id) || ignore.has(owner_id))
-                            continue;
+                        if (ids.has(owner_id) || ignore.has(owner_id)) continue;
 
                         if (obj.getProjectRole(subject, owner_id) == obj.PROJ_NO_ROLE) {
                             ids.add(owner_id);
@@ -2199,23 +2431,25 @@ module.exports = (function() {
             }
 
             // Find indirect ACLs (through a group)
-            var mem, members = obj.db.member.byExample({
-                _to: subject
-            });
+            var mem,
+                members = obj.db.member.byExample({
+                    _to: subject,
+                });
             while (members.hasNext()) {
                 mem = members.next();
                 // Group must have at least one ACL set; otherwise ignore it
-                if (obj.db.acl.firstExample({
-                        _to: mem._from
-                    })) {
+                if (
+                    obj.db.acl.firstExample({
+                        _to: mem._from,
+                    })
+                ) {
                     owner_id = obj.db.owner.firstExample({
-                        _from: mem._from
+                        _from: mem._from,
                     })._to;
 
-                    if (owner_id.charAt(0) == 'p') {
+                    if (owner_id.charAt(0) == "p") {
                         if (inc_projects) {
-                            if (ids.has(owner_id) || ignore.has(owner_id))
-                                continue;
+                            if (ids.has(owner_id) || ignore.has(owner_id)) continue;
 
                             if (obj.getProjectRole(subject, owner_id) == obj.PROJ_NO_ROLE) {
                                 ids.add(owner_id);
@@ -2231,76 +2465,91 @@ module.exports = (function() {
 
             var doc, title;
 
-            ids.forEach(function(id) {
+            ids.forEach(function (id) {
                 doc = obj.db._document(id);
-                if (doc.title)
-                    title = doc.title;
-                else
-                    title = doc.name_last + ", " + doc.name_first;
+                if (doc.title) title = doc.title;
+                else title = doc.name_last + ", " + doc.name_first;
                 results.push({
                     id: doc._id,
                     title: title,
-                    owner: doc.owner
+                    owner: doc.owner,
                 });
             });
 
-            results.sort(function(a, b) {
-                if (a.id < b.id)
-                    return -1;
-                else if (a.id > b.id)
-                    return 1;
-                else
-                    return 0;
+            results.sort(function (a, b) {
+                if (a.id < b.id) return -1;
+                else if (a.id > b.id) return 1;
+                else return 0;
             });
         }
 
         return results;
     };
 
-    obj.usersWithClientACLs = function(client_id, id_only) {
+    obj.usersWithClientACLs = function (client_id, id_only) {
         var result;
         if (id_only) {
-            result = obj.db._query("for x in union_distinct((for v in 2..2 inbound @user acl, outbound owner filter is_same_collection('u',v) return v._id),(for v,e,p in 3..3 inbound @user member, acl, outbound owner filter is_same_collection('g',p.vertices[1]) and is_same_collection('acl',p.edges[1]) and is_same_collection('u',v) return v._id)) return x", {
-                user: client_id
-            }).toArray();
+            result = obj.db
+                ._query(
+                    "for x in union_distinct((for v in 2..2 inbound @user acl, outbound owner filter is_same_collection('u',v) return v._id),(for v,e,p in 3..3 inbound @user member, acl, outbound owner filter is_same_collection('g',p.vertices[1]) and is_same_collection('acl',p.edges[1]) and is_same_collection('u',v) return v._id)) return x",
+                    {
+                        user: client_id,
+                    },
+                )
+                .toArray();
         } else {
-            result = obj.db._query("for x in union_distinct((for v in 2..2 inbound @user acl, outbound owner filter is_same_collection('u',v) return {uid:v._id,name:v.name}),(for v,e,p in 3..3 inbound @user member, acl, outbound owner filter is_same_collection('g',p.vertices[1]) and is_same_collection('acl',p.edges[1]) and is_same_collection('u',v) return {uid:v._id,name:v.name})) sort x.name return x", {
-                user: client_id
-            }).toArray();
+            result = obj.db
+                ._query(
+                    "for x in union_distinct((for v in 2..2 inbound @user acl, outbound owner filter is_same_collection('u',v) return {uid:v._id,name:v.name}),(for v,e,p in 3..3 inbound @user member, acl, outbound owner filter is_same_collection('g',p.vertices[1]) and is_same_collection('acl',p.edges[1]) and is_same_collection('u',v) return {uid:v._id,name:v.name})) sort x.name return x",
+                    {
+                        user: client_id,
+                    },
+                )
+                .toArray();
         }
         //console.log("usersWithACLs:",result);
         return result;
     };
 
-    obj.projectsWithClientACLs = function(client_id, id_only) {
+    obj.projectsWithClientACLs = function (client_id, id_only) {
         // Get projects that have ACLs set for client AND where client is not owner, admin, or member of project
         var result;
         if (id_only) {
-            result = obj.db._query("for i in minus((for v in 2..2 inbound @user member, acl, outbound owner filter is_same_collection('p',v) return v._id),(for v,e,p in 2..2 inbound @user member, outbound owner filter p.vertices[1].gid == 'members' and is_same_collection('p',v) return v._id)) return i", {
-                user: client_id
-            });
+            result = obj.db._query(
+                "for i in minus((for v in 2..2 inbound @user member, acl, outbound owner filter is_same_collection('p',v) return v._id),(for v,e,p in 2..2 inbound @user member, outbound owner filter p.vertices[1].gid == 'members' and is_same_collection('p',v) return v._id)) return i",
+                {
+                    user: client_id,
+                },
+            );
         } else {
-            result = obj.db._query("for i in minus((for v in 2..2 inbound @user member, acl, outbound owner filter is_same_collection('p',v) return {id:v._id,title:v.title}),(for v,e,p in 2..2 inbound @user member, outbound owner filter p.vertices[1].gid == 'members' and is_same_collection('p',v) return {id:v._id,title:v.title})) return i", {
-                user: client_id
-            });
+            result = obj.db._query(
+                "for i in minus((for v in 2..2 inbound @user member, acl, outbound owner filter is_same_collection('p',v) return {id:v._id,title:v.title}),(for v,e,p in 2..2 inbound @user member, outbound owner filter p.vertices[1].gid == 'members' and is_same_collection('p',v) return {id:v._id,title:v.title})) return i",
+                {
+                    user: client_id,
+                },
+            );
         }
         //console.log("projectsWithACLs:",result);
         return result.toArray();
     };
 
-    obj.checkDependencies = function(id, src, depth) {
+    obj.checkDependencies = function (id, src, depth) {
         //console.log("checkdep ",id,src,depth);
 
-        var dep, deps = obj.db._query("for v in 1..1 outbound @id dep return v._id", {
-            id: id
-        });
+        var dep,
+            deps = obj.db._query("for v in 1..1 outbound @id dep return v._id", {
+                id: id,
+            });
         if (!depth || depth < 50) {
             //console.log("checkdep depth ok");
             while (deps.hasNext()) {
                 //console.log("has next");
                 dep = deps.next();
                 if (dep == src)
-                    throw [obj.ERR_INVALID_PARAM, "Circular dependency detected in references, from " + id];
+                    throw [
+                        obj.ERR_INVALID_PARAM,
+                        "Circular dependency detected in references, from " + id,
+                    ];
                 obj.checkDependencies(dep, src ? src : id, depth + 1);
             }
         }
@@ -2308,31 +2557,42 @@ module.exports = (function() {
 
     // Returns bitmask: CLOSED_BIT (1) | OPEN_TYPE_INH (4) | OPEN_TYPE (4) | ACTIVE_TYPE (4)
 
-
     //obj.annotationGetMask = function( a_client, a_subj_id, a_admin ){
-    obj.getNoteMask = function(a_client, a_subj, a_admin) {
+    obj.getNoteMask = function (a_client, a_subj, a_admin) {
         var mask = 0,
-            res, n, b, id = a_subj.id || a_subj._id;
+            res,
+            n,
+            b,
+            id = a_subj.id || a_subj._id;
 
         if (a_client) {
             if (a_admin || (a_admin === undefined && obj.hasAdminPermObject(a_client, id))) {
                 // Owner/admin - return notes that are open or active
-                res = obj.db._query("for n in 1..1 outbound @id note return {type:n.type,state:n.state,parent_id:n.parent_id}", {
-                    id: id
-                });
+                res = obj.db._query(
+                    "for n in 1..1 outbound @id note return {type:n.type,state:n.state,parent_id:n.parent_id}",
+                    {
+                        id: id,
+                    },
+                );
             } else {
                 // Non-owner - return notes that are active
                 // Creator - return notes that are open or active
-                res = obj.db._query("for n in 1..1 outbound @id note filter n.state == 2 || n.creator == @client return {type:n.type,state:n.state,parent_id:n.parent_id}", {
-                    id: id,
-                    client: a_client._id
-                });
+                res = obj.db._query(
+                    "for n in 1..1 outbound @id note filter n.state == 2 || n.creator == @client return {type:n.type,state:n.state,parent_id:n.parent_id}",
+                    {
+                        id: id,
+                        client: a_client._id,
+                    },
+                );
             }
         } else {
             // Annonymous - return notes that are active
-            res = obj.db._query("for n in 1..1 outbound @id note filter n.state == 2 return {type:n.type,state:n.state,parent_id:n.parent_id}", {
-                id: id
-            });
+            res = obj.db._query(
+                "for n in 1..1 outbound @id note filter n.state == 2 return {type:n.type,state:n.state,parent_id:n.parent_id}",
+                {
+                    id: id,
+                },
+            );
         }
 
         // Shift note type bits based on inherited, open, active state
@@ -2343,10 +2603,8 @@ module.exports = (function() {
                 mask |= obj.NOTE_MASK_CLS_ANY;
             } else {
                 b = 1 << n.type;
-                if (n.parent_id && n.state == obj.NOTE_OPEN)
-                    b <<= 8;
-                else if (n.state == obj.NOTE_OPEN)
-                    b <<= 4;
+                if (n.parent_id && n.state == obj.NOTE_OPEN) b <<= 8;
+                else if (n.state == obj.NOTE_OPEN) b <<= 4;
 
                 mask |= b;
             }
@@ -2359,12 +2617,14 @@ module.exports = (function() {
         return mask;
     };
 
-    obj.annotationInitDependents = function(a_client, a_parent_note, a_updates) {
+    obj.annotationInitDependents = function (a_client, a_parent_note, a_updates) {
         //console.log("annotationInitDependents",a_parent_note._id);
 
         var subj = obj.db._document(a_parent_note.subject_id),
-            note, dep, deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return v", {
-                id: subj._id
+            note,
+            dep,
+            deps = obj.db._query("for v,e in 1..1 inbound @id dep filter e.type < 2 return v", {
+                id: subj._id,
             }),
             time = Math.floor(Date.now() / 1000),
             new_note = {
@@ -2375,14 +2635,20 @@ module.exports = (function() {
                 ct: time,
                 ut: time,
                 title: a_parent_note.title,
-                comments: [{
-                    user: a_parent_note.creator,
-                    new_type: a_parent_note.type,
-                    new_state: obj.NOTE_OPEN,
-                    time: time,
-                    comment: "Impact assessment needed due to issue on direct ancestor '" + a_parent_note.subject_id +
-                        "'. Original issue description: \"" + a_parent_note.comments[0].comment + "\""
-                }]
+                comments: [
+                    {
+                        user: a_parent_note.creator,
+                        new_type: a_parent_note.type,
+                        new_state: obj.NOTE_OPEN,
+                        time: time,
+                        comment:
+                            "Impact assessment needed due to issue on direct ancestor '" +
+                            a_parent_note.subject_id +
+                            "'. Original issue description: \"" +
+                            a_parent_note.comments[0].comment +
+                            '"',
+                    },
+                ],
             };
 
         // Create new linked annotation for each dependent
@@ -2391,15 +2657,15 @@ module.exports = (function() {
             //console.log("dep:",dep._id);
             new_note.subject_id = dep._id;
             note = obj.db.n.save(new_note, {
-                returnNew: true
+                returnNew: true,
             });
             obj.db.note.save({
                 _from: dep._id,
-                _to: note.new._id
+                _to: note.new._id,
             });
             obj.db.note.save({
                 _from: note.new._id,
-                _to: a_parent_note._id
+                _to: a_parent_note._id,
             });
 
             // Add update listing data if not present
@@ -2417,25 +2683,33 @@ module.exports = (function() {
     children to match. For other types, close all children. For errors and warnings, if state is changed to active,
     reopen any closed children; otherwise, if open or closed, close all children. For child notes that have already
     been activated, must recurse to all children as needed. */
-    obj.annotationUpdateDependents = function(a_client, a_parent_note, a_prev_type, a_prev_state, a_updates) {
-        if (a_parent_note.type == a_prev_type && (a_parent_note.state == a_prev_state || (a_parent_note.state != obj.NOTE_ACTIVE && a_prev_state != obj.NOTE_ACTIVE)))
+    obj.annotationUpdateDependents = function (
+        a_client,
+        a_parent_note,
+        a_prev_type,
+        a_prev_state,
+        a_updates,
+    ) {
+        if (
+            a_parent_note.type == a_prev_type &&
+            (a_parent_note.state == a_prev_state ||
+                (a_parent_note.state != obj.NOTE_ACTIVE && a_prev_state != obj.NOTE_ACTIVE))
+        )
             return;
 
         var time = Math.floor(Date.now() / 1000),
             upd = {
                 type: a_parent_note.type,
-                ut: time
+                ut: time,
             },
             comment = {
                 user: a_client._id,
-                time: time
+                time: time,
             };
 
-        if (a_parent_note.type != a_prev_type)
-            comment.new_type = a_parent_note.type;
+        if (a_parent_note.type != a_prev_type) comment.new_type = a_parent_note.type;
 
-        if (a_parent_note.state != a_prev_state)
-            comment.new_state = a_parent_note.state;
+        if (a_parent_note.state != a_prev_state) comment.new_state = a_parent_note.state;
 
         if (a_parent_note.type >= obj.NOTE_WARN && a_parent_note.state == obj.NOTE_ACTIVE) {
             upd.state = obj.NOTE_OPEN;
@@ -2443,11 +2717,8 @@ module.exports = (function() {
 
             if (a_parent_note.type != a_prev_type && a_parent_note.state != a_prev_state)
                 comment.comment += "type and state";
-            else if (a_parent_note.state != a_prev_state)
-                comment.comment += "type";
-            else
-                comment.comment += "state";
-
+            else if (a_parent_note.state != a_prev_state) comment.comment += "type";
+            else comment.comment += "state";
         } else {
             upd.state = obj.NOTE_CLOSED;
             comment.comment = "Impact assessment invalidated due to change of state";
@@ -2459,20 +2730,29 @@ module.exports = (function() {
             client: a_client,
             note_upd: upd,
             comment: comment,
-            updates: a_updates
+            updates: a_updates,
         };
 
         // Recurse full tree only if type is changing or state is changed from active to open or closed
-        if (comment.new_type != undefined || (a_parent_note.state != obj.NOTE_ACTIVE && a_prev_state == obj.NOTE_ACTIVE))
+        if (
+            comment.new_type != undefined ||
+            (a_parent_note.state != obj.NOTE_ACTIVE && a_prev_state == obj.NOTE_ACTIVE)
+        )
             context.recurse = true;
 
         obj.annotationUpdateDependents_Recurse(a_parent_note._id, context);
     };
 
-    obj.annotationUpdateDependents_Recurse = function(a_note_id, a_context, a_close) {
-        var old_state, note, subj, deps = obj.db._query("for v in 1..1 inbound @id note filter is_same_collection('n',v) return v", {
-            id: a_note_id
-        });
+    obj.annotationUpdateDependents_Recurse = function (a_note_id, a_context, a_close) {
+        var old_state,
+            note,
+            subj,
+            deps = obj.db._query(
+                "for v in 1..1 inbound @id note filter is_same_collection('n',v) return v",
+                {
+                    id: a_note_id,
+                },
+            );
 
         if (a_close) {
             old_state = a_context.note_upd.state;
@@ -2489,7 +2769,10 @@ module.exports = (function() {
 
             // Add/refresh update listing data
             if (note.subject_id in a_context.updates) {
-                a_context.updates[note.subject_id].notes = obj.getNoteMask(a_context.client, a_context.updates[note.subject_id]);
+                a_context.updates[note.subject_id].notes = obj.getNoteMask(
+                    a_context.client,
+                    a_context.updates[note.subject_id],
+                );
             } else {
                 subj = obj.db._document(note.subject_id);
                 subj.notes = obj.getNoteMask(a_context.client, subj);
@@ -2508,11 +2791,12 @@ module.exports = (function() {
         }
     };
 
-    obj.annotationDelete = function(a_id, a_update_ids) {
+    obj.annotationDelete = function (a_id, a_update_ids) {
         //console.log("delete note:",a_id);
-        var n, notes = obj.db.note.byExample({
-            _to: a_id
-        });
+        var n,
+            notes = obj.db.note.byExample({
+                _to: a_id,
+            });
 
         while (notes.hasNext()) {
             n = notes.next();
@@ -2522,12 +2806,16 @@ module.exports = (function() {
         }
 
         n = obj.db.n.document(a_id);
-        if (a_update_ids)
-            a_update_ids.add(n.subject_id);
+        if (a_update_ids) a_update_ids.add(n.subject_id);
         obj.graph.n.remove(a_id);
     };
 
-    obj.annotationDependenciesUpdated = function(a_data, a_dep_ids_added, a_dep_ids_removed, a_update_ids) {
+    obj.annotationDependenciesUpdated = function (
+        a_data,
+        a_dep_ids_added,
+        a_dep_ids_removed,
+        a_update_ids,
+    ) {
         //console.log("annotationDependenciesUpdated",a_data._id);
         // Called when dependencies are added/removed to/from existing/new data record
         var res, qry_res;
@@ -2538,9 +2826,12 @@ module.exports = (function() {
             //console.log("deletings notes from:",a_data._id);
 
             // Find local annotations linked to upstream dependencies
-            qry_res = obj.db._query("for v,e,p in 3..3 any @src note filter is_same_collection('d',v) && p.edges[1]._from == p.vertices[1]._id return {src: p.vertices[1], dst: p.vertices[3]}", {
-                src: a_data._id
-            });
+            qry_res = obj.db._query(
+                "for v,e,p in 3..3 any @src note filter is_same_collection('d',v) && p.edges[1]._from == p.vertices[1]._id return {src: p.vertices[1], dst: p.vertices[3]}",
+                {
+                    src: a_data._id,
+                },
+            );
 
             while (qry_res.hasNext()) {
                 res = qry_res.next();
@@ -2558,9 +2849,12 @@ module.exports = (function() {
         if (a_dep_ids_added) {
             //console.log("deps added:",Array.from( a_dep_ids_added ));
             // Get all annotations from new dependencies that may need to be propagated
-            qry_res = obj.db._query("for i in @src for v in 1..1 outbound i note filter v.type > 1 return v", {
-                src: Array.from(a_dep_ids_added)
-            });
+            qry_res = obj.db._query(
+                "for i in @src for v in 1..1 outbound i note filter v.type > 1 return v",
+                {
+                    src: Array.from(a_dep_ids_added),
+                },
+            );
 
             if (qry_res.hasNext()) {
                 var time = Math.floor(Date.now() / 1000),
@@ -2571,9 +2865,14 @@ module.exports = (function() {
                     //console.log("dep:",res);
 
                     // Only need to propagate if dependents are already present or state is active
-                    if (res.state == obj.NOTE_ACTIVE || obj.db.note.byExample({
-                            _to: res._id
-                        }).count() > 1) {
+                    if (
+                        res.state == obj.NOTE_ACTIVE ||
+                        obj.db.note
+                            .byExample({
+                                _to: res._id,
+                            })
+                            .count() > 1
+                    ) {
                         //console.log("propagate");
                         new_note = {
                             state: obj.NOTE_OPEN,
@@ -2584,26 +2883,32 @@ module.exports = (function() {
                             ct: time,
                             ut: time,
                             title: res.title,
-                            comments: [{
-                                user: res.creator,
-                                new_type: res.type,
-                                new_state: obj.NOTE_OPEN,
-                                time: time,
-                                comment: "Impact assessment needed due to issue on direct ancestor '" + res.subject_id +
-                                    "'. Original issue description: \"" + res.comments[0].comment + "\""
-                            }]
+                            comments: [
+                                {
+                                    user: res.creator,
+                                    new_type: res.type,
+                                    new_state: obj.NOTE_OPEN,
+                                    time: time,
+                                    comment:
+                                        "Impact assessment needed due to issue on direct ancestor '" +
+                                        res.subject_id +
+                                        "'. Original issue description: \"" +
+                                        res.comments[0].comment +
+                                        '"',
+                                },
+                            ],
                         };
 
                         new_note = obj.db.n.save(new_note, {
-                            returnNew: true
+                            returnNew: true,
                         }).new;
                         obj.db.note.save({
                             _from: a_data._id,
-                            _to: new_note._id
+                            _to: new_note._id,
                         });
                         obj.db.note.save({
                             _from: new_note._id,
-                            _to: res._id
+                            _to: res._id,
                         });
                     }
                 }
@@ -2611,7 +2916,7 @@ module.exports = (function() {
         }
     };
 
-    obj.addTags = function(a_tags) {
+    obj.addTags = function (a_tags) {
         //console.log("addTags",a_tags);
 
         var id, tag, j, code;
@@ -2623,7 +2928,7 @@ module.exports = (function() {
                 //console.log( "update", id );
                 tag = obj.db.tag.document(id);
                 obj.db._update(id, {
-                    count: tag.count + 1
+                    count: tag.count + 1,
                 });
             } else {
                 //console.log( "save", id );
@@ -2632,21 +2937,24 @@ module.exports = (function() {
 
                 for (j = 0; j < tag.length; j++) {
                     code = tag.charCodeAt(j);
-                    if (!(code > 47 && code < 58) && // numeric (0-9)
+                    if (
+                        !(code > 47 && code < 58) && // numeric (0-9)
                         !(code > 96 && code < 123) && // lower alpha (a-z)
-                        code !== 45) // "-"
+                        code !== 45
+                    )
+                        // "-"
                         throw [obj.ERR_INVALID_CHAR, "Invalid character(s) in tag."];
                 }
 
                 obj.db.tag.save({
                     _key: tag,
-                    count: 1
+                    count: 1,
                 });
             }
         }
     };
 
-    obj.removeTags = function(a_tags) {
+    obj.removeTags = function (a_tags) {
         //console.log("removeTags",a_tags);
 
         var id, tag;
@@ -2657,7 +2965,7 @@ module.exports = (function() {
                 if (tag.count > 1) {
                     //console.log("update",id);
                     obj.db._update(id, {
-                        count: tag.count - 1
+                        count: tag.count - 1,
                     });
                 } else {
                     //console.log("remove",id);
@@ -2667,18 +2975,16 @@ module.exports = (function() {
         }
     };
 
-    obj.saveRecentGlobusPath = function(a_client, a_path, a_mode) {
+    obj.saveRecentGlobusPath = function (a_client, a_path, a_mode) {
         var path = a_path,
             idx = a_path.lastIndexOf("/");
 
         if (a_mode == obj.TT_DATA_PUT) {
             // For PUT, strip off filename but keep last slash
-            if (idx > 0)
-                path = a_path.substr(0, idx + 1);
+            if (idx > 0) path = a_path.substr(0, idx + 1);
         } else {
             // For GET, make sure path ends in a slash
-            if (idx != a_path.length - 1)
-                path += "/";
+            if (idx != a_path.length - 1) path += "/";
         }
 
         if (a_client.eps && a_client.eps.length) {
@@ -2696,17 +3002,21 @@ module.exports = (function() {
         }
 
         obj.db._update(a_client._id, {
-            eps: a_client.eps
+            eps: a_client.eps,
         });
     };
 
     // All col IDs are from same scope (owner), exapnd to include all readable sub-collections
     // Collections must exist
     // TODO This would be more efficient as a recursive function
-    obj.expandSearchCollections2 = function(a_client, a_col_ids) {
+    obj.expandSearchCollections2 = function (a_client, a_col_ids) {
         var cols = new Set(a_col_ids),
-            c, col, cur, next = a_col_ids,
-            perm, child;
+            c,
+            col,
+            cur,
+            next = a_col_ids,
+            perm,
+            child;
 
         while (next) {
             cur = next;
@@ -2716,9 +3026,12 @@ module.exports = (function() {
                 col = obj.db.c.document(cur[c]);
 
                 if (obj.hasAdminPermObject(a_client, col._id)) {
-                    child = obj.db._query("for i in 1..10 outbound @col item filter is_same_collection('c',i) return i._id", {
-                        col: col._id
-                    });
+                    child = obj.db._query(
+                        "for i in 1..10 outbound @col item filter is_same_collection('c',i) return i._id",
+                        {
+                            col: col._id,
+                        },
+                    );
 
                     if (!cols.has(col._id)) {
                         cols.add(col._id);
@@ -2731,20 +3044,37 @@ module.exports = (function() {
                         }
                     }
                 } else {
-                    perm = obj.getPermissionsLocal(a_client._id, col, true, obj.PERM_RD_REC | obj.PERM_LIST);
+                    perm = obj.getPermissionsLocal(
+                        a_client._id,
+                        col,
+                        true,
+                        obj.PERM_RD_REC | obj.PERM_LIST,
+                    );
 
-                    if (perm.grant & (obj.PERM_RD_REC | obj.PERM_LIST) != (obj.PERM_RD_REC | obj.PERM_LIST)) {
-                        throw [obj.ERR_PERM_DENIED, "Permission denied for collection '" + col._id + "'"];
+                    if (
+                        perm.grant &
+                        ((obj.PERM_RD_REC | obj.PERM_LIST) != (obj.PERM_RD_REC | obj.PERM_LIST))
+                    ) {
+                        throw [
+                            obj.ERR_PERM_DENIED,
+                            "Permission denied for collection '" + col._id + "'",
+                        ];
                     }
 
                     if (!cols.has(col._id)) {
                         cols.add(col._id);
                     }
 
-                    if (perm.inhgrant & (obj.PERM_RD_REC | obj.PERM_LIST) == (obj.PERM_RD_REC | obj.PERM_LIST)) {
-                        child = obj.db._query("for i in 1..10 outbound @col item filter is_same_collection('c',i) return i._id", {
-                            col: col._id
-                        });
+                    if (
+                        perm.inhgrant &
+                        ((obj.PERM_RD_REC | obj.PERM_LIST) == (obj.PERM_RD_REC | obj.PERM_LIST))
+                    ) {
+                        child = obj.db._query(
+                            "for i in 1..10 outbound @col item filter is_same_collection('c',i) return i._id",
+                            {
+                                col: col._id,
+                            },
+                        );
                         while (child.hasNext()) {
                             col = child.next();
                             if (!cols.has(col)) {
@@ -2752,9 +3082,12 @@ module.exports = (function() {
                             }
                         }
                     } else {
-                        child = obj.db._query("for i in 1..1 outbound @col item filter is_same_collection('c',i) return i._id", {
-                            col: col._id
-                        });
+                        child = obj.db._query(
+                            "for i in 1..1 outbound @col item filter is_same_collection('c',i) return i._id",
+                            {
+                                col: col._id,
+                            },
+                        );
                         while (child.hasNext()) {
                             next.push(child.next());
                         }
@@ -2766,7 +3099,7 @@ module.exports = (function() {
         return Array.from(cols);
     };
 
-    obj.expandSearchCollections = function(a_client, a_col_ids) {
+    obj.expandSearchCollections = function (a_client, a_col_ids) {
         var cols = new Set();
         for (var c in a_col_ids) {
             obj.expandSearchCollections_recurse(a_client, cols, a_col_ids[c]);
@@ -2774,16 +3107,19 @@ module.exports = (function() {
         return Array.from(cols);
     };
 
-    obj.expandSearchCollections_recurse = function(a_client, a_cols, a_col_id, a_inh_perm) {
+    obj.expandSearchCollections_recurse = function (a_client, a_cols, a_col_id, a_inh_perm) {
         if (!a_cols.has(a_col_id)) {
             //console.log("expColl",a_col_id,"inh:",a_inh_perm);
             var col, res;
             if (obj.hasAdminPermObject(a_client, a_col_id)) {
                 a_cols.add(a_col_id);
                 //console.log("has admin");
-                res = obj.db._query("for i in 1..10 outbound @col item filter is_same_collection('c',i) return i._id", {
-                    col: a_col_id
-                });
+                res = obj.db._query(
+                    "for i in 1..10 outbound @col item filter is_same_collection('c',i) return i._id",
+                    {
+                        col: a_col_id,
+                    },
+                );
                 while (res.hasNext()) {
                     col = res.next();
                     if (!a_cols.has(col)) {
@@ -2793,13 +3129,25 @@ module.exports = (function() {
             } else {
                 col = obj.db.c.document(a_col_id);
 
-                var perm = obj.getPermissionsLocal(a_client._id, col, a_inh_perm == undefined ? true : false, obj.PERM_RD_REC | obj.PERM_LIST);
+                var perm = obj.getPermissionsLocal(
+                    a_client._id,
+                    col,
+                    a_inh_perm == undefined ? true : false,
+                    obj.PERM_RD_REC | obj.PERM_LIST,
+                );
                 //console.log("perm",perm);
 
-                if (((perm.grant | perm.inherited | a_inh_perm) & (obj.PERM_RD_REC | obj.PERM_LIST)) != (obj.PERM_RD_REC | obj.PERM_LIST)) {
+                if (
+                    ((perm.grant | perm.inherited | a_inh_perm) &
+                        (obj.PERM_RD_REC | obj.PERM_LIST)) !=
+                    (obj.PERM_RD_REC | obj.PERM_LIST)
+                ) {
                     if (a_inh_perm == undefined) {
                         // Only throw a PERM_DENIED error if this is one of the user-specified collections (not a child)
-                        throw [obj.ERR_PERM_DENIED, "Permission denied for collection '" + col._id + "'"];
+                        throw [
+                            obj.ERR_PERM_DENIED,
+                            "Permission denied for collection '" + col._id + "'",
+                        ];
                     } else {
                         // Don't have access - skip
                         return;
@@ -2810,12 +3158,19 @@ module.exports = (function() {
 
                 a_cols.add(a_col_id);
 
-                if (((perm.inhgrant | perm.inherited | a_inh_perm) & (obj.PERM_RD_REC | obj.PERM_LIST)) == (obj.PERM_RD_REC | obj.PERM_LIST)) {
+                if (
+                    ((perm.inhgrant | perm.inherited | a_inh_perm) &
+                        (obj.PERM_RD_REC | obj.PERM_LIST)) ==
+                    (obj.PERM_RD_REC | obj.PERM_LIST)
+                ) {
                     //console.log("have all inh perms");
 
-                    res = obj.db._query("for i in 1..10 outbound @col item filter is_same_collection('c',i) return i._id", {
-                        col: a_col_id
-                    });
+                    res = obj.db._query(
+                        "for i in 1..10 outbound @col item filter is_same_collection('c',i) return i._id",
+                        {
+                            col: a_col_id,
+                        },
+                    );
                     while (res.hasNext()) {
                         col = res.next();
                         if (!a_cols.has(col)) {
@@ -2823,10 +3178,13 @@ module.exports = (function() {
                         }
                     }
                 } else {
-                    res = obj.db._query("for i in 1..1 outbound @col item filter is_same_collection('c',i) return i._id", {
-                        col: col._id
-                    });
-                    perm = (perm.inhgrant | perm.inherited | a_inh_perm);
+                    res = obj.db._query(
+                        "for i in 1..1 outbound @col item filter is_same_collection('c',i) return i._id",
+                        {
+                            col: col._id,
+                        },
+                    );
+                    perm = perm.inhgrant | perm.inherited | a_inh_perm;
                     //console.log("not all inh perms", perm);
 
                     while (res.hasNext()) {
@@ -2837,5 +3195,60 @@ module.exports = (function() {
         }
     };
 
+    /**
+     * Parses other_token_data string field and breaks it into pieces
+     *
+     * @param {integer} token_type - Type to determine parse logic.
+     *
+     * @param {string} other_token_data
+     *
+     * String of additional token data, delimited by the '|' character.
+     * The format is determined by the token type.
+     * Currently expecting the following formats:
+     *
+     * GLOBUS_TRANSFER: "<UUID>|<scopes>"
+     * @returns {{}} Object containing the parsed key/values of the input other_token_data string.
+     * @throws obj.ERR_INVALAD_PARAM
+     *
+     * @example
+     * // returns { uuid: "1cbaaee5-b938-4a4e-87a8-f1ec4d5d92f9", scopes: "urn:globus:auth:scope:transfer.api.globus.org:all+email" }
+     * parseOtherTokenData(AccessTokenType.GLOBUS_TRANSFER, "1cbaaee5-b938-4a4e-87a8-f1ec4d5d92f9|urn:globus:auth:scope:transfer.api.globus.org:all+email");
+     */
+    obj.parseOtherTokenData = (token_type, other_token_data) => {
+        let return_data = {};
+        // TODO: other token types
+        if (token_type === obj.AccessTokenType.GLOBUS_TRANSFER) {
+            // TODO: add support for additional type of collection and HA fields
+            // TODO: callers and jsdocs will need to be updated if changes are made to assumed data
+            // GLOBUS_TRANSFER parse currently assumes uuid and scopes exist, but this may change
+            const parsed_data = other_token_data.split("|");
+            if (parsed_data.length !== 2) {
+                throw [obj.ERR_INVALID_PARAM, "Unexpected count of additional token data provided"];
+            }
+
+            const parsed_uuid = parsed_data[0];
+            if (!obj.isUUID(parsed_uuid)) {
+                throw [
+                    obj.ERR_INVALID_PARAM,
+                    "Provided other_token_data does not follow format of '<UUID>|<scopes>'",
+                ];
+            }
+            const parsed_scopes = parsed_data[1];
+            if (!parsed_scopes.includes("transfer.api.globus.org")) {
+                // TODO: does this need validation, and is this validation sufficient?
+                throw [
+                    obj.ERR_INVALID_PARAM,
+                    "Scopes included in other_token_data do not refer to transfer resource, but transfer resource was specified",
+                ];
+            }
+            return_data = {
+                ...return_data,
+                uuid: parsed_uuid,
+                scopes: parsed_scopes,
+            };
+        }
+        return return_data;
+    };
+
     return obj;
-}());
+})();

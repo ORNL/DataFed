@@ -1,5 +1,6 @@
 ARG          DATAFED_DIR="/datafed"
 ARG DATAFED_INSTALL_PATH="/opt/datafed"
+ARG DATAFED_DEPENDENCIES_INSTALL_PATH="/opt/datafed/dependencies"
 ARG            GCS_IMAGE="code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
 ARG            BUILD_DIR="$DATAFED_DIR/source"
 ARG              LIB_DIR="/usr/local/lib"

@@ -10,6 +10,11 @@ foreach(PROG
   if(BUILD_SHARED_LIBS)
     target_compile_definitions(unit_${PROG} PRIVATE BOOST_TEST_DYN_LINK)
   endif()
-  add_test(unit_${PROG} unit_${PROG})
+  if ( ENABLE_UNIT_TESTS )
+    add_test(unit_${PROG} unit_${PROG})
+  endif( ENABLE_UNIT_TESTS )
+  if ( ENABLE_MEMORY_TESTS )
+    add_test(NAME memory_${PROG} COMMAND valgrind  --leak-check=full --error-exitcode=1 $<TARGET_FILE:unit_${PROG}>)
+  endif( ENABLE_MEMORY_TESTS )
 
 endforeach(PROG)

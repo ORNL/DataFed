@@ -1,6 +1,6 @@
 
-module.exports = {
-  MAJOR: @DATAFED_WEB_MAJOR@,
-  MINOR: @DATAFED_WEB_MINOR@,
-  PATCH: @DATAFED_WEB_PATCH@
-};
+const MAJOR = @DATAFED_WEB_MAJOR@;
+const MINOR = @DATAFED_WEB_MINOR@;
+const PATCH = @DATAFED_WEB_PATCH@;
+
+export default { MAJOR, MINOR, PATCH };

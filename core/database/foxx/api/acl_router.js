@@ -1,30 +1,30 @@
-'use strict';
+"use strict";
 
-const createRouter = require('@arangodb/foxx/router');
+const createRouter = require("@arangodb/foxx/router");
 const router = createRouter();
-const joi = require('joi');
-const g_db = require('@arangodb').db;
-const g_lib = require('./support');
+const joi = require("joi");
+const g_db = require("@arangodb").db;
+const g_lib = require("./support");
 
 module.exports = router;
 
-
 //==================== ACL API FUNCTIONS
 
-router.get('/update', function(req, res) {
+router
+    .get("/update", function (req, res) {
         try {
             var result = [];
 
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "p", "uuid", "accn", "d", "c", "a", "admin", "alias"],
-                    write: ["c", "d", "acl"]
+                    write: ["c", "d", "acl"],
                 },
-                action: function() {
+                action: function () {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
                     var object = g_lib.getObject(req.queryParams.id, client);
                     var owner_id = g_db.owner.firstExample({
-                        _from: object._id
+                        _from: object._id,
                     })._to;
                     //var owner = g_db._document( owner_id );
                     //owner_id = owner_id.substr(2);
@@ -33,10 +33,8 @@ router.get('/update', function(req, res) {
 
                     var is_coll;
 
-                    if (object._id[0] == "c")
-                        is_coll = true;
-                    else
-                        is_coll = false;
+                    if (object._id[0] == "c") is_coll = true;
+                    else is_coll = false;
 
                     if (!is_coll && object._id[0] != "d")
                         throw [g_lib.ERR_INVALID_PARAM, "Invalid object type, " + object._id];
@@ -53,9 +51,14 @@ router.get('/update', function(req, res) {
 
                     if (!is_admin) {
                         client_perm = g_lib.getPermissions(client, object, g_lib.PERM_ALL);
-                        cur_rules = g_db._query("for v, e in 1..1 outbound @object acl return { id: v._id, gid: v.gid, grant: e.grant, inhgrant: e.inhgrant }", {
-                            object: object._id
-                        }).toArray();
+                        cur_rules = g_db
+                            ._query(
+                                "for v, e in 1..1 outbound @object acl return { id: v._id, gid: v.gid, grant: e.grant, inhgrant: e.inhgrant }",
+                                {
+                                    object: object._id,
+                                },
+                            )
+                            .toArray();
                     }
 
                     var acl_mode = 0;
@@ -64,7 +67,7 @@ router.get('/update', function(req, res) {
                     if (req.queryParams.rules) {
                         // Delete existing ACL rules for this object
                         g_db.acl.removeByExample({
-                            _from: object._id
+                            _from: object._id,
                         });
 
                         var rule, obj, old_rule, chg;
@@ -73,13 +76,16 @@ router.get('/update', function(req, res) {
                             rule = req.queryParams.rules[i];
 
                             if (!is_coll && rule.inhgrant)
-                                throw [g_lib.ERR_INVALID_PARAM, "Inherited permissions cannot be applied to data records"];
+                                throw [
+                                    g_lib.ERR_INVALID_PARAM,
+                                    "Inherited permissions cannot be applied to data records",
+                                ];
 
                             if (rule.id.startsWith("g/")) {
                                 acl_mode |= 2;
                                 var group = g_db.g.firstExample({
                                     uid: owner_id,
-                                    gid: rule.id.substr(2)
+                                    gid: rule.id.substr(2),
                                 });
 
                                 if (!group)
@@ -94,7 +100,7 @@ router.get('/update', function(req, res) {
 
                             if (!is_admin) {
                                 // TODO I believe the code below is obsolete - granting sharing permission is (should be) unrestricted now
-                                old_rule = cur_rules.findIndex(function(r) {
+                                old_rule = cur_rules.findIndex(function (r) {
                                     return r.id == rule.id;
                                 });
 
@@ -103,26 +109,49 @@ router.get('/update', function(req, res) {
                                     if (old_rule.grant != rule.grant) {
                                         chg = old_rule.grant ^ rule.grant;
                                         if ((chg & client_perm) != (chg & ~g_lib.PERM_SHARE)) {
-                                            console.log("bad alter", rule.id, old_rule, rule, client_perm);
-                                            throw [g_lib.ERR_PERM_DENIED, "Attempt to alter protected permissions on " + rule.id + " ACL."];
+                                            console.log(
+                                                "bad alter",
+                                                rule.id,
+                                                old_rule,
+                                                rule,
+                                                client_perm,
+                                            );
+                                            throw [
+                                                g_lib.ERR_PERM_DENIED,
+                                                "Attempt to alter protected permissions on " +
+                                                    rule.id +
+                                                    " ACL.",
+                                            ];
                                         }
                                     }
                                 } else {
-                                    if ((rule.grant & g_lib.PERM_SHARE) || (rule.grant & client_perm) != rule.grant) {
-                                        console.log("exceeding", rule.id, old_rule.grant, rule.grant, client_perm);
-                                        throw [g_lib.ERR_PERM_DENIED, "Attempt to exceed controlled permissions on " + rule.id + " ACL."];
+                                    if (
+                                        rule.grant & g_lib.PERM_SHARE ||
+                                        (rule.grant & client_perm) != rule.grant
+                                    ) {
+                                        console.log(
+                                            "exceeding",
+                                            rule.id,
+                                            old_rule.grant,
+                                            rule.grant,
+                                            client_perm,
+                                        );
+                                        throw [
+                                            g_lib.ERR_PERM_DENIED,
+                                            "Attempt to exceed controlled permissions on " +
+                                                rule.id +
+                                                " ACL.",
+                                        ];
                                     }
                                 }
                             }
 
                             obj = {
                                 _from: object._id,
-                                _to: rule.id
+                                _to: rule.id,
                             };
-                            if (rule.grant)
-                                obj.grant = rule.grant;
-                            if (rule.inhgrant)
-                                obj.inhgrant = rule.inhgrant;
+                            if (rule.grant) obj.grant = rule.grant;
+                            if (rule.inhgrant) obj.inhgrant = rule.inhgrant;
 
                             g_db.acl.save(obj);
                         }
@@ -131,14 +160,19 @@ router.get('/update', function(req, res) {
                     new_obj.acls = acl_mode;
 
                     g_db._update(object._id, new_obj, {
-                        keepNull: false
+                        keepNull: false,
                     });
 
-                    result = g_db._query("for v, e in 1..1 outbound @object acl return { id: v._id, gid: v.gid, grant: e.grant, inhgrant: e.inhgrant }", {
-                        object: object._id
-                    }).toArray();
+                    result = g_db
+                        ._query(
+                            "for v, e in 1..1 outbound @object acl return { id: v._id, gid: v.gid, grant: e.grant, inhgrant: e.inhgrant }",
+                            {
+                                object: object._id,
+                            },
+                        )
+                        .toArray();
                     postProcACLRules(result, object);
-                }
+                },
             });
 
             res.send(result);
@@ -146,13 +180,20 @@ router.get('/update', function(req, res) {
             g_lib.handleException(e, res);
         }
     })
-    .queryParam('client', joi.string().required(), "Client ID")
-    .queryParam('id', joi.string().required(), "ID or alias of data record or collection")
-    .queryParam('rules', joi.array().items(g_lib.acl_schema).optional(), "User and/or group ACL rules to create")
-    .summary('Update ACL(s) on a data record or collection')
-    .description('Update access control list(s) (ACLs) on a data record or collection. Inherited permissions can only be set on collections.');
+    .queryParam("client", joi.string().required(), "Client ID")
+    .queryParam("id", joi.string().required(), "ID or alias of data record or collection")
+    .queryParam(
+        "rules",
+        joi.array().items(g_lib.acl_schema).optional(),
+        "User and/or group ACL rules to create",
+    )
+    .summary("Update ACL(s) on a data record or collection")
+    .description(
+        "Update access control list(s) (ACLs) on a data record or collection. Inherited permissions can only be set on collections.",
+    );
 
-router.get('/view', function(req, res) {
+router
+    .get("/view", function (req, res) {
         try {
             const client = g_lib.getUserFromClientID(req.queryParams.client);
             var object = g_lib.getObject(req.queryParams.id, client);
@@ -165,9 +206,14 @@ router.get('/view', function(req, res) {
                     throw g_lib.ERR_PERM_DENIED;
             }
 
-            var rules = g_db._query("for v, e in 1..1 outbound @object acl return { id: v._id, gid: v.gid, grant: e.grant, inhgrant: e.inhgrant }", {
-                object: object._id
-            }).toArray();
+            var rules = g_db
+                ._query(
+                    "for v, e in 1..1 outbound @object acl return { id: v._id, gid: v.gid, grant: e.grant, inhgrant: e.inhgrant }",
+                    {
+                        object: object._id,
+                    },
+                )
+                .toArray();
             postProcACLRules(rules, object);
 
             res.send(rules);
@@ -175,34 +221,40 @@ router.get('/view', function(req, res) {
             g_lib.handleException(e, res);
         }
     })
-    .queryParam('client', joi.string().required(), "Client ID")
-    .queryParam('id', joi.string().required(), "ID or alias of data record or collection")
-    .summary('View current ACL on an object')
-    .description('View current ACL on an object (data record or collection)');
+    .queryParam("client", joi.string().required(), "Client ID")
+    .queryParam("id", joi.string().required(), "ID or alias of data record or collection")
+    .summary("View current ACL on an object")
+    .description("View current ACL on an object (data record or collection)");
 
-
-router.get('/shared/list', function(req, res) {
+router
+    .get("/shared/list", function (req, res) {
         try {
             const client = g_lib.getUserFromClientID(req.queryParams.client);
 
-            res.send(g_lib.getACLOwnersBySubject(client._id, req.queryParams.inc_users, req.queryParams.inc_projects));
+            res.send(
+                g_lib.getACLOwnersBySubject(
+                    client._id,
+                    req.queryParams.inc_users,
+                    req.queryParams.inc_projects,
+                ),
+            );
         } catch (e) {
             g_lib.handleException(e, res);
         }
     })
-    .queryParam('client', joi.string().required(), "Client ID")
-    .queryParam('inc_users', joi.boolean().optional(), "Include users")
-    .queryParam('inc_projects', joi.boolean().optional(), "Include projects")
-    .summary('List users/projects that have shared data or collections with client/subject.')
-    .description('List users/projects that have shared data or collections with client/subject.');
+    .queryParam("client", joi.string().required(), "Client ID")
+    .queryParam("inc_users", joi.boolean().optional(), "Include users")
+    .queryParam("inc_projects", joi.boolean().optional(), "Include projects")
+    .summary("List users/projects that have shared data or collections with client/subject.")
+    .description("List users/projects that have shared data or collections with client/subject.");
 
-
-router.get('/shared/list/items', function(req, res) {
+router
+    .get("/shared/list/items", function (req, res) {
         try {
             const client = g_lib.getUserFromClientID(req.queryParams.client);
             var owner_id;
 
-            if (req.queryParams.owner.charAt(0) == 'p') {
+            if (req.queryParams.owner.charAt(0) == "p") {
                 owner_id = req.queryParams.owner;
 
                 // Verify project exists
@@ -212,10 +264,17 @@ router.get('/shared/list/items', function(req, res) {
                 owner_id = g_lib.getUserFromClientID(req.queryParams.owner)._id;
             }
 
-            var i, share, shares = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner return {id:v._id,title:v.title,alias:v.alias,owner:v.owner,creator:v.creator,md_err:v.md_err,external:v.external,locked:v.locked}", {
-                client: client._id,
-                owner: owner_id
-            }).toArray();
+            var i,
+                share,
+                shares = g_db
+                    ._query(
+                        "for v in 1..2 inbound @client member, acl filter v.owner == @owner return {id:v._id,title:v.title,alias:v.alias,owner:v.owner,creator:v.creator,md_err:v.md_err,external:v.external,locked:v.locked}",
+                        {
+                            client: client._id,
+                            owner: owner_id,
+                        },
+                    )
+                    .toArray();
 
             for (i in shares) {
                 share = shares[i];
@@ -227,16 +286,14 @@ router.get('/shared/list/items', function(req, res) {
             } else {
                 res.send(dedupShares(client, shares));
             }
-
         } catch (e) {
             g_lib.handleException(e, res);
         }
     })
-    .queryParam('client', joi.string().required(), "Client ID")
-    .queryParam('owner', joi.string().required(), "Owner ID")
-    .summary('Lists data and collections shared with client/subject by owner')
-    .description('Lists data and collections shared with client/subject by owner');
-
+    .queryParam("client", joi.string().required(), "Client ID")
+    .queryParam("owner", joi.string().required(), "Owner ID")
+    .summary("Lists data and collections shared with client/subject by owner")
+    .description("Lists data and collections shared with client/subject by owner");
 
 /*
 router.get('/by_user', function (req, res) {
@@ -256,30 +313,33 @@ router.get('/by_user', function (req, res) {
 function dedupShares(client, shares) {
     var i, j, k, id;
     var items = {},
-        item, parent;
+        item,
+        parent;
 
     for (i in shares) {
         id = shares[i].id;
         item = {
             paths: [],
-            data: shares[i]
+            data: shares[i],
         };
-        parent = g_db.item.byExample({
-            _to: item.data.id
-        }).toArray();
+        parent = g_db.item
+            .byExample({
+                _to: item.data.id,
+            })
+            .toArray();
         if (parent.length) {
             for (j in parent) {
                 item.paths.push({
                     path: [id, parent[j]._from],
                     par: null,
-                    done: false
+                    done: false,
                 });
             }
         } else {
             item.paths.push({
                 path: [id],
                 par: null,
-                done: true
+                done: true,
             });
         }
         items[id] = item;
@@ -309,7 +369,7 @@ function dedupShares(client, shares) {
                         }
 
                         parent = g_db.item.firstExample({
-                            _to: id
+                            _to: id,
                         });
                         if (parent) {
                             path.path.push(parent._from);
@@ -365,8 +425,7 @@ function dedupShares(client, shares) {
                         k = 0;
                         break;
                     }
-                    if ((perm.grant & g_lib.PERM_LIST) == 0)
-                        break;
+                    if ((perm.grant & g_lib.PERM_LIST) == 0) break;
                 }
 
                 if (k == 0) {
@@ -381,14 +440,11 @@ function dedupShares(client, shares) {
         }
     }
 
-    shares.sort(function(a, b) {
+    shares.sort(function (a, b) {
         if (a.id.charAt(0) != b.id.charAt(0)) {
-            if (a.id.charAt(0) == 'c')
-                return -1;
-            else
-                return 1;
-        } else
-            return a.title.localeCompare(b.title);
+            if (a.id.charAt(0) == "c") return -1;
+            else return 1;
+        } else return a.title.localeCompare(b.title);
     });
 
     return shares;
@@ -467,13 +523,10 @@ function postProcACLRules(rules, object) {
 
         if (rule.gid != null) {
             rule.id = "g/" + rule.gid;
-        } else
-            delete rule.gid;
+        } else delete rule.gid;
 
-        if (rule.grant == null)
-            delete rule.grant;
+        if (rule.grant == null) delete rule.grant;
 
-        if (rule.inhgrant == null)
-            delete rule.inhgrant;
+        if (rule.inhgrant == null) delete rule.inhgrant;
     }
 }

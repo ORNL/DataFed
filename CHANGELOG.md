@@ -7,6 +7,9 @@
 2. [918] - Add admin script for making a user an admin
 3. [1009] - Add collections to database for holding Globus tokens. 
 4. [1002] - Add backoff for task worker when database fails to prevent log overflow.
+5. [1109] - Add support for Globus token association to Globus collection and user.
+6. [1215] - Add support for fetching Globus tokens associated with Globus collection and user.
+7. [1214] - Add support for mapped collections on transfer tasks
 
 ## PATCH Bug fixes/Technical Debt/Documentation
 1. [984] - Fixes {server_default} from showing up in path.
@@ -22,6 +25,19 @@
 11. [1012] - Allow customized base build image for Docker dependencies and runtime Dockerfiles
 12. [986] - Design improvement to upload and download transfer box.
 13. [985] - Handles longer than needed timeouts on ui pages.
+14. [1053] - Set CMake to enable foxx tests when built in the CI.
+15. [1086] - Address XML-RPC bug from deprecated client
+16. [1149] - Docker container GCS Collection Mount Bug Fix
+17. [1168] - Add authz unit testing to the CI
+18. [1200] - Add JavaScript linter (eslint) and (prettier) formatter for JavaScript
+19. [1180] - Refactor of authz foxx module, split into objects and added unit tests
+20. [1223] - Fix deprecated method usage for Protobuf in Python client library
+21. [1257] - Bug in authz library parsing of authz.conf file, globus paths incorrectly sanitized when using just '/'
+22. [1255] - Fixes bug, in libauthz with log_path var not being read in from config file.
+23. [1268] - Bug fixes unbound variable in foxx entrypoint file.
+24. [1269] - Update Arangodb to 3.12.4
+25. [1288] - Bug Jupyter Notebook in documentation were fixed.
+26. [1321] - Refactor, allow core config threads via env vars
 
 # v2024.6.17.10.40
 

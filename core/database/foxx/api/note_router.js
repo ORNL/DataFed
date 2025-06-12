@@ -1,35 +1,42 @@
-'use strict';
+"use strict";
 
-const createRouter = require('@arangodb/foxx/router');
+const createRouter = require("@arangodb/foxx/router");
 const router = createRouter();
-const joi = require('joi');
-const g_db = require('@arangodb').db;
-const g_lib = require('./support');
+const joi = require("joi");
+const g_db = require("@arangodb").db;
+const g_lib = require("./support");
 
 module.exports = router;
 
-
 //==================== ACL API FUNCTIONS
 
-router.post('/create', function(req, res) {
+router
+    .post("/create", function (req, res) {
         console.log("note/create");
         try {
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn", "d", "c"],
-                    write: ["d", "n", "note"]
+                    write: ["d", "n", "note"],
                 },
-                action: function() {
+                action: function () {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
                     var id = g_lib.resolveDataCollID(req.queryParams.subject, client),
                         doc = g_db._document(id);
 
                     if (!g_lib.hasAdminPermObject(client, id)) {
-                        if ((g_lib.getPermissions(client, doc, g_lib.PERM_RD_REC) & g_lib.PERM_RD_REC) == 0) {
+                        if (
+                            (g_lib.getPermissions(client, doc, g_lib.PERM_RD_REC) &
+                                g_lib.PERM_RD_REC) ==
+                            0
+                        ) {
                             throw g_lib.ERR_PERM_DENIED;
                         }
                         if (req.queryParams.activate) {
-                            throw [g_lib.ERR_PERM_DENIED, "Only owner or admin may create a new annotaion in active state."];
+                            throw [
+                                g_lib.ERR_PERM_DENIED,
+                                "Only owner or admin may create a new annotaion in active state.",
+                            ];
                         }
                     }
 
@@ -40,25 +47,27 @@ router.post('/create', function(req, res) {
                             subject_id: id,
                             ct: time,
                             ut: time,
-                            creator: client._id
+                            creator: client._id,
                         },
                         updates = {};
 
                     g_lib.procInputParam(req.queryParams, "title", false, obj);
-                    obj.comments = [{
-                        user: client._id,
-                        new_type: obj.type,
-                        new_state: obj.state,
-                        time: time
-                    }];
+                    obj.comments = [
+                        {
+                            user: client._id,
+                            new_type: obj.type,
+                            new_state: obj.state,
+                            time: time,
+                        },
+                    ];
                     g_lib.procInputParam(req.queryParams, "comment", false, obj.comments[0]);
 
                     var note = g_db.n.save(obj, {
-                        returnNew: true
+                        returnNew: true,
                     });
                     g_db.note.save({
                         _from: id,
-                        _to: note._id
+                        _to: note._id,
                     });
 
                     // For ACTIVE errors and warnings, propagate to direct children
@@ -74,44 +83,54 @@ router.post('/create', function(req, res) {
 
                     res.send({
                         results: [note.new],
-                        updates: Object.values(updates)
+                        updates: Object.values(updates),
                     });
-                }
+                },
             });
         } catch (e) {
             g_lib.handleException(e, res);
         }
     })
-    .queryParam('client', joi.string().required(), "Client UID")
-    .queryParam('subject', joi.string().required(), "ID or alias of data record or collection")
-    .queryParam('type', joi.number().min(0).max(3).required(), "Type of annotation (see SDMS.proto for NOTE_TYPE enum)")
-    .queryParam('title', joi.string().required(), "Title of annotaion")
-    .queryParam('comment', joi.string().required(), "Comments")
-    .queryParam('activate', joi.boolean().optional(), "Make new annotation active on create")
-    .summary('Create an annotation on an object')
-    .description('Create an annotation on an object');
+    .queryParam("client", joi.string().required(), "Client UID")
+    .queryParam("subject", joi.string().required(), "ID or alias of data record or collection")
+    .queryParam(
+        "type",
+        joi.number().min(0).max(3).required(),
+        "Type of annotation (see SDMS.proto for NOTE_TYPE enum)",
+    )
+    .queryParam("title", joi.string().required(), "Title of annotaion")
+    .queryParam("comment", joi.string().required(), "Comments")
+    .queryParam("activate", joi.boolean().optional(), "Make new annotation active on create")
+    .summary("Create an annotation on an object")
+    .description("Create an annotation on an object");
 
-
-router.post('/update', function(req, res) {
+router
+    .post("/update", function (req, res) {
         console.log("note/update");
         try {
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn"],
-                    write: ["d", "n", "note"]
+                    write: ["d", "n", "note"],
                 },
-                action: function() {
+                action: function () {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
 
                     if (!req.queryParams.id.startsWith("n/"))
-                        throw [g_lib.ERR_INVALID_PARAM, "Invalid annotaion ID '" + req.queryParams.id + "'"];
+                        throw [
+                            g_lib.ERR_INVALID_PARAM,
+                            "Invalid annotaion ID '" + req.queryParams.id + "'",
+                        ];
 
                     if (!g_db._exists(req.queryParams.id))
-                        throw [g_lib.ERR_INVALID_PARAM, "Annotaion ID '" + req.queryParams.id + "' does not exist."];
+                        throw [
+                            g_lib.ERR_INVALID_PARAM,
+                            "Annotaion ID '" + req.queryParams.id + "' does not exist.",
+                        ];
 
                     var note = g_db.n.document(req.queryParams.id),
                         ne = g_db.note.firstExample({
-                            _to: note._id
+                            _to: note._id,
                         }),
                         old_state = note.state,
                         old_type = note.type,
@@ -134,9 +153,13 @@ router.post('/update', function(req, res) {
 
                     if (!g_lib.hasAdminPermObject(client, ne._from)) {
                         if (client._id == note.creator) {
-                            if ((note.state == g_lib.NOTE_ACTIVE && (req.queryParams.new_state != undefined ||
-                                    req.queryParams.new_type != undefined || req.queryParams.title != undefined)) ||
-                                req.queryParams.new_state == g_lib.NOTE_ACTIVE) {
+                            if (
+                                (note.state == g_lib.NOTE_ACTIVE &&
+                                    (req.queryParams.new_state != undefined ||
+                                        req.queryParams.new_type != undefined ||
+                                        req.queryParams.title != undefined)) ||
+                                req.queryParams.new_state == g_lib.NOTE_ACTIVE
+                            ) {
                                 throw g_lib.ERR_PERM_DENIED;
                             }
                         } else {
@@ -147,11 +170,11 @@ router.post('/update', function(req, res) {
                     var time = Math.floor(Date.now() / 1000),
                         obj = {
                             ut: time,
-                            comments: note.comments
+                            comments: note.comments,
                         },
                         comment = {
                             user: client._id,
-                            time: time
+                            time: time,
                         };
 
                     if (req.queryParams.new_type !== undefined) {
@@ -173,15 +196,25 @@ router.post('/update', function(req, res) {
                     obj.comments.push(comment);
 
                     note = g_db.n.update(note._id, obj, {
-                        returnNew: true
+                        returnNew: true,
                     }).new;
 
                     // If this is an error or warning, must assess impact to dependent records (derived/component only)
-                    if (g_db.note.byExample({
-                            _to: note._id
-                        }).count() > 1) {
+                    if (
+                        g_db.note
+                            .byExample({
+                                _to: note._id,
+                            })
+                            .count() > 1
+                    ) {
                         //console.log("update existing dependent notes");
-                        g_lib.annotationUpdateDependents(client, note, old_type, old_state, updates);
+                        g_lib.annotationUpdateDependents(
+                            client,
+                            note,
+                            old_type,
+                            old_state,
+                            updates,
+                        );
                     } else if (note.state == g_lib.NOTE_ACTIVE && note.type >= g_lib.NOTE_WARN) {
                         //console.log("init new dependent notes");
                         g_lib.annotationInitDependents(client, note, updates);
@@ -195,39 +228,49 @@ router.post('/update', function(req, res) {
 
                     res.send({
                         results: [note],
-                        updates: Object.values(updates)
+                        updates: Object.values(updates),
                     });
-                }
+                },
             });
         } catch (e) {
             g_lib.handleException(e, res);
         }
     })
-    .queryParam('client', joi.string().required(), "Client UID")
-    .queryParam('id', joi.string().required(), "ID of annotation")
-    .queryParam('new_type', joi.number().min(0).max(3).optional(), "Type of annotation (see SDMS.proto for NOTE_TYPE enum)")
-    .queryParam('new_state', joi.number().min(0).max(2).optional(), "New state (omit for comment)")
-    .queryParam('new_title', joi.string().optional(), "New title")
-    .queryParam('comment', joi.string().required(), "Comments")
-    .summary('Update an annotation')
-    .description('Update an annotation with new comment and optional new state');
+    .queryParam("client", joi.string().required(), "Client UID")
+    .queryParam("id", joi.string().required(), "ID of annotation")
+    .queryParam(
+        "new_type",
+        joi.number().min(0).max(3).optional(),
+        "Type of annotation (see SDMS.proto for NOTE_TYPE enum)",
+    )
+    .queryParam("new_state", joi.number().min(0).max(2).optional(), "New state (omit for comment)")
+    .queryParam("new_title", joi.string().optional(), "New title")
+    .queryParam("comment", joi.string().required(), "Comments")
+    .summary("Update an annotation")
+    .description("Update an annotation with new comment and optional new state");
 
-
-router.post('/comment/edit', function(req, res) {
+router
+    .post("/comment/edit", function (req, res) {
         try {
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn"],
-                    write: ["n"]
+                    write: ["n"],
                 },
-                action: function() {
+                action: function () {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
 
                     if (!req.queryParams.id.startsWith("n/"))
-                        throw [g_lib.ERR_INVALID_PARAM, "Invalid annotaion ID '" + req.queryParams.id + "'"];
+                        throw [
+                            g_lib.ERR_INVALID_PARAM,
+                            "Invalid annotaion ID '" + req.queryParams.id + "'",
+                        ];
 
                     if (!g_db._exists(req.queryParams.id))
-                        throw [g_lib.ERR_INVALID_PARAM, "Annotaion ID '" + req.queryParams.id + "' does not exist."];
+                        throw [
+                            g_lib.ERR_INVALID_PARAM,
+                            "Annotaion ID '" + req.queryParams.id + "' does not exist.",
+                        ];
 
                     var note = g_db.n.document(req.queryParams.id);
 
@@ -235,7 +278,7 @@ router.post('/comment/edit', function(req, res) {
                         throw [g_lib.ERR_INVALID_PARAM, "Comment index out of range."];
 
                     var obj = {
-                            ut: Math.floor(Date.now() / 1000)
+                            ut: Math.floor(Date.now() / 1000),
                         },
                         comment = note.comments[req.queryParams.comment_idx];
 
@@ -249,41 +292,47 @@ router.post('/comment/edit', function(req, res) {
                     }
 
                     note = g_db.n.update(note._id, obj, {
-                        returnNew: true
+                        returnNew: true,
                     });
 
                     res.send({
-                        results: [note.new]
+                        results: [note.new],
                     });
-                }
+                },
             });
         } catch (e) {
             g_lib.handleException(e, res);
         }
     })
-    .queryParam('client', joi.string().required(), "Client UID")
-    .queryParam('id', joi.string().required(), "ID of annotation")
-    .queryParam('comment', joi.string().required(), "New description / comments")
-    .queryParam('comment_idx', joi.number().min(0).required(), "Comment index number to edit")
-    .summary('Edit an annotation comment')
-    .description('Edit a specific comment within an annotation.');
+    .queryParam("client", joi.string().required(), "Client UID")
+    .queryParam("id", joi.string().required(), "ID of annotation")
+    .queryParam("comment", joi.string().required(), "New description / comments")
+    .queryParam("comment_idx", joi.number().min(0).required(), "Comment index number to edit")
+    .summary("Edit an annotation comment")
+    .description("Edit a specific comment within an annotation.");
 
-
-router.get('/view', function(req, res) {
+router
+    .get("/view", function (req, res) {
         try {
             const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
 
             if (!req.queryParams.id.startsWith("n/"))
-                throw [g_lib.ERR_INVALID_PARAM, "Invalid annotaion ID '" + req.queryParams.id + "'"];
+                throw [
+                    g_lib.ERR_INVALID_PARAM,
+                    "Invalid annotaion ID '" + req.queryParams.id + "'",
+                ];
 
             if (!g_db._exists(req.queryParams.id))
-                throw [g_lib.ERR_INVALID_PARAM, "Annotaion ID '" + req.queryParams.id + "' does not exist."];
+                throw [
+                    g_lib.ERR_INVALID_PARAM,
+                    "Annotaion ID '" + req.queryParams.id + "' does not exist.",
+                ];
 
             var note = g_db.n.document(req.queryParams.id);
 
             if (!client || client._id != note.creator) {
                 var ne = g_db.note.firstExample({
-                    _to: note._id
+                    _to: note._id,
                 });
                 if (!client || !g_lib.hasAdminPermObject(client, ne._from)) {
                     if (note.state == g_lib.NOTE_ACTIVE) {
@@ -293,7 +342,11 @@ router.get('/view', function(req, res) {
                             if (!g_lib.hasPublicRead(doc._id)) {
                                 throw g_lib.ERR_PERM_DENIED;
                             }
-                        } else if ((g_lib.getPermissions(client, doc, g_lib.PERM_RD_REC) & g_lib.PERM_RD_REC) == 0) {
+                        } else if (
+                            (g_lib.getPermissions(client, doc, g_lib.PERM_RD_REC) &
+                                g_lib.PERM_RD_REC) ==
+                            0
+                        ) {
                             throw g_lib.ERR_PERM_DENIED;
                         }
                     } else {
@@ -302,85 +355,101 @@ router.get('/view', function(req, res) {
                 }
             }
 
-            if (g_db.note.byExample({
-                    _to: note._id
-                }).count() > 1)
+            if (
+                g_db.note
+                    .byExample({
+                        _to: note._id,
+                    })
+                    .count() > 1
+            )
                 note.has_child = true;
 
             res.send({
-                results: [note]
+                results: [note],
             });
         } catch (e) {
             g_lib.handleException(e, res);
         }
     })
-    .queryParam('client', joi.string().required(), "Client UID")
-    .queryParam('id', joi.string().required(), "ID of annotation")
-    .summary('View annotation')
-    .description('View annotation');
+    .queryParam("client", joi.string().required(), "Client UID")
+    .queryParam("id", joi.string().required(), "ID of annotation")
+    .summary("View annotation")
+    .description("View annotation");
 
-
-router.get('/list/by_subject', function(req, res) {
+router
+    .get("/list/by_subject", function (req, res) {
         try {
             const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
 
-            var results, qry, id = g_lib.resolveDataCollID(req.queryParams.subject, client);
+            var results,
+                qry,
+                id = g_lib.resolveDataCollID(req.queryParams.subject, client);
 
             if (!client) {
-                qry = "for v in 1..1 outbound @subj note filter v.state == 2 sort v.ut desc return {_id:v._id,state:v.state,type:v.type,subject_id:v.subject_id,title:v.title,creator:v.creator,parent_id:v.parent_id,ct:v.ct,ut:v.ut}";
-                results = g_db._query(qry, {
-                    subj: id
-                });
-            } else if (g_lib.hasAdminPermObject(client, id)) {
-                qry = "for v in 1..1 outbound @subj note sort v.ut desc return {_id:v._id,state:v.state,type:v.type,subject_id:v.subject_id,title:v.title,creator:v.creator,parent_id:v.parent_id,ct:v.ct,ut:v.ut}";
-                results = g_db._query(qry, {
-                    subj: id
-                });
-            } else {
-                qry = "for v in 1..1 outbound @subj note filter v.state == 2 || v.creator == @client sort v.ut desc return {_id:v._id,state:v.state,type:v.type,subject_id:v.subject_id,title:v.title,creator:v.creator,parent_id:v.parent_id,ct:v.ct,ut:v.ut}";
+                qry =
+                    "for v in 1..1 outbound @subj note filter v.state == 2 sort v.ut desc return {_id:v._id,state:v.state,type:v.type,subject_id:v.subject_id,title:v.title,creator:v.creator,parent_id:v.parent_id,ct:v.ct,ut:v.ut}";
                 results = g_db._query(qry, {
                     subj: id,
-                    client: client._id
+                });
+            } else if (g_lib.hasAdminPermObject(client, id)) {
+                qry =
+                    "for v in 1..1 outbound @subj note sort v.ut desc return {_id:v._id,state:v.state,type:v.type,subject_id:v.subject_id,title:v.title,creator:v.creator,parent_id:v.parent_id,ct:v.ct,ut:v.ut}";
+                results = g_db._query(qry, {
+                    subj: id,
+                });
+            } else {
+                qry =
+                    "for v in 1..1 outbound @subj note filter v.state == 2 || v.creator == @client sort v.ut desc return {_id:v._id,state:v.state,type:v.type,subject_id:v.subject_id,title:v.title,creator:v.creator,parent_id:v.parent_id,ct:v.ct,ut:v.ut}";
+                results = g_db._query(qry, {
+                    subj: id,
+                    client: client._id,
                 });
             }
 
             res.send({
-                results: results.toArray()
+                results: results.toArray(),
             });
         } catch (e) {
             g_lib.handleException(e, res);
         }
     })
-    .queryParam('client', joi.string().required(), "Client UID")
-    .queryParam('subject', joi.string().required(), "ID/alias of subject")
-    .summary('List annotations by subject')
-    .description('List annotations attached to subject data record or colelction');
+    .queryParam("client", joi.string().required(), "Client UID")
+    .queryParam("subject", joi.string().required(), "ID/alias of subject")
+    .summary("List annotations by subject")
+    .description("List annotations attached to subject data record or colelction");
 
-
-router.get('/purge', function(req, res) {
+router
+    .get("/purge", function (req, res) {
         try {
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn"],
-                    write: ["n", "note"]
+                    write: ["n", "note"],
                 },
-                action: function() {
+                action: function () {
                     //console.log("note purge, age:", req.queryParams.age_sec );
 
-                    var t = (Date.now() / 1000) - req.queryParams.age_sec;
-                    var id, notes = g_db._query("for i in n filter i.state == " + g_lib.NOTE_CLOSED + " && i.ut < " + t + " and i.parent_id == null return i._id");
+                    var t = Date.now() / 1000 - req.queryParams.age_sec;
+                    var id,
+                        notes = g_db._query(
+                            "for i in n filter i.state == " +
+                                g_lib.NOTE_CLOSED +
+                                " && i.ut < " +
+                                t +
+                                " and i.parent_id == null return i._id",
+                        );
                     while (notes.hasNext()) {
                         id = notes.next();
                         console.log("purging", id);
                         // This will also delete all dependent annotations
                         g_lib.annotationDelete(id);
                     }
-                }
+                },
             });
         } catch (e) {
             g_lib.handleException(e, res);
         }
     })
-    .queryParam('age_sec', joi.number().integer().min(0).required(), "Purge age (seconds)")
-    .summary('Purge old closed annotations')
-    .description('Purge old closed annotations');
+    .queryParam("age_sec", joi.number().integer().min(0).required(), "Purge age (seconds)")
+    .summary("Purge old closed annotations")
+    .description("Purge old closed annotations");

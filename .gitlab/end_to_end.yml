@@ -15,7 +15,8 @@ end-to-end-arango-setup:
 
 end-to-end-foxx-setup:
   variables:
-    IMAGE_TAG: "datafed/foxx-"
+    PROJECT: "datafed"
+    COMPONENT: "foxx"
     GIT_STRATEGY: clone
     HOST_LOG_FILE_PATH: "/shared/logs"
     CONTAINER_LOG_FILE_PATH: "/datafed/logs"
@@ -28,6 +29,8 @@ end-to-end-foxx-setup:
   script:
     - sudo apt-get install jq -y
     - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    # Echo into GITLAB_ENV is needed so after_script has access
+    - echo "BRANCH_LOWER=${BRANCH_LOWER}" >> $GITLAB_ENV
     - mkdir -p "$HOST_LOG_FILE_PATH"
     - chmod o+w "${HOST_LOG_FILE_PATH}"
     - USER_ID=$(id -u)
@@ -41,10 +44,14 @@ end-to-end-foxx-setup:
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     - ./scripts/container_stop.sh -n "foxx-" -p
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
+    # Echo into GITLAB_ENV is needed so after_script has access
+    - echo "random_string=${random_string}" >> $GITLAB_ENV
+    - CONTAINER_NAME="foxx-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}"
     - echo "#!/bin/bash" > "${RUN_FILE}"
     - echo "docker run -d \\" >> "${RUN_FILE}"
-    - echo "--name \"foxx-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> "${RUN_FILE}"
+    - echo "--name \"${CONTAINER_NAME}\" \\" >> "${RUN_FILE}"
     - echo "-e DATAFED_ZEROMQ_SYSTEM_SECRET=\"$CI_DATAFED_ZEROMQ_SYSTEM_SECRET\" \\" >> "${RUN_FILE}"
+    - echo "-e ENABLE_FOXX_TESTS=\"TRUE\" \\" >> "${RUN_FILE}"
     - echo "-e DATAFED_DOMAIN=\"$CI_DATAFED_DOMAIN\" \\" >> "${RUN_FILE}"
     - echo "-e DATAFED_DATABASE_PASSWORD=\"$CI_DATAFED_DATABASE_PASSWORD\" \\" >> "${RUN_FILE}"
     - echo "-e DATAFED_DATABASE_IP_ADDRESS_PORT=\"$CI_DATAFED_DATABASE_IP_ADDRESS_PORT\" \\" >> "${RUN_FILE}"
@@ -53,16 +60,31 @@ end-to-end-foxx-setup:
     - echo "-e UID=\"$USER_ID\" \\" >> "${RUN_FILE}"
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> "${RUN_FILE}"
     - echo "-v \"./foxx_tmp:/tmp\" \\" >> "${RUN_FILE}"
-    - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest\"" >> "${RUN_FILE}"
+    - echo "-t \"${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:${CI_COMMIT_SHA}\"" >> "${RUN_FILE}"
     - chmod +x "${RUN_FILE}"
     - "./${RUN_FILE}"
     - sleep 10
       # Make sure container is running immediately after because it is meant to
       # be ephermal anyway, this is not the same for the other containers
-    - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest"
-    - while [ ! -f "foxx_tmp/.foxx_is_installed" ]; do echo "Waiting for foxx_tmp/.foxx_is_installed"; sleep 10; done
+    - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:${CI_COMMIT_SHA}"
+    - while [ ! -f "foxx_tmp/.foxx_is_installed" ]; do
+      # Container is found to be running
+    -   if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+    -     echo "Waiting for foxx_tmp/.foxx_is_installed"
+    -     docker logs "foxx-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}";
+    -     sleep 10
+    -   else
+      # Container is not running get exit code
+    -     exit_code=$(docker inspect -f '{{.State.ExitCode}}' "$CONTAINER_NAME")
+    -     if [ "$exit_code" != "0" ]; then
+    -       docker logs "foxx-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}";
+    -       exit "$exit_code"
+    -     fi
+    -   fi 
+    - done
     - ./scripts/ci_database_health_check.sh
   after_script:
+    - docker logs "foxx-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}";
     - rm -rf foxx_tmp
 
 ################################################################################
@@ -79,6 +101,9 @@ end-to-end-gcs-node-clean:
     - ci-datafed-globus
     - docker
   script:
+    - mkdir -p "${DATAFED_GLOBUS_DIR}"
+    - cp "${CI_DATAFED_GCS_DEPLOYMENT_KEY}" "${DATAFED_GLOBUS_DIR}/deployment-key.json"
+    - cp "${CI_DATAFED_GCS_CLIENT_CRED}" "${DATAFED_GLOBUS_DIR}/client_cred.json"
     - cat "${DATAFED_GLOBUS_DIR}/deployment-key.json" | jq .node_key > "${DATAFED_GLOBUS_DIR}/node_deletion_key.json"
     - SECRET=$(cat "${DATAFED_GLOBUS_DIR}/deployment-key.json" | jq -r .secret)
     - CLIENT=$(cat "${DATAFED_GLOBUS_DIR}/deployment-key.json" | jq -r .client_id)
@@ -86,7 +111,8 @@ end-to-end-gcs-node-clean:
 
 end-to-end-core-setup:
   variables:
-    IMAGE_TAG: "datafed/core-"
+    PROJECT: "datafed"
+    COMPONENT: "core"
     GIT_STRATEGY: clone
     HOST_LOG_FILE_PATH: "/shared/logs"
     CONTAINER_LOG_FILE_PATH: "/datafed/logs"
@@ -123,20 +149,22 @@ end-to-end-core-setup:
     - echo "-e DATAFED_DATABASE_IP_ADDRESS_PORT=\"$CI_DATAFED_DATABASE_IP_ADDRESS_PORT\" \\" >> run_core.sh
     - echo "-e DATAFED_DEFAULT_LOG_PATH=\"$CONTAINER_LOG_FILE_PATH\" \\" >> run_core.sh
     - echo "-e UID=\"$USER_ID\" \\" >> run_core.sh
+    - echo "-e DATAFED_CORE_LOG_LEVEL=\"$DATAFED_CORE_LOG_LEVEL\" \\" >> run_core.sh
     - echo "-p 7513:7513 \\" >> run_core.sh
     - echo "-p 7512:7512 \\" >> run_core.sh
     - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_core.sh
     - echo "-v \"/shared/keys/datafed-core-key.pub\":/opt/datafed/keys/datafed-core-key.pub \\" >> run_core.sh
     - echo "-v \"/shared/keys/datafed-core-key.priv\":/opt/datafed/keys/datafed-core-key.priv \\" >> run_core.sh
-    - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest\"" >> run_core.sh
+    - echo "-t \"${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:${CI_COMMIT_SHA}\"" >> run_core.sh
     - chmod +x run_core.sh
     - ./run_core.sh
     - sleep 10
-    - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest" 
+    - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:${CI_COMMIT_SHA}" 
 
 end-to-end-ws-setup:
   variables:
-    IMAGE_TAG: "datafed/ws-"
+    PROJECT: "datafed"
+    COMPONENT: "ws"
     GIT_STRATEGY: clone
     HOST_LOG_FILE_PATH: "/shared/logs"
     CONTAINER_LOG_FILE_PATH: "/datafed/logs"
@@ -186,17 +214,18 @@ end-to-end-ws-setup:
     - echo "-v \"/shared/keys/datafed-core-key.pub:/opt/datafed/keys/datafed-core-key.pub\" \\" >> run_web.sh
     - echo "-v \"${DATAFED_WEB_CERT_PATH}:/opt/datafed/keys/${DATAFED_WEB_CERT_NAME}\" \\" >> run_web.sh
     - echo "-v \"${DATAFED_WEB_KEY_PATH}:/opt/datafed/keys/${DATAFED_WEB_KEY_NAME}\" \\" >> run_web.sh
-    - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest\" " >> run_web.sh
+    - echo "-t \"${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:${CI_COMMIT_SHA}\" " >> run_web.sh
     - chmod +x run_web.sh
     - ./run_web.sh
     - sleep 30
-    - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest" 
+    - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:${CI_COMMIT_SHA}" 
 
 # Repo server currently will crash on startup if it cannot connect to the core
 # server.
 end-to-end-repo-setup:
   variables:
-    IMAGE_TAG: "datafed/repo-"
+    PROJECT: "datafed"
+    COMPONENT: "repo"
     GIT_STRATEGY: clone
     HOST_LOG_FILE_PATH: "/shared/logs"
     CONTAINER_LOG_FILE_PATH: "/datafed/logs"
@@ -221,8 +250,8 @@ end-to-end-repo-setup:
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
     - ./scripts/container_stop.sh -n "repo-" -p
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
-    - cat $CI_DATAFED_CORE_PUB_KEY > /shared/datafed-repo-key.pub
-    - cat $CI_DATAFED_CORE_PRIV_KEY > /shared/datafed-repo-key.priv
+    - cat $CI_DATAFED_REPO_PUB_KEY > /shared/datafed-repo-key.pub
+    - cat $CI_DATAFED_REPO_PRIV_KEY > /shared/datafed-repo-key.priv
     - echo "#!/bin/bash" > "${RUN_FILE}"
     - echo "docker run -d \\" >> "${RUN_FILE}"
     - echo "--name \"repo-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> "${RUN_FILE}"
@@ -242,16 +271,16 @@ end-to-end-repo-setup:
     - echo "-v \"${DATAFED_HOST_COLLECTION_MOUNT}:/mnt/datafed\" \\" >> "${RUN_FILE}"
     - echo "-v \"/shared/datafed-repo-key.pub\":/opt/datafed/keys/datafed-repo-key.pub \\" >> "${RUN_FILE}"
     - echo "-v \"/shared/datafed-repo-key.priv\":/opt/datafed/keys/datafed-repo-key.priv \\" >> "${RUN_FILE}"
-    - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest\"" >> "${RUN_FILE}"
+    - echo "-t \"${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:${CI_COMMIT_SHA}\"" >> "${RUN_FILE}"
     - chmod +x "${RUN_FILE}"
     - ./${RUN_FILE}
     - sleep 10
-    - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest" 
+    - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:${CI_COMMIT_SHA}" 
 
 
 # Requires setting up Globus Connect Server, requires firewall exceptions on
 # the machine running this.
-# Note we need the certificates to be available on the gcs-authz container
+# Note we need the certificates to be available on the gcs container
 # if it is meant to be run on the same machine as the metadata services
 # because the Apache web server can then route traffic appropriately, if 
 # run separate from the metadata services it should not be needed.
@@ -259,7 +288,8 @@ end-to-end-repo-setup:
 # generated, it requires the repo server public key.
 end-to-end-gcs-authz-setup:
   variables:
-    IMAGE_TAG: "datafed/gcs-"
+    PROJECT: "datafed"
+    COMPONENT: "gcs"
     HOST_LOG_FILE_PATH: "/shared/logs"
     CONTAINER_LOG_FILE_PATH: "/datafed/logs"
     GIT_STRATEGY: clone
@@ -282,13 +312,13 @@ end-to-end-gcs-authz-setup:
     - chown gitlab-runner "$HOST_LOG_FILE_PATH"
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
-    - ./scripts/container_stop.sh -n "gcs-authz" -p
+    - ./scripts/container_stop.sh -n "${COMPONENT}" -p
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
-    - cat $CI_DATAFED_CORE_PUB_KEY > /shared/datafed-repo-key.pub
-    - cat $CI_DATAFED_CORE_PRIV_KEY > /shared/datafed-repo-key.priv
+    - cat $CI_DATAFED_REPO_PUB_KEY > /shared/datafed-repo-key.pub
+    - cat $CI_DATAFED_REPO_PRIV_KEY > /shared/datafed-repo-key.priv
     - echo "#!/bin/bash" > run_globus.sh
     - echo "docker run -d \\" >> run_globus.sh
-    - echo "--name \"gcs-authz-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_globus.sh
+    - echo "--name \"${COMPONENT}-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_globus.sh
     - echo "--network host \\" >> run_globus.sh
     - echo "-e DATAFED_GLOBUS_APP_SECRET=\"$CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_globus.sh
     - echo "-e DATAFED_GLOBUS_APP_ID=\"$CI_DATAFED_GLOBUS_APP_ID\" \\" >> run_globus.sh
@@ -315,13 +345,21 @@ end-to-end-gcs-authz-setup:
     - echo "-v \"${DATAFED_HOST_COLLECTION_MOUNT}:/mnt/datafed\" \\" >> run_globus.sh
     - echo "-v \"/shared/datafed-repo-key.pub\":/opt/datafed/keys/datafed-repo-key.pub \\" >> run_globus.sh
     - echo "-v \"/shared/datafed-repo-key.priv\":/opt/datafed/keys/datafed-repo-key.priv \\" >> run_globus.sh
-    - echo "-t \"${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest\"" >> run_globus.sh
+    - echo "-t \"${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:${CI_COMMIT_SHA}\"" >> run_globus.sh
     - if [ -f "${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh" ]; then rm "${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh"; fi
     - chmod +x run_globus.sh
     - ./run_globus.sh
-    - while [ ! -f "${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh" ]; do echo "Waiting for ${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh"; sleep 10; done
+    # Check that repo form has been created before saying job is a success the
+    # repo-form is needed before the next job can move forward. In addition
+    # ensure that the container has not died due to an error.
+    - |
+      while [ ! -f "${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh" ]
+      do
+        echo "Waiting for ${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh"
+        sleep 10
+        ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:${CI_COMMIT_SHA}"
+      done
     - cat "${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh"
-    - ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${IMAGE_TAG}${BRANCH_LOWER}:latest"
     - cp ${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh .
     - cp ${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.json .
   artifacts:
@@ -381,12 +419,16 @@ end_to_end_web_test:
     DATAFED_WEB_TEST_USERNAME: "datafed89"
     DATAFED_WEB_TEST_PASSWORD: "${CI_DATAFED_USER89_GLOBUSID_PASSWORD}"
     DATAFED_DOMAIN: "${CI_DATAFED_DOMAIN}"
+    NVM_DIR: "/shared/install/nvm"
   stage: end-to-end-test
   needs: ["end_to_end_client-test"]
   tags:
     - ci-datafed-client
   script:
     - cd tests/end-to-end/web-UI
+    - "[ -s \"$NVM_DIR/nvm.sh\" ] && . \"$NVM_DIR/nvm.sh\""  # This loads nvm
+    - nvm install 18
+    - nvm use 18
     - npm install
     - sudo npx playwright install-deps
     - npx playwright install
@@ -405,43 +447,66 @@ end_to_end_web_test:
       -DINSTALL_FOXX=OFF
     - cmake --build build --target end_to_end_web_tests
 
+################################################################################
+# Signal end to end to end tests
+################################################################################
+end-to-end-signal:
+  stage: end-to-end-test-finish-signal
+  tags:
+    - datafed-infrastructure
+  script:
+    - echo "Signal end of end to end tests"
+  when: always
+################################################################################
+# Log output
+################################################################################
+# We don't want to run the log jobs if the infrastructure was never stood up
+# because the jobs will hang indefinately
+
 end_to_end_error_discovery_arango:
+  needs: ["check-ci-infrastructure", "end-to-end-arango-setup", "end-to-end-signal"]
   stage: log
   tags:
     - ci-datafed-arango
   script:
     - sudo journalctl --no-pager -u arangodb3.service
-  rules:
-    - when: always
 
 end_to_end_error_discovery_gcs:
+  needs: ["check-ci-infrastructure", "end-to-end-gcs-authz-setup", "end-to-end-signal"]
   extends: .error_logs_client_end_to_end
   variables:
-    IMAGE_TAG: "datafed/gcs-"
+    PROJECT: "datafed"
+    COMPONENT: "gcs"
   tags:
     - ci-datafed-globus
     - docker
 
 end_to_end_error_discovery_repo:
+  needs: ["check-ci-infrastructure", "end-to-end-repo-setup", "end-to-end-signal"]
   extends: .error_logs_client_end_to_end
   variables:
-    IMAGE_TAG: "datafed/repo-"
+    PROJECT: "datafed"
+    COMPONENT: "repo"
   tags:
     - ci-datafed-globus
     - docker
 
 end_to_end_error_discovery_core:
+  needs: ["check-ci-infrastructure", "end-to-end-core-setup", "end-to-end-signal"]
   extends: .error_logs_client_end_to_end
   variables:
-    IMAGE_TAG: "datafed/core-"
+    PROJECT: "datafed"
+    COMPONENT: "core"
   tags:
     - ci-datafed-core
     - docker
 
 end_to_end_error_discovery_web:
+  needs: ["check-ci-infrastructure", "end-to-end-ws-setup", "end-to-end-signal"]
   extends: .error_logs_client_end_to_end
   variables:
-    IMAGE_TAG: "datafed/ws-"
+    PROJECT: "datafed"
+    COMPONENT: "ws"
   tags:
     - ci-datafed-core
     - docker

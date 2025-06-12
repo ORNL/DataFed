@@ -1,13 +1,21 @@
 #!/bin/bash
 
-# -e has been removed so that if an error occurs the PASSWORD File is deleted and not left lying around
-# -u has been removed because we are checking for possible non existent env variables
-set -f -o pipefail
+# History
+#
+# -e added back in because CI jobs are not failing when there are problems in
+# this script. Residual password files can be removed a different way. i.e.  in
+# a cleanup script associated with a CI job.
+#
+# -e has been removed so that if an error occurs the PASSWORD File is deleted
+# and not left lying around
+set -euf -o pipefail
 
-SCRIPT=$(realpath "$0")
+SCRIPT=$(realpath "$BASH_SOURCE[0]")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/../../../)
 source ${PROJECT_ROOT}/config/datafed.sh
+source "${PROJECT_ROOT}/scripts/dependency_versions.sh"
+source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
 Help()
 {
@@ -32,14 +40,14 @@ Help()
 local_DATABASE_NAME="sdms"
 local_DATABASE_USER="root"
 
-if [ -z "${DATAFED_DATABASE_PASSWORD}" ]
+if [ -z "${DATAFED_DATABASE_PASSWORD:-}" ]
 then
   local_DATAFED_DATABASE_PASSWORD=""
 else
   local_DATAFED_DATABASE_PASSWORD=$(printenv DATAFED_DATABASE_PASSWORD)
 fi
 
-if [ -z "${FOXX_MAJOR_API_VERSION}" ]
+if [ -z "${FOXX_MAJOR_API_VERSION:-}" ]
 then
   local_FOXX_MAJOR_API_VERSION=$(cat ${PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs )
 else
@@ -110,39 +118,30 @@ fi
 # The web deployment requires manual interaction, and I could not figure out the 
 # syntax for the REST http endpoints with curl so we are going to try the node module
 
-## Will create the zip file in the build directory to keep datafed source code clean
-#cd ../../build
-## Zip up the api
-#zip datafed.zip ../core/database/api/* 
-#
-## Get the size of the file in bytes
-#bytes=$(wc -c < datafed.zip)
-
-NODE_VERSION="v14.21.3"
-
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
-
-nvm use $NODE_VERSION
+# Will only install if not already present
+install_nvm
+install_node
 
 FOXX_PREFIX=""
-{
-	# Determine if exists globally first
-	which foxx
-} || {
-	FOXX_PREFIX="~/bin/"
-}
+if ! command -v foxx > /dev/null 2>&1; then
+      FOXX_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/bin/"
+fi
 
 PATH_TO_PASSWD_FILE=${SOURCE}/database_temp.password
 if [ "$TEST_TO_RUN" == "all" ]
 then
+  # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint 
   "${FOXX_PREFIX}foxx" test -u "${local_DATABASE_USER}" \
+   --server "tcp://${DATAFED_DATABASE_HOST}:8529" \
     -p "${PATH_TO_PASSWD_FILE}" \
     --database "${local_DATABASE_NAME}" \
     "/api/${local_FOXX_MAJOR_API_VERSION}" --reporter spec
 else
+  echo "Test: $TEST_TO_RUN"
+  # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint 
   "${FOXX_PREFIX}foxx" test -u "${local_DATABASE_USER}" \
+  --server "tcp://${DATAFED_DATABASE_HOST}:8529" \
     -p "${PATH_TO_PASSWD_FILE}" \
     --database "${local_DATABASE_NAME}" \
-    "/api/${local_FOXX_MAJOR_API_VERSION}" "$TEST_TO_RUN" --reporter spec
+    "/api/${local_FOXX_MAJOR_API_VERSION}" "$TEST_TO_RUN" --reporter spec --verbose
 fi

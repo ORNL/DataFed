@@ -1,8 +1,17 @@
 #!/bin/bash
 
-# -e has been removed so that if an error occurs the PASSWORD File is deleted and not left lying around
-# -u has been removed because we have no guarantees that the env variables are defined
-set -f -o pipefail
+# History
+#
+# -e has been added back, password file deletion should be handled by another 
+# means such as the CI after script section. If the API fails to install, it 
+# could lead to improper testing the CI env. 
+#
+# -e has been removed so that if an error occurs the PASSWORD File is deleted
+# and not left lying around
+#
+# -u has been removed because we have no guarantees that the env variables are
+# defined
+set -ef -o pipefail
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
@@ -138,7 +147,7 @@ fi
 basic_auth="$local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD"
 url="http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_api/database/user"
 # Do not output to /dev/null we need the output
-code=$(curl -s -o /dev/null -w "%{http_code}" --user "$basic_auth" "$url")
+code=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl -s -o /dev/null -w "%{http_code}" --user "$basic_auth" "$url")
 
 if [[ "$code" != "200" ]]; then
   echo "Error detected in attempting to connect to database at $url"
@@ -149,7 +158,7 @@ fi
 url2="http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_api/database"
 # We are now going to initialize the DataFed database in Arango, but only if sdms database does
 # not exist
-output=$(curl -s -i --dump - --user "$basic_auth" "$url2")
+output=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl -s -i --user "$basic_auth" "$url2")
 
 echo "Output: $output"
 
@@ -223,7 +232,7 @@ echo "$local_DATAFED_DATABASE_PASSWORD" > "${PATH_TO_PASSWD_FILE}"
 
   echo "$FOUND_API"
 
-  RESULT=$(curl -s http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/version)
+  RESULT=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl -s http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/version)
   CODE=$(echo "${RESULT}" | jq '.code' )
   echo "Code is $CODE"
   if [ -z "${FOUND_API}" ]
@@ -233,6 +242,7 @@ echo "$local_DATAFED_DATABASE_PASSWORD" > "${PATH_TO_PASSWD_FILE}"
   then
       INSTALL_API="TRUE"
     # Remove the api at this point
+    # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint 
     "${FOXX_PREFIX}foxx" remove \
       "/api/${local_FOXX_MAJOR_API_VERSION}" \
       --server "http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
@@ -244,6 +254,7 @@ echo "$local_DATAFED_DATABASE_PASSWORD" > "${PATH_TO_PASSWD_FILE}"
   echo "$RESULT"
   if [ "${INSTALL_API}" == "TRUE"  ]
   then
+    # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint 
     "${FOXX_PREFIX}foxx" install \
       --server "http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
       -u "${local_DATABASE_USER}" \
@@ -253,6 +264,7 @@ echo "$local_DATAFED_DATABASE_PASSWORD" > "${PATH_TO_PASSWD_FILE}"
       "${PROJECT_ROOT}/core/database/foxx/"
   else
     echo "DataFed Foxx Services have already been uploaded, replacing to ensure consisency"
+    # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint 
     "${FOXX_PREFIX}foxx" replace \
       --server "http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
       -u "${local_DATABASE_USER}" \

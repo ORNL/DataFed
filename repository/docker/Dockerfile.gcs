@@ -66,10 +66,7 @@ COPY ./scripts/install_authz_dependencies.sh   ${BUILD_DIR}/scripts/
 COPY ./scripts/copy_dependency.sh              ${BUILD_DIR}/scripts/
 
 RUN ${BUILD_DIR}/scripts/generate_datafed.sh
-RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_authz_dependencies.sh unify
-
-# All files should be owned by the datafed user
-RUN chown -R datafed:root ${DATAFED_DIR}
+RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_authz_dependencies.sh
 
 COPY --chown=datafed:root ./scripts/dependency_versions.sh            ${BUILD_DIR}/scripts/
 COPY --chown=datafed:root ./scripts/generate_authz_config.sh          ${BUILD_DIR}/scripts/generate_authz_config.sh
@@ -127,6 +124,7 @@ RUN ${BUILD_DIR}/scripts/generate_gsi-authz_config.sh
 RUN ${BUILD_DIR}/scripts/generate_authz_config.sh &&  \
   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake -S. -B build  \
     -DBUILD_REPO_SERVER=False         \
+    -DBUILD_AUTHZ_TESTS=True          \
     -DBUILD_AUTHZ=True                \
     -DBUILD_AUTHZ_WITH_SYSLOG=False   \
     -DBUILD_CORE_SERVER=False         \

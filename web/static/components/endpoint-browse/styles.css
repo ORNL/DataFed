@@ -1,0 +1,42 @@
+.endpoint-browser {
+    display: flex;
+    flex-direction: column;
+}
+
+.endpoint-browser .path-label {
+    margin-right: 0.5em;
+}
+
+.endpoint-browser .path-input-container {
+    flex: auto;
+    margin-right: 0.5em;
+}
+
+.endpoint-browser .path-input-container input {
+    width: 100%;
+}
+
+.endpoint-browser .row-flex {
+    display: flex;
+    align-items: center;
+}
+
+.endpoint-browser .spacer {
+    flex: none;
+    padding: 0.25em;
+}
+
+.endpoint-browser .file-tree-view {
+    flex: 1 1 100%;
+    min-height: 0;
+    overflow: auto;
+}
+
+.endpoint-browser .file-tree-view tbody {
+    width: 100%;
+}
+
+.endpoint-browser .file-tree-view tbody td {
+    white-space: nowrap;
+    padding: 0 2em 0 0;
+}

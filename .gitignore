@@ -1,4 +1,5 @@
 /.idea/
+.venv/
 build
 cmake/sodium_version
 cmake/curl_version
@@ -42,6 +43,7 @@ python/datafed_pkg/datafed/Version_pb2.py
 python/datafed_pkg/datafed/__pycache__/
 python/datafed_pkg/dist/
 web/package.json
+repository/gridftp/globus5/authz/mock_core/Version.hpp
 repository/gridftp/globus5/authz/source/Version.hpp
 repository/server/Version.hpp
 scripts/globus/datafed-home-repo.sh

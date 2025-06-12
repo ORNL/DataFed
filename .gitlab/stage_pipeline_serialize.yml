@@ -11,5 +11,17 @@ wait:
   tags:
     - datafed-infrastructure
   script:
+    # Why is sleep necessary, ci_pipeline_serializer ensures there are only 
+    # two active pipelines at a time, it will wait until one frees up before
+    # continuing the job.
+    #
+    # However, if the number of active pipelines was reduced to 1 and and a new
+    # pipeline starts, it takes a bit of time for the new pipeline to be
+    # registered thus its possible to have more than 2 active pipelines. Two running 
+    # and one held by the resource_group
+    #
+    # By sleeping for some random amount of seconds it gives the GitLab database
+    # a moment to update the number of active pipelines.
+    - sleep $((RANDOM % 30 + 10))
     - chmod +x ./scripts/ci_pipeline_serializer.sh && ./scripts/ci_pipeline_serializer.sh
   resource_group: pipeline_serializer

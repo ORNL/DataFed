@@ -42,7 +42,6 @@ while [ : ]; do
         shift 1
         ;;
     -b | --base-image)
-        echo "BASE"
         BASE_IMAGE="$2"
         shift 2
         ;;
@@ -54,6 +53,10 @@ while [ : ]; do
         exit;;
   esac
 done
+
+echo "BASE_IMAGE:     $BASE_IMAGE"
+echo "BUILD_METADATA: $BUILD_METADATA"
+echo "BUILD_REPO:     $BUILD_REPO"
 
 if [[ "$BUILD_METADATA" == "TRUE" ]]
 then
@@ -81,19 +84,26 @@ then
   fi
   docker build -f \
     "${PROJECT_ROOT}/core/docker/Dockerfile" \
-    --build-arg DEPENDENCIES="datafed-dependencies" \
-    --build-arg RUNTIME="datafed-runtime" \
+    --build-arg DEPENDENCIES="datafed-dependencies:latest" \
+    --build-arg RUNTIME="datafed-runtime:latest" \
     "${PROJECT_ROOT}" \
     -t datafed-core:latest
   docker build -f \
     "${PROJECT_ROOT}/web/docker/Dockerfile" \
-    --build-arg DEPENDENCIES="datafed-dependencies" \
+    --build-arg DEPENDENCIES="datafed-dependencies:latest" \
+    --build-arg RUNTIME="datafed-runtime" \
+    --target ws-build \
+    "${PROJECT_ROOT}" \
+    -t datafed-web-build:latest
+  docker build -f \
+    "${PROJECT_ROOT}/web/docker/Dockerfile" \
+    --build-arg DEPENDENCIES="datafed-dependencies:latest" \
     --build-arg RUNTIME="datafed-runtime" \
     "${PROJECT_ROOT}" \
     -t datafed-web:latest
   docker build -f \
     "${PROJECT_ROOT}/docker/Dockerfile.foxx" \
-    --build-arg DEPENDENCIES="datafed-dependencies" \
+    --build-arg DEPENDENCIES="datafed-dependencies:latest" \
     --build-arg RUNTIME="datafed-runtime" \
     "${PROJECT_ROOT}" \
     -t datafed-foxx:latest

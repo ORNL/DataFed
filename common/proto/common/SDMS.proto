@@ -86,6 +86,16 @@ enum ProjectRole
     PROJ_ADMIN      = 3;
 }
 
+// Used to specify type of access token contained within message
+enum AccessTokenType {
+    GENERIC = 1;
+    GLOBUS = 2;
+    GLOBUS_AUTH = 3;
+    GLOBUS_TRANSFER = 4;
+    GLOBUS_DEFAULT = 5;
+    ACCESS_SENTINEL = 255;
+}
+
 // ============================ Data Structures
 
 // Allocation-specific statistics data

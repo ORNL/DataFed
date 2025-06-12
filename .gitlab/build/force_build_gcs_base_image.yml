@@ -5,7 +5,8 @@ stages:
 build-gcs-base:
   stage: build
   variables:
-    IMAGE_TAG: "datafed/gcs-base"
+    PROJECT: "datafed"
+    COMPONENT: "gcs-base"
     GIT_SUBMODULE_STRATEGY: recursive
     GIT_STRATEGY: clone
     DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
@@ -19,18 +20,19 @@ build-gcs-base:
     - cd "external/globus-connect-server-deploy/docker"
     - git checkout "$DATAFED_GCS_SUBMODULE_VERSION"
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
-    - docker build --progress plain -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" - < "./docker-files/Dockerfile.ubuntu-20.04"
-    - docker tag "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
-    - export DATAFED_HARBOR_REPOSITORY="${IMAGE_TAG}-${BRANCH_LOWER}"
+    - docker build --no-cache --progress plain -t "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" - < "./docker-files/Dockerfile.ubuntu-20.04"
+    - docker tag "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
+    - export DATAFED_HARBOR_REPOSITORY="${COMPONENT}-${BRANCH_LOWER}"
     - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
     - export DATAFED_HARBOR_PASSWORD="${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
-    - docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:latest"
-    - docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+    - docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
+    - docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+    - cd "${CI_PROJECT_DIR}"
     - |
-      while [ "$(${CI_PROJECT_DIR}/scripts/ci_harbor_artifact_count.sh)" == "0" ]; do
+      while [ "$(${CI_PROJECT_DIR}/scripts/ci_harbor_artifact_count.sh -r ${DATAFED_HARBOR_REPOSITORY})" == "0" ]; do
         echo "Artifact missing from harbor..."
-        docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:latest"
-        docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+        docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
+        docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
         sleep 5  # Optional: Add a sleep to avoid busy waiting 
       done
-    - cat "./harbor_check.log"
+    - cat "${CI_PROJECT_DIR}/harbor_check.log"

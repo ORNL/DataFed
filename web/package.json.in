@@ -18,7 +18,7 @@
     "sanitize-html": "^2.11.0"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha test/**/*.test.js"
   },
   "repository": {
     "type": "git",
@@ -34,5 +34,13 @@
   "bugs": {
     "url": "https://github.com/ORNL/DataFed/issues"
   },
-  "homepage": "https://github.com/ORNL/DataFed#readme"
+  "homepage": "https://github.com/ORNL/DataFed#readme",
+  "devDependencies": {
+    "chai": "^4",
+    "esm": "^3.2.25",
+    "mocha": "^10.8.2",
+    "pug": "^3.0.3",
+    "sinon": "17.0.0"
+  },
+  "type": "module"
 }

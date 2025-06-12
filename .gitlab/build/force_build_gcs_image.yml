@@ -5,9 +5,11 @@ stages:
 build-gcs:
   stage: build
   variables:
-    IMAGE_TAG: "datafed/gcs"
+    PROJECT: "datafed"
+    COMPONENT: "gcs"
     GIT_STRATEGY: clone
     DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
+    BUILD_INTERMEDIATE: "FALSE"
   tags:
     - ci-datafed-globus
     - docker
@@ -16,19 +18,19 @@ build-gcs:
     - echo "$BRANCH_LOWER"
     - ./scripts/generate_datafed.sh
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
-    - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" --build-arg GCS_IMAGE="${REGISTRY}/datafed/gcs-base-${BRANCH_LOWER}:latest" -f repository/docker/Dockerfile.gcs -t "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" .
-    - docker tag "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:latest" "${REGISTRY}/${IMAGE_TAG}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
-    - export DATAFED_HARBOR_REPOSITORY="${IMAGE_TAG}-${BRANCH_LOWER}"
+    - docker build --no-cache --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" --build-arg GCS_IMAGE="${REGISTRY}/datafed/gcs-base-${BRANCH_LOWER}:latest" -f repository/docker/Dockerfile.gcs -t "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" .
+    - docker tag "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
+    - export DATAFED_HARBOR_REPOSITORY="${COMPONENT}-${BRANCH_LOWER}"
     - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
     - export DATAFED_HARBOR_PASSWORD="${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
-    - docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:latest"
-    - docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+    - docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
+    - docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
     - |
-      while [ "$(./scripts/ci_harbor_artifact_count.sh)" == "0" ]; do
+      while [ "$(${CI_PROJECT_DIR}/scripts/ci_harbor_artifact_count.sh -r ${DATAFED_HARBOR_REPOSITORY})" == "0" ]; do
         echo "Artifact missing from harbor..."
-        docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:latest"
-        docker push "${REGISTRY}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+        docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
+        docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
         sleep 5  # Optional: Add a sleep to avoid busy waiting 
       done
-    - cat "./harbor_check.log"
+    - cat "${CI_PROJECT_DIR}/harbor_check.log"
 

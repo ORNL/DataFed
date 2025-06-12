@@ -113,9 +113,16 @@ fi
 
 if [ -z "${DATAFED_COMPOSE_REPO_DOMAIN}" ]
 then
-  # Make the repo domain equivalent to the COMPOSE DOMAIN unless it is specified
-  # explicitly
-  local_DATAFED_COMPOSE_REPO_DOMAIN="${local_DATAFED_COMPOSE_DOMAIN}"
+
+  # Make the repo domain equivalent to the COMPOSE DOMAIN unless REPO_DOMAIN is
+  # specified explicitly, and it is not localhost, communication between the
+  # core container and the repo container will not resolve using localhost.
+  if [ "${local_DATAFED_COMPOSE_DOMAIN}" = "localhost" ]
+  then
+    local_DATAFED_COMPOSE_REPO_DOMAIN=""
+  else
+    local_DATAFED_COMPOSE_REPO_DOMAIN="${local_DATAFED_COMPOSE_DOMAIN}"
+  fi
 else
   local_DATAFED_COMPOSE_REPO_DOMAIN=$(printenv DATAFED_COMPOSE_REPO_DOMAIN)
 fi
@@ -181,6 +188,13 @@ then
   local_DATAFED_COMPOSE_DATABASE_IP_ADDRESS="http://arango"
 else
   local_DATAFED_COMPOSE_DATABASE_IP_ADDRESS=$(printenv DATAFED_COMPOSE_DATABASE_IP_ADDRESS)
+fi
+
+if [ -z "${DATAFED_ENABLE_FOXX_TESTS}" ]
+then
+  local_DATAFED_ENABLE_FOXX_TESTS="FALSE"
+else
+  local_DATAFED_ENABLE_FOXX_TESTS=$(printenv DATAFED_ENABLE_FOXX_TESTS)
 fi
 
 if [ -z "${DATAFED_COMPOSE_DATABASE_PORT}" ]
@@ -250,6 +264,12 @@ else
   local_DATAFED_GLOBUS_SUBSCRIPTION=$(printenv DATAFED_GLOBUS_SUBSCRIPTION)
 fi
 
+if [ -z "${DATAFED_CORE_LOG_LEVEL}" ]
+then
+  local_DATAFED_CORE_LOG_LEVEL=3
+else
+  local_DATAFED_CORE_LOG_LEVEL=$(printenv DATAFED_CORE_LOG_LEVEL)
+fi
 
 # Make the logs folder if it doesn't exist
 mkdir -p "${COMPOSE_ENV_DIR}/logs"
@@ -270,6 +290,7 @@ DATAFED_HTTPS_SERVER_PORT=${local_DATAFED_COMPOSE_HTTPS_SERVER_PORT}
 DATAFED_DOMAIN=${local_DATAFED_COMPOSE_DOMAIN}
 DATAFED_UID=$(id -u)
 DATAFED_CONTAINER_LOG_PATH=${local_DATAFED_COMPOSE_CONTAINER_LOG_PATH}
+DATAFED_CORE_LOG_LEVEL=${local_DATAFED_CORE_LOG_LEVEL}
 EOF
 fi
 
@@ -285,6 +306,7 @@ DATAFED_WEB_KEY_PATH=/opt/datafed/keys/${local_DATAFED_WEB_KEY_NAME}
 DATAFED_DATABASE_PASSWORD=${local_DATAFED_COMPOSE_DATABASE_PASSWORD}
 DATAFED_DATABASE_IP_ADDRESS=${local_DATAFED_COMPOSE_DATABASE_IP_ADDRESS}
 DATAFED_DATABASE_PORT=${local_DATAFED_COMPOSE_DATABASE_PORT}
+DATAFED_ENABLE_FOXX_TESTS=${local_DATAFED_ENABLE_FOXX_TESTS}
 EOF
 fi
 

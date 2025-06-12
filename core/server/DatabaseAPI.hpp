@@ -51,10 +51,23 @@ public:
   void userSetKeys(const std::string &a_pub_key, const std::string &a_priv_key,
                    LogContext log_context);
   void userClearKeys(LogContext log_context);
-  void userSetAccessToken(const std::string &a_acc_tok, uint32_t a_expires_in,
-                          const std::string &a_ref_tok, LogContext log_context);
+  void userSetAccessToken(const std::string &a_acc_tok,
+                          const uint32_t a_expires_in,
+                          const std::string &a_ref_tok,
+                          const SDMS::AccessTokenType &token_type,
+                          const std::string &other_token_data,
+                          LogContext log_context);
+  void userSetAccessToken(const std::string &a_access_token,
+                          const uint32_t a_expires_in,
+                          const std::string &a_refresh_token,
+                          LogContext log_context);
   void userGetAccessToken(std::string &a_acc_tok, std::string &a_ref_tok,
-                          uint32_t &a_expires_in, LogContext log_context);
+                          uint32_t &a_expires_in,
+                          const std::string collection_id,
+                          const std::string collection_type,
+                          bool &needs_consent,
+                          int &token_type, // TODO: use underlying type?
+                          std::string &scopes, LogContext log_context);
   void getExpiringAccessTokens(uint32_t a_expires_in,
                                std::vector<UserTokenInfo> &a_expiring_tokens,
                                LogContext log_context);
@@ -324,10 +337,7 @@ private:
   long dbGet(const char *a_url_path,
              const std::vector<std::pair<std::string, std::string>> &a_params,
              libjson::Value &a_result, LogContext, bool a_log = true);
-  bool
-  dbGetRaw(const char *a_url_path,
-           const std::vector<std::pair<std::string, std::string>> &a_params,
-           std::string &a_result);
+  bool dbGetRaw(const std::string url, std::string &a_result);
   long dbPost(const char *a_url_path,
               const std::vector<std::pair<std::string, std::string>> &a_params,
               const std::string *a_body, libjson::Value &a_result, LogContext);
@@ -405,6 +415,18 @@ private:
                                   const std::string &a_iter = "i");
   std::string parseSearchIdAlias(const std::string &a_query,
                                  const std::string &a_iter);
+
+  const std::string buildSearchParamURL(
+      const char *endpoint_path,
+      const std::vector<std::pair<std::string, std::string>> &param_vec);
+
+  std::string newJsonMetricParse(
+      uint32_t a_timestamp, uint32_t a_total,
+      const std::map<std::string, std::map<uint16_t, uint32_t>> &a_metrics);
+
+  std::string oldJsonMetricParse(
+      uint32_t a_timestamp, uint32_t a_total,
+      const std::map<std::string, std::map<uint16_t, uint32_t>> &a_metrics);
 
   CURL *m_curl;
   char *m_client;

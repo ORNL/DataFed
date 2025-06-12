@@ -9,10 +9,12 @@ build-core:
   extends: .docker_build_script
   stage: build
   variables:
-    IMAGE_TAG: "datafed/core"
+    PROJECT: "datafed"
+    COMPONENT: "core"
     GIT_STRATEGY: clone
     DOCKER_FILE_PATH: "core/docker/Dockerfile"
     DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
+    BUILD_INTERMEDIATE: "FALSE"
   tags:
     - ci-datafed-core
     - docker
@@ -31,8 +33,21 @@ retag-image:
   extends: .docker_retag_image
   stage: build
   variables:
-    IMAGE_TAG: "datafed/core"
+    PROJECT: "datafed"
+    COMPONENT: "core"
     GIT_STRATEGY: clone
     DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
+    BUILD_INTERMEDIATE: "FALSE"
   tags:
     - docker
+  rules:
+    - changes:
+        - docker/**/*
+        - scripts/**/*
+        - core/**/*
+        - common/**/*
+        - CMakeLists.txt
+        - cmake/**/*
+        - .gitlab-ci.yml
+      when: never
+    - when: on_success

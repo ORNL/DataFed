@@ -40,6 +40,7 @@ class GoogleProtoMessage : public IMessage {
 public:
   GoogleProtoMessage();
 
+  virtual ~GoogleProtoMessage() {};
 private:
   MessageState m_state = MessageState::REQUEST;
 

@@ -69,6 +69,9 @@ fi
 if [ -n "$UID" ]; then
     echo "Switching datafed user to UID: ${UID}"
     usermod -u $UID datafed
+    # All files should be owned by the datafed user
+    chown -R datafed:root ${DATAFED_DIR}
+    chown -R datafed:root ${DATAFED_INSTALL_PATH}/authz
 fi
 
 if [ ! -f "${DATAFED_INSTALL_PATH}/keys/datafed-core-key.pub" ]
@@ -200,6 +203,8 @@ fi
 su -m -c "${BUILD_DIR}/scripts/globus/setup_globus.sh" datafed
 
 source "${DATAFED_PYTHON_ENV}/bin/activate"
+source "${BUILD_DIR}/scripts/dependency_versions.sh"
+
 # Must be passed in directly
 GCS_CLI_ENDPOINT_ID="$GCS_CLI_ENDPOINT_ID" \
 DATAFED_GCS_COLLECTION_BASE_PATH="$DATAFED_GCS_COLLECTION_BASE_PATH" \
@@ -207,7 +212,7 @@ DATAFED_GCS_URL="$DATAFED_GCS_URL" \
 GCS_CLI_CLIENT_ID="$GCS_CLI_CLIENT_ID" \
 GCS_CLI_CLIENT_SECRET="$GCS_CLI_CLIENT_SECRET" \
 DATAFED_REPO_USER="$DATAFED_REPO_USER" \
-  python3 "${BUILD_DIR}/scripts/globus/create_guest_collection.py"
+  "python${DATAFED_PYTHON_VERSION}" "${BUILD_DIR}/scripts/globus/create_guest_collection.py"
 
 "${BUILD_DIR}/scripts/globus/generate_repo_form.sh" -j -s
 

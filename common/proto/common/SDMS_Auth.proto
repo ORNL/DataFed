@@ -21,7 +21,6 @@ enum Protocol
     ID = 2;
 }
 
-
 // ============================================================================
 // ----------- Setup/Config Messages ------------------------------------------
 // ============================================================================
@@ -116,6 +115,8 @@ message UserSetAccessTokenRequest
     required string             access      = 1; // Access token
     required uint32             expires_in  = 2; // Access expiration time in seconds
     required string             refresh     = 3; // Refresh token (never expires)
+    optional AccessTokenType    type        = 4 [default = GLOBUS_DEFAULT];
+    optional string             other       = 5; // Other information relevant to the set access token
 }
 
 // Get user access token (from Globus OAuth). This token will allow client to
@@ -123,14 +124,17 @@ message UserSetAccessTokenRequest
 // Reply: UserAccessTokenReply on success, NackReply on error
 message UserGetAccessTokenRequest
 {
+    optional string             collection_id   = 1;
+    optional string             collection_type = 2;    // TODO: use enum
 }
 
 // Reply containing the user Globus access token and expiration time (in
 // seconds) for authenticated user.
 message UserAccessTokenReply
 {
-    required string             access      = 1; // Globus access token
-    required uint32             expires_in  = 2; // Access token expiration in seconds
+    required string             access          = 1; // Globus access token
+    required uint32             expires_in      = 2; // Access token expiration in seconds
+    optional bool               needs_consent   = 3; // Indicate requirement of consent flow
 }
 
 // Request to create a new DataFed user account.
@@ -421,11 +425,13 @@ message RecordOwnerChangeReply
 // Reply: DataGetReply on success, NackReply on error
 message DataGetRequest
 {
-    repeated string             id          = 1; // ID/alias of data records and or collections
-    optional string             path        = 2; // Globus path to download to (not required if check option is set)
-    optional Encryption         encrypt     = 3; // Optional encryption mode (none, if available, required)
-    optional bool               orig_fname  = 4; // Optional flag to download to original filenames
-    optional bool               check       = 5; // Optional flag to perform initial validation only if true
+    repeated string             id              = 1; // ID/alias of data records and or collections
+    optional string             path            = 2; // Globus path to download to (not required if check option is set)
+    optional Encryption         encrypt         = 3; // Optional encryption mode (none, if available, required)
+    optional bool               orig_fname      = 4; // Optional flag to download to original filenames
+    optional bool               check           = 5; // Optional flag to perform initial validation only if true
+    optional string             collection_id   = 6; // Globus Collection ID
+    optional string             collection_type = 7; // Globus Collection Type
 }
 
 // Request to upload raw data to a data records. Auth user must have WRITE_DATA
@@ -434,11 +440,13 @@ message DataGetRequest
 // Reply: DataPutReply on success, NackReply on error
 message DataPutRequest
 {
-    required string             id          = 1; // ID/alias of data record
-    optional string             path        = 2; // Globus path to upload from
-    optional Encryption         encrypt     = 3; // Optional encryption mode (none, if available, required)
-    optional string             ext         = 4; // Optional extension override
-    optional bool               check       = 5; // Optional flag to perform initial validation only if true
+    required string             id              = 1; // ID/alias of data record
+    optional string             path            = 2; // Globus path to upload from
+    optional Encryption         encrypt         = 3; // Optional encryption mode (none, if available, required)
+    optional string             ext             = 4; // Optional extension override
+    optional bool               check           = 5; // Optional flag to perform initial validation only if true
+    optional string             collection_id   = 6; // Globus Collection ID
+    optional string             collection_type = 7; // Globus Collection Type
 }
 
 // Reply containing data download information, including associated background task.
