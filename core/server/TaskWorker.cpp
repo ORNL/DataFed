@@ -283,7 +283,7 @@ TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
   DL_TRACE(log_context, ">>>> Token Expires in: " << expires_in);
 
   //if the token expired or needs to be updated
-  if ((expires_in < 3600) || needs_update) {
+  if ((expires_in < 3600) or needs_update) {
 
     me.m_db.setClient(uid);
 
