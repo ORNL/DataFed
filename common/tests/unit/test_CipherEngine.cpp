@@ -34,6 +34,8 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryption)
     outf.close();
 
     readFile("datafed-token-key.txt", SDMS::CipherEngine::KEY_LENGTH, key);
+
+    //Instance only used for encrypting
     CipherEngine encryptCipher(key);
 
     //Sets struct CipherString: which contains cipherText, cipherIV, cipherPaddedLen
@@ -47,12 +49,14 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryption)
     std::cout << "Encrypted Message Len:\n" << encoded_encrypted_packet.encrypted_msg_len << std::endl;
     std::cout << "Expected Encrypted Message Len:\n96" << std::endl;
 
+    //Instance only used for decrypting (we dont want to use the encrypt instance as this is how the code is oriented from going in and coming out the database)
     CipherEngine decryptCipher(key);
 
     //START OF ENCRYPTION
     std::string unencrypted_msg;
     unencrypted_msg = decryptCipher.decrypt(encoded_encrypted_packet, log_context);
     std::cout << "Unencrypted Message:" << unencrypted_msg << std::endl;
+    std::cout << "Expected Unencrypted Message: 1234567890yoDa56Bx5yobvJYEjdGr2YpGYJybE7x4Bq42pQ3zuXCb8YQyn0EqEB7vjPx3GlNlKwkEsMn1234567890" << std::endl;
     BOOST_CHECK(msg.compare(unencrypted_msg) == 0);
 }
 
@@ -63,6 +67,7 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryption_KeyGen)
     unsigned char key[SDMS::CipherEngine::KEY_LENGTH];
     CipherEngine::generateEncryptionKey(key);
 
+    //Instance only used for encrypting
     CipherEngine encryptCipher(key);
 
     //Sets struct CipherString: which contains cipherText, cipherIV, cipherPaddedLen
@@ -77,12 +82,14 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryption_KeyGen)
     std::cout << "Encrypted Message Len:\n" << encoded_encrypted_packet.encrypted_msg_len << std::endl;
     std::cout << "Expected Encrypted Message Len:\n96" << std::endl;
 
+    //Instance only used for decrypting (we dont want to use the encrypt instance as this is how the code is oriented from going in and coming out the database)
     CipherEngine decryptCipher(key);
 
     //START OF DECRYPTION
     std::string unencrypted_msg;
     unencrypted_msg = decryptCipher.decrypt(encoded_encrypted_packet, log_context);
     std::cout << "Unencrypted Message:" << unencrypted_msg << std::endl;
+    std::cout << "Expected Unencrypted Message: 1234567890yoDa56Bx5yobvJYEjdGr2YpGYJybE7x4Bq42pQ3zuXCb8YQyn0EqEB7vjPx3GlNlKwkEsMn1234567890" << std::endl;
     BOOST_CHECK(msg.compare(unencrypted_msg) == 0);
 }
 
@@ -92,6 +99,7 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryption_IVGen)
     unsigned char key[SDMS::CipherEngine::KEY_LENGTH];
     CipherEngine::generateEncryptionKey(key);
 
+    //Instance only used for encrypting
     CipherEngine encryptCipher(key);
 
     //Sets struct CipherString: which contains cipherText, cipherIV, cipherPaddedLen
@@ -109,12 +117,14 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryption_IVGen)
     std::cout << "Encrypted Message Len:\n" << encoded_encrypted_packet.encrypted_msg_len << std::endl;
     std::cout << "Expected Encrypted Message Len:\n96" << std::endl;
 
+    //Instance only used for decrypting (we dont want to use the encrypt instance as this is how the code is oriented from going in and coming out the database)
     CipherEngine decryptCipher(key);
 
     //START OF DECRYPTION
     std::string unencrypted_msg;
     unencrypted_msg = decryptCipher.decrypt(encoded_encrypted_packet, log_context);
     std::cout << "Unencrypted Message:" << unencrypted_msg << std::endl;
+    std::cout << "Expected Unencrypted Message: 1234567890yoDa56Bx5yobvJYEjdGr2YpGYJybE7x4Bq42pQ3zuXCb8YQyn0EqEB7vjPx3GlNlKwkEsMn1234567890" << std::endl;
     BOOST_CHECK(msg.compare(unencrypted_msg) == 0);
 }
 
@@ -127,7 +137,7 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryptionJSONValue)
     unsigned char key[SDMS::CipherEngine::KEY_LENGTH];
     readFile("datafed-token-key.txt", SDMS::CipherEngine::KEY_LENGTH, key);
 
-    //Construct
+    //Instance only used for encrypting
     CipherEngine testCipher(key);
 
     //Sets struct CipherString: which contains cipherText, cipherIV, cipherPaddedLen
