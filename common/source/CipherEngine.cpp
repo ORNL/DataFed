@@ -39,7 +39,7 @@ namespace SDMS{
         const int outputLength = EVP_EncodeBlock(reinterpret_cast<unsigned char*>(output.get()), input, length);
         if (paddedLength != outputLength) 
         {  DL_ERROR(log_context, "Output Length (" << outputLength <<") and Predicted Padded Length ("<< paddedLength <<" ) of encoded bytes not equal!"); } 
-        return std::move(output);
+        return output;
     } 
  
     std::unique_ptr<unsigned char[]> CipherEngine::decode64(const char* input,const int length, LogContext log_context) {   
@@ -51,7 +51,7 @@ namespace SDMS{
         const int outputLength = EVP_DecodeBlock(output.get(), reinterpret_cast<const unsigned char*>(input), length);
         if (paddedLength != outputLength) 
         { DL_ERROR(log_context, "Output Length (" << outputLength <<") and Predicted Padded Length ("<< paddedLength <<" ) of decoded bytes not equal!"); } 
-        return std::move(output);
+        return output;
     }
     void CipherEngine::generateIV(unsigned char *iv)
     {
