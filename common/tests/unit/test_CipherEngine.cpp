@@ -44,19 +44,12 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryption)
 
     CipherEngine::CipherString encoded_encrypted_packet = encryptCipher.encrypt(msg,log_context);
 
-    std::cout << "Encrypted Message:\n" << encoded_encrypted_packet.encrypted_msg.get() << std::endl;
-    std::cout << "IV:\n" << encoded_encrypted_packet.iv.get() << std::endl;
-    std::cout << "Encrypted Message Len:\n" << encoded_encrypted_packet.encrypted_msg_len << std::endl;
-    std::cout << "Expected Encrypted Message Len:\n96" << std::endl;
-
     //Instance only used for decrypting (we dont want to use the encrypt instance as this is how the code is oriented from going in and coming out the database)
     CipherEngine decryptCipher(key);
 
     //START OF ENCRYPTION
     std::string unencrypted_msg;
     unencrypted_msg = decryptCipher.decrypt(encoded_encrypted_packet, log_context);
-    std::cout << "Unencrypted Message:" << unencrypted_msg << std::endl;
-    std::cout << "Expected Unencrypted Message: 1234567890yoDa56Bx5yobvJYEjdGr2YpGYJybE7x4Bq42pQ3zuXCb8YQyn0EqEB7vjPx3GlNlKwkEsMn1234567890" << std::endl;
     BOOST_CHECK(msg.compare(unencrypted_msg) == 0);
 }
 
@@ -77,19 +70,12 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryption_KeyGen)
     //Start of Encryption
     CipherEngine::CipherString encoded_encrypted_packet = encryptCipher.encrypt(msg,log_context);
 
-    std::cout << "Encrypted Message:\n" << encoded_encrypted_packet.encrypted_msg.get() << std::endl;
-    std::cout << "IV:\n" << encoded_encrypted_packet.iv.get() << std::endl;
-    std::cout << "Encrypted Message Len:\n" << encoded_encrypted_packet.encrypted_msg_len << std::endl;
-    std::cout << "Expected Encrypted Message Len:\n96" << std::endl;
-
     //Instance only used for decrypting (we dont want to use the encrypt instance as this is how the code is oriented from going in and coming out the database)
     CipherEngine decryptCipher(key);
 
     //START OF DECRYPTION
     std::string unencrypted_msg;
     unencrypted_msg = decryptCipher.decrypt(encoded_encrypted_packet, log_context);
-    std::cout << "Unencrypted Message:" << unencrypted_msg << std::endl;
-    std::cout << "Expected Unencrypted Message: 1234567890yoDa56Bx5yobvJYEjdGr2YpGYJybE7x4Bq42pQ3zuXCb8YQyn0EqEB7vjPx3GlNlKwkEsMn1234567890" << std::endl;
     BOOST_CHECK(msg.compare(unencrypted_msg) == 0);
 }
 
@@ -112,19 +98,12 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryption_IVGen)
     //Start of Encryption
     CipherEngine::CipherString encoded_encrypted_packet = encryptCipher.encrypt(iv, msg, log_context);
 
-    std::cout << "Encrypted Message:\n" << encoded_encrypted_packet.encrypted_msg.get() << std::endl;
-    std::cout << "IV:\n" << encoded_encrypted_packet.iv.get() << std::endl;
-    std::cout << "Encrypted Message Len:\n" << encoded_encrypted_packet.encrypted_msg_len << std::endl;
-    std::cout << "Expected Encrypted Message Len:\n96" << std::endl;
-
-    //Instance only used for decrypting (we dont want to use the encrypt instance as this is how the code is oriented from going in and coming out the database)
+     //Instance only used for decrypting (we dont want to use the encrypt instance as this is how the code is oriented from going in and coming out the database)
     CipherEngine decryptCipher(key);
 
     //START OF DECRYPTION
     std::string unencrypted_msg;
     unencrypted_msg = decryptCipher.decrypt(encoded_encrypted_packet, log_context);
-    std::cout << "Unencrypted Message:" << unencrypted_msg << std::endl;
-    std::cout << "Expected Unencrypted Message: 1234567890yoDa56Bx5yobvJYEjdGr2YpGYJybE7x4Bq42pQ3zuXCb8YQyn0EqEB7vjPx3GlNlKwkEsMn1234567890" << std::endl;
     BOOST_CHECK(msg.compare(unencrypted_msg) == 0);
 }
 
@@ -147,11 +126,6 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryptionJSONValue)
     //Start of Encryption
     CipherEngine::CipherString encoded_encrypted_packet = testCipher.encrypt(msg, log_context);
 
-    std::cout << "Encrypted Message:\n" << encoded_encrypted_packet.encrypted_msg.get() << std::endl;
-    std::cout << "IV:\n" << encoded_encrypted_packet.iv.get() << std::endl;
-    std::cout << "Encrypted Message Len:\n" << encoded_encrypted_packet.encrypted_msg_len << std::endl;
-    std::cout << "Expected Encrypted Message Len:\n96" << std::endl;
-
     libjson::Value value;
     std::string json_document = std::string("{ \"access\": \"") + std::string(encoded_encrypted_packet.encrypted_msg.get()) + "\", \"access_len\": 96, \"access_iv\": \"" + std::string(encoded_encrypted_packet.iv.get()) + "\"}";
 
@@ -168,7 +142,7 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryptionJSONValue)
     memcpy(encoded_access_obj.encrypted_msg.get(), access.c_str(), SDMS::CipherEngine::MAX_MSG_LENGTH);
     encoded_access_obj.encrypted_msg[SDMS::CipherEngine::MAX_MSG_LENGTH] = '\0'; // null terminate
 
-  // Do the same for IV
+    // Do the same for IV
     std::string access_iv = obj.getString("access_iv");
     encoded_access_obj.iv = std::make_unique<char[]>(SDMS::CipherEngine::ENCODED_IV_LENGTH + 1);
     memcpy(encoded_access_obj.iv.get(), access_iv.c_str(), SDMS::CipherEngine::ENCODED_IV_LENGTH);
@@ -176,7 +150,6 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryptionJSONValue)
 
     std::string unencrypted_msg;
     unencrypted_msg = testCipher.decrypt(encoded_access_obj, log_context);
-    std::cout << "Unencrypted Message:" << unencrypted_msg << std::endl;
     BOOST_CHECK(msg.compare(unencrypted_msg) == 0);
 }
 
