@@ -97,11 +97,11 @@ clean_install_flags() {
 }
 
 install_python() {
+  install_openssl
+
   local PYTHON_FLAG_PREFIX=".python_installed-"
   clean_install_flags "$PYTHON_FLAG_PREFIX"
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${PYTHON_FLAG_PREFIX}${DATAFED_PYTHON_VERSION}" ]; then
-    install_openssl
-
     local original_dir=$(pwd)
     cd "${PROJECT_ROOT}"
     "$SUDO_CMD" apt update

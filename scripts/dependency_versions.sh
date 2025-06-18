@@ -11,10 +11,10 @@ DATAFED_LIBZMQ_VERSION="4.3.4"
 # this version is different from above due to the fact libzmq names its shared library diffrently than the actual api version
 DATAFED_LIB_LIBZMQ_VERSION="5.2.4"
 DATAFED_LIB_ZMQCPP_VERSION="4.10.0"
-DATAFED_PYTHON_VERSION="3.9"
-DATAFED_NVM_VERSION="v0.40.1"
 # we cannot use node 22 even though it is the currently highest supported LTS version, due to a currently unsolved build error
 DATAFED_NODE_VERSION="v20.18.2"
+DATAFED_NVM_VERSION="v0.40.1"
+DATAFED_PYTHON_VERSION="3.9"
 DATAFED_PYTHON_VERSION_FULL="3.9.22"
 # Git tag
 DATAFED_PROTOBUF_VERSION="25.7"
