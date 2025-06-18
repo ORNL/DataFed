@@ -1,12 +1,17 @@
-## Ticket  
+<!--
+Please refer to the DEVELOPER.md file for detailed contribution guidelines:
+https://github.com/ORNL/DataFed/blob/master/docs/dev/DEVELOPER.md
+-->
 
-<!--- Put ticket # if JIRA or name if Gitlab and link -->    
+## Ticket
 
-## Description 
+<!--- Put ticket # if JIRA or name if Gitlab and link -->  
+
+## Description
 
 <!--- Describe your changes in detail -->  
 
-## How Has This Been Tested?  
+## How Has This Been Tested?
 
 <!--- Please describe in detail how you tested your changes. -->  
 
@@ -14,16 +19,15 @@
 
 <!--- see how your change affects other areas of the code, etc. -->  
 
-## Artifacts (if appropriate):  
+## Artifacts (if appropriate):
 
 <!--- Include videos and pictures that validate your work -->  
 
-## Tasks
+## Checklist
 
-* [ ] - A description of the PR has been provided, and a diagram included if it is a new feature.
-* [ ] - Formatter has been run
-* [ ] - CHANGELOG comment has been added
-* [ ] - Labels have been assigned to the pr
-* [ ] - A reviwer has been added
-* [ ] - A user has been assigned to work on the pr
-* [ ] - If new feature a unit test has been added
+- [ ] Branch name follows convention (see [DEVELOPER.md](../docs/dev/DEVELOPER.md))
+- [ ] PR title follows format: `[<TEAM>-<issue-number>] <Brief description>`
+- [ ] Unit tests added for new features/bug fixes
+- [ ] Integration tests updated (if applicable)
+- [ ] Labels assigned to PR
+- [ ] All CI checks passing

@@ -7,11 +7,7 @@ assignees: ''
 
 ---
 
-## Ticket  
-
-<!--- Put ticket # if JIRA or name if Gitlab and link -->    
-
-## Description 
+## Description
 
 <!--- Describe your changes in detail -->  
 
@@ -19,7 +15,7 @@ assignees: ''
 
 <!--- Please describe the necessary acceptance criteria for development to be complete -->  
 
-## Resources (optional):  
+## Resources (optional):
 
 <!--- Include resoruces that will be helpful of necessary to complete the work -->  
 
