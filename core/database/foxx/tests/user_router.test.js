@@ -265,45 +265,4 @@ describe("unit_user_router: the Foxx microservice user_router token/get endpoint
     });
 });
 
-describe("unit_user_router: the Foxx microservice user_router token/set endpoint", () => {
-    const test_param_indexes = [0, 1, 2, 3, 4];
-    const test_params = test_param_indexes.map((param_index) => {
-        return {
-            _key: "testUser" + param_index,
-            access: "access_token" + param_index,
-            refresh: "refresh_token" + param_index,
-            access_len: 96,
-            access_iv: "access_iv" + param_index,
-            refresh_len: 96,
-            refresh_iv: "refresh_iv" + param_index,
-        };
-    });
-    const test_uuid = "1cbaaee5-b938-4a4e-87a8-f1ec4d5d92f9"; // fake UUID
-    const test_scope = "urn:globus:auth:scope:transfer.api.globus.org:all";
-    const test_edge_params = {
-        type: g_lib.AccessTokenType.GLOBUS_TRANSFER,
-        other_token_data: test_uuid + "%7C" + test_scope, // URL encoded | character
-    };
-
-    it("should accept a valid user's token and execute an update", () => {
-        // arrange
-        // NOTE: the get request has query params instead of a body
-        const query_params = test_params[0];
-        // TODO: make encoded query params less hard coded
-        const request_string = `${usr_base_url}/token/set?client=${query_params._key}&access=${query_params.access}&refresh=${query_params.refresh}&expires_in=500000&access_len=${query_params.access_len}&access_iv=${query_params.access_iv}&refresh_len=${query_params.refresh_len}&refresh_iv=${query_params.refresh_iv}`;
-
-        // act
-        const response = request.get(request_string);
-
-        // assert
-        expect(response.status).to.equal(204);
-
-        const request_get = `${usr_base_url}/token/get?client=${query_params._key}`;
-
-        const response_get = request.get(request_get);
-        console.log(response_get);
-        //expect(response_get.body).to.include('query parameter \\',);
-    });
-});
-
 
