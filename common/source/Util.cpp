@@ -40,7 +40,7 @@ std::string exec(const char *cmd) {
   return result;
 }
 
-void readFile(const std::string fileName,const int arraySize, unsigned char* array)
+void readFile(const std::string &fileName,const int arraySize, unsigned char* array)
 {
     //Converting Key for encryption funct
     unsigned char keyChar[arraySize] = {};
