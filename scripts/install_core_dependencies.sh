@@ -10,7 +10,7 @@ PROJECT_ROOT=$(realpath ${SOURCE}/..)
 source "${PROJECT_ROOT}/scripts/utils.sh"
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
-packages=("libtool" "build-essential" "g++" "gcc" "make" "libboost-all-dev" "pkg-config" "autoconf" "automake" "unzip" "wget" "rapidjson-dev" "libkrb5-dev" "git" "python${DATAFED_PYTHON_VERSION}" "python${DATAFED_PYTHON_VERSION}-venv")
+packages=("libtool" "build-essential" "g++" "gcc" "make" "libboost-all-dev" "libboost-program-options-dev" "pkg-config" "autoconf" "automake" "unzip" "wget" "rapidjson-dev" "libkrb5-dev" "git" "python${DATAFED_PYTHON_VERSION}-venv")
 pip_packages=("setuptools")
 # NOTE the order matters here
 externals=("cmake" "nlohmann_json" "json_schema_validator" "protobuf"

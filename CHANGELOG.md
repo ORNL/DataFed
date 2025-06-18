@@ -1,6 +1,7 @@
 # Pre-release
 
 ## MAJOR Breaking changes
+1. [1336] - Changed base container for all builds to debian:bookworm-slim and addressed a majority of CVEs.
 
 ## MINOR Feature
 1. [987] - This implements serialized GitLab CI pipelines
