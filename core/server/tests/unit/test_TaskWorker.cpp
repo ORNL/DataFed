@@ -54,7 +54,8 @@ BOOST_AUTO_TEST_CASE(testing_encrypted_token)
 {
     SDMS::LogContext log_context;
     bool needs_update = false;
-
+    TaskWorker::Token_Name access_token_name = TaskWorker::Token_Name::ACCESS;
+ 
     // Buffers for keys
     unsigned char token_key[SDMS::CipherEngine::KEY_LENGTH];
     unsigned char key[SDMS::CipherEngine::KEY_LENGTH];
@@ -95,7 +96,7 @@ BOOST_AUTO_TEST_CASE(testing_encrypted_token)
     needs_update = TaskWorkerTestAccess::tokenNeedsUpdate(obj);
 
     // Decrypt or prepare the token using the access function
-    std::string acc_tok = TaskWorkerTestAccess::prepToken(obj, "acc_tok", cipher_key_path, needs_update, log_context);
+    std::string acc_tok = TaskWorkerTestAccess::prepToken(obj, TaskWorker::enumToString(access_token_name), cipher_key_path, needs_update, log_context);
 
     // Assert that decrypted token matches original and no update was needed
     BOOST_CHECK(acc_tok == "1234567890yoDa56Bx5yobvJYEjdGr2YpGYJybE7x4Bq42pQ3zuXCb8YQyn0EqEB7vjPx3GlNlKwkEsMn1234567890"
@@ -107,7 +108,8 @@ BOOST_AUTO_TEST_CASE(testing_unencrypted_token)
 {
     SDMS::LogContext log_context;
     bool needs_update = false;
-
+    TaskWorker::Token_Name access_token_name = TaskWorker::Token_Name::ACCESS;
+ 
     // Prepare test parameters with an unencrypted token (empty IV and zero length)
     libjson::Value test_params;
     test_params.fromString("{\"acc_tok\":\"1234567890yoDa56Bx5yobvJYEjdGr2YpGYJybE7x4Bq42pQ3zuXCb8YQyn0EqEB7vjPx3GlNlKwkEsMn1234567890\","
@@ -120,7 +122,7 @@ BOOST_AUTO_TEST_CASE(testing_unencrypted_token)
     needs_update = TaskWorkerTestAccess::tokenNeedsUpdate(obj);
 
     // Prepare the token (may involve encrypting it if update is needed)
-    std::string acc_tok = TaskWorkerTestAccess::prepToken(obj, "acc_tok", cipher_key_path, needs_update, log_context);
+    std::string acc_tok = TaskWorkerTestAccess::prepToken(obj, TaskWorker::enumToString(access_token_name), cipher_key_path, needs_update, log_context);
 
     // Assert that the token needs to be updated
     BOOST_CHECK(needs_update == true);

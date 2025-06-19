@@ -241,11 +241,24 @@ TaskWorker::tokenNeedsUpdate(const Value::Object &obj)
     return obj.getString("acc_tok_iv").empty();
 }
 
+std::string 
+TaskWorker::enumToString(Token_Name token_name)
+{
+    return tokenNameToString[token_name];
+}
+
+std::map<TaskWorker::Token_Name, std::string> TaskWorker::tokenNameToString =
+{
+    { TaskWorker::Token_Name::ACCESS, "acc_tok" },
+    { TaskWorker::Token_Name::REFRESH, "ref_tok" }
+};
 
 ICommunicator::Response
 TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
                                LogContext log_context) {
 
+  Token_Name access_token_name = Token_Name::ACCESS;
+  Token_Name refresh_token_name = Token_Name::REFRESH;
   bool needs_update = false;
   const Value::Object &obj = a_task_params.asObject();
 
@@ -253,8 +266,8 @@ TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
   needs_update = tokenNeedsUpdate(obj);
 
   //Update the tokens to be unencrypted
-  string acc_tok = prepToken(obj, "acc_tok", me.m_db.cipher_key_file_path, needs_update, log_context);
-  string ref_tok = prepToken(obj, "ref_tok", me.m_db.cipher_key_file_path, needs_update, log_context);
+  string acc_tok = prepToken(obj, enumToString(access_token_name), me.m_db.cipher_key_file_path, needs_update, log_context);
+  string ref_tok = prepToken(obj, enumToString(refresh_token_name), me.m_db.cipher_key_file_path, needs_update, log_context);
 
   const string &uid = obj.getString("uid");
   TaskType type = (TaskType)obj.getNumber("type");
