@@ -105,7 +105,7 @@ install_python() {
     local original_dir=$(pwd)
     cd "${PROJECT_ROOT}"
     "$SUDO_CMD" apt update
-    "$SUDO_CMD" apt install -y build-essential libreadline-dev zlib1g-dev libffi-dev wget
+    "$SUDO_CMD" apt install -y build-essential libreadline-dev zlib1g-dev libffi-dev wget libsqlite3-dev
 
     wget "https://www.python.org/ftp/python/${DATAFED_PYTHON_VERSION_FULL}/Python-${DATAFED_PYTHON_VERSION_FULL}.tgz"
     tar -xf "Python-${DATAFED_PYTHON_VERSION_FULL}.tgz"
@@ -113,7 +113,7 @@ install_python() {
 
     export CPPFLAGS="-I${DATAFED_DEPENDENCIES_INSTALL_PATH}/include $CPPFLAGS"
     export LDFLAGS="-L${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib -Wl,-rpath,${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib $LDFLAGS"
-    ./configure --prefix="${DATAFED_PYTHON_DEPENDENCIES_DIR}" --with-openssl="${DATAFED_DEPENDENCIES_INSTALL_PATH}" --with-openssl-rpath=auto
+    ./configure --prefix="${DATAFED_PYTHON_DEPENDENCIES_DIR}" --with-openssl="${DATAFED_DEPENDENCIES_INSTALL_PATH}" --with-openssl-rpath=auto --enable-loadable-sqlite-extensions
     make -j$(nproc)
     make altinstall
 

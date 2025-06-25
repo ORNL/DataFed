@@ -148,7 +148,7 @@ COPY --chown=datafed:root ./scripts/globus/__init__.py                ${BUILD_DI
 
 RUN apt update
 RUN apt-get install wget jq bind9-host build-essential -y
-RUN apt-get reinstall globus-connect-server54 -y
+RUN apt-get reinstall globus-connect-server54 libsqlite3-dev -y
 
 RUN ${BUILD_DIR}/scripts/generate_gsi-authz_config.sh
 # Don't build with syslog the container does not seem to support syslog

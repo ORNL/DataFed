@@ -12,7 +12,7 @@ source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
 packages=("host" "libtool" "build-essential" "g++" "gcc" "autoconf"
   "automake" "make" "git" "pkg-config"
-  "libglobus-common-dev" "wget" "jq" "sudo" "libboost-all-dev" "libgssapi-krb5-2")
+  "libglobus-common-dev" "wget" "jq" "sudo" "libboost-all-dev" "libgssapi-krb5-2" "libsqlite3-dev")
 pip_packages=("setuptools" "distro" "jwt" "globus_sdk")
 externals=("cmake" "protobuf" "libsodium" "libzmq" "libopenssl")
 
