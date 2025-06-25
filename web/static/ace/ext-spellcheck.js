@@ -19,13 +19,13 @@ define("ace/ext/spellcheck", [
         if (!t.session.tokenRe.test(o)) return;
         var u = "\x01\x01",
             a = o + " " + u;
-        (n.value = a),
+        ((n.value = a),
             n.setSelectionRange(o.length, o.length + 1),
             n.setSelectionRange(0, 0),
-            n.setSelectionRange(0, o.length);
+            n.setSelectionRange(0, o.length));
         var f = !1;
-        r.addListener(n, "keydown", function l() {
-            r.removeListener(n, "keydown", l), (f = !0);
+        (r.addListener(n, "keydown", function l() {
+            (r.removeListener(n, "keydown", l), (f = !0));
         }),
             t.textInput.setInputHandler(function (e) {
                 console.log(e, a, n.selectionStart, n.selectionEnd);
@@ -40,17 +40,17 @@ define("ace/ext/spellcheck", [
                             : ((r = r.slice(0, -1)), t.session.replace(s, r), "");
                 }
                 return e;
-            });
+            }));
     };
     var i = e("../editor").Editor;
     e("../config").defineOptions(i.prototype, "editor", {
         spellcheck: {
             set: function (e) {
                 var n = this.textInput.getElement();
-                (n.spellcheck = !!e),
+                ((n.spellcheck = !!e),
                     e
                         ? this.on("nativecontextmenu", t.contextMenuHandler)
-                        : this.removeListener("nativecontextmenu", t.contextMenuHandler);
+                        : this.removeListener("nativecontextmenu", t.contextMenuHandler));
             },
             value: !0,
         },
