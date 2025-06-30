@@ -1,0 +1,10 @@
+# Python dependencies for Globus Connect Server configuration scripts
+# Install with: pip3 install -r requirements.txt
+
+# Globus SDK for interacting with Globus services
+globus-sdk>=3.0.0,<4.0.0
+
+# Additional dependencies that might be useful
+# (These are typically available in the system but listed for completeness)
+requests>=2.25.0
+urllib3>=1.26.0

@@ -1,0 +1,125 @@
+# Complete Kubernetes deployment for Globus Connect Server
+# Replace YOUR_* values with your actual configuration
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: globus-gcs
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gcs-config
+  namespace: globus-gcs
+data:
+  GCS_HOSTNAME: "YOUR_HOSTNAME"
+  GCS_IP_ADDRESS: "YOUR_PUBLIC_IP"
+  GCS_ROOT_NAME: "My Organization GCS"
+  GCS_COLLECTION_NAME: "My_Collection"
+  GCS_COLLECTION_ROOT_PATH: "/mnt/globus-collections"
+  LOCAL_USER: "globus"
+  GCS_UID: "1000"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gcs-secrets
+  namespace: globus-gcs
+type: Opaque
+stringData:
+  GLOBUS_CLIENT_ID: "YOUR_CLIENT_ID"
+  GLOBUS_CLIENT_SECRET: "YOUR_CLIENT_SECRET"
+  GLOBUS_SUBSCRIPTION_ID: "YOUR_SUBSCRIPTION_ID"
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: globus-creds-pvc
+  namespace: globus-gcs
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: collection-data-pvc
+  namespace: globus-gcs
+spec:
+  accessModes: [ReadWriteMany]
+  resources:
+    requests:
+      storage: 100Gi
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: globus-connect-server
+  namespace: globus-gcs
+spec:
+  serviceName: gcs-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: globus-gcs
+  template:
+    metadata:
+      labels:
+        app: globus-gcs
+    spec:
+      containers:
+      - name: gcs
+        image: globus-connect-server:latest
+        envFrom:
+        - configMapRef:
+            name: gcs-config
+        - secretRef:
+            name: gcs-secrets
+        ports:
+        - containerPort: 443
+          name: https
+        - containerPort: 2811
+          name: gridftp-control
+        volumeMounts:
+        - name: globus-creds
+          mountPath: /opt/globus
+        - name: collection-data
+          mountPath: /mnt/globus-collections
+        securityContext:
+          capabilities:
+            add:
+            - NET_ADMIN
+            - SYS_ADMIN
+      volumes:
+      - name: globus-creds
+        persistentVolumeClaim:
+          claimName: globus-creds-pvc
+      - name: collection-data
+        persistentVolumeClaim:
+          claimName: collection-data-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gcs-service
+  namespace: globus-gcs
+spec:
+  type: LoadBalancer
+  selector:
+    app: globus-gcs
+  ports:
+  - name: https
+    port: 443
+    targetPort: 443
+  - name: gridftp-control
+    port: 2811
+    targetPort: 2811

@@ -3,6 +3,22 @@
 
 set -euo pipefail
 
+# Activate the Globus Python environment
+source /opt/globus/bin/activate
+
+# Load credentials from files if not already set
+if [ -z "${GCS_CLI_CLIENT_ID:-}" ] || [ -z "${GCS_CLI_CLIENT_SECRET:-}" ] || [ -z "${GCS_CLI_ENDPOINT_ID:-}" ]; then
+    if [ -f "/opt/globus-config/client_cred.json" ] && [ -f "/opt/globus-config/deployment-key.json" ]; then
+        export GCS_CLI_CLIENT_ID=$(jq -r .client < /opt/globus-config/client_cred.json)
+        export GCS_CLI_CLIENT_SECRET=$(jq -r .secret < /opt/globus-config/client_cred.json)
+        export GCS_CLI_ENDPOINT_ID=$(jq -r .client_id < /opt/globus-config/deployment-key.json)
+        echo "Loaded GCS CLI credentials from files"
+    else
+        echo "Warning: Credential files not found or GCS_CLI_* environment variables not set"
+        echo "Authentication may fail"
+    fi
+fi
+
 # Load environment variables
 GCS_ROOT_NAME="${GCS_ROOT_NAME:-GCS Endpoint}"
 GCS_COLLECTION_NAME="${GCS_COLLECTION_NAME:-${GCS_ROOT_NAME} Collection}"

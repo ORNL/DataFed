@@ -1,361 +1,120 @@
-# Globus Connect Server Configuration for ROVI
+# Globus Connect Server Configuration
 
-This repository contains a standalone configuration for deploying Globus Connect Server (GCS) in a containerized environment, specifically designed for the ROVI project at ORNL using ITSD Rancher.
+This directory contains a standalone configuration for deploying Globus Connect Server (GCS) in a containerized environment.
 
-## Overview
-
-This configuration provides:
-- Dockerized Globus Connect Server v5.4
-- Automated setup scripts for storage gateways and collections
-- Support for guest collections (with subscription)
-- Identity mapping to a local user
-- SSL/TLS support via Let's Encrypt
+**Key Architecture**: Globus Connect Server v5.4 is pre-installed inside the Docker container. You do NOT need to install GCS on your host machine - only Docker and Python are required.
 
 ## Prerequisites
 
-1. **Globus Account**: You need a Globus account with ability to create projects
-2. **Globus Subscription** (optional): Required for guest collections
-3. **Public IP Address**: The GCS endpoint needs a publicly accessible IP
-4. **DNS Hostname**: A DNS name that resolves to your public IP
-5. **Docker & Docker Compose**: For running the containerized setup
-6. **Storage**: Persistent storage for collections
+- [ ] Docker (>= 20.10) and Docker Compose (>= 1.29) installed
+- [ ] Python 3 (>= 3.6) with pip3
+- [ ] Git installed and configured
+- [ ] A Globus account with project creation privileges
+- [ ] A public IP address for your server
+- [ ] A DNS hostname that resolves to your public IP
+- [ ] Ports 443 and 50000-51000 accessible from the internet
+
+**Note**: You do **NOT** need to install Globus Connect Server on your host machine. GCS v5.4 is pre-installed inside the Docker container. This containerized approach simplifies deployment and ensures consistency.
+
+For detailed requirements, see [Installation Guide](./docs/installation.md).
 
 ## Quick Start
 
-### 1. Clone and Configure
+1. **Setup and Check Dependencies**
+   ```bash
+   ./bin/setup.sh
+   ```
+
+2. **Initialize Globus Credentials**
+   ```bash
+   ./bin/init-credentials.sh
+   ```
+
+3. **Build Docker Images**
+   ```bash
+   ./bin/build.sh
+   ```
+   The build script automatically detects whether you're in the DataFed repository or using it standalone.
+
+4. **Start Services**
+   ```bash
+   docker compose up -d
+   ```
+
+For detailed instructions, see [Getting Started Guide](docs/getting-started.md).
+
+## Cleanup and Removal
+
+To clean up your GCS deployment:
 
 ```bash
-# Copy environment template
-cp .env.template .env
+# Remove cloud resources only (endpoint, project, clients)
+./bin/cleanup.sh --cloud
 
-# Edit .env with your configuration
-vim .env
+# Remove local files only (containers, volumes, credentials)
+./bin/cleanup.sh --local
+
+# Remove everything
+./bin/cleanup.sh --all
+
+# Skip confirmation prompts
+./bin/cleanup.sh --all --force
 ```
 
-### 2. Initialize Globus Credentials
+See [Troubleshooting Guide](docs/troubleshooting.md#cleanup-procedures) for details.
 
-Run the initialization script to create Globus project and credentials:
+## Documentation
 
-```bash
-docker-compose run --rm globus-connect-server python3 /opt/scripts/init-globus.py
-```
-
-This will:
-- Prompt you to authenticate with Globus
-- Create a project in your Globus account
-- Generate client credentials
-- Save credentials to `./globus/client_cred.json`
-
-### 3. Start Globus Connect Server
-
-```bash
-docker-compose up -d
-```
-
-The container will:
-- Set up the GCS endpoint
-- Configure storage gateways
-- Create a mapped collection
-- Start all necessary services
-
-### 4. Verify Setup
-
-```bash
-# Check logs
-docker-compose logs -f
-
-# Verify services are running
-docker-compose exec globus-connect-server ps aux | grep -E "apache2|gridftp"
-```
-
-## Management Scripts
-
-This configuration includes several utility scripts for managing your GCS instance:
-
-### create-guest-collection.py
-
-Create guest collections programmatically:
-
-```bash
-# Create a public guest collection with access for all users
-docker-compose exec globus-connect-server python3 /opt/scripts/create-guest-collection.py \
-    "My Guest Collection" \
-    --mapped-collection "ROVI_Collection" \
-    --base-path "/project/shared"
-
-# Create a private guest collection
-docker-compose exec globus-connect-server python3 /opt/scripts/create-guest-collection.py \
-    "Private Collection" \
-    --private \
-    --no-all-users
-```
-
-Options:
-- `--mapped-collection`: Name or ID of the mapped collection (defaults to GCS_COLLECTION_NAME)
-- `--base-path`: Base path within the mapped collection (default: /)
-- `--private`: Make the collection private
-- `--no-all-users`: Don't grant access to all authenticated users
-
-### manage-collections.py
-
-List, inspect, and manage collections:
-
-```bash
-# List all collections
-docker-compose exec globus-connect-server python3 /opt/scripts/manage-collections.py list
-
-# List only guest collections with details
-docker-compose exec globus-connect-server python3 /opt/scripts/manage-collections.py list \
-    --type guest -v
-
-# Get detailed information about a collection
-docker-compose exec globus-connect-server python3 /opt/scripts/manage-collections.py info \
-    "My Collection"
-
-# Delete a collection
-docker-compose exec globus-connect-server python3 /opt/scripts/manage-collections.py delete \
-    "Old Collection" --yes
-
-# List storage gateways and user credentials
-docker-compose exec globus-connect-server python3 /opt/scripts/manage-collections.py gateways -v
-```
-
-Commands:
-- `list`: List collections (filter by --type: all, mapped, guest)
-- `info`: Get detailed collection information
-- `delete`: Delete a collection
-- `gateways`: List storage gateways
-
-### Using Scripts Outside the Container
-
-You can also run these scripts outside the container by specifying paths:
-
-```bash
-# Set up environment
-export GLOBUS_CRED_FILE=/path/to/globus/client_cred.json
-export GLOBUS_DEPLOYMENT_KEY=/path/to/globus/deployment-key.json
-export GCS_HOSTNAME=gcs.example.com
-
-# Run script
-python3 scripts/manage-collections.py list
-```
-
-## Environment Variables
-
-Key variables in `.env`:
-
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `GCS_HOSTNAME` | Public DNS hostname | `gcs.example.com` |
-| `GCS_IP_ADDRESS` | Public IP address | `1.2.3.4` |
-| `GCS_ROOT_NAME` | Display name prefix | `ROVI GCS` |
-| `GCS_COLLECTION_ROOT_PATH` | Container path for collections | `/mnt/globus-collections` |
-| `HOST_COLLECTION_PATH` | Host path to mount | `/data/globus` |
-| `GLOBUS_CLIENT_ID` | OAuth2 client ID | `abc-123...` |
-| `GLOBUS_CLIENT_SECRET` | OAuth2 client secret | `xyz-789...` |
-| `GLOBUS_SUBSCRIPTION_ID` | Subscription ID (optional) | `sub-123...` |
+- 📚 [Getting Started](docs/getting-started.md) - First-time setup walkthrough
+- 🔧 [Installation Guide](docs/installation.md) - Detailed setup and build instructions
+- 📋 [Management Guide](docs/management.md) - Managing collections and users
+- ⚙️ [Configuration Reference](docs/configuration.md) - All configuration options
+- 🐳 [Docker Deployment](docs/deployment/docker.md) - Docker-specific information
+- ☸️ [Kubernetes Deployment](docs/deployment/kubernetes.md) - Rancher/K8s deployment
+- 🔍 [Troubleshooting](docs/troubleshooting.md) - Common issues and solutions
 
 ## Directory Structure
 
 ```
 globus-connect-server-config/
+├── README.md                   # This documentation
 ├── docker-compose.yml          # Container orchestration
-├── Dockerfile                  # GCS container image
-├── .env                        # Environment configuration
-├── scripts/                    # Setup and management scripts
-│   ├── init-globus.py         # Initialize Globus credentials
-│   ├── setup-globus.sh        # Configure gateways/collections
-│   ├── entrypoint.sh          # Container entrypoint
-│   ├── create-guest-collection.py  # Create guest collections
-│   ├── manage-collections.py  # Manage existing collections
-│   └── utils.py               # Shared utility functions
-├── globus/                    # Globus credentials (git-ignored)
-│   ├── client_cred.json       # Client credentials
-│   └── deployment-key.json    # Endpoint deployment key
-├── keys/                      # SSL certificates
-└── logs/                      # Service logs
+├── .env.template              # Environment template
+│
+├── bin/                       # User-facing scripts
+│   ├── setup.sh               # Initial setup and dependency check
+│   ├── init-credentials.sh    # Initialize Globus credentials
+│   ├── check-deps.sh         # Verify system dependencies
+│   ├── build.sh              # Build images (with DataFed repo)
+│   ├── build-standalone.sh   # Build images (standalone)
+│   └── cleanup.sh            # Clean up GCS resources
+│
+├── docker/                    # Docker-related files
+│   ├── Dockerfile            # Custom GCS configuration layer
+│   └── requirements.txt      # Python dependencies
+│
+├── config/                    # Configuration files
+│   └── versions.env          # Version configuration
+│
+├── scripts/                   # Internal scripts
+│   ├── entrypoint.sh         # Container entrypoint
+│   ├── setup-globus.sh       # Configure gateways/collections
+│   └── *.py                  # Python management scripts
+│
+├── docs/                      # Documentation
+│   └── ...                   # Detailed guides
+│
+├── globus/                   # Globus credentials (git-ignored)
+├── keys/                     # SSL certificates (git-ignored)
+└── logs/                     # Service logs (git-ignored)
 ```
-
-## Rancher Deployment
-
-### 1. Create Namespace
-
-```yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: globus-gcs
-```
-
-### 2. Create ConfigMap for Environment
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: gcs-config
-  namespace: globus-gcs
-data:
-  GCS_HOSTNAME: "gcs-rovi.ornl.gov"
-  GCS_IP_ADDRESS: "YOUR_PUBLIC_IP"
-  # Add other non-secret configs
-```
-
-### 3. Create Secrets
-
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: gcs-secrets
-  namespace: globus-gcs
-type: Opaque
-stringData:
-  GLOBUS_CLIENT_ID: "your-client-id"
-  GLOBUS_CLIENT_SECRET: "your-client-secret"
-  GLOBUS_SUBSCRIPTION_ID: "your-subscription-id"
-```
-
-### 4. Create Deployment
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: globus-connect-server
-  namespace: globus-gcs
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: globus-gcs
-  template:
-    metadata:
-      labels:
-        app: globus-gcs
-    spec:
-      containers:
-      - name: gcs
-        image: globus-connect-server:latest
-        envFrom:
-        - configMapRef:
-            name: gcs-config
-        - secretRef:
-            name: gcs-secrets
-        ports:
-        - containerPort: 443
-          name: https
-        - containerPort: 50000-51000
-          name: gridftp
-        volumeMounts:
-        - name: globus-creds
-          mountPath: /opt/globus
-        - name: collection-data
-          mountPath: /mnt/globus-collections
-        - name: ssl-certs
-          mountPath: /opt/keys
-        securityContext:
-          capabilities:
-            add:
-            - NET_ADMIN
-            - SYS_ADMIN
-      volumes:
-      - name: globus-creds
-        persistentVolumeClaim:
-          claimName: globus-creds-pvc
-      - name: collection-data
-        persistentVolumeClaim:
-          claimName: collection-data-pvc
-      - name: ssl-certs
-        secret:
-          secretName: ssl-certificates
-```
-
-### 5. Create Services
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: gcs-service
-  namespace: globus-gcs
-spec:
-  type: LoadBalancer
-  selector:
-    app: globus-gcs
-  ports:
-  - name: https
-    port: 443
-    targetPort: 443
-  - name: gridftp-control
-    port: 2811
-    targetPort: 2811
-  # GridFTP data ports would need NodePort or host networking
-```
-
-## Storage Considerations
-
-1. **Persistent Volumes**: Use PVCs for:
-   - `/opt/globus` - Credentials and deployment key
-   - `/mnt/globus-collections` - Collection data
-   - `/opt/keys` - SSL certificates
-
-2. **Permissions**: Ensure the UID in container matches host filesystem permissions
-
-3. **Backup**: Regular backups of credentials and collection metadata
-
-## Troubleshooting
-
-### Check Service Status
-
-```bash
-# Inside container
-docker-compose exec globus-connect-server bash
-
-# Check GCS status
-globus-connect-server self-diagnostic
-
-# View logs
-tail -f /var/log/globus-connect-server/*.log
-```
-
-### Common Issues
-
-1. **Port Access**: Ensure ports 443 and 50000-51000 are accessible
-2. **DNS Resolution**: Verify hostname resolves to public IP
-3. **Credentials**: Check `/opt/globus/client_cred.json` exists
-4. **Permissions**: Verify UID matches between container and host
-
-### Reset Setup
-
-To completely reset and start over:
-
-```bash
-# Stop and remove containers
-docker-compose down
-
-# Remove credentials and state
-rm -rf globus/*.json
-rm -rf logs/*
-
-# Start fresh
-docker-compose run --rm globus-connect-server python3 /opt/scripts/init-globus.py
-docker-compose up -d
-```
-
-## Security Notes
-
-1. **Credentials**: Never commit `client_cred.json` or `deployment-key.json`
-2. **Network**: Use firewall rules to restrict GridFTP data ports
-3. **SSL**: Let's Encrypt certificates are automatically managed
-4. **Access**: Use Globus ACLs to control collection access
 
 ## Support
 
 For issues specific to this configuration:
-- Check the troubleshooting section
-- Review container logs
-- Verify environment variables
+- Check the [Troubleshooting Guide](docs/troubleshooting.md)
+- Review container logs: `docker compose logs -f`
+- Run diagnostics: `./bin/check-deps.sh`
 
 For Globus Connect Server issues:
 - [Globus Documentation](https://docs.globus.org/globus-connect-server/)
@@ -363,4 +122,4 @@ For Globus Connect Server issues:
 
 ## License
 
-This configuration is provided as-is for the ROVI project at ORNL.
+This configuration is provided as-is for research organizations and data repositories.

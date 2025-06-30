@@ -1,9 +1,9 @@
 services:
   globus-connect-server:
-    image: globus-connect-server:latest
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: docker/Dockerfile
+    image: globus-connect-server:latest
     container_name: globus-connect-server
     hostname: ${GCS_HOSTNAME}
     environment:
@@ -24,12 +24,13 @@ services:
       GCS_CONTACT_EMAIL: ${GCS_CONTACT_EMAIL}
       # User mapping
       LOCAL_USER: ${LOCAL_USER:-globus}
-      UID: ${UID:-1000}
+      GCS_UID: ${GCS_UID:-1000}
     # Use host networking for GridFTP passive mode
     network_mode: host
     volumes:
-      # Globus credentials and deployment key
-      - ./globus:/opt/globus
+      # Globus credentials and deployment key (mount as read-only files, not directory)
+      - ./globus/client_cred.json:/opt/globus-config/client_cred.json:ro
+      - ./globus/deployment-key.json:/opt/globus-config/deployment-key.json:ro
       # SSL certificates
       - ./keys:/opt/keys
       # Collection data

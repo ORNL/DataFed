@@ -2,14 +2,10 @@
 .env
 
 # Globus credentials - NEVER commit these!
-globus/client_cred.json
-globus/deployment-key.json
-globus/*.json
-
+globus/
+backups/
 # SSL certificates
-keys/*.crt
-keys/*.key
-keys/*.pem
+keys/
 
 # Logs
 logs/
