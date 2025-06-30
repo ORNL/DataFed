@@ -1,0 +1,21 @@
+# Environment configuration
+.env
+
+# Globus credentials - NEVER commit these!
+globus/client_cred.json
+globus/deployment-key.json
+globus/*.json
+
+# SSL certificates
+keys/*.crt
+keys/*.key
+keys/*.pem
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+*.tmp
+*.swp
+.DS_Store

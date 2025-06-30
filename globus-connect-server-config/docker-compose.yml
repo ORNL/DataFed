@@ -1,0 +1,38 @@
+services:
+  globus-connect-server:
+    image: globus-connect-server:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: globus-connect-server
+    hostname: ${GCS_HOSTNAME}
+    environment:
+      # Globus Connect Server Configuration
+      GCS_HOSTNAME: ${GCS_HOSTNAME}
+      GCS_IP_ADDRESS: ${GCS_IP_ADDRESS}
+      GCS_ROOT_NAME: ${GCS_ROOT_NAME}
+      GCS_COLLECTION_NAME: ${GCS_COLLECTION_NAME}
+      GCS_COLLECTION_ROOT_PATH: ${GCS_COLLECTION_ROOT_PATH}
+      # Globus Authentication
+      GLOBUS_CLIENT_ID: ${GLOBUS_CLIENT_ID}
+      GLOBUS_CLIENT_SECRET: ${GLOBUS_CLIENT_SECRET}
+      GLOBUS_SUBSCRIPTION_ID: ${GLOBUS_SUBSCRIPTION_ID}
+      # Optional Configuration
+      GCS_CONTROL_PORT: ${GCS_CONTROL_PORT:-443}
+      GCS_ALLOWED_DOMAINS: ${GCS_ALLOWED_DOMAINS}
+      GCS_ORGANIZATION: ${GCS_ORGANIZATION}
+      GCS_CONTACT_EMAIL: ${GCS_CONTACT_EMAIL}
+      # User mapping
+      LOCAL_USER: ${LOCAL_USER:-globus}
+      UID: ${UID:-1000}
+    # Use host networking for GridFTP passive mode
+    network_mode: host
+    volumes:
+      # Globus credentials and deployment key
+      - ./globus:/opt/globus
+      # SSL certificates
+      - ./keys:/opt/keys
+      # Collection data
+      - ${HOST_COLLECTION_PATH}:${GCS_COLLECTION_ROOT_PATH}
+      # Logs
+      - ./logs:/var/log/globus
