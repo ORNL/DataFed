@@ -105,7 +105,7 @@ COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/python3.9   ${
 
 # Needed for tests
 COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake
-COPY --from=dependencies ${BUILD_DIR}/ ${BUILD_DIR}/
+COPY --from=dependencies ${BUILD_DIR}/build ${BUILD_DIR}/build
 
 # For communicating with public
 EXPOSE 443
