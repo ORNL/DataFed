@@ -25,10 +25,6 @@ This configuration provides:
 ### 1. Clone and Configure
 
 ```bash
-# Clone this configuration
-git clone <repository-url>
-cd globus-connect-server-config
-
 # Copy environment template
 cp .env.template .env
 
@@ -72,6 +68,78 @@ docker-compose logs -f
 docker-compose exec globus-connect-server ps aux | grep -E "apache2|gridftp"
 ```
 
+## Management Scripts
+
+This configuration includes several utility scripts for managing your GCS instance:
+
+### create-guest-collection.py
+
+Create guest collections programmatically:
+
+```bash
+# Create a public guest collection with access for all users
+docker-compose exec globus-connect-server python3 /opt/scripts/create-guest-collection.py \
+    "My Guest Collection" \
+    --mapped-collection "ROVI_Collection" \
+    --base-path "/project/shared"
+
+# Create a private guest collection
+docker-compose exec globus-connect-server python3 /opt/scripts/create-guest-collection.py \
+    "Private Collection" \
+    --private \
+    --no-all-users
+```
+
+Options:
+- `--mapped-collection`: Name or ID of the mapped collection (defaults to GCS_COLLECTION_NAME)
+- `--base-path`: Base path within the mapped collection (default: /)
+- `--private`: Make the collection private
+- `--no-all-users`: Don't grant access to all authenticated users
+
+### manage-collections.py
+
+List, inspect, and manage collections:
+
+```bash
+# List all collections
+docker-compose exec globus-connect-server python3 /opt/scripts/manage-collections.py list
+
+# List only guest collections with details
+docker-compose exec globus-connect-server python3 /opt/scripts/manage-collections.py list \
+    --type guest -v
+
+# Get detailed information about a collection
+docker-compose exec globus-connect-server python3 /opt/scripts/manage-collections.py info \
+    "My Collection"
+
+# Delete a collection
+docker-compose exec globus-connect-server python3 /opt/scripts/manage-collections.py delete \
+    "Old Collection" --yes
+
+# List storage gateways and user credentials
+docker-compose exec globus-connect-server python3 /opt/scripts/manage-collections.py gateways -v
+```
+
+Commands:
+- `list`: List collections (filter by --type: all, mapped, guest)
+- `info`: Get detailed collection information
+- `delete`: Delete a collection
+- `gateways`: List storage gateways
+
+### Using Scripts Outside the Container
+
+You can also run these scripts outside the container by specifying paths:
+
+```bash
+# Set up environment
+export GLOBUS_CRED_FILE=/path/to/globus/client_cred.json
+export GLOBUS_DEPLOYMENT_KEY=/path/to/globus/deployment-key.json
+export GCS_HOSTNAME=gcs.example.com
+
+# Run script
+python3 scripts/manage-collections.py list
+```
+
 ## Environment Variables
 
 Key variables in `.env`:
@@ -91,18 +159,21 @@ Key variables in `.env`:
 
 ```
 globus-connect-server-config/
-├── docker-compose.yml      # Container orchestration
-├── Dockerfile             # GCS container image
-├── .env                   # Environment configuration
-├── scripts/               # Setup and management scripts
-│   ├── init-globus.py    # Initialize Globus credentials
-│   ├── setup-globus.sh   # Configure gateways/collections
-│   └── entrypoint.sh     # Container entrypoint
-├── globus/               # Globus credentials (git-ignored)
-│   ├── client_cred.json  # Client credentials
-│   └── deployment-key.json # Endpoint deployment key
-├── keys/                 # SSL certificates
-└── logs/                 # Service logs
+├── docker-compose.yml          # Container orchestration
+├── Dockerfile                  # GCS container image
+├── .env                        # Environment configuration
+├── scripts/                    # Setup and management scripts
+│   ├── init-globus.py         # Initialize Globus credentials
+│   ├── setup-globus.sh        # Configure gateways/collections
+│   ├── entrypoint.sh          # Container entrypoint
+│   ├── create-guest-collection.py  # Create guest collections
+│   ├── manage-collections.py  # Manage existing collections
+│   └── utils.py               # Shared utility functions
+├── globus/                    # Globus credentials (git-ignored)
+│   ├── client_cred.json       # Client credentials
+│   └── deployment-key.json    # Endpoint deployment key
+├── keys/                      # SSL certificates
+└── logs/                      # Service logs
 ```
 
 ## Rancher Deployment
