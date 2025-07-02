@@ -14,24 +14,39 @@
 #include <string.h>
 #include <iostream>
 #include <fstream>
-
+#include <iomanip>
 using namespace std;
 using namespace SDMS;
 
 BOOST_AUTO_TEST_SUITE(KeyEncryptionDecryptionTest)
 
+BOOST_AUTO_TEST_CASE(testing_KeyGeneration)
+{
+    unsigned char token_key[SDMS::CipherEngine::KEY_LENGTH];
+    unsigned char keyArray[SDMS::CipherEngine::KEY_LENGTH];
+    unsigned char finalArray[SDMS::CipherEngine::KEY_LENGTH];
+    CipherEngine::generateEncryptionKey(token_key);
+    std::string fname = "datafed-token-key.txt";
+
+    std::ofstream outf(fname, std::ios::binary);
+    outf.write(reinterpret_cast<const char*>(token_key), SDMS::CipherEngine::KEY_LENGTH);
+    outf.close();
+
+    //Grabbing key
+    std::ifstream keyFile("datafed-token-key.txt", std::ios::binary);
+
+    keyFile.read(reinterpret_cast<char*>(keyArray),SDMS::CipherEngine::KEY_LENGTH);
+    for (int lv = 0; lv < SDMS::CipherEngine::KEY_LENGTH; lv++)
+    {
+            finalArray[lv] = keyArray[lv];
+    }
+    BOOST_CHECK(sizeof(finalArray)==SDMS::CipherEngine::KEY_LENGTH);
+}
+
 BOOST_AUTO_TEST_CASE(test_EncryptionDecryption)
 {
     LogContext log_context;
     unsigned char key[SDMS::CipherEngine::KEY_LENGTH];
-
-    string fname = "datafed-token-key.txt";
-    std::ofstream outf;
-    outf.open(fname.c_str());
-    if (!outf.is_open() || !outf.good())
-    EXCEPT_PARAM(1, "Could not open file: " << fname);
-    outf << key;
-    outf.close();
 
     readFile("datafed-token-key.txt", SDMS::CipherEngine::KEY_LENGTH, key);
 
@@ -62,7 +77,6 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryption_KeyGen)
 
     //Instance only used for encrypting
     CipherEngine encryptCipher(key);
-
     //Sets struct CipherString: which contains cipherText, cipherIV, cipherPaddedLen
     //Mimicing a globus token
     const string msg = "1234567890yoDa56Bx5yobvJYEjdGr2YpGYJybE7x4Bq42pQ3zuXCb8YQyn0EqEB7vjPx3GlNlKwkEsMn1234567890";
@@ -83,7 +97,7 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryption_IVGen)
 {
     LogContext log_context;
     unsigned char key[SDMS::CipherEngine::KEY_LENGTH];
-    CipherEngine::generateEncryptionKey(key);
+    readFile("datafed-token-key.txt", SDMS::CipherEngine::KEY_LENGTH, key);
 
     //Instance only used for encrypting
     CipherEngine encryptCipher(key);
@@ -153,27 +167,4 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryptionJSONValue)
     BOOST_CHECK(msg.compare(unencrypted_msg) == 0);
 }
 
-BOOST_AUTO_TEST_CASE(testing_KeyGeneration)
-{
-    unsigned char token_key[SDMS::CipherEngine::KEY_LENGTH];
-    unsigned char keyArray[SDMS::CipherEngine::KEY_LENGTH];
-    unsigned char finalArray[SDMS::CipherEngine::KEY_LENGTH];
-    CipherEngine::generateEncryptionKey(token_key);
-
-    std::string fname = "datafed-token-key.txt";
-
-    std::ofstream outf(fname, std::ios::binary);
-    outf.write(reinterpret_cast<const char*>(token_key), SDMS::CipherEngine::KEY_LENGTH);
-    outf.close();
-
-    //Grabbing key
-    std::ifstream keyFile("datafed-token-key.txt", std::ios::binary);
-
-    keyFile.read(reinterpret_cast<char*>(keyArray),SDMS::CipherEngine::KEY_LENGTH);
-    for (int lv = 0; lv < SDMS::CipherEngine::KEY_LENGTH; lv++)
-    {
-            finalArray[lv] = keyArray[lv];
-    }
-    BOOST_CHECK(sizeof(finalArray)==SDMS::CipherEngine::KEY_LENGTH);
-}
 BOOST_AUTO_TEST_SUITE_END()
