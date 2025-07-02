@@ -35,22 +35,22 @@ namespace SDMS{
         // (length + 2) / 3 gives the number of 3-byte blocks (rounded up), multiplied by 4 gives the number of base64 characters required.
         const int paddedLength = SDMS::CipherEngine::BASE64_ENCODED_BLOCK_SIZE*((length + (SDMS::CipherEngine::BASE64_INPUT_BLOCK_SIZE-1))/SDMS::CipherEngine::BASE64_INPUT_BLOCK_SIZE);
         auto output = std::make_unique<char[]>(paddedLength+SDMS::CipherEngine::NULL_TERMINATOR_SIZE);
-        std::fill_n(output.get(), paddedLength + SDMS::CipherEngine::NULL_TERMINATOR_SIZE, 0);  // manually zero-initialize 
+        std::fill_n(output.get(), paddedLength + SDMS::CipherEngine::NULL_TERMINATOR_SIZE, 0);  // manually zero-initialize
         const int outputLength = EVP_EncodeBlock(reinterpret_cast<unsigned char*>(output.get()), input, length);
         if (paddedLength != outputLength) 
         {  DL_ERROR(log_context, "Output Length (" << outputLength <<") and Predicted Padded Length ("<< paddedLength <<" ) of encoded bytes not equal!"); } 
         return output;
-    } 
- 
-    std::unique_ptr<unsigned char[]> CipherEngine::decode64(const char* input,const int length, LogContext log_context) {   
+    }
+
+    std::unique_ptr<unsigned char[]> CipherEngine::decode64(const char* input,const int length, LogContext log_context) {
         // Calculate the padded length, the number of original decoded bytes
         // (length / 4) gives the number of 4-byte blocks of base64 data, multiplied by 3 gives the decoded byte length
         const int paddedLength = ((length/SDMS::CipherEngine::BASE64_ENCODED_BLOCK_SIZE)*SDMS::CipherEngine::BASE64_INPUT_BLOCK_SIZE);
         auto output = std::make_unique<unsigned char[]>(paddedLength+SDMS::CipherEngine::NULL_TERMINATOR_SIZE);
         std::fill_n(output.get(), paddedLength+SDMS::CipherEngine::NULL_TERMINATOR_SIZE, 0);
         const int outputLength = EVP_DecodeBlock(output.get(), reinterpret_cast<const unsigned char*>(input), length);
-        if (paddedLength != outputLength) 
-        { DL_ERROR(log_context, "Output Length (" << outputLength <<") and Predicted Padded Length ("<< paddedLength <<" ) of decoded bytes not equal!"); } 
+        if (paddedLength != outputLength)
+        { DL_ERROR(log_context, "Output Length (" << outputLength <<") and Predicted Padded Length ("<< paddedLength <<" ) of decoded bytes not equal!"); }
         return output;
     }
     void CipherEngine::generateIV(unsigned char *iv)
@@ -65,11 +65,10 @@ namespace SDMS{
     CipherEngine::CipherEngine(const unsigned char* inputKey)
     {
         memcpy(key, inputKey, SDMS::CipherEngine::KEY_LENGTH);
-    } 
-
+    }
 
     void CipherEngine::generateEncryptionKey(unsigned char token_key[SDMS::CipherEngine::KEY_LENGTH])
-    { 
+    {
         if (RAND_bytes(token_key, SDMS::CipherEngine::KEY_LENGTH) != 1)
         {
             handleErrors();
@@ -79,15 +78,14 @@ namespace SDMS{
 
     CipherEngine::CipherBytes CipherEngine::encryptAlgorithm(unsigned char *iv, const string& msg, LogContext log_context)
     {
-        EVP_CIPHER_CTX *ctx = nullptr; 
+        EVP_CIPHER_CTX *ctx = nullptr;
         CipherBytes bytes_result = {};
-        
+
         //setting IV for the resulting obj:
         for(int i = 0; i < SDMS::CipherEngine::IV_LENGTH; i++)
         {
             bytes_result.iv[i] = iv[i];
         }
- 
 
        vector<unsigned char> msg_unsigned(msg.begin(), msg.end());
 
@@ -108,7 +106,7 @@ namespace SDMS{
         if(1 != EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv))
             handleErrors();
 
-        int len;   
+        int len;
         /*
          * Provide the message to be encrypted, and obtain
          * the encrypted output.
@@ -152,7 +150,6 @@ namespace SDMS{
         return encodeBytes(unencoded_bytes, log_context);
     }
 
-
     CipherEngine::CipherString CipherEngine::encrypt(const string& msg, LogContext log_context)
     {
         unsigned char iv[SDMS::CipherEngine::IV_LENGTH] = {};
@@ -165,18 +162,16 @@ namespace SDMS{
 
     std::string CipherEngine::decrypt(const CipherString& encoded_encrypted_string, LogContext log_context)
     {
-    
     EVP_CIPHER_CTX *ctx = nullptr;
 
     //converts the cipherstring back to a unsigned char
     std::unique_ptr<unsigned char[]> ciphertext = decode64(encoded_encrypted_string.encrypted_msg.get(), static_cast<int>(strlen(encoded_encrypted_string.encrypted_msg.get())), log_context);
-    std::unique_ptr<unsigned char[]> iv = decode64(encoded_encrypted_string.iv.get(), static_cast<int>(strlen(encoded_encrypted_string.iv.get())), log_context);
-   
+    std::unique_ptr<unsigned char[]> iv = decode64(encoded_encrypted_string.iv.get(), static_cast<int>(strlen(encoded_encrypted_string.iv.get())),log_context);
     /* Create and initialise the context */
     if(!(ctx = EVP_CIPHER_CTX_new()))
     {
         handleErrors();
-    } 
+    }
     /* Initialise the decryption operation. IMPORTANT - ensure you use a key
      * and IV size appropriate for your cipher
      * In this example we are using 256 bit AES (i.e. a 256 bit key). The
@@ -188,21 +183,20 @@ namespace SDMS{
     {
         handleErrors();
     }
-    
-    int plaintext_len;
+    int plaintext_len = 0;
     unsigned char plaintext[encoded_encrypted_string.encrypted_msg_len + EVP_MAX_BLOCK_LENGTH] = {};
     const int ciphertext_len = encoded_encrypted_string.encrypted_msg_len;
-    int len;
+    int len = 0;
     /*
      * Provide the message to be decrypted, and obtain the plaintext output.
      * EVP_DecryptUpdate can be called multiple times if necessary.
      */
+
     if(1 != EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext.get(), ciphertext_len))
     {
         handleErrors();
     }
     plaintext_len = len;
-
 
     /*
      * Finalise the decryption. Further plaintext bytes may be written at
@@ -219,7 +213,6 @@ namespace SDMS{
     EVP_CIPHER_CTX_free(ctx);
 
     //Convert the plaintext back to string
-       
     return std::string(reinterpret_cast<char const*>(plaintext), plaintext_len);
     }
 }
