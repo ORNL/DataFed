@@ -59,7 +59,7 @@ class CipherEngine
         static const int ENCODED_IV_LENGTH = 24;
 
         /** Base64 encoded encrypted message length */
-        static const int ENCODED_MSG_LENGTH = 32;
+        static const int ENCODED_MSG_LENGTH = 128; //32
 
         /**
          * @brief Generates a random encryption key.
