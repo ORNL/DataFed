@@ -22,6 +22,9 @@ private:
   void validate();
 
 public:
+
+  virtual ~ZeroMQSocketCredentials() {};
+
   ZeroMQSocketCredentials() = default;
 
   ZeroMQSocketCredentials(

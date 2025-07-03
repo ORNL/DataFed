@@ -1,4 +1,4 @@
-define(
+(define(
     "ace/occur",
     [
         "require",
@@ -19,25 +19,25 @@ define(
             s = e("./search").Search,
             o = e("./edit_session").EditSession,
             u = e("./search_highlight").SearchHighlight;
-        r.inherits(a, s),
+        (r.inherits(a, s),
             function () {
-                (this.enter = function (e, t) {
+                ((this.enter = function (e, t) {
                     if (!t.needle) return !1;
                     var n = e.getCursorPosition();
                     this.displayOccurContent(e, t);
                     var r = this.originalToOccurPosition(e.session, n);
-                    return e.moveCursorToPosition(r), !0;
+                    return (e.moveCursorToPosition(r), !0);
                 }),
                     (this.exit = function (e, t) {
                         var n = t.translatePosition && e.getCursorPosition(),
                             r = n && this.occurToOriginalPosition(e.session, n);
-                        return this.displayOriginalContent(e), r && e.moveCursorToPosition(r), !0;
+                        return (this.displayOriginalContent(e), r && e.moveCursorToPosition(r), !0);
                     }),
                     (this.highlight = function (e, t) {
                         var n = (e.$occurHighlight =
                             e.$occurHighlight ||
                             e.addDynamicMarker(new u(null, "ace_occur-highlight", "text")));
-                        n.setRegexp(t), e._emit("changeBackMarker");
+                        (n.setRegexp(t), e._emit("changeBackMarker"));
                     }),
                     (this.displayOccurContent = function (e, t) {
                         this.$originalSession = e.session;
@@ -46,19 +46,19 @@ define(
                                 return e.content;
                             }),
                             i = new o(r.join("\n"));
-                        (i.$occur = this),
+                        ((i.$occur = this),
                             (i.$occurMatchingLines = n),
                             e.setSession(i),
                             (this.$useEmacsStyleLineStart =
                                 this.$originalSession.$useEmacsStyleLineStart),
                             (i.$useEmacsStyleLineStart = this.$useEmacsStyleLineStart),
                             this.highlight(i, t.re),
-                            i._emit("changeBackMarker");
+                            i._emit("changeBackMarker"));
                     }),
                     (this.displayOriginalContent = function (e) {
-                        e.setSession(this.$originalSession),
+                        (e.setSession(this.$originalSession),
                             (this.$originalSession.$useEmacsStyleLineStart =
-                                this.$useEmacsStyleLineStart);
+                                this.$useEmacsStyleLineStart));
                     }),
                     (this.originalToOccurPosition = function (e, t) {
                         var n = e.$occurMatchingLines,
@@ -86,14 +86,14 @@ define(
                                     : t.concat({ row: r, content: e.getLine(r) });
                             }, [])
                         );
-                    });
-            }.call(a.prototype);
+                    }));
+            }.call(a.prototype));
         var f = e("./lib/dom");
-        f.importCssString(
+        (f.importCssString(
             ".ace_occur-highlight {\n    border-radius: 4px;\n    background-color: rgba(87, 255, 8, 0.25);\n    position: absolute;\n    z-index: 4;\n    box-sizing: border-box;\n    box-shadow: 0 0 4px rgb(91, 255, 50);\n}\n.ace_dark .ace_occur-highlight {\n    background-color: rgb(80, 140, 85);\n    box-shadow: 0 0 4px rgb(60, 120, 70);\n}\n",
             "incremental-occur-highlighting",
         ),
-            (t.Occur = a);
+            (t.Occur = a));
     },
 ),
     define(
@@ -127,7 +127,7 @@ define(
                         exec: function (e) {
                             var t = e.session.$occur;
                             if (!t) return;
-                            t.exit(e, {}), e.session.$occur || f.uninstallFrom(e);
+                            (t.exit(e, {}), e.session.$occur || f.uninstallFrom(e));
                         },
                         readOnly: !0,
                     },
@@ -137,20 +137,20 @@ define(
                         exec: function (e) {
                             var t = e.session.$occur;
                             if (!t) return;
-                            t.exit(e, { translatePosition: !0 }),
-                                e.session.$occur || f.uninstallFrom(e);
+                            (t.exit(e, { translatePosition: !0 }),
+                                e.session.$occur || f.uninstallFrom(e));
                         },
                         readOnly: !0,
                     },
                 ],
                 u = e("../keyboard/hash_handler").HashHandler,
                 a = e("../lib/oop");
-            a.inherits(f, u),
+            (a.inherits(f, u),
                 function () {
-                    (this.isOccurHandler = !0),
+                    ((this.isOccurHandler = !0),
                         (this.attach = function (e) {
-                            u.call(this, o, e.commands.platform), (this.$editor = e);
-                        });
+                            (u.call(this, o, e.commands.platform), (this.$editor = e));
+                        }));
                     var e = this.handleKeyboard;
                     this.handleKeyboard = function (t, n, r, i) {
                         var s = e.call(this, t, n, r, i);
@@ -159,14 +159,14 @@ define(
                 }.call(f.prototype),
                 (f.installIn = function (e) {
                     var t = new this();
-                    e.keyBinding.addKeyboardHandler(t), e.commands.addCommands(o);
+                    (e.keyBinding.addKeyboardHandler(t), e.commands.addCommands(o));
                 }),
                 (f.uninstallFrom = function (e) {
                     e.commands.removeCommands(o);
                     var t = e.getKeyboardHandler();
                     t.isOccurHandler && e.keyBinding.removeKeyboardHandler(t);
                 }),
-                (t.occurStartCommand = s);
+                (t.occurStartCommand = s));
         },
     ),
     define(
@@ -188,14 +188,14 @@ define(
                 i = e("../lib/oop"),
                 s = e("../keyboard/hash_handler").HashHandler,
                 o = e("./occur_commands").occurStartCommand;
-            (t.iSearchStartCommands = [
+            ((t.iSearchStartCommands = [
                 {
                     name: "iSearch",
                     bindKey: { win: "Ctrl-F", mac: "Command-F" },
                     exec: function (e, t) {
                         r.loadModule(["core", "ace/incremental_search"], function (n) {
                             var r = (n.iSearch = n.iSearch || new n.IncrementalSearch());
-                            r.activate(e, t.backwards), t.jumpToFirstMatch && r.next(t);
+                            (r.activate(e, t.backwards), t.jumpToFirstMatch && r.next(t));
                         });
                     },
                     readOnly: !0,
@@ -243,14 +243,14 @@ define(
                         name: "searchForward",
                         bindKey: { win: "Ctrl-S|Ctrl-K", mac: "Ctrl-S|Command-G" },
                         exec: function (e, t) {
-                            (t.useCurrentOrPrevSearch = !0), e.next(t);
+                            ((t.useCurrentOrPrevSearch = !0), e.next(t));
                         },
                     },
                     {
                         name: "searchBackward",
                         bindKey: { win: "Ctrl-R|Ctrl-Shift-K", mac: "Ctrl-R|Command-Shift-G" },
                         exec: function (e, t) {
-                            (t.useCurrentOrPrevSearch = !0), (t.backwards = !0), e.next(t);
+                            ((t.useCurrentOrPrevSearch = !0), (t.backwards = !0), e.next(t));
                         },
                     },
                     {
@@ -292,7 +292,7 @@ define(
                         bindKey: "Ctrl-O",
                         exec: function (e) {
                             var t = i.mixin({}, e.$options);
-                            e.deactivate(), o.exec(e.$editor, t);
+                            (e.deactivate(), o.exec(e.$editor, t));
                         },
                     },
                     {
@@ -338,7 +338,7 @@ define(
                                               return e.concat(t ? t : []);
                                           }, [])
                                         : [];
-                            e.deactivate(!1), r.forEach(t.selection.addRange.bind(t.selection));
+                            (e.deactivate(!1), r.forEach(t.selection.addRange.bind(t.selection)));
                         },
                     },
                     {
@@ -358,15 +358,15 @@ define(
                 })),
                 i.inherits(u, s),
                 function () {
-                    (this.attach = function (e) {
+                    ((this.attach = function (e) {
                         var n = this.$iSearch;
-                        s.call(this, t.iSearchCommands, e.commands.platform),
+                        (s.call(this, t.iSearchCommands, e.commands.platform),
                             (this.$commandExecHandler = e.commands.addEventListener(
                                 "exec",
                                 function (t) {
                                     if (!t.command.isIncrementalSearchCommand)
                                         return n.deactivate();
-                                    t.stopPropagation(), t.preventDefault();
+                                    (t.stopPropagation(), t.preventDefault());
                                     var r = e.session.getScrollTop(),
                                         i = t.command.exec(n, t.args || {});
                                     return (
@@ -375,13 +375,13 @@ define(
                                         i
                                     );
                                 },
-                            ));
+                            )));
                     }),
                         (this.detach = function (e) {
                             if (!this.$commandExecHandler) return;
-                            e.commands.removeEventListener("exec", this.$commandExecHandler),
-                                delete this.$commandExecHandler;
-                        });
+                            (e.commands.removeEventListener("exec", this.$commandExecHandler),
+                                delete this.$commandExecHandler);
+                        }));
                     var e = this.handleKeyboard;
                     this.handleKeyboard = function (t, n, r, i) {
                         if (((n === 1 || n === 8) && r === "v") || (n === 1 && r === "y"))
@@ -395,7 +395,7 @@ define(
                         return !1;
                     };
                 }.call(u.prototype),
-                (t.IncrementalSearchKeyboardHandler = u);
+                (t.IncrementalSearchKeyboardHandler = u));
         },
     ),
     define(
@@ -417,8 +417,8 @@ define(
         function (e, t, n) {
             "use strict";
             function f() {
-                (this.$options = { wrap: !1, skipCurrent: !1 }),
-                    (this.$keyboardHandler = new a(this));
+                ((this.$options = { wrap: !1, skipCurrent: !1 }),
+                    (this.$keyboardHandler = new a(this)));
             }
             function l(e) {
                 return e instanceof RegExp;
@@ -445,10 +445,10 @@ define(
                 o = e("./search_highlight").SearchHighlight,
                 u = e("./commands/incremental_search_commands"),
                 a = u.IncrementalSearchKeyboardHandler;
-            r.inherits(f, s),
+            (r.inherits(f, s),
                 function () {
-                    (this.activate = function (e, t) {
-                        (this.$editor = e),
+                    ((this.activate = function (e, t) {
+                        ((this.$editor = e),
                             (this.$startPos = this.$currentPos = e.getCursorPosition()),
                             (this.$options.needle = ""),
                             (this.$options.backwards = t),
@@ -460,17 +460,17 @@ define(
                                 this.onMouseDown.bind(this),
                             )),
                             this.selectionFix(e),
-                            this.statusMessage(!0);
+                            this.statusMessage(!0));
                     }),
                         (this.deactivate = function (e) {
                             this.cancelSearch(e);
                             var t = this.$editor;
-                            t.keyBinding.removeKeyboardHandler(this.$keyboardHandler),
+                            (t.keyBinding.removeKeyboardHandler(this.$keyboardHandler),
                                 this.$mousedownHandler &&
                                     (t.removeEventListener("mousedown", this.$mousedownHandler),
                                     delete this.$mousedownHandler),
                                 (t.onPaste = this.$originalEditorOnPaste),
-                                this.message("");
+                                this.message(""));
                         }),
                         (this.selectionFix = function (e) {
                             e.selection.isEmpty() && !e.session.$emacsMark && e.clearSelection();
@@ -480,7 +480,7 @@ define(
                                 n = (t.$isearchHighlight =
                                     t.$isearchHighlight ||
                                     t.addDynamicMarker(new o(null, "ace_isearch-result", "text")));
-                            n.setRegexp(e), t._emit("changeBackMarker");
+                            (n.setRegexp(e), t._emit("changeBackMarker"));
                         }),
                         (this.cancelSearch = function (e) {
                             var t = this.$editor;
@@ -500,7 +500,7 @@ define(
                             var n = this.$options;
                             t && (n.needle = t.call(this, n.needle || "") || "");
                             if (n.needle.length === 0)
-                                return this.statusMessage(!0), this.cancelSearch(!0);
+                                return (this.statusMessage(!0), this.cancelSearch(!0));
                             n.start = this.$currentPos;
                             var r = this.$editor.session,
                                 s = this.find(r),
@@ -523,7 +523,7 @@ define(
                             return this.highlightAndFindWithNeedle(!1, function (t) {
                                 if (!l(t)) return t + e;
                                 var n = c(t);
-                                return (n.expression += e), p(n);
+                                return ((n.expression += e), p(n));
                             });
                         }),
                         (this.removeChar = function (e) {
@@ -552,7 +552,7 @@ define(
                             );
                         }),
                         (this.onMouseDown = function (e) {
-                            return this.deactivate(), !0;
+                            return (this.deactivate(), !0);
                         }),
                         (this.onPaste = function (e) {
                             this.addString(e);
@@ -570,18 +570,18 @@ define(
                         (this.statusMessage = function (e) {
                             var t = this.$options,
                                 n = "";
-                            (n += t.backwards ? "reverse-" : ""),
+                            ((n += t.backwards ? "reverse-" : ""),
                                 (n += "isearch: " + t.needle),
                                 (n += e ? "" : " (not found)"),
-                                this.message(n);
+                                this.message(n));
                         }),
                         (this.message = function (e) {
                             this.$editor.showCommandLine
                                 ? (this.$editor.showCommandLine(e), this.$editor.focus())
                                 : console.log(e);
-                        });
+                        }));
                 }.call(f.prototype),
-                (t.IncrementalSearch = f);
+                (t.IncrementalSearch = f));
             var d = e("./lib/dom");
             d.importCssString &&
                 d.importCssString(
@@ -602,10 +602,10 @@ define(
             e("./config").defineOptions(m.prototype, "editor", {
                 useIncrementalSearch: {
                     set: function (e) {
-                        this.keyBinding.$handlers.forEach(function (t) {
+                        (this.keyBinding.$handlers.forEach(function (t) {
                             t.setupIncrementalSearch && t.setupIncrementalSearch(this, e);
                         }),
-                            this._emit("incrementalSearchSettingChanged", { isEnabled: e });
+                            this._emit("incrementalSearchSettingChanged", { isEnabled: e }));
                     },
                 },
             });
@@ -629,12 +629,14 @@ define(
             e("../incremental_search");
             var i = e("../commands/incremental_search_commands"),
                 s = e("./hash_handler").HashHandler;
-            (t.handler = new s()), (t.handler.isEmacs = !0), (t.handler.$id = "ace/keyboard/emacs");
+            ((t.handler = new s()),
+                (t.handler.isEmacs = !0),
+                (t.handler.$id = "ace/keyboard/emacs"));
             var o = !1,
                 u,
                 a;
-            (t.handler.attach = function (e) {
-                o ||
+            ((t.handler.attach = function (e) {
+                (o ||
                     ((o = !0),
                     r.importCssString(
                         "            .emacs-mode .ace_cursor{                border: 1px rgba(50,250,50,0.8) solid!important;                box-sizing: border-box!important;                background-color: rgba(0,250,0,0.9);                opacity: 0.5;            }            .emacs-mode .ace_hidden-cursors .ace_cursor{                opacity: 1;                background-color: transparent;            }            .emacs-mode .ace_overwrite-cursors .ace_cursor {                opacity: 1;                background-color: transparent;                border-width: 0 0 2px 2px !important;            }            .emacs-mode .ace_text-layer {                z-index: 4            }            .emacs-mode .ace_cursor-layer {                z-index: 2            }",
@@ -654,8 +656,8 @@ define(
                     }),
                     (e.pushEmacsMark = function (e, t) {
                         var n = this.session.$emacsMark;
-                        n && this.session.$emacsMarkRing.push(n),
-                            !e || t ? this.setEmacsMark(e) : this.session.$emacsMarkRing.push(e);
+                        (n && this.session.$emacsMarkRing.push(n),
+                            !e || t ? this.setEmacsMark(e) : this.session.$emacsMarkRing.push(e));
                     }),
                     (e.popEmacsMark = function () {
                         var e = this.emacsMark();
@@ -671,7 +673,10 @@ define(
                             i = this.session.$emacsMarkRing,
                             s = i.length - (n - r),
                             o = i[s] || t.anchor;
-                        return e && i.splice(s, 1, "row" in e && "column" in e ? e : undefined), o;
+                        return (
+                            e && i.splice(s, 1, "row" in e && "column" in e ? e : undefined),
+                            o
+                        );
                     }),
                     e.on("click", l),
                     e.on("changeSession", f),
@@ -681,10 +686,10 @@ define(
                     (t.handler.platform = e.commands.platform),
                     (e.$emacsModeHandler = this),
                     e.addEventListener("copy", this.onCopy),
-                    e.addEventListener("paste", this.onPaste);
+                    e.addEventListener("paste", this.onPaste));
             }),
                 (t.handler.detach = function (e) {
-                    (e.renderer.$blockCursor = !1),
+                    ((e.renderer.$blockCursor = !1),
                         (e.session.$selectLongWords = u),
                         (e.session.$useEmacsStyleLineStart = a),
                         e.removeEventListener("click", l),
@@ -693,10 +698,10 @@ define(
                         e.commands.removeCommands(d),
                         e.removeEventListener("copy", this.onCopy),
                         e.removeEventListener("paste", this.onPaste),
-                        (e.$emacsModeHandler = null);
-                });
+                        (e.$emacsModeHandler = null));
+                }));
             var f = function (e) {
-                    e.oldSession &&
+                    (e.oldSession &&
                         ((e.oldSession.$selectLongWords = u),
                         (e.oldSession.$useEmacsStyleLineStart = a)),
                         (u = e.session.$selectLongWords),
@@ -705,7 +710,7 @@ define(
                         (e.session.$useEmacsStyleLineStart = !0),
                         e.session.hasOwnProperty("$emacsMark") || (e.session.$emacsMark = null),
                         e.session.hasOwnProperty("$emacsMarkRing") ||
-                            (e.session.$emacsMarkRing = []);
+                            (e.session.$emacsMarkRing = []));
                 },
                 l = function (e) {
                     e.editor.session.$emacsMark = null;
@@ -729,18 +734,18 @@ define(
                     "S",
                     "C",
                 ];
-            p.forEach(function (e) {
+            (p.forEach(function (e) {
                 var t = 0;
-                e.split("-").forEach(function (e) {
+                (e.split("-").forEach(function (e) {
                     t |= c[h[e]];
                 }),
-                    (h[t] = e.toLowerCase() + "-");
+                    (h[t] = e.toLowerCase() + "-"));
             }),
                 (t.handler.onCopy = function (e, n) {
                     if (n.$handlesEmacsOnCopy) return;
-                    (n.$handlesEmacsOnCopy = !0),
+                    ((n.$handlesEmacsOnCopy = !0),
                         t.handler.commands.killRingSave.exec(n),
-                        (n.$handlesEmacsOnCopy = !1);
+                        (n.$handlesEmacsOnCopy = !1));
                 }),
                 (t.handler.onPaste = function (e, t) {
                     t.pushEmacsMark(t.getCursorPosition());
@@ -750,7 +755,7 @@ define(
                     if (!e) return;
                     var n = this.commandKeyBinding;
                     e.split("|").forEach(function (e) {
-                        (e = e.toLowerCase()), (n[e] = t);
+                        ((e = e.toLowerCase()), (n[e] = t));
                         var r = e.split(" ").slice(0, -1);
                         r.reduce(function (e, t, n) {
                             var r = e[n - 1] ? e[n - 1] + " " : "";
@@ -762,7 +767,7 @@ define(
                 }),
                 (t.handler.getStatusText = function (e, t) {
                     var n = "";
-                    return t.count && (n += t.count), t.keyChain && (n += " " + t.keyChain), n;
+                    return (t.count && (n += t.count), t.keyChain && (n += " " + t.keyChain), n);
                 }),
                 (t.handler.handleKeyboard = function (e, t, n, r) {
                     if (r === -1) return undefined;
@@ -772,7 +777,7 @@ define(
                         i.pushEmacsMark();
                         if (e.count) {
                             var s = new Array(e.count + 1).join(n);
-                            return (e.count = null), { command: "insertstring", args: s };
+                            return ((e.count = null), { command: "insertstring", args: s });
                         }
                     }
                     var o = h[t];
@@ -785,25 +790,25 @@ define(
                                 { command: "null" }
                             );
                     }
-                    o && (n = o + n), e.keyChain && (n = e.keyChain += " " + n);
+                    (o && (n = o + n), e.keyChain && (n = e.keyChain += " " + n));
                     var a = this.commandKeyBinding[n];
                     e.keyChain = a == "null" ? n : "";
                     if (!a) return undefined;
                     if (a === "null") return { command: "null" };
-                    if (a === "universalArgument") return (e.count = -4), { command: "null" };
+                    if (a === "universalArgument") return ((e.count = -4), { command: "null" });
                     var f;
                     typeof a != "string" &&
                         ((f = a.args),
                         a.command && (a = a.command),
                         a === "goorselect" && ((a = i.emacsMark() ? f[1] : f[0]), (f = null)));
                     if (typeof a == "string") {
-                        (a === "insertstring" || a === "splitline" || a === "togglecomment") &&
+                        ((a === "insertstring" || a === "splitline" || a === "togglecomment") &&
                             i.pushEmacsMark(),
-                            (a = this.commands[a] || i.commands.commands[a]);
+                            (a = this.commands[a] || i.commands.commands[a]));
                         if (!a) return undefined;
                     }
-                    !a.readOnly && !a.isYank && (e.lastCommand = null),
-                        !a.readOnly && i.emacsMark() && i.setEmacsMark(null);
+                    (!a.readOnly && !a.isYank && (e.lastCommand = null),
+                        !a.readOnly && i.emacsMark() && i.setEmacsMark(null));
                     if (e.count) {
                         var u = e.count;
                         e.count = 0;
@@ -817,7 +822,7 @@ define(
                                     multiSelectAction: a.multiSelectAction,
                                 },
                             };
-                        f || (f = {}), typeof f == "object" && (f.count = u);
+                        (f || (f = {}), typeof f == "object" && (f.count = u));
                     }
                     return { command: a, args: f };
                 }),
@@ -901,12 +906,12 @@ define(
                             n = t.$cursorLayer.getPixelPosition(),
                             r = t.$size.scrollerHeight - t.lineHeight,
                             i = t.scrollTop;
-                        Math.abs(n.top - i) < 2
+                        (Math.abs(n.top - i) < 2
                             ? (i = n.top - r)
                             : Math.abs(n.top - i - r * 0.5) < 2
                               ? (i = n.top)
                               : (i = n.top - r * 0.5),
-                            e.session.setScrollTop(i);
+                            e.session.setScrollTop(i));
                     },
                     selectRectangularRegion: function (e) {
                         e.multiSelect.toggleBlockSelection();
@@ -918,7 +923,7 @@ define(
                                 t && e.moveCursorToPosition(t);
                             }
                             if (t && t.count) {
-                                e.inMultiSelectMode ? e.forEachSelection(u) : u(), u();
+                                (e.inMultiSelectMode ? e.forEachSelection(u) : u(), u());
                                 return;
                             }
                             var n = e.emacsMark(),
@@ -931,17 +936,17 @@ define(
                                     return e.isEmpty();
                                 });
                             if (s && (n || !o)) {
-                                e.inMultiSelectMode
+                                (e.inMultiSelectMode
                                     ? e.forEachSelection({ exec: e.clearSelection.bind(e) })
                                     : e.clearSelection(),
-                                    n && e.pushEmacsMark(null);
+                                    n && e.pushEmacsMark(null));
                                 return;
                             }
                             if (!n) {
-                                i.forEach(function (t) {
+                                (i.forEach(function (t) {
                                     e.pushEmacsMark(t);
                                 }),
-                                    e.setEmacsMark(i[i.length - 1]);
+                                    e.setEmacsMark(i[i.length - 1]));
                                 return;
                             }
                         },
@@ -957,8 +962,8 @@ define(
                             }
                             if (n.count) {
                                 var i = { row: r.lead.row, column: r.lead.column };
-                                r.clearSelection(),
-                                    r.moveCursorToPosition(t.emacsMarkForSelection(i));
+                                (r.clearSelection(),
+                                    r.moveCursorToPosition(t.emacsMarkForSelection(i)));
                             } else r.selectToPosition(t.emacsMarkForSelection());
                         },
                         readOnly: !0,
@@ -967,48 +972,48 @@ define(
                     },
                     killWord: {
                         exec: function (e, n) {
-                            e.clearSelection(),
+                            (e.clearSelection(),
                                 n == "left"
                                     ? e.selection.selectWordLeft()
-                                    : e.selection.selectWordRight();
+                                    : e.selection.selectWordRight());
                             var r = e.getSelectionRange(),
                                 i = e.session.getTextRange(r);
-                            t.killRing.add(i), e.session.remove(r), e.clearSelection();
+                            (t.killRing.add(i), e.session.remove(r), e.clearSelection());
                         },
                         multiSelectAction: "forEach",
                     },
                     killLine: function (e) {
-                        e.pushEmacsMark(null), e.clearSelection();
+                        (e.pushEmacsMark(null), e.clearSelection());
                         var n = e.getSelectionRange(),
                             r = e.session.getLine(n.start.row);
-                        (n.end.column = r.length), (r = r.substr(n.start.column));
+                        ((n.end.column = r.length), (r = r.substr(n.start.column)));
                         var i = e.session.getFoldLine(n.start.row);
-                        i && n.end.row != i.end.row && ((n.end.row = i.end.row), (r = "x")),
+                        (i && n.end.row != i.end.row && ((n.end.row = i.end.row), (r = "x")),
                             /^\s*$/.test(r) &&
                                 (n.end.row++,
                                 (r = e.session.getLine(n.end.row)),
-                                (n.end.column = /^\s*$/.test(r) ? r.length : 0));
+                                (n.end.column = /^\s*$/.test(r) ? r.length : 0)));
                         var s = e.session.getTextRange(n);
-                        e.prevOp.command == this ? t.killRing.append(s) : t.killRing.add(s),
+                        (e.prevOp.command == this ? t.killRing.append(s) : t.killRing.add(s),
                             e.session.remove(n),
-                            e.clearSelection();
+                            e.clearSelection());
                     },
                     yank: function (e) {
-                        e.onPaste(t.killRing.get() || ""),
-                            (e.keyBinding.$data.lastCommand = "yank");
+                        (e.onPaste(t.killRing.get() || ""),
+                            (e.keyBinding.$data.lastCommand = "yank"));
                     },
                     yankRotate: function (e) {
                         if (e.keyBinding.$data.lastCommand != "yank") return;
-                        e.undo(),
+                        (e.undo(),
                             e.session.$emacsMarkRing.pop(),
                             e.onPaste(t.killRing.rotate()),
-                            (e.keyBinding.$data.lastCommand = "yank");
+                            (e.keyBinding.$data.lastCommand = "yank"));
                     },
                     killRegion: {
                         exec: function (e) {
-                            t.killRing.add(e.getCopyText()),
+                            (t.killRing.add(e.getCopyText()),
                                 e.commands.byName.cut.exec(e),
-                                e.setEmacsMark(null);
+                                e.setEmacsMark(null));
                         },
                         readOnly: !0,
                         multiSelectAction: "forEach",
@@ -1018,44 +1023,44 @@ define(
                             e.$handlesEmacsOnCopy = !0;
                             var n = e.session.$emacsMarkRing.slice(),
                                 r = [];
-                            t.killRing.add(e.getCopyText()),
+                            (t.killRing.add(e.getCopyText()),
                                 setTimeout(function () {
                                     function t() {
                                         var t = e.selection,
                                             n = t.getRange(),
                                             i = t.isBackwards() ? n.end : n.start;
-                                        r.push({ row: i.row, column: i.column }),
-                                            t.clearSelection();
+                                        (r.push({ row: i.row, column: i.column }),
+                                            t.clearSelection());
                                     }
-                                    (e.$handlesEmacsOnCopy = !1),
+                                    ((e.$handlesEmacsOnCopy = !1),
                                         e.inMultiSelectMode ? e.forEachSelection({ exec: t }) : t(),
-                                        (e.session.$emacsMarkRing = n.concat(r.reverse()));
-                                }, 0);
+                                        (e.session.$emacsMarkRing = n.concat(r.reverse())));
+                                }, 0));
                         },
                         readOnly: !0,
                     },
                     keyboardQuit: function (e) {
-                        e.selection.clearSelection(),
+                        (e.selection.clearSelection(),
                             e.setEmacsMark(null),
-                            (e.keyBinding.$data.count = null);
+                            (e.keyBinding.$data.count = null));
                     },
                     focusCommandLine: function (e, t) {
                         e.showCommandLine && e.showCommandLine(t);
                     },
                 }),
-                t.handler.addCommands(i.iSearchStartCommands);
+                t.handler.addCommands(i.iSearchStartCommands));
             var d = t.handler.commands;
-            (d.yank.isYank = !0),
+            ((d.yank.isYank = !0),
                 (d.yankRotate.isYank = !0),
                 (t.killRing = {
                     $data: [],
                     add: function (e) {
-                        e && this.$data.push(e), this.$data.length > 30 && this.$data.shift();
+                        (e && this.$data.push(e), this.$data.length > 30 && this.$data.shift());
                     },
                     append: function (e) {
                         var t = this.$data.length - 1,
                             n = this.$data[t] || "";
-                        e && (n += e), n && (this.$data[t] = n);
+                        (e && (n += e), n && (this.$data[t] = n));
                     },
                     get: function (e) {
                         return (
@@ -1067,14 +1072,14 @@ define(
                         );
                     },
                     pop: function () {
-                        return this.$data.length > 1 && this.$data.pop(), this.get();
+                        return (this.$data.length > 1 && this.$data.pop(), this.get());
                     },
                     rotate: function () {
-                        return this.$data.unshift(this.$data.pop()), this.get();
+                        return (this.$data.unshift(this.$data.pop()), this.get());
                     },
-                });
+                }));
         },
-    );
+    ));
 (function () {
     window.require(["ace/keyboard/emacs"], function (m) {
         if (typeof module == "object" && typeof exports == "object" && module) {

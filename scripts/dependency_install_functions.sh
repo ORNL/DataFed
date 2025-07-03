@@ -63,8 +63,33 @@ else
   fi
 fi
 
+# Function to clean up multiple installation flag files with a given prefix
+clean_install_flags() {
+  local install_path="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+  local prefix="$1" # The first argument is now the prefix
+
+  # Validate that a prefix was provided
+  if [ -z "$prefix" ]; then
+    echo "Error: No prefix provided for clean_install_flags." >&2
+    return 1 # Indicate an error
+  fi
+
+  # Count files matching the pattern
+  local count=$(find "${install_path}" -maxdepth 1 -type f -name "${prefix}*" 2>/dev/null | wc -l)
+
+  if [ "${count}" -gt 1 ]; then
+    echo "Warning: Found ${count} installation flag files with prefix '${prefix}'. Cleaning up..."
+    # Remove all files matching the pattern
+    find "${install_path}" -maxdepth 1 -type f -name "${prefix}*" -delete
+    echo "Removed all existing installation flag files with prefix '${prefix}'."
+  fi
+}
+
 install_python() {
-  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.python_installed-${DATAFED_PYTHON_VERSION}" ]; then
+
+  local PYTHON_FLAG_PREFIX=".python_installed-"
+  clean_install_flags "$PYTHON_FLAG_PREFIX"
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${PYTHON_FLAG_PREFIX}${DATAFED_PYTHON_VERSION}" ]; then
     # Check if the deadsnakes repository has already been added to avoid issues with gpg
     if ! grep -qr '^deb .\+deadsnakes' /etc/apt/sources.list.d/; then
 	"$SUDO_CMD" apt update
@@ -75,7 +100,7 @@ install_python() {
 
     "$SUDO_CMD" apt install -y "python${DATAFED_PYTHON_VERSION}" "python${DATAFED_PYTHON_VERSION}-dev" "python${DATAFED_PYTHON_VERSION}-venv" "python${DATAFED_PYTHON_VERSION}-distutils"
 
-    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.python_installed-${DATAFED_PYTHON_VERSION}"
+    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${PYTHON_FLAG_PREFIX}${DATAFED_PYTHON_VERSION}"
   fi
 }
 
@@ -100,7 +125,10 @@ init_python() {
 }
 
 install_cmake() {
-  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.cmake_installed-${DATAFED_CMAKE_VERSION}" ]; then
+
+  local CMAKE_FLAG_PREFIX=".cmake_installed-"
+  clean_install_flags "$CMAKE_FLAG_PREFIX"
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${CMAKE_FLAG_PREFIX}${DATAFED_CMAKE_VERSION}" ]; then
     # Version 3.20 of cmake and onwards starting using all lower case in the package names, previos versions use a
     # a capital L in the name.
     wget https://github.com/Kitware/CMake/releases/download/v${DATAFED_CMAKE_VERSION}/cmake-${DATAFED_CMAKE_VERSION}-linux-x86_64.tar.gz
@@ -113,7 +141,7 @@ install_cmake() {
     rm -rf "cmake-${DATAFED_CMAKE_VERSION}-linux-x86_64.tar.gz"
 
     # Mark cmake as installed
-    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.cmake_installed-${DATAFED_CMAKE_VERSION}"
+    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${CMAKE_FLAG_PREFIX}${DATAFED_CMAKE_VERSION}"
   fi
   # WARNING: overwriting PATH can be very dangerous
   #   In Docker builds this must follow the pattern:
@@ -124,7 +152,9 @@ install_cmake() {
 }
 
 install_protobuf() {
-  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.protobuf_installed-${DATAFED_PROTOBUF_VERSION}" ]; then
+  local PROTOBUF_FLAG_PREFIX=".protobuf_installed-"
+  clean_install_flags "$PROTOBUF_FLAG_PREFIX"
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${PROTOBUF_FLAG_PREFIX}${DATAFED_PROTOBUF_VERSION}" ]; then
     local original_dir=$(pwd)
     cd "${PROJECT_ROOT}"
     if [ -d "${PROJECT_ROOT}/external/protobuf" ]; then
@@ -181,13 +211,15 @@ install_protobuf() {
     cd "${PROJECT_ROOT}"
 
     # Mark protobuf as installed
-    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.protobuf_installed-${DATAFED_PROTOBUF_VERSION}"
+    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${PROTOBUF_FLAG_PREFIX}${DATAFED_PROTOBUF_VERSION}"
     cd "$original_dir"
   fi
 }
 
 install_libsodium() {
-  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.libsodium_installed-${DATAFED_LIBSODIUM_VERSION}" ]; then
+  local LIBSODIUM_FLAG_PREFIX=".libsodium_installed-"
+  clean_install_flags "$LIBSODIUM_FLAG_PREFIX"
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${LIBSODIUM_FLAG_PREFIX}${DATAFED_LIBSODIUM_VERSION}" ]; then
     local original_dir=$(pwd)
     if [ -d "${PROJECT_ROOT}/external/libsodium" ]; then
       # sudo required because of egg file
@@ -225,13 +257,15 @@ install_libsodium() {
     fi
 
     # Mark libsodium as installed
-    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.libsodium_installed-${DATAFED_LIBSODIUM_VERSION}"
+    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${LIBSODIUM_FLAG_PREFIX}${DATAFED_LIBSODIUM_VERSION}"
     cd "$original_dir"
   fi
 }
 
 install_libzmq() {
-  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.libzmq_installed-${DATAFED_LIBZMQ_VERSION}" ]; then
+  local LIBZMQ_FLAG_PREFIX=".libzmq_installed-"
+  clean_install_flags "$LIBZMQ_FLAG_PREFIX"
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${LIBZMQ_FLAG_PREFIX}${DATAFED_LIBZMQ_VERSION}" ]; then
     local original_dir=$(pwd)
     if [ -d "${PROJECT_ROOT}/external/libzmq" ]; then
       "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/libzmq"
@@ -288,12 +322,14 @@ install_libzmq() {
 
     cd "$original_dir"
     # Mark libzmq as installed
-    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.libzmq_installed-${DATAFED_LIBZMQ_VERSION}"
+    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${LIBZMQ_FLAG_PREFIX}${DATAFED_LIBZMQ_VERSION}"
   fi
 }
 
 install_nlohmann_json() {
-  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.nlohmann_json_installed-${DATAFED_NLOHMANN_JSON_VERSION}" ]; then
+  local NLOHMANN_FLAG_PREFIX=".nlohmann_json_installed-"
+  clean_install_flags "$NLOHMANN_FLAG_PREFIX"
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${NLOHMANN_FLAG_PREFIX}${DATAFED_NLOHMANN_JSON_VERSION}" ]; then
     local original_dir=$(pwd)
     if [ -d "${PROJECT_ROOT}/external/json" ]; then
       "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/json"
@@ -326,13 +362,15 @@ install_nlohmann_json() {
     fi
 
     # Mark nlohmann_json as installed
-    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.nlohmann_json_installed-${DATAFED_NLOHMANN_JSON_VERSION}"
+    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${NLOHMANN_FLAG_PREFIX}${DATAFED_NLOHMANN_JSON_VERSION}"
     cd "$original_dir"
   fi
 }
 
 install_json_schema_validator() {
-  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.json_schema_validator_installed-${DATAFED_JSON_SCHEMA_VALIDATOR_VERSION}" ]; then
+  local NLOHMANN_SCHEMA_FLAG_PREFIX=".nlohmann_schema_validator_installed-"
+  clean_install_flags "$NLOHMANN_SCHEMA_FLAG_PREFIX"
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${NLOHMANN_SCHEMA_FLAG_PREFIX}${DATAFED_JSON_SCHEMA_VALIDATOR_VERSION}" ]; then
     local original_dir=$(pwd)
     if [ -d "${PROJECT_ROOT}/external/json-schema-validator" ]; then
       "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/json-schema-validator"
@@ -355,13 +393,15 @@ install_json_schema_validator() {
     # library, does not appear to support both targets at the same time, similar
     # to protobuf
     # Mark json-schema-validator as installed
-    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.json_schema_validator_installed-${DATAFED_JSON_SCHEMA_VALIDATOR_VERSION}"
+    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${NLOHMANN_SCHEMA_FLAG_PREFIX}${DATAFED_JSON_SCHEMA_VALIDATOR_VERSION}"
     cd "$original_dir"
   fi
 }
 
 install_gcs() {
-  if [ ! -e ".gcs_installed-${DATAFED_GLOBUS_VERSION}" ]; then
+  local GCS_FLAG_PREFIX=".gcs_installed-"
+  clean_install_flags "$GCS_FLAG_PREFIX"
+  if [ ! -e "${GCS_FLAG_PREFIX}${DATAFED_GLOBUS_VERSION}" ]; then
     "$SUDO_CMD" apt update
     "$SUDO_CMD" apt install -y curl git gnupg
     "$DATAFED_DEPENDENCIES_INSTALL_PATH/bin/"curl -LOs \
@@ -373,13 +413,15 @@ install_gcs() {
     "$SUDO_CMD" apt-get install globus-connect-server54 -y
 
     # Mark gcs as installed
-    touch ".gcs_installed-${DATAFED_GLOBUS_VERSION}"
+    touch "${GCS_FLAG_PREFIX}${DATAFED_GLOBUS_VERSION}"
   fi
 }
 
 install_nvm() {
+  local NVM_FLAG_PREFIX=".nvm_installed-"
+  clean_install_flags "$NVM_FLAG_PREFIX"
   # By default this will place NVM in $HOME/.nvm
-  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.nvm_installed-${DATAFED_NVM_VERSION}" ]; then
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${NVM_FLAG_PREFIX}${DATAFED_NVM_VERSION}" ]; then
     # By setting NVM_DIR beforehand when the scirpt is run it
     # will use it to set the install path
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
@@ -387,7 +429,7 @@ install_nvm() {
     #curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${DATAFED_NVM_VERSION}/install.sh" | bash
     PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/bin/:$PATH" "$DATAFED_DEPENDENCIES_INSTALL_PATH/bin/"curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${DATAFED_NVM_VERSION}/install.sh" | bash
     # Mark nvm as installed
-    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.nvm_installed-${DATAFED_NVM_VERSION}"
+    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${NVM_FLAG_PREFIX}${DATAFED_NVM_VERSION}"
   else
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
   fi
@@ -416,8 +458,10 @@ install_ws_node_packages() {
 }
 
 install_node() {
+  local NODE_FLAG_PREFIX=".node_installed-"
+  clean_install_flags "$NODE_FLAG_PREFIX"
   # By default this will place NVM in $HOME/.nvm
-  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.node_installed-${DATAFED_NODE_VERSION}" ]; then
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${NODE_FLAG_PREFIX}${DATAFED_NODE_VERSION}" ]; then
     local original_dir=$(pwd)
     if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.nvm_installed-${DATAFED_NVM_VERSION}" ]; then
       echo "You must first install nvm before installing node."
@@ -430,7 +474,7 @@ install_node() {
     PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/bin:$PATH" LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib:$LD_LIBRARY_PATH" nvm install "$DATAFED_NODE_VERSION"
     nvm use "$DATAFED_NODE_VERSION"
     # Mark node as installed
-    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.node_installed-${DATAFED_NODE_VERSION}"
+    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${NODE_FLAG_PREFIX}${DATAFED_NODE_VERSION}"
     cd "$original_dir"
   else
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
@@ -450,15 +494,17 @@ install_foxx_cli() {
     echo "You must first install node before installing foxx_cli"
     exit 1
   fi
+  local FOXX_FLAG_PREFIX=".foxx_cli_installed-"
+  clean_install_flags "$FOXX_FLAG_PREFIX"
   # By default this will place NVM in $HOME/.nvm
-  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.foxx_cli_installed" ]; then
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${FOXX_FLAG_PREFIX}" ]; then
     local original_dir=$(pwd)
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
     export NODE_VERSION="$DATAFED_NODE_VERSION"
     "$NVM_DIR/nvm-exec" npm install --global foxx-cli --prefix "${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm"
     # Mark foxx_cli as installed
-    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.foxx_cli_installed"
+    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${FOXX_FLAG_PREFIX}"
     cd "$original_dir"
   else
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
@@ -491,7 +537,9 @@ install_arangodb() {
 }
 
 install_openssl() {
-  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.openssl_installed-${DATAFED_OPENSSL}" ]; then
+  local OPENSSL_FLAG_PREFIX=".openssl_installed-"
+  clean_install_flags "$OPENSSL_FLAG_PREFIX"
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${OPENSSL_FLAG_PREFIX}${DATAFED_OPENSSL}" ]; then
     local original_dir=$(pwd)
     if [ -d "${PROJECT_ROOT}/external/openssl" ]; then
       "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/openssl"
@@ -509,13 +557,15 @@ install_openssl() {
       "$SUDO_CMD" make install
     fi
     # Mark openssl as installed
-    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.openssl_installed-${DATAFED_OPENSSL}"
+    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${OPENSSL_FLAG_PREFIX}${DATAFED_OPENSSL}"
     cd "$original_dir"
   fi
 }
 
 install_libcurl() {
-  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.libcurl_installed-${DATAFED_LIBCURL}" ]; then
+  local CURL_FLAG_PREFIX=".libcurl_installed-"
+  clean_install_flags "$CURL_FLAG_PREFIX"
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${CURL_FLAG_PREFIX}${DATAFED_LIBCURL}" ]; then
     local original_dir=$(pwd)
     if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.zlib_installed-${DATAFED_ZLIB_VERSION}" ]; then
       echo "You must first install zlib before installing libcurl packages"
@@ -559,13 +609,15 @@ install_libcurl() {
     fi
 
     # Mark libcurl as installed
-    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.libcurl_installed-${DATAFED_LIBCURL}"
+    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${CURL_FLAG_PREFIX}${DATAFED_LIBCURL}"
     cd "$original_dir"
   fi
 }
 
 install_zlib() {
-  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.zlib_installed-${DATAFED_ZLIB_VERSION}" ]; then
+  local ZLIB_FLAG_PREFIX=".zlib_installed-"
+  clean_install_flags "$ZLIB_FLAG_PREFIX"
+  if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${ZLIB_FLAG_PREFIX}${DATAFED_ZLIB_VERSION}" ]; then
     local original_dir=$(pwd)
     if [ -d "${PROJECT_ROOT}/external/zlib" ]; then
       "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/zlib"
@@ -584,7 +636,7 @@ install_zlib() {
     fi
 
     # Mark libcurl as installed
-    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.zlib_installed-${DATAFED_ZLIB_VERSION}"
+    touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${ZLIB_FLAG_PREFIX}${DATAFED_ZLIB_VERSION}"
     cd "$original_dir"
   fi
 }

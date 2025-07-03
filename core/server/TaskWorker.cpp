@@ -69,7 +69,7 @@ void TaskWorker::workerThread(LogContext log_context) {
   string err_msg;
   Value task_cmd;
   Value::ObjectIter iter;
-  uint32_t cmd;
+  uint32_t cmd = 0;
   int step;
   bool first;
   int db_connection_backoff;

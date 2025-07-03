@@ -1,4 +1,4 @@
-define(
+(define(
     "ace/mode/json_highlight_rules",
     ["require", "exports", "module", "ace/lib/oop", "ace/mode/text_highlight_rules"],
     function (e, t, n) {
@@ -37,7 +37,7 @@ define(
                     ],
                 };
             };
-        r.inherits(s, i), (t.JsonHighlightRules = s);
+        (r.inherits(s, i), (t.JsonHighlightRules = s));
     },
 ),
     define(
@@ -47,8 +47,8 @@ define(
             "use strict";
             var r = e("../range").Range,
                 i = function () {};
-            (function () {
-                (this.checkOutdent = function (e, t) {
+            ((function () {
+                ((this.checkOutdent = function (e, t) {
                     return /^\s+$/.test(e) ? /^\s*\}/.test(t) : !1;
                 }),
                     (this.autoOutdent = function (e, t) {
@@ -63,9 +63,9 @@ define(
                     }),
                     (this.$getIndent = function (e) {
                         return e.match(/^\s*/)[0];
-                    });
+                    }));
             }).call(i.prototype),
-                (t.MatchingBraceOutdent = i);
+                (t.MatchingBraceOutdent = i));
         },
     ),
     define(
@@ -85,9 +85,9 @@ define(
                             this.foldingStopMarker.source.replace(/\|[^|]*?$/, "|" + e.end),
                         )));
                 });
-            r.inherits(o, s),
+            (r.inherits(o, s),
                 function () {
-                    (this.foldingStartMarker = /([\{\[\(])[^\}\]\)]*$|^\s*(\/\*)/),
+                    ((this.foldingStartMarker = /([\{\[\(])[^\}\]\)]*$|^\s*(\/\*)/),
                         (this.foldingStopMarker = /^[^\[\{\(]*([\}\]\)])|^[\s\*]*(\*\/)/),
                         (this.singleLineBlockCommentRe = /^\s*(\/\*).*\*\/\s*$/),
                         (this.tripleStarBlockCommentRe = /^\s*(\/\*\*\*).*\*\/\s*$/),
@@ -169,8 +169,8 @@ define(
                             }
                             var l = n;
                             if (l > o) return new i(o, r, l, t.length);
-                        });
-                }.call(o.prototype);
+                        }));
+                }.call(o.prototype));
         },
     ),
     define(
@@ -197,14 +197,14 @@ define(
                 a = e("./folding/cstyle").FoldMode,
                 f = e("../worker/worker_client").WorkerClient,
                 l = function () {
-                    (this.HighlightRules = s),
+                    ((this.HighlightRules = s),
                         (this.$outdent = new o()),
                         (this.$behaviour = new u()),
-                        (this.foldingRules = new a());
+                        (this.foldingRules = new a()));
                 };
-            r.inherits(l, i),
+            (r.inherits(l, i),
                 function () {
-                    (this.getNextLineIndent = function (e, t, n) {
+                    ((this.getNextLineIndent = function (e, t, n) {
                         var r = this.$getIndent(t);
                         if (e == "start") {
                             var i = t.match(/^.*[\{\(\[]\s*$/);
@@ -231,11 +231,11 @@ define(
                                 t
                             );
                         }),
-                        (this.$id = "ace/mode/json");
+                        (this.$id = "ace/mode/json"));
                 }.call(l.prototype),
-                (t.Mode = l);
+                (t.Mode = l));
         },
-    );
+    ));
 (function () {
     window.require(["ace/mode/json"], function (m) {
         if (typeof module == "object" && typeof exports == "object" && module) {

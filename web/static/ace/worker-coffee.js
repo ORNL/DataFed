@@ -1,5 +1,5 @@
 "no use strict";
-!(function (e) {
+(!(function (e) {
     function t(e, t) {
         var n = e,
             r = "";
@@ -10,13 +10,13 @@
             if (i === !1) return "";
             var s = n.lastIndexOf("/");
             if (s === -1) break;
-            (r = n.substr(s) + r), (n = n.slice(0, s));
+            ((r = n.substr(s) + r), (n = n.slice(0, s)));
         }
         return e;
     }
     if (typeof e.window != "undefined" && e.document) return;
     if (e.require && e.define) return;
-    e.console ||
+    (e.console ||
         ((e.console = function () {
             var e = Array.prototype.slice.call(arguments, 0);
             postMessage({ type: "log", data: e });
@@ -102,7 +102,7 @@
                                 }
                             }),
                         );
-                    return t && (e.exports = t), e;
+                    return (t && (e.exports = t), e);
                 },
             };
         }),
@@ -117,17 +117,17 @@
                 i = function () {};
             return (
                 function () {
-                    r.implement(this, n),
+                    (r.implement(this, n),
                         (this.callback = function (e, t) {
                             postMessage({ type: "call", id: t, data: e });
                         }),
                         (this.emit = function (e, t) {
                             postMessage({ type: "event", name: e, data: t });
-                        });
+                        }));
                 }.call(i.prototype),
                 new i()
             );
-        });
+        }));
     var n = (e.main = null),
         r = (e.sender = null);
     e.onmessage = function (t) {
@@ -140,7 +140,7 @@
                 e[i.command].apply(e, i.args);
             }
         else if (i.init) {
-            e.initBaseUrls(i.tlns), require("ace/lib/es5-shim"), (r = e.sender = e.initSender());
+            (e.initBaseUrls(i.tlns), require("ace/lib/es5-shim"), (r = e.sender = e.initSender()));
             var s = require(i.module)[i.classname];
             n = e.main = new s(r);
         }
@@ -148,11 +148,11 @@
 })(this),
     define("ace/lib/oop", [], function (e, t, n) {
         "use strict";
-        (t.inherits = function (e, t) {
-            (e.super_ = t),
+        ((t.inherits = function (e, t) {
+            ((e.super_ = t),
                 (e.prototype = Object.create(t.prototype, {
                     constructor: { value: e, enumerable: !1, writable: !0, configurable: !0 },
-                }));
+                })));
         }),
             (t.mixin = function (e, t) {
                 for (var n in t) e[n] = t[n];
@@ -160,7 +160,7 @@
             }),
             (t.implement = function (e, n) {
                 t.mixin(e, n);
-            });
+            }));
     }),
     define("ace/range", [], function (e, t, n) {
         "use strict";
@@ -168,10 +168,10 @@
                 return e.row - t.row || e.column - t.column;
             },
             i = function (e, t, n, r) {
-                (this.start = { row: e, column: t }), (this.end = { row: n, column: r });
+                ((this.start = { row: e, column: t }), (this.end = { row: n, column: r }));
             };
-        (function () {
-            (this.isEqual = function (e) {
+        ((function () {
+            ((this.isEqual = function (e) {
                 return (
                     this.start.row === e.start.row &&
                     this.end.row === e.end.row &&
@@ -316,11 +316,11 @@
                     return new i(t.row, t.column, n.row, n.column);
                 }),
                 (this.moveBy = function (e, t) {
-                    (this.start.row += e),
+                    ((this.start.row += e),
                         (this.start.column += t),
                         (this.end.row += e),
-                        (this.end.column += t);
-                });
+                        (this.end.column += t));
+                }));
         }).call(i.prototype),
             (i.fromPoints = function (e, t) {
                 return new i(e.row, e.column, t.row, t.column);
@@ -329,7 +329,7 @@
             (i.comparePoints = function (e, t) {
                 return e.row - t.row || e.column - t.column;
             }),
-            (t.Range = i);
+            (t.Range = i));
     }),
     define("ace/apply_delta", [], function (e, t, n) {
         "use strict";
@@ -340,11 +340,11 @@
             return t.row >= 0 && t.row < e.length && t.column >= 0 && t.column <= e[t.row].length;
         }
         function s(e, t) {
-            t.action != "insert" &&
+            (t.action != "insert" &&
                 t.action != "remove" &&
                 r(t, "delta.action must be 'insert' or 'remove'"),
                 t.lines instanceof Array || r(t, "delta.lines must be an Array"),
-                (!t.start || !t.end) && r(t, "delta.start/end must be an present");
+                (!t.start || !t.end) && r(t, "delta.start/end must be an present"));
             var n = t.start;
             i(e, t.start) || r(t, "delta.start must be contained in document");
             var s = t.end;
@@ -366,9 +366,9 @@
                     if (o.length === 1) e[r] = s.substring(0, i) + t.lines[0] + s.substring(i);
                     else {
                         var u = [r, 1].concat(t.lines);
-                        e.splice.apply(e, u),
+                        (e.splice.apply(e, u),
                             (e[r] = s.substring(0, i) + e[r]),
-                            (e[r + t.lines.length - 1] += s.substring(i));
+                            (e[r + t.lines.length - 1] += s.substring(i)));
                     }
                     break;
                 case "remove":
@@ -389,18 +389,18 @@
             s = function () {
                 this.defaultPrevented = !0;
             };
-        (r._emit = r._dispatchEvent =
+        ((r._emit = r._dispatchEvent =
             function (e, t) {
-                this._eventRegistry || (this._eventRegistry = {}),
-                    this._defaultHandlers || (this._defaultHandlers = {});
+                (this._eventRegistry || (this._eventRegistry = {}),
+                    this._defaultHandlers || (this._defaultHandlers = {}));
                 var n = this._eventRegistry[e] || [],
                     r = this._defaultHandlers[e];
                 if (!n.length && !r) return;
                 if (typeof t != "object" || !t) t = {};
-                t.type || (t.type = e),
+                (t.type || (t.type = e),
                     t.stopPropagation || (t.stopPropagation = i),
                     t.preventDefault || (t.preventDefault = s),
-                    (n = n.slice());
+                    (n = n.slice()));
                 for (var o = 0; o < n.length; o++) {
                     n[o](t, this);
                     if (t.propagationStopped) break;
@@ -417,7 +417,7 @@
                 var n = this;
                 t &&
                     this.addEventListener(e, function r() {
-                        n.removeEventListener(e, r), t.apply(null, arguments);
+                        (n.removeEventListener(e, r), t.apply(null, arguments));
                     });
             }),
             (r.setDefaultHandler = function (e, t) {
@@ -426,7 +426,7 @@
                 if (n[e]) {
                     var r = n[e],
                         i = n._disabled_[e];
-                    i || (n._disabled_[e] = i = []), i.push(r);
+                    (i || (n._disabled_[e] = i = []), i.push(r));
                     var s = i.indexOf(t);
                     s != -1 && i.splice(s, 1);
                 }
@@ -465,18 +465,18 @@
             (r.removeAllListeners = function (e) {
                 this._eventRegistry && (this._eventRegistry[e] = []);
             }),
-            (t.EventEmitter = r);
+            (t.EventEmitter = r));
     }),
     define("ace/anchor", [], function (e, t, n) {
         "use strict";
         var r = e("./lib/oop"),
             i = e("./lib/event_emitter").EventEmitter,
             s = (t.Anchor = function (e, t, n) {
-                (this.$onChange = this.onChange.bind(this)),
+                ((this.$onChange = this.onChange.bind(this)),
                     this.attach(e),
                     typeof n == "undefined"
                         ? this.setPosition(t.row, t.column)
-                        : this.setPosition(t, n);
+                        : this.setPosition(t, n));
             });
         (function () {
             function e(e, t, n) {
@@ -495,7 +495,7 @@
                       ? { row: n.row + s, column: n.column + (n.row == a.row ? o : 0) }
                       : { row: u.row, column: u.column };
             }
-            r.implement(this, i),
+            (r.implement(this, i),
                 (this.getPosition = function () {
                     return this.$clipPositionToDocument(this.row, this.column);
                 }),
@@ -514,16 +514,16 @@
                     n ? (r = { row: e, column: t }) : (r = this.$clipPositionToDocument(e, t));
                     if (this.row == r.row && this.column == r.column) return;
                     var i = { row: this.row, column: this.column };
-                    (this.row = r.row),
+                    ((this.row = r.row),
                         (this.column = r.column),
-                        this._signal("change", { old: i, value: r });
+                        this._signal("change", { old: i, value: r }));
                 }),
                 (this.detach = function () {
                     this.document.removeEventListener("change", this.$onChange);
                 }),
                 (this.attach = function (e) {
-                    (this.document = e || this.document),
-                        this.document.on("change", this.$onChange);
+                    ((this.document = e || this.document),
+                        this.document.on("change", this.$onChange));
                 }),
                 (this.$clipPositionToDocument = function (e, t) {
                     var n = {};
@@ -541,7 +541,7 @@
                         t < 0 && (n.column = 0),
                         n
                     );
-                });
+                }));
         }).call(s.prototype);
     }),
     define("ace/document", [], function (e, t, n) {
@@ -552,19 +552,19 @@
             o = e("./range").Range,
             u = e("./anchor").Anchor,
             a = function (e) {
-                (this.$lines = [""]),
+                ((this.$lines = [""]),
                     e.length === 0
                         ? (this.$lines = [""])
                         : Array.isArray(e)
                           ? this.insertMergedLines({ row: 0, column: 0 }, e)
-                          : this.insert({ row: 0, column: 0 }, e);
+                          : this.insert({ row: 0, column: 0 }, e));
             };
-        (function () {
-            r.implement(this, s),
+        ((function () {
+            (r.implement(this, s),
                 (this.setValue = function (e) {
                     var t = this.getLength() - 1;
-                    this.remove(new o(0, 0, t, this.getLine(t).length)),
-                        this.insert({ row: 0, column: 0 }, e);
+                    (this.remove(new o(0, 0, t, this.getLine(t).length)),
+                        this.insert({ row: 0, column: 0 }, e));
                 }),
                 (this.getValue = function () {
                     return this.getAllLines().join(this.getNewLineCharacter());
@@ -581,7 +581,7 @@
                       }),
                 (this.$detectNewLine = function (e) {
                     var t = e.match(/^.*?(\r\n|\r|\n)/m);
-                    (this.$autoNewLine = t ? t[1] : "\n"), this._signal("changeNewLineMode");
+                    ((this.$autoNewLine = t ? t[1] : "\n"), this._signal("changeNewLineMode"));
                 }),
                 (this.getNewLineCharacter = function () {
                     switch (this.$newLineMode) {
@@ -597,7 +597,7 @@
                 (this.$newLineMode = "auto"),
                 (this.setNewLineMode = function (e) {
                     if (this.$newLineMode === e) return;
-                    (this.$newLineMode = e), this._signal("changeNewLineMode");
+                    ((this.$newLineMode = e), this._signal("changeNewLineMode"));
                 }),
                 (this.getNewLineMode = function () {
                     return this.$newLineMode;
@@ -625,8 +625,8 @@
                     if (e.start.row === e.end.row)
                         t = [this.getLine(e.start.row).substring(e.start.column, e.end.column)];
                     else {
-                        (t = this.getLines(e.start.row, e.end.row)),
-                            (t[0] = (t[0] || "").substring(e.start.column));
+                        ((t = this.getLines(e.start.row, e.end.row)),
+                            (t[0] = (t[0] || "").substring(e.start.column)));
                         var n = t.length - 1;
                         e.end.row - e.start.row == n && (t[n] = t[n].substring(0, e.end.column));
                     }
@@ -707,10 +707,10 @@
                 (this.insertFullLines = function (e, t) {
                     e = Math.min(Math.max(e, 0), this.getLength());
                     var n = 0;
-                    e < this.getLength()
+                    (e < this.getLength()
                         ? ((t = t.concat([""])), (n = 0))
                         : ((t = [""].concat(t)), e--, (n = this.$lines[e].length)),
-                        this.insertMergedLines({ row: e, column: n }, t);
+                        this.insertMergedLines({ row: e, column: n }, t));
                 }),
                 (this.insertMergedLines = function (e, t) {
                     var n = this.clippedPos(e.row, e.column),
@@ -753,8 +753,8 @@
                     );
                 }),
                 (this.removeFullLines = function (e, t) {
-                    (e = Math.min(Math.max(0, e), this.getLength() - 1)),
-                        (t = Math.min(Math.max(0, t), this.getLength() - 1));
+                    ((e = Math.min(Math.max(0, e), this.getLength() - 1)),
+                        (t = Math.min(Math.max(0, t), this.getLength() - 1)));
                     var n = t == this.getLength() - 1 && e > 0,
                         r = t < this.getLength() - 1,
                         i = n ? e - 1 : e,
@@ -789,7 +789,7 @@
                     if (t == this.getTextRange(e)) return e.end;
                     this.remove(e);
                     var n;
-                    return t ? (n = this.insert(e.start, t)) : (n = e.start), n;
+                    return (t ? (n = this.insert(e.start, t)) : (n = e.start), n);
                 }),
                 (this.applyDeltas = function (e) {
                     for (var t = 0; t < e.length; t++) this.applyDelta(e[t]);
@@ -813,7 +813,7 @@
                     for (var o = 0, u = 0; o < r; o = u) {
                         u += t - 1;
                         var a = n.slice(o, u);
-                        a.push(""),
+                        (a.push(""),
                             this.applyDelta(
                                 {
                                     start: this.pos(i + o, s),
@@ -822,12 +822,12 @@
                                     lines: a,
                                 },
                                 !0,
-                            );
+                            ));
                     }
-                    (e.lines = n.slice(o)),
+                    ((e.lines = n.slice(o)),
                         (e.start.row = i + o),
                         (e.start.column = s),
-                        this.applyDelta(e, !0);
+                        this.applyDelta(e, !0));
                 }),
                 (this.revertDelta = function (e) {
                     this.applyDelta({
@@ -853,13 +853,13 @@
                         s = Math.min(e.row, n.length);
                     for (var o = t || 0; o < s; ++o) i += n[o].length + r;
                     return i + e.column;
-                });
+                }));
         }).call(a.prototype),
-            (t.Document = a);
+            (t.Document = a));
     }),
     define("ace/lib/lang", [], function (e, t, n) {
         "use strict";
-        (t.last = function (e) {
+        ((t.last = function (e) {
             return e[e.length - 1];
         }),
             (t.stringReverse = function (e) {
@@ -872,10 +872,10 @@
                     if ((t >>= 1)) e += e;
                 }
                 return n;
-            });
+            }));
         var r = /^\s\s*/,
             i = /\s\s*$/;
-        (t.stringTrimLeft = function (e) {
+        ((t.stringTrimLeft = function (e) {
             return e.replace(r, "");
         }),
             (t.stringTrimRight = function (e) {
@@ -942,18 +942,18 @@
             (t.deferredCall = function (e) {
                 var t = null,
                     n = function () {
-                        (t = null), e();
+                        ((t = null), e());
                     },
                     r = function (e) {
-                        return r.cancel(), (t = setTimeout(n, e || 0)), r;
+                        return (r.cancel(), (t = setTimeout(n, e || 0)), r);
                     };
                 return (
                     (r.schedule = r),
                     (r.call = function () {
-                        return this.cancel(), e(), r;
+                        return (this.cancel(), e(), r);
                     }),
                     (r.cancel = function () {
-                        return clearTimeout(t), (t = null), r;
+                        return (clearTimeout(t), (t = null), r);
                     }),
                     (r.isPending = function () {
                         return t;
@@ -964,28 +964,28 @@
             (t.delayedCall = function (e, t) {
                 var n = null,
                     r = function () {
-                        (n = null), e();
+                        ((n = null), e());
                     },
                     i = function (e) {
                         n == null && (n = setTimeout(r, e || t));
                     };
                 return (
                     (i.delay = function (e) {
-                        n && clearTimeout(n), (n = setTimeout(r, e || t));
+                        (n && clearTimeout(n), (n = setTimeout(r, e || t)));
                     }),
                     (i.schedule = i),
                     (i.call = function () {
-                        this.cancel(), e();
+                        (this.cancel(), e());
                     }),
                     (i.cancel = function () {
-                        n && clearTimeout(n), (n = null);
+                        (n && clearTimeout(n), (n = null));
                     }),
                     (i.isPending = function () {
                         return n;
                     }),
                     i
                 );
-            });
+            }));
     }),
     define("ace/worker/mirror", [], function (e, t, n) {
         "use strict";
@@ -1012,12 +1012,12 @@
                 });
             });
         (function () {
-            (this.$timeout = 500),
+            ((this.$timeout = 500),
                 (this.setTimeout = function (e) {
                     this.$timeout = e;
                 }),
                 (this.setValue = function (e) {
-                    this.doc.setValue(e), this.deferredUpdate.schedule(this.$timeout);
+                    (this.doc.setValue(e), this.deferredUpdate.schedule(this.$timeout));
                 }),
                 (this.getValue = function (e) {
                     this.sender.callback(this.doc.getValue(), e);
@@ -1025,7 +1025,7 @@
                 (this.onUpdate = function () {}),
                 (this.isPending = function () {
                     return this.deferredUpdate.isPending();
-                });
+                }));
         }).call(o.prototype);
     }),
     define("ace/mode/coffee/coffee", [], function (require, exports, module) {
@@ -1047,10 +1047,10 @@
                 throw new TypeError(
                     "Super expression must either be null or a function, not " + typeof t,
                 );
-            (e.prototype = Object.create(t && t.prototype, {
+            ((e.prototype = Object.create(t && t.prototype, {
                 constructor: { value: e, enumerable: !1, writable: !0, configurable: !0 },
             })),
-                t && (Object.setPrototypeOf ? Object.setPrototypeOf(e, t) : (e.__proto__ = t));
+                t && (Object.setPrototypeOf ? Object.setPrototypeOf(e, t) : (e.__proto__ = t)));
         }
         function _classCallCheck(e, t) {
             if (!(e instanceof t)) throw new TypeError("Cannot call a class as a function");
@@ -1100,7 +1100,7 @@
                             r = !0
                         );
                     } catch (e) {
-                        (i = !0), (s = e);
+                        ((i = !0), (s = e));
                     } finally {
                         try {
                             !r && o["return"] && o["return"]();
@@ -1119,14 +1119,14 @@
             _createClass = (function () {
                 function e(e, t) {
                     for (var n = 0, r; n < t.length; n++)
-                        (r = t[n]),
+                        ((r = t[n]),
                             (r.enumerable = r.enumerable || !1),
                             (r.configurable = !0),
                             "value" in r && (r.writable = !0),
-                            Object.defineProperty(e, r.key, r);
+                            Object.defineProperty(e, r.key, r));
                 }
                 return function (t, n, r) {
-                    return n && e(t.prototype, n), r && e(t, r), t;
+                    return (n && e(t.prototype, n), r && e(t, r), t);
                 };
             })();
         (function (root) {
@@ -1183,7 +1183,7 @@
                         return (
                             function () {
                                 var t, n, r, i, s, o, u, a;
-                                (e.starts = function (e, t, n) {
+                                ((e.starts = function (e, t, n) {
                                     return t === e.substr(n, t.length);
                                 }),
                                     (e.ends = function (e, t, n) {
@@ -1197,13 +1197,13 @@
                                         function (e, t) {
                                             var n;
                                             for (n = ""; 0 < t; )
-                                                1 & t && (n += e), (t >>>= 1), (e += e);
+                                                (1 & t && (n += e), (t >>>= 1), (e += e));
                                             return n;
                                         }),
                                     (e.compact = function (e) {
                                         var t, n, r, i;
                                         for (i = [], t = 0, r = e.length; t < r; t++)
-                                            (n = e[t]), n && i.push(n);
+                                            ((n = e[t]), n && i.push(n));
                                         return i;
                                     }),
                                     (e.count = function (e, t) {
@@ -1218,23 +1218,23 @@
                                     (i = e.extend =
                                         function (e, t) {
                                             var n, r;
-                                            for (n in t) (r = t[n]), (e[n] = r);
+                                            for (n in t) ((r = t[n]), (e[n] = r));
                                             return e;
                                         }),
                                     (e.flatten = s =
                                         function (t) {
                                             var n, r, i, o;
                                             for (r = [], i = 0, o = t.length; i < o; i++)
-                                                (n = t[i]),
+                                                ((n = t[i]),
                                                     "[object Array]" ===
                                                     Object.prototype.toString.call(n)
                                                         ? (r = r.concat(s(n)))
-                                                        : r.push(n);
+                                                        : r.push(n));
                                             return r;
                                         }),
                                     (e.del = function (e, t) {
                                         var n;
-                                        return (n = e[t]), delete e[t], n;
+                                        return ((n = e[t]), delete e[t], n);
                                     }),
                                     (e.some =
                                         null == (o = Array.prototype.some)
@@ -1259,14 +1259,14 @@
                                             n < s;
                                             n++
                                         )
-                                            (o = f[n]),
+                                            ((o = f[n]),
                                                 t.test(o)
                                                     ? ((i = !1), a.push(o))
                                                     : i || u.test(o)
                                                       ? ((i = !0), a.push("# " + o))
                                                       : !i && r.test(o)
                                                         ? a.push(o)
-                                                        : ((i = !0), a.push("# " + o));
+                                                        : ((i = !0), a.push("# " + o)));
                                         return a.join("\n");
                                     }),
                                     (n = function (e, t) {
@@ -1392,11 +1392,11 @@
                                     (e.throwSyntaxError = function (e, t) {
                                         var n;
                                         throw (
-                                            ((n = new SyntaxError(e)),
+                                            (n = new SyntaxError(e)),
                                             (n.location = t),
                                             (n.toString = a),
                                             (n.stack = n.toString()),
-                                            n)
+                                            n
                                         );
                                     }),
                                     (e.updateSyntaxError = function (e, t, n) {
@@ -1464,7 +1464,7 @@
                                                 : "	" === e
                                                   ? "tab"
                                                   : e;
-                                    });
+                                    }));
                             }.call(this),
                             { exports: e }.exports
                         );
@@ -1509,10 +1509,10 @@
                                                         r < i;
                                                         r++
                                                     )
-                                                        (n = s[r]),
+                                                        ((n = s[r]),
                                                             n.unshift
                                                                 ? o.push(n)
-                                                                : t.comments.push(n);
+                                                                : t.comments.push(n));
                                                     t.comments = o.concat(t.comments);
                                                 } else t.comments = e.comments;
                                                 return delete e.comments;
@@ -1569,7 +1569,7 @@
                                                                                         e < t;
                                                                                         e++
                                                                                     )
-                                                                                        (i = n[e]),
+                                                                                        ((i = n[e]),
                                                                                             r.push(
                                                                                                 i[0] +
                                                                                                     "/" +
@@ -1577,7 +1577,7 @@
                                                                                                     (i.comments
                                                                                                         ? "*"
                                                                                                         : ""),
-                                                                                            );
+                                                                                            ));
                                                                                     return r;
                                                                                 }
                                                                                     .call(this)
@@ -1621,7 +1621,7 @@
                                                                                         e < t;
                                                                                         e++
                                                                                     )
-                                                                                        (i = n[e]),
+                                                                                        ((i = n[e]),
                                                                                             r.push(
                                                                                                 i[0] +
                                                                                                     "/" +
@@ -1629,7 +1629,7 @@
                                                                                                     (i.comments
                                                                                                         ? "*"
                                                                                                         : ""),
-                                                                                            );
+                                                                                            ));
                                                                                     return r;
                                                                                 }
                                                                                     .call(this)
@@ -1736,11 +1736,11 @@
                                                                             r < o;
                                                                             r++
                                                                         )
-                                                                            (i = a[r]),
+                                                                            ((i = a[r]),
                                                                                 x(
                                                                                     i,
                                                                                     this.tokens[t],
-                                                                                );
+                                                                                ));
                                                                         return this.tokens.splice(
                                                                             0,
                                                                             t,
@@ -1916,14 +1916,14 @@
                                                                                 0 > t.call(v, c))));
 
                                                                     )
-                                                                        ((s = this.tag(n)),
+                                                                        (((s = this.tag(n)),
                                                                         0 <= t.call(a, s)) &&
                                                                             i.push(this.tag(n)),
                                                                             ((o = this.tag(n)),
                                                                             0 <= t.call(f, o)) &&
                                                                                 i.length &&
                                                                                 i.pop(),
-                                                                            (n -= 1);
+                                                                            (n -= 1));
                                                                     return (
                                                                         (h = this.tag(n)),
                                                                         0 <= t.call(r, h)
@@ -2659,9 +2659,10 @@
                                                                                                     rt,
                                                                                                     3,
                                                                                                 );
-                                                                                        (W = it[0]),
+                                                                                        ((W =
+                                                                                            it[0]),
                                                                                             (U =
-                                                                                                it[1]);
+                                                                                                it[1]));
                                                                                         var st =
                                                                                             it[2];
                                                                                         if (
@@ -2839,10 +2840,10 @@
                                                                                 a < f;
                                                                                 a++
                                                                             )
-                                                                                (s = h[a]),
+                                                                                ((s = h[a]),
                                                                                     (s.unshift =
-                                                                                        !0);
-                                                                            return x(e, i[u]), 1;
+                                                                                        !0));
+                                                                            return (x(e, i[u]), 1);
                                                                         }),
                                                                         (r = function (e, r, i) {
                                                                             var s, u, a;
@@ -2893,7 +2894,7 @@
                                                                                         -1 !== a;
 
                                                                                     )
-                                                                                        !1 ===
+                                                                                        (!1 ===
                                                                                             e
                                                                                                 .comments[
                                                                                                 a
@@ -2915,8 +2916,8 @@
                                                                                                 a,
                                                                                                 1,
                                                                                             )),
-                                                                                            a--;
-                                                                                    0 !==
+                                                                                            a--);
+                                                                                    (0 !==
                                                                                         u.comments
                                                                                             .length &&
                                                                                         (c = r(
@@ -2932,7 +2933,7 @@
                                                                                                 e,
                                                                                                 n,
                                                                                                 s,
-                                                                                            );
+                                                                                            ));
                                                                                 } else {
                                                                                     for (
                                                                                         u = {
@@ -2947,7 +2948,8 @@
                                                                                         -1 !== a;
 
                                                                                     )
-                                                                                        !e.comments[
+                                                                                        (!e
+                                                                                            .comments[
                                                                                             a
                                                                                         ].newLine ||
                                                                                             e
@@ -2968,7 +2970,7 @@
                                                                                                 a,
                                                                                                 1,
                                                                                             )),
-                                                                                            a--;
+                                                                                            a--);
                                                                                     0 !==
                                                                                         u.comments
                                                                                             .length &&
@@ -3014,9 +3016,9 @@
                                                                                         : u[2])
                                                                             ) {
                                                                                 var f = s;
-                                                                                (i = f.first_line),
+                                                                                ((i = f.first_line),
                                                                                     (r =
-                                                                                        f.first_column);
+                                                                                        f.first_column));
                                                                             } else if (
                                                                                 (o =
                                                                                     null ==
@@ -3025,9 +3027,9 @@
                                                                                         : a[2])
                                                                             ) {
                                                                                 var l = o;
-                                                                                (i = l.last_line),
+                                                                                ((i = l.last_line),
                                                                                     (r =
-                                                                                        l.last_column);
+                                                                                        l.last_column));
                                                                             } else i = r = 0;
                                                                             return (
                                                                                 (e[2] = {
@@ -3707,7 +3709,7 @@
                                                         e
                                                     );
                                                 })();
-                                                return (e.prototype.generate = b), e;
+                                                return ((e.prototype.generate = b), e);
                                             }.call(this),
                                         r = [
                                             ["(", ")"],
@@ -3729,9 +3731,12 @@
                                     w++
                                 ) {
                                     var C = _slicedToArray(r[w], 2);
-                                    (E = C[0]), (T = C[1]), f.push((d[T] = E)), a.push((d[E] = T));
+                                    ((E = C[0]),
+                                        (T = C[1]),
+                                        f.push((d[T] = E)),
+                                        a.push((d[E] = T)));
                                 }
-                                (u = ["CATCH", "THEN", "ELSE", "FINALLY"].concat(a)),
+                                ((u = ["CATCH", "THEN", "ELSE", "FINALLY"].concat(a)),
                                     (h = [
                                         "IDENTIFIER",
                                         "PROPERTY",
@@ -3842,7 +3847,7 @@
                                         "THROW",
                                         "UNARY",
                                         "YIELD",
-                                    ].concat(p.concat(c.concat(i.concat(s)))));
+                                    ].concat(p.concat(c.concat(i.concat(s))))));
                             }.call(this),
                             { exports: e }.exports
                         );
@@ -3928,9 +3933,9 @@
                                     Et,
                                     St,
                                     xt;
-                                (K = r.Rewriter), (O = r.INVERSES);
+                                ((K = r.Rewriter), (O = r.INVERSES));
                                 var Tt = require("./helpers");
-                                (dt = Tt.count),
+                                ((dt = Tt.count),
                                     (St = Tt.starts),
                                     (pt = Tt.compact),
                                     (Et = Tt.repeat),
@@ -4091,14 +4096,16 @@
                                                                 "own" === u && "FOR" === this.tag())
                                                             )
                                                                 return (
-                                                                    this.token("OWN", u), u.length
+                                                                    this.token("OWN", u),
+                                                                    u.length
                                                                 );
                                                             if (
                                                                 "from" === u &&
                                                                 "YIELD" === this.tag()
                                                             )
                                                                 return (
-                                                                    this.token("FROM", u), u.length
+                                                                    this.token("FROM", u),
+                                                                    u.length
                                                                 );
                                                             if ("as" === u && this.seenImport) {
                                                                 if ("*" === this.value())
@@ -4114,7 +4121,7 @@
                                                                         "IDENTIFIER",
                                                                         this.value(!0),
                                                                     ];
-                                                                    (g[0] = q[0]), (g[1] = q[1]);
+                                                                    ((g[0] = q[0]), (g[1] = q[1]));
                                                                 }
                                                                 if (
                                                                     "DEFAULT" ===
@@ -4166,12 +4173,15 @@
                                                                         this.chunk.slice(3),
                                                                     ))
                                                                 ) {
-                                                                    this.token("SUPER", "super"),
+                                                                    (this.token("SUPER", "super"),
                                                                         this.token(
                                                                             "CALL_START",
                                                                             "(",
                                                                         ),
-                                                                        this.token("CALL_END", ")");
+                                                                        this.token(
+                                                                            "CALL_END",
+                                                                            ")",
+                                                                        ));
                                                                     var U = M,
                                                                         z = _slicedToArray(U, 2);
                                                                     return (
@@ -4354,8 +4364,8 @@
                                                                         m[2].first_line,
                                                                         m[2].first_column,
                                                                     ];
-                                                                    (j[2].first_line = W[0]),
-                                                                        (j[2].first_column = W[1]);
+                                                                    ((j[2].first_line = W[0]),
+                                                                        (j[2].first_column = W[1]));
                                                                 }
                                                                 return (
                                                                     r &&
@@ -4383,7 +4393,8 @@
                                                                 );
                                                             }
                                                             return (
-                                                                this.token("DEFAULT", u), u.length
+                                                                this.token("DEFAULT", u),
+                                                                u.length
                                                             );
                                                         },
                                                     },
@@ -4476,7 +4487,7 @@
                                                                 y,
                                                                 b;
                                                             if (((v = r[0]), !v)) return 0;
-                                                            (d = this.prev()),
+                                                            ((d = this.prev()),
                                                                 d &&
                                                                     "from" === this.value() &&
                                                                     (this.seenImport ||
@@ -4493,7 +4504,7 @@
                                                                               ? w
                                                                               : void 0;
                                                                 })()),
-                                                                (f = 3 === v.length);
+                                                                (f = 3 === v.length));
                                                             var x = this.matchWithInterpolations(
                                                                 g,
                                                                 v,
@@ -4516,23 +4527,23 @@
                                                                                 e < t;
                                                                                 l = ++e
                                                                             )
-                                                                                (y = b[l]),
+                                                                                ((y = b[l]),
                                                                                     "NEOSTRING" ===
                                                                                         y[0] &&
                                                                                         n.push(
                                                                                             y[1],
-                                                                                        );
+                                                                                        ));
                                                                             return n;
                                                                         })().join("#{}");
                                                                     (p = E.exec(u));
 
                                                                 )
-                                                                    (s = p[1]),
+                                                                    ((s = p[1]),
                                                                         (null === c ||
                                                                             (0 < (m = s.length) &&
                                                                                 m < c.length)) &&
-                                                                            (c = s);
-                                                                c && (h = RegExp("\\n" + c, "g")),
+                                                                            (c = s));
+                                                                (c && (h = RegExp("\\n" + c, "g")),
                                                                     this.mergeInterpolationTokens(
                                                                         b,
                                                                         { delimiter: o },
@@ -4563,7 +4574,7 @@
                                                                                 e
                                                                             );
                                                                         },
-                                                                    );
+                                                                    ));
                                                             } else
                                                                 this.mergeInterpolationTokens(
                                                                     b,
@@ -4682,13 +4693,13 @@
                                                                         e < t;
                                                                         a = ++e
                                                                     )
-                                                                        (s = o[a]),
+                                                                        ((s = o[a]),
                                                                             n.push({
                                                                                 content: s,
                                                                                 here: null != u,
                                                                                 newLine:
                                                                                     h || 0 !== a,
-                                                                            });
+                                                                            }));
                                                                     return n;
                                                                 })()),
                                                                 (d = this.prev()),
@@ -4793,10 +4804,10 @@
                                                                             c < h;
                                                                             c++
                                                                         )
-                                                                            (s = u[c]),
+                                                                            ((s = u[c]),
                                                                                 this.commentToken(
                                                                                     s,
-                                                                                );
+                                                                                ));
                                                                     break;
                                                                 case !(p = z.exec(this.chunk)):
                                                                     var E = p,
@@ -4857,7 +4868,7 @@
                                                                     );
                                                                     break;
                                                                 case !y && 1 !== b.length:
-                                                                    (r = r
+                                                                    ((r = r
                                                                         ? this.formatRegex(r, {
                                                                               flags: f,
                                                                               delimiter: "/",
@@ -4880,10 +4891,10 @@
                                                                             0,
                                                                             a,
                                                                             d,
-                                                                        );
+                                                                        ));
                                                                     break;
                                                                 default:
-                                                                    this.token(
+                                                                    (this.token(
                                                                         "REGEX_START",
                                                                         "(",
                                                                         0,
@@ -4939,7 +4950,7 @@
                                                                             ")",
                                                                             a - 1,
                                                                             0,
-                                                                        );
+                                                                        ));
                                                             }
                                                             return a;
                                                         },
@@ -5025,7 +5036,7 @@
                                                                         (this.indentLiteral = u),
                                                                         i.length
                                                                     );
-                                                                (r =
+                                                                ((r =
                                                                     l - this.indent + this.outdebt),
                                                                     this.token(
                                                                         "INDENT",
@@ -5040,7 +5051,7 @@
                                                                     (this.outdebt = this.indebt =
                                                                         0),
                                                                     (this.indent = l),
-                                                                    (this.indentLiteral = u);
+                                                                    (this.indentLiteral = u));
                                                             } else
                                                                 l < this.baseIndent
                                                                     ? this.error(
@@ -5061,7 +5072,7 @@
                                                         value: function (n, r, i) {
                                                             var s, o, u, a;
                                                             for (s = this.indent - n; 0 < n; )
-                                                                (u =
+                                                                ((u =
                                                                     this.indents[
                                                                         this.indents.length - 1
                                                                     ]),
@@ -5094,7 +5105,7 @@
                                                                                   i,
                                                                               ),
                                                                               (n -= o))
-                                                                        : (this.outdebt = n = 0);
+                                                                        : (this.outdebt = n = 0));
                                                             return (
                                                                 o && (this.outdebt -= n),
                                                                 this.suppressSemicolons(),
@@ -5271,9 +5282,9 @@
                                                                         1
                                                                     );
                                                                 if (">" === u) {
-                                                                    this.pair("/>"),
+                                                                    (this.pair("/>"),
                                                                         (c = this.token("]", "]")),
-                                                                        this.token(",", ",");
+                                                                        this.token(",", ","));
                                                                     var x =
                                                                         this.matchWithInterpolations(
                                                                             A,
@@ -5396,9 +5407,9 @@
                                                             if ((n = R.exec(this.chunk))) {
                                                                 var b = n,
                                                                     w = _slicedToArray(b, 1);
-                                                                (y = w[0]),
+                                                                ((y = w[0]),
                                                                     u.test(y) &&
-                                                                        this.tagParameters();
+                                                                        this.tagParameters());
                                                             } else y = this.chunk.charAt(0);
                                                             if (
                                                                 ((m = y),
@@ -5459,7 +5470,7 @@
                                                                               !1),
                                                                 ";" === y)
                                                             )
-                                                                ((l = null == s ? void 0 : s[0]),
+                                                                (((l = null == s ? void 0 : s[0]),
                                                                 0 <=
                                                                     t.call(
                                                                         ["="].concat(
@@ -5472,7 +5483,7 @@
                                                                         this.seenImport =
                                                                         this.seenExport =
                                                                             !1),
-                                                                    (m = "TERMINATOR");
+                                                                    (m = "TERMINATOR"));
                                                             else if (
                                                                 "*" === y &&
                                                                 "EXPORT" ===
@@ -5500,9 +5511,9 @@
                                                                     !s.spaced &&
                                                                     ((c = s[0]), 0 <= t.call(o, c))
                                                                 )
-                                                                    "?" === s[0] &&
+                                                                    ("?" === s[0] &&
                                                                         (s[0] = "FUNC_EXIST"),
-                                                                        (m = "CALL_START");
+                                                                        (m = "CALL_START"));
                                                                 else if (
                                                                     "[" === y &&
                                                                     ((((h = s[0]),
@@ -5631,15 +5642,15 @@
                                                                     break;
                                                                 var M = w,
                                                                     _ = _slicedToArray(M, 1);
-                                                                (g = _[0]), (m = g.length - 1);
+                                                                ((g = _[0]), (m = g.length - 1));
                                                                 var D =
                                                                         this.getLineAndColumnFromChunk(
                                                                             S + m,
                                                                         ),
                                                                     P = _slicedToArray(D, 2);
-                                                                (b = P[0]),
+                                                                ((b = P[0]),
                                                                     (p = P[1]),
-                                                                    (N = C.slice(m));
+                                                                    (N = C.slice(m)));
                                                                 var H = new e().tokenize(N, {
                                                                     line: b,
                                                                     column: p,
@@ -5653,7 +5664,7 @@
                                                                     c)
                                                                 ) {
                                                                     var B, j, F, I;
-                                                                    (B = E),
+                                                                    ((B = E),
                                                                         (j = _slicedToArray(B, 1)),
                                                                         (x = j[0]),
                                                                         B,
@@ -5667,9 +5678,9 @@
                                                                             "",
                                                                             "end of interpolation",
                                                                             h[2],
-                                                                        ]);
+                                                                        ]));
                                                                 }
-                                                                "TERMINATOR" ===
+                                                                ("TERMINATOR" ===
                                                                     (null == (T = E[1])
                                                                         ? void 0
                                                                         : T[0]) && E.splice(1, 1),
@@ -5692,7 +5703,7 @@
                                                                         ))),
                                                                     L.push(["TOKENS", E]),
                                                                     (C = C.slice(v)),
-                                                                    (S += v);
+                                                                    (S += v));
                                                             }
                                                             return (
                                                                 C.slice(0, s.length) !== s &&
@@ -5805,7 +5816,7 @@
                                                                             }
                                                                             x.splice(1, 0, m);
                                                                         }
-                                                                        (d = x[0]), (E = x);
+                                                                        ((d = x[0]), (E = x));
                                                                         break;
                                                                     case "NEOSTRING":
                                                                         if (
@@ -5819,7 +5830,7 @@
                                                                             if (0 !== a) continue;
                                                                             o = this.tokens.length;
                                                                         }
-                                                                        2 === a &&
+                                                                        (2 === a &&
                                                                             null != o &&
                                                                             this.tokens.splice(
                                                                                 o,
@@ -5832,9 +5843,9 @@
                                                                                     r,
                                                                                 )),
                                                                             (d = w),
-                                                                            (E = [w]);
+                                                                            (E = [w]));
                                                                 }
-                                                                this.tokens.length > u &&
+                                                                (this.tokens.length > u &&
                                                                     ((g = this.token("+", "+")),
                                                                     (g[2] = {
                                                                         first_line: d[2].first_line,
@@ -5847,7 +5858,7 @@
                                                                     (T = this.tokens).push.apply(
                                                                         T,
                                                                         _toConsumableArray(E),
-                                                                    );
+                                                                    ));
                                                             }
                                                             if (v) {
                                                                 var L = n.call(t, -1),
@@ -5939,12 +5950,12 @@
                                                                 0 < s)
                                                             ) {
                                                                 var a, f;
-                                                                (o = u.split("\n")),
+                                                                ((o = u.split("\n")),
                                                                     (a = n.call(o, -1)),
                                                                     (f = _slicedToArray(a, 1)),
                                                                     (i = f[0]),
                                                                     a,
-                                                                    (r = i.length);
+                                                                    (r = i.length));
                                                             } else r += u.length;
                                                             return [this.chunkLine + s, r];
                                                         },
@@ -5971,9 +5982,9 @@
                                                                         r,
                                                                     ),
                                                                 f = _slicedToArray(a, 2);
-                                                            (o.first_line = f[0]),
+                                                            ((o.first_line = f[0]),
                                                                 (o.first_column = f[1]),
-                                                                (s = 0 < i ? i - 1 : 0);
+                                                                (s = 0 < i ? i - 1 : 0));
                                                             var l = this.getLineAndColumnFromChunk(
                                                                     r + s,
                                                                 ),
@@ -6267,7 +6278,7 @@
                                                         value: function () {
                                                             var n, r, i;
                                                             for (i = []; ";" === this.value(); )
-                                                                this.tokens.pop(),
+                                                                (this.tokens.pop(),
                                                                     ((n =
                                                                         null == (r = this.prev())
                                                                             ? void 0
@@ -6286,7 +6297,7 @@
                                                                                   "unexpected ;",
                                                                               ),
                                                                           )
-                                                                        : i.push(void 0);
+                                                                        : i.push(void 0));
                                                             return i;
                                                         },
                                                     },
@@ -6581,7 +6592,7 @@
                                         "||",
                                         "BIN?",
                                         "EXTENDS",
-                                    ]);
+                                    ]));
                             }.call(this),
                             { exports: e }.exports
                         );
@@ -25402,10 +25413,10 @@
                                             for (var d in this.yy)
                                                 Object.prototype.hasOwnProperty.call(this.yy, d) &&
                                                     (p.yy[d] = this.yy[d]);
-                                            h.setInput(e, p.yy),
+                                            (h.setInput(e, p.yy),
                                                 (p.yy.lexer = h),
                                                 (p.yy.parser = this),
-                                                "undefined" == typeof h.yylloc && (h.yylloc = {});
+                                                "undefined" == typeof h.yylloc && (h.yylloc = {}));
                                             var v = h.yylloc;
                                             i.push(v);
                                             var m = h.options && h.options.ranges;
@@ -25438,7 +25449,7 @@
                                                         this.terminals_[T] &&
                                                             T > 2 &&
                                                             k.push("'" + this.terminals_[T] + "'");
-                                                    (L = h.showPosition
+                                                    ((L = h.showPosition
                                                         ? "Parse error on line " +
                                                           (u + 1) +
                                                           ":\n" +
@@ -25462,7 +25473,7 @@
                                                             line: h.yylineno,
                                                             loc: v,
                                                             expected: k,
-                                                        });
+                                                        }));
                                                 }
                                                 if (S[0] instanceof Array && 1 < S.length)
                                                     throw new Error(
@@ -25473,7 +25484,7 @@
                                                     );
                                                 switch (S[0]) {
                                                     case 1:
-                                                        n.push(b),
+                                                        (n.push(b),
                                                             r.push(h.yytext),
                                                             i.push(h.yylloc),
                                                             n.push(S[1]),
@@ -25484,7 +25495,7 @@
                                                                   (o = h.yytext),
                                                                   (u = h.yylineno),
                                                                   (v = h.yylloc),
-                                                                  0 < f && f--);
+                                                                  0 < f && f--));
                                                         break;
                                                     case 2:
                                                         if (
@@ -25516,7 +25527,7 @@
                                                             "undefined" != typeof x)
                                                         )
                                                             return x;
-                                                        N &&
+                                                        (N &&
                                                             ((n = n.slice(0, 2 * -1 * N)),
                                                             (r = r.slice(0, -1 * N)),
                                                             (i = i.slice(0, -1 * N))),
@@ -25527,7 +25538,7 @@
                                                                 s[n[n.length - 2]][
                                                                     n[n.length - 1]
                                                                 ]),
-                                                            n.push(C);
+                                                            n.push(C));
                                                         break;
                                                     case 3:
                                                         return !0;
@@ -25536,7 +25547,7 @@
                                             return !0;
                                         },
                                     };
-                                return (e.prototype = oi), (oi.Parser = e), new e();
+                                return ((e.prototype = oi), (oi.Parser = e), new e());
                             })();
                         return (
                             "undefined" != typeof require &&
@@ -25561,7 +25572,7 @@
                                     function e(t, n, r, i) {
                                         _classCallCheck(this, e);
                                         var s, o;
-                                        (this.parent = t),
+                                        ((this.parent = t),
                                             (this.expressions = n),
                                             (this.method = r),
                                             (this.referencedVars = i),
@@ -25575,7 +25586,7 @@
                                                 null ==
                                                 (s = null == (o = this.parent) ? void 0 : o.root)
                                                     ? this
-                                                    : s);
+                                                    : s));
                                     }
                                     return (
                                         _createClass(e, [
@@ -25739,8 +25750,8 @@
                                                             e < n;
                                                             e++
                                                         )
-                                                            (t = r[e]),
-                                                                "var" === t.type && i.push(t.name);
+                                                            ((t = r[e]),
+                                                                "var" === t.type && i.push(t.name));
                                                         return i;
                                                     }
                                                         .call(this)
@@ -25759,11 +25770,11 @@
                                                         t < n;
                                                         t++
                                                     )
-                                                        (s = r[t]),
+                                                        ((s = r[t]),
                                                             s.type.assigned &&
                                                                 i.push(
                                                                     s.name + " = " + s.type.value,
-                                                                );
+                                                                ));
                                                     return i;
                                                 },
                                             },
@@ -25898,9 +25909,9 @@
                                 var fn = require("./scope");
                                 gt = fn.Scope;
                                 var ln = require("./lexer");
-                                (Qt = ln.isUnassignable), (z = ln.JS_FORBIDDEN);
+                                ((Qt = ln.isUnassignable), (z = ln.JS_FORBIDDEN));
                                 var cn = require("./helpers");
-                                (qt = cn.compact),
+                                ((qt = cn.compact),
                                     (Wt = cn.flatten),
                                     (zt = cn.extend),
                                     (Yt = cn.merge),
@@ -25924,14 +25935,14 @@
                                         return this;
                                     }),
                                     (tt = function () {
-                                        return (this.negated = !this.negated), this;
+                                        return ((this.negated = !this.negated), this);
                                     }),
                                     (e.CodeFragment = v =
                                         (function () {
                                             function e(t, n) {
                                                 _classCallCheck(this, e);
                                                 var r;
-                                                (this.code = "" + n),
+                                                ((this.code = "" + n),
                                                     (this.type =
                                                         (null == t || null == (r = t.constructor)
                                                             ? void 0
@@ -25939,7 +25950,7 @@
                                                     (this.locationData =
                                                         null == t ? void 0 : t.locationData),
                                                     (this.comments =
-                                                        null == t ? void 0 : t.comments);
+                                                        null == t ? void 0 : t.comments));
                                             }
                                             return (
                                                 _createClass(e, [
@@ -25964,7 +25975,7 @@
                                         return (function () {
                                             var n, r, i;
                                             for (i = [], n = 0, r = e.length; n < r; n++)
-                                                (t = e[n]), i.push(t.code);
+                                                ((t = e[n]), i.push(t.code));
                                             return i;
                                         })().join("");
                                     }),
@@ -26105,14 +26116,14 @@
                                                                             ? void 0
                                                                             : l.isGenerator)
                                                                     ):
-                                                                        a.unshift(
+                                                                        (a.unshift(
                                                                             this.makeCode(
                                                                                 "(yield* ",
                                                                             ),
                                                                         ),
                                                                             a.push(
                                                                                 this.makeCode(")"),
-                                                                            );
+                                                                            ));
                                                                         break;
                                                                     case !(
                                                                         s.isAsync ||
@@ -26120,14 +26131,14 @@
                                                                             ? void 0
                                                                             : c.isAsync)
                                                                     ):
-                                                                        a.unshift(
+                                                                        (a.unshift(
                                                                             this.makeCode(
                                                                                 "(await ",
                                                                             ),
                                                                         ),
                                                                             a.push(
                                                                                 this.makeCode(")"),
-                                                                            );
+                                                                            ));
                                                                 }
                                                                 return a;
                                                             },
@@ -26309,7 +26320,10 @@
                                                                         !1,
                                                                         function (e) {
                                                                             if (t(e))
-                                                                                return (n = e), !1;
+                                                                                return (
+                                                                                    (n = e),
+                                                                                    !1
+                                                                                );
                                                                         },
                                                                     ),
                                                                     n
@@ -26535,12 +26549,12 @@
                                                                     o < u;
                                                                     s = ++o
                                                                 )
-                                                                    (i = t[s]),
+                                                                    ((i = t[s]),
                                                                         s &&
                                                                             r.push(
                                                                                 this.makeCode(n),
                                                                             ),
-                                                                        (r = r.concat(i));
+                                                                        (r = r.concat(i)));
                                                                 return r;
                                                             },
                                                         },
@@ -26593,7 +26607,7 @@
                                                                 0 <= s;
                                                                 i = s += -1
                                                             )
-                                                                (r = t[i]),
+                                                                ((r = t[i]),
                                                                     r.fragments &&
                                                                         (n.apply(
                                                                             t,
@@ -26603,7 +26617,7 @@
                                                                                 )),
                                                                             ),
                                                                         ),
-                                                                        o);
+                                                                        o));
                                                             return t;
                                                         },
                                                     },
@@ -26663,7 +26677,7 @@
                                                             n.__proto__ || Object.getPrototypeOf(n)
                                                         ).call(this),
                                                     );
-                                                    return (t.expressions = qt(Wt(e || []))), t;
+                                                    return ((t.expressions = qt(Wt(e || []))), t);
                                                 }
                                                 return (
                                                     _inherits(n, e),
@@ -26755,7 +26769,7 @@
                                                                         r--;
 
                                                                     ) {
-                                                                        (n = this.expressions[r]),
+                                                                        ((n = this.expressions[r]),
                                                                             (this.expressions[r] =
                                                                                 n.makeReturn(t)),
                                                                             n instanceof vt &&
@@ -26763,7 +26777,7 @@
                                                                                 this.expressions.splice(
                                                                                     r,
                                                                                     1,
-                                                                                );
+                                                                                ));
                                                                         break;
                                                                     }
                                                                     return this;
@@ -26848,14 +26862,14 @@
                                                                                             d,
                                                                                             1,
                                                                                         );
-                                                                                (f = v[0]),
+                                                                                ((f = v[0]),
                                                                                     "" === f.code ||
                                                                                         f.isComment ||
                                                                                         o.push(
                                                                                             this.makeCode(
                                                                                                 ";",
                                                                                             ),
-                                                                                        );
+                                                                                        ));
                                                                             }
                                                                             s.push(o);
                                                                         } else
@@ -26923,8 +26937,8 @@
                                                                         r < i;
                                                                         r++
                                                                     )
-                                                                        (s = u[r]),
-                                                                            t.scope.parameter(s);
+                                                                        ((s = u[r]),
+                                                                            t.scope.parameter(s));
                                                                     return (
                                                                         (n =
                                                                             this.compileWithDeclarations(
@@ -26990,15 +27004,15 @@
                                                                             9e9,
                                                                         );
                                                                         var b = [this.spaced, !1];
-                                                                        (y = b[0]),
-                                                                            (this.spaced = b[1]);
+                                                                        ((y = b[0]),
+                                                                            (this.spaced = b[1]));
                                                                         var w = [
                                                                             this.compileNode(t),
                                                                             y,
                                                                         ];
-                                                                        (a = w[0]),
+                                                                        ((a = w[0]),
                                                                             (this.spaced = w[1]),
-                                                                            (this.expressions = m);
+                                                                            (this.expressions = m));
                                                                     }
                                                                     d = this.compileNode(t);
                                                                     var E = t;
@@ -27071,7 +27085,7 @@
                                                                                             ),
                                                                                         );
                                                                                 }
-                                                                            n &&
+                                                                            (n &&
                                                                                 (o &&
                                                                                     a.push(
                                                                                         this.makeCode(
@@ -27101,7 +27115,7 @@
                                                                                                 ? "\n"
                                                                                                 : ""),
                                                                                     ),
-                                                                                );
+                                                                                ));
                                                                         } else
                                                                             a.length &&
                                                                                 d.length &&
@@ -27202,7 +27216,7 @@
                                                                                             e < t;
                                                                                             e++
                                                                                         )
-                                                                                            (i =
+                                                                                            ((i =
                                                                                                 n[
                                                                                                     e
                                                                                                 ]),
@@ -27217,7 +27231,7 @@
                                                                                                       )
                                                                                                     : r.push(
                                                                                                           i.code,
-                                                                                                      );
+                                                                                                      ));
                                                                                         return r;
                                                                                     })()
                                                                                         .join(
@@ -27247,10 +27261,10 @@
                                                                                     -1 === v)
                                                                                 )
                                                                                     if (0 === y)
-                                                                                        (g.code =
+                                                                                        ((g.code =
                                                                                             "\n" +
                                                                                             g.code),
-                                                                                            (v = 0);
+                                                                                            (v = 0));
                                                                                     else {
                                                                                         if (
                                                                                             !g.isStringWithInterpolations ||
@@ -27258,14 +27272,14 @@
                                                                                                 g.code
                                                                                         )
                                                                                             continue;
-                                                                                        (r =
+                                                                                        ((r =
                                                                                             r.slice(
                                                                                                 1,
                                                                                             ) +
                                                                                             "\n"),
-                                                                                            (v = 1);
+                                                                                            (v = 1));
                                                                                     }
-                                                                                delete s.precedingComments,
+                                                                                (delete s.precedingComments,
                                                                                     (g.code =
                                                                                         g.code.slice(
                                                                                             0,
@@ -27274,7 +27288,7 @@
                                                                                         r +
                                                                                         g.code.slice(
                                                                                             v,
-                                                                                        ));
+                                                                                        )));
                                                                                 break;
                                                                             }
                                                                         }
@@ -27368,7 +27382,7 @@
                                                                                                 e;
                                                                                                 t++
                                                                                             )
-                                                                                                (i =
+                                                                                                ((i =
                                                                                                     n[
                                                                                                         t
                                                                                                     ]),
@@ -27383,7 +27397,7 @@
                                                                                                           )
                                                                                                         : r.push(
                                                                                                               i.code,
-                                                                                                          );
+                                                                                                          ));
                                                                                             return r;
                                                                                         })()
                                                                                             .join(
@@ -27412,12 +27426,12 @@
                                                                                         k ===
                                                                                         n.length - 1
                                                                                     )
-                                                                                        (C.code +=
+                                                                                        ((C.code +=
                                                                                             "\n"),
                                                                                             (v =
                                                                                                 C
                                                                                                     .code
-                                                                                                    .length);
+                                                                                                    .length));
                                                                                     else {
                                                                                         if (
                                                                                             !C.isStringWithInterpolations ||
@@ -27425,10 +27439,11 @@
                                                                                                 C.code
                                                                                         )
                                                                                             continue;
-                                                                                        (r += "\n"),
-                                                                                            (v = 0);
+                                                                                        ((r +=
+                                                                                            "\n"),
+                                                                                            (v = 0));
                                                                                     }
-                                                                                delete s.followingComments,
+                                                                                (delete s.followingComments,
                                                                                     "\n" ===
                                                                                         C.code &&
                                                                                         (r =
@@ -27444,7 +27459,7 @@
                                                                                         r +
                                                                                         C.code.slice(
                                                                                             v,
-                                                                                        ));
+                                                                                        )));
                                                                                 break;
                                                                             }
                                                                         }
@@ -27468,7 +27483,7 @@
                                                     n
                                                 );
                                             })(a);
-                                            return (e.prototype.children = ["expressions"]), e;
+                                            return ((e.prototype.children = ["expressions"]), e);
                                         }.call(this)),
                                     (e.Literal = G =
                                         function () {
@@ -27481,7 +27496,7 @@
                                                             t.__proto__ || Object.getPrototypeOf(t)
                                                         ).call(this),
                                                     );
-                                                    return (n.value = e), n;
+                                                    return ((n.value = e), n);
                                                 }
                                                 return (
                                                     _inherits(t, e),
@@ -27523,7 +27538,7 @@
                                                     t
                                                 );
                                             })(a);
-                                            return (e.prototype.shouldCache = nt), e;
+                                            return ((e.prototype.shouldCache = nt), e);
                                         }.call(this)),
                                     (e.NumberLiteral = st =
                                         (function (e) {
@@ -27538,7 +27553,7 @@
                                                     )
                                                 );
                                             }
-                                            return _inherits(t, e), t;
+                                            return (_inherits(t, e), t);
                                         })(G)),
                                     (e.InfinityLiteral = U =
                                         (function (e) {
@@ -27671,7 +27686,7 @@
                                                     )
                                                 );
                                             }
-                                            return _inherits(t, e), t;
+                                            return (_inherits(t, e), t);
                                         })(G)),
                                     (e.PassthroughLiteral = lt =
                                         (function (e) {
@@ -27686,7 +27701,7 @@
                                                     )
                                                 );
                                             }
-                                            return _inherits(t, e), t;
+                                            return (_inherits(t, e), t);
                                         })(G)),
                                     (e.IdentifierLiteral = _ =
                                         function () {
@@ -27716,7 +27731,7 @@
                                                     t
                                                 );
                                             })(G);
-                                            return (e.prototype.isAssignable = Bt), e;
+                                            return ((e.prototype.isAssignable = Bt), e);
                                         }.call(this)),
                                     (e.CSXTag = c =
                                         (function (e) {
@@ -27731,7 +27746,7 @@
                                                     )
                                                 );
                                             }
-                                            return _inherits(t, e), t;
+                                            return (_inherits(t, e), t);
                                         })(_)),
                                     (e.PropertyName = ct =
                                         function () {
@@ -27748,9 +27763,9 @@
                                                         )
                                                     );
                                                 }
-                                                return _inherits(t, e), t;
+                                                return (_inherits(t, e), t);
                                             })(G);
-                                            return (e.prototype.isAssignable = Bt), e;
+                                            return ((e.prototype.isAssignable = Bt), e);
                                         }.call(this)),
                                     (e.ComputedPropertyName = m =
                                         (function (e) {
@@ -27921,7 +27936,7 @@
                                                     )
                                                 );
                                             }
-                                            return _inherits(t, e), t;
+                                            return (_inherits(t, e), t);
                                         })(G)),
                                     (e.BooleanLiteral = l =
                                         (function (e) {
@@ -27936,7 +27951,7 @@
                                                     )
                                                 );
                                             }
-                                            return _inherits(t, e), t;
+                                            return (_inherits(t, e), t);
                                         })(G)),
                                     (e.Return = vt =
                                         function () {
@@ -27949,7 +27964,7 @@
                                                             n.__proto__ || Object.getPrototypeOf(n)
                                                         ).call(this),
                                                     );
-                                                    return (t.expression = e), t;
+                                                    return ((t.expression = e), t);
                                                 }
                                                 return (
                                                     _inherits(n, e),
@@ -28029,7 +28044,8 @@
                                                                         ),
                                                                     );
                                                                 return (
-                                                                    r.push(this.makeCode(";")), r
+                                                                    r.push(this.makeCode(";")),
+                                                                    r
                                                                 );
                                                             },
                                                         },
@@ -28473,7 +28489,7 @@
                                                                     r++
                                                                 ) {
                                                                     var u;
-                                                                    (s = o[r]),
+                                                                    ((s = o[r]),
                                                                         (u = n).push.apply(
                                                                             u,
                                                                             _toConsumableArray(
@@ -28481,7 +28497,7 @@
                                                                                     t,
                                                                                 ),
                                                                             ),
-                                                                        );
+                                                                        ));
                                                                 }
                                                                 return n;
                                                             },
@@ -28599,7 +28615,8 @@
                                                 );
                                             })(a);
                                             return (
-                                                (e.prototype.children = ["base", "properties"]), e
+                                                (e.prototype.children = ["base", "properties"]),
+                                                e
                                             );
                                         }.call(this)),
                                     (e.HereComment = O =
@@ -28655,10 +28672,10 @@
                                                                     i < u;
                                                                     i++
                                                                 )
-                                                                    (a = l[i]),
+                                                                    ((a = l[i]),
                                                                         (o = /^\s*/.exec(a)[0]),
                                                                         o.length > s.length &&
-                                                                            (s = o);
+                                                                            (s = o));
                                                                 this.content = this.content.replace(
                                                                     RegExp("^(" + o + ")", "gm"),
                                                                     "",
@@ -28839,7 +28856,7 @@
                                                                 var r, i, s, o, u, a, f, l;
                                                                 if (this.soak) {
                                                                     if (this.variable instanceof xt)
-                                                                        (o = new G(
+                                                                        ((o = new G(
                                                                             this.variable.compile(
                                                                                 n,
                                                                             ),
@@ -28850,7 +28867,7 @@
                                                                                     .accessor &&
                                                                                 this.variable.error(
                                                                                     "Unsupported reference to 'super'",
-                                                                                );
+                                                                                ));
                                                                     else {
                                                                         if (
                                                                             (i = on(
@@ -28867,7 +28884,7 @@
                                                                                 c,
                                                                                 2,
                                                                             );
-                                                                        (o = h[0]), (l = h[1]);
+                                                                        ((o = h[0]), (l = h[1]));
                                                                     }
                                                                     return (
                                                                         (l = new t(l, this.args)),
@@ -28884,7 +28901,8 @@
                                                                 }
                                                                 for (r = this, a = []; ; ) {
                                                                     if (r.variable instanceof t) {
-                                                                        a.push(r), (r = r.variable);
+                                                                        (a.push(r),
+                                                                            (r = r.variable));
                                                                         continue;
                                                                     }
                                                                     if (!(r.variable instanceof Pt))
@@ -28907,13 +28925,13 @@
                                                                     s < u;
                                                                     s++
                                                                 )
-                                                                    (r = f[s]),
+                                                                    ((r = f[s]),
                                                                         i &&
                                                                             (r.variable instanceof t
                                                                                 ? (r.variable = i)
                                                                                 : (r.variable.base =
                                                                                       i)),
-                                                                        (i = on(n, r, "variable"));
+                                                                        (i = on(n, r, "variable")));
                                                                 return i;
                                                             },
                                                         },
@@ -28957,9 +28975,9 @@
                                                                             e < t;
                                                                             e++
                                                                         )
-                                                                            (s = n[e]),
+                                                                            ((s = n[e]),
                                                                                 s instanceof d &&
-                                                                                    r.push(s);
+                                                                                    r.push(s));
                                                                         return r;
                                                                     }.call(this)),
                                                                     0 < o.length &&
@@ -28975,9 +28993,9 @@
                                                                                 },
                                                                             ),
                                                                         w = _slicedToArray(b, 1);
-                                                                    (a = w[0]),
+                                                                    ((a = w[0]),
                                                                         (this.variable.base.cached =
-                                                                            a);
+                                                                            a));
                                                                 }
                                                                 for (
                                                                     g = this.args,
@@ -28987,7 +29005,7 @@
                                                                     u = ++c
                                                                 ) {
                                                                     var E;
-                                                                    (s = g[u]),
+                                                                    ((s = g[u]),
                                                                         u &&
                                                                             f.push(
                                                                                 this.makeCode(", "),
@@ -29000,7 +29018,7 @@
                                                                                     V,
                                                                                 ),
                                                                             ),
-                                                                        );
+                                                                        ));
                                                                 }
                                                                 return (
                                                                     (l = []),
@@ -29077,7 +29095,7 @@
                                                                         l++
                                                                     ) {
                                                                         var v;
-                                                                        (h = p[l]),
+                                                                        ((h = p[l]),
                                                                             (i = h.base),
                                                                             (o =
                                                                                 (null == i
@@ -29111,11 +29129,11 @@
                                                                                         J,
                                                                                     ),
                                                                                 ),
-                                                                            );
+                                                                            ));
                                                                     }
                                                                 if (a) {
                                                                     var m, g;
-                                                                    f.push(this.makeCode(">")),
+                                                                    (f.push(this.makeCode(">")),
                                                                         (m = f).push.apply(
                                                                             m,
                                                                             _toConsumableArray(
@@ -29136,7 +29154,7 @@
                                                                                     ),
                                                                                 ],
                                                                             ),
-                                                                        );
+                                                                        ));
                                                                 } else f.push(this.makeCode(" />"));
                                                                 return f;
                                                             },
@@ -29145,7 +29163,10 @@
                                                     t
                                                 );
                                             })(a);
-                                            return (e.prototype.children = ["variable", "args"]), e;
+                                            return (
+                                                (e.prototype.children = ["variable", "args"]),
+                                                e
+                                            );
                                         }.call(this)),
                                     (e.SuperCall = Tt =
                                         function () {
@@ -29214,9 +29235,9 @@
                                                                 ) {
                                                                     var u = o.cache(n, null, Bt),
                                                                         a = _slicedToArray(u, 2);
-                                                                    (o = a[0]),
+                                                                    ((o = a[0]),
                                                                         (r = a[1]),
-                                                                        s.push(r);
+                                                                        s.push(r));
                                                                 }
                                                                 return (
                                                                     s.unshift(o),
@@ -29249,7 +29270,7 @@
                                                             t.__proto__ || Object.getPrototypeOf(t)
                                                         ).call(this),
                                                     );
-                                                    return (n.accessor = e), n;
+                                                    return ((n.accessor = e), n);
                                                 }
                                                 return (
                                                     _inherits(t, e),
@@ -29270,7 +29291,7 @@
                                                                         null == this.accessor)
                                                                 ) {
                                                                     var c = r;
-                                                                    (i = c.name),
+                                                                    ((i = c.name),
                                                                         (l = c.variable),
                                                                         (i.shouldCache() ||
                                                                             (i instanceof R &&
@@ -29287,7 +29308,7 @@
                                                                         (this.accessor =
                                                                             null == s
                                                                                 ? i
-                                                                                : new R(s));
+                                                                                : new R(s)));
                                                                 }
                                                                 return (
                                                                     (null == (u = this.accessor) ||
@@ -29314,7 +29335,7 @@
                                                     t
                                                 );
                                             })(a);
-                                            return (e.prototype.children = ["accessor"]), e;
+                                            return ((e.prototype.children = ["accessor"]), e);
                                         }.call(this)),
                                     (e.RegexWithInterpolations = dt =
                                         (function (e) {
@@ -29338,7 +29359,7 @@
                                                     )
                                                 );
                                             }
-                                            return _inherits(t, e), t;
+                                            return (_inherits(t, e), t);
                                         })(h)),
                                     (e.TaggedTemplateCall = Lt =
                                         (function (e) {
@@ -29386,7 +29407,7 @@
                                                             t.__proto__ || Object.getPrototypeOf(t)
                                                         ).call(this),
                                                     );
-                                                    return (r.child = e), (r.parent = n), r;
+                                                    return ((r.child = e), (r.parent = n), r);
                                                 }
                                                 return (
                                                     _inherits(t, e),
@@ -29404,7 +29425,10 @@
                                                     t
                                                 );
                                             })(a);
-                                            return (e.prototype.children = ["child", "parent"]), e;
+                                            return (
+                                                (e.prototype.children = ["child", "parent"]),
+                                                e
+                                            );
                                         }.call(this)),
                                     (e.Access = i =
                                         function () {
@@ -29417,7 +29441,11 @@
                                                             t.__proto__ || Object.getPrototypeOf(t)
                                                         ).call(this),
                                                     );
-                                                    return (r.name = e), (r.soak = "soak" === n), r;
+                                                    return (
+                                                        (r.name = e),
+                                                        (r.soak = "soak" === n),
+                                                        r
+                                                    );
                                                 }
                                                 return (
                                                     _inherits(t, e),
@@ -29468,7 +29496,7 @@
                                                             t.__proto__ || Object.getPrototypeOf(t)
                                                         ).call(this),
                                                     );
-                                                    return (n.index = e), n;
+                                                    return ((n.index = e), n);
                                                 }
                                                 return (
                                                     _inherits(t, e),
@@ -29496,7 +29524,7 @@
                                                     t
                                                 );
                                             })(a);
-                                            return (e.prototype.children = ["index"]), e;
+                                            return ((e.prototype.children = ["index"]), e);
                                         }.call(this)),
                                     (e.Range = ht =
                                         function () {
@@ -29524,14 +29552,14 @@
                                                             key: "compileVariables",
                                                             value: function (t) {
                                                                 var n, r;
-                                                                (t = Yt(t, { top: !0 })),
-                                                                    (n = Rt(t, "shouldCache"));
+                                                                ((t = Yt(t, { top: !0 })),
+                                                                    (n = Rt(t, "shouldCache")));
                                                                 var i = this.cacheToCodeFragments(
                                                                         this.from.cache(t, V, n),
                                                                     ),
                                                                     s = _slicedToArray(i, 2);
-                                                                (this.fromC = s[0]),
-                                                                    (this.fromVar = s[1]);
+                                                                ((this.fromC = s[0]),
+                                                                    (this.fromVar = s[1]));
                                                                 var o = this.cacheToCodeFragments(
                                                                         this.to.cache(t, V, n),
                                                                     ),
@@ -29546,8 +29574,8 @@
                                                                                 r.cache(t, V, n),
                                                                             ),
                                                                         f = _slicedToArray(a, 2);
-                                                                    (this.step = f[0]),
-                                                                        (this.stepVar = f[1]);
+                                                                    ((this.step = f[0]),
+                                                                        (this.stepVar = f[1]));
                                                                 }
                                                                 return (
                                                                     (this.fromNum =
@@ -29591,7 +29619,7 @@
                                                                     !t.index)
                                                                 )
                                                                     return this.compileArray(t);
-                                                                (a =
+                                                                ((a =
                                                                     null != this.fromNum &&
                                                                     null != this.toNum),
                                                                     (o = Rt(t, "index")),
@@ -29611,7 +29639,7 @@
                                                                     this.step !== this.stepVar &&
                                                                         (m += ", " + this.step),
                                                                     (l = o + " <" + this.equals),
-                                                                    (s = o + " >" + this.equals);
+                                                                    (s = o + " >" + this.equals));
                                                                 var g = [this.fromNum, this.toNum];
                                                                 return (
                                                                     (i = g[0]),
@@ -29855,7 +29883,7 @@
                                                     t
                                                 );
                                             })(a);
-                                            return (e.prototype.children = ["from", "to"]), e;
+                                            return ((e.prototype.children = ["from", "to"]), e);
                                         }.call(this)),
                                     (e.Slice = yt =
                                         function () {
@@ -29868,7 +29896,7 @@
                                                             t.__proto__ || Object.getPrototypeOf(t)
                                                         ).call(this),
                                                     );
-                                                    return (n.range = e), n;
+                                                    return ((n.range = e), n);
                                                 }
                                                 return (
                                                     _inherits(t, e),
@@ -29941,7 +29969,7 @@
                                                     t
                                                 );
                                             })(a);
-                                            return (e.prototype.children = ["range"]), e;
+                                            return ((e.prototype.children = ["range"]), e);
                                         }.call(this)),
                                     (e.Obj = ot =
                                         function () {
@@ -30058,11 +30086,11 @@
                                                                         l < g;
                                                                         l++
                                                                     )
-                                                                        (E = x[l]),
+                                                                        ((E = x[l]),
                                                                             E instanceof Pt &&
                                                                                 E.error(
                                                                                     "cannot have an implicit value in an implicit object",
-                                                                                );
+                                                                                ));
                                                                 if (this.hasSplat() && !this.csx)
                                                                     return this.compileSpread(n);
                                                                 if (
@@ -30086,7 +30114,7 @@
                                                                             S instanceof o)
                                                                         ) {
                                                                             var L = S;
-                                                                            (k = L.value),
+                                                                            ((k = L.value),
                                                                                 (C = k.unwrapAll()),
                                                                                 C instanceof s ||
                                                                                 C instanceof t
@@ -30094,7 +30122,7 @@
                                                                                     : C instanceof
                                                                                           o &&
                                                                                       (C.nestedLhs =
-                                                                                          !0);
+                                                                                          !0));
                                                                         }
                                                                 for (
                                                                     f = !0,
@@ -30104,11 +30132,11 @@
                                                                     d < b;
                                                                     d++
                                                                 )
-                                                                    (S = N[d]),
+                                                                    ((S = N[d]),
                                                                         S instanceof o &&
                                                                             "object" ===
                                                                                 S.context &&
-                                                                            (f = !1);
+                                                                            (f = !1));
                                                                 for (
                                                                     r = [],
                                                                         r.push(
@@ -30172,7 +30200,7 @@
                                                                                     O,
                                                                                     2,
                                                                                 );
-                                                                            (p = M[0]),
+                                                                            ((p = M[0]),
                                                                                 (k = M[1]),
                                                                                 p instanceof _ &&
                                                                                     (p = new ct(
@@ -30182,7 +30210,7 @@
                                                                                     p,
                                                                                     k,
                                                                                     "object",
-                                                                                ));
+                                                                                )));
                                                                         } else if (
                                                                             p instanceof Pt &&
                                                                             p.base instanceof m
@@ -30199,7 +30227,7 @@
                                                                                             D,
                                                                                             2,
                                                                                         );
-                                                                                (p = P[0]),
+                                                                                ((p = P[0]),
                                                                                     (k = P[1]),
                                                                                     p instanceof
                                                                                         _ &&
@@ -30210,7 +30238,7 @@
                                                                                         p,
                                                                                         k,
                                                                                         "object",
-                                                                                    ));
+                                                                                    )));
                                                                             } else
                                                                                 S = new o(
                                                                                     p,
@@ -30226,7 +30254,7 @@
                                                                                     S,
                                                                                     "object",
                                                                                 ));
-                                                                    a && r.push(this.makeCode(a)),
+                                                                    (a && r.push(this.makeCode(a)),
                                                                         (A = r).push.apply(
                                                                             A,
                                                                             _toConsumableArray(
@@ -30239,7 +30267,7 @@
                                                                         c &&
                                                                             r.push(
                                                                                 this.makeCode(c),
-                                                                            );
+                                                                            ));
                                                                 }
                                                                 return (
                                                                     r.push(
@@ -30284,7 +30312,7 @@
                                                                     n < r;
                                                                     n++
                                                                 )
-                                                                    (i = s[n]),
+                                                                    ((i = s[n]),
                                                                         i instanceof o &&
                                                                             "object" ===
                                                                                 i.context &&
@@ -30292,7 +30320,9 @@
                                                                         (i = i.unwrapAll()),
                                                                         null == i.eachName
                                                                             ? u.push(void 0)
-                                                                            : u.push(i.eachName(t));
+                                                                            : u.push(
+                                                                                  i.eachName(t),
+                                                                              ));
                                                                 return u;
                                                             },
                                                         },
@@ -30322,7 +30352,8 @@
                                                                                 );
                                                                             }
                                                                             return (
-                                                                                (c = []), (a = [])
+                                                                                (c = []),
+                                                                                (a = [])
                                                                             );
                                                                         },
                                                                         s = 0,
@@ -30330,13 +30361,13 @@
                                                                     s < o;
                                                                     s++
                                                                 )
-                                                                    (u = f[s]),
+                                                                    ((u = f[s]),
                                                                         u instanceof bt
                                                                             ? (c.push(
                                                                                   new Pt(u.name),
                                                                               ),
                                                                               i())
-                                                                            : a.push(u);
+                                                                            : a.push(u));
                                                                 return (
                                                                     i(),
                                                                     l[0] instanceof t ||
@@ -30363,7 +30394,7 @@
                                                                     r = ++i
                                                                 ) {
                                                                     var f;
-                                                                    (u = a[r]),
+                                                                    ((u = a[r]),
                                                                         (u.csx = !0),
                                                                         (s =
                                                                             r === a.length - 1
@@ -30384,7 +30415,7 @@
                                                                                 ),
                                                                             ),
                                                                         ),
-                                                                        n.push(this.makeCode(s));
+                                                                        n.push(this.makeCode(s)));
                                                                 }
                                                                 return this.front
                                                                     ? this.wrapInParentheses(n)
@@ -30395,7 +30426,7 @@
                                                     t
                                                 );
                                             })(a);
-                                            return (e.prototype.children = ["properties"]), e;
+                                            return ((e.prototype.children = ["properties"]), e);
                                         }.call(this)),
                                     (e.Arr = s =
                                         function () {
@@ -30412,7 +30443,7 @@
                                                             n.__proto__ || Object.getPrototypeOf(n)
                                                         ).call(this),
                                                     );
-                                                    return (r.lhs = t), (r.objects = e || []), r;
+                                                    return ((r.lhs = t), (r.objects = e || []), r);
                                                 }
                                                 return (
                                                     _inherits(n, e),
@@ -30514,7 +30545,7 @@
                                                                     h < v;
                                                                     E = ++h
                                                                 )
-                                                                    (w = C[E]),
+                                                                    ((w = C[E]),
                                                                         (k = w.unwrapAll()),
                                                                         k.comments &&
                                                                             0 ===
@@ -30528,7 +30559,7 @@
                                                                         this.lhs &&
                                                                             (k instanceof n ||
                                                                                 k instanceof ot) &&
-                                                                            (k.lhs = !0);
+                                                                            (k.lhs = !0));
                                                                 for (
                                                                     s = function () {
                                                                         var e, t, n, i;
@@ -30540,13 +30571,13 @@
                                                                             e < t;
                                                                             e++
                                                                         )
-                                                                            (w = n[e]),
+                                                                            ((w = n[e]),
                                                                                 i.push(
                                                                                     w.compileToFragments(
                                                                                         r,
                                                                                         V,
                                                                                     ),
-                                                                                );
+                                                                                ));
                                                                         return i;
                                                                     }.call(this),
                                                                         S = s.length,
@@ -30564,15 +30595,15 @@
                                                                         d < g;
                                                                         d++
                                                                     )
-                                                                        (o = f[d]),
+                                                                        ((o = f[d]),
                                                                             o.isHereComment
                                                                                 ? (o.code =
                                                                                       o.code.trim())
                                                                                 : 0 !== c &&
                                                                                   !1 === l &&
                                                                                   Vt(o) &&
-                                                                                  (l = !0);
-                                                                    0 !== c &&
+                                                                                  (l = !0));
+                                                                    (0 !== c &&
                                                                         x &&
                                                                         (!a(f) || c === S - 1) &&
                                                                         i.push(this.makeCode(", ")),
@@ -30580,7 +30611,7 @@
                                                                         (L = i).push.apply(
                                                                             L,
                                                                             _toConsumableArray(f),
-                                                                        );
+                                                                        ));
                                                                 }
                                                                 if (l || 0 <= t.call(Xt(i), "\n")) {
                                                                     for (
@@ -30588,7 +30619,7 @@
                                                                         T < y;
                                                                         u = ++T
                                                                     )
-                                                                        (o = i[u]),
+                                                                        ((o = i[u]),
                                                                             o.isHereComment
                                                                                 ? (o.code =
                                                                                       en(
@@ -30603,8 +30634,8 @@
                                                                                       !o.isElision) &&
                                                                                   (o.code =
                                                                                       ",\n" +
-                                                                                      r.indent);
-                                                                    i.unshift(
+                                                                                      r.indent));
+                                                                    (i.unshift(
                                                                         this.makeCode(
                                                                             "[\n" + r.indent,
                                                                         ),
@@ -30615,18 +30646,18 @@
                                                                                     this.tab +
                                                                                     "]",
                                                                             ),
-                                                                        );
+                                                                        ));
                                                                 } else {
                                                                     for (
                                                                         N = 0, b = i.length;
                                                                         N < b;
                                                                         N++
                                                                     )
-                                                                        (o = i[N]),
+                                                                        ((o = i[N]),
                                                                             o.isHereComment &&
-                                                                                (o.code += " ");
-                                                                    i.unshift(this.makeCode("[")),
-                                                                        i.push(this.makeCode("]"));
+                                                                                (o.code += " "));
+                                                                    (i.unshift(this.makeCode("[")),
+                                                                        i.push(this.makeCode("]")));
                                                                 }
                                                                 return i;
                                                             },
@@ -30659,9 +30690,9 @@
                                                                     n < r;
                                                                     n++
                                                                 )
-                                                                    (i = s[n]),
+                                                                    ((i = s[n]),
                                                                         (i = i.unwrapAll()),
-                                                                        o.push(i.eachName(t));
+                                                                        o.push(i.eachName(t)));
                                                                 return o;
                                                             },
                                                         },
@@ -30669,7 +30700,7 @@
                                                     n
                                                 );
                                             })(a);
-                                            return (e.prototype.children = ["objects"]), e;
+                                            return ((e.prototype.children = ["objects"]), e);
                                         }.call(this)),
                                     (e.Class = p =
                                         function () {
@@ -30730,10 +30761,10 @@
                                                                 ) {
                                                                     var s = this.variable.cache(t),
                                                                         u = _slicedToArray(s, 2);
-                                                                    (this.variable = u[0]),
-                                                                        (this.variableRef = u[1]);
+                                                                    ((this.variable = u[0]),
+                                                                        (this.variableRef = u[1]));
                                                                 }
-                                                                this.variable &&
+                                                                (this.variable &&
                                                                     (r = new o(
                                                                         this.variable,
                                                                         r,
@@ -30745,7 +30776,7 @@
                                                                         },
                                                                     )),
                                                                     (this.compileNode =
-                                                                        this.compileClassDeclaration);
+                                                                        this.compileClassDeclaration));
                                                                 try {
                                                                     return r.compileToFragments(t);
                                                                 } finally {
@@ -30811,7 +30842,7 @@
                                                                     !this.body.isEmpty())
                                                                 ) {
                                                                     var o;
-                                                                    (this.body.spaced = !0),
+                                                                    ((this.body.spaced = !0),
                                                                         i.push(this.makeCode("\n")),
                                                                         (o = i).push.apply(
                                                                             o,
@@ -30826,10 +30857,11 @@
                                                                             this.makeCode(
                                                                                 "\n" + this.tab,
                                                                             ),
-                                                                        );
+                                                                        ));
                                                                 }
                                                                 return (
-                                                                    i.push(this.makeCode("}")), i
+                                                                    i.push(this.makeCode("}")),
+                                                                    i
                                                                 );
                                                             },
                                                         },
@@ -30924,7 +30956,7 @@
                                                                             (t = y[r]);
 
                                                                         )
-                                                                            (c =
+                                                                            ((c =
                                                                                 this.addInitializerExpression(
                                                                                     t,
                                                                                 )) &&
@@ -30932,8 +30964,8 @@
                                                                                 u.push(c),
                                                                                 l.push(c),
                                                                                 (E = r + 1)),
-                                                                                r++;
-                                                                        b(),
+                                                                                r++);
+                                                                        (b(),
                                                                             n.apply(
                                                                                 o,
                                                                                 [
@@ -30942,20 +30974,20 @@
                                                                                 ].concat(u),
                                                                             ),
                                                                             u,
-                                                                            (a += u.length);
+                                                                            (a += u.length));
                                                                     } else
-                                                                        (c =
+                                                                        ((c =
                                                                             this.addInitializerExpression(
                                                                                 s,
                                                                             )) &&
                                                                             (l.push(c), (o[a] = c)),
-                                                                            (a += 1);
+                                                                            (a += 1));
                                                                 for (
                                                                     p = 0, m = l.length;
                                                                     p < m;
                                                                     p++
                                                                 )
-                                                                    (g = l[p]),
+                                                                    ((g = l[p]),
                                                                         g instanceof d &&
                                                                             (g.ctor
                                                                                 ? (this.ctor &&
@@ -30970,7 +31002,7 @@
                                                                                   : g.bound &&
                                                                                     this.boundMethods.push(
                                                                                         g,
-                                                                                    ));
+                                                                                    )));
                                                                 if (l.length !== o.length)
                                                                     return (
                                                                         (this.body.expressions =
@@ -30984,10 +31016,10 @@
                                                                                     e < t;
                                                                                     e++
                                                                                 )
-                                                                                    (s = l[e]),
+                                                                                    ((s = l[e]),
                                                                                         n.push(
                                                                                             s.hoist(),
-                                                                                        );
+                                                                                        ));
                                                                                 return n;
                                                                             })()),
                                                                         new f(o)
@@ -31119,7 +31151,7 @@
                                                                                 e < r;
                                                                                 e++
                                                                             )
-                                                                                (t = s[e]),
+                                                                                ((t = s[e]),
                                                                                     this.parent &&
                                                                                         (t.classVariable =
                                                                                             this.variableRef),
@@ -31146,7 +31178,7 @@
                                                                                                 ],
                                                                                             ),
                                                                                         ),
-                                                                                    );
+                                                                                    ));
                                                                             return u;
                                                                         }.call(this)),
                                                                     null
@@ -31182,7 +31214,7 @@
                                                             t.__proto__ || Object.getPrototypeOf(t)
                                                         ).call(this),
                                                     );
-                                                    return (r.class = e), (r.body = n), r;
+                                                    return ((r.class = e), (r.body = n), r);
                                                 }
                                                 return (
                                                     _inherits(t, e),
@@ -31333,7 +31365,7 @@
                                                                                     i < s;
                                                                                     r = ++i
                                                                                 )
-                                                                                    (u = a[r]),
+                                                                                    ((u = a[r]),
                                                                                         u instanceof
                                                                                             Pt &&
                                                                                         u.isObject(
@@ -31355,7 +31387,7 @@
                                                                                                   t.name,
                                                                                               ) &&
                                                                                               (u.value.isStatic =
-                                                                                                  !0);
+                                                                                                  !0));
                                                                                 e.expressions = Wt(
                                                                                     e.expressions,
                                                                                 );
@@ -31399,7 +31431,7 @@
                                                                             e < a;
                                                                             e++
                                                                         )
-                                                                            (n = t[e]),
+                                                                            ((n = t[e]),
                                                                                 (l = n.variable),
                                                                                 (r =
                                                                                     null == l
@@ -31442,7 +31474,7 @@
                                                                                         )),
                                                                                         (n.variable =
                                                                                             l)),
-                                                                                c.push(n);
+                                                                                c.push(n));
                                                                         return c;
                                                                     }.call(this)),
                                                                     qt(a)
@@ -31605,7 +31637,7 @@
                                                                     null != this.defaultBinding)
                                                                 ) {
                                                                     var r;
-                                                                    (r = n).push.apply(
+                                                                    ((r = n).push.apply(
                                                                         r,
                                                                         _toConsumableArray(
                                                                             this.defaultBinding.compileNode(
@@ -31616,7 +31648,7 @@
                                                                         null != this.namedImports &&
                                                                             n.push(
                                                                                 this.makeCode(", "),
-                                                                            );
+                                                                            ));
                                                                 }
                                                                 if (null != this.namedImports) {
                                                                     var i;
@@ -31733,7 +31765,7 @@
                                                     )
                                                 );
                                             }
-                                            return _inherits(t, e), t;
+                                            return (_inherits(t, e), t);
                                         })(S)),
                                     (e.ExportDefaultDeclaration = x =
                                         (function (e) {
@@ -31748,7 +31780,7 @@
                                                     )
                                                 );
                                             }
-                                            return _inherits(t, e), t;
+                                            return (_inherits(t, e), t);
                                         })(S)),
                                     (e.ExportAllDeclaration = E =
                                         (function (e) {
@@ -31763,7 +31795,7 @@
                                                     )
                                                 );
                                             }
-                                            return _inherits(t, e), t;
+                                            return (_inherits(t, e), t);
                                         })(S)),
                                     (e.ModuleSpecifierList = et =
                                         function () {
@@ -31776,7 +31808,7 @@
                                                             t.__proto__ || Object.getPrototypeOf(t)
                                                         ).call(this),
                                                     );
-                                                    return (n.specifiers = e), n;
+                                                    return ((n.specifiers = e), n);
                                                 }
                                                 return (
                                                     _inherits(t, e),
@@ -31798,13 +31830,13 @@
                                                                             e < n;
                                                                             e++
                                                                         )
-                                                                            (a = r[e]),
+                                                                            ((a = r[e]),
                                                                                 i.push(
                                                                                     a.compileToFragments(
                                                                                         t,
                                                                                         V,
                                                                                     ),
-                                                                                );
+                                                                                ));
                                                                         return i;
                                                                     }.call(this)),
                                                                     0 !== this.specifiers.length)
@@ -31821,7 +31853,7 @@
                                                                         s = ++o
                                                                     ) {
                                                                         var f;
-                                                                        (i = r[s]),
+                                                                        ((i = r[s]),
                                                                             s &&
                                                                                 n.push(
                                                                                     this.makeCode(
@@ -31834,7 +31866,7 @@
                                                                                 _toConsumableArray(
                                                                                     i,
                                                                                 ),
-                                                                            );
+                                                                            ));
                                                                     }
                                                                     n.push(this.makeCode("\n}"));
                                                                 } else n.push(this.makeCode("{}"));
@@ -31845,7 +31877,7 @@
                                                     t
                                                 );
                                             })(a);
-                                            return (e.prototype.children = ["specifiers"]), e;
+                                            return ((e.prototype.children = ["specifiers"]), e);
                                         }.call(this)),
                                     (e.ImportSpecifierList = I =
                                         (function (e) {
@@ -31860,7 +31892,7 @@
                                                     )
                                                 );
                                             }
-                                            return _inherits(t, e), t;
+                                            return (_inherits(t, e), t);
                                         })(et)),
                                     (e.ExportSpecifierList = C =
                                         (function (e) {
@@ -31875,7 +31907,7 @@
                                                     )
                                                 );
                                             }
-                                            return _inherits(t, e), t;
+                                            return (_inherits(t, e), t);
                                         })(et)),
                                     (e.ModuleSpecifier = Z =
                                         function () {
@@ -31968,7 +32000,8 @@
                                                 );
                                             })(a);
                                             return (
-                                                (e.prototype.children = ["original", "alias"]), e
+                                                (e.prototype.children = ["original", "alias"]),
+                                                e
                                             );
                                         }.call(this)),
                                     (e.ImportSpecifier = F =
@@ -32032,7 +32065,7 @@
                                                     )
                                                 );
                                             }
-                                            return _inherits(t, e), t;
+                                            return (_inherits(t, e), t);
                                         })(F)),
                                     (e.ImportNamespaceSpecifier = j =
                                         (function (e) {
@@ -32047,7 +32080,7 @@
                                                     )
                                                 );
                                             }
-                                            return _inherits(t, e), t;
+                                            return (_inherits(t, e), t);
                                         })(F)),
                                     (e.ExportSpecifier = N =
                                         (function (e) {
@@ -32062,7 +32095,7 @@
                                                     )
                                                 );
                                             }
-                                            return _inherits(t, e), t;
+                                            return (_inherits(t, e), t);
                                         })(Z)),
                                     (e.Assign = o =
                                         function () {
@@ -32330,7 +32363,7 @@
                                                                             : m.length)
                                                                     ) {
                                                                         var E, S, x, T;
-                                                                        (g =
+                                                                        ((g =
                                                                             this.variable
                                                                                 .properties),
                                                                             (E = g),
@@ -32351,7 +32384,7 @@
                                                                                     ? void 0
                                                                                     : y.value) &&
                                                                                 (this.value.name =
-                                                                                    a);
+                                                                                    a));
                                                                     }
                                                                 return (this.csx &&
                                                                     (this.value.base.csxAttribute =
@@ -32516,13 +32549,13 @@
                                                                                                 E,
                                                                                                 2,
                                                                                             );
-                                                                                    (y.value.value =
+                                                                                    ((y.value.value =
                                                                                         S[0]),
-                                                                                        (m = S[1]);
+                                                                                        (m = S[1]));
                                                                                 }
                                                                                 if (p) {
                                                                                     var x;
-                                                                                    (d = new Pt(
+                                                                                    ((d = new Pt(
                                                                                         a.base,
                                                                                         a.properties.concat(
                                                                                             [
@@ -32552,7 +32585,7 @@
                                                                                                     d,
                                                                                                 ),
                                                                                             ),
-                                                                                        );
+                                                                                        ));
                                                                                 }
                                                                             } else
                                                                                 y instanceof bt &&
@@ -32580,7 +32613,7 @@
                                                                                                         t;
                                                                                                         e++
                                                                                                     )
-                                                                                                        (g =
+                                                                                                        ((g =
                                                                                                             n[
                                                                                                                 e
                                                                                                             ]),
@@ -32590,7 +32623,7 @@
                                                                                                                     u(
                                                                                                                         g,
                                                                                                                     ),
-                                                                                                                );
+                                                                                                                ));
                                                                                                     return r;
                                                                                                 })(),
                                                                                             ),
@@ -32628,7 +32661,7 @@
                                                                     a < l;
                                                                     a++
                                                                 )
-                                                                    (c = p[a]),
+                                                                    ((c = p[a]),
                                                                         (m = new h(
                                                                             new Pt(
                                                                                 new G(
@@ -32655,7 +32688,7 @@
                                                                                         : null,
                                                                                 },
                                                                             ),
-                                                                        );
+                                                                        ));
                                                                 return (
                                                                     (n = d.compileToFragments(t)),
                                                                     t.level === K &&
@@ -32739,9 +32772,9 @@
                                                                             e < t;
                                                                             E = ++e
                                                                         )
-                                                                            (L = O[E]),
+                                                                            ((L = O[E]),
                                                                                 L instanceof bt &&
-                                                                                    n.push(E);
+                                                                                    n.push(E));
                                                                         return n;
                                                                     })()),
                                                                     (v = (function () {
@@ -32753,9 +32786,9 @@
                                                                             e < t;
                                                                             E = ++e
                                                                         )
-                                                                            (L = O[E]),
+                                                                            ((L = O[E]),
                                                                                 L instanceof w &&
-                                                                                    n.push(E);
+                                                                                    n.push(E));
                                                                         return n;
                                                                     })()),
                                                                     (q = [].concat(
@@ -32847,11 +32880,11 @@
                                                                             t < n;
                                                                             E = ++t
                                                                         )
-                                                                            (L = e[E]),
+                                                                            ((L = e[E]),
                                                                                 L.base instanceof
                                                                                     ot &&
                                                                                     L.base.hasSplat() &&
-                                                                                    r.push(E);
+                                                                                    r.push(E));
                                                                         return r;
                                                                     }),
                                                                     (y = function (e) {
@@ -32863,11 +32896,11 @@
                                                                             t < n;
                                                                             E = ++t
                                                                         )
-                                                                            (L = e[E]),
+                                                                            ((L = e[E]),
                                                                                 L instanceof r &&
                                                                                     "object" ===
                                                                                         L.context &&
-                                                                                    i.push(E);
+                                                                                    i.push(E));
                                                                         return i;
                                                                     }),
                                                                     (A = function (e) {
@@ -32927,7 +32960,7 @@
                                                                                         s =
                                                                                             S.variable;
                                                                                     }
-                                                                                    (c = s.this
+                                                                                    ((c = s.this
                                                                                         ? s
                                                                                               .properties[0]
                                                                                               .name
@@ -32946,9 +32979,9 @@
                                                                                                     c,
                                                                                                 ),
                                                                                             ],
-                                                                                        ));
+                                                                                        )));
                                                                                 } else
-                                                                                    (s =
+                                                                                    ((s =
                                                                                         (function () {
                                                                                             switch (
                                                                                                 !1
@@ -32999,8 +33032,8 @@
                                                                                                             ],
                                                                                                         );
                                                                                                 }
-                                                                                            })());
-                                                                                (d = Qt(
+                                                                                            })()));
+                                                                                ((d = Qt(
                                                                                     s.unwrap()
                                                                                         .value,
                                                                                 )),
@@ -33021,7 +33054,7 @@
                                                                                                 V,
                                                                                             ),
                                                                                         ),
-                                                                                    );
+                                                                                    ));
                                                                             }
                                                                         return m;
                                                                     }),
@@ -33241,7 +33274,7 @@
                                                                                 o.cache(t, $),
                                                                             ),
                                                                         v = _slicedToArray(d, 2);
-                                                                    (u = v[0]), (a = v[1]);
+                                                                    ((u = v[0]), (a = v[1]));
                                                                 } else u = a = "0";
                                                                 l
                                                                     ? (null == o
@@ -33310,9 +33343,9 @@
                                                         this,
                                                     ),
                                                 );
-                                                return (n.glyph = e), n;
+                                                return ((n.glyph = e), n);
                                             }
-                                            return _inherits(t, e), t;
+                                            return (_inherits(t, e), t);
                                         })(a)),
                                     (e.Code = d =
                                         function () {
@@ -33542,7 +33575,7 @@
                                                                     b < x;
                                                                     g = ++b
                                                                 )
-                                                                    (O = R[g]),
+                                                                    ((O = R[g]),
                                                                         O.splat || O instanceof w
                                                                             ? (m
                                                                                   ? O.error(
@@ -33771,7 +33804,7 @@
                                                                                                   ),
                                                                                               ),
                                                                                           )),
-                                                                                    H.push(j)));
+                                                                                    H.push(j))));
                                                                 if (
                                                                     (0 !== B.length &&
                                                                         p.unshift(
@@ -33800,7 +33833,7 @@
                                                                                                         t;
                                                                                                         e++
                                                                                                     )
-                                                                                                        (O =
+                                                                                                        ((O =
                                                                                                             B[
                                                                                                                 e
                                                                                                             ]),
@@ -33808,7 +33841,7 @@
                                                                                                                 O.asReference(
                                                                                                                     n,
                                                                                                                 ),
-                                                                                                            );
+                                                                                                            ));
                                                                                                     return r;
                                                                                                 })(),
                                                                                             ),
@@ -33938,7 +33971,7 @@
                                                                                 .length)
                                                                     ) {
                                                                         var rt;
-                                                                        (d =
+                                                                        ((d =
                                                                             n.scope.variables.splice(
                                                                                 J,
                                                                             )),
@@ -33949,7 +33982,7 @@
                                                                                 _toConsumableArray(
                                                                                     d,
                                                                                 ),
-                                                                            );
+                                                                            ));
                                                                     }
                                                                 }
                                                                 if (
@@ -33967,8 +34000,8 @@
                                                                         S < N;
                                                                         S++
                                                                     )
-                                                                        (l = $[S]),
-                                                                            (l.unshift = !1);
+                                                                        ((l = $[S]),
+                                                                            (l.unshift = !1));
                                                                     this.compileCommentFragments(
                                                                         n,
                                                                         this.funcGlyph,
@@ -33987,7 +34020,7 @@
                                                                         n.scope,
                                                                         n.scope.parent,
                                                                     ];
-                                                                    (k = it[0]),
+                                                                    ((k = it[0]),
                                                                         (n.scope = it[1]),
                                                                         (A =
                                                                             this.name.compileToFragments(
@@ -33995,7 +34028,7 @@
                                                                             )),
                                                                         "." === A[0].code &&
                                                                             A.shift(),
-                                                                        (n.scope = k);
+                                                                        (n.scope = k));
                                                                 }
                                                                 if (
                                                                     ((u = this.joinFragmentArrays(
@@ -34008,12 +34041,12 @@
                                                                                 t < e;
                                                                                 t++
                                                                             )
-                                                                                (C = L[t]),
+                                                                                ((C = L[t]),
                                                                                     n.push(
                                                                                         this.makeCode(
                                                                                             C,
                                                                                         ),
-                                                                                    );
+                                                                                    ));
                                                                             return n;
                                                                         }.call(this),
                                                                         " ",
@@ -34081,8 +34114,8 @@
                                                                     n < r;
                                                                     n++
                                                                 )
-                                                                    (i = s[n]),
-                                                                        o.push(i.eachName(t));
+                                                                    ((i = s[n]),
+                                                                        o.push(i.eachName(t)));
                                                                 return o;
                                                             },
                                                         },
@@ -34383,7 +34416,7 @@
                                                                     s < u;
                                                                     s++
                                                                 )
-                                                                    (l = h[s]),
+                                                                    ((l = h[s]),
                                                                         (a = l),
                                                                         l instanceof o &&
                                                                             null == l.context &&
@@ -34427,7 +34460,7 @@
                                                                                     l.error(
                                                                                         "illegal parameter " +
                                                                                             l.compile(),
-                                                                                    );
+                                                                                    ));
                                                             },
                                                         },
                                                         {
@@ -34465,7 +34498,7 @@
                                                     n
                                                 );
                                             })(a);
-                                            return (e.prototype.children = ["name", "value"]), e;
+                                            return ((e.prototype.children = ["name", "value"]), e);
                                         }.call(this)),
                                     (e.Splat = bt =
                                         function () {
@@ -34478,7 +34511,7 @@
                                                             t.__proto__ || Object.getPrototypeOf(t)
                                                         ).call(this),
                                                     );
-                                                    return (n.name = e.compile ? e : new G(e)), n;
+                                                    return ((n.name = e.compile ? e : new G(e)), n);
                                                 }
                                                 return (
                                                     _inherits(t, e),
@@ -34524,7 +34557,7 @@
                                                     t
                                                 );
                                             })(a);
-                                            return (e.prototype.children = ["name"]), e;
+                                            return ((e.prototype.children = ["name"]), e);
                                         }.call(this)),
                                     (e.Expansion = w =
                                         function () {
@@ -34563,7 +34596,7 @@
                                                     t
                                                 );
                                             })(a);
-                                            return (e.prototype.shouldCache = nt), e;
+                                            return ((e.prototype.shouldCache = nt), e);
                                         }.call(this)),
                                     (e.Elision = g =
                                         function () {
@@ -34668,7 +34701,7 @@
                                                         {
                                                             key: "addBody",
                                                             value: function (t) {
-                                                                return (this.body = t), this;
+                                                                return ((this.body = t), this);
                                                             },
                                                         },
                                                         {
@@ -34915,11 +34948,11 @@
                                                                             n && n.operator;
 
                                                                         )
-                                                                            t &&
+                                                                            (t &&
                                                                                 (t =
                                                                                     n.operator in
                                                                                     r),
-                                                                                (n = n.first);
+                                                                                (n = n.first));
                                                                         if (!t)
                                                                             return new ft(
                                                                                 this,
@@ -34929,10 +34962,10 @@
                                                                             n && n.operator;
 
                                                                         )
-                                                                            (n.invert = !n.invert),
+                                                                            ((n.invert = !n.invert),
                                                                                 (n.operator =
                                                                                     r[n.operator]),
-                                                                                (n = n.first);
+                                                                                (n = n.first));
                                                                         return this;
                                                                     }
                                                                     return (o = r[this.operator])
@@ -34989,11 +35022,11 @@
                                                                         i < s;
                                                                         i++
                                                                     )
-                                                                        (u = l[i]),
+                                                                        ((u = l[i]),
                                                                             u.value
                                                                                 ? (a.push(u.value),
                                                                                   delete u.value)
-                                                                                : a.push(u);
+                                                                                : a.push(u));
                                                                     return (
                                                                         (n = new h(t, a)),
                                                                         (n.do = !0),
@@ -35404,7 +35437,7 @@
                                                             t.__proto__ || Object.getPrototypeOf(t)
                                                         ).call(this),
                                                     );
-                                                    return (r.object = e), (r.array = n), r;
+                                                    return ((r.object = e), (r.array = n), r);
                                                 }
                                                 return (
                                                     _inherits(t, e),
@@ -35455,7 +35488,7 @@
                                                                     c,
                                                                     h,
                                                                     p;
-                                                                (h = r[0]), (l = r[1]);
+                                                                ((h = r[0]), (l = r[1]));
                                                                 var d = this.negated
                                                                         ? [" !== ", " && "]
                                                                         : [" === ", " || "],
@@ -35470,7 +35503,7 @@
                                                                     a < f;
                                                                     o = ++a
                                                                 )
-                                                                    (u = c[o]),
+                                                                    ((u = c[o]),
                                                                         o &&
                                                                             p.push(
                                                                                 this.makeCode(s),
@@ -35482,7 +35515,7 @@
                                                                                 t,
                                                                                 W,
                                                                             ),
-                                                                        ));
+                                                                        )));
                                                                 return t.level < $
                                                                     ? p
                                                                     : this.wrapInParentheses(p);
@@ -35733,7 +35766,7 @@
                                                             t.__proto__ || Object.getPrototypeOf(t)
                                                         ).call(this),
                                                     );
-                                                    return (n.expression = e), n;
+                                                    return ((n.expression = e), n);
                                                 }
                                                 return (
                                                     _inherits(t, e),
@@ -35804,9 +35837,9 @@
                                                                         r < i;
                                                                         r++
                                                                     )
-                                                                        (n = o[r]),
+                                                                        ((n = o[r]),
                                                                             0 > t.call(s, n) &&
-                                                                                s.push(n);
+                                                                                s.push(n));
                                                                     return delete e.comments;
                                                                 }
                                                             },
@@ -35837,7 +35870,7 @@
                                                                             ? ["===", "||"]
                                                                             : ["!==", "&&"],
                                                                         o = _slicedToArray(s, 2);
-                                                                    (n = o[0]),
+                                                                    ((n = o[0]),
                                                                         (r = o[1]),
                                                                         (i =
                                                                             "typeof " +
@@ -35856,9 +35889,9 @@
                                                                                   n +
                                                                                   " " +
                                                                                   this
-                                                                                      .comparisonTarget));
+                                                                                      .comparisonTarget)));
                                                                 } else
-                                                                    (n =
+                                                                    ((n =
                                                                         "null" ===
                                                                         this.comparisonTarget
                                                                             ? this.negated
@@ -35872,7 +35905,7 @@
                                                                             " " +
                                                                             n +
                                                                             " " +
-                                                                            this.comparisonTarget);
+                                                                            this.comparisonTarget));
                                                                 return [
                                                                     this.makeCode(
                                                                         t.level <= X
@@ -35903,7 +35936,7 @@
                                                             t.__proto__ || Object.getPrototypeOf(t)
                                                         ).call(this),
                                                     );
-                                                    return (n.body = e), n;
+                                                    return ((n.body = e), n);
                                                 }
                                                 return (
                                                     _inherits(t, e),
@@ -35968,7 +36001,7 @@
                                                     t
                                                 );
                                             })(a);
-                                            return (e.prototype.children = ["body"]), e;
+                                            return ((e.prototype.children = ["body"]), e);
                                         }.call(this)),
                                     (e.StringWithInterpolations = St =
                                         function () {
@@ -35981,7 +36014,7 @@
                                                             t.__proto__ || Object.getPrototypeOf(t)
                                                         ).call(this),
                                                     );
-                                                    return (n.body = e), n;
+                                                    return ((n.body = e), n);
                                                 }
                                                 return (
                                                     _inherits(t, e),
@@ -36030,14 +36063,14 @@
                                                                                         e.comments
                                                                                     ) {
                                                                                         var a;
-                                                                                        (a =
+                                                                                        ((a =
                                                                                             l).push.apply(
                                                                                             a,
                                                                                             _toConsumableArray(
                                                                                                 e.comments,
                                                                                             ),
                                                                                         ),
-                                                                                            delete e.comments;
+                                                                                            delete e.comments);
                                                                                     }
                                                                                     return (
                                                                                         s.push(e),
@@ -36058,14 +36091,14 @@
                                                                                             n < i;
                                                                                             n++
                                                                                         )
-                                                                                            (t =
+                                                                                            ((t =
                                                                                                 l[
                                                                                                     n
                                                                                                 ]),
                                                                                                 (t.unshift =
                                                                                                     !0),
                                                                                                 (t.newLine =
-                                                                                                    !0);
+                                                                                                    !0));
                                                                                         It(l, e);
                                                                                     }
                                                                                     return (
@@ -36101,14 +36134,14 @@
                                                                                             r < o;
                                                                                             r++
                                                                                         )
-                                                                                            (t =
+                                                                                            ((t =
                                                                                                 u[
                                                                                                     r
                                                                                                 ]),
                                                                                                 (t.unshift =
                                                                                                     !1),
                                                                                                 (t.newLine =
-                                                                                                    !0);
+                                                                                                    !0));
                                                                                         It(
                                                                                             e.comments,
                                                                                             s[
@@ -36137,7 +36170,7 @@
                                                                         i instanceof Et)
                                                                     ) {
                                                                         var h;
-                                                                        (i.value = i.unquote(
+                                                                        ((i.value = i.unquote(
                                                                             !0,
                                                                             this.csx,
                                                                         )),
@@ -36166,10 +36199,10 @@
                                                                                         n,
                                                                                     ),
                                                                                 ),
-                                                                            );
+                                                                            ));
                                                                     } else {
                                                                         var p;
-                                                                        this.csx ||
+                                                                        (this.csx ||
                                                                             u.push(
                                                                                 this.makeCode("$"),
                                                                             ),
@@ -36202,7 +36235,7 @@
                                                                                 _toConsumableArray(
                                                                                     r,
                                                                                 ),
-                                                                            );
+                                                                            ));
                                                                     }
                                                                 return (
                                                                     this.csx ||
@@ -36236,7 +36269,7 @@
                                                     t
                                                 );
                                             })(a);
-                                            return (e.prototype.children = ["body"]), e;
+                                            return ((e.prototype.children = ["body"]), e);
                                         }.call(this)),
                                     (e.For = L =
                                         function () {
@@ -36280,7 +36313,7 @@
                                                         r.object)
                                                     ) {
                                                         var c = [r.index, r.name];
-                                                        (r.name = c[0]), (r.index = c[1]);
+                                                        ((r.name = c[0]), (r.index = c[1]));
                                                     }
                                                     for (
                                                         ((null == (u = r.index)
@@ -36338,10 +36371,10 @@
                                                                             n < s;
                                                                             n++
                                                                         )
-                                                                            (t = o[n]),
+                                                                            ((t = o[n]),
                                                                                 (t.newLine =
                                                                                     t.unshift =
-                                                                                        !0);
+                                                                                        !0));
                                                                         return Zt(e, r[i]);
                                                                     }
                                                                 },
@@ -36454,10 +36487,10 @@
                                                                                 ),
                                                                             ),
                                                                         z = _slicedToArray(U, 2);
-                                                                    (j = z[0]),
+                                                                    ((j = z[0]),
                                                                         (I = z[1]),
                                                                         this.step.isNumber() &&
-                                                                            (F = +I);
+                                                                            (F = +I));
                                                                 }
                                                                 return (
                                                                     this.pattern && (C = E),
@@ -36758,7 +36791,8 @@
                                                                     n < r;
                                                                     n++
                                                                 )
-                                                                    (i = s[n]), i[1].makeReturn(t);
+                                                                    ((i = s[n]),
+                                                                        i[1].makeReturn(t));
                                                                 return (
                                                                     t &&
                                                                         (this.otherwise ||
@@ -36823,7 +36857,7 @@
                                                                         h < d;
                                                                         h++
                                                                     )
-                                                                        (i = m[h]),
+                                                                        ((i = m[h]),
                                                                             this.subject ||
                                                                                 (i = i.invert()),
                                                                             (u = u.concat(
@@ -36837,7 +36871,7 @@
                                                                                 this.makeCode(
                                                                                     ":\n",
                                                                                 ),
-                                                                            ));
+                                                                            )));
                                                                     if (
                                                                         (0 <
                                                                             (r =
@@ -37262,16 +37296,16 @@
                                     }),
                                     (Zt = function (e, t) {
                                         if (null != e && e.comments)
-                                            return It(e.comments, t), delete e.comments;
+                                            return (It(e.comments, t), delete e.comments);
                                     }),
                                     (un = function (e, t) {
                                         var n, r, i, s, o;
                                         for (i = !1, r = s = 0, o = e.length; s < o; r = ++s)
                                             if (((n = e[r]), !n.isComment)) {
-                                                e.splice(r, 0, t), (i = !0);
+                                                (e.splice(r, 0, t), (i = !0));
                                                 break;
                                             }
-                                        return i || e.push(t), e;
+                                        return (i || e.push(t), e);
                                     }),
                                     (Jt = function (e) {
                                         return e instanceof _ && "arguments" === e.value;
@@ -37290,8 +37324,8 @@
                                     (on = function (e, t, n) {
                                         var r;
                                         if ((r = t[n].unfoldSoak(e)))
-                                            return (t[n] = r.body), (r.body = new Pt(t)), r;
-                                    });
+                                            return ((t[n] = r.body), (r.body = new Pt(t)), r);
+                                    }));
                             }.call(this),
                             { exports: e }.exports
                         );
@@ -37301,11 +37335,11 @@
                         return (
                             function () {
                                 var t, n;
-                                (t = (function () {
+                                ((t = (function () {
                                     function e(t) {
-                                        _classCallCheck(this, e),
+                                        (_classCallCheck(this, e),
                                             (this.line = t),
-                                            (this.columns = []);
+                                            (this.columns = []));
                                     }
                                     return (
                                         _createClass(e, [
@@ -37349,7 +37383,7 @@
                                     (n = function () {
                                         var e = (function () {
                                                 function e() {
-                                                    _classCallCheck(this, e), (this.lines = []);
+                                                    (_classCallCheck(this, e), (this.lines = []));
                                                 }
                                                 return (
                                                     _createClass(e, [
@@ -37447,11 +37481,11 @@
                                                                         )
                                                                             if (((p = m[s]), !!p)) {
                                                                                 for (; b < p.line; )
-                                                                                    (o = 0),
+                                                                                    ((o = 0),
                                                                                         (d = !1),
                                                                                         (r += ";"),
-                                                                                        b++;
-                                                                                d &&
+                                                                                        b++);
+                                                                                (d &&
                                                                                     ((r += ","),
                                                                                     (d = !1)),
                                                                                     (r +=
@@ -37478,7 +37512,7 @@
                                                                                         )),
                                                                                     (u =
                                                                                         p.sourceColumn),
-                                                                                    (d = !0);
+                                                                                    (d = !0));
                                                                             }
                                                                 return (
                                                                     (g = t.sourceFiles
@@ -37512,10 +37546,11 @@
                                                                     f || !n;
 
                                                                 )
-                                                                    (u = f & s),
+                                                                    ((u = f & s),
                                                                         (f >>= i),
                                                                         f && (u |= r),
-                                                                        (n += this.encodeBase64(u));
+                                                                        (n +=
+                                                                            this.encodeBase64(u)));
                                                                 return n;
                                                             },
                                                         },
@@ -37550,7 +37585,7 @@
                                             e
                                         );
                                     }.call(this)),
-                                    (e.exports = n);
+                                    (e.exports = n));
                             }.call(this),
                             e.exports
                         );
@@ -37578,7 +37613,7 @@
                                     g;
                                 i = n.Lexer;
                                 var y = require("./parser");
-                                (d = y.parser),
+                                ((d = y.parser),
                                     (c = require("./helpers")),
                                     (s = require("./sourcemap")),
                                     (p = require("../../package.json")),
@@ -37669,8 +37704,8 @@
                                                 (t.referencedVars = (function () {
                                                     var e, t, n;
                                                     for (n = [], e = 0, t = O.length; e < t; e++)
-                                                        (A = O[e]),
-                                                            "IDENTIFIER" === A[0] && n.push(A[1]);
+                                                        ((A = O[e]),
+                                                            "IDENTIFIER" === A[0] && n.push(A[1]));
                                                     return n;
                                                 })()),
                                                 null == t.bare || !0 !== t.bare)
@@ -37695,7 +37730,7 @@
                                                 b < S;
                                                 b++
                                             )
-                                                (f = l[b]),
+                                                ((f = l[b]),
                                                     p &&
                                                         (f.locationData &&
                                                             !/^[;\s]*$/.test(f.code) &&
@@ -37714,7 +37749,7 @@
                                                                   f.code.length -
                                                                   (f.code.lastIndexOf("\n") + 1))
                                                             : (n += f.code.length)),
-                                                    (w += f.code);
+                                                    (w += f.code));
                                             if (
                                                 (t.header &&
                                                     ((g =
@@ -37731,7 +37766,7 @@
                                                     throw new Error(
                                                         "The transpile option must be given an object with options to pass to Babel",
                                                     );
-                                                (M = t.transpile.transpile),
+                                                ((M = t.transpile.transpile),
                                                     delete t.transpile.transpile,
                                                     (_ = Object.assign({}, t.transpile)),
                                                     P &&
@@ -37739,7 +37774,7 @@
                                                         (_.inputSourceMap = P),
                                                     (D = M(w, _)),
                                                     (w = D.code),
-                                                    P && D.map && (P = D.map);
+                                                    P && D.map && (P = D.map));
                                             }
                                             return (
                                                 t.inlineMap &&
@@ -37785,16 +37820,16 @@
                                             if (((n = d.tokens[this.pos++]), n)) {
                                                 var r = n,
                                                     i = _slicedToArray(r, 3);
-                                                (t = i[0]),
+                                                ((t = i[0]),
                                                     (this.yytext = i[1]),
                                                     (this.yylloc = i[2]),
                                                     (d.errorToken = n.origin || n),
-                                                    (this.yylineno = this.yylloc.first_line);
+                                                    (this.yylineno = this.yylloc.first_line));
                                             } else t = "";
                                             return t;
                                         },
                                         setInput: function (t) {
-                                            return (d.tokens = t), (this.pos = 0);
+                                            return ((d.tokens = t), (this.pos = 0));
                                         },
                                         upcomingInput: function () {
                                             return "";
@@ -37809,7 +37844,7 @@
                                             o,
                                             u,
                                             a;
-                                        (u = r.errorToken), (a = r.tokens);
+                                        ((u = r.errorToken), (a = r.tokens));
                                         var f = u,
                                             l = _slicedToArray(f, 3);
                                         return (
@@ -37973,7 +38008,7 @@
                                                     "The arguments were: " + JSON.stringify(n),
                                                 )
                                             );
-                                    });
+                                    }));
                             }.call(this),
                             { exports: e }.exports
                         );
@@ -37987,7 +38022,7 @@
                                     CoffeeScript,
                                     compile,
                                     runScripts;
-                                (CoffeeScript = require("./coffeescript")),
+                                ((CoffeeScript = require("./coffeescript")),
                                     (compile = CoffeeScript.compile),
                                     (CoffeeScript.eval = function (code) {
                                         var options =
@@ -38023,7 +38058,8 @@
                                                         ? arguments[1]
                                                         : {};
                                                 return (
-                                                    (t.inlineMap = !0), CoffeeScript.compile(e, t)
+                                                    (t.inlineMap = !0),
+                                                    CoffeeScript.compile(e, t)
                                                 );
                                             }),
                                         (CoffeeScript.load = function (e, t) {
@@ -38077,10 +38113,10 @@
                                                             e < n;
                                                             e++
                                                         )
-                                                            (u = f[e]),
+                                                            ((u = f[e]),
                                                                 ((r = u.type),
                                                                 0 <= indexOf.call(t, r)) &&
-                                                                    i.push(u);
+                                                                    i.push(u));
                                                         return i;
                                                     })(),
                                                     i = 0,
@@ -38103,7 +38139,7 @@
                                                 s < o;
                                                 r = ++s
                                             )
-                                                (a = e[r]),
+                                                ((a = e[r]),
                                                     (function (r, i) {
                                                         var s, o;
                                                         return (
@@ -38116,7 +38152,7 @@
                                                                   CoffeeScript.load(
                                                                       o,
                                                                       function (t) {
-                                                                          return (e[i] = t), n();
+                                                                          return ((e[i] = t), n());
                                                                       },
                                                                       s,
                                                                       !0,
@@ -38129,7 +38165,7 @@
                                                                   (s.sourceFiles = ["embedded"]),
                                                                   (e[i] = [r.innerHTML, s]))
                                                         );
-                                                    })(a, r);
+                                                    })(a, r));
                                             return n();
                                         }),
                                         window.addEventListener
@@ -38138,7 +38174,7 @@
                                                   runScripts,
                                                   !1,
                                               )
-                                            : window.attachEvent("onload", runScripts));
+                                            : window.attachEvent("onload", runScripts)));
                             }.call(this),
                             module.exports
                         );
@@ -38160,9 +38196,9 @@
             s = e("../mode/coffee/coffee");
         window.addEventListener = function () {};
         var o = (t.Worker = function (e) {
-            i.call(this, e), this.setTimeout(250);
+            (i.call(this, e), this.setTimeout(250));
         });
-        r.inherits(o, i),
+        (r.inherits(o, i),
             function () {
                 this.onUpdate = function () {
                     var e = this.doc.getValue(),
@@ -38183,13 +38219,13 @@
                     }
                     this.sender.emit("annotate", t);
                 };
-            }.call(o.prototype);
+            }.call(o.prototype));
     }),
     define("ace/lib/es5-shim", [], function (e, t, n) {
         function r() {}
         function w(e) {
             try {
-                return Object.defineProperty(e, "sentinel", {}), "sentinel" in e;
+                return (Object.defineProperty(e, "sentinel", {}), "sentinel" in e);
             } catch (t) {}
         }
         function H(e) {
@@ -38262,35 +38298,35 @@
             p,
             d;
         if ((d = f(o, "__defineGetter__")))
-            (l = i.bind(o.__defineGetter__)),
+            ((l = i.bind(o.__defineGetter__)),
                 (c = i.bind(o.__defineSetter__)),
                 (h = i.bind(o.__lookupGetter__)),
-                (p = i.bind(o.__lookupSetter__));
+                (p = i.bind(o.__lookupSetter__)));
         if ([1, 2].splice(0).length != 2)
             if (
                 !(function () {
                     function e(e) {
                         var t = new Array(e + 2);
-                        return (t[0] = t[1] = 0), t;
+                        return ((t[0] = t[1] = 0), t);
                     }
                     var t = [],
                         n;
-                    t.splice.apply(t, e(20)),
+                    (t.splice.apply(t, e(20)),
                         t.splice.apply(t, e(26)),
                         (n = t.length),
                         t.splice(5, 0, "XXX"),
-                        n + 1 == t.length;
+                        n + 1 == t.length);
                     if (n + 1 == t.length) return !0;
                 })()
             )
                 Array.prototype.splice = function (e, t) {
                     var n = this.length;
-                    e > 0
+                    (e > 0
                         ? e > n && (e = n)
                         : e == void 0
                           ? (e = 0)
                           : e < 0 && (e = Math.max(n + e, 0)),
-                        e + t < n || (t = n - e);
+                        e + t < n || (t = n - e));
                     var r = this.slice(e, e + t),
                         i = u.call(arguments, 2),
                         s = i.length;
@@ -38303,7 +38339,7 @@
                             c = n - o;
                         if (f < a) for (var h = 0; h < l; ++h) this[f + h] = this[a + h];
                         else if (f > a) for (h = l; h--; ) this[f + h] = this[a + h];
-                        if (s && e === c) (this.length = c), this.push.apply(this, i);
+                        if (s && e === c) ((this.length = c), this.push.apply(this, i));
                         else {
                             this.length = c + s;
                             for (h = 0; h < s; ++h) this[e + h] = i[h];
@@ -38330,7 +38366,7 @@
             });
         var m = Object("a"),
             g = m[0] != "a" || !(0 in m);
-        Array.prototype.forEach ||
+        (Array.prototype.forEach ||
             (Array.prototype.forEach = function (t) {
                 var n = F(this),
                     r = g && a(this) == "[object String]" ? this.split("") : n,
@@ -38432,15 +38468,15 @@
                     do o in this && (s = t.call(void 0, s, r[o], o, n));
                     while (o--);
                     return s;
-                });
+                }));
         if (!Array.prototype.indexOf || [0, 1].indexOf(1, 2) != -1)
             Array.prototype.indexOf = function (t) {
                 var n = g && a(this) == "[object String]" ? this.split("") : F(this),
                     r = n.length >>> 0;
                 if (!r) return -1;
                 var i = 0;
-                arguments.length > 1 && (i = H(arguments[1])),
-                    (i = i >= 0 ? i : Math.max(0, r + i));
+                (arguments.length > 1 && (i = H(arguments[1])),
+                    (i = i >= 0 ? i : Math.max(0, r + i)));
                 for (; i < r; i++) if (i in n && n[i] === t) return i;
                 return -1;
             };
@@ -38450,8 +38486,8 @@
                     r = n.length >>> 0;
                 if (!r) return -1;
                 var i = r - 1;
-                arguments.length > 1 && (i = Math.min(i, H(arguments[1]))),
-                    (i = i >= 0 ? i : r - Math.abs(i));
+                (arguments.length > 1 && (i = Math.min(i, H(arguments[1]))),
+                    (i = i >= 0 ? i : r - Math.abs(i)));
                 for (; i >= 0; i--) if (i in n && t === n[i]) return i;
                 return -1;
             };
@@ -38473,9 +38509,9 @@
                     var i = h(t, n),
                         s = p(t, n);
                     t.__proto__ = u;
-                    if (i || s) return i && (r.get = i), s && (r.set = s), r;
+                    if (i || s) return (i && (r.get = i), s && (r.set = s), r);
                 }
-                return (r.value = t[n]), r;
+                return ((r.value = t[n]), r);
             };
         }
         Object.getOwnPropertyNames ||
@@ -38484,7 +38520,7 @@
             });
         if (!Object.create) {
             var b;
-            Object.prototype.__proto__ === null
+            (Object.prototype.__proto__ === null
                 ? (b = function () {
                       return { __proto__: null };
                   })
@@ -38511,10 +38547,10 @@
                         if (typeof t != "object")
                             throw new TypeError("typeof prototype[" + typeof t + "] != 'object'");
                         var i = function () {};
-                        (i.prototype = t), (r = new i()), (r.__proto__ = t);
+                        ((i.prototype = t), (r = new i()), (r.__proto__ = t));
                     }
-                    return n !== void 0 && Object.defineProperties(r, n), r;
-                });
+                    return (n !== void 0 && Object.defineProperties(r, n), r);
+                }));
         }
         if (Object.defineProperty) {
             var E = w({}),
@@ -38537,16 +38573,16 @@
                 if (f(r, "value"))
                     if (d && (h(t, n) || p(t, n))) {
                         var s = t.__proto__;
-                        (t.__proto__ = o), delete t[n], (t[n] = r.value), (t.__proto__ = s);
+                        ((t.__proto__ = o), delete t[n], (t[n] = r.value), (t.__proto__ = s));
                     } else t[n] = r.value;
                 else {
                     if (!d) throw new TypeError(C);
-                    f(r, "get") && l(t, n, r.get), f(r, "set") && c(t, n, r.set);
+                    (f(r, "get") && l(t, n, r.get), f(r, "set") && c(t, n, r.set));
                 }
                 return t;
             };
         }
-        Object.defineProperties ||
+        (Object.defineProperties ||
             (Object.defineProperties = function (t, n) {
                 for (var r in n) f(n, r) && Object.defineProperty(t, r, n[r]);
                 return t;
@@ -38558,7 +38594,7 @@
             Object.freeze ||
                 (Object.freeze = function (t) {
                     return t;
-                });
+                }));
         try {
             Object.freeze(function () {});
         } catch (k) {
@@ -38568,7 +38604,7 @@
                 };
             })(Object.freeze);
         }
-        Object.preventExtensions ||
+        (Object.preventExtensions ||
             (Object.preventExtensions = function (t) {
                 return t;
             }),
@@ -38587,8 +38623,8 @@
                     while (f(t, n)) n += "?";
                     t[n] = !0;
                     var r = f(t, n);
-                    return delete t[n], r;
-                });
+                    return (delete t[n], r);
+                }));
         if (!Object.keys) {
             var L = !0,
                 A = [
@@ -38633,4 +38669,4 @@
             if (e == null) throw new TypeError("can't convert " + e + " to object");
             return Object(e);
         };
-    });
+    }));

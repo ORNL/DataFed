@@ -1,5 +1,5 @@
 "no use strict";
-!(function (e) {
+(!(function (e) {
     function t(e, t) {
         var n = e,
             r = "";
@@ -10,13 +10,13 @@
             if (i === !1) return "";
             var s = n.lastIndexOf("/");
             if (s === -1) break;
-            (r = n.substr(s) + r), (n = n.slice(0, s));
+            ((r = n.substr(s) + r), (n = n.slice(0, s)));
         }
         return e;
     }
     if (typeof e.window != "undefined" && e.document) return;
     if (e.require && e.define) return;
-    e.console ||
+    (e.console ||
         ((e.console = function () {
             var e = Array.prototype.slice.call(arguments, 0);
             postMessage({ type: "log", data: e });
@@ -102,7 +102,7 @@
                                 }
                             }),
                         );
-                    return t && (e.exports = t), e;
+                    return (t && (e.exports = t), e);
                 },
             };
         }),
@@ -117,17 +117,17 @@
                 i = function () {};
             return (
                 function () {
-                    r.implement(this, n),
+                    (r.implement(this, n),
                         (this.callback = function (e, t) {
                             postMessage({ type: "call", id: t, data: e });
                         }),
                         (this.emit = function (e, t) {
                             postMessage({ type: "event", name: e, data: t });
-                        });
+                        }));
                 }.call(i.prototype),
                 new i()
             );
-        });
+        }));
     var n = (e.main = null),
         r = (e.sender = null);
     e.onmessage = function (t) {
@@ -140,7 +140,7 @@
                 e[i.command].apply(e, i.args);
             }
         else if (i.init) {
-            e.initBaseUrls(i.tlns), require("ace/lib/es5-shim"), (r = e.sender = e.initSender());
+            (e.initBaseUrls(i.tlns), require("ace/lib/es5-shim"), (r = e.sender = e.initSender()));
             var s = require(i.module)[i.classname];
             n = e.main = new s(r);
         }
@@ -148,11 +148,11 @@
 })(this),
     define("ace/lib/oop", [], function (e, t, n) {
         "use strict";
-        (t.inherits = function (e, t) {
-            (e.super_ = t),
+        ((t.inherits = function (e, t) {
+            ((e.super_ = t),
                 (e.prototype = Object.create(t.prototype, {
                     constructor: { value: e, enumerable: !1, writable: !0, configurable: !0 },
-                }));
+                })));
         }),
             (t.mixin = function (e, t) {
                 for (var n in t) e[n] = t[n];
@@ -160,11 +160,11 @@
             }),
             (t.implement = function (e, n) {
                 t.mixin(e, n);
-            });
+            }));
     }),
     define("ace/lib/lang", [], function (e, t, n) {
         "use strict";
-        (t.last = function (e) {
+        ((t.last = function (e) {
             return e[e.length - 1];
         }),
             (t.stringReverse = function (e) {
@@ -177,10 +177,10 @@
                     if ((t >>= 1)) e += e;
                 }
                 return n;
-            });
+            }));
         var r = /^\s\s*/,
             i = /\s\s*$/;
-        (t.stringTrimLeft = function (e) {
+        ((t.stringTrimLeft = function (e) {
             return e.replace(r, "");
         }),
             (t.stringTrimRight = function (e) {
@@ -247,18 +247,18 @@
             (t.deferredCall = function (e) {
                 var t = null,
                     n = function () {
-                        (t = null), e();
+                        ((t = null), e());
                     },
                     r = function (e) {
-                        return r.cancel(), (t = setTimeout(n, e || 0)), r;
+                        return (r.cancel(), (t = setTimeout(n, e || 0)), r);
                     };
                 return (
                     (r.schedule = r),
                     (r.call = function () {
-                        return this.cancel(), e(), r;
+                        return (this.cancel(), e(), r);
                     }),
                     (r.cancel = function () {
-                        return clearTimeout(t), (t = null), r;
+                        return (clearTimeout(t), (t = null), r);
                     }),
                     (r.isPending = function () {
                         return t;
@@ -269,28 +269,28 @@
             (t.delayedCall = function (e, t) {
                 var n = null,
                     r = function () {
-                        (n = null), e();
+                        ((n = null), e());
                     },
                     i = function (e) {
                         n == null && (n = setTimeout(r, e || t));
                     };
                 return (
                     (i.delay = function (e) {
-                        n && clearTimeout(n), (n = setTimeout(r, e || t));
+                        (n && clearTimeout(n), (n = setTimeout(r, e || t)));
                     }),
                     (i.schedule = i),
                     (i.call = function () {
-                        this.cancel(), e();
+                        (this.cancel(), e());
                     }),
                     (i.cancel = function () {
-                        n && clearTimeout(n), (n = null);
+                        (n && clearTimeout(n), (n = null));
                     }),
                     (i.isPending = function () {
                         return n;
                     }),
                     i
                 );
-            });
+            }));
     }),
     define("ace/range", [], function (e, t, n) {
         "use strict";
@@ -298,10 +298,10 @@
                 return e.row - t.row || e.column - t.column;
             },
             i = function (e, t, n, r) {
-                (this.start = { row: e, column: t }), (this.end = { row: n, column: r });
+                ((this.start = { row: e, column: t }), (this.end = { row: n, column: r }));
             };
-        (function () {
-            (this.isEqual = function (e) {
+        ((function () {
+            ((this.isEqual = function (e) {
                 return (
                     this.start.row === e.start.row &&
                     this.end.row === e.end.row &&
@@ -446,11 +446,11 @@
                     return new i(t.row, t.column, n.row, n.column);
                 }),
                 (this.moveBy = function (e, t) {
-                    (this.start.row += e),
+                    ((this.start.row += e),
                         (this.start.column += t),
                         (this.end.row += e),
-                        (this.end.column += t);
-                });
+                        (this.end.column += t));
+                }));
         }).call(i.prototype),
             (i.fromPoints = function (e, t) {
                 return new i(e.row, e.column, t.row, t.column);
@@ -459,7 +459,7 @@
             (i.comparePoints = function (e, t) {
                 return e.row - t.row || e.column - t.column;
             }),
-            (t.Range = i);
+            (t.Range = i));
     }),
     define("ace/apply_delta", [], function (e, t, n) {
         "use strict";
@@ -470,11 +470,11 @@
             return t.row >= 0 && t.row < e.length && t.column >= 0 && t.column <= e[t.row].length;
         }
         function s(e, t) {
-            t.action != "insert" &&
+            (t.action != "insert" &&
                 t.action != "remove" &&
                 r(t, "delta.action must be 'insert' or 'remove'"),
                 t.lines instanceof Array || r(t, "delta.lines must be an Array"),
-                (!t.start || !t.end) && r(t, "delta.start/end must be an present");
+                (!t.start || !t.end) && r(t, "delta.start/end must be an present"));
             var n = t.start;
             i(e, t.start) || r(t, "delta.start must be contained in document");
             var s = t.end;
@@ -496,9 +496,9 @@
                     if (o.length === 1) e[r] = s.substring(0, i) + t.lines[0] + s.substring(i);
                     else {
                         var u = [r, 1].concat(t.lines);
-                        e.splice.apply(e, u),
+                        (e.splice.apply(e, u),
                             (e[r] = s.substring(0, i) + e[r]),
-                            (e[r + t.lines.length - 1] += s.substring(i));
+                            (e[r + t.lines.length - 1] += s.substring(i)));
                     }
                     break;
                 case "remove":
@@ -519,18 +519,18 @@
             s = function () {
                 this.defaultPrevented = !0;
             };
-        (r._emit = r._dispatchEvent =
+        ((r._emit = r._dispatchEvent =
             function (e, t) {
-                this._eventRegistry || (this._eventRegistry = {}),
-                    this._defaultHandlers || (this._defaultHandlers = {});
+                (this._eventRegistry || (this._eventRegistry = {}),
+                    this._defaultHandlers || (this._defaultHandlers = {}));
                 var n = this._eventRegistry[e] || [],
                     r = this._defaultHandlers[e];
                 if (!n.length && !r) return;
                 if (typeof t != "object" || !t) t = {};
-                t.type || (t.type = e),
+                (t.type || (t.type = e),
                     t.stopPropagation || (t.stopPropagation = i),
                     t.preventDefault || (t.preventDefault = s),
-                    (n = n.slice());
+                    (n = n.slice()));
                 for (var o = 0; o < n.length; o++) {
                     n[o](t, this);
                     if (t.propagationStopped) break;
@@ -547,7 +547,7 @@
                 var n = this;
                 t &&
                     this.addEventListener(e, function r() {
-                        n.removeEventListener(e, r), t.apply(null, arguments);
+                        (n.removeEventListener(e, r), t.apply(null, arguments));
                     });
             }),
             (r.setDefaultHandler = function (e, t) {
@@ -556,7 +556,7 @@
                 if (n[e]) {
                     var r = n[e],
                         i = n._disabled_[e];
-                    i || (n._disabled_[e] = i = []), i.push(r);
+                    (i || (n._disabled_[e] = i = []), i.push(r));
                     var s = i.indexOf(t);
                     s != -1 && i.splice(s, 1);
                 }
@@ -595,18 +595,18 @@
             (r.removeAllListeners = function (e) {
                 this._eventRegistry && (this._eventRegistry[e] = []);
             }),
-            (t.EventEmitter = r);
+            (t.EventEmitter = r));
     }),
     define("ace/anchor", [], function (e, t, n) {
         "use strict";
         var r = e("./lib/oop"),
             i = e("./lib/event_emitter").EventEmitter,
             s = (t.Anchor = function (e, t, n) {
-                (this.$onChange = this.onChange.bind(this)),
+                ((this.$onChange = this.onChange.bind(this)),
                     this.attach(e),
                     typeof n == "undefined"
                         ? this.setPosition(t.row, t.column)
-                        : this.setPosition(t, n);
+                        : this.setPosition(t, n));
             });
         (function () {
             function e(e, t, n) {
@@ -625,7 +625,7 @@
                       ? { row: n.row + s, column: n.column + (n.row == a.row ? o : 0) }
                       : { row: u.row, column: u.column };
             }
-            r.implement(this, i),
+            (r.implement(this, i),
                 (this.getPosition = function () {
                     return this.$clipPositionToDocument(this.row, this.column);
                 }),
@@ -644,16 +644,16 @@
                     n ? (r = { row: e, column: t }) : (r = this.$clipPositionToDocument(e, t));
                     if (this.row == r.row && this.column == r.column) return;
                     var i = { row: this.row, column: this.column };
-                    (this.row = r.row),
+                    ((this.row = r.row),
                         (this.column = r.column),
-                        this._signal("change", { old: i, value: r });
+                        this._signal("change", { old: i, value: r }));
                 }),
                 (this.detach = function () {
                     this.document.removeEventListener("change", this.$onChange);
                 }),
                 (this.attach = function (e) {
-                    (this.document = e || this.document),
-                        this.document.on("change", this.$onChange);
+                    ((this.document = e || this.document),
+                        this.document.on("change", this.$onChange));
                 }),
                 (this.$clipPositionToDocument = function (e, t) {
                     var n = {};
@@ -671,7 +671,7 @@
                         t < 0 && (n.column = 0),
                         n
                     );
-                });
+                }));
         }).call(s.prototype);
     }),
     define("ace/document", [], function (e, t, n) {
@@ -682,19 +682,19 @@
             o = e("./range").Range,
             u = e("./anchor").Anchor,
             a = function (e) {
-                (this.$lines = [""]),
+                ((this.$lines = [""]),
                     e.length === 0
                         ? (this.$lines = [""])
                         : Array.isArray(e)
                           ? this.insertMergedLines({ row: 0, column: 0 }, e)
-                          : this.insert({ row: 0, column: 0 }, e);
+                          : this.insert({ row: 0, column: 0 }, e));
             };
-        (function () {
-            r.implement(this, s),
+        ((function () {
+            (r.implement(this, s),
                 (this.setValue = function (e) {
                     var t = this.getLength() - 1;
-                    this.remove(new o(0, 0, t, this.getLine(t).length)),
-                        this.insert({ row: 0, column: 0 }, e);
+                    (this.remove(new o(0, 0, t, this.getLine(t).length)),
+                        this.insert({ row: 0, column: 0 }, e));
                 }),
                 (this.getValue = function () {
                     return this.getAllLines().join(this.getNewLineCharacter());
@@ -711,7 +711,7 @@
                       }),
                 (this.$detectNewLine = function (e) {
                     var t = e.match(/^.*?(\r\n|\r|\n)/m);
-                    (this.$autoNewLine = t ? t[1] : "\n"), this._signal("changeNewLineMode");
+                    ((this.$autoNewLine = t ? t[1] : "\n"), this._signal("changeNewLineMode"));
                 }),
                 (this.getNewLineCharacter = function () {
                     switch (this.$newLineMode) {
@@ -727,7 +727,7 @@
                 (this.$newLineMode = "auto"),
                 (this.setNewLineMode = function (e) {
                     if (this.$newLineMode === e) return;
-                    (this.$newLineMode = e), this._signal("changeNewLineMode");
+                    ((this.$newLineMode = e), this._signal("changeNewLineMode"));
                 }),
                 (this.getNewLineMode = function () {
                     return this.$newLineMode;
@@ -755,8 +755,8 @@
                     if (e.start.row === e.end.row)
                         t = [this.getLine(e.start.row).substring(e.start.column, e.end.column)];
                     else {
-                        (t = this.getLines(e.start.row, e.end.row)),
-                            (t[0] = (t[0] || "").substring(e.start.column));
+                        ((t = this.getLines(e.start.row, e.end.row)),
+                            (t[0] = (t[0] || "").substring(e.start.column)));
                         var n = t.length - 1;
                         e.end.row - e.start.row == n && (t[n] = t[n].substring(0, e.end.column));
                     }
@@ -837,10 +837,10 @@
                 (this.insertFullLines = function (e, t) {
                     e = Math.min(Math.max(e, 0), this.getLength());
                     var n = 0;
-                    e < this.getLength()
+                    (e < this.getLength()
                         ? ((t = t.concat([""])), (n = 0))
                         : ((t = [""].concat(t)), e--, (n = this.$lines[e].length)),
-                        this.insertMergedLines({ row: e, column: n }, t);
+                        this.insertMergedLines({ row: e, column: n }, t));
                 }),
                 (this.insertMergedLines = function (e, t) {
                     var n = this.clippedPos(e.row, e.column),
@@ -883,8 +883,8 @@
                     );
                 }),
                 (this.removeFullLines = function (e, t) {
-                    (e = Math.min(Math.max(0, e), this.getLength() - 1)),
-                        (t = Math.min(Math.max(0, t), this.getLength() - 1));
+                    ((e = Math.min(Math.max(0, e), this.getLength() - 1)),
+                        (t = Math.min(Math.max(0, t), this.getLength() - 1)));
                     var n = t == this.getLength() - 1 && e > 0,
                         r = t < this.getLength() - 1,
                         i = n ? e - 1 : e,
@@ -919,7 +919,7 @@
                     if (t == this.getTextRange(e)) return e.end;
                     this.remove(e);
                     var n;
-                    return t ? (n = this.insert(e.start, t)) : (n = e.start), n;
+                    return (t ? (n = this.insert(e.start, t)) : (n = e.start), n);
                 }),
                 (this.applyDeltas = function (e) {
                     for (var t = 0; t < e.length; t++) this.applyDelta(e[t]);
@@ -943,7 +943,7 @@
                     for (var o = 0, u = 0; o < r; o = u) {
                         u += t - 1;
                         var a = n.slice(o, u);
-                        a.push(""),
+                        (a.push(""),
                             this.applyDelta(
                                 {
                                     start: this.pos(i + o, s),
@@ -952,12 +952,12 @@
                                     lines: a,
                                 },
                                 !0,
-                            );
+                            ));
                     }
-                    (e.lines = n.slice(o)),
+                    ((e.lines = n.slice(o)),
                         (e.start.row = i + o),
                         (e.start.column = s),
-                        this.applyDelta(e, !0);
+                        this.applyDelta(e, !0));
                 }),
                 (this.revertDelta = function (e) {
                     this.applyDelta({
@@ -983,9 +983,9 @@
                         s = Math.min(e.row, n.length);
                     for (var o = t || 0; o < s; ++o) i += n[o].length + r;
                     return i + e.column;
-                });
+                }));
         }).call(a.prototype),
-            (t.Document = a);
+            (t.Document = a));
     }),
     define("ace/worker/mirror", [], function (e, t, n) {
         "use strict";
@@ -1012,12 +1012,12 @@
                 });
             });
         (function () {
-            (this.$timeout = 500),
+            ((this.$timeout = 500),
                 (this.setTimeout = function (e) {
                     this.$timeout = e;
                 }),
                 (this.setValue = function (e) {
-                    this.doc.setValue(e), this.deferredUpdate.schedule(this.$timeout);
+                    (this.doc.setValue(e), this.deferredUpdate.schedule(this.$timeout));
                 }),
                 (this.getValue = function (e) {
                     this.sender.callback(this.doc.getValue(), e);
@@ -1025,7 +1025,7 @@
                 (this.onUpdate = function () {}),
                 (this.isPending = function () {
                     return this.deferredUpdate.isPending();
-                });
+                }));
         }).call(o.prototype);
     }),
     define("ace/mode/css/csslint", [], function (require, exports, module) {
@@ -1040,11 +1040,11 @@
                 if (typeof e != "object") return e;
                 if (util.isArray(e)) a = [];
                 else if (util.isRegExp(e))
-                    (a = new RegExp(e.source, util.getRegExpFlags(e))),
-                        e.lastIndex && (a.lastIndex = e.lastIndex);
+                    ((a = new RegExp(e.source, util.getRegExpFlags(e))),
+                        e.lastIndex && (a.lastIndex = e.lastIndex));
                 else if (util.isDate(e)) a = new Date(e.getTime());
                 else {
-                    if (o && Buffer.isBuffer(e)) return (a = new Buffer(e.length)), e.copy(a), a;
+                    if (o && Buffer.isBuffer(e)) return ((a = new Buffer(e.length)), e.copy(a), a);
                     typeof r == "undefined"
                         ? (a = Object.create(Object.getPrototypeOf(e)))
                         : (a = Object.create(r));
@@ -1052,7 +1052,7 @@
                 if (t) {
                     var f = i.indexOf(e);
                     if (f != -1) return s[f];
-                    i.push(e), s.push(a);
+                    (i.push(e), s.push(a));
                 }
                 for (var l in e) a[l] = u(e[l], n - 1);
                 return a;
@@ -1067,41 +1067,41 @@
             );
         }
         function Reporter(e, t) {
-            (this.messages = []), (this.stats = []), (this.lines = e), (this.ruleset = t);
+            ((this.messages = []), (this.stats = []), (this.lines = e), (this.ruleset = t));
         }
         var parserlib = {};
-        (function () {
+        ((function () {
             function e() {
                 this._listeners = {};
             }
             function t(e) {
-                (this._input = e.replace(/\n\r?/g, "\n")),
+                ((this._input = e.replace(/\n\r?/g, "\n")),
                     (this._line = 1),
                     (this._col = 1),
-                    (this._cursor = 0);
+                    (this._cursor = 0));
             }
             function n(e, t, n) {
-                (this.col = n), (this.line = t), (this.message = e);
+                ((this.col = n), (this.line = t), (this.message = e));
             }
             function r(e, t, n, r) {
-                (this.col = n), (this.line = t), (this.text = e), (this.type = r);
+                ((this.col = n), (this.line = t), (this.text = e), (this.type = r));
             }
             function i(e, n) {
-                (this._reader = e ? new t(e.toString()) : null),
+                ((this._reader = e ? new t(e.toString()) : null),
                     (this._token = null),
                     (this._tokenData = n),
                     (this._lt = []),
                     (this._ltIndex = 0),
-                    (this._ltIndexCache = []);
+                    (this._ltIndexCache = []));
             }
-            (e.prototype = {
+            ((e.prototype = {
                 constructor: e,
                 addListener: function (e, t) {
-                    this._listeners[e] || (this._listeners[e] = []), this._listeners[e].push(t);
+                    (this._listeners[e] || (this._listeners[e] = []), this._listeners[e].push(t));
                 },
                 fire: function (e) {
-                    typeof e == "string" && (e = { type: e }),
-                        typeof e.target != "undefined" && (e.target = this);
+                    (typeof e == "string" && (e = { type: e }),
+                        typeof e.target != "undefined" && (e.target = this));
                     if (typeof e.type == "undefined")
                         throw new Error("Event object missing 'type' property.");
                     if (this._listeners[e.type]) {
@@ -1183,7 +1183,7 @@
                     readWhile: function (e) {
                         var t = "",
                             n = this.read();
-                        while (n !== null && e(n)) (t += n), (n = this.read());
+                        while (n !== null && e(n)) ((t += n), (n = this.read()));
                         return t;
                     },
                     readMatch: function (e) {
@@ -1223,9 +1223,9 @@
                         r = e.concat([]),
                         i = 0,
                         s = r.length + 1;
-                    (r.UNKNOWN = -1), r.unshift({ name: "EOF" });
+                    ((r.UNKNOWN = -1), r.unshift({ name: "EOF" }));
                     for (; i < s; i++)
-                        t.push(r[i].name), (r[r[i].name] = i), r[i].text && (n[r[i].text] = i);
+                        (t.push(r[i].name), (r[r[i].name] = i), r[i].text && (n[r[i].text] = i));
                     return (
                         (r.name = function (e) {
                             return t[e];
@@ -1244,14 +1244,14 @@
                             r = 0,
                             i = e.length;
                         while (r < i) if (n == e[r++]) return !0;
-                        return this.unget(), !1;
+                        return (this.unget(), !1);
                     },
                     mustMatch: function (e, t) {
                         var r;
                         e instanceof Array || (e = [e]);
                         if (!this.match.apply(this, arguments))
                             throw (
-                                ((r = this.LT(1)),
+                                (r = this.LT(1)),
                                 new n(
                                     "Expected " +
                                         this._tokenData[e[0]].name +
@@ -1262,7 +1262,7 @@
                                         ".",
                                     r.startLine,
                                     r.startCol,
-                                ))
+                                )
                             );
                     },
                     advance: function (e, t) {
@@ -1283,22 +1283,22 @@
                             this._ltIndex >= 0 &&
                             this._ltIndex < this._lt.length
                         ) {
-                            i++,
+                            (i++,
                                 (this._token = this._lt[this._ltIndex++]),
-                                (a = t[this._token.type]);
+                                (a = t[this._token.type]));
                             while (
                                 a.channel !== undefined &&
                                 e !== a.channel &&
                                 this._ltIndex < this._lt.length
                             )
-                                (this._token = this._lt[this._ltIndex++]),
+                                ((this._token = this._lt[this._ltIndex++]),
                                     (a = t[this._token.type]),
-                                    i++;
+                                    i++);
                             if (
                                 (a.channel === undefined || e === a.channel) &&
                                 this._ltIndex <= this._lt.length
                             )
-                                return this._ltIndexCache.push(i), this._token.type;
+                                return (this._ltIndexCache.push(i), this._token.type);
                         }
                         return (
                             (u = this._getToken()),
@@ -1322,8 +1322,8 @@
                             n;
                         if (e > 0) {
                             if (e > 5) throw new Error("Too much lookahead.");
-                            while (t) (n = this.get()), t--;
-                            while (t < e) this.unget(), t++;
+                            while (t) ((n = this.get()), t--);
+                            while (t < e) (this.unget(), t++);
                         } else if (e < 0) {
                             if (!this._lt[this._ltIndex + e])
                                 throw new Error("Too much lookbehind.");
@@ -1332,7 +1332,7 @@
                         return n;
                     },
                     LT: function (e) {
-                        return this.LA(e), this._lt[this._ltIndex + e - 1];
+                        return (this.LA(e), this._lt[this._ltIndex + e - 1]);
                     },
                     peek: function () {
                         return this.LA(1);
@@ -1350,8 +1350,8 @@
                     },
                     unget: function () {
                         if (!this._ltIndexCache.length) throw new Error("Too much lookahead.");
-                        (this._ltIndex -= this._ltIndexCache.pop()),
-                            (this._token = this._lt[this._ltIndex - 1]);
+                        ((this._ltIndex -= this._ltIndexCache.pop()),
+                            (this._token = this._lt[this._ltIndex - 1]));
                     },
                 }),
                 (parserlib.util = {
@@ -1360,11 +1360,11 @@
                     SyntaxUnit: r,
                     EventTarget: e,
                     TokenStreamBase: i,
-                });
+                }));
         })(),
             (function () {
                 function Combinator(e, t, n) {
-                    SyntaxUnit.call(this, e, t, n, Parser.COMBINATOR_TYPE),
+                    (SyntaxUnit.call(this, e, t, n, Parser.COMBINATOR_TYPE),
                         (this.type = "unknown"),
                         /^\s+$/.test(e)
                             ? (this.type = "descendant")
@@ -1372,10 +1372,10 @@
                               ? (this.type = "child")
                               : e == "+"
                                 ? (this.type = "adjacent-sibling")
-                                : e == "~" && (this.type = "sibling");
+                                : e == "~" && (this.type = "sibling"));
                 }
                 function MediaFeature(e, t) {
-                    SyntaxUnit.call(
+                    (SyntaxUnit.call(
                         this,
                         "(" + e + (t !== null ? ":" + t : "") + ")",
                         e.startLine,
@@ -1383,10 +1383,10 @@
                         Parser.MEDIA_FEATURE_TYPE,
                     ),
                         (this.name = e),
-                        (this.value = t);
+                        (this.value = t));
                 }
                 function MediaQuery(e, t, n, r, i) {
-                    SyntaxUnit.call(
+                    (SyntaxUnit.call(
                         this,
                         (e ? e + " " : "") +
                             (t ? t : "") +
@@ -1398,29 +1398,29 @@
                     ),
                         (this.modifier = e),
                         (this.mediaType = t),
-                        (this.features = n);
+                        (this.features = n));
                 }
                 function Parser(e) {
-                    EventTarget.call(this), (this.options = e || {}), (this._tokenStream = null);
+                    (EventTarget.call(this), (this.options = e || {}), (this._tokenStream = null));
                 }
                 function PropertyName(e, t, n, r) {
-                    SyntaxUnit.call(this, e, n, r, Parser.PROPERTY_NAME_TYPE), (this.hack = t);
+                    (SyntaxUnit.call(this, e, n, r, Parser.PROPERTY_NAME_TYPE), (this.hack = t));
                 }
                 function PropertyValue(e, t, n) {
-                    SyntaxUnit.call(this, e.join(" "), t, n, Parser.PROPERTY_VALUE_TYPE),
-                        (this.parts = e);
+                    (SyntaxUnit.call(this, e.join(" "), t, n, Parser.PROPERTY_VALUE_TYPE),
+                        (this.parts = e));
                 }
                 function PropertyValueIterator(e) {
-                    (this._i = 0), (this._parts = e.parts), (this._marks = []), (this.value = e);
+                    ((this._i = 0), (this._parts = e.parts), (this._marks = []), (this.value = e));
                 }
                 function PropertyValuePart(text, line, col) {
-                    SyntaxUnit.call(this, text, line, col, Parser.PROPERTY_VALUE_PART_TYPE),
-                        (this.type = "unknown");
+                    (SyntaxUnit.call(this, text, line, col, Parser.PROPERTY_VALUE_PART_TYPE),
+                        (this.type = "unknown"));
                     var temp;
                     if (/^([+\-]?[\d\.]+)([a-z]+)$/i.test(text)) {
-                        (this.type = "dimension"),
+                        ((this.type = "dimension"),
                             (this.value = +RegExp.$1),
-                            (this.units = RegExp.$2);
+                            (this.units = RegExp.$2));
                         switch (this.units.toLowerCase()) {
                             case "em":
                             case "rem":
@@ -1559,22 +1559,22 @@
                                                           (this.value = text));
                 }
                 function Selector(e, t, n) {
-                    SyntaxUnit.call(this, e.join(" "), t, n, Parser.SELECTOR_TYPE),
+                    (SyntaxUnit.call(this, e.join(" "), t, n, Parser.SELECTOR_TYPE),
                         (this.parts = e),
-                        (this.specificity = Specificity.calculate(this));
+                        (this.specificity = Specificity.calculate(this)));
                 }
                 function SelectorPart(e, t, n, r, i) {
-                    SyntaxUnit.call(this, n, r, i, Parser.SELECTOR_PART_TYPE),
+                    (SyntaxUnit.call(this, n, r, i, Parser.SELECTOR_PART_TYPE),
                         (this.elementName = e),
-                        (this.modifiers = t);
+                        (this.modifiers = t));
                 }
                 function SelectorSubPart(e, t, n, r) {
-                    SyntaxUnit.call(this, e, n, r, Parser.SELECTOR_SUB_PART_TYPE),
+                    (SyntaxUnit.call(this, e, n, r, Parser.SELECTOR_SUB_PART_TYPE),
                         (this.type = t),
-                        (this.args = []);
+                        (this.args = []));
                 }
                 function Specificity(e, t, n, r) {
-                    (this.a = e), (this.b = t), (this.c = n), (this.d = r);
+                    ((this.a = e), (this.b = t), (this.c = n), (this.d = r));
                 }
                 function isHexDigit(e) {
                     return e !== null && h.test(e);
@@ -1605,7 +1605,7 @@
                     TokenStreamBase.call(this, e, Tokens);
                 }
                 function ValidationError(e, t, n) {
-                    (this.col = n), (this.line = t), (this.message = e);
+                    ((this.col = n), (this.line = t), (this.message = e));
                 }
                 var EventTarget = parserlib.util.EventTarget,
                     TokenStreamBase = parserlib.util.TokenStreamBase,
@@ -1800,7 +1800,7 @@
                         windowframe: "Window frame.",
                         windowtext: "Text in windows.",
                     };
-                (Combinator.prototype = new SyntaxUnit()),
+                ((Combinator.prototype = new SyntaxUnit()),
                     (Combinator.prototype.constructor = Combinator),
                     (MediaFeature.prototype = new SyntaxUnit()),
                     (MediaFeature.prototype.constructor = MediaFeature),
@@ -1837,31 +1837,31 @@
                                         n,
                                         r,
                                         i;
-                                    this.fire("startstylesheet"),
+                                    (this.fire("startstylesheet"),
                                         this._charset(),
-                                        this._skipCruft();
+                                        this._skipCruft());
                                     while (e.peek() == Tokens.IMPORT_SYM)
-                                        this._import(), this._skipCruft();
+                                        (this._import(), this._skipCruft());
                                     while (e.peek() == Tokens.NAMESPACE_SYM)
-                                        this._namespace(), this._skipCruft();
+                                        (this._namespace(), this._skipCruft());
                                     i = e.peek();
                                     while (i > Tokens.EOF) {
                                         try {
                                             switch (i) {
                                                 case Tokens.MEDIA_SYM:
-                                                    this._media(), this._skipCruft();
+                                                    (this._media(), this._skipCruft());
                                                     break;
                                                 case Tokens.PAGE_SYM:
-                                                    this._page(), this._skipCruft();
+                                                    (this._page(), this._skipCruft());
                                                     break;
                                                 case Tokens.FONT_FACE_SYM:
-                                                    this._font_face(), this._skipCruft();
+                                                    (this._font_face(), this._skipCruft());
                                                     break;
                                                 case Tokens.KEYFRAMES_SYM:
-                                                    this._keyframes(), this._skipCruft();
+                                                    (this._keyframes(), this._skipCruft());
                                                     break;
                                                 case Tokens.VIEWPORT_SYM:
-                                                    this._viewport(), this._skipCruft();
+                                                    (this._viewport(), this._skipCruft());
                                                     break;
                                                 case Tokens.UNKNOWN_SYM:
                                                     e.get();
@@ -1871,7 +1871,7 @@
                                                             e.LT(0).startLine,
                                                             e.LT(0).startCol,
                                                         );
-                                                    this.fire({
+                                                    (this.fire({
                                                         type: "error",
                                                         error: null,
                                                         message:
@@ -1881,13 +1881,13 @@
                                                         line: e.LT(0).startLine,
                                                         col: e.LT(0).startCol,
                                                     }),
-                                                        (n = 0);
+                                                        (n = 0));
                                                     while (
                                                         e.advance([Tokens.LBRACE, Tokens.RBRACE]) ==
                                                         Tokens.LBRACE
                                                     )
                                                         n++;
-                                                    while (n) e.advance([Tokens.RBRACE]), n--;
+                                                    while (n) (e.advance([Tokens.RBRACE]), n--);
                                                     break;
                                                 case Tokens.S:
                                                     this._readWhitespace();
@@ -1897,39 +1897,39 @@
                                                         switch (i) {
                                                             case Tokens.CHARSET_SYM:
                                                                 throw (
-                                                                    ((r = e.LT(1)),
+                                                                    (r = e.LT(1)),
                                                                     this._charset(!1),
                                                                     new SyntaxError(
                                                                         "@charset not allowed here.",
                                                                         r.startLine,
                                                                         r.startCol,
-                                                                    ))
+                                                                    )
                                                                 );
                                                             case Tokens.IMPORT_SYM:
                                                                 throw (
-                                                                    ((r = e.LT(1)),
+                                                                    (r = e.LT(1)),
                                                                     this._import(!1),
                                                                     new SyntaxError(
                                                                         "@import not allowed here.",
                                                                         r.startLine,
                                                                         r.startCol,
-                                                                    ))
+                                                                    )
                                                                 );
                                                             case Tokens.NAMESPACE_SYM:
                                                                 throw (
-                                                                    ((r = e.LT(1)),
+                                                                    (r = e.LT(1)),
                                                                     this._namespace(!1),
                                                                     new SyntaxError(
                                                                         "@namespace not allowed here.",
                                                                         r.startLine,
                                                                         r.startCol,
-                                                                    ))
+                                                                    )
                                                                 );
                                                             default:
-                                                                e.get(),
+                                                                (e.get(),
                                                                     this._unexpectedToken(
                                                                         e.token(),
-                                                                    );
+                                                                    ));
                                                         }
                                             }
                                         } catch (s) {
@@ -1945,8 +1945,8 @@
                                         }
                                         i = e.peek();
                                     }
-                                    i != Tokens.EOF && this._unexpectedToken(e.token()),
-                                        this.fire("endstylesheet");
+                                    (i != Tokens.EOF && this._unexpectedToken(e.token()),
+                                        this.fire("endstylesheet"));
                                 },
                                 _charset: function (e) {
                                     var t = this._tokenStream,
@@ -1977,7 +1977,7 @@
                                         r,
                                         i,
                                         s = [];
-                                    t.mustMatch(Tokens.IMPORT_SYM),
+                                    (t.mustMatch(Tokens.IMPORT_SYM),
                                         (i = t.token()),
                                         this._readWhitespace(),
                                         t.mustMatch([Tokens.STRING, Tokens.URI]),
@@ -1998,7 +1998,7 @@
                                                 media: s,
                                                 line: i.startLine,
                                                 col: i.startCol,
-                                            });
+                                            }));
                                 },
                                 _namespace: function (e) {
                                     var t = this._tokenStream,
@@ -2006,7 +2006,7 @@
                                         r,
                                         i,
                                         s;
-                                    t.mustMatch(Tokens.NAMESPACE_SYM),
+                                    (t.mustMatch(Tokens.NAMESPACE_SYM),
                                         (n = t.token().startLine),
                                         (r = t.token().startCol),
                                         this._readWhitespace(),
@@ -2026,14 +2026,14 @@
                                                 uri: s,
                                                 line: n,
                                                 col: r,
-                                            });
+                                            }));
                                 },
                                 _media: function () {
                                     var e = this._tokenStream,
                                         t,
                                         n,
                                         r;
-                                    e.mustMatch(Tokens.MEDIA_SYM),
+                                    (e.mustMatch(Tokens.MEDIA_SYM),
                                         (t = e.token().startLine),
                                         (n = e.token().startCol),
                                         this._readWhitespace(),
@@ -2045,25 +2045,25 @@
                                             media: r,
                                             line: t,
                                             col: n,
-                                        });
+                                        }));
                                     for (;;)
                                         if (e.peek() == Tokens.PAGE_SYM) this._page();
                                         else if (e.peek() == Tokens.FONT_FACE_SYM)
                                             this._font_face();
                                         else if (e.peek() == Tokens.VIEWPORT_SYM) this._viewport();
                                         else if (!this._ruleset()) break;
-                                    e.mustMatch(Tokens.RBRACE),
+                                    (e.mustMatch(Tokens.RBRACE),
                                         this._readWhitespace(),
-                                        this.fire({ type: "endmedia", media: r, line: t, col: n });
+                                        this.fire({ type: "endmedia", media: r, line: t, col: n }));
                                 },
                                 _media_query_list: function () {
                                     var e = this._tokenStream,
                                         t = [];
-                                    this._readWhitespace(),
+                                    (this._readWhitespace(),
                                         (e.peek() == Tokens.IDENT || e.peek() == Tokens.LPAREN) &&
-                                            t.push(this._media_query());
+                                            t.push(this._media_query()));
                                     while (e.match(Tokens.COMMA))
-                                        this._readWhitespace(), t.push(this._media_query());
+                                        (this._readWhitespace(), t.push(this._media_query()));
                                     return t;
                                 },
                                 _media_query: function () {
@@ -2072,7 +2072,7 @@
                                         n = null,
                                         r = null,
                                         i = [];
-                                    e.match(Tokens.IDENT) &&
+                                    (e.match(Tokens.IDENT) &&
                                         ((n = e.token().value.toLowerCase()),
                                         n != "only" && n != "not"
                                             ? (e.unget(), (n = null))
@@ -2083,14 +2083,14 @@
                                               r === null && (r = e.token()))
                                             : e.peek() == Tokens.LPAREN &&
                                               (r === null && (r = e.LT(1)),
-                                              i.push(this._media_expression()));
+                                              i.push(this._media_expression())));
                                     if (t === null && i.length === 0) return null;
                                     this._readWhitespace();
                                     while (e.match(Tokens.IDENT))
-                                        e.token().value.toLowerCase() != "and" &&
+                                        (e.token().value.toLowerCase() != "and" &&
                                             this._unexpectedToken(e.token()),
                                             this._readWhitespace(),
-                                            i.push(this._media_expression());
+                                            i.push(this._media_expression()));
                                     return new MediaQuery(n, t, i, r.startLine, r.startCol);
                                 },
                                 _media_type: function () {
@@ -2121,7 +2121,8 @@
                                 _media_feature: function () {
                                     var e = this._tokenStream;
                                     return (
-                                        e.mustMatch(Tokens.IDENT), SyntaxUnit.fromToken(e.token())
+                                        e.mustMatch(Tokens.IDENT),
+                                        SyntaxUnit.fromToken(e.token())
                                     );
                                 },
                                 _page: function () {
@@ -2130,7 +2131,7 @@
                                         n,
                                         r = null,
                                         i = null;
-                                    e.mustMatch(Tokens.PAGE_SYM),
+                                    (e.mustMatch(Tokens.PAGE_SYM),
                                         (t = e.token().startLine),
                                         (n = e.token().startCol),
                                         this._readWhitespace(),
@@ -2154,7 +2155,7 @@
                                             pseudo: i,
                                             line: t,
                                             col: n,
-                                        });
+                                        }));
                                 },
                                 _margin: function () {
                                     var e = this._tokenStream,
@@ -2215,25 +2216,25 @@
                                     var e = this._tokenStream,
                                         t,
                                         n;
-                                    e.mustMatch(Tokens.FONT_FACE_SYM),
+                                    (e.mustMatch(Tokens.FONT_FACE_SYM),
                                         (t = e.token().startLine),
                                         (n = e.token().startCol),
                                         this._readWhitespace(),
                                         this.fire({ type: "startfontface", line: t, col: n }),
                                         this._readDeclarations(!0),
-                                        this.fire({ type: "endfontface", line: t, col: n });
+                                        this.fire({ type: "endfontface", line: t, col: n }));
                                 },
                                 _viewport: function () {
                                     var e = this._tokenStream,
                                         t,
                                         n;
-                                    e.mustMatch(Tokens.VIEWPORT_SYM),
+                                    (e.mustMatch(Tokens.VIEWPORT_SYM),
                                         (t = e.token().startLine),
                                         (n = e.token().startCol),
                                         this._readWhitespace(),
                                         this.fire({ type: "startviewport", line: t, col: n }),
                                         this._readDeclarations(!0),
-                                        this.fire({ type: "endviewport", line: t, col: n });
+                                        this.fire({ type: "endviewport", line: t, col: n }));
                                 },
                                 _operator: function (e) {
                                     var t = this._tokenStream,
@@ -2242,7 +2243,7 @@
                                         t.match([Tokens.SLASH, Tokens.COMMA]) ||
                                         (e && t.match([Tokens.PLUS, Tokens.STAR, Tokens.MINUS]))
                                     )
-                                        (n = t.token()), this._readWhitespace();
+                                        ((n = t.token()), this._readWhitespace());
                                     return n ? PropertyValuePart.fromToken(n) : null;
                                 },
                                 _combinator: function () {
@@ -2303,14 +2304,14 @@
                                         n = this._selectors_group();
                                     } catch (r) {
                                         if (r instanceof SyntaxError && !this.options.strict) {
-                                            this.fire({
+                                            (this.fire({
                                                 type: "error",
                                                 error: r,
                                                 message: r.message,
                                                 line: r.line,
                                                 col: r.col,
                                             }),
-                                                (t = e.advance([Tokens.RBRACE]));
+                                                (t = e.advance([Tokens.RBRACE])));
                                             if (t != Tokens.RBRACE) throw r;
                                             return !0;
                                         }
@@ -2342,11 +2343,11 @@
                                     if (n !== null) {
                                         t.push(n);
                                         while (e.match(Tokens.COMMA))
-                                            this._readWhitespace(),
+                                            (this._readWhitespace(),
                                                 (n = this._selector()),
                                                 n !== null
                                                     ? t.push(n)
-                                                    : this._unexpectedToken(e.LT(1));
+                                                    : this._unexpectedToken(e.LT(1)));
                                     }
                                     return t.length ? t : null;
                                 },
@@ -2362,14 +2363,14 @@
                                     do {
                                         r = this._combinator();
                                         if (r !== null)
-                                            t.push(r),
+                                            (t.push(r),
                                                 (n = this._simple_selector_sequence()),
                                                 n === null
                                                     ? this._unexpectedToken(e.LT(1))
-                                                    : t.push(n);
+                                                    : t.push(n));
                                         else {
                                             if (!this._readWhitespace()) break;
-                                            (i = new Combinator(
+                                            ((i = new Combinator(
                                                 e.token().value,
                                                 e.token().startLine,
                                                 e.token().startCol,
@@ -2379,7 +2380,7 @@
                                                 n === null
                                                     ? r !== null && this._unexpectedToken(e.LT(1))
                                                     : (r !== null ? t.push(r) : t.push(i),
-                                                      t.push(n));
+                                                      t.push(n)));
                                         }
                                     } while (!0);
                                     return new Selector(t, t[0].line, t[0].col);
@@ -2411,11 +2412,11 @@
                                         a = !1,
                                         f,
                                         l;
-                                    (f = e.LT(1).startLine),
+                                    ((f = e.LT(1).startLine),
                                         (l = e.LT(1).startCol),
                                         (t = this._type_selector()),
                                         t || (t = this._universal()),
-                                        t !== null && (r += t);
+                                        t !== null && (r += t));
                                     for (;;) {
                                         if (e.peek() === Tokens.S) break;
                                         while (s < o && u === null) u = i[s++].call(this);
@@ -2423,7 +2424,7 @@
                                             if (r === "") return null;
                                             break;
                                         }
-                                        (s = 0), n.push(u), (r += u.toString()), (u = null);
+                                        ((s = 0), n.push(u), (r += u.toString()), (u = null));
                                     }
                                     return r !== "" ? new SelectorPart(t, n, r, f, l) : null;
                                 },
@@ -2466,10 +2467,10 @@
                                     var e = this._tokenStream,
                                         t = "";
                                     if (e.LA(1) === Tokens.PIPE || e.LA(2) === Tokens.PIPE)
-                                        e.match([Tokens.IDENT, Tokens.STAR]) &&
+                                        (e.match([Tokens.IDENT, Tokens.STAR]) &&
                                             (t += e.token().value),
                                             e.mustMatch(Tokens.PIPE),
-                                            (t += "|");
+                                            (t += "|"));
                                     return t.length ? t : null;
                                 },
                                 _universal: function () {
@@ -2572,7 +2573,7 @@
                                             Tokens.SLASH,
                                         ])
                                     )
-                                        (t += e.token().value), (t += this._readWhitespace());
+                                        ((t += e.token().value), (t += this._readWhitespace()));
                                     return t.length ? t : null;
                                 },
                                 _negation: function () {
@@ -2624,8 +2625,8 @@
                                         o,
                                         u,
                                         a;
-                                    (o = e.LT(1).startLine), (u = e.LT(1).startCol);
-                                    while (r < i && n === null) (n = t[r].call(this)), r++;
+                                    ((o = e.LT(1).startLine), (u = e.LT(1).startCol));
+                                    while (r < i && n === null) ((n = t[r].call(this)), r++);
                                     return (
                                         n === null && this._unexpectedToken(e.LT(1)),
                                         n.type == "elementName"
@@ -2644,13 +2645,13 @@
                                         o = "";
                                     t = this._property();
                                     if (t !== null) {
-                                        e.mustMatch(Tokens.COLON),
+                                        (e.mustMatch(Tokens.COLON),
                                             this._readWhitespace(),
                                             (n = this._expr()),
                                             (!n || n.length === 0) &&
                                                 this._unexpectedToken(e.LT(1)),
                                             (r = this._prio()),
-                                            (o = t.toString());
+                                            (o = t.toString()));
                                         if (
                                             (this.options.starHack && t.hack == "*") ||
                                             (this.options.underscoreHack && t.hack == "_")
@@ -2679,7 +2680,7 @@
                                 _prio: function () {
                                     var e = this._tokenStream,
                                         t = e.match(Tokens.IMPORTANT_SYM);
-                                    return this._readWhitespace(), t;
+                                    return (this._readWhitespace(), t);
                                 },
                                 _expr: function (e) {
                                     var t = this._tokenStream,
@@ -2690,9 +2691,9 @@
                                     if (r !== null) {
                                         n.push(r);
                                         do {
-                                            (i = this._operator(e)),
+                                            ((i = this._operator(e)),
                                                 i && n.push(i),
-                                                (r = this._term(e));
+                                                (r = this._term(e)));
                                             if (r === null) break;
                                             n.push(r);
                                         } while (!0);
@@ -2774,28 +2775,32 @@
                                         n = null,
                                         r;
                                     if (e.match(Tokens.FUNCTION)) {
-                                        (t = e.token().value),
+                                        ((t = e.token().value),
                                             this._readWhitespace(),
                                             (n = this._expr(!0)),
-                                            (t += n);
+                                            (t += n));
                                         if (this.options.ieFilters && e.peek() == Tokens.EQUALS)
                                             do {
-                                                this._readWhitespace() && (t += e.token().value),
+                                                (this._readWhitespace() && (t += e.token().value),
                                                     e.LA(0) == Tokens.COMMA &&
                                                         (t += e.token().value),
                                                     e.match(Tokens.IDENT),
                                                     (t += e.token().value),
                                                     e.match(Tokens.EQUALS),
                                                     (t += e.token().value),
-                                                    (r = e.peek());
+                                                    (r = e.peek()));
                                                 while (
                                                     r != Tokens.COMMA &&
                                                     r != Tokens.S &&
                                                     r != Tokens.RPAREN
                                                 )
-                                                    e.get(), (t += e.token().value), (r = e.peek());
+                                                    (e.get(),
+                                                        (t += e.token().value),
+                                                        (r = e.peek()));
                                             } while (e.match([Tokens.COMMA, Tokens.S]));
-                                        e.match(Tokens.RPAREN), (t += ")"), this._readWhitespace();
+                                        (e.match(Tokens.RPAREN),
+                                            (t += ")"),
+                                            this._readWhitespace());
                                     }
                                     return t;
                                 },
@@ -2807,21 +2812,23 @@
                                     if (e.match([Tokens.IE_FUNCTION, Tokens.FUNCTION])) {
                                         t = e.token().value;
                                         do {
-                                            this._readWhitespace() && (t += e.token().value),
+                                            (this._readWhitespace() && (t += e.token().value),
                                                 e.LA(0) == Tokens.COMMA && (t += e.token().value),
                                                 e.match(Tokens.IDENT),
                                                 (t += e.token().value),
                                                 e.match(Tokens.EQUALS),
                                                 (t += e.token().value),
-                                                (r = e.peek());
+                                                (r = e.peek()));
                                             while (
                                                 r != Tokens.COMMA &&
                                                 r != Tokens.S &&
                                                 r != Tokens.RPAREN
                                             )
-                                                e.get(), (t += e.token().value), (r = e.peek());
+                                                (e.get(), (t += e.token().value), (r = e.peek()));
                                         } while (e.match([Tokens.COMMA, Tokens.S]));
-                                        e.match(Tokens.RPAREN), (t += ")"), this._readWhitespace();
+                                        (e.match(Tokens.RPAREN),
+                                            (t += ")"),
+                                            this._readWhitespace());
                                     }
                                     return t;
                                 },
@@ -2830,7 +2837,7 @@
                                         t = null,
                                         n;
                                     if (e.match(Tokens.HASH)) {
-                                        (t = e.token()), (n = t.value);
+                                        ((t = e.token()), (n = t.value));
                                         if (!/#[a-f0-9]{3,6}/i.test(n))
                                             throw new SyntaxError(
                                                 "Expected a hex color but found '" +
@@ -2853,7 +2860,7 @@
                                         n,
                                         r,
                                         i = "";
-                                    e.mustMatch(Tokens.KEYFRAMES_SYM),
+                                    (e.mustMatch(Tokens.KEYFRAMES_SYM),
                                         (t = e.token()),
                                         /^@\-([^\-]+)\-/.test(t.value) && (i = RegExp.$1),
                                         this._readWhitespace(),
@@ -2868,12 +2875,12 @@
                                             col: t.startCol,
                                         }),
                                         this._readWhitespace(),
-                                        (n = e.peek());
+                                        (n = e.peek()));
                                     while (n == Tokens.IDENT || n == Tokens.PERCENTAGE)
-                                        this._keyframe_rule(),
+                                        (this._keyframe_rule(),
                                             this._readWhitespace(),
-                                            (n = e.peek());
-                                    this.fire({
+                                            (n = e.peek()));
+                                    (this.fire({
                                         type: "endkeyframes",
                                         name: r,
                                         prefix: i,
@@ -2881,7 +2888,7 @@
                                         col: t.startCol,
                                     }),
                                         this._readWhitespace(),
-                                        e.mustMatch(Tokens.RBRACE);
+                                        e.mustMatch(Tokens.RBRACE));
                                 },
                                 _keyframe_name: function () {
                                     var e = this._tokenStream,
@@ -2895,7 +2902,7 @@
                                     var e = this._tokenStream,
                                         t,
                                         n = this._key_list();
-                                    this.fire({
+                                    (this.fire({
                                         type: "startkeyframerule",
                                         keys: n,
                                         line: n[0].line,
@@ -2907,18 +2914,18 @@
                                             keys: n,
                                             line: n[0].line,
                                             col: n[0].col,
-                                        });
+                                        }));
                                 },
                                 _key_list: function () {
                                     var e = this._tokenStream,
                                         t,
                                         n,
                                         r = [];
-                                    r.push(this._key()), this._readWhitespace();
+                                    (r.push(this._key()), this._readWhitespace());
                                     while (e.match(Tokens.COMMA))
-                                        this._readWhitespace(),
+                                        (this._readWhitespace(),
                                             r.push(this._key()),
-                                            this._readWhitespace();
+                                            this._readWhitespace());
                                     return r;
                                 },
                                 _key: function () {
@@ -2942,9 +2949,9 @@
                                 _readDeclarations: function (e, t) {
                                     var n = this._tokenStream,
                                         r;
-                                    this._readWhitespace(),
+                                    (this._readWhitespace(),
                                         e && n.mustMatch(Tokens.LBRACE),
-                                        this._readWhitespace();
+                                        this._readWhitespace());
                                     try {
                                         for (;;) {
                                             if (
@@ -2958,18 +2965,18 @@
                                             }
                                             this._readWhitespace();
                                         }
-                                        n.mustMatch(Tokens.RBRACE), this._readWhitespace();
+                                        (n.mustMatch(Tokens.RBRACE), this._readWhitespace());
                                     } catch (i) {
                                         if (!(i instanceof SyntaxError && !this.options.strict))
                                             throw i;
-                                        this.fire({
+                                        (this.fire({
                                             type: "error",
                                             error: i,
                                             message: i.message,
                                             line: i.line,
                                             col: i.col,
                                         }),
-                                            (r = n.advance([Tokens.SEMICOLON, Tokens.RBRACE]));
+                                            (r = n.advance([Tokens.SEMICOLON, Tokens.RBRACE])));
                                         if (r == Tokens.SEMICOLON) this._readDeclarations(!1, t);
                                         else if (r != Tokens.RBRACE) throw i;
                                     }
@@ -3001,8 +3008,8 @@
                                     Validation.validate(e, t);
                                 },
                                 parse: function (e) {
-                                    (this._tokenStream = new TokenStream(e, Tokens)),
-                                        this._stylesheet();
+                                    ((this._tokenStream = new TokenStream(e, Tokens)),
+                                        this._stylesheet());
                                 },
                                 parseStyleSheet: function (e) {
                                     return this.parse(e);
@@ -3010,35 +3017,35 @@
                                 parseMediaQuery: function (e) {
                                     this._tokenStream = new TokenStream(e, Tokens);
                                     var t = this._media_query();
-                                    return this._verifyEnd(), t;
+                                    return (this._verifyEnd(), t);
                                 },
                                 parsePropertyValue: function (e) {
-                                    (this._tokenStream = new TokenStream(e, Tokens)),
-                                        this._readWhitespace();
+                                    ((this._tokenStream = new TokenStream(e, Tokens)),
+                                        this._readWhitespace());
                                     var t = this._expr();
-                                    return this._readWhitespace(), this._verifyEnd(), t;
+                                    return (this._readWhitespace(), this._verifyEnd(), t);
                                 },
                                 parseRule: function (e) {
-                                    (this._tokenStream = new TokenStream(e, Tokens)),
-                                        this._readWhitespace();
+                                    ((this._tokenStream = new TokenStream(e, Tokens)),
+                                        this._readWhitespace());
                                     var t = this._ruleset();
-                                    return this._readWhitespace(), this._verifyEnd(), t;
+                                    return (this._readWhitespace(), this._verifyEnd(), t);
                                 },
                                 parseSelector: function (e) {
-                                    (this._tokenStream = new TokenStream(e, Tokens)),
-                                        this._readWhitespace();
+                                    ((this._tokenStream = new TokenStream(e, Tokens)),
+                                        this._readWhitespace());
                                     var t = this._selector();
-                                    return this._readWhitespace(), this._verifyEnd(), t;
+                                    return (this._readWhitespace(), this._verifyEnd(), t);
                                 },
                                 parseStyleAttribute: function (e) {
-                                    (e += "}"),
+                                    ((e += "}"),
                                         (this._tokenStream = new TokenStream(e, Tokens)),
-                                        this._readDeclarations();
+                                        this._readDeclarations());
                                 },
                             };
                         for (t in n) n.hasOwnProperty(t) && (e[t] = n[t]);
                         return e;
-                    })());
+                    })()));
                 var Properties = {
                     "align-items": "flex-start | flex-end | center | baseline | stretch",
                     "align-content":
@@ -3126,7 +3133,7 @@
                                 ((i = !0), r || ValidationTypes.isAny(e, "behind")));
                         if (e.hasNext())
                             throw (
-                                ((s = e.next()),
+                                (s = e.next()),
                                 i
                                     ? new ValidationError(
                                           "Expected end of value but found '" + s + "'.",
@@ -3137,7 +3144,7 @@
                                           "Expected (<'azimuth'>) but found '" + s + "'.",
                                           s.line,
                                           s.col,
-                                      ))
+                                      )
                             );
                     },
                     "backface-visibility": "visible | hidden",
@@ -3186,7 +3193,7 @@
                         r ? (t = !0) : ValidationTypes.isAny(e, "fill");
                         if (e.hasNext())
                             throw (
-                                ((o = e.next()),
+                                (o = e.next()),
                                 t
                                     ? new ValidationError(
                                           "Expected end of value but found '" + o + "'.",
@@ -3199,7 +3206,7 @@
                                               "'.",
                                           o.line,
                                           o.col,
-                                      ))
+                                      )
                             );
                     },
                     "border-image-source": "<image> | none",
@@ -3223,13 +3230,13 @@
                             t = ValidationTypes.isAny(e, n);
                             if (!t) {
                                 if (!(e.peek() == "/" && s > 0 && !r)) break;
-                                (r = !0), (o = s + 5), e.next();
+                                ((r = !0), (o = s + 5), e.next());
                             }
                             s++;
                         }
                         if (e.hasNext())
                             throw (
-                                ((u = e.next()),
+                                (u = e.next()),
                                 t
                                     ? new ValidationError(
                                           "Expected end of value but found '" + u + "'.",
@@ -3240,7 +3247,7 @@
                                           "Expected (<'border-radius'>) but found '" + u + "'.",
                                           u.line,
                                           u.col,
-                                      ))
+                                      )
                             );
                     },
                     "border-right": "<border-width> || <border-style> || <color>",
@@ -3283,12 +3290,12 @@
                             Validation.multiProperty("<shadow>", e, !0, Infinity);
                         else if (e.hasNext())
                             throw (
-                                ((n = e.next()),
+                                (n = e.next()),
                                 new ValidationError(
                                     "Expected end of value but found '" + n + "'.",
                                     n.line,
                                     n.col,
-                                ))
+                                )
                             );
                     },
                     "box-sizing": "content-box | border-box | inherit",
@@ -3566,7 +3573,7 @@
                     "z-index": "<integer> | auto | inherit",
                     zoom: "<number> | <percentage> | normal",
                 };
-                (PropertyName.prototype = new SyntaxUnit()),
+                ((PropertyName.prototype = new SyntaxUnit()),
                     (PropertyName.prototype.constructor = PropertyName),
                     (PropertyName.prototype.toString = function () {
                         return (this.hack ? this.hack : "") + this.text;
@@ -3601,9 +3608,9 @@
                     (PropertyValuePart.prototype.constructor = PropertyValuePart),
                     (PropertyValuePart.fromToken = function (e) {
                         return new PropertyValuePart(e.value, e.startLine, e.startCol);
-                    });
+                    }));
                 var Pseudos = { ":first-letter": 1, ":first-line": 1, ":before": 1, ":after": 1 };
-                (Pseudos.ELEMENT = 1),
+                ((Pseudos.ELEMENT = 1),
                     (Pseudos.CLASS = 2),
                     (Pseudos.isElement = function (e) {
                         return e.indexOf("::") === 0 || Pseudos[e.toLowerCase()] == Pseudos.ELEMENT;
@@ -3667,9 +3674,9 @@
                             s = 0,
                             o = 0;
                         for (t = 0, n = e.parts.length; t < n; t++)
-                            (r = e.parts[t]), r instanceof SelectorPart && u(r);
+                            ((r = e.parts[t]), r instanceof SelectorPart && u(r));
                         return new Specificity(0, i, s, o);
-                    });
+                    }));
                 var h = /^[0-9a-fA-F]$/,
                     nonascii = /^[\u0080-\uFFFF]$/,
                     nl = /\n|\r\n|\r|\f/;
@@ -3748,7 +3755,8 @@
                             break;
                         }
                         return (
-                            !r && t === null && (r = this.createToken(Tokens.EOF, null, i, s)), r
+                            !r && t === null && (r = this.createToken(Tokens.EOF, null, i, s)),
+                            r
                         );
                     },
                     createToken: function (e, t, n, r, i) {
@@ -3775,10 +3783,10 @@
                             o = !1,
                             u,
                             a;
-                        i.mark(),
+                        (i.mark(),
                             (u = this.readName()),
                             (r = e + u),
-                            (s = Tokens.type(r.toLowerCase()));
+                            (s = Tokens.type(r.toLowerCase())));
                         if (s == Tokens.CHAR || s == Tokens.UNKNOWN)
                             r.length > 1
                                 ? (s = Tokens.UNKNOWN_SYM)
@@ -3855,7 +3863,7 @@
                             s = Tokens.CHAR,
                             o,
                             u;
-                        r.mark(), (u = r.read());
+                        (r.mark(), (u = r.read()));
                         while (u) {
                             if (u == "/") {
                                 if (r.peek() != "*") break;
@@ -3864,9 +3872,9 @@
                             } else {
                                 if (!isWhitespace(u)) {
                                     if (/i/i.test(u)) {
-                                        (o = r.readCount(8)),
+                                        ((o = r.readCount(8)),
                                             /mportant/i.test(o) &&
-                                                ((i += u + o), (s = Tokens.IMPORTANT_SYM));
+                                                ((i += u + o), (s = Tokens.IMPORTANT_SYM)));
                                         break;
                                     }
                                     break;
@@ -3931,9 +3939,9 @@
                                 u = Tokens.INVALID;
                                 break;
                             }
-                            (o = a), (a = s.read());
+                            ((o = a), (a = s.read()));
                         }
-                        return a === null && (u = Tokens.INVALID), this.createToken(u, i, t, n);
+                        return (a === null && (u = Tokens.INVALID), this.createToken(u, i, t, n));
                     },
                     unicodeRangeToken: function (e, t, n) {
                         var r = this._reader,
@@ -3966,15 +3974,16 @@
                         var t = this._reader,
                             n = "",
                             r = t.peek();
-                        while (isHexDigit(r) && n.length < 6) t.read(), (n += r), (r = t.peek());
-                        if (e) while (r == "?" && n.length < 6) t.read(), (n += r), (r = t.peek());
+                        while (isHexDigit(r) && n.length < 6) (t.read(), (n += r), (r = t.peek()));
+                        if (e)
+                            while (r == "?" && n.length < 6) (t.read(), (n += r), (r = t.peek()));
                         return n;
                     },
                     readWhitespace: function () {
                         var e = this._reader,
                             t = "",
                             n = e.peek();
-                        while (isWhitespace(n)) e.read(), (t += n), (n = e.peek());
+                        while (isWhitespace(n)) (e.read(), (t += n), (n = e.peek()));
                         return t;
                     },
                     readNumber: function (e) {
@@ -3987,7 +3996,7 @@
                             else {
                                 if (i != ".") break;
                                 if (r) break;
-                                (r = !0), (n += t.read());
+                                ((r = !0), (n += t.read()));
                             }
                             i = t.peek();
                         }
@@ -4000,15 +4009,15 @@
                             r = t,
                             i = e.peek();
                         while (i) {
-                            (i = e.read()), (n += i);
+                            ((i = e.read()), (n += i));
                             if (i == t && r != "\\") break;
                             if (isNewLine(e.peek()) && i != "\\") {
                                 n = "";
                                 break;
                             }
-                            (r = i), (i = e.peek());
+                            ((r = i), (i = e.peek()));
                         }
-                        return i === null && (n = ""), n;
+                        return (i === null && (n = ""), n);
                     },
                     readURI: function (e) {
                         var t = this._reader,
@@ -4016,17 +4025,20 @@
                             r = "",
                             i = t.peek();
                         t.mark();
-                        while (i && isWhitespace(i)) t.read(), (i = t.peek());
-                        i == "'" || i == '"' ? (r = this.readString()) : (r = this.readURL()),
-                            (i = t.peek());
-                        while (i && isWhitespace(i)) t.read(), (i = t.peek());
-                        return r === "" || i != ")" ? ((n = e), t.reset()) : (n += r + t.read()), n;
+                        while (i && isWhitespace(i)) (t.read(), (i = t.peek()));
+                        (i == "'" || i == '"' ? (r = this.readString()) : (r = this.readURL()),
+                            (i = t.peek()));
+                        while (i && isWhitespace(i)) (t.read(), (i = t.peek()));
+                        return (
+                            r === "" || i != ")" ? ((n = e), t.reset()) : (n += r + t.read()),
+                            n
+                        );
                     },
                     readURL: function () {
                         var e = this._reader,
                             t = "",
                             n = e.peek();
-                        while (/^[!#$%&\\*-~]$/.test(n)) (t += e.read()), (n = e.peek());
+                        while (/^[!#$%&\\*-~]$/.test(n)) ((t += e.read()), (n = e.peek()));
                         return t;
                     },
                     readName: function (e) {
@@ -4034,10 +4046,10 @@
                             n = e || "",
                             r = t.peek();
                         for (;;)
-                            if (r == "\\") (n += this.readEscape(t.read())), (r = t.peek());
+                            if (r == "\\") ((n += this.readEscape(t.read())), (r = t.peek()));
                             else {
                                 if (!r || !isNameChar(r)) break;
-                                (n += t.read()), (r = t.peek());
+                                ((n += t.read()), (r = t.peek()));
                             }
                         return n;
                     },
@@ -4047,7 +4059,7 @@
                             r = 0,
                             i = t.peek();
                         if (isHexDigit(i))
-                            do (n += t.read()), (i = t.peek());
+                            do ((n += t.read()), (i = t.peek()));
                             while (i && isHexDigit(i) && ++r < 6);
                         return (
                             (n.length == 3 && /\s/.test(i)) || n.length == 7 || n.length == 1
@@ -4158,21 +4170,21 @@
                 (function () {
                     var e = [],
                         t = {};
-                    (Tokens.UNKNOWN = -1), Tokens.unshift({ name: "EOF" });
+                    ((Tokens.UNKNOWN = -1), Tokens.unshift({ name: "EOF" }));
                     for (var n = 0, r = Tokens.length; n < r; n++) {
-                        e.push(Tokens[n].name), (Tokens[Tokens[n].name] = n);
+                        (e.push(Tokens[n].name), (Tokens[Tokens[n].name] = n));
                         if (Tokens[n].text)
                             if (Tokens[n].text instanceof Array)
                                 for (var i = 0; i < Tokens[n].text.length; i++)
                                     t[Tokens[n].text[i]] = n;
                             else t[Tokens[n].text] = n;
                     }
-                    (Tokens.name = function (t) {
+                    ((Tokens.name = function (t) {
                         return e[t];
                     }),
                         (Tokens.type = function (e) {
                             return t[e] || -1;
-                        });
+                        }));
                 })();
                 var Validation = {
                     validate: function (e, t) {
@@ -4233,12 +4245,12 @@
                                   );
                         if (t.hasNext())
                             throw (
-                                ((u = t.next()),
+                                (u = t.next()),
                                 new ValidationError(
                                     "Expected end of value but found '" + u + "'.",
                                     u.line,
                                     u.col,
-                                ))
+                                )
                             );
                     },
                     multiProperty: function (e, t, n, r) {
@@ -4278,12 +4290,12 @@
                                         ));
                         if (t.hasNext())
                             throw (
-                                ((a = t.next()),
+                                (a = t.next()),
                                 new ValidationError(
                                     "Expected end of value but found '" + a + "'.",
                                     a.line,
                                     a.col,
-                                ))
+                                )
                             );
                     },
                     groupProperty: function (e, t, n) {
@@ -4298,7 +4310,7 @@
                             a = ValidationTypes.isAnyOfGroup(t, e);
                             if (!a) break;
                             if (o[a]) break;
-                            (o[a] = 1), o.count++, (u = !0);
+                            ((o[a] = 1), o.count++, (u = !0));
                             if (o.count == s || !t.hasNext()) r = !0;
                         }
                         if (!r)
@@ -4316,12 +4328,12 @@
                                   );
                         if (t.hasNext())
                             throw (
-                                ((f = t.next()),
+                                (f = t.next()),
                                 new ValidationError(
                                     "Expected end of value but found '" + f + "'.",
                                     f.line,
                                     f.col,
-                                ))
+                                )
                             );
                     },
                 };
@@ -4580,13 +4592,13 @@
                                 i = !1,
                                 s;
                             if (e.hasNext()) {
-                                ValidationTypes.isAny(e, "inset") && (r = !0),
-                                    ValidationTypes.isAny(e, "<color>") && (i = !0);
+                                (ValidationTypes.isAny(e, "inset") && (r = !0),
+                                    ValidationTypes.isAny(e, "<color>") && (i = !0));
                                 while (ValidationTypes.isAny(e, "<length>") && n < 4) n++;
-                                e.hasNext() &&
+                                (e.hasNext() &&
                                     (i || ValidationTypes.isAny(e, "<color>"),
                                     r || ValidationTypes.isAny(e, "inset")),
-                                    (t = n >= 2 && n <= 4);
+                                    (t = n >= 2 && n <= 4));
                             }
                             return t;
                         },
@@ -4616,14 +4628,14 @@
                                   : ValidationTypes.isType(e, "<flex-basis>") && (n = !0);
                             if (!n)
                                 throw (
-                                    ((t = e.peek()),
+                                    (t = e.peek()),
                                     new ValidationError(
                                         "Expected (none | [ <flex-grow> <flex-shrink>? || <flex-basis> ]) but found '" +
                                             e.value.text +
                                             "'.",
                                         t.line,
                                         t.col,
-                                    ))
+                                    )
                                 );
                             return n;
                         },
@@ -4649,7 +4661,7 @@
             })(),
             (function () {
                 for (var e in parserlib) exports[e] = parserlib[e];
-            })();
+            })());
         var util = {
             isArray: function (e) {
                 return (
@@ -4666,16 +4678,19 @@
             getRegExpFlags: function (e) {
                 var t = "";
                 return (
-                    e.global && (t += "g"), e.ignoreCase && (t += "i"), e.multiline && (t += "m"), t
+                    e.global && (t += "g"),
+                    e.ignoreCase && (t += "i"),
+                    e.multiline && (t += "m"),
+                    t
                 );
             },
         };
-        typeof module == "object" && (module.exports = clone),
+        (typeof module == "object" && (module.exports = clone),
             (clone.clonePrototype = function (e) {
                 if (e === null) return null;
                 var t = function () {};
-                return (t.prototype = e), new t();
-            });
+                return ((t.prototype = e), new t());
+            }));
         var CSSLint = (function () {
             function i(e, t) {
                 var r,
@@ -4703,7 +4718,7 @@
             return (
                 (r.version = "@VERSION@"),
                 (r.addRule = function (t) {
-                    e.push(t), (e[t.id] = t);
+                    (e.push(t), (e[t.id] = t));
                 }),
                 (r.clearRules = function () {
                     e = [];
@@ -4751,11 +4766,11 @@
                             underscoreHack: !0,
                             strict: !1,
                         });
-                    (u = t.replace(/\n\r?/g, "$split$").split("$split$")),
+                    ((u = t.replace(/\n\r?/g, "$split$").split("$split$")),
                         r || (r = this.getRuleset()),
                         n.test(t) && ((r = clone(r)), (r = i(t, r))),
                         (o = new Reporter(u, r)),
-                        (r.errors = 2);
+                        (r.errors = 2));
                     for (s in r) r.hasOwnProperty(s) && r[s] && e[s] && e[s].init(f, o);
                     try {
                         f.parse(t);
@@ -4777,7 +4792,7 @@
                 r
             );
         })();
-        (Reporter.prototype = {
+        ((Reporter.prototype = {
             constructor: Reporter,
             error: function (e, t, n, r) {
                 this.messages.push({
@@ -4862,7 +4877,7 @@
                                 if (o.type === e.SELECTOR_PART_TYPE) {
                                     a = 0;
                                     for (c = 0; c < o.modifiers.length; c++)
-                                        (u = o.modifiers[c]),
+                                        ((u = o.modifiers[c]),
                                             u.type === "class" && a++,
                                             a > 1 &&
                                                 t.report(
@@ -4870,7 +4885,7 @@
                                                     o.line,
                                                     o.col,
                                                     n,
-                                                );
+                                                ));
                                 }
                             }
                         }
@@ -4884,7 +4899,7 @@
                 browsers: "All",
                 init: function (e, t) {
                     function u() {
-                        (s = {}), (o = !1);
+                        ((s = {}), (o = !1));
                     }
                     function a() {
                         var e, u;
@@ -4942,7 +4957,7 @@
                         },
                         s,
                         o = !1;
-                    e.addListener("startrule", u),
+                    (e.addListener("startrule", u),
                         e.addListener("startfontface", u),
                         e.addListener("startpage", u),
                         e.addListener("startpagemargin", u),
@@ -4966,7 +4981,7 @@
                         e.addListener("endfontface", a),
                         e.addListener("endpage", a),
                         e.addListener("endpagemargin", a),
-                        e.addListener("endkeyframerule", a);
+                        e.addListener("endkeyframerule", a));
                 },
             }),
             CSSLint.addRule({
@@ -5001,14 +5016,14 @@
                         s = !1,
                         o,
                         u;
-                    e.addListener("startfontface", function () {
+                    (e.addListener("startfontface", function () {
                         r = !0;
                     }),
                         e.addListener("property", function (e) {
                             if (!r) return;
                             var t = e.property.toString().toLowerCase(),
                                 n = e.value.toString();
-                            (o = e.line), (u = e.col);
+                            ((o = e.line), (u = e.col));
                             if (t === "src") {
                                 var a =
                                     /^\s?url\(['"].+\.eot\?.*['"]\)\s*format\(['"]embedded-opentype['"]\).*$/i;
@@ -5018,15 +5033,15 @@
                             }
                         }),
                         e.addListener("endfontface", function () {
-                            (r = !1),
+                            ((r = !1),
                                 s &&
                                     t.report(
                                         "@font-face declaration doesn't follow the fontspring bulletproof syntax.",
                                         o,
                                         u,
                                         n,
-                                    );
-                        });
+                                    ));
+                        }));
                 },
             }),
             CSSLint.addRule({
@@ -5107,11 +5122,11 @@
                     };
                     for (s in r)
                         if (r.hasOwnProperty(s)) {
-                            (o = []), (u = r[s].split(" "));
+                            ((o = []), (u = r[s].split(" ")));
                             for (a = 0, f = u.length; a < f; a++) o.push("-" + u[a] + "-" + s);
-                            (r[s] = o), c.apply(h, o);
+                            ((r[s] = o), c.apply(h, o));
                         }
-                    e.addListener("startrule", function () {
+                    (e.addListener("startrule", function () {
                         i = [];
                     }),
                         e.addListener("startkeyframes", function (e) {
@@ -5159,10 +5174,10 @@
                             }
                             for (a in e)
                                 if (e.hasOwnProperty(a)) {
-                                    (l = e[a]), (c = l.full), (h = l.actual);
+                                    ((l = e[a]), (c = l.full), (h = l.actual));
                                     if (c.length > h.length)
                                         for (s = 0, o = c.length; s < o; s++)
-                                            (p = c[s]),
+                                            ((p = c[s]),
                                                 CSSLint.Util.indexOf(h, p) === -1 &&
                                                     ((d =
                                                         h.length === 1
@@ -5179,9 +5194,9 @@
                                                         l.actualNodes[0].line,
                                                         l.actualNodes[0].col,
                                                         n,
-                                                    ));
+                                                    )));
                                 }
-                        });
+                        }));
                 },
             }),
             CSSLint.addRule({
@@ -5208,7 +5223,7 @@
                         if (e)
                             switch (e) {
                                 case "inline":
-                                    s("height", e),
+                                    (s("height", e),
                                         s("width", e),
                                         s("margin", e),
                                         s("margin-top", e),
@@ -5217,7 +5232,7 @@
                                             "float",
                                             e,
                                             "display:inline has no effect on floated elements (but may be used to fix the IE6 double-margin bug).",
-                                        );
+                                        ));
                                     break;
                                 case "block":
                                     s("vertical-align", e);
@@ -5254,7 +5269,7 @@
                             "vertical-align": 1,
                         },
                         i;
-                    e.addListener("startrule", o),
+                    (e.addListener("startrule", o),
                         e.addListener("startfontface", o),
                         e.addListener("startkeyframerule", o),
                         e.addListener("startpagemargin", o),
@@ -5272,7 +5287,7 @@
                         e.addListener("endfontface", u),
                         e.addListener("endkeyframerule", u),
                         e.addListener("endpagemargin", u),
-                        e.addListener("endpage", u);
+                        e.addListener("endpage", u));
                 },
             }),
             CSSLint.addRule({
@@ -5320,7 +5335,7 @@
                     var n = this,
                         r,
                         i;
-                    e.addListener("startrule", s),
+                    (e.addListener("startrule", s),
                         e.addListener("startfontface", s),
                         e.addListener("startpage", s),
                         e.addListener("startpagemargin", s),
@@ -5328,7 +5343,7 @@
                         e.addListener("property", function (e) {
                             var s = e.property,
                                 o = s.text.toLowerCase();
-                            r[o] &&
+                            (r[o] &&
                                 (i !== o || r[o] === e.value.text) &&
                                 t.report(
                                     "Duplicate property '" + e.property + "' found.",
@@ -5337,8 +5352,8 @@
                                     n,
                                 ),
                                 (r[o] = e.value.text),
-                                (i = o);
-                        });
+                                (i = o));
+                        }));
                 },
             }),
             CSSLint.addRule({
@@ -5349,7 +5364,7 @@
                 init: function (e, t) {
                     var n = this,
                         r = 0;
-                    e.addListener("startrule", function () {
+                    (e.addListener("startrule", function () {
                         r = 0;
                     }),
                         e.addListener("property", function () {
@@ -5358,7 +5373,7 @@
                         e.addListener("endrule", function (e) {
                             var i = e.selectors;
                             r === 0 && t.report("Rule is empty.", i[0].line, i[0].col, n);
-                        });
+                        }));
                 },
             }),
             CSSLint.addRule({
@@ -5380,7 +5395,7 @@
                 browsers: "IE6,IE7,IE8",
                 init: function (e, t) {
                     function o() {
-                        (s = {}), (r = null);
+                        ((s = {}), (r = null));
                     }
                     var n = this,
                         r,
@@ -5400,7 +5415,7 @@
                             "background-color": 1,
                         },
                         s;
-                    e.addListener("startrule", o),
+                    (e.addListener("startrule", o),
                         e.addListener("startfontface", o),
                         e.addListener("startpage", o),
                         e.addListener("startpagemargin", o),
@@ -5414,7 +5429,7 @@
                                 l = u.length;
                             if (i[o])
                                 while (a < l)
-                                    u[a].type === "color" &&
+                                    (u[a].type === "color" &&
                                         ("alpha" in u[a] || "hue" in u[a]
                                             ? (/([^\)]+)\(/.test(u[a]) &&
                                                   (f = RegExp.$1.toUpperCase()),
@@ -5434,9 +5449,9 @@
                                                       n,
                                                   ))
                                             : (e.colorType = "compat")),
-                                        a++;
+                                        a++);
                             r = e;
-                        });
+                        }));
                 },
             }),
             CSSLint.addRule({
@@ -5447,21 +5462,21 @@
                 init: function (e, t) {
                     var n = this,
                         r = 0;
-                    e.addListener("property", function (e) {
+                    (e.addListener("property", function (e) {
                         e.property.text.toLowerCase() === "float" &&
                             e.value.text.toLowerCase() !== "none" &&
                             r++;
                     }),
                         e.addListener("endstylesheet", function () {
-                            t.stat("floats", r),
+                            (t.stat("floats", r),
                                 r >= 10 &&
                                     t.rollupWarn(
                                         "Too many floats (" +
                                             r +
                                             "), you're probably using them for layout. Consider using a grid system instead.",
                                         n,
-                                    );
-                        });
+                                    ));
+                        }));
                 },
             }),
             CSSLint.addRule({
@@ -5472,13 +5487,13 @@
                 init: function (e, t) {
                     var n = this,
                         r = 0;
-                    e.addListener("startfontface", function () {
+                    (e.addListener("startfontface", function () {
                         r++;
                     }),
                         e.addListener("endstylesheet", function () {
                             r > 5 &&
                                 t.rollupWarn("Too many @font-face declarations (" + r + ").", n);
-                        });
+                        }));
                 },
             }),
             CSSLint.addRule({
@@ -5489,19 +5504,19 @@
                 init: function (e, t) {
                     var n = this,
                         r = 0;
-                    e.addListener("property", function (e) {
+                    (e.addListener("property", function (e) {
                         e.property.toString() === "font-size" && r++;
                     }),
                         e.addListener("endstylesheet", function () {
-                            t.stat("font-sizes", r),
+                            (t.stat("font-sizes", r),
                                 r >= 10 &&
                                     t.rollupWarn(
                                         "Too many font-size declarations (" +
                                             r +
                                             "), abstraction needed.",
                                         n,
-                                    );
-                        });
+                                    ));
+                        }));
                 },
             }),
             CSSLint.addRule({
@@ -5512,7 +5527,7 @@
                 init: function (e, t) {
                     var n = this,
                         r;
-                    e.addListener("startrule", function () {
+                    (e.addListener("startrule", function () {
                         r = { moz: 0, webkit: 0, oldWebkit: 0, o: 0 };
                     }),
                         e.addListener("property", function (e) {
@@ -5522,7 +5537,7 @@
                         }),
                         e.addListener("endrule", function (e) {
                             var i = [];
-                            r.moz || i.push("Firefox 3.6+"),
+                            (r.moz || i.push("Firefox 3.6+"),
                                 r.webkit || i.push("Webkit (Safari 5+, Chrome)"),
                                 r.oldWebkit || i.push("Old Webkit (Safari 4+, Chrome)"),
                                 r.o || i.push("Opera 11.1+"),
@@ -5535,8 +5550,8 @@
                                         e.selectors[0].line,
                                         e.selectors[0].col,
                                         n,
-                                    );
-                        });
+                                    ));
+                        }));
                 },
             }),
             CSSLint.addRule({
@@ -5556,12 +5571,12 @@
                             l,
                             c;
                         for (f = 0; f < i.length; f++) {
-                            (s = i[f]), (a = 0);
+                            ((s = i[f]), (a = 0));
                             for (l = 0; l < s.parts.length; l++) {
                                 o = s.parts[l];
                                 if (o.type === e.SELECTOR_PART_TYPE)
                                     for (c = 0; c < o.modifiers.length; c++)
-                                        (u = o.modifiers[c]), u.type === "id" && a++;
+                                        ((u = o.modifiers[c]), u.type === "id" && a++);
                             }
                             a === 1
                                 ? t.report("Don't use IDs in selectors.", s.line, s.col, n)
@@ -5596,20 +5611,20 @@
                 init: function (e, t) {
                     var n = this,
                         r = 0;
-                    e.addListener("property", function (e) {
+                    (e.addListener("property", function (e) {
                         e.important === !0 &&
                             (r++, t.report("Use of !important", e.line, e.col, n));
                     }),
                         e.addListener("endstylesheet", function () {
-                            t.stat("important", r),
+                            (t.stat("important", r),
                                 r >= 10 &&
                                     t.rollupWarn(
                                         "Too many !important declarations (" +
                                             r +
                                             "), try to use less than 10 to avoid specificity issues.",
                                         n,
-                                    );
-                        });
+                                    ));
+                        }));
                 },
             }),
             CSSLint.addRule({
@@ -5635,7 +5650,7 @@
                         i = function () {
                             r = [];
                         };
-                    e.addListener("startrule", i),
+                    (e.addListener("startrule", i),
                         e.addListener("startfontface", i),
                         e.addListener("startpage", i),
                         e.addListener("startpagemargin", i),
@@ -5655,7 +5670,7 @@
                                     e.col,
                                     n,
                                 );
-                        });
+                        }));
                 },
             }),
             CSSLint.addRule({
@@ -5696,7 +5711,7 @@
                     }
                     var n = this,
                         r;
-                    e.addListener("startrule", i),
+                    (e.addListener("startrule", i),
                         e.addListener("startfontface", i),
                         e.addListener("startpage", i),
                         e.addListener("startpagemargin", i),
@@ -5714,7 +5729,7 @@
                         e.addListener("endfontface", s),
                         e.addListener("endpage", s),
                         e.addListener("endpagemargin", s),
-                        e.addListener("endkeyframerule", s);
+                        e.addListener("endkeyframerule", s));
                 },
             }),
             CSSLint.addRule({
@@ -5725,7 +5740,7 @@
                 init: function (e, t) {
                     var n = this,
                         r = {};
-                    e.addListener("startrule", function (i) {
+                    (e.addListener("startrule", function (i) {
                         var s = i.selectors,
                             o,
                             u,
@@ -5739,7 +5754,7 @@
                                 u = o.parts[l];
                                 if (u.type === e.SELECTOR_PART_TYPE)
                                     for (c = 0; c < u.modifiers.length; c++)
-                                        (a = u.modifiers[c]),
+                                        ((a = u.modifiers[c]),
                                             u.elementName && a.type === "id"
                                                 ? t.report(
                                                       "Element (" +
@@ -5753,7 +5768,7 @@
                                                   )
                                                 : a.type === "class" &&
                                                   (r[a] || (r[a] = []),
-                                                  r[a].push({ modifier: a, part: u }));
+                                                  r[a].push({ modifier: a, part: u })));
                             }
                         }
                     }),
@@ -5773,7 +5788,7 @@
                                         r[e][0].part.col,
                                         n,
                                     );
-                        });
+                        }));
                 },
             }),
             CSSLint.addRule({
@@ -5792,7 +5807,7 @@
                         for (u = 0; u < i.length; u++) {
                             s = i[u];
                             for (a = 0; a < s.parts.length; a++)
-                                (o = s.parts[a]),
+                                ((o = s.parts[a]),
                                     o.type === e.SELECTOR_PART_TYPE &&
                                         o.elementName &&
                                         /h[1-6]/.test(o.elementName.toString()) &&
@@ -5804,7 +5819,7 @@
                                             o.line,
                                             o.col,
                                             n,
-                                        );
+                                        ));
                         }
                     });
                 },
@@ -5830,7 +5845,7 @@
                                 o = s.parts[f];
                                 if (o.type === e.SELECTOR_PART_TYPE)
                                     for (l = 0; l < o.modifiers.length; l++)
-                                        (u = o.modifiers[l]),
+                                        ((u = o.modifiers[l]),
                                             u.type === "attribute" &&
                                                 /([\~\|\^\$\*]=)/.test(u) &&
                                                 t.report(
@@ -5840,7 +5855,7 @@
                                                     u.line,
                                                     u.col,
                                                     n,
-                                                );
+                                                ));
                             }
                         }
                     });
@@ -5853,12 +5868,12 @@
                 browsers: "All",
                 init: function (e, t) {
                     var n = 0;
-                    e.addListener("startrule", function () {
+                    (e.addListener("startrule", function () {
                         n++;
                     }),
                         e.addListener("endstylesheet", function () {
                             t.stat("rule-count", n);
-                        });
+                        }));
                 },
             }),
             CSSLint.addRule({
@@ -5869,7 +5884,7 @@
                 init: function (e, t) {
                     var n = this,
                         r = 0;
-                    e.addListener("startrule", function (e) {
+                    (e.addListener("startrule", function (e) {
                         r += e.selectors.length;
                     }),
                         e.addListener("endstylesheet", function () {
@@ -5882,7 +5897,7 @@
                                     0,
                                     n,
                                 );
-                        });
+                        }));
                 },
             }),
             CSSLint.addRule({
@@ -5893,7 +5908,7 @@
                 init: function (e, t) {
                     var n = this,
                         r = 0;
-                    e.addListener("startrule", function (e) {
+                    (e.addListener("startrule", function (e) {
                         r += e.selectors.length;
                     }),
                         e.addListener("endstylesheet", function () {
@@ -5906,7 +5921,7 @@
                                     0,
                                     n,
                                 );
-                        });
+                        }));
                 },
             }),
             CSSLint.addRule({
@@ -5932,7 +5947,7 @@
                             s = d[r];
                             for (o = 0, a = s.parts.length; o < a; o++)
                                 for (u = o + 1; u < a; u++)
-                                    (f = s.parts[o]),
+                                    ((f = s.parts[o]),
                                         (l = s.parts[u]),
                                         (c = f.type),
                                         (h = f.line),
@@ -5944,7 +5959,7 @@
                                                 h,
                                                 d[r].parts[0].col,
                                                 n,
-                                            );
+                                            ));
                         }
                     }
                     var n = this;
@@ -5997,14 +6012,14 @@
                     for (r in a)
                         if (a.hasOwnProperty(r))
                             for (i = 0, s = a[r].length; i < s; i++) o[a[r][i]] = r;
-                    e.addListener("startrule", f),
+                    (e.addListener("startrule", f),
                         e.addListener("startfontface", f),
                         e.addListener("property", function (e) {
                             var t = e.property.toString().toLowerCase();
                             o[t] && (u[t] = 1);
                         }),
                         e.addListener("endrule", l),
-                        e.addListener("endfontface", l);
+                        e.addListener("endfontface", l));
                 },
             }),
             CSSLint.addRule({
@@ -6033,7 +6048,7 @@
                 browsers: "All",
                 init: function (e, t) {
                     function s() {
-                        (r = !1), (i = "inherit");
+                        ((r = !1), (i = "inherit"));
                     }
                     function o() {
                         r &&
@@ -6048,7 +6063,7 @@
                     var n = this,
                         r,
                         i;
-                    e.addListener("startrule", s),
+                    (e.addListener("startrule", s),
                         e.addListener("startfontface", s),
                         e.addListener("property", function (e) {
                             var t = e.property.toString().toLowerCase(),
@@ -6058,7 +6073,7 @@
                                 : t === "direction" && n.toString() === "ltr" && (i = "ltr");
                         }),
                         e.addListener("endrule", o),
-                        e.addListener("endfontface", o);
+                        e.addListener("endfontface", o));
                 },
             }),
             CSSLint.addRule({
@@ -6088,7 +6103,7 @@
                 init: function (e, t) {
                     var n = this,
                         r = { h1: 0, h2: 0, h3: 0, h4: 0, h5: 0, h6: 0 };
-                    e.addListener("startrule", function (e) {
+                    (e.addListener("startrule", function (e) {
                         var i = e.selectors,
                             s,
                             o,
@@ -6096,7 +6111,7 @@
                             a,
                             f;
                         for (a = 0; a < i.length; a++) {
-                            (s = i[a]), (o = s.parts[s.parts.length - 1]);
+                            ((s = i[a]), (o = s.parts[s.parts.length - 1]));
                             if (o.elementName && /(h[1-6])/i.test(o.elementName.toString())) {
                                 for (f = 0; f < o.modifiers.length; f++)
                                     if (o.modifiers[f].type === "pseudo") {
@@ -6127,7 +6142,7 @@
                                     "You have " + i.join(", ") + " defined in this stylesheet.",
                                     n,
                                 );
-                        });
+                        }));
                 },
             }),
             CSSLint.addRule({
@@ -6143,9 +6158,9 @@
                             s,
                             o;
                         for (o = 0; o < r.length; o++)
-                            (i = r[o]),
+                            ((i = r[o]),
                                 (s = i.parts[i.parts.length - 1]),
-                                s.elementName === "*" && t.report(n.desc, s.line, s.col, n);
+                                s.elementName === "*" && t.report(n.desc, s.line, s.col, n));
                     });
                 },
             }),
@@ -6164,13 +6179,13 @@
                             a,
                             f;
                         for (a = 0; a < i.length; a++) {
-                            (s = i[a]), (o = s.parts[s.parts.length - 1]);
+                            ((s = i[a]), (o = s.parts[s.parts.length - 1]));
                             if (o.type === e.SELECTOR_PART_TYPE)
                                 for (f = 0; f < o.modifiers.length; f++)
-                                    (u = o.modifiers[f]),
+                                    ((u = o.modifiers[f]),
                                         u.type === "attribute" &&
                                             (!o.elementName || o.elementName === "*") &&
-                                            t.report(n.desc, o.line, o.col, n);
+                                            t.report(n.desc, o.line, o.col, n));
                         }
                     });
                 },
@@ -6182,7 +6197,7 @@
                 browsers: "All",
                 init: function (e, t) {
                     function o() {
-                        (r = {}), (i = 1);
+                        ((r = {}), (i = 1));
                     }
                     function u() {
                         var e,
@@ -6193,7 +6208,7 @@
                             f = [];
                         for (e in r) s[e] && f.push({ actual: e, needed: s[e] });
                         for (i = 0, o = f.length; i < o; i++)
-                            (u = f[i].needed),
+                            ((u = f[i].needed),
                                 (a = f[i].actual),
                                 r[u]
                                     ? r[u][0].pos < r[a][0].pos &&
@@ -6216,7 +6231,7 @@
                                           r[a][0].name.line,
                                           r[a][0].name.col,
                                           n,
-                                      );
+                                      ));
                     }
                     var n = this,
                         r,
@@ -6266,21 +6281,21 @@
                             "-moz-box-sizing": "box-sizing",
                             "-webkit-box-sizing": "box-sizing",
                         };
-                    e.addListener("startrule", o),
+                    (e.addListener("startrule", o),
                         e.addListener("startfontface", o),
                         e.addListener("startpage", o),
                         e.addListener("startpagemargin", o),
                         e.addListener("startkeyframerule", o),
                         e.addListener("property", function (e) {
                             var t = e.property.text.toLowerCase();
-                            r[t] || (r[t] = []),
-                                r[t].push({ name: e.property, value: e.value, pos: i++ });
+                            (r[t] || (r[t] = []),
+                                r[t].push({ name: e.property, value: e.value, pos: i++ }));
                         }),
                         e.addListener("endrule", u),
                         e.addListener("endfontface", u),
                         e.addListener("endpage", u),
                         e.addListener("endpagemargin", u),
-                        e.addListener("endkeyframerule", u);
+                        e.addListener("endkeyframerule", u));
                 },
             }),
             CSSLint.addRule({
@@ -6295,7 +6310,7 @@
                             i = 0,
                             s = r.length;
                         while (i < s)
-                            (r[i].units || r[i].type === "percentage") &&
+                            ((r[i].units || r[i].type === "percentage") &&
                                 r[i].value === 0 &&
                                 r[i].type !== "time" &&
                                 t.report(
@@ -6304,7 +6319,7 @@
                                     r[i].col,
                                     n,
                                 ),
-                                i++;
+                                i++);
                     });
                 },
             }),
@@ -6606,18 +6621,18 @@
                     n = n || {};
                     if (r.length === 0)
                         return n.quiet ? "" : "\n\ncsslint: No errors in " + t + ".";
-                    (i = "\n\ncsslint: There "),
+                    ((i = "\n\ncsslint: There "),
                         r.length === 1
                             ? (i += "is 1 problem")
                             : (i += "are " + r.length + " problems"),
-                        (i += " in " + t + ".");
+                        (i += " in " + t + "."));
                     var s = t.lastIndexOf("/"),
                         o = t;
                     return (
                         s === -1 && (s = t.lastIndexOf("\\")),
                         s > -1 && (o = t.substring(s + 1)),
                         CSSLint.Util.forEach(r, function (e, t) {
-                            (i = i + "\n\n" + o),
+                            ((i = i + "\n\n" + o),
                                 e.rollup
                                     ? ((i += "\n" + (t + 1) + ": " + e.type),
                                       (i += "\n" + e.message))
@@ -6631,13 +6646,13 @@
                                           ", col " +
                                           e.col),
                                       (i += "\n" + e.message),
-                                      (i += "\n" + e.evidence));
+                                      (i += "\n" + e.evidence)));
                         }),
                         i
                     );
                 },
             }),
-            (module.exports.CSSLint = CSSLint);
+            (module.exports.CSSLint = CSSLint));
     }),
     define("ace/mode/css_worker", [], function (e, t, n) {
         "use strict";
@@ -6646,33 +6661,33 @@
             s = e("../worker/mirror").Mirror,
             o = e("./css/csslint").CSSLint,
             u = (t.Worker = function (e) {
-                s.call(this, e),
+                (s.call(this, e),
                     this.setTimeout(400),
                     (this.ruleset = null),
                     this.setDisabledRules("ids|order-alphabetical"),
                     this.setInfoRules(
                         "adjoining-classes|qualified-headings|zero-units|gradients|import|outline-none|vendor-prefix",
-                    );
+                    ));
             });
-        r.inherits(u, s),
+        (r.inherits(u, s),
             function () {
-                (this.setInfoRules = function (e) {
-                    typeof e == "string" && (e = e.split("|")),
+                ((this.setInfoRules = function (e) {
+                    (typeof e == "string" && (e = e.split("|")),
                         (this.infoRules = i.arrayToMap(e)),
-                        this.doc.getValue() && this.deferredUpdate.schedule(100);
+                        this.doc.getValue() && this.deferredUpdate.schedule(100));
                 }),
                     (this.setDisabledRules = function (e) {
                         if (!e) this.ruleset = null;
                         else {
                             typeof e == "string" && (e = e.split("|"));
                             var t = {};
-                            o.getRules().forEach(function (e) {
+                            (o.getRules().forEach(function (e) {
                                 t[e.id] = !0;
                             }),
                                 e.forEach(function (e) {
                                     delete t[e];
                                 }),
-                                (this.ruleset = t);
+                                (this.ruleset = t));
                         }
                         this.doc.getValue() && this.deferredUpdate.schedule(100);
                     }),
@@ -6693,14 +6708,14 @@
                                 };
                             }),
                         );
-                    });
-            }.call(u.prototype);
+                    }));
+            }.call(u.prototype));
     }),
     define("ace/lib/es5-shim", [], function (e, t, n) {
         function r() {}
         function w(e) {
             try {
-                return Object.defineProperty(e, "sentinel", {}), "sentinel" in e;
+                return (Object.defineProperty(e, "sentinel", {}), "sentinel" in e);
             } catch (t) {}
         }
         function H(e) {
@@ -6773,35 +6788,35 @@
             p,
             d;
         if ((d = f(o, "__defineGetter__")))
-            (l = i.bind(o.__defineGetter__)),
+            ((l = i.bind(o.__defineGetter__)),
                 (c = i.bind(o.__defineSetter__)),
                 (h = i.bind(o.__lookupGetter__)),
-                (p = i.bind(o.__lookupSetter__));
+                (p = i.bind(o.__lookupSetter__)));
         if ([1, 2].splice(0).length != 2)
             if (
                 !(function () {
                     function e(e) {
                         var t = new Array(e + 2);
-                        return (t[0] = t[1] = 0), t;
+                        return ((t[0] = t[1] = 0), t);
                     }
                     var t = [],
                         n;
-                    t.splice.apply(t, e(20)),
+                    (t.splice.apply(t, e(20)),
                         t.splice.apply(t, e(26)),
                         (n = t.length),
                         t.splice(5, 0, "XXX"),
-                        n + 1 == t.length;
+                        n + 1 == t.length);
                     if (n + 1 == t.length) return !0;
                 })()
             )
                 Array.prototype.splice = function (e, t) {
                     var n = this.length;
-                    e > 0
+                    (e > 0
                         ? e > n && (e = n)
                         : e == void 0
                           ? (e = 0)
                           : e < 0 && (e = Math.max(n + e, 0)),
-                        e + t < n || (t = n - e);
+                        e + t < n || (t = n - e));
                     var r = this.slice(e, e + t),
                         i = u.call(arguments, 2),
                         s = i.length;
@@ -6814,7 +6829,7 @@
                             c = n - o;
                         if (f < a) for (var h = 0; h < l; ++h) this[f + h] = this[a + h];
                         else if (f > a) for (h = l; h--; ) this[f + h] = this[a + h];
-                        if (s && e === c) (this.length = c), this.push.apply(this, i);
+                        if (s && e === c) ((this.length = c), this.push.apply(this, i));
                         else {
                             this.length = c + s;
                             for (h = 0; h < s; ++h) this[e + h] = i[h];
@@ -6841,7 +6856,7 @@
             });
         var m = Object("a"),
             g = m[0] != "a" || !(0 in m);
-        Array.prototype.forEach ||
+        (Array.prototype.forEach ||
             (Array.prototype.forEach = function (t) {
                 var n = F(this),
                     r = g && a(this) == "[object String]" ? this.split("") : n,
@@ -6943,15 +6958,15 @@
                     do o in this && (s = t.call(void 0, s, r[o], o, n));
                     while (o--);
                     return s;
-                });
+                }));
         if (!Array.prototype.indexOf || [0, 1].indexOf(1, 2) != -1)
             Array.prototype.indexOf = function (t) {
                 var n = g && a(this) == "[object String]" ? this.split("") : F(this),
                     r = n.length >>> 0;
                 if (!r) return -1;
                 var i = 0;
-                arguments.length > 1 && (i = H(arguments[1])),
-                    (i = i >= 0 ? i : Math.max(0, r + i));
+                (arguments.length > 1 && (i = H(arguments[1])),
+                    (i = i >= 0 ? i : Math.max(0, r + i)));
                 for (; i < r; i++) if (i in n && n[i] === t) return i;
                 return -1;
             };
@@ -6961,8 +6976,8 @@
                     r = n.length >>> 0;
                 if (!r) return -1;
                 var i = r - 1;
-                arguments.length > 1 && (i = Math.min(i, H(arguments[1]))),
-                    (i = i >= 0 ? i : r - Math.abs(i));
+                (arguments.length > 1 && (i = Math.min(i, H(arguments[1]))),
+                    (i = i >= 0 ? i : r - Math.abs(i)));
                 for (; i >= 0; i--) if (i in n && t === n[i]) return i;
                 return -1;
             };
@@ -6984,9 +6999,9 @@
                     var i = h(t, n),
                         s = p(t, n);
                     t.__proto__ = u;
-                    if (i || s) return i && (r.get = i), s && (r.set = s), r;
+                    if (i || s) return (i && (r.get = i), s && (r.set = s), r);
                 }
-                return (r.value = t[n]), r;
+                return ((r.value = t[n]), r);
             };
         }
         Object.getOwnPropertyNames ||
@@ -6995,7 +7010,7 @@
             });
         if (!Object.create) {
             var b;
-            Object.prototype.__proto__ === null
+            (Object.prototype.__proto__ === null
                 ? (b = function () {
                       return { __proto__: null };
                   })
@@ -7022,10 +7037,10 @@
                         if (typeof t != "object")
                             throw new TypeError("typeof prototype[" + typeof t + "] != 'object'");
                         var i = function () {};
-                        (i.prototype = t), (r = new i()), (r.__proto__ = t);
+                        ((i.prototype = t), (r = new i()), (r.__proto__ = t));
                     }
-                    return n !== void 0 && Object.defineProperties(r, n), r;
-                });
+                    return (n !== void 0 && Object.defineProperties(r, n), r);
+                }));
         }
         if (Object.defineProperty) {
             var E = w({}),
@@ -7048,16 +7063,16 @@
                 if (f(r, "value"))
                     if (d && (h(t, n) || p(t, n))) {
                         var s = t.__proto__;
-                        (t.__proto__ = o), delete t[n], (t[n] = r.value), (t.__proto__ = s);
+                        ((t.__proto__ = o), delete t[n], (t[n] = r.value), (t.__proto__ = s));
                     } else t[n] = r.value;
                 else {
                     if (!d) throw new TypeError(C);
-                    f(r, "get") && l(t, n, r.get), f(r, "set") && c(t, n, r.set);
+                    (f(r, "get") && l(t, n, r.get), f(r, "set") && c(t, n, r.set));
                 }
                 return t;
             };
         }
-        Object.defineProperties ||
+        (Object.defineProperties ||
             (Object.defineProperties = function (t, n) {
                 for (var r in n) f(n, r) && Object.defineProperty(t, r, n[r]);
                 return t;
@@ -7069,7 +7084,7 @@
             Object.freeze ||
                 (Object.freeze = function (t) {
                     return t;
-                });
+                }));
         try {
             Object.freeze(function () {});
         } catch (k) {
@@ -7079,7 +7094,7 @@
                 };
             })(Object.freeze);
         }
-        Object.preventExtensions ||
+        (Object.preventExtensions ||
             (Object.preventExtensions = function (t) {
                 return t;
             }),
@@ -7098,8 +7113,8 @@
                     while (f(t, n)) n += "?";
                     t[n] = !0;
                     var r = f(t, n);
-                    return delete t[n], r;
-                });
+                    return (delete t[n], r);
+                }));
         if (!Object.keys) {
             var L = !0,
                 A = [
@@ -7144,4 +7159,4 @@
             if (e == null) throw new TypeError("can't convert " + e + " to object");
             return Object(e);
         };
-    });
+    }));

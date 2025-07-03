@@ -40,6 +40,7 @@ public:
       : m_authentication_manager(&auth_manager){};
   static std::unique_ptr<IOperator> create(std::any options);
 
+  virtual ~AuthenticationOperator() {};
 private:
   IAuthenticationManager *m_authentication_manager;
 

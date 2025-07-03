@@ -5,7 +5,7 @@ import * as settings from "./settings.js";
 import * as dialogs from "./dialogs.js";
 import * as panel_info from "./panel_item_info.js";
 import * as panel_cat from "./panel_catalog.js";
-import * as panel_graph from "./panel_graph.js";
+import * as panel_graph from "./components/provenance/panel_graph.js";
 import * as panel_search from "./panel_search.js";
 import * as dlgDataNewEdit from "./dlg_data_new_edit.js";
 import * as dlgRepoEdit from "./dlg_repo_edit.js";

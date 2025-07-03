@@ -296,12 +296,20 @@
       # different names. Or one image was built on top of another and share the
       # same base.
     - MATCHING_CONTAINERS=$( echo "$ANCESTOR_CONTAINERS" | grep "${COMPONENT}-${BRANCH_LOWER}" || echo "")
-    - if [ -z "$MATCHING_CONTAINERS" ]; then
+    - >
+      if [ -z "$MATCHING_CONTAINERS" ]; then
         echo "No matching containers found for image ${FULL_IMAGE_NAME} and component ${COMPONENT}-${BRANCH_LOWER}";
       else
         echo "Getting log output for the following.";
         echo "$MATCHING_CONTAINERS";
-        docker logs $MATCHING_CONTAINERS;
+        while IFS= read -r container_id; do
+          if [ -n "$container_id" ]; then # Ensure the line is not empty
+            echo "--- Logs for container: $container_id ---";
+            docker logs "$container_id";
+            echo "--- End of logs for container: $container_id ---";
+            echo; # Add a blank line for separation
+          fi
+        done <<< "$MATCHING_CONTAINERS" # Feed the variable's content as stdin to the while loop
       fi
 
 # In the case that we are not needing to actually rebuild the image we want to

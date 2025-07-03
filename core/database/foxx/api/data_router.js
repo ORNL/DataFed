@@ -129,7 +129,7 @@ function recordCreate(client, record, result) {
         if (idx < 0) {
             throw [g_lib.ERR_INVALID_PARAM, "Schema ID missing version number suffix."];
         }
-        (sch_id = obj.sch_id.substr(0, idx)), (sch_ver = parseInt(obj.sch_id.substr(idx + 1)));
+        ((sch_id = obj.sch_id.substr(0, idx)), (sch_ver = parseInt(obj.sch_id.substr(idx + 1))));
         var sch = g_db.sch.firstExample({
             id: sch_id,
             ver: sch_ver,

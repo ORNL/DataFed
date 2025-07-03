@@ -59,6 +59,16 @@ const std::string secret_key =
 const std::string server_key =
     "Wce6y$B4vXjM$xnM^tRGJGP^ads5hxkDSULJWM&9"; // 40 chars
 
+struct GlobalProtobufTeardown {
+    ~GlobalProtobufTeardown() {
+        // This is the teardown function that runs once at the end
+        google::protobuf::ShutdownProtobufLibrary();
+    }
+};
+
+// Declare a global fixture instance
+BOOST_GLOBAL_FIXTURE(GlobalProtobufTeardown);
+
 BOOST_AUTO_TEST_SUITE(ProxyTest)
 
 BOOST_AUTO_TEST_CASE(testing_Proxy) {

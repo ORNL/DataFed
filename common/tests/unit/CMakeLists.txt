@@ -28,6 +28,11 @@ foreach(PROG
       common libzmq-static protobuf::libprotobuf Threads::Threads)
   endif()
   # Only want this if using shared boost libraries
-  add_test(unit_${PROG} unit_${PROG})
+  if ( ENABLE_UNIT_TESTS )
+    add_test(unit_${PROG} unit_${PROG})
+  endif( ENABLE_UNIT_TESTS )
+  if ( ENABLE_MEMORY_TESTS )
+    add_test(NAME memory_${PROG} COMMAND valgrind  --leak-check=full --error-exitcode=1 $<TARGET_FILE:unit_${PROG}>)
+  endif( ENABLE_MEMORY_TESTS )
 endforeach(PROG)
 

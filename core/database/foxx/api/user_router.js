@@ -276,8 +276,8 @@ router
                             ];
                         }
 
-                        (obj.name_first = name.substr(0, idx).trim()),
-                            (obj.name_last = name.substr(idx + 1));
+                        ((obj.name_first = name.substr(0, idx).trim()),
+                            (obj.name_last = name.substr(idx + 1)));
                         obj.name = name.toLowerCase() + " " + user_id.substr(2);
                     }
 
