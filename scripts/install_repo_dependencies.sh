@@ -12,9 +12,7 @@ source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
 packages=("libtool" "wget" "build-essential" "g++" "gcc" "libboost-all-dev" "pkg-config" "autoconf" "automake" "make" "unzip" "git")
 pip_packages=("setuptools")
-externals=("cmake" "protobuf" "libsodium" "libzmq")
-
-install_python
+externals=("cmake" "libopenssl" "python" "protobuf" "libsodium" "libzmq")
 
 local_UNIFY=false
 
@@ -46,12 +44,12 @@ if [[ $local_UNIFY = false ]]; then
   "$SUDO_CMD" dpkg --configure -a
   "$SUDO_CMD" apt-get install -y "${packages[@]}"
 
+  for ext in "${externals[@]}"; do
+    install_dep_by_name "$ext"
+  done
+
   init_python
   source "${DATAFED_PYTHON_ENV}/bin/activate"
   "python${DATAFED_PYTHON_VERSION}" -m pip install --upgrade pip
   "python${DATAFED_PYTHON_VERSION}" -m pip install "${pip_packages[@]}"
-
-  for ext in "${externals[@]}"; do
-    install_dep_by_name "$ext"
-  done
 fi

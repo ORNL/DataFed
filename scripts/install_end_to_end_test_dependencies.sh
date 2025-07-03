@@ -16,11 +16,9 @@ packages=("libtool" "build-essential" "g++" "gcc" "make" "libboost-all-dev" "pkg
 	
 pip_packages=("setuptools")
 # NOTE the order matters here
-externals=("cmake" "protobuf" "nvm" "node" "foxx")
+externals=("cmake" "libopenssl" "python" "protobuf" "nvm" "node" "foxx")
 
 local_UNIFY=false
-
-install_python
 
 if [ $# -eq 1 ]; then
   case "$1" in
@@ -47,12 +45,13 @@ if [[ $local_UNIFY = false ]]; then
   "$SUDO_CMD" apt-get update
   "$SUDO_CMD" dpkg --configure -a
   "$SUDO_CMD" apt-get install -y "${packages[@]}"
-  init_python
-  source "${DATAFED_PYTHON_ENV}/bin/activate"
-  "python${DATAFED_PYTHON_VERSION}" -m pip install --upgrade pip
-  "python${DATAFED_PYTHON_VERSION}" -m pip install "${pip_packages[@]}"
 
   for ext in "${externals[@]}"; do
     install_dep_by_name "$ext"
   done
+
+  init_python
+  source "${DATAFED_PYTHON_ENV}/bin/activate"
+  "python${DATAFED_PYTHON_VERSION}" -m pip install --upgrade pip
+  "python${DATAFED_PYTHON_VERSION}" -m pip install "${pip_packages[@]}"
 fi

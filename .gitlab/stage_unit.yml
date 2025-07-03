@@ -40,13 +40,14 @@ run-ws-unit-job:
     - env
     - ./scripts/container_stop.sh -n "ws-" -p 
     - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
+    - source scripts/dependency_versions.sh
       # Don't run in daemon mode this is just a unit test
     - echo "#!/bin/bash" > run_web.sh
     - echo "docker run \\" >> run_web.sh
     - echo "--name \"ws-${BRANCH_LOWER}-${INTERMEDIATE_LAYER_NAME}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_web.sh
-    - echo "-e NVM_INC=/opt/datafed/dependencies/nvm/versions/node/v20.18.2/include/node \\" >> run_web.sh
-    - echo "-e PATH=/opt/datafed/dependencies/nvm/versions/node/v20.18.2/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \\" >> run_web.sh
-    - echo "-e NVM_INC=/opt/datafed/dependencies/nvm/versions/node/v20.18.2/include/node \\" >> run_web.sh
+    - echo "-e NVM_INC=/opt/datafed/dependencies/nvm/versions/node/${DATAFED_NODE_VERSION}/include/node \\" >> run_web.sh
+    - echo "-e PATH=/opt/datafed/dependencies/nvm/versions/node/${DATAFED_NODE_VERSION}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \\" >> run_web.sh
+    - echo "-e NVM_INC=/opt/datafed/dependencies/nvm/versions/node/${DATAFED_NODE_VERSION}/include/node \\" >> run_web.sh
     - echo "-e DATAFED_GLOBUS_APP_SECRET=\"$CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_web.sh
     - echo "-e DATAFED_GLOBUS_APP_ID=\"$CI_DATAFED_GLOBUS_APP_ID\" \\" >> run_web.sh
     - echo "-e DATAFED_ZEROMQ_SESSION_SECRET=\"$CI_DATAFED_ZEROMQ_SESSION_SECRET\" \\" >> run_web.sh

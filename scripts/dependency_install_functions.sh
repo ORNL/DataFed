@@ -49,6 +49,9 @@ else
   fi
 fi
 
+# This if statement is to make sure PKG_CONFIG_PATH is defined for cmake, and
+# that it contains the necessary paths from the datafed depedencies install path
+# to compile other dependencies
 if [[ ! -v PKG_CONFIG_PATH ]]; then
   PKG_CONFIG_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/lib/pkgconfig"
 else
@@ -97,12 +100,20 @@ clean_install_flags() {
 }
 
 install_python() {
-  install_openssl
+  local original_dir=$(pwd)
 
   local PYTHON_FLAG_PREFIX=".python_installed-"
   clean_install_flags "$PYTHON_FLAG_PREFIX"
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${PYTHON_FLAG_PREFIX}${DATAFED_PYTHON_VERSION}" ]; then
     local original_dir=$(pwd)
+
+    # Check if openssl is already installed, otherwise error since openssl is required
+    local OPENSSL_FLAG_PREFIX=".openssl_installed-"
+    if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${OPENSSL_FLAG_PREFIX}${DATAFED_OPENSSL}" ]; then
+      echo "You must first install openssl before installing python"
+      exit 1
+    fi
+
     cd "${PROJECT_ROOT}"
     "$SUDO_CMD" apt update
     "$SUDO_CMD" apt install -y build-essential libreadline-dev zlib1g-dev libffi-dev wget libsqlite3-dev
@@ -717,6 +728,9 @@ install_dep_by_name() {
       ;;
     "ws_node_packages")
       install_ws_node_packages
+      ;;
+    "python")
+      install_python
       ;;
   esac
   cd ~

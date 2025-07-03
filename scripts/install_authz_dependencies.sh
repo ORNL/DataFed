@@ -14,9 +14,7 @@ packages=("host" "libtool" "build-essential" "g++" "gcc" "autoconf"
   "automake" "make" "git" "pkg-config"
   "libglobus-common-dev" "wget" "jq" "sudo" "libboost-all-dev" "libgssapi-krb5-2" "libsqlite3-dev")
 pip_packages=("setuptools" "distro" "jwt" "globus_sdk")
-externals=("cmake" "protobuf" "libsodium" "libzmq" "libopenssl")
-
-install_python
+externals=("cmake" "libopenssl" "python" "protobuf" "libsodium" "libzmq")
 
 local_UNIFY=false
 
@@ -43,15 +41,15 @@ fi
 
 if [[ $local_UNIFY = false ]]; then
   sudo_command
-
   "$SUDO_CMD" apt-get update
   "$SUDO_CMD" dpkg --configure -a
   "$SUDO_CMD" apt-get install -y "${packages[@]}"
-  init_python
-  source "${DATAFED_PYTHON_ENV}/bin/activate"
-  "python${DATAFED_PYTHON_VERSION}" -m pip install "${pip_packages[@]}"
 
   for ext in "${externals[@]}"; do
     install_dep_by_name "$ext"
   done
+
+  init_python
+  source "${DATAFED_PYTHON_ENV}/bin/activate"
+  "python${DATAFED_PYTHON_VERSION}" -m pip install "${pip_packages[@]}"
 fi

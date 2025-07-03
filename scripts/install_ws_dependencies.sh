@@ -12,9 +12,7 @@ source "${SOURCE}/dependency_versions.sh"
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
 packages=("curl" "g++" "make" "wget")
-externals=("cmake" "nvm" "node" "ws_node_packages")
-
-install_python
+externals=("cmake" "libopenssl" "python" "nvm" "node" "ws_node_packages")
 
 Help()
 {

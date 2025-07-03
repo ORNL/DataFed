@@ -13,10 +13,8 @@ source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 packages=("libtool" "build-essential" "g++" "gcc" "make" "libboost-all-dev" "libboost-program-options-dev" "pkg-config" "autoconf" "automake" "unzip" "wget" "rapidjson-dev" "libkrb5-dev" "git")
 pip_packages=("setuptools")
 # NOTE the order matters here
-externals=("cmake" "nlohmann_json" "json_schema_validator" "protobuf"
-  "libsodium" "libzmq" "libopenssl" "zlib" "libcurl")
-
-install_python
+externals=("cmake" "libopenssl" "python" "nlohmann_json" "json_schema_validator" "protobuf"
+  "libsodium" "libzmq" "zlib" "libcurl")
 
 local_UNIFY=false
 
@@ -43,17 +41,15 @@ fi
 
 if [[ $local_UNIFY = false ]]; then
   sudo_command
-  echo "GOT HERE 1"
   "$SUDO_CMD" apt-get update
   "$SUDO_CMD" dpkg --configure -a
   "$SUDO_CMD" apt-get install -y "${packages[@]}"
-  echo "GOT HERE 2"
-  init_python
-  source "${DATAFED_PYTHON_ENV}/bin/activate"
-  "python${DATAFED_PYTHON_VERSION}" -m pip install "${pip_packages[@]}"
-  echo "GOT HERE 3"
 
   for ext in "${externals[@]}"; do
     install_dep_by_name "$ext"
   done
+
+  init_python
+  source "${DATAFED_PYTHON_ENV}/bin/activate"
+  "python${DATAFED_PYTHON_VERSION}" -m pip install "${pip_packages[@]}"
 fi
