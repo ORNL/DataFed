@@ -13,7 +13,7 @@ export pip_file_path="${PROJECT_ROOT}/tmp/pip_deps"
 export ext_file_path="${PROJECT_ROOT}/tmp/ext_deps"
 
 if [ ! -d "${PROJECT_ROOT}/tmp" ]; then
-    mkdir -p "${PROJECT_ROOT}/tmp" 
+    mkdir -p "${PROJECT_ROOT}/tmp"
 fi
 
 if [ ! -e "${PROJECT_ROOT}/config/datafed.sh" ]
@@ -31,8 +31,8 @@ if [ ! -e "$DATAFED_DEPENDENCIES_INSTALL_PATH" ] || [ ! -d "$DATAFED_DEPENDENCIE
     else
       echo "Sudo command $SUDO_CMD"
       "$SUDO_CMD" mkdir -p "$DATAFED_DEPENDENCIES_INSTALL_PATH"
-      user=$(whoami)  
-      "$SUDO_CMD" chown "$user" "$DATAFED_DEPENDENCIES_INSTALL_PATH" 
+      user=$(whoami)
+      "$SUDO_CMD" chown "$user" "$DATAFED_DEPENDENCIES_INSTALL_PATH"
     fi
 fi
 
@@ -191,7 +191,7 @@ install_protobuf() {
     else
       "$SUDO_CMD" cmake --build build --target install
     fi
-    # Build Shared library 
+    # Build Shared library
     # Don't build shared, it messes up the static library linking because the
     # cmake file installed are not compatible
     # WARNING - static library will break if build with shared options on
@@ -312,7 +312,7 @@ install_libzmq() {
     else
       "$SUDO_CMD" cmake --build build --target install
     fi
-    
+
     cd "$original_dir"
     # Mark libzmq as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${LIBZMQ_FLAG_PREFIX}${DATAFED_LIBZMQ_VERSION}"
@@ -373,7 +373,7 @@ install_json_schema_validator() {
     git clone https://github.com/pboettch/json-schema-validator "${PROJECT_ROOT}/external/json-schema-validator"
     cd "${PROJECT_ROOT}/external/json-schema-validator"
     git checkout ${DATAFED_JSON_SCHEMA_VALIDATOR_VERSION}
-    # Build static 
+    # Build static
     cmake -S . -B build \
       -DBUILD_SHARED_LIBS=OFF \
       -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
@@ -417,7 +417,7 @@ install_nvm() {
   clean_install_flags "$NVM_FLAG_PREFIX"
   # By default this will place NVM in $HOME/.nvm
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${NVM_FLAG_PREFIX}${DATAFED_NVM_VERSION}" ]; then
-    # By setting NVM_DIR beforehand when the scirpt is run it 
+    # By setting NVM_DIR beforehand when the scirpt is run it
     # will use it to set the install path
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
     mkdir -p "${NVM_DIR}"
@@ -445,7 +445,7 @@ install_ws_node_packages() {
   fi
 
   # Configure the package.json.in file -> package.json
-  cmake -P "${PROJECT_ROOT}/cmake/Web.cmake" 
+  cmake -P "${PROJECT_ROOT}/cmake/Web.cmake"
   export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
   export NODE_VERSION="$DATAFED_NODE_VERSION"
   "$NVM_DIR/nvm-exec" npm --prefix "${PROJECT_ROOT}/web" install "${PROJECT_ROOT}/web"
@@ -473,7 +473,7 @@ install_node() {
     cd "$original_dir"
   else
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
-    # Used by nvm 
+    # Used by nvm
     export NODE_VERSION="$DATAFED_NODE_VERSION"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
     nvm use "$DATAFED_NODE_VERSION"
@@ -505,7 +505,7 @@ install_foxx_cli() {
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
     export NODE_VERSION="$DATAFED_NODE_VERSION"
-    
+
     # check that foxx can be found
     if [ ! -d "${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm" ]
     then
@@ -551,7 +551,7 @@ install_openssl() {
     if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
       make install
     else
-      "$SUDO_CMD" make install 
+      "$SUDO_CMD" make install
     fi
     # Mark openssl as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${OPENSSL_FLAG_PREFIX}${DATAFED_OPENSSL}"
@@ -597,7 +597,7 @@ install_libcurl() {
       --without-winidn --without-libpsl \
       --without-libssh2 --without-nghttp2 --without-brotli \
       --without-libidn --without-libbrotli \
-      --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}" 
+      --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     make -j 8
 
     if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
@@ -631,7 +631,7 @@ install_zlib() {
     if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
       make install
     else
-      "$SUDO_CMD" make install 
+      "$SUDO_CMD" make install
     fi
 
     # Mark libcurl as installed
