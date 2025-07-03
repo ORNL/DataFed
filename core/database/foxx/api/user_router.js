@@ -590,7 +590,7 @@ router
                         access_iv: req.queryParams.access_iv,
                         access_len: req.queryParams.access_len,
                         refresh_iv: req.queryParams.refresh_iv,
-                        refresh_len: req.queryParams.refresh_len
+                        refresh_len: req.queryParams.refresh_len,
                     };
 
                     switch (token_type) {

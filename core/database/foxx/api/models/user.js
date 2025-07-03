@@ -107,7 +107,8 @@ class UserModel {
      */
     #map_entry_to_token() {
         // TODO: abstract database objects
-        const { access, refresh, expiration, access_iv, access_len, refresh_iv, refresh_len} = this.#database_entry;
+        const { access, refresh, expiration, access_iv, access_len, refresh_iv, refresh_len } =
+            this.#database_entry;
         let token = new DataFedOAuthToken();
         token.access = access;
         token.refresh = refresh;

@@ -604,7 +604,6 @@ var tasks_func = (function () {
                 access_len: tokens.access_len,
                 refresh_iv: tokens.refresh_iv,
                 refresh_len: tokens.refresh_len,
-
             };
             params = Object.assign(params, state.xfr[a_task.step - 1]);
             reply = {

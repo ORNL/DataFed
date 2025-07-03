@@ -132,7 +132,6 @@ class UserToken {
             access_len: 0,
             refresh_iv: "",
             refresh_len: 0,
-
         };
         if (needs_consent) {
             // short circuit when consent flow is required
@@ -169,7 +168,7 @@ class UserToken {
             access_iv: token_doc.access_iv,
             access_len: token_doc.access_len,
             refresh_iv: token_doc.refresh_iv,
-            refresh_len: token_doc. refresh_len,
+            refresh_len: token_doc.refresh_len,
         });
     }
 }

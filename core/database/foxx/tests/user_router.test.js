@@ -264,5 +264,3 @@ describe("unit_user_router: the Foxx microservice user_router token/get endpoint
         expect(JSON.parse(response.body)).to.include({ needs_consent: true });
     });
 });
-
-

@@ -21,7 +21,7 @@ describe("unit_user_model: User Model tests", () => {
                 access: "get user access token",
                 refresh: "get user refresh token",
                 expiration: 123456789,
-                access_iv:"get user access IV",
+                access_iv: "get user access IV",
                 access_len: 16,
             },
             { returnNew: true },
