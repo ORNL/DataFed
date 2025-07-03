@@ -1,4 +1,4 @@
-define(
+(define(
     "ace/ext/menu_tools/overlay_page",
     ["require", "exports", "module", "ace/lib/dom"],
     function (e, t, n) {
@@ -6,34 +6,34 @@ define(
         var r = e("../../lib/dom"),
             i =
                 "#ace_settingsmenu, #kbshortcutmenu {background-color: #F7F7F7;color: black;box-shadow: -5px 4px 5px rgba(126, 126, 126, 0.55);padding: 1em 0.5em 2em 1em;overflow: auto;position: absolute;margin: 0;bottom: 0;right: 0;top: 0;z-index: 9991;cursor: default;}.ace_dark #ace_settingsmenu, .ace_dark #kbshortcutmenu {box-shadow: -20px 10px 25px rgba(126, 126, 126, 0.25);background-color: rgba(255, 255, 255, 0.6);color: black;}.ace_optionsMenuEntry:hover {background-color: rgba(100, 100, 100, 0.1);transition: all 0.3s}.ace_closeButton {background: rgba(245, 146, 146, 0.5);border: 1px solid #F48A8A;border-radius: 50%;padding: 7px;position: absolute;right: -8px;top: -8px;z-index: 100000;}.ace_closeButton{background: rgba(245, 146, 146, 0.9);}.ace_optionsMenuKey {color: darkslateblue;font-weight: bold;}.ace_optionsMenuCommand {color: darkcyan;font-weight: normal;}.ace_optionsMenuEntry input, .ace_optionsMenuEntry button {vertical-align: middle;}.ace_optionsMenuEntry button[ace_selected_button=true] {background: #e7e7e7;box-shadow: 1px 0px 2px 0px #adadad inset;border-color: #adadad;}.ace_optionsMenuEntry button {background: white;border: 1px solid lightgray;margin: 0px;}.ace_optionsMenuEntry button:hover{background: #f0f0f0;}";
-        r.importCssString(i),
+        (r.importCssString(i),
             (n.exports.overlayPage = function (t, n, i, s, o, u) {
                 function l(e) {
                     e.keyCode === 27 && a.click();
                 }
-                (i = i ? "top: " + i + ";" : ""),
+                ((i = i ? "top: " + i + ";" : ""),
                     (o = o ? "bottom: " + o + ";" : ""),
                     (s = s ? "right: " + s + ";" : ""),
-                    (u = u ? "left: " + u + ";" : "");
+                    (u = u ? "left: " + u + ";" : ""));
                 var a = document.createElement("div"),
                     f = document.createElement("div");
-                (a.style.cssText =
+                ((a.style.cssText =
                     "margin: 0; padding: 0; position: fixed; top:0; bottom:0; left:0; right:0;z-index: 9990; background-color: rgba(0, 0, 0, 0.3);"),
                     a.addEventListener("click", function () {
-                        document.removeEventListener("keydown", l),
+                        (document.removeEventListener("keydown", l),
                             a.parentNode.removeChild(a),
                             t.focus(),
-                            (a = null);
+                            (a = null));
                     }),
                     document.addEventListener("keydown", l),
                     (f.style.cssText = i + s + o + u),
                     f.addEventListener("click", function (e) {
                         e.stopPropagation();
-                    });
+                    }));
                 var c = r.createElement("div");
                 c.style.position = "relative";
                 var h = r.createElement("div");
-                (h.className = "ace_closeButton"),
+                ((h.className = "ace_closeButton"),
                     h.addEventListener("click", function () {
                         a.click();
                     }),
@@ -42,8 +42,8 @@ define(
                     f.appendChild(n),
                     a.appendChild(f),
                     document.body.appendChild(a),
-                    t.blur();
-            });
+                    t.blur());
+            }));
     },
 ),
     define("ace/ext/modelist", ["require", "exports", "module"], function (e, t, n) {
@@ -60,18 +60,18 @@ define(
         }
         var r = [],
             s = function (e, t, n) {
-                (this.name = e),
+                ((this.name = e),
                     (this.caption = t),
                     (this.mode = "ace/mode/" + e),
-                    (this.extensions = n);
+                    (this.extensions = n));
                 var r;
-                /\^/.test(n)
+                (/\^/.test(n)
                     ? (r =
                           n.replace(/\|(\^)?/g, function (e, t) {
                               return "$|" + (t ? "^" : "^.*\\.");
                           }) + "$")
                     : (r = "^.*\\.(" + n + ")$"),
-                    (this.extRe = new RegExp(r, "gi"));
+                    (this.extRe = new RegExp(r, "gi")));
             };
         s.prototype.supportsFile = function (e) {
             return e.match(this.extRe);
@@ -99,7 +99,7 @@ define(
                 c = (u[f] || f).replace(/_/g, " "),
                 h = f.toLowerCase(),
                 p = new s(h, c, l[0]);
-            (a[h] = p), r.push(p);
+            ((a[h] = p), r.push(p));
         }
         n.exports = { getModeForPath: i, modes: r, modesByName: a };
     }),
@@ -110,7 +110,7 @@ define(
             "use strict";
             e("ace/lib/fixoldbrowsers");
             var r = [["Light"], ["Dark", "dark", "dark"]];
-            (t.themesByName = {}),
+            ((t.themesByName = {}),
                 (t.themes = r.map(function (e) {
                     var n = e[1] || e[0].replace(/ /g, "_").toLowerCase(),
                         r = {
@@ -119,8 +119,8 @@ define(
                             isDark: e[2] == "dark",
                             name: n,
                         };
-                    return (t.themesByName[n] = r), r;
-                }));
+                    return ((t.themesByName[n] = r), r);
+                })));
         },
     ),
     define(
@@ -260,18 +260,18 @@ define(
                     },
                 },
                 p = function (e, t) {
-                    (this.editor = e),
+                    ((this.editor = e),
                         (this.container = t || document.createElement("div")),
                         (this.groups = []),
-                        (this.options = {});
+                        (this.options = {}));
                 };
-            (function () {
-                s.implement(this, o),
+            ((function () {
+                (s.implement(this, o),
                     (this.add = function (e) {
-                        e.Main && s.mixin(h.Main, e.Main), e.More && s.mixin(h.More, e.More);
+                        (e.Main && s.mixin(h.Main, e.Main), e.More && s.mixin(h.More, e.More));
                     }),
                     (this.render = function () {
-                        (this.container.innerHTML = ""),
+                        ((this.container.innerHTML = ""),
                             u(
                                 [
                                     "table",
@@ -292,7 +292,7 @@ define(
                                     ],
                                 ],
                                 this.container,
-                            );
+                            ));
                     }),
                     (this.renderOptionGroup = function (e) {
                         return Object.keys(e)
@@ -350,7 +350,7 @@ define(
                                 }),
                             ];
                         else if (t.type == "number")
-                            (r = [
+                            ((r = [
                                 "input",
                                 {
                                     type: "number",
@@ -370,13 +370,13 @@ define(
                                                 {
                                                     onclick: function () {
                                                         var t = this.parentNode.firstChild;
-                                                        (t.value = e.value), t.oninput();
+                                                        ((t.value = e.value), t.oninput());
                                                     },
                                                 },
                                                 e.caption,
                                             ];
                                         }),
-                                    ]);
+                                    ]));
                         else if (t.items) {
                             var s = function (e) {
                                     return e.map(function (e) {
@@ -404,7 +404,7 @@ define(
                                 o,
                             ];
                         } else
-                            typeof t.values == "string" && (t.values = t.values.split("|")),
+                            (typeof t.values == "string" && (t.values = t.values.split("|")),
                                 t.values && (i = i == t.values[1]),
                                 (r = [
                                     "input",
@@ -414,12 +414,12 @@ define(
                                         checked: i || null,
                                         onchange: function () {
                                             var e = this.checked;
-                                            t.values && (e = t.values[e ? 1 : 0]),
-                                                n.setOption(t, e);
+                                            (t.values && (e = t.values[e ? 1 : 0]),
+                                                n.setOption(t, e));
                                         },
                                     },
                                 ]),
-                                t.type == "checkedNumber" && (r = [r, []]);
+                                t.type == "checkedNumber" && (r = [r, []]));
                         return r;
                     }),
                     (this.renderOption = function (e, t) {
@@ -435,7 +435,7 @@ define(
                         ];
                     }),
                     (this.setOption = function (e, t) {
-                        typeof e == "string" && (e = this.options[e]),
+                        (typeof e == "string" && (e = this.options[e]),
                             t == "false" && (t = !1),
                             t == "true" && (t = !0),
                             t == "null" && (t = null),
@@ -444,13 +444,13 @@ define(
                                 parseFloat(t).toString() == t &&
                                 (t = parseFloat(t)),
                             e.onchange ? e.onchange(t) : e.path && this.editor.setOption(e.path, t),
-                            this._signal("setOption", { name: e.path, value: t });
+                            this._signal("setOption", { name: e.path, value: t }));
                     }),
                     (this.getOption = function (e) {
                         return e.getValue ? e.getValue() : this.editor.getOption(e.path);
-                    });
+                    }));
             }).call(p.prototype),
-                (t.OptionPanel = p);
+                (t.OptionPanel = p));
         },
     ),
     define(
@@ -468,10 +468,10 @@ define(
             function s(e) {
                 if (!document.getElementById("ace_settingsmenu")) {
                     var t = new r(e);
-                    t.render(),
+                    (t.render(),
                         (t.container.id = "ace_settingsmenu"),
                         i(e, t.container, "0", "0", "0"),
-                        t.container.querySelector("select,input,button,checkbox").focus();
+                        t.container.querySelector("select,input,button,checkbox").focus());
                 }
             }
             var r = e("ace/ext/options").OptionPanel,
@@ -483,7 +483,7 @@ define(
                 };
             };
         },
-    );
+    ));
 (function () {
     window.require(["ace/ext/settings_menu"], function (m) {
         if (typeof module == "object" && typeof exports == "object" && module) {

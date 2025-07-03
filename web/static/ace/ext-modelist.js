@@ -12,18 +12,18 @@ define("ace/ext/modelist", ["require", "exports", "module"], function (e, t, n) 
     }
     var r = [],
         s = function (e, t, n) {
-            (this.name = e),
+            ((this.name = e),
                 (this.caption = t),
                 (this.mode = "ace/mode/" + e),
-                (this.extensions = n);
+                (this.extensions = n));
             var r;
-            /\^/.test(n)
+            (/\^/.test(n)
                 ? (r =
                       n.replace(/\|(\^)?/g, function (e, t) {
                           return "$|" + (t ? "^" : "^.*\\.");
                       }) + "$")
                 : (r = "^.*\\.(" + n + ")$"),
-                (this.extRe = new RegExp(r, "gi"));
+                (this.extRe = new RegExp(r, "gi")));
         };
     s.prototype.supportsFile = function (e) {
         return e.match(this.extRe);
@@ -200,7 +200,7 @@ define("ace/ext/modelist", ["require", "exports", "module"], function (e, t, n) 
             c = (u[f] || f).replace(/_/g, " "),
             h = f.toLowerCase(),
             p = new s(h, c, l[0]);
-        (a[h] = p), r.push(p);
+        ((a[h] = p), r.push(p));
     }
     n.exports = { getModeForPath: i, modes: r, modesByName: a };
 });

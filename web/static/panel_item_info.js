@@ -241,8 +241,8 @@ var tree_opts1 = {
 
         for (var i in resp) {
             note = resp[i];
-            (nt = model.NoteTypeFromString[note.type]),
-                (entry = { icon: false, key: note.id, subject_id: note.subject_id });
+            ((nt = model.NoteTypeFromString[note.type]),
+                (entry = { icon: false, key: note.id, subject_id: note.subject_id }));
 
             if (note.parentId) {
                 //entry.title = "<span class='inh-"+(nt == model.NOTE_ERROR?"err":"warn")+"-title'>(<i class='ui-icon ui-icon-" + note_icon[nt] + " inh-"+(nt == model.NOTE_ERROR?"err":"warn")+"-title'></i>)</span> ";

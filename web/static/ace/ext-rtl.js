@@ -47,7 +47,7 @@ define("ace/ext/rtl", [
             t.direction = t.textAlign = t.width = "";
         }
         var t = e.$textLayer.$lines;
-        t.cells.forEach(n), t.cellCache.forEach(n);
+        (t.cells.forEach(n), t.cellCache.forEach(n));
     }
     var r = e("ace/lib/dom"),
         i = e("ace/lib/lang"),
@@ -73,7 +73,7 @@ define("ace/ext/rtl", [
     e("../config").defineOptions(o.prototype, "editor", {
         rtlText: {
             set: function (e) {
-                e
+                (e
                     ? (this.on("session", f),
                       this.on("changeSelection", u),
                       this.renderer.on("afterRender", l),
@@ -85,7 +85,7 @@ define("ace/ext/rtl", [
                       this.commands.off("exec", a),
                       this.commands.removeCommands(s),
                       c(this.renderer)),
-                    this.renderer.updateFull();
+                    this.renderer.updateFull());
             },
         },
     });
