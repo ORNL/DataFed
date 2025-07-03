@@ -24,4 +24,5 @@ then
   "${DATAFED_INSTALL_PATH}/core/datafed-core" --gen-keys
   mv datafed-core-key.pub "${DATAFED_INSTALL_PATH}/keys/"
   mv datafed-core-key.priv "${DATAFED_INSTALL_PATH}/keys/"
+  mv datafed-token-key.txt "${DATAFED_INSTALL_PATH}/keys/"
 fi
