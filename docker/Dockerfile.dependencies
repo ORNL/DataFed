@@ -54,10 +54,6 @@ RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_depen
 COPY ./scripts/install_ws_dependencies.sh ${BUILD_DIR}/scripts/
 RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_dependencies.sh -a -r -z -c
 
-# Core dependencies
-#COPY ./scripts/install_core_dependencies.sh ${BUILD_DIR}/scripts/
-#RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_dependencies.sh -a -r -z -w
-
 # Repo dependencies
 COPY ./scripts/install_repo_dependencies.sh ${BUILD_DIR}/scripts/
 RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC ${BUILD_DIR}/scripts/install_dependencies.sh -a -z -w -c
