@@ -114,7 +114,7 @@ then
   source "${PROJECT_ROOT}/scripts/dependency_versions.sh"
   cd "${PROJECT_ROOT}/external/globus-connect-server-deploy/docker"
   git checkout "$DATAFED_GCS_SUBMODULE_VERSION"
-  docker build --progress plain --tag "gcs-ubuntu-base:latest" - < "./docker-files/Dockerfile.ubuntu-20.04"
+  docker build --progress plain --tag "gcs-ubuntu-base:latest" - < "./docker-files/Dockerfile.debian-12"
   cd "${PROJECT_ROOT}"
   if [ "$BASE_IMAGE" == "" ]
   then

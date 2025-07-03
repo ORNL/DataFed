@@ -49,6 +49,19 @@ else
   fi
 fi
 
+# This if statement is to make sure PKG_CONFIG_PATH is defined for cmake, and
+# that it contains the necessary paths from the datafed depedencies install path
+# to compile other dependencies
+if [[ ! -v PKG_CONFIG_PATH ]]; then
+  PKG_CONFIG_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/lib/pkgconfig"
+else
+  if [[ -n "$PKG_CONFIG_PATH" ]]; then
+    PKG_CONFIG_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/lib/pkgconfig:$PKG_CONFIG_PATH"
+  else
+    PKG_CONFIG_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/lib/pkgconfig"
+  fi
+fi
+
 # WARNING: overwriting PATH can be very dangerous
 #   In Docker builds this must follow the pattern:
 #     PATH="<desired addition to path>:$PATH"
@@ -87,21 +100,44 @@ clean_install_flags() {
 }
 
 install_python() {
+  local original_dir=$(pwd)
 
   local PYTHON_FLAG_PREFIX=".python_installed-"
   clean_install_flags "$PYTHON_FLAG_PREFIX"
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${PYTHON_FLAG_PREFIX}${DATAFED_PYTHON_VERSION}" ]; then
-    # Check if the deadsnakes repository has already been added to avoid issues with gpg
-    if ! grep -qr '^deb .\+deadsnakes' /etc/apt/sources.list.d/; then
-	"$SUDO_CMD" apt update
-	"$SUDO_CMD" apt install -y software-properties-common
-	"$SUDO_CMD" add-apt-repository -y ppa:deadsnakes/ppa
-	"$SUDO_CMD" apt update
+    local original_dir=$(pwd)
+
+    # Check if openssl is already installed, otherwise error since openssl is required
+    local OPENSSL_FLAG_PREFIX=".openssl_installed-"
+    if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${OPENSSL_FLAG_PREFIX}${DATAFED_OPENSSL}" ]; then
+      echo "You must first install openssl before installing python"
+      exit 1
     fi
 
-    "$SUDO_CMD" apt install -y "python${DATAFED_PYTHON_VERSION}" "python${DATAFED_PYTHON_VERSION}-dev" "python${DATAFED_PYTHON_VERSION}-venv" "python${DATAFED_PYTHON_VERSION}-distutils"
+    cd "${PROJECT_ROOT}"
+    "$SUDO_CMD" apt update
+    "$SUDO_CMD" apt install -y build-essential libreadline-dev zlib1g-dev libffi-dev wget libsqlite3-dev
+
+    wget "https://www.python.org/ftp/python/${DATAFED_PYTHON_VERSION_FULL}/Python-${DATAFED_PYTHON_VERSION_FULL}.tgz"
+    tar -xf "Python-${DATAFED_PYTHON_VERSION_FULL}.tgz"
+    cd "Python-${DATAFED_PYTHON_VERSION_FULL}" 
+
+    export CPPFLAGS="-I${DATAFED_DEPENDENCIES_INSTALL_PATH}/include $CPPFLAGS"
+    export LDFLAGS="-L${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib -Wl,-rpath,${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib $LDFLAGS"
+    ./configure --prefix="${DATAFED_PYTHON_DEPENDENCIES_DIR}" --with-openssl="${DATAFED_DEPENDENCIES_INSTALL_PATH}" --with-openssl-rpath=auto --enable-loadable-sqlite-extensions
+    make -j$(nproc)
+    make altinstall
+
+    mkdir -p "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin"
+    # Delete link if it exists
+    rm -rf "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/python${DATAFED_PYTHON_VERSION}"
+    ln -s "${DATAFED_PYTHON_DEPENDENCIES_DIR}/bin/python${DATAFED_PYTHON_VERSION}" "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/python${DATAFED_PYTHON_VERSION}"
+    export PYTHON="${DATAFED_PYTHON_DEPENDENCIES_DIR}/bin/python${DATAFED_PYTHON_VERSION}"
 
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${PYTHON_FLAG_PREFIX}${DATAFED_PYTHON_VERSION}"
+    cd "$original_dir"
+  else
+    echo "Python already installed, skipping..."
   fi
 }
 
@@ -120,6 +156,7 @@ init_python() {
   if [ ! -e "$DATAFED_DEPENDENCIES_INSTALL_PATH" ] || [ ! -d "$DATAFED_PYTHON_DEPENDENCIES_DIR" ]; then
       mkdir -p "$DATAFED_PYTHON_DEPENDENCIES_DIR"
   fi
+
   "python${DATAFED_PYTHON_VERSION}" -m venv "${DATAFED_PYTHON_ENV}"
   # Make sure that pip is installed and upgraded
   "python${DATAFED_PYTHON_VERSION}" -m ensurepip --upgrade
@@ -478,6 +515,7 @@ install_node() {
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
     nvm use "$DATAFED_NODE_VERSION"
   fi
+  echo "NODE VERSION USED/INSTALLED $DATAFED_NODE_VERSION"
 }
 
 install_foxx_cli() {
@@ -542,6 +580,10 @@ install_openssl() {
     then
       "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/openssl"
     fi
+
+    "$SUDO_CMD" apt update
+    "$SUDO_CMD" apt install -y build-essential git
+
     git clone https://github.com/openssl/openssl "${PROJECT_ROOT}/external/openssl"
     cd "${PROJECT_ROOT}/external/openssl"
     git checkout "$DATAFED_OPENSSL_COMMIT"
@@ -553,9 +595,12 @@ install_openssl() {
     else
       "$SUDO_CMD" make install
     fi
+
     # Mark openssl as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${OPENSSL_FLAG_PREFIX}${DATAFED_OPENSSL}"
     cd "$original_dir"
+  else
+    echo "OpenSSL already installed, skipping..."
   fi
 }
 
@@ -683,6 +728,9 @@ install_dep_by_name() {
       ;;
     "ws_node_packages")
       install_ws_node_packages
+      ;;
+    "python")
+      install_python
       ;;
   esac
   cd ~
