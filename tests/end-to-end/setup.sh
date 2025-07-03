@@ -173,12 +173,12 @@ then
   exit 1
 fi
 # Set globus tokens
-HTTP_CODE=$(curl --user "${basic_auth}" -w "%{http_code}" -o /dev/null  -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed89&access=${DATAFED_USER89_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER89_GLOBUS_REFRESH_TOKEN}&expires_in=1")
+HTTP_CODE=$(curl --user "${basic_auth}" -w "%{http_code}" -o /dev/null  -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed89&access=${DATAFED_USER89_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER89_GLOBUS_REFRESH_TOKEN}&expires_in=1&access_len=0&access_iv=\"\"&refresh_len=0&refresh_iv=\"\"")
 echo "HTTP_CODE: ${HTTP_CODE}"
 FIRST_INT=${HTTP_CODE:0:1}
 if [ "${FIRST_INT}" -ne "2" ]
 then
-  response=$(curl --user "${basic_auth}" --fail-early -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed89&access=${DATAFED_USER89_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER89_GLOBUS_REFRESH_TOKEN}&expires_in=1")
+  response=$(curl --user "${basic_auth}" --fail-early -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed89&access=${DATAFED_USER89_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER89_GLOBUS_REFRESH_TOKEN}&expires_in=1&access_len=0&access_iv=\"\"&refresh_len=0&refresh_iv=\"\"")
   CODE=$(echo $response | jq .code )
   ERROR_MSG=$(echo $response | jq .errorMessage )
   echo "$ERROR_MSG"
@@ -198,12 +198,12 @@ then
   exit 1
 fi
 # Set globus tokens
-HTTP_CODE=$(curl --user "${basic_auth}"   -w "%{http_code}" -o /dev/null  -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed99&access=${DATAFED_USER99_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER99_GLOBUS_REFRESH_TOKEN}&expires_in=1")
+HTTP_CODE=$(curl --user "${basic_auth}"   -w "%{http_code}" -o /dev/null  -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed99&access=${DATAFED_USER99_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER99_GLOBUS_REFRESH_TOKEN}&expires_in=1&access_len=0&access_iv=\"\"&refresh_len=0&refresh_iv=\"\"")
 echo "HTTP_CODE: ${HTTP_CODE}"
 FIRST_INT=${HTTP_CODE:0:1}
 if [ "${FIRST_INT}" -ne "2" ]
 then
-  response=$(curl --user "${basic_auth}"  --fail-early -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed99&access=${DATAFED_USER99_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER99_GLOBUS_REFRESH_TOKEN}&expires_in=1")
+  response=$(curl --user "${basic_auth}"  --fail-early -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed99&access=${DATAFED_USER99_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER99_GLOBUS_REFRESH_TOKEN}&expires_in=1&access_len=0&access_iv=\"\"&refresh_len=0&refresh_iv=\"\"")
   CODE=$(echo $response | jq .code )
   ERROR_MSG=$(echo $response | jq .errorMessage )
   echo "$ERROR_MSG"
