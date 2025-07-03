@@ -10,9 +10,9 @@ PROJECT_ROOT=$(realpath ${SOURCE}/..)
 source "${PROJECT_ROOT}/scripts/utils.sh"
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
-packages=("g++" "gcc" "make" "pkg-config" "python${DATAFED_PYTHON_VERSION}" "python${DATAFED_PYTHON_VERSION}-venv")
-externals=("cmake" "protobuf")
+packages=("g++" "gcc" "make" "pkg-config")
 pip_packages=("setuptools" "sphinx" "sphinx-rtd-theme" "sphinx-autoapi")
+externals=("cmake" "libopenssl" "python" "protobuf")
 
 local_UNIFY=false
 
@@ -42,13 +42,14 @@ if [[ $local_UNIFY = false ]]; then
   "$SUDO_CMD" apt-get update
   "$SUDO_CMD" dpkg --configure -a
   "$SUDO_CMD" apt-get install -y "${packages[@]}"
-  init_python
-  source "${DATAFED_PYTHON_ENV}/bin/activate"
-  "python${DATAFED_PYTHON_VERSION}" -m pip install --upgrade pip
-  "python${DATAFED_PYTHON_VERSION}" -m pip install "${pip_packages[@]}"
 
   for ext in "${externals[@]}"; do
     install_dep_by_name "$ext"
   done
+
+  init_python
+  source "${DATAFED_PYTHON_ENV}/bin/activate"
+  "python${DATAFED_PYTHON_VERSION}" -m pip install --upgrade pip
+  "python${DATAFED_PYTHON_VERSION}" -m pip install "${pip_packages[@]}"
 fi
 

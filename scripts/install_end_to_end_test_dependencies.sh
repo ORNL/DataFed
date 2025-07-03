@@ -11,12 +11,12 @@ source "${PROJECT_ROOT}/scripts/utils.sh"
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
 packages=("libtool" "build-essential" "g++" "gcc" "make" "libboost-all-dev" "pkg-config" "autoconf" "automake" "unzip" "libcurl4-openssl-dev" "wget"
-	"rapidjson-dev" "libkrb5-dev" "git" "python${DATAFED_PYTHON_VERSION}" "python${DATAFED_PYTHON_VERSION}-venv" "libssl-dev")
+	"rapidjson-dev" "libkrb5-dev" "git" "libssl-dev")
 
 	
 pip_packages=("setuptools")
 # NOTE the order matters here
-externals=("cmake" "protobuf" "nvm" "node" "foxx")
+externals=("cmake" "libopenssl" "python" "protobuf" "nvm" "node" "foxx")
 
 local_UNIFY=false
 
@@ -45,12 +45,13 @@ if [[ $local_UNIFY = false ]]; then
   "$SUDO_CMD" apt-get update
   "$SUDO_CMD" dpkg --configure -a
   "$SUDO_CMD" apt-get install -y "${packages[@]}"
-  init_python
-  source "${DATAFED_PYTHON_ENV}/bin/activate"
-  "python${DATAFED_PYTHON_VERSION}" -m pip install --upgrade pip
-  "python${DATAFED_PYTHON_VERSION}" -m pip install "${pip_packages[@]}"
 
   for ext in "${externals[@]}"; do
     install_dep_by_name "$ext"
   done
+
+  init_python
+  source "${DATAFED_PYTHON_ENV}/bin/activate"
+  "python${DATAFED_PYTHON_VERSION}" -m pip install --upgrade pip
+  "python${DATAFED_PYTHON_VERSION}" -m pip install "${pip_packages[@]}"
 fi

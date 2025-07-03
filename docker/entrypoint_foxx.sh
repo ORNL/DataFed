@@ -33,28 +33,31 @@ then
   # Check to see if foxx has previously been installed
   "${PROJECT_ROOT}/scripts/generate_datafed.sh"
 
-	# Define common CMake options
-	cmake_options=(
-		-S. -B build
-		-DBUILD_REPO_SERVER=False
-		-DBUILD_COMMON=False
-		-DBUILD_AUTHZ=False
-		-DBUILD_CORE_SERVER=False
-		-DBUILD_WEB_SERVER=False
-		-DBUILD_DOCS=False
-		-DBUILD_PYTHON_CLIENT=False
-		-DBUILD_FOXX=True
-		-DINSTALL_FOXX=True
-	)
+  export LD_LIBRARY_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/lib"
+  ldconfig "$LD_LIBRARY_PATH"
 
-	# Add the ENABLE_FOXX_TESTS option if it's set to TRUE
+  # Define common CMake options
+  cmake_options=(
+	  -S. -B build
+	  -DBUILD_REPO_SERVER=False
+	  -DBUILD_COMMON=False
+	  -DBUILD_AUTHZ=False
+	  -DBUILD_CORE_SERVER=False
+	  -DBUILD_WEB_SERVER=False
+	  -DBUILD_DOCS=False
+	  -DBUILD_PYTHON_CLIENT=False
+	  -DBUILD_FOXX=True
+	  -DINSTALL_FOXX=True
+  )
+
+  # Add the ENABLE_FOXX_TESTS option if it's set to TRUE
   # Should only run this if you are ok with making changes to the database
-	if [ "$ENABLE_FOXX_TESTS" == "TRUE" ]; then
-		cmake_options+=(-DENABLE_FOXX_TESTS=True)
-	fi
+  if [ "$ENABLE_FOXX_TESTS" == "TRUE" ]; then
+	  cmake_options+=(-DENABLE_FOXX_TESTS=True)
+  fi
 
-	# Run the CMake command with the constructed options
-	"${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" "${cmake_options[@]}"
+  # Run the CMake command with the constructed options
+  "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" "${cmake_options[@]}"
 
   "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" --build build
 
