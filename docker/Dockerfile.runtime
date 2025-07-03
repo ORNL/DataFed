@@ -24,7 +24,6 @@ RUN echo $DATAFED_DIR
 RUN adduser --disabled-password --gecos "" datafed
 
 COPY ./scripts/dependency_versions.sh  ${BUILD_DIR}/scripts/
-COPY ./scripts/copy_dependency.sh      ${BUILD_DIR}/scripts/
 RUN mkdir -p ${DATAFED_DIR}
 RUN mkdir -p /opt/datafed
 RUN mkdir -p /var/log/datafed
