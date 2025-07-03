@@ -680,7 +680,7 @@ install_zlib() {
       "$SUDO_CMD" make install
     fi
 
-    # Mark libcurl as installed
+    # Mark zlib as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${ZLIB_FLAG_PREFIX}${DATAFED_ZLIB_VERSION}"
     cd "$original_dir"
   fi
