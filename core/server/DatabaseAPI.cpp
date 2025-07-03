@@ -45,7 +45,7 @@ DatabaseAPI::DatabaseAPI(const std::string &a_db_url,
                          const std::string &a_db_user,
                          const std::string &a_db_pass,
                          const std::string &cipher_key_file_path)
-    : m_client(0), m_db_url(a_db_url), cipher_key_file_path(cipher_key_file_path){
+    : cipher_key_file_path(cipher_key_file_path), m_client(0), m_db_url(a_db_url) {
   m_curl = curl_easy_init();
   if (!m_curl)
     EXCEPT(ID_INTERNAL_ERROR, "libcurl init failed");
@@ -355,6 +355,7 @@ void DatabaseAPI::userGetAccessToken(
   DL_DEBUG(log_context, "Attempting to grab token key");
   //grab the token_key
   readFile(cipher_key_file_path + "datafed-token-key.txt", CipherEngine::KEY_LENGTH, token_key);
+
   CipherEngine cipher(token_key);
 
   CipherEngine::CipherString encoded_refresh_obj;
