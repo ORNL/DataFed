@@ -238,6 +238,11 @@ return obj.getString(token);
 bool
 TaskWorker::tokenNeedsUpdate(const Value::Object &obj)
 {
+    if(!obj.has("acc_tok_iv"))
+    {
+        return true;
+    }
+
     return obj.getString("acc_tok_iv").empty();
 }
 
