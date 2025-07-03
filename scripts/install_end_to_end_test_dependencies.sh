@@ -16,7 +16,7 @@ packages=("libtool" "build-essential" "g++" "gcc" "make" "libboost-all-dev" "pkg
 	
 pip_packages=("setuptools")
 # NOTE the order matters here
-externals=("libcurl" "cmake" "libopenssl" "python" "protobuf" "nvm" "node" "foxx")
+externals=("libopenssl" "zlib" "libcurl" "cmake" "python" "protobuf" "nvm" "node" "foxx")
 
 local_UNIFY=false
 
