@@ -1,11 +1,11 @@
-(function () {
+((function () {
     function o(n) {
         var i = e;
         n && (e[n] || (e[n] = {}), (i = e[n]));
         if (!i.define || !i.define.packaged)
-            (t.original = i.define), (i.define = t), (i.define.packaged = !0);
+            ((t.original = i.define), (i.define = t), (i.define.packaged = !0));
         if (!i.require || !i.require.packaged)
-            (r.original = i.require), (i.require = r), (i.require.packaged = !0);
+            ((r.original = i.require), (i.require = r), (i.require.packaged = !0));
     }
     var ACE_NAMESPACE = "",
         e = (function () {
@@ -21,14 +21,14 @@
                   console.trace());
             return;
         }
-        arguments.length == 2 && (r = n),
-            t.modules[e] || ((t.payloads[e] = r), (t.modules[e] = null));
+        (arguments.length == 2 && (r = n),
+            t.modules[e] || ((t.payloads[e] = r), (t.modules[e] = null)));
     };
-    (t.modules = {}), (t.payloads = {});
+    ((t.modules = {}), (t.payloads = {}));
     var n = function (e, t, n) {
             if (typeof t == "string") {
                 var i = s(e, t);
-                if (i != undefined) return n && n(), i;
+                if (i != undefined) return (n && n(), i);
             } else if (Object.prototype.toString.call(t) === "[object Array]") {
                 var o = [];
                 for (var u = 0, a = t.length; u < a; ++u) {
@@ -70,7 +70,7 @@
                             return n(r, e, t);
                         },
                         f = s(a, o, u);
-                    (o = f || u.exports), (t.modules[r] = o), delete t.payloads[r];
+                    ((o = f || u.exports), (t.modules[r] = o), delete t.payloads[r]);
                 }
                 s = t.modules[r] = o || s;
             }
@@ -104,10 +104,10 @@
             i = r.exec.call(/()??/, "")[1] === undefined,
             s = (function () {
                 var e = /^/g;
-                return r.test.call(e, ""), !e.lastIndex;
+                return (r.test.call(e, ""), !e.lastIndex);
             })();
         if (s && i) return;
-        (RegExp.prototype.exec = function (e) {
+        ((RegExp.prototype.exec = function (e) {
             var t = r.exec.apply(this, arguments),
                 n,
                 a;
@@ -122,7 +122,7 @@
                     }));
                 if (this._xregexp && this._xregexp.captureNames)
                     for (var f = 1; f < t.length; f++)
-                        (n = this._xregexp.captureNames[f - 1]), n && (t[n] = t[f]);
+                        ((n = this._xregexp.captureNames[f - 1]), n && (t[n] = t[f]));
                 !s && this.global && !t[0].length && this.lastIndex > t.index && this.lastIndex--;
             }
             return t;
@@ -138,13 +138,13 @@
                             this.lastIndex--,
                         !!t
                     );
-                });
+                }));
     }),
     define("ace/lib/es5-shim", ["require", "exports", "module"], function (e, t, n) {
         function r() {}
         function w(e) {
             try {
-                return Object.defineProperty(e, "sentinel", {}), "sentinel" in e;
+                return (Object.defineProperty(e, "sentinel", {}), "sentinel" in e);
             } catch (t) {}
         }
         function H(e) {
@@ -217,35 +217,35 @@
             p,
             d;
         if ((d = f(o, "__defineGetter__")))
-            (l = i.bind(o.__defineGetter__)),
+            ((l = i.bind(o.__defineGetter__)),
                 (c = i.bind(o.__defineSetter__)),
                 (h = i.bind(o.__lookupGetter__)),
-                (p = i.bind(o.__lookupSetter__));
+                (p = i.bind(o.__lookupSetter__)));
         if ([1, 2].splice(0).length != 2)
             if (
                 !(function () {
                     function e(e) {
                         var t = new Array(e + 2);
-                        return (t[0] = t[1] = 0), t;
+                        return ((t[0] = t[1] = 0), t);
                     }
                     var t = [],
                         n;
-                    t.splice.apply(t, e(20)),
+                    (t.splice.apply(t, e(20)),
                         t.splice.apply(t, e(26)),
                         (n = t.length),
                         t.splice(5, 0, "XXX"),
-                        n + 1 == t.length;
+                        n + 1 == t.length);
                     if (n + 1 == t.length) return !0;
                 })()
             )
                 Array.prototype.splice = function (e, t) {
                     var n = this.length;
-                    e > 0
+                    (e > 0
                         ? e > n && (e = n)
                         : e == void 0
                           ? (e = 0)
                           : e < 0 && (e = Math.max(n + e, 0)),
-                        e + t < n || (t = n - e);
+                        e + t < n || (t = n - e));
                     var r = this.slice(e, e + t),
                         i = u.call(arguments, 2),
                         s = i.length;
@@ -258,7 +258,7 @@
                             c = n - o;
                         if (f < a) for (var h = 0; h < l; ++h) this[f + h] = this[a + h];
                         else if (f > a) for (h = l; h--; ) this[f + h] = this[a + h];
-                        if (s && e === c) (this.length = c), this.push.apply(this, i);
+                        if (s && e === c) ((this.length = c), this.push.apply(this, i));
                         else {
                             this.length = c + s;
                             for (h = 0; h < s; ++h) this[e + h] = i[h];
@@ -285,7 +285,7 @@
             });
         var m = Object("a"),
             g = m[0] != "a" || !(0 in m);
-        Array.prototype.forEach ||
+        (Array.prototype.forEach ||
             (Array.prototype.forEach = function (t) {
                 var n = F(this),
                     r = g && a(this) == "[object String]" ? this.split("") : n,
@@ -387,15 +387,15 @@
                     do o in this && (s = t.call(void 0, s, r[o], o, n));
                     while (o--);
                     return s;
-                });
+                }));
         if (!Array.prototype.indexOf || [0, 1].indexOf(1, 2) != -1)
             Array.prototype.indexOf = function (t) {
                 var n = g && a(this) == "[object String]" ? this.split("") : F(this),
                     r = n.length >>> 0;
                 if (!r) return -1;
                 var i = 0;
-                arguments.length > 1 && (i = H(arguments[1])),
-                    (i = i >= 0 ? i : Math.max(0, r + i));
+                (arguments.length > 1 && (i = H(arguments[1])),
+                    (i = i >= 0 ? i : Math.max(0, r + i)));
                 for (; i < r; i++) if (i in n && n[i] === t) return i;
                 return -1;
             };
@@ -405,8 +405,8 @@
                     r = n.length >>> 0;
                 if (!r) return -1;
                 var i = r - 1;
-                arguments.length > 1 && (i = Math.min(i, H(arguments[1]))),
-                    (i = i >= 0 ? i : r - Math.abs(i));
+                (arguments.length > 1 && (i = Math.min(i, H(arguments[1]))),
+                    (i = i >= 0 ? i : r - Math.abs(i)));
                 for (; i >= 0; i--) if (i in n && t === n[i]) return i;
                 return -1;
             };
@@ -428,9 +428,9 @@
                     var i = h(t, n),
                         s = p(t, n);
                     t.__proto__ = u;
-                    if (i || s) return i && (r.get = i), s && (r.set = s), r;
+                    if (i || s) return (i && (r.get = i), s && (r.set = s), r);
                 }
-                return (r.value = t[n]), r;
+                return ((r.value = t[n]), r);
             };
         }
         Object.getOwnPropertyNames ||
@@ -439,7 +439,7 @@
             });
         if (!Object.create) {
             var b;
-            Object.prototype.__proto__ === null
+            (Object.prototype.__proto__ === null
                 ? (b = function () {
                       return { __proto__: null };
                   })
@@ -466,10 +466,10 @@
                         if (typeof t != "object")
                             throw new TypeError("typeof prototype[" + typeof t + "] != 'object'");
                         var i = function () {};
-                        (i.prototype = t), (r = new i()), (r.__proto__ = t);
+                        ((i.prototype = t), (r = new i()), (r.__proto__ = t));
                     }
-                    return n !== void 0 && Object.defineProperties(r, n), r;
-                });
+                    return (n !== void 0 && Object.defineProperties(r, n), r);
+                }));
         }
         if (Object.defineProperty) {
             var E = w({}),
@@ -492,16 +492,16 @@
                 if (f(r, "value"))
                     if (d && (h(t, n) || p(t, n))) {
                         var s = t.__proto__;
-                        (t.__proto__ = o), delete t[n], (t[n] = r.value), (t.__proto__ = s);
+                        ((t.__proto__ = o), delete t[n], (t[n] = r.value), (t.__proto__ = s));
                     } else t[n] = r.value;
                 else {
                     if (!d) throw new TypeError(C);
-                    f(r, "get") && l(t, n, r.get), f(r, "set") && c(t, n, r.set);
+                    (f(r, "get") && l(t, n, r.get), f(r, "set") && c(t, n, r.set));
                 }
                 return t;
             };
         }
-        Object.defineProperties ||
+        (Object.defineProperties ||
             (Object.defineProperties = function (t, n) {
                 for (var r in n) f(n, r) && Object.defineProperty(t, r, n[r]);
                 return t;
@@ -513,7 +513,7 @@
             Object.freeze ||
                 (Object.freeze = function (t) {
                     return t;
-                });
+                }));
         try {
             Object.freeze(function () {});
         } catch (k) {
@@ -523,7 +523,7 @@
                 };
             })(Object.freeze);
         }
-        Object.preventExtensions ||
+        (Object.preventExtensions ||
             (Object.preventExtensions = function (t) {
                 return t;
             }),
@@ -542,8 +542,8 @@
                     while (f(t, n)) n += "?";
                     t[n] = !0;
                     var r = f(t, n);
-                    return delete t[n], r;
-                });
+                    return (delete t[n], r);
+                }));
         if (!Object.keys) {
             var L = !0,
                 A = [
@@ -594,7 +594,7 @@
         ["require", "exports", "module", "ace/lib/regexp", "ace/lib/es5-shim"],
         function (e, t, n) {
             "use strict";
-            e("./regexp"),
+            (e("./regexp"),
                 e("./es5-shim"),
                 typeof Element != "undefined" &&
                     !Element.prototype.remove &&
@@ -605,19 +605,19 @@
                         value: function () {
                             this.parentNode && this.parentNode.removeChild(this);
                         },
-                    });
+                    }));
         },
     ),
     define("ace/lib/useragent", ["require", "exports", "module"], function (e, t, n) {
         "use strict";
-        (t.OS = { LINUX: "LINUX", MAC: "MAC", WINDOWS: "WINDOWS" }),
+        ((t.OS = { LINUX: "LINUX", MAC: "MAC", WINDOWS: "WINDOWS" }),
             (t.getOS = function () {
                 return t.isMac ? t.OS.MAC : t.isLinux ? t.OS.LINUX : t.OS.WINDOWS;
-            });
+            }));
         if (typeof navigator != "object") return;
         var r = (navigator.platform.match(/mac|win|linux/i) || ["other"])[0].toLowerCase(),
             i = navigator.userAgent;
-        (t.isWin = r == "win"),
+        ((t.isWin = r == "win"),
             (t.isMac = r == "mac"),
             (t.isLinux = r == "linux"),
             (t.isIE =
@@ -643,7 +643,7 @@
             (t.isChromeOS = i.indexOf(" CrOS ") >= 0),
             (t.isIOS = /iPad|iPhone|iPod/.test(i) && !window.MSStream),
             t.isIOS && (t.isMac = !0),
-            (t.isMobile = t.isIPad || t.isAndroid);
+            (t.isMobile = t.isIPad || t.isAndroid));
     }),
     define(
         "ace/lib/dom",
@@ -652,10 +652,10 @@
             "use strict";
             var r = e("./useragent"),
                 i = "http://www.w3.org/1999/xhtml";
-            (t.buildDom = function o(e, t, n) {
+            ((t.buildDom = function o(e, t, n) {
                 if (typeof e == "string" && e) {
                     var r = document.createTextNode(e);
-                    return t && t.appendChild(r), r;
+                    return (t && t.appendChild(r), r);
                 }
                 if (!Array.isArray(e)) return e;
                 if (typeof e[0] != "string" || !e[0]) {
@@ -731,9 +731,9 @@
                     for (;;) {
                         var i = n.indexOf(t);
                         if (i == -1) break;
-                        (r = !1), n.splice(i, 1);
+                        ((r = !1), n.splice(i, 1));
                     }
-                    return r && n.push(t), (e.className = n.join(" ")), r;
+                    return (r && n.push(t), (e.className = n.join(" ")), r);
                 }),
                 (t.setCssClass = function (e, n, r) {
                     r ? t.addCssClass(e, n) : t.removeCssClass(e, n);
@@ -751,36 +751,36 @@
                     if (r && t.hasCssString(r, s)) return null;
                     r && (n += "\n/*# sourceURL=ace/css/" + r + " */");
                     var u = t.createElement("style");
-                    u.appendChild(o.createTextNode(n)),
+                    (u.appendChild(o.createTextNode(n)),
                         r && (u.id = r),
                         s == o && (s = t.getDocumentHead(o)),
-                        s.insertBefore(u, s.firstChild);
+                        s.insertBefore(u, s.firstChild));
                 }),
                 (t.importCssStylsheet = function (e, n) {
                     t.buildDom(["link", { rel: "stylesheet", href: e }], t.getDocumentHead(n));
                 }),
                 (t.scrollbarWidth = function (e) {
                     var n = t.createElement("ace_inner");
-                    (n.style.width = "100%"),
+                    ((n.style.width = "100%"),
                         (n.style.minWidth = "0px"),
                         (n.style.height = "200px"),
-                        (n.style.display = "block");
+                        (n.style.display = "block"));
                     var r = t.createElement("ace_outer"),
                         i = r.style;
-                    (i.position = "absolute"),
+                    ((i.position = "absolute"),
                         (i.left = "-10000px"),
                         (i.overflow = "hidden"),
                         (i.width = "200px"),
                         (i.minWidth = "0px"),
                         (i.height = "150px"),
                         (i.display = "block"),
-                        r.appendChild(n);
+                        r.appendChild(n));
                     var s = e.documentElement;
                     s.appendChild(r);
                     var o = n.offsetWidth;
                     i.overflow = "scroll";
                     var u = n.offsetWidth;
-                    return o == u && (u = r.clientWidth), s.removeChild(r), o - u;
+                    return (o == u && (u = r.clientWidth), s.removeChild(r), o - u);
                 }),
                 typeof document == "undefined" && (t.importCssString = function () {}),
                 (t.computedStyle = function (e, t) {
@@ -793,14 +793,14 @@
                 (t.HAS_CSS_TRANSFORMS = !1),
                 (t.HI_DPI = r.isWin
                     ? typeof window != "undefined" && window.devicePixelRatio >= 1.5
-                    : !0);
+                    : !0));
             if (typeof document != "undefined") {
                 var s = document.createElement("div");
-                t.HI_DPI && s.style.transform !== undefined && (t.HAS_CSS_TRANSFORMS = !0),
+                (t.HI_DPI && s.style.transform !== undefined && (t.HAS_CSS_TRANSFORMS = !0),
                     !r.isEdge &&
                         typeof s.style.animationName != "undefined" &&
                         (t.HAS_CSS_ANIMATION = !0),
-                    (s = null);
+                    (s = null));
             }
             t.HAS_CSS_TRANSFORMS
                 ? (t.translate = function (e, t, n) {
@@ -808,17 +808,17 @@
                           "translate(" + Math.round(t) + "px, " + Math.round(n) + "px)";
                   })
                 : (t.translate = function (e, t, n) {
-                      (e.style.top = Math.round(n) + "px"), (e.style.left = Math.round(t) + "px");
+                      ((e.style.top = Math.round(n) + "px"), (e.style.left = Math.round(t) + "px"));
                   });
         },
     ),
     define("ace/lib/oop", ["require", "exports", "module"], function (e, t, n) {
         "use strict";
-        (t.inherits = function (e, t) {
-            (e.super_ = t),
+        ((t.inherits = function (e, t) {
+            ((e.super_ = t),
                 (e.prototype = Object.create(t.prototype, {
                     constructor: { value: e, enumerable: !1, writable: !0, configurable: !0 },
-                }));
+                })));
         }),
             (t.mixin = function (e, t) {
                 for (var n in t) e[n] = t[n];
@@ -826,7 +826,7 @@
             }),
             (t.implement = function (e, n) {
                 t.mixin(e, n);
-            });
+            }));
     }),
     define(
         "ace/lib/keys",
@@ -953,9 +953,9 @@
                         t,
                         n;
                     for (n in e.FUNCTION_KEYS)
-                        (t = e.FUNCTION_KEYS[n].toLowerCase()), (e[t] = parseInt(n, 10));
+                        ((t = e.FUNCTION_KEYS[n].toLowerCase()), (e[t] = parseInt(n, 10)));
                     for (n in e.PRINTABLE_KEYS)
-                        (t = e.PRINTABLE_KEYS[n].toLowerCase()), (e[t] = parseInt(n, 10));
+                        ((t = e.PRINTABLE_KEYS[n].toLowerCase()), (e[t] = parseInt(n, 10)));
                     return (
                         r.mixin(e, e.MODIFIER_KEYS),
                         r.mixin(e, e.PRINTABLE_KEYS),
@@ -979,11 +979,11 @@
                         e
                     );
                 })();
-            r.mixin(t, i),
+            (r.mixin(t, i),
                 (t.keyCodeToString = function (e) {
                     var t = i[e];
-                    return typeof t != "string" && (t = String.fromCharCode(e)), t.toLowerCase();
-                });
+                    return (typeof t != "string" && (t = String.fromCharCode(e)), t.toLowerCase());
+                }));
         },
     ),
     define(
@@ -1010,7 +1010,7 @@
                         }
                     }
                 }
-                n in r.MODIFIER_KEYS && (n = -1), a & 8 && n >= 91 && n <= 93 && (n = -1);
+                (n in r.MODIFIER_KEYS && (n = -1), a & 8 && n >= 91 && n <= 93 && (n = -1));
                 if (!a && n === 13) {
                     var f = "location" in t ? t.location : t.keyLocation;
                     if (f === 3) {
@@ -1032,13 +1032,13 @@
                 i = e("./useragent"),
                 s = null,
                 o = 0;
-            (t.addListener = function (e, t, n) {
+            ((t.addListener = function (e, t, n) {
                 if (e.addEventListener) return e.addEventListener(t, n, !1);
                 if (e.attachEvent) {
                     var r = function () {
                         n.call(e, window.event);
                     };
-                    (n._wrapper = r), e.attachEvent("on" + t, r);
+                    ((n._wrapper = r), e.attachEvent("on" + t, r));
                 }
             }),
                 (t.removeListener = function (e, t, n) {
@@ -1046,7 +1046,7 @@
                     e.detachEvent && e.detachEvent("on" + t, n._wrapper || n);
                 }),
                 (t.stopEvent = function (e) {
-                    return t.stopPropagation(e), t.preventDefault(e), !1;
+                    return (t.stopPropagation(e), t.preventDefault(e), !1);
                 }),
                 (t.stopPropagation = function (e) {
                     e.stopPropagation ? e.stopPropagation() : (e.cancelBubble = !0);
@@ -1066,11 +1066,11 @@
                 }),
                 (t.capture = function (e, n, r) {
                     function i(e) {
-                        n && n(e),
+                        (n && n(e),
                             r && r(e),
                             t.removeListener(document, "mousemove", n, !0),
                             t.removeListener(document, "mouseup", i, !0),
-                            t.removeListener(document, "dragstart", i, !0);
+                            t.removeListener(document, "dragstart", i, !0));
                     }
                     return (
                         t.addListener(document, "mousemove", n, !0),
@@ -1081,52 +1081,52 @@
                 }),
                 (t.addTouchMoveListener = function (e, n) {
                     var r, i;
-                    t.addListener(e, "touchstart", function (e) {
+                    (t.addListener(e, "touchstart", function (e) {
                         var t = e.touches,
                             n = t[0];
-                        (r = n.clientX), (i = n.clientY);
+                        ((r = n.clientX), (i = n.clientY));
                     }),
                         t.addListener(e, "touchmove", function (e) {
                             var t = e.touches;
                             if (t.length > 1) return;
                             var s = t[0];
-                            (e.wheelX = r - s.clientX),
+                            ((e.wheelX = r - s.clientX),
                                 (e.wheelY = i - s.clientY),
                                 (r = s.clientX),
                                 (i = s.clientY),
-                                n(e);
-                        });
+                                n(e));
+                        }));
                 }),
                 (t.addMouseWheelListener = function (e, n) {
                     "onmousewheel" in e
                         ? t.addListener(e, "mousewheel", function (e) {
                               var t = 8;
-                              e.wheelDeltaX !== undefined
+                              (e.wheelDeltaX !== undefined
                                   ? ((e.wheelX = -e.wheelDeltaX / t),
                                     (e.wheelY = -e.wheelDeltaY / t))
                                   : ((e.wheelX = 0), (e.wheelY = -e.wheelDelta / t)),
-                                  n(e);
+                                  n(e));
                           })
                         : "onwheel" in e
                           ? t.addListener(e, "wheel", function (e) {
                                 var t = 0.35;
                                 switch (e.deltaMode) {
                                     case e.DOM_DELTA_PIXEL:
-                                        (e.wheelX = e.deltaX * t || 0),
-                                            (e.wheelY = e.deltaY * t || 0);
+                                        ((e.wheelX = e.deltaX * t || 0),
+                                            (e.wheelY = e.deltaY * t || 0));
                                         break;
                                     case e.DOM_DELTA_LINE:
                                     case e.DOM_DELTA_PAGE:
-                                        (e.wheelX = (e.deltaX || 0) * 5),
-                                            (e.wheelY = (e.deltaY || 0) * 5);
+                                        ((e.wheelX = (e.deltaX || 0) * 5),
+                                            (e.wheelY = (e.deltaY || 0) * 5));
                                 }
                                 n(e);
                             })
                           : t.addListener(e, "DOMMouseScroll", function (e) {
-                                e.axis && e.axis == e.HORIZONTAL_AXIS
+                                (e.axis && e.axis == e.HORIZONTAL_AXIS
                                     ? ((e.wheelX = (e.detail || 0) * 5), (e.wheelY = 0))
                                     : ((e.wheelX = 0), (e.wheelY = (e.detail || 0) * 5)),
-                                    n(e);
+                                    n(e));
                             });
                 }),
                 (t.addMultiMouseDownListener = function (e, n, r, s) {
@@ -1139,21 +1139,21 @@
                         if (i.isIE) {
                             var c = Math.abs(e.clientX - u) > 5 || Math.abs(e.clientY - a) > 5;
                             if (!f || c) o = 1;
-                            f && clearTimeout(f),
+                            (f && clearTimeout(f),
                                 (f = setTimeout(
                                     function () {
                                         f = null;
                                     },
                                     n[o - 1] || 600,
                                 )),
-                                o == 1 && ((u = e.clientX), (a = e.clientY));
+                                o == 1 && ((u = e.clientX), (a = e.clientY)));
                         }
-                        (e._clicks = o), r[s]("mousedown", e);
+                        ((e._clicks = o), r[s]("mousedown", e));
                         if (o > 4) o = 0;
                         else if (o > 1) return r[s](l[o], e);
                     }
                     function h(e) {
-                        (o = 2),
+                        ((o = 2),
                             f && clearTimeout(f),
                             (f = setTimeout(
                                 function () {
@@ -1162,19 +1162,19 @@
                                 n[o - 1] || 600,
                             )),
                             r[s]("mousedown", e),
-                            r[s](l[o], e);
+                            r[s](l[o], e));
                     }
                     var o = 0,
                         u,
                         a,
                         f,
                         l = { 2: "dblclick", 3: "tripleclick", 4: "quadclick" };
-                    Array.isArray(e) || (e = [e]),
+                    (Array.isArray(e) || (e = [e]),
                         e.forEach(function (e) {
-                            t.addListener(e, "mousedown", c),
-                                i.isOldIE && t.addListener(e, "dblclick", h);
-                        });
-                });
+                            (t.addListener(e, "mousedown", c),
+                                i.isOldIE && t.addListener(e, "dblclick", h));
+                        }));
+                }));
             var u =
                 !i.isMac || !i.isOpera || "KeyboardEvent" in window
                     ? function (e) {
@@ -1195,25 +1195,25 @@
                               (e.ctrlKey ? 8 : 0)
                           );
                       };
-            (t.getModifierString = function (e) {
+            ((t.getModifierString = function (e) {
                 return r.KEY_MODS[u(e)];
             }),
                 (t.addCommandKeyListener = function (e, n) {
                     var r = t.addListener;
                     if (i.isOldGecko || (i.isOpera && !("KeyboardEvent" in window))) {
                         var o = null;
-                        r(e, "keydown", function (e) {
+                        (r(e, "keydown", function (e) {
                             o = e.keyCode;
                         }),
                             r(e, "keypress", function (e) {
                                 return a(n, e, o);
-                            });
+                            }));
                     } else {
                         var u = null;
-                        r(e, "keydown", function (e) {
+                        (r(e, "keydown", function (e) {
                             s[e.keyCode] = (s[e.keyCode] || 0) + 1;
                             var t = a(n, e, e.keyCode);
-                            return (u = e.defaultPrevented), t;
+                            return ((u = e.defaultPrevented), t);
                         }),
                             r(e, "keypress", function (e) {
                                 u &&
@@ -1223,9 +1223,9 @@
                             r(e, "keyup", function (e) {
                                 s[e.keyCode] = null;
                             }),
-                            s || (f(), r(window, "focus", f));
+                            s || (f(), r(window, "focus", f)));
                     }
-                });
+                }));
             if (typeof window == "object" && window.postMessage && !i.isOldIE) {
                 var l = 1;
                 t.nextTick = function (e, n) {
@@ -1235,10 +1235,10 @@
                             s.data == r &&
                                 (t.stopPropagation(s), t.removeListener(n, "message", i), e());
                         };
-                    t.addListener(n, "message", i), n.postMessage(r, "*");
+                    (t.addListener(n, "message", i), n.postMessage(r, "*"));
                 };
             }
-            (t.$idleBlocked = !1),
+            ((t.$idleBlocked = !1),
                 (t.onIdle = function (e, n) {
                     return setTimeout(function r() {
                         t.$idleBlocked ? setTimeout(r, 100) : e();
@@ -1246,11 +1246,11 @@
                 }),
                 (t.$idleBlockId = null),
                 (t.blockIdle = function (e) {
-                    t.$idleBlockId && clearTimeout(t.$idleBlockId),
+                    (t.$idleBlockId && clearTimeout(t.$idleBlockId),
                         (t.$idleBlocked = !0),
                         (t.$idleBlockId = setTimeout(function () {
                             t.$idleBlocked = !1;
-                        }, e || 100));
+                        }, e || 100)));
                 }),
                 (t.nextFrame =
                     typeof window == "object" &&
@@ -1263,7 +1263,7 @@
                     ? (t.nextFrame = t.nextFrame.bind(window))
                     : (t.nextFrame = function (e) {
                           setTimeout(e, 17);
-                      });
+                      }));
         },
     ),
     define("ace/range", ["require", "exports", "module"], function (e, t, n) {
@@ -1272,10 +1272,10 @@
                 return e.row - t.row || e.column - t.column;
             },
             i = function (e, t, n, r) {
-                (this.start = { row: e, column: t }), (this.end = { row: n, column: r });
+                ((this.start = { row: e, column: t }), (this.end = { row: n, column: r }));
             };
-        (function () {
-            (this.isEqual = function (e) {
+        ((function () {
+            ((this.isEqual = function (e) {
                 return (
                     this.start.row === e.start.row &&
                     this.end.row === e.end.row &&
@@ -1420,11 +1420,11 @@
                     return new i(t.row, t.column, n.row, n.column);
                 }),
                 (this.moveBy = function (e, t) {
-                    (this.start.row += e),
+                    ((this.start.row += e),
                         (this.start.column += t),
                         (this.end.row += e),
-                        (this.end.column += t);
-                });
+                        (this.end.column += t));
+                }));
         }).call(i.prototype),
             (i.fromPoints = function (e, t) {
                 return new i(e.row, e.column, t.row, t.column);
@@ -1433,11 +1433,11 @@
             (i.comparePoints = function (e, t) {
                 return e.row - t.row || e.column - t.column;
             }),
-            (t.Range = i);
+            (t.Range = i));
     }),
     define("ace/lib/lang", ["require", "exports", "module"], function (e, t, n) {
         "use strict";
-        (t.last = function (e) {
+        ((t.last = function (e) {
             return e[e.length - 1];
         }),
             (t.stringReverse = function (e) {
@@ -1450,10 +1450,10 @@
                     if ((t >>= 1)) e += e;
                 }
                 return n;
-            });
+            }));
         var r = /^\s\s*/,
             i = /\s\s*$/;
-        (t.stringTrimLeft = function (e) {
+        ((t.stringTrimLeft = function (e) {
             return e.replace(r, "");
         }),
             (t.stringTrimRight = function (e) {
@@ -1520,18 +1520,18 @@
             (t.deferredCall = function (e) {
                 var t = null,
                     n = function () {
-                        (t = null), e();
+                        ((t = null), e());
                     },
                     r = function (e) {
-                        return r.cancel(), (t = setTimeout(n, e || 0)), r;
+                        return (r.cancel(), (t = setTimeout(n, e || 0)), r);
                     };
                 return (
                     (r.schedule = r),
                     (r.call = function () {
-                        return this.cancel(), e(), r;
+                        return (this.cancel(), e(), r);
                     }),
                     (r.cancel = function () {
-                        return clearTimeout(t), (t = null), r;
+                        return (clearTimeout(t), (t = null), r);
                     }),
                     (r.isPending = function () {
                         return t;
@@ -1542,28 +1542,28 @@
             (t.delayedCall = function (e, t) {
                 var n = null,
                     r = function () {
-                        (n = null), e();
+                        ((n = null), e());
                     },
                     i = function (e) {
                         n == null && (n = setTimeout(r, e || t));
                     };
                 return (
                     (i.delay = function (e) {
-                        n && clearTimeout(n), (n = setTimeout(r, e || t));
+                        (n && clearTimeout(n), (n = setTimeout(r, e || t)));
                     }),
                     (i.schedule = i),
                     (i.call = function () {
-                        this.cancel(), e();
+                        (this.cancel(), e());
                     }),
                     (i.cancel = function () {
-                        n && clearTimeout(n), (n = null);
+                        (n && clearTimeout(n), (n = null));
                     }),
                     (i.isPending = function () {
                         return n;
                     }),
                     i
                 );
-            });
+            }));
     }),
     define(
         "ace/keyboard/textinput_ios",
@@ -1591,7 +1591,7 @@
                     function x(e) {
                         if (m) return;
                         m = !0;
-                        if (k) (t = 0), (n = e ? 0 : c.value.length - 1);
+                        if (k) ((t = 0), (n = e ? 0 : c.value.length - 1));
                         else
                             var t = 4,
                                 n = 5;
@@ -1602,20 +1602,20 @@
                     }
                     function T() {
                         if (m) return;
-                        (c.value = h), i.isWebKit && S.schedule();
+                        ((c.value = h), i.isWebKit && S.schedule());
                     }
                     function R() {
-                        clearTimeout(q),
+                        (clearTimeout(q),
                             (q = setTimeout(function () {
-                                g && ((c.style.cssText = g), (g = "")),
+                                (g && ((c.style.cssText = g), (g = "")),
                                     t.renderer.$keepTextAreaAtCursor == null &&
                                         ((t.renderer.$keepTextAreaAtCursor = !0),
-                                        t.renderer.$moveTextAreaToCursor());
-                            }, 0));
+                                        t.renderer.$moveTextAreaToCursor()));
+                            }, 0)));
                     }
                     var n = this,
                         c = s.createElement("textarea");
-                    (c.className = i.isIOS
+                    ((c.className = i.isIOS
                         ? "ace_text-input ace_text-input-ios"
                         : "ace_text-input"),
                         i.isTouchPad && c.setAttribute("x-palm-disable-auto-cap", !0),
@@ -1624,7 +1624,7 @@
                         c.setAttribute("autocapitalize", "off"),
                         c.setAttribute("spellcheck", !1),
                         (c.style.opacity = "0"),
-                        e.insertBefore(c, e.firstChild);
+                        e.insertBefore(c, e.firstChild));
                     var h = "\n aaaa a\n",
                         p = !1,
                         d = !1,
@@ -1635,34 +1635,34 @@
                     try {
                         var b = document.activeElement === c;
                     } catch (w) {}
-                    r.addListener(c, "blur", function (e) {
-                        t.onBlur(e), (b = !1);
+                    (r.addListener(c, "blur", function (e) {
+                        (t.onBlur(e), (b = !1));
                     }),
                         r.addListener(c, "focus", function (e) {
-                            (b = !0), t.onFocus(e), x();
+                            ((b = !0), t.onFocus(e), x());
                         }),
                         (this.focus = function () {
                             if (g) return c.focus();
-                            (c.style.position = "fixed"), c.focus();
+                            ((c.style.position = "fixed"), c.focus());
                         }),
                         (this.blur = function () {
                             c.blur();
                         }),
                         (this.isFocused = function () {
                             return b;
-                        });
+                        }));
                     var E = o.delayedCall(function () {
                             b && x(y);
                         }),
                         S = o.delayedCall(function () {
                             m || ((c.value = h), b && x());
                         });
-                    i.isWebKit ||
+                    (i.isWebKit ||
                         t.addEventListener("changeSelection", function () {
                             t.selection.isEmpty() != y && ((y = !y), E.schedule());
                         }),
                         T(),
-                        b && t.onFocus();
+                        b && t.onFocus());
                     var N = function (e) {
                             return e.selectionStart === 0 && e.selectionEnd === e.value.length;
                         },
@@ -1670,16 +1670,16 @@
                             N(c) ? (t.selectAll(), x()) : k && x(t.selection.isEmpty());
                         },
                         k = null;
-                    (this.setInputHandler = function (e) {
+                    ((this.setInputHandler = function (e) {
                         k = e;
                     }),
                         (this.getInputHandler = function () {
                             return k;
-                        });
+                        }));
                     var L = !1,
                         A = function (e) {
                             if (c.selectionStart === 4 && c.selectionEnd === 5) return;
-                            k && ((e = k(e)), (k = null)),
+                            (k && ((e = k(e)), (k = null)),
                                 v
                                     ? (x(), e && t.onPaste(e), (v = !1))
                                     : e == h.substr(0) && c.selectionStart === 4
@@ -1698,12 +1698,12 @@
                                             (e = e.slice(0, -1)),
                                         e && t.onTextInput(e)),
                                 p && (p = !1),
-                                L && (L = !1);
+                                L && (L = !1));
                         },
                         O = function (e) {
                             if (m) return;
                             var t = c.value;
-                            A(t), T();
+                            (A(t), T());
                         },
                         M = function (e, t, n) {
                             var r = e.clipboardData || window.clipboardData;
@@ -1730,7 +1730,7 @@
                                   (c.value = s),
                                   c.select(),
                                   setTimeout(function () {
-                                      (p = !1), T(), x(), n ? t.onCut() : t.onCopy();
+                                      ((p = !1), T(), x(), n ? t.onCut() : t.onCopy());
                                   }));
                         },
                         D = function (e) {
@@ -1747,15 +1747,15 @@
                                   r.preventDefault(e))
                                 : ((c.value = ""), (v = !0));
                         };
-                    r.addCommandKeyListener(c, t.onCommandKey.bind(t)),
+                    (r.addCommandKeyListener(c, t.onCommandKey.bind(t)),
                         r.addListener(c, "select", C),
                         r.addListener(c, "input", O),
                         r.addListener(c, "cut", D),
                         r.addListener(c, "copy", P),
-                        r.addListener(c, "paste", H);
+                        r.addListener(c, "paste", H));
                     var B = function (e) {
                             if (m || !t.onCompositionStart || t.$readOnly) return;
-                            (m = {}),
+                            ((m = {}),
                                 (m.canUndo = t.session.$undoManager),
                                 t.onCompositionStart(),
                                 setTimeout(j, 0),
@@ -1765,22 +1765,22 @@
                                     (t.insert(""),
                                     t.session.markUndoGroup(),
                                     t.selection.clearSelection()),
-                                t.session.markUndoGroup();
+                                t.session.markUndoGroup());
                         },
                         j = function () {
                             if (!m || !t.onCompositionUpdate || t.$readOnly) return;
                             var e = c.value.replace(/\x01/g, "");
                             if (m.lastValue === e) return;
-                            t.onCompositionUpdate(e),
+                            (t.onCompositionUpdate(e),
                                 m.lastValue && t.undo(),
-                                m.canUndo && (m.lastValue = e);
+                                m.canUndo && (m.lastValue = e));
                             if (m.lastValue) {
                                 var n = t.selection.getRange();
-                                t.insert(m.lastValue),
+                                (t.insert(m.lastValue),
                                     t.session.markUndoGroup(),
                                     (m.range = t.selection.getRange()),
                                     t.selection.setRange(n),
-                                    t.selection.clearSelection();
+                                    t.selection.clearSelection());
                             }
                         },
                         F = function (e) {
@@ -1793,7 +1793,7 @@
                                 if (m) return;
                                 e == n.lastValue ? T() : !n.lastValue && e && (T(), A(e));
                             });
-                            (k = function (i) {
+                            ((k = function (i) {
                                 return (
                                     r && clearTimeout(r),
                                     (i = i.replace(/\x01/g, "")),
@@ -1804,14 +1804,14 @@
                                 t.removeListener("mousedown", F),
                                 e.type == "compositionend" &&
                                     n.range &&
-                                    t.selection.setRange(n.range);
+                                    t.selection.setRange(n.range));
                             var s =
                                 (!!i.isChrome && i.isChrome >= 53) ||
                                 (!!i.isWebKit && i.isWebKit >= 603);
                             s && O();
                         },
                         I = o.delayedCall(j, 50);
-                    r.addListener(c, "compositionstart", B),
+                    (r.addListener(c, "compositionstart", B),
                         r.addListener(c, "compositionupdate", function () {
                             I.schedule();
                         }),
@@ -1829,57 +1829,57 @@
                             c.readOnly = e;
                         }),
                         (this.onContextMenu = function (e) {
-                            (L = !0),
+                            ((L = !0),
                                 x(t.selection.isEmpty()),
                                 t._emit("nativecontextmenu", { target: t, domEvent: e }),
-                                this.moveToMouse(e, !0);
+                                this.moveToMouse(e, !0));
                         }),
                         (this.moveToMouse = function (e, n) {
-                            g || (g = c.style.cssText),
+                            (g || (g = c.style.cssText),
                                 (c.style.cssText =
                                     (n ? "z-index:100000;" : "") +
                                     "height:" +
                                     c.style.height +
                                     ";" +
-                                    (i.isIE ? "opacity:0.1;" : ""));
+                                    (i.isIE ? "opacity:0.1;" : "")));
                             var o = t.container.getBoundingClientRect(),
                                 u = s.computedStyle(t.container),
                                 a = o.top + (parseInt(u.borderTopWidth) || 0),
                                 f = o.left + (parseInt(o.borderLeftWidth) || 0),
                                 l = o.bottom - a - c.clientHeight - 2,
                                 h = function (e) {
-                                    (c.style.left = e.clientX - f - 2 + "px"),
-                                        (c.style.top = Math.min(e.clientY - a - 2, l) + "px");
+                                    ((c.style.left = e.clientX - f - 2 + "px"),
+                                        (c.style.top = Math.min(e.clientY - a - 2, l) + "px"));
                                 };
                             h(e);
                             if (e.type != "mousedown") return;
-                            t.renderer.$keepTextAreaAtCursor &&
+                            (t.renderer.$keepTextAreaAtCursor &&
                                 (t.renderer.$keepTextAreaAtCursor = null),
                                 clearTimeout(q),
-                                i.isWin && r.capture(t.container, h, R);
+                                i.isWin && r.capture(t.container, h, R));
                         }),
-                        (this.onContextMenuClose = R);
+                        (this.onContextMenuClose = R));
                     var q,
                         U = function (e) {
-                            t.textInput.onContextMenu(e), R();
+                            (t.textInput.onContextMenu(e), R());
                         };
-                    r.addListener(c, "mouseup", U),
+                    (r.addListener(c, "mouseup", U),
                         r.addListener(c, "mousedown", function (e) {
-                            e.preventDefault(), R();
+                            (e.preventDefault(), R());
                         }),
                         r.addListener(t.renderer.scroller, "contextmenu", U),
-                        r.addListener(c, "contextmenu", U);
+                        r.addListener(c, "contextmenu", U));
                     if (i.isIOS) {
                         var z = null,
                             W = !1;
-                        e.addEventListener("keydown", function (e) {
-                            z && clearTimeout(z), (W = !0);
+                        (e.addEventListener("keydown", function (e) {
+                            (z && clearTimeout(z), (W = !0));
                         }),
                             e.addEventListener("keyup", function (e) {
                                 z = setTimeout(function () {
                                     W = !1;
                                 }, 100);
-                            });
+                            }));
                         var X = function (e) {
                             if (document.activeElement !== c) return;
                             if (W) return;
@@ -1945,10 +1945,10 @@
                                 }
                             }
                         };
-                        document.addEventListener("selectionchange", X),
+                        (document.addEventListener("selectionchange", X),
                             t.on("destroy", function () {
                                 document.removeEventListener("selectionchange", X);
-                            });
+                            }));
                     }
                 };
             t.TextInput = c;
@@ -1990,53 +1990,53 @@
                             u = t.session.getLine(i);
                         if (r.start.row != i) {
                             var a = t.session.getLine(i - 1);
-                            (s = r.start.row < i - 1 ? 0 : s),
+                            ((s = r.start.row < i - 1 ? 0 : s),
                                 (o += a.length + 1),
-                                (u = a + "\n" + u);
+                                (u = a + "\n" + u));
                         } else if (r.end.row != i) {
                             var f = t.session.getLine(i + 1);
-                            (o = r.end.row > i + 1 ? f.length : o),
+                            ((o = r.end.row > i + 1 ? f.length : o),
                                 (o += u.length + 1),
-                                (u = u + "\n" + f);
+                                (u = u + "\n" + f));
                         }
                         u.length > l &&
                             (s < l && o < l ? (u = u.slice(0, l)) : ((u = "\n"), (s = 0), (o = 1)));
                         var c = u + "\n\n";
-                        c != E && ((n.value = E = c), (S = x = c.length)),
-                            O && ((S = n.selectionStart), (x = n.selectionEnd));
+                        (c != E && ((n.value = E = c), (S = x = c.length)),
+                            O && ((S = n.selectionStart), (x = n.selectionEnd)));
                         if (x != o || S != s)
                             try {
-                                n.setSelectionRange(s, o), (S = s), (x = o);
+                                (n.setSelectionRange(s, o), (S = s), (x = o));
                             } catch (h) {}
                         d = !1;
                     }
                     function R() {
-                        (w = !0), n.blur(), n.focus(), (w = !1);
+                        ((w = !0), n.blur(), n.focus(), (w = !1));
                     }
                     function z(e) {
-                        e.keyCode == 27 &&
+                        (e.keyCode == 27 &&
                             n.value.length < n.selectionStart &&
                             (d || (E = n.value), (S = x = -1), C()),
-                            U();
+                            U());
                     }
                     function X() {
-                        clearTimeout(W),
+                        (clearTimeout(W),
                             (W = setTimeout(function () {
-                                m && ((n.style.cssText = m), (m = "")),
+                                (m && ((n.style.cssText = m), (m = "")),
                                     t.renderer.$keepTextAreaAtCursor == null &&
                                         ((t.renderer.$keepTextAreaAtCursor = !0),
-                                        t.renderer.$moveTextAreaToCursor());
-                            }, 0));
+                                        t.renderer.$moveTextAreaToCursor()));
+                            }, 0)));
                     }
                     if (i.isIOS) return c.call(this, e, t);
                     var n = s.createElement("textarea");
-                    (n.className = "ace_text-input"),
+                    ((n.className = "ace_text-input"),
                         n.setAttribute("wrap", "off"),
                         n.setAttribute("autocorrect", "off"),
                         n.setAttribute("autocapitalize", "off"),
                         n.setAttribute("spellcheck", !1),
                         (n.style.opacity = "0"),
-                        e.insertBefore(n, e.firstChild);
+                        e.insertBefore(n, e.firstChild));
                     var h = !1,
                         p = !1,
                         d = !1,
@@ -2053,13 +2053,13 @@
                     try {
                         var T = document.activeElement === n;
                     } catch (N) {}
-                    r.addListener(n, "blur", function (e) {
+                    (r.addListener(n, "blur", function (e) {
                         if (w) return;
-                        t.onBlur(e), (T = !1);
+                        (t.onBlur(e), (T = !1));
                     }),
                         r.addListener(n, "focus", function (e) {
                             if (w) return;
-                            (T = !0), t.onFocus(e), C();
+                            ((T = !0), t.onFocus(e), C());
                         }),
                         (this.$focusScroll = !1),
                         (this.focus = function () {
@@ -2067,27 +2067,27 @@
                                 return n.focus({ preventScroll: !0 });
                             if (!document.documentElement.contains(n)) return;
                             var e = n.style.top;
-                            (n.style.position = "fixed"), (n.style.top = "0px");
+                            ((n.style.position = "fixed"), (n.style.top = "0px"));
                             var t = n.getBoundingClientRect().top != 0,
                                 r = [];
                             if (t) {
                                 var i = n.parentElement;
                                 while (i && i.nodeType == 1)
-                                    r.push(i),
+                                    (r.push(i),
                                         i.setAttribute("ace_nocontext", !0),
                                         !i.parentElement && i.getRootNode
                                             ? (i = i.getRootNode().host)
-                                            : (i = i.parentElement);
+                                            : (i = i.parentElement));
                             }
-                            n.focus({ preventScroll: !0 }),
+                            (n.focus({ preventScroll: !0 }),
                                 t &&
                                     r.forEach(function (e) {
                                         e.removeAttribute("ace_nocontext");
                                     }),
                                 setTimeout(function () {
-                                    (n.style.position = ""),
-                                        n.style.top == "0px" && (n.style.top = e);
-                                }, 0);
+                                    ((n.style.position = ""),
+                                        n.style.top == "0px" && (n.style.top = e));
+                                }, 0));
                         }),
                         (this.blur = function () {
                             n.blur();
@@ -2097,9 +2097,9 @@
                         }),
                         t.on("beforeEndOperation", function () {
                             if (t.curOp && t.curOp.command.name == "insertstring") return;
-                            d && ((E = n.value = ""), q()), C();
+                            (d && ((E = n.value = ""), q()), C());
                         }),
-                        T && t.onFocus();
+                        T && t.onFocus());
                     var k = function (e) {
                             return (
                                 e.selectionStart === 0 &&
@@ -2114,16 +2114,16 @@
                             h ? (h = !1) : k(n) && (t.selectAll(), C());
                         },
                         A = null;
-                    (this.setInputHandler = function (e) {
+                    ((this.setInputHandler = function (e) {
                         A = e;
                     }),
                         (this.getInputHandler = function () {
                             return A;
-                        });
+                        }));
                     var O = !1,
                         M = function (e, r) {
                             O && (O = !1);
-                            if (p) return C(), e && t.onPaste(e), (p = !1), "";
+                            if (p) return (C(), e && t.onPaste(e), (p = !1), "");
                             var i = n.selectionStart,
                                 s = n.selectionEnd,
                                 o = S,
@@ -2132,14 +2132,14 @@
                                 f = e.length - i,
                                 l = e.length - s,
                                 c = 0;
-                            while (o > 0 && E[c] == e[c]) c++, o--;
-                            (a = a.slice(c)), (c = 1);
+                            while (o > 0 && E[c] == e[c]) (c++, o--);
+                            ((a = a.slice(c)), (c = 1));
                             while (
                                 u > 0 &&
                                 E.length - c > S - 1 &&
                                 E[E.length - c] == e[e.length - c]
                             )
-                                c++, u--;
+                                (c++, u--);
                             return (
                                 (f -= c - 1),
                                 (l -= c - 1),
@@ -2187,7 +2187,7 @@
                                   (n.value = s),
                                   n.select(),
                                   setTimeout(function () {
-                                      (h = !1), C(), i ? t.onCut() : t.onCopy();
+                                      ((h = !1), C(), i ? t.onCut() : t.onCopy());
                                   }));
                         },
                         H = function (e) {
@@ -2204,7 +2204,7 @@
                                   r.preventDefault(e))
                                 : ((n.value = ""), (p = !0));
                         };
-                    r.addCommandKeyListener(n, t.onCommandKey.bind(t)),
+                    (r.addCommandKeyListener(n, t.onCommandKey.bind(t)),
                         r.addListener(n, "select", L),
                         r.addListener(n, "input", _),
                         r.addListener(n, "cut", H),
@@ -2223,14 +2223,14 @@
                                     case 88:
                                         H(e);
                                 }
-                            });
+                            }));
                     var F = function (e) {
                             if (d || !t.onCompositionStart || t.$readOnly) return;
                             d = {};
                             if (b) return;
-                            setTimeout(I, 0), t.on("mousedown", R);
+                            (setTimeout(I, 0), t.on("mousedown", R));
                             var r = t.getSelectionRange();
-                            (r.end.row = r.start.row),
+                            ((r.end.row = r.start.row),
                                 (r.end.column = r.start.column),
                                 (d.markerRange = r),
                                 (d.selectionStart = S),
@@ -2238,7 +2238,7 @@
                                 d.useTextareaForIME
                                     ? ((n.value = ""), (E = ""), (S = 0), (x = 0))
                                     : (n.msGetInputContext && (d.context = n.msGetInputContext()),
-                                      n.getInputContext && (d.context = n.getInputContext()));
+                                      n.getInputContext && (d.context = n.getInputContext())));
                         },
                         I = function () {
                             if (!d || !t.onCompositionUpdate || t.$readOnly) return;
@@ -2246,21 +2246,21 @@
                             if (d.useTextareaForIME) t.onCompositionUpdate(n.value);
                             else {
                                 var e = n.value;
-                                M(e),
+                                (M(e),
                                     d.markerRange &&
                                         (d.context &&
                                             (d.markerRange.start.column = d.selectionStart =
                                                 d.context.compositionStartOffset),
                                         (d.markerRange.end.column =
-                                            d.markerRange.start.column + x - d.selectionStart));
+                                            d.markerRange.start.column + x - d.selectionStart)));
                             }
                         },
                         q = function (e) {
                             if (!t.onCompositionEnd || t.$readOnly) return;
-                            (d = !1), t.onCompositionEnd(), t.off("mousedown", R), e && _();
+                            ((d = !1), t.onCompositionEnd(), t.off("mousedown", R), e && _());
                         },
                         U = o.delayedCall(I, 50).schedule.bind(null, null);
-                    r.addListener(n, "compositionstart", F),
+                    (r.addListener(n, "compositionstart", F),
                         r.addListener(n, "compositionupdate", I),
                         r.addListener(n, "keyup", z),
                         r.addListener(n, "keydown", U),
@@ -2269,7 +2269,7 @@
                             return n;
                         }),
                         (this.setCommandMode = function (e) {
-                            (b = e), (n.readOnly = !1);
+                            ((b = e), (n.readOnly = !1));
                         }),
                         (this.setReadOnly = function (e) {
                             b || (n.readOnly = e);
@@ -2278,46 +2278,46 @@
                             y = e;
                         }),
                         (this.onContextMenu = function (e) {
-                            (O = !0),
+                            ((O = !0),
                                 C(),
                                 t._emit("nativecontextmenu", { target: t, domEvent: e }),
-                                this.moveToMouse(e, !0);
+                                this.moveToMouse(e, !0));
                         }),
                         (this.moveToMouse = function (e, o) {
-                            m || (m = n.style.cssText),
+                            (m || (m = n.style.cssText),
                                 (n.style.cssText =
                                     (o ? "z-index:100000;" : "") +
                                     (i.isIE ? "opacity:0.1;" : "") +
                                     "text-indent: -" +
                                     (S + x) * t.renderer.characterWidth * 0.5 +
-                                    "px;");
+                                    "px;"));
                             var u = t.container.getBoundingClientRect(),
                                 a = s.computedStyle(t.container),
                                 f = u.top + (parseInt(a.borderTopWidth) || 0),
                                 l = u.left + (parseInt(u.borderLeftWidth) || 0),
                                 c = u.bottom - f - n.clientHeight - 2,
                                 h = function (e) {
-                                    (n.style.left = e.clientX - l - 2 + "px"),
-                                        (n.style.top = Math.min(e.clientY - f - 2, c) + "px");
+                                    ((n.style.left = e.clientX - l - 2 + "px"),
+                                        (n.style.top = Math.min(e.clientY - f - 2, c) + "px"));
                                 };
                             h(e);
                             if (e.type != "mousedown") return;
-                            t.renderer.$keepTextAreaAtCursor &&
+                            (t.renderer.$keepTextAreaAtCursor &&
                                 (t.renderer.$keepTextAreaAtCursor = null),
                                 clearTimeout(W),
-                                i.isWin && r.capture(t.container, h, X);
+                                i.isWin && r.capture(t.container, h, X));
                         }),
-                        (this.onContextMenuClose = X);
+                        (this.onContextMenuClose = X));
                     var W,
                         V = function (e) {
-                            t.textInput.onContextMenu(e), X();
+                            (t.textInput.onContextMenu(e), X());
                         };
-                    r.addListener(n, "mouseup", V),
+                    (r.addListener(n, "mouseup", V),
                         r.addListener(n, "mousedown", function (e) {
-                            e.preventDefault(), X();
+                            (e.preventDefault(), X());
                         }),
                         r.addListener(t.renderer.scroller, "contextmenu", V),
-                        r.addListener(n, "contextmenu", V);
+                        r.addListener(n, "contextmenu", V));
                 };
             t.TextInput = h;
         },
@@ -2330,12 +2330,12 @@
             function o(e) {
                 e.$clickSelection = null;
                 var t = e.editor;
-                t.setDefaultHandler("mousedown", this.onMouseDown.bind(e)),
+                (t.setDefaultHandler("mousedown", this.onMouseDown.bind(e)),
                     t.setDefaultHandler("dblclick", this.onDoubleClick.bind(e)),
                     t.setDefaultHandler("tripleclick", this.onTripleClick.bind(e)),
                     t.setDefaultHandler("quadclick", this.onQuadClick.bind(e)),
                     t.setDefaultHandler("mousewheel", this.onMouseWheel.bind(e)),
-                    t.setDefaultHandler("touchmove", this.onTouchMove.bind(e));
+                    t.setDefaultHandler("touchmove", this.onTouchMove.bind(e)));
                 var n = [
                     "select",
                     "startSelect",
@@ -2347,11 +2347,11 @@
                     "dragWaitEnd",
                     "focusWait",
                 ];
-                n.forEach(function (t) {
+                (n.forEach(function (t) {
                     e[t] = this[t];
                 }, this),
                     (e.selectByLines = this.extendSelectionBy.bind(e, "getLineRange")),
-                    (e.selectByWords = this.extendSelectionBy.bind(e, "getWordRange"));
+                    (e.selectByWords = this.extendSelectionBy.bind(e, "getWordRange")));
             }
             function u(e, t, n, r) {
                 return Math.sqrt(Math.pow(n - e, 2) + Math.pow(r - t, 2));
@@ -2368,8 +2368,8 @@
             var r = e("../lib/useragent"),
                 i = 0,
                 s = 250;
-            (function () {
-                (this.onMouseDown = function (e) {
+            ((function () {
+                ((this.onMouseDown = function (e) {
                     var t = e.inSelection(),
                         n = e.getDocumentPosition();
                     this.mousedownEvent = e;
@@ -2378,17 +2378,17 @@
                     if (s !== 0) {
                         var o = i.getSelectionRange(),
                             u = o.isEmpty();
-                        (u || s == 1) && i.selection.moveToPosition(n),
+                        ((u || s == 1) && i.selection.moveToPosition(n),
                             s == 2 &&
                                 (i.textInput.onContextMenu(e.domEvent),
-                                r.isMozilla || e.preventDefault());
+                                r.isMozilla || e.preventDefault()));
                         return;
                     }
                     this.mousedownEvent.time = Date.now();
                     if (t && !i.isFocused()) {
                         i.focus();
                         if (this.$focusTimeout && !this.$clickSelection && !i.inMultiSelectMode) {
-                            this.setState("focusWait"), this.captureMouse(e);
+                            (this.setState("focusWait"), this.captureMouse(e));
                             return;
                         }
                     }
@@ -2402,13 +2402,13 @@
                         e = e || this.editor.renderer.screenToTextCoordinates(this.x, this.y);
                         var n = this.editor;
                         if (!this.mousedownEvent) return;
-                        this.mousedownEvent.getShiftKey()
+                        (this.mousedownEvent.getShiftKey()
                             ? n.selection.selectToPosition(e)
                             : t || n.selection.moveToPosition(e),
                             t || this.select(),
                             n.renderer.scroller.setCapture && n.renderer.scroller.setCapture(),
                             n.setStyle("ace_selecting"),
-                            this.setState("select");
+                            this.setState("select"));
                     }),
                     (this.select = function () {
                         var e,
@@ -2420,11 +2420,11 @@
                             else if (r == 1) e = this.$clickSelection.start;
                             else {
                                 var i = a(this.$clickSelection, n);
-                                (n = i.cursor), (e = i.anchor);
+                                ((n = i.cursor), (e = i.anchor));
                             }
                             t.selection.setSelectionAnchor(e.row, e.column);
                         }
-                        t.selection.selectToPosition(n), t.renderer.scrollCursorIntoView();
+                        (t.selection.selectToPosition(n), t.renderer.scrollCursorIntoView());
                     }),
                     (this.extendSelectionBy = function (e) {
                         var t,
@@ -2440,24 +2440,24 @@
                             } else if (o == 1 && s >= 0) {
                                 t = this.$clickSelection.start;
                                 if (i.start.row != r.row || i.start.column != r.column) r = i.end;
-                            } else if (s == -1 && o == 1) (r = i.end), (t = i.start);
+                            } else if (s == -1 && o == 1) ((r = i.end), (t = i.start));
                             else {
                                 var u = a(this.$clickSelection, r);
-                                (r = u.cursor), (t = u.anchor);
+                                ((r = u.cursor), (t = u.anchor));
                             }
                             n.selection.setSelectionAnchor(t.row, t.column);
                         }
-                        n.selection.selectToPosition(r), n.renderer.scrollCursorIntoView();
+                        (n.selection.selectToPosition(r), n.renderer.scrollCursorIntoView());
                     }),
                     (this.selectEnd =
                         this.selectAllEnd =
                         this.selectByWordsEnd =
                         this.selectByLinesEnd =
                             function () {
-                                (this.$clickSelection = null),
+                                ((this.$clickSelection = null),
                                     this.editor.unsetStyle("ace_selecting"),
                                     this.editor.renderer.scroller.releaseCapture &&
-                                        this.editor.renderer.scroller.releaseCapture();
+                                        this.editor.renderer.scroller.releaseCapture());
                             }),
                     (this.focusWait = function () {
                         var e = u(this.mousedownEvent.x, this.mousedownEvent.y, this.x, this.y),
@@ -2470,30 +2470,30 @@
                             n = this.editor,
                             r = n.session,
                             i = r.getBracketRange(t);
-                        i
+                        (i
                             ? (i.isEmpty() && (i.start.column--, i.end.column++),
                               this.setState("select"))
                             : ((i = n.selection.getWordRange(t.row, t.column)),
                               this.setState("selectByWords")),
                             (this.$clickSelection = i),
-                            this.select();
+                            this.select());
                     }),
                     (this.onTripleClick = function (e) {
                         var t = e.getDocumentPosition(),
                             n = this.editor;
                         this.setState("selectByLines");
                         var r = n.getSelectionRange();
-                        r.isMultiLine() && r.contains(t.row, t.column)
+                        (r.isMultiLine() && r.contains(t.row, t.column)
                             ? ((this.$clickSelection = n.selection.getLineRange(r.start.row)),
                               (this.$clickSelection.end = n.selection.getLineRange(r.end.row).end))
                             : (this.$clickSelection = n.selection.getLineRange(t.row)),
-                            this.select();
+                            this.select());
                     }),
                     (this.onQuadClick = function (e) {
                         var t = this.editor;
-                        t.selectAll(),
+                        (t.selectAll(),
                             (this.$clickSelection = t.getSelectionRange()),
-                            this.setState("selectAll");
+                            this.setState("selectAll"));
                     }),
                     (this.onMouseWheel = function (e) {
                         if (e.getAccelKey()) return;
@@ -2511,8 +2511,8 @@
                         i < s && ((o = (o + n.vx) / 2), (u = (u + n.vy) / 2));
                         var a = Math.abs(o / u),
                             f = !1;
-                        a >= 1 && t.renderer.isScrollableBy(e.wheelX * e.speed, 0) && (f = !0),
-                            a <= 1 && t.renderer.isScrollableBy(0, e.wheelY * e.speed) && (f = !0);
+                        (a >= 1 && t.renderer.isScrollableBy(e.wheelX * e.speed, 0) && (f = !0),
+                            a <= 1 && t.renderer.isScrollableBy(0, e.wheelY * e.speed) && (f = !0));
                         if (f) n.allowed = r;
                         else if (r - n.allowed < s) {
                             var l =
@@ -2520,7 +2520,7 @@
                                 Math.abs(u) <= 1.1 * Math.abs(n.vy);
                             l ? ((f = !0), (n.allowed = r)) : (n.allowed = 0);
                         }
-                        (n.t = r), (n.vx = o), (n.vy = u);
+                        ((n.t = r), (n.vx = o), (n.vy = u));
                         if (f)
                             return (
                                 t.renderer.scrollBy(e.wheelX * e.speed, e.wheelY * e.speed),
@@ -2529,9 +2529,9 @@
                     }),
                     (this.onTouchMove = function (e) {
                         this.editor._emit("mousewheel", e);
-                    });
+                    }));
             }).call(o.prototype),
-                (t.DefaultHandlers = o);
+                (t.DefaultHandlers = o));
         },
     ),
     define(
@@ -2540,12 +2540,12 @@
         function (e, t, n) {
             "use strict";
             function s(e) {
-                (this.isOpen = !1), (this.$element = null), (this.$parentNode = e);
+                ((this.isOpen = !1), (this.$element = null), (this.$parentNode = e));
             }
             var r = e("./lib/oop"),
                 i = e("./lib/dom");
-            (function () {
-                (this.$init = function () {
+            ((function () {
+                ((this.$init = function () {
                     return (
                         (this.$element = i.createElement("div")),
                         (this.$element.className = "ace_tooltip"),
@@ -2564,17 +2564,17 @@
                         this.getElement().innerHTML = e;
                     }),
                     (this.setPosition = function (e, t) {
-                        (this.getElement().style.left = e + "px"),
-                            (this.getElement().style.top = t + "px");
+                        ((this.getElement().style.left = e + "px"),
+                            (this.getElement().style.top = t + "px"));
                     }),
                     (this.setClassName = function (e) {
                         i.addCssClass(this.getElement(), e);
                     }),
                     (this.show = function (e, t, n) {
-                        e != null && this.setText(e),
+                        (e != null && this.setText(e),
                             t != null && n != null && this.setPosition(t, n),
                             this.isOpen ||
-                                ((this.getElement().style.display = "block"), (this.isOpen = !0));
+                                ((this.getElement().style.display = "block"), (this.isOpen = !0)));
                     }),
                     (this.hide = function () {
                         this.isOpen &&
@@ -2587,13 +2587,13 @@
                         return this.getElement().offsetWidth;
                     }),
                     (this.destroy = function () {
-                        (this.isOpen = !1),
+                        ((this.isOpen = !1),
                             this.$element &&
                                 this.$element.parentNode &&
-                                this.$element.parentNode.removeChild(this.$element);
-                    });
+                                this.$element.parentNode.removeChild(this.$element));
+                    }));
             }).call(s.prototype),
-                (t.Tooltip = s);
+                (t.Tooltip = s));
         },
     ),
     define(
@@ -2621,26 +2621,26 @@
                         if (a > t.session.documentToScreenRow(l.row, l.column)) return c();
                     }
                     if (f == s) return;
-                    (f = s.text.join("<br/>")),
+                    ((f = s.text.join("<br/>")),
                         i.setHtml(f),
                         i.show(),
                         t._signal("showGutterTooltip", i),
-                        t.on("mousewheel", c);
+                        t.on("mousewheel", c));
                     if (e.$tooltipFollowsMouse) h(u);
                     else {
                         var p = u.domEvent.target,
                             d = p.getBoundingClientRect(),
                             v = i.getElement().style;
-                        (v.left = d.right + "px"), (v.top = d.bottom + "px");
+                        ((v.left = d.right + "px"), (v.top = d.bottom + "px"));
                     }
                 }
                 function c() {
-                    o && (o = clearTimeout(o)),
+                    (o && (o = clearTimeout(o)),
                         f &&
                             (i.hide(),
                             (f = null),
                             t._signal("hideGutterTooltip", i),
-                            t.removeEventListener("mousewheel", c));
+                            t.removeEventListener("mousewheel", c)));
                 }
                 function h(e) {
                     i.setPosition(e.x, e.y);
@@ -2656,29 +2656,29 @@
                         o = t.session.selection;
                     if (r.getShiftKey()) o.selectTo(s, 0);
                     else {
-                        if (r.domEvent.detail == 2) return t.selectAll(), r.preventDefault();
+                        if (r.domEvent.detail == 2) return (t.selectAll(), r.preventDefault());
                         e.$clickSelection = t.selection.getLineRange(s);
                     }
-                    return e.setState("selectByLines"), e.captureMouse(r), r.preventDefault();
+                    return (e.setState("selectByLines"), e.captureMouse(r), r.preventDefault());
                 });
                 var o, u, f;
-                e.editor.setDefaultHandler("guttermousemove", function (t) {
+                (e.editor.setDefaultHandler("guttermousemove", function (t) {
                     var n = t.domEvent.target || t.domEvent.srcElement;
                     if (r.hasCssClass(n, "ace_fold-widget")) return c();
-                    f && e.$tooltipFollowsMouse && h(t), (u = t);
+                    (f && e.$tooltipFollowsMouse && h(t), (u = t));
                     if (o) return;
                     o = setTimeout(function () {
-                        (o = null), u && !e.isMousePressed ? l() : c();
+                        ((o = null), u && !e.isMousePressed ? l() : c());
                     }, 50);
                 }),
                     s.addListener(t.renderer.$gutter, "mouseout", function (e) {
                         u = null;
                         if (!f || o) return;
                         o = setTimeout(function () {
-                            (o = null), c();
+                            ((o = null), c());
                         }, 50);
                     }),
-                    t.on("changeSession", c);
+                    t.on("changeSession", c));
             }
             function a(e) {
                 o.call(this, e);
@@ -2687,21 +2687,21 @@
                 i = e("../lib/oop"),
                 s = e("../lib/event"),
                 o = e("../tooltip").Tooltip;
-            i.inherits(a, o),
+            (i.inherits(a, o),
                 function () {
                     this.setPosition = function (e, t) {
                         var n = window.innerWidth || document.documentElement.clientWidth,
                             r = window.innerHeight || document.documentElement.clientHeight,
                             i = this.getWidth(),
                             s = this.getHeight();
-                        (e += 15),
+                        ((e += 15),
                             (t += 15),
                             e + i > n && (e -= e + i - n),
                             t + s > r && (t -= 20 + s),
-                            o.prototype.setPosition.call(this, e, t);
+                            o.prototype.setPosition.call(this, e, t));
                     };
                 }.call(a.prototype),
-                (t.GutterHandler = u);
+                (t.GutterHandler = u));
         },
     ),
     define(
@@ -2712,24 +2712,24 @@
             var r = e("../lib/event"),
                 i = e("../lib/useragent"),
                 s = (t.MouseEvent = function (e, t) {
-                    (this.domEvent = e),
+                    ((this.domEvent = e),
                         (this.editor = t),
                         (this.x = this.clientX = e.clientX),
                         (this.y = this.clientY = e.clientY),
                         (this.$pos = null),
                         (this.$inSelection = null),
                         (this.propagationStopped = !1),
-                        (this.defaultPrevented = !1);
+                        (this.defaultPrevented = !1));
                 });
             (function () {
-                (this.stopPropagation = function () {
-                    r.stopPropagation(this.domEvent), (this.propagationStopped = !0);
+                ((this.stopPropagation = function () {
+                    (r.stopPropagation(this.domEvent), (this.propagationStopped = !0));
                 }),
                     (this.preventDefault = function () {
-                        r.preventDefault(this.domEvent), (this.defaultPrevented = !0);
+                        (r.preventDefault(this.domEvent), (this.defaultPrevented = !0));
                     }),
                     (this.stop = function () {
-                        this.stopPropagation(), this.preventDefault();
+                        (this.stopPropagation(), this.preventDefault());
                     }),
                     (this.getDocumentPosition = function () {
                         return this.$pos
@@ -2763,7 +2763,7 @@
                           }
                         : function () {
                               return this.domEvent.ctrlKey;
-                          });
+                          }));
             }).call(s.prototype);
         },
     ),
@@ -2777,7 +2777,7 @@
                     var r = Date.now(),
                         i = !n || e.row != n.row,
                         s = !n || e.column != n.column;
-                    if (!S || i || s) t.moveCursorToPosition(e), (S = r), (x = { x: p, y: d });
+                    if (!S || i || s) (t.moveCursorToPosition(e), (S = r), (x = { x: p, y: d }));
                     else {
                         var o = l(x.x, x.y, p, d);
                         o > a
@@ -2797,8 +2797,8 @@
                         f = Math.min(a.x.left, a.x.right),
                         l = Math.min(a.y.top, a.y.bottom),
                         c = { row: e.row, column: e.column };
-                    f / s <= 2 && (c.column += a.x.left < a.x.right ? -3 : 2),
-                        l / i <= 1 && (c.row += a.y.top < a.y.bottom ? -1 : 1);
+                    (f / s <= 2 && (c.column += a.x.left < a.x.right ? -3 : 2),
+                        l / i <= 1 && (c.row += a.y.top < a.y.bottom ? -1 : 1));
                     var h = e.row != c.row,
                         v = e.column != c.column,
                         m = !n || e.row != n.row;
@@ -2810,10 +2810,10 @@
                 }
                 function C() {
                     var e = g;
-                    (g = t.renderer.screenToTextCoordinates(p, d)), T(g, e), N(g, e);
+                    ((g = t.renderer.screenToTextCoordinates(p, d)), T(g, e), N(g, e));
                 }
                 function k() {
-                    (m = t.selection.toOrientedRange()),
+                    ((m = t.selection.toOrientedRange()),
                         (h = t.session.addMarker(m, "ace_selection", t.getSelectionStyle())),
                         t.clearSelection(),
                         t.isFocused() && t.renderer.$cursorLayer.setBlinking(!1),
@@ -2821,10 +2821,10 @@
                         C(),
                         (v = setInterval(C, 20)),
                         (y = 0),
-                        i.addListener(document, "mousemove", O);
+                        i.addListener(document, "mousemove", O));
                 }
                 function L() {
-                    clearInterval(v),
+                    (clearInterval(v),
                         t.session.removeMarker(h),
                         (h = null),
                         t.selection.fromOrientedRange(m),
@@ -2836,7 +2836,7 @@
                         (y = 0),
                         (E = null),
                         (S = null),
-                        i.removeListener(document, "mousemove", O);
+                        i.removeListener(document, "mousemove", O));
                 }
                 function O() {
                     A == null &&
@@ -2873,16 +2873,16 @@
                 }
                 var t = e.editor,
                     n = r.createElement("img");
-                (n.src =
+                ((n.src =
                     "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="),
                     s.isOpera &&
                         (n.style.cssText =
-                            "width:1px;height:1px;position:fixed;top:0;left:0;z-index:2147483647;opacity:0;");
+                            "width:1px;height:1px;position:fixed;top:0;left:0;z-index:2147483647;opacity:0;"));
                 var f = ["dragWait", "dragWaitEnd", "startDrag", "dragReadyEnd", "onMouseDrag"];
-                f.forEach(function (t) {
+                (f.forEach(function (t) {
                     e[t] = this[t];
                 }, this),
-                    t.addEventListener("mousedown", this.onMouseDown.bind(e));
+                    t.addEventListener("mousedown", this.onMouseDown.bind(e)));
                 var c = t.container,
                     h,
                     p,
@@ -2896,36 +2896,36 @@
                     E,
                     S,
                     x;
-                (this.onDragStart = function (e) {
+                ((this.onDragStart = function (e) {
                     if (this.cancelDrag || !c.draggable) {
                         var r = this;
                         return (
                             setTimeout(function () {
-                                r.startSelect(), r.captureMouse(e);
+                                (r.startSelect(), r.captureMouse(e));
                             }, 0),
                             e.preventDefault()
                         );
                     }
                     m = t.getSelectionRange();
                     var i = e.dataTransfer;
-                    (i.effectAllowed = t.getReadOnly() ? "copy" : "copyMove"),
+                    ((i.effectAllowed = t.getReadOnly() ? "copy" : "copyMove"),
                         s.isOpera && (t.container.appendChild(n), (n.scrollTop = 0)),
                         i.setDragImage && i.setDragImage(n, 0, 0),
                         s.isOpera && t.container.removeChild(n),
                         i.clearData(),
                         i.setData("Text", t.session.getTextRange()),
                         (w = !0),
-                        this.setState("drag");
+                        this.setState("drag"));
                 }),
                     (this.onDragEnd = function (e) {
-                        (c.draggable = !1), (w = !1), this.setState(null);
+                        ((c.draggable = !1), (w = !1), this.setState(null));
                         if (!t.getReadOnly()) {
                             var n = e.dataTransfer.dropEffect;
-                            !b && n == "move" && t.session.remove(t.getSelectionRange()),
-                                t.renderer.$cursorLayer.setBlinking(!0);
+                            (!b && n == "move" && t.session.remove(t.getSelectionRange()),
+                                t.renderer.$cursorLayer.setBlinking(!0));
                         }
-                        this.editor.unsetStyle("ace_dragging"),
-                            this.editor.renderer.setCursorStyle("");
+                        (this.editor.unsetStyle("ace_dragging"),
+                            this.editor.renderer.setCursorStyle(""));
                     }),
                     (this.onDragEnter = function (e) {
                         if (t.getReadOnly() || !M(e.dataTransfer)) return;
@@ -2951,7 +2951,7 @@
                     }),
                     (this.onDragLeave = function (e) {
                         y--;
-                        if (y <= 0 && h) return L(), (b = null), i.preventDefault(e);
+                        if (y <= 0 && h) return (L(), (b = null), i.preventDefault(e));
                     }),
                     (this.onDrop = function (e) {
                         if (!g) return;
@@ -2968,16 +2968,18 @@
                             }
                         else {
                             var r = n.getData("Text");
-                            (m = { start: g, end: t.session.insert(g, r) }), t.focus(), (b = null);
+                            ((m = { start: g, end: t.session.insert(g, r) }),
+                                t.focus(),
+                                (b = null));
                         }
-                        return L(), i.preventDefault(e);
+                        return (L(), i.preventDefault(e));
                     }),
                     i.addListener(c, "dragstart", this.onDragStart.bind(e)),
                     i.addListener(c, "dragend", this.onDragEnd.bind(e)),
                     i.addListener(c, "dragenter", this.onDragEnter.bind(e)),
                     i.addListener(c, "dragover", this.onDragOver.bind(e)),
                     i.addListener(c, "dragleave", this.onDragLeave.bind(e)),
-                    i.addListener(c, "drop", this.onDrop.bind(e));
+                    i.addListener(c, "drop", this.onDrop.bind(e)));
                 var A = null;
             }
             function l(e, t, n, r) {
@@ -2989,32 +2991,32 @@
                 o = 200,
                 u = 200,
                 a = 5;
-            (function () {
-                (this.dragWait = function () {
+            ((function () {
+                ((this.dragWait = function () {
                     var e = Date.now() - this.mousedownEvent.time;
                     e > this.editor.getDragDelay() && this.startDrag();
                 }),
                     (this.dragWaitEnd = function () {
                         var e = this.editor.container;
-                        (e.draggable = !1),
+                        ((e.draggable = !1),
                             this.startSelect(this.mousedownEvent.getDocumentPosition()),
-                            this.selectEnd();
+                            this.selectEnd());
                     }),
                     (this.dragReadyEnd = function (e) {
-                        this.editor.renderer.$cursorLayer.setBlinking(!this.editor.getReadOnly()),
+                        (this.editor.renderer.$cursorLayer.setBlinking(!this.editor.getReadOnly()),
                             this.editor.unsetStyle("ace_dragging"),
                             this.editor.renderer.setCursorStyle(""),
-                            this.dragWaitEnd();
+                            this.dragWaitEnd());
                     }),
                     (this.startDrag = function () {
                         this.cancelDrag = !1;
                         var e = this.editor,
                             t = e.container;
-                        (t.draggable = !0),
+                        ((t.draggable = !0),
                             e.renderer.$cursorLayer.setBlinking(!1),
-                            e.setStyle("ace_dragging");
+                            e.setStyle("ace_dragging"));
                         var n = s.isWin ? "default" : "move";
-                        e.renderer.setCursorStyle(n), this.setState("dragReady");
+                        (e.renderer.setCursorStyle(n), this.setState("dragReady"));
                     }),
                     (this.onMouseDrag = function (e) {
                         var t = this.editor.container;
@@ -3050,29 +3052,29 @@
                                 }
                                 this.setState("dragWait");
                             } else this.startDrag();
-                            this.captureMouse(e, this.onMouseDrag.bind(this)),
-                                (e.defaultPrevented = !0);
+                            (this.captureMouse(e, this.onMouseDrag.bind(this)),
+                                (e.defaultPrevented = !0));
                         }
-                    });
+                    }));
             }).call(f.prototype),
-                (t.DragdropHandler = f);
+                (t.DragdropHandler = f));
         },
     ),
     define("ace/lib/net", ["require", "exports", "module", "ace/lib/dom"], function (e, t, n) {
         "use strict";
         var r = e("./dom");
-        (t.get = function (e, t) {
+        ((t.get = function (e, t) {
             var n = new XMLHttpRequest();
-            n.open("GET", e, !0),
+            (n.open("GET", e, !0),
                 (n.onreadystatechange = function () {
                     n.readyState === 4 && t(n.responseText);
                 }),
-                n.send(null);
+                n.send(null));
         }),
             (t.loadScript = function (e, t) {
                 var n = r.getDocumentHead(),
                     i = document.createElement("script");
-                (i.src = e),
+                ((i.src = e),
                     n.appendChild(i),
                     (i.onload = i.onreadystatechange =
                         function (e, n) {
@@ -3082,13 +3084,13 @@
                                 i.readyState == "loaded" ||
                                 i.readyState == "complete"
                             )
-                                (i = i.onload = i.onreadystatechange = null), n || t();
-                        });
+                                ((i = i.onload = i.onreadystatechange = null), n || t());
+                        }));
             }),
             (t.qualifyURL = function (e) {
                 var t = document.createElement("a");
-                return (t.href = e), t.href;
-            });
+                return ((t.href = e), t.href);
+            }));
     }),
     define("ace/lib/event_emitter", ["require", "exports", "module"], function (e, t, n) {
         "use strict";
@@ -3099,18 +3101,18 @@
             s = function () {
                 this.defaultPrevented = !0;
             };
-        (r._emit = r._dispatchEvent =
+        ((r._emit = r._dispatchEvent =
             function (e, t) {
-                this._eventRegistry || (this._eventRegistry = {}),
-                    this._defaultHandlers || (this._defaultHandlers = {});
+                (this._eventRegistry || (this._eventRegistry = {}),
+                    this._defaultHandlers || (this._defaultHandlers = {}));
                 var n = this._eventRegistry[e] || [],
                     r = this._defaultHandlers[e];
                 if (!n.length && !r) return;
                 if (typeof t != "object" || !t) t = {};
-                t.type || (t.type = e),
+                (t.type || (t.type = e),
                     t.stopPropagation || (t.stopPropagation = i),
                     t.preventDefault || (t.preventDefault = s),
-                    (n = n.slice());
+                    (n = n.slice()));
                 for (var o = 0; o < n.length; o++) {
                     n[o](t, this);
                     if (t.propagationStopped) break;
@@ -3127,7 +3129,7 @@
                 var n = this;
                 t &&
                     this.addEventListener(e, function r() {
-                        n.removeEventListener(e, r), t.apply(null, arguments);
+                        (n.removeEventListener(e, r), t.apply(null, arguments));
                     });
             }),
             (r.setDefaultHandler = function (e, t) {
@@ -3136,7 +3138,7 @@
                 if (n[e]) {
                     var r = n[e],
                         i = n._disabled_[e];
-                    i || (n._disabled_[e] = i = []), i.push(r);
+                    (i || (n._disabled_[e] = i = []), i.push(r));
                     var s = i.indexOf(t);
                     s != -1 && i.splice(s, 1);
                 }
@@ -3175,7 +3177,7 @@
             (r.removeAllListeners = function (e) {
                 this._eventRegistry && (this._eventRegistry[e] = []);
             }),
-            (t.EventEmitter = r);
+            (t.EventEmitter = r));
     }),
     define(
         "ace/lib/app_config",
@@ -3189,11 +3191,11 @@
             }
             function u(e, t) {
                 var n = new Error(e);
-                (n.data = t),
+                ((n.data = t),
                     typeof console == "object" && console.error && console.error(n),
                     setTimeout(function () {
                         throw n;
-                    });
+                    }));
             }
             var r = e("./oop"),
                 i = e("./event_emitter").EventEmitter,
@@ -3224,7 +3226,7 @@
                         if (!n) return o('misspelled option "' + e + '"');
                         if (n.forwardTo)
                             return this[n.forwardTo] && this[n.forwardTo].setOption(e, t);
-                        n.handlesSet || (this["$" + e] = t), n && n.set && n.set.call(this, t);
+                        (n.handlesSet || (this["$" + e] = t), n && n.set && n.set.call(this, t));
                     },
                     getOption: function (e) {
                         var t = this.$options[e];
@@ -3240,17 +3242,17 @@
                 a = function () {
                     this.$defaultOptions = {};
                 };
-            (function () {
-                r.implement(this, i),
+            ((function () {
+                (r.implement(this, i),
                     (this.defineOptions = function (e, t, n) {
                         return (
                             e.$options || (this.$defaultOptions[t] = e.$options = {}),
                             Object.keys(n).forEach(function (t) {
                                 var r = n[t];
-                                typeof r == "string" && (r = { forwardTo: r }),
+                                (typeof r == "string" && (r = { forwardTo: r }),
                                     r.name || (r.name = t),
                                     (e.$options[r.name] = r),
-                                    "initialValue" in r && (e["$" + r.name] = r.initialValue);
+                                    "initialValue" in r && (e["$" + r.name] = r.initialValue));
                             }),
                             r.implement(e, s),
                             this
@@ -3275,9 +3277,9 @@
                         }, this);
                     }),
                     (this.warn = o),
-                    (this.reportError = u);
+                    (this.reportError = u));
             }).call(a.prototype),
-                (t.AppConfig = a);
+                (t.AppConfig = a));
         },
     ),
     define(
@@ -3314,12 +3316,12 @@
                     var b = d.match(/^(.*)\/ace(\-\w+)?\.js(\?|$)/);
                     b && (s = b[1]);
                 }
-                s && ((i.base = i.base || s), (i.packaged = !0)),
+                (s && ((i.base = i.base || s), (i.packaged = !0)),
                     (i.basePath = i.base),
                     (i.workerPath = i.workerPath || i.base),
                     (i.modePath = i.modePath || i.base),
                     (i.themePath = i.themePath || i.base),
-                    delete i.base;
+                    delete i.base);
                 for (var w in i) typeof i[w] != "undefined" && t.set(w, i[w]);
             }
             function c(e) {
@@ -3344,7 +3346,7 @@
                     suffix: ".js",
                     $moduleUrls: {},
                 };
-            (t.get = function (e) {
+            ((t.get = function (e) {
                 if (!a.hasOwnProperty(e)) throw new Error("Unknown config key: " + e);
                 return a[e];
             }),
@@ -3385,21 +3387,21 @@
                         i = e(n);
                     } catch (u) {}
                     if (i && !t.$loading[n]) return r && r(i);
-                    t.$loading[n] || (t.$loading[n] = []), t.$loading[n].push(r);
+                    (t.$loading[n] || (t.$loading[n] = []), t.$loading[n].push(r));
                     if (t.$loading[n].length > 1) return;
                     var a = function () {
                         e([n], function (e) {
                             t._emit("load.module", { name: n, module: e });
                             var r = t.$loading[n];
-                            (t.$loading[n] = null),
+                            ((t.$loading[n] = null),
                                 r.forEach(function (t) {
                                     t && t(e);
-                                });
+                                }));
                         });
                     };
                     if (!t.get("packaged")) return a();
-                    s.loadScript(t.moduleUrl(n, o), a), f();
-                });
+                    (s.loadScript(t.moduleUrl(n, o), a), f());
+                }));
             var f = function () {
                 !a.basePath &&
                     !a.workerPath &&
@@ -3441,7 +3443,7 @@
                 f = e("../config"),
                 l = function (e) {
                     var t = this;
-                    (this.editor = e), new s(this), new o(this), new a(this);
+                    ((this.editor = e), new s(this), new o(this), new a(this));
                     var n = function (t) {
                             var n =
                                 !document.hasFocus ||
@@ -3449,10 +3451,10 @@
                                 (!e.isFocused() &&
                                     document.activeElement ==
                                         (e.textInput && e.textInput.getElement()));
-                            n && window.focus(), e.focus();
+                            (n && window.focus(), e.focus());
                         },
                         u = e.renderer.getMouseEventTarget();
-                    r.addListener(u, "click", this.onMouseEvent.bind(this, "click")),
+                    (r.addListener(u, "click", this.onMouseEvent.bind(this, "click")),
                         r.addListener(u, "mousemove", this.onMouseMove.bind(this, "mousemove")),
                         r.addMultiMouseDownListener(
                             [
@@ -3472,9 +3474,9 @@
                         r.addTouchMoveListener(
                             e.container,
                             this.onTouchMove.bind(this, "touchmove"),
-                        );
+                        ));
                     var f = e.renderer.$gutter;
-                    r.addListener(f, "mousedown", this.onMouseEvent.bind(this, "guttermousedown")),
+                    (r.addListener(f, "mousedown", this.onMouseEvent.bind(this, "guttermousedown")),
                         r.addListener(f, "click", this.onMouseEvent.bind(this, "gutterclick")),
                         r.addListener(
                             f,
@@ -3500,10 +3502,10 @@
                             !i.isEmpty() && i.insideStart(r.row, r.column)
                                 ? s.setCursorStyle("default")
                                 : s.setCursorStyle("");
-                        });
+                        }));
                 };
-            (function () {
-                (this.onMouseEvent = function (e, t) {
+            ((function () {
+                ((this.onMouseEvent = function (e, t) {
                     this.editor._emit(e, new u(t, this.editor));
                 }),
                     (this.onMouseMove = function (e, t) {
@@ -3513,23 +3515,23 @@
                     }),
                     (this.onMouseWheel = function (e, t) {
                         var n = new u(t, this.editor);
-                        (n.speed = this.$scrollSpeed * 2),
+                        ((n.speed = this.$scrollSpeed * 2),
                             (n.wheelX = t.wheelX),
                             (n.wheelY = t.wheelY),
-                            this.editor._emit(e, n);
+                            this.editor._emit(e, n));
                     }),
                     (this.onTouchMove = function (e, t) {
                         var n = new u(t, this.editor);
-                        (n.speed = 1),
+                        ((n.speed = 1),
                             (n.wheelX = t.wheelX),
                             (n.wheelY = t.wheelY),
-                            this.editor._emit(e, n);
+                            this.editor._emit(e, n));
                     }),
                     (this.setState = function (e) {
                         this.state = e;
                     }),
                     (this.captureMouse = function (e, t) {
-                        (this.x = e.x), (this.y = e.y), (this.isMousePressed = !0);
+                        ((this.x = e.x), (this.y = e.y), (this.isMousePressed = !0));
                         var n = this.editor,
                             s = this.editor.renderer;
                         s.$keepTextAreaAtCursor && (s.$keepTextAreaAtCursor = null);
@@ -3538,14 +3540,14 @@
                                 if (!e) return;
                                 if (i.isWebKit && !e.which && o.releaseMouse)
                                     return o.releaseMouse();
-                                (o.x = e.clientX),
+                                ((o.x = e.clientX),
                                     (o.y = e.clientY),
                                     t && t(e),
                                     (o.mouseEvent = new u(e, o.editor)),
-                                    (o.$mouseMoved = !0);
+                                    (o.$mouseMoved = !0));
                             },
                             f = function (e) {
-                                n.off("beforeEndOperation", c),
+                                (n.off("beforeEndOperation", c),
                                     clearInterval(h),
                                     l(),
                                     o[o.state + "End"] && o[o.state + "End"](e),
@@ -3555,10 +3557,10 @@
                                     (o.isMousePressed = !1),
                                     (o.$onCaptureMouseMove = o.releaseMouse = null),
                                     e && o.onMouseEvent("mouseup", e),
-                                    n.endOperation();
+                                    n.endOperation());
                             },
                             l = function () {
-                                o[o.state] && o[o.state](), (o.$mouseMoved = !1);
+                                (o[o.state] && o[o.state](), (o.$mouseMoved = !1));
                             };
                         if (i.isOldIE && e.domEvent.type == "dblclick")
                             return setTimeout(function () {
@@ -3572,21 +3574,21 @@
                                 (o.state = ""),
                                 o.releaseMouse());
                         };
-                        n.on("beforeEndOperation", c),
+                        (n.on("beforeEndOperation", c),
                             n.startOperation({ command: { name: "mouse" } }),
                             (o.$onCaptureMouseMove = a),
-                            (o.releaseMouse = r.capture(this.editor.container, a, f));
+                            (o.releaseMouse = r.capture(this.editor.container, a, f)));
                         var h = setInterval(l, 20);
                     }),
                     (this.releaseMouse = null),
                     (this.cancelContextMenu = function () {
                         var e = function (t) {
                             if (t && t.domEvent && t.domEvent.type != "contextmenu") return;
-                            this.editor.off("nativecontextmenu", e),
-                                t && t.domEvent && r.stopEvent(t.domEvent);
+                            (this.editor.off("nativecontextmenu", e),
+                                t && t.domEvent && r.stopEvent(t.domEvent));
                         }.bind(this);
-                        setTimeout(e, 10), this.editor.on("nativecontextmenu", e);
-                    });
+                        (setTimeout(e, 10), this.editor.on("nativecontextmenu", e));
+                    }));
             }).call(l.prototype),
                 f.defineOptions(l.prototype, "mouseHandler", {
                     scrollSpeed: { initialValue: 2 },
@@ -3595,7 +3597,7 @@
                     focusTimeout: { initialValue: 0 },
                     tooltipFollowsMouse: { initialValue: !0 },
                 }),
-                (t.MouseHandler = l);
+                (t.MouseHandler = l));
         },
     ),
     define(
@@ -3604,7 +3606,7 @@
         function (e, t, n) {
             "use strict";
             function i(e) {
-                e.on("click", function (t) {
+                (e.on("click", function (t) {
                     var n = t.getDocumentPosition(),
                         i = e.session,
                         s = i.getFoldAt(n.row, n.column, 1);
@@ -3620,9 +3622,9 @@
                         if (n == "foldWidgets") {
                             var r = t.getDocumentPosition().row,
                                 i = e.session;
-                            i.foldWidgets && i.foldWidgets[r] && e.session.onFoldWidgetClick(r, t),
+                            (i.foldWidgets && i.foldWidgets[r] && e.session.onFoldWidgetClick(r, t),
                                 e.isFocused() || e.focus(),
-                                t.stop();
+                                t.stop());
                         }
                     }),
                     e.on("gutterdblclick", function (t) {
@@ -3645,7 +3647,7 @@
                             }
                             t.stop();
                         }
-                    });
+                    }));
             }
             var r = e("../lib/dom");
             t.FoldHandler = i;
@@ -3659,16 +3661,16 @@
             var r = e("../lib/keys"),
                 i = e("../lib/event"),
                 s = function (e) {
-                    (this.$editor = e),
+                    ((this.$editor = e),
                         (this.$data = { editor: e }),
                         (this.$handlers = []),
-                        this.setDefaultHandler(e.commands);
+                        this.setDefaultHandler(e.commands));
                 };
-            (function () {
-                (this.setDefaultHandler = function (e) {
-                    this.removeKeyboardHandler(this.$defaultHandler),
+            ((function () {
+                ((this.setDefaultHandler = function (e) {
+                    (this.removeKeyboardHandler(this.$defaultHandler),
                         (this.$defaultHandler = e),
-                        this.addKeyboardHandler(e, 0);
+                        this.addKeyboardHandler(e, 0));
                 }),
                     (this.setKeyboardHandler = function (e) {
                         var t = this.$handlers;
@@ -3681,11 +3683,11 @@
                         if (!e) return;
                         typeof e == "function" && !e.handleKeyboard && (e.handleKeyboard = e);
                         var n = this.$handlers.indexOf(e);
-                        n != -1 && this.$handlers.splice(n, 1),
+                        (n != -1 && this.$handlers.splice(n, 1),
                             t == undefined
                                 ? this.$handlers.push(e)
                                 : this.$handlers.splice(t, 0, e),
-                            n == -1 && e.attach && e.attach(this.$editor);
+                            n == -1 && e.attach && e.attach(this.$editor));
                     }),
                     (this.removeKeyboardHandler = function (e) {
                         var t = this.$handlers.indexOf(e);
@@ -3713,7 +3715,7 @@
                         for (var a = this.$handlers.length; a--; ) {
                             s = this.$handlers[a].handleKeyboard(this.$data, e, t, n, r);
                             if (!s || !s.command) continue;
-                            s.command == "null"
+                            (s.command == "null"
                                 ? (o = !0)
                                 : (o = u.exec(s.command, this.$editor, s.args, r)),
                                 o &&
@@ -3721,7 +3723,7 @@
                                     e != -1 &&
                                     s.passEvent != 1 &&
                                     s.command.passEvent != 1 &&
-                                    i.stopEvent(r);
+                                    i.stopEvent(r));
                             if (o) break;
                         }
                         return (
@@ -3741,9 +3743,9 @@
                     }),
                     (this.onTextInput = function (e) {
                         this.$callKeyboardHandlers(-1, e);
-                    });
+                    }));
             }).call(s.prototype),
-                (t.KeyBinding = s);
+                (t.KeyBinding = s));
         },
     ),
     define("ace/lib/bidiutil", ["require", "exports", "module"], function (e, t, n) {
@@ -3761,14 +3763,14 @@
                 E = null,
                 T = [];
             if (!r) for (w = 0, r = []; w < n; w++) r[w] = R(e[w]);
-            (o = s), (u = !1), (a = !1), (f = !1), (l = !1);
+            ((o = s), (u = !1), (a = !1), (f = !1), (l = !1));
             for (E = 0; E < n; E++) {
-                (c = m),
+                ((c = m),
                     (T[E] = h = q(e, r, T, E)),
                     (m = i[c][h]),
                     (g = m & 240),
                     (m &= 15),
-                    (t[E] = v = i[m][5]);
+                    (t[E] = v = i[m][5]));
                 if (g > 0)
                     if (g == 16) {
                         for (w = b; w < E; w++) t[w] = 1;
@@ -3780,7 +3782,7 @@
                     for (w = b; w < E; w++) t[w] = v;
                     b = -1;
                 }
-                r[E] == S && (t[E] = 0), (o |= v);
+                (r[E] == S && (t[E] = 0), (o |= v));
             }
             if (l)
                 for (w = 0; w < n; w++)
@@ -3808,7 +3810,7 @@
                 if (t[i] >= e) {
                     u = i + 1;
                     while (u < r && t[u] >= e) u++;
-                    for (a = i, l = u - 1; a < l; a++, l--) (c = n[a]), (n[a] = n[l]), (n[l] = c);
+                    for (a = i, l = u - 1; a < l; a++, l--) ((c = n[a]), (n[a] = n[l]), (n[l] = c));
                     i = u;
                 }
                 i++;
@@ -3830,7 +3832,7 @@
                 case b:
                     return u ? w : b;
                 case T:
-                    return (u = !0), (a = !0), y;
+                    return ((u = !0), (a = !0), y);
                 case N:
                     return E;
                 case C:
@@ -3841,7 +3843,7 @@
                         ((c = t[r + 1]) != b && c != w)
                     )
                         return E;
-                    return u && (c = w), c == o ? c : E;
+                    return (u && (c = w), c == o ? c : E);
                 case k:
                     o = r > 0 ? n[r - 1] : S;
                     if (o == b && r + 1 < t.length && t[r + 1] == b) return b;
@@ -3849,12 +3851,12 @@
                 case L:
                     if (r > 0 && n[r - 1] == b) return b;
                     if (u) return E;
-                    (p = r + 1), (h = t.length);
+                    ((p = r + 1), (h = t.length));
                     while (p < h && t[p] == L) p++;
                     if (p < h && t[p] == b) return b;
                     return E;
                 case A:
-                    (h = t.length), (p = r + 1);
+                    ((h = t.length), (p = r + 1));
                     while (p < h && t[p] == A) p++;
                     if (p < h) {
                         var d = e[r],
@@ -3865,9 +3867,9 @@
                     if (r < 1 || (o = t[r - 1]) == S) return E;
                     return n[r - 1];
                 case S:
-                    return (u = !1), (f = !0), s;
+                    return ((u = !1), (f = !0), s);
                 case x:
-                    return (l = !0), E;
+                    return ((l = !0), E);
                 case O:
                 case M:
                 case D:
@@ -4247,7 +4249,7 @@
                 E,
                 N,
             ];
-        (t.L = g),
+        ((t.L = g),
             (t.R = y),
             (t.EN = b),
             (t.ON_R = 3),
@@ -4262,9 +4264,9 @@
                     o = new Array(i.length),
                     u = new Array(i.length),
                     a = [];
-                (s = r ? m : v), F(i, a, i.length, n);
+                ((s = r ? m : v), F(i, a, i.length, n));
                 for (var f = 0; f < o.length; o[f] = f, f++);
-                I(2, a, o), I(1, a, o);
+                (I(2, a, o), I(1, a, o));
                 for (var f = 0; f < o.length - 1; f++)
                     n[f] === w
                         ? (a[f] = t.AN)
@@ -4274,23 +4276,23 @@
                             i[f - 1] === "\u0644" &&
                             /\u0622|\u0623|\u0625|\u0627/.test(i[f]) &&
                             ((a[f - 1] = a[f] = t.R_H), f++);
-                i[i.length - 1] === t.DOT && (a[i.length - 1] = t.B),
-                    i[0] === "\u202b" && (a[0] = t.RLE);
+                (i[i.length - 1] === t.DOT && (a[i.length - 1] = t.B),
+                    i[0] === "\u202b" && (a[0] = t.RLE));
                 for (var f = 0; f < o.length; f++) u[f] = a[o[f]];
                 return { logicalFromVisual: o, bidiLevels: u };
             }),
             (t.hasBidiCharacters = function (e, t) {
                 var n = !1;
                 for (var r = 0; r < e.length; r++)
-                    (t[r] = R(e.charAt(r))),
-                        !n && (t[r] == y || t[r] == T || t[r] == w) && (n = !0);
+                    ((t[r] = R(e.charAt(r))),
+                        !n && (t[r] == y || t[r] == T || t[r] == w) && (n = !0));
                 return n;
             }),
             (t.getVisualFromLogicalIdx = function (e, t) {
                 for (var n = 0; n < t.logicalFromVisual.length; n++)
                     if (t.logicalFromVisual[n] == e) return n;
                 return 0;
-            });
+            }));
     }),
     define(
         "ace/bidihandler",
@@ -4301,7 +4303,7 @@
                 i = e("./lib/lang"),
                 s = /[\u0590-\u05f4\u0600-\u06ff\u0700-\u08ac\u202B]/,
                 o = function (e) {
-                    (this.session = e),
+                    ((this.session = e),
                         (this.bidiMap = {}),
                         (this.currentRow = null),
                         (this.bidiUtil = r),
@@ -4318,10 +4320,10 @@
                         (this.rtlLineOffset = 0),
                         (this.wrapOffset = 0),
                         (this.isMoveLeftOperation = !1),
-                        (this.seenBidi = s.test(e.getValue()));
+                        (this.seenBidi = s.test(e.getValue())));
                 };
-            (function () {
-                (this.isBidiRow = function (e, t, n) {
+            ((function () {
+                ((this.isBidiRow = function (e, t, n) {
                     return this.seenBidi
                         ? (e !== this.currentRow &&
                               ((this.currentRow = e),
@@ -4355,7 +4357,7 @@
                             while (this.currentRow - e > 0) {
                                 n = this.session.$getRowCacheIndex(t, this.currentRow - e - 1);
                                 if (n !== r) break;
-                                (r = n), e++;
+                                ((r = n), e++);
                             }
                         } else e = this.currentRow;
                         return e;
@@ -4364,12 +4366,12 @@
                         e === undefined && (e = this.getDocumentRow());
                         var n = e === this.session.getLength() - 1,
                             s = n ? this.EOF : this.EOL;
-                        (this.wrapIndent = 0),
+                        ((this.wrapIndent = 0),
                             (this.line = this.session.getLine(e)),
-                            (this.isRtlDir = this.line.charAt(0) === this.RLE);
+                            (this.isRtlDir = this.line.charAt(0) === this.RLE));
                         if (this.session.$useWrapMode) {
                             var o = this.session.$wrapData[e];
-                            o &&
+                            (o &&
                                 (t === undefined && (t = this.getSplitIndex()),
                                 t > 0 && o.length
                                     ? ((this.wrapIndent = o.indent),
@@ -4379,12 +4381,12 @@
                                               ? this.line.substring(o[t - 1], o[t])
                                               : this.line.substring(o[o.length - 1])))
                                     : (this.line = this.line.substring(0, o[t]))),
-                                t == o.length && (this.line += this.showInvisibles ? s : r.DOT);
+                                t == o.length && (this.line += this.showInvisibles ? s : r.DOT));
                         } else this.line += this.showInvisibles ? s : r.DOT;
                         var u = this.session,
                             a = 0,
                             f;
-                        (this.line = this.line.replace(
+                        ((this.line = this.line.replace(
                             /\t|[\u1100-\u2029, \u202F-\uFFE6]/g,
                             function (e, t) {
                                 return e === "	" || u.isFullWidth(e.charCodeAt(0))
@@ -4401,7 +4403,7 @@
                                         : this.line),
                                 (this.rtlLineOffset =
                                     this.contentWidth -
-                                    this.fontMetrics.$main.getBoundingClientRect().width));
+                                    this.fontMetrics.$main.getBoundingClientRect().width)));
                     }),
                     (this.updateBidiMap = function () {
                         var e = [];
@@ -4417,17 +4419,17 @@
                         this.fontMetrics = e;
                         var t = (this.characterWidth = e.$characterSize.width),
                             n = e.$measureCharWidth("\u05d4");
-                        (this.charWidths[r.L] =
+                        ((this.charWidths[r.L] =
                             this.charWidths[r.EN] =
                             this.charWidths[r.ON_R] =
                                 t),
                             (this.charWidths[r.R] = this.charWidths[r.AN] = n),
                             (this.charWidths[r.R_H] = n * 0.45),
                             (this.charWidths[r.B] = this.charWidths[r.RLE] = 0),
-                            (this.currentRow = null);
+                            (this.currentRow = null));
                     }),
                     (this.setShowInvisibles = function (e) {
-                        (this.showInvisibles = e), (this.currentRow = null);
+                        ((this.showInvisibles = e), (this.currentRow = null));
                     }),
                     (this.setEolChar = function (e) {
                         this.EOL = e;
@@ -4486,12 +4488,12 @@
                         this.wrapIndent &&
                             (o += this.isRtlDir ? -1 * this.wrapOffset : this.wrapOffset);
                         for (var h, p = 0; p < r.length; p++)
-                            (h = n.logicalFromVisual[p]),
+                            ((h = n.logicalFromVisual[p]),
                                 (i = r[p]),
                                 (f = h >= u && h < a),
                                 f && !l ? (c = o) : !f && l && s.push({ left: c, width: o - c }),
                                 (o += this.charWidths[i]),
-                                (l = f);
+                                (l = f));
                         f && p === r.length && s.push({ left: c, width: o - c });
                         if (this.isRtlDir)
                             for (var d = 0; d < s.length; d++) s[d].left += this.rtlLineOffset;
@@ -4535,9 +4537,9 @@
                             t === 0 && this.isRtlDir && t++,
                             t + this.wrapIndent
                         );
-                    });
+                    }));
             }).call(o.prototype),
-                (t.BidiHandler = o);
+                (t.BidiHandler = o));
         },
     ),
     define(
@@ -4558,28 +4560,28 @@
                 s = e("./lib/event_emitter").EventEmitter,
                 o = e("./range").Range,
                 u = function (e) {
-                    (this.session = e),
+                    ((this.session = e),
                         (this.doc = e.getDocument()),
                         this.clearSelection(),
                         (this.cursor = this.lead = this.doc.createAnchor(0, 0)),
                         (this.anchor = this.doc.createAnchor(0, 0)),
-                        (this.$silent = !1);
+                        (this.$silent = !1));
                     var t = this;
-                    this.cursor.on("change", function (e) {
-                        (t.$cursorChanged = !0),
+                    (this.cursor.on("change", function (e) {
+                        ((t.$cursorChanged = !0),
                             t.$silent || t._emit("changeCursor"),
                             !t.$isEmpty && !t.$silent && t._emit("changeSelection"),
                             !t.$keepDesiredColumnOnChange &&
                                 e.old.column != e.value.column &&
-                                (t.$desiredColumn = null);
+                                (t.$desiredColumn = null));
                     }),
                         this.anchor.on("change", function () {
-                            (t.$anchorChanged = !0),
-                                !t.$isEmpty && !t.$silent && t._emit("changeSelection");
-                        });
+                            ((t.$anchorChanged = !0),
+                                !t.$isEmpty && !t.$silent && t._emit("changeSelection"));
+                        }));
                 };
-            (function () {
-                r.implement(this, s),
+            ((function () {
+                (r.implement(this, s),
                     (this.isEmpty = function () {
                         return (
                             this.$isEmpty ||
@@ -4594,7 +4596,7 @@
                         return this.lead.getPosition();
                     }),
                     (this.setSelectionAnchor = function (e, t) {
-                        (this.$isEmpty = !1), this.anchor.setPosition(e, t);
+                        ((this.$isEmpty = !1), this.anchor.setPosition(e, t));
                     }),
                     (this.getAnchor = this.getSelectionAnchor =
                         function () {
@@ -4634,7 +4636,7 @@
                     (this.$setSelection = function (e, t, n, r) {
                         var i = this.$isEmpty,
                             s = this.inMultiSelectMode;
-                        (this.$silent = !0),
+                        ((this.$silent = !0),
                             (this.$cursorChanged = this.$anchorChanged = !1),
                             this.anchor.setPosition(e, t),
                             this.cursor.setPosition(n, r),
@@ -4645,11 +4647,11 @@
                                 this.$anchorChanged ||
                                 i != this.$isEmpty ||
                                 s) &&
-                                this._emit("changeSelection");
+                                this._emit("changeSelection"));
                     }),
                     (this.$moveSelection = function (e) {
                         var t = this.lead;
-                        this.$isEmpty && this.setSelectionAnchor(t.row, t.column), e.call(this);
+                        (this.$isEmpty && this.setSelectionAnchor(t.row, t.column), e.call(this));
                     }),
                     (this.selectTo = function (e, t) {
                         this.$moveSelection(function () {
@@ -4662,10 +4664,10 @@
                         });
                     }),
                     (this.moveTo = function (e, t) {
-                        this.clearSelection(), this.moveCursorTo(e, t);
+                        (this.clearSelection(), this.moveCursorTo(e, t));
                     }),
                     (this.moveToPosition = function (e) {
-                        this.clearSelection(), this.moveCursorToPosition(e);
+                        (this.clearSelection(), this.moveCursorToPosition(e));
                     }),
                     (this.selectUp = function () {
                         this.$moveSelection(this.moveCursorUp);
@@ -4700,7 +4702,7 @@
                     (this.getWordRange = function (e, t) {
                         if (typeof t == "undefined") {
                             var n = e || this.lead;
-                            (e = n.row), (t = n.column);
+                            ((e = n.row), (t = n.column));
                         }
                         return this.session.getWordRange(e, t);
                     }),
@@ -4781,10 +4783,10 @@
                             r = this.session.screenToDocumentPosition(n, 0),
                             i = this.session.getDisplayLine(e, null, r.row, r.column),
                             s = i.match(/^\s*/);
-                        s[0].length != t &&
+                        (s[0].length != t &&
                             !this.session.$useEmacsStyleLineStart &&
                             (r.column += s[0].length),
-                            this.moveCursorToPosition(r);
+                            this.moveCursorToPosition(r));
                     }),
                     (this.moveCursorLineEnd = function () {
                         var e = this.lead,
@@ -4811,8 +4813,8 @@
                             t = this.lead.column,
                             n = this.doc.getLine(e),
                             r = n.substring(t);
-                        (this.session.nonTokenRe.lastIndex = 0),
-                            (this.session.tokenRe.lastIndex = 0);
+                        ((this.session.nonTokenRe.lastIndex = 0),
+                            (this.session.tokenRe.lastIndex = 0));
                         var i = this.session.getFoldAt(e, t, 1);
                         if (i) {
                             this.moveCursorTo(i.end.row, i.end.column);
@@ -4823,15 +4825,15 @@
                             (this.session.nonTokenRe.lastIndex = 0),
                             (r = n.substring(t)));
                         if (t >= n.length) {
-                            this.moveCursorTo(e, n.length),
+                            (this.moveCursorTo(e, n.length),
                                 this.moveCursorRight(),
-                                e < this.doc.getLength() - 1 && this.moveCursorWordRight();
+                                e < this.doc.getLength() - 1 && this.moveCursorWordRight());
                             return;
                         }
-                        this.session.tokenRe.exec(r) &&
+                        (this.session.tokenRe.exec(r) &&
                             ((t += this.session.tokenRe.lastIndex),
                             (this.session.tokenRe.lastIndex = 0)),
-                            this.moveCursorTo(e, t);
+                            this.moveCursorTo(e, t));
                     }),
                     (this.moveCursorLongWordLeft = function () {
                         var e = this.lead.row,
@@ -4844,22 +4846,22 @@
                         var r = this.session.getFoldStringAt(e, t, -1);
                         r == null && (r = this.doc.getLine(e).substring(0, t));
                         var s = i.stringReverse(r);
-                        (this.session.nonTokenRe.lastIndex = 0),
+                        ((this.session.nonTokenRe.lastIndex = 0),
                             (this.session.tokenRe.lastIndex = 0),
                             this.session.nonTokenRe.exec(s) &&
                                 ((t -= this.session.nonTokenRe.lastIndex),
                                 (s = s.slice(this.session.nonTokenRe.lastIndex)),
-                                (this.session.nonTokenRe.lastIndex = 0));
+                                (this.session.nonTokenRe.lastIndex = 0)));
                         if (t <= 0) {
-                            this.moveCursorTo(e, 0),
+                            (this.moveCursorTo(e, 0),
                                 this.moveCursorLeft(),
-                                e > 0 && this.moveCursorWordLeft();
+                                e > 0 && this.moveCursorWordLeft());
                             return;
                         }
-                        this.session.tokenRe.exec(s) &&
+                        (this.session.tokenRe.exec(s) &&
                             ((t -= this.session.tokenRe.lastIndex),
                             (this.session.tokenRe.lastIndex = 0)),
-                            this.moveCursorTo(e, t);
+                            this.moveCursorTo(e, t));
                     }),
                     (this.$shortWordEndIndex = function (e) {
                         var t = 0,
@@ -4873,7 +4875,7 @@
                             if (t < 1) {
                                 i.lastIndex = 0;
                                 while ((n = e[t]) && !i.test(n)) {
-                                    (i.lastIndex = 0), t++;
+                                    ((i.lastIndex = 0), t++);
                                     if (r.test(n)) {
                                         if (t > 2) {
                                             t--;
@@ -4885,7 +4887,7 @@
                                 }
                             }
                         }
-                        return (i.lastIndex = 0), t;
+                        return ((i.lastIndex = 0), t);
                     }),
                     (this.moveCursorShortWordRight = function () {
                         var e = this.lead.row,
@@ -4896,9 +4898,9 @@
                         if (i) return this.moveCursorTo(i.end.row, i.end.column);
                         if (t == n.length) {
                             var s = this.doc.getLength();
-                            do e++, (r = this.doc.getLine(e));
+                            do (e++, (r = this.doc.getLine(e)));
                             while (e < s && /^\s*$/.test(r));
-                            /^\s+/.test(r) || (r = ""), (t = 0);
+                            (/^\s+/.test(r) || (r = ""), (t = 0));
                         }
                         var o = this.$shortWordEndIndex(r);
                         this.moveCursorTo(e, t + o);
@@ -4911,9 +4913,9 @@
                             return this.moveCursorTo(n.start.row, n.start.column);
                         var r = this.session.getLine(e).substring(0, t);
                         if (t === 0) {
-                            do e--, (r = this.doc.getLine(e));
+                            do (e--, (r = this.doc.getLine(e)));
                             while (e > 0 && /^\s*$/.test(r));
-                            (t = r.length), /\s+$/.test(r) || (r = "");
+                            ((t = r.length), /\s+$/.test(r) || (r = ""));
                         }
                         var s = i.stringReverse(r),
                             o = this.$shortWordEndIndex(s);
@@ -4947,7 +4949,7 @@
                                 ? (n.column = this.$desiredColumn)
                                 : (this.$desiredColumn = n.column));
                         var i = this.session.screenToDocumentPosition(n.row + e, n.column, r);
-                        e !== 0 &&
+                        (e !== 0 &&
                             t === 0 &&
                             i.row === this.lead.row &&
                             i.column === this.lead.column &&
@@ -4955,33 +4957,35 @@
                             this.session.lineWidgets[i.row] &&
                             (i.row > 0 || e > 0) &&
                             i.row++,
-                            this.moveCursorTo(i.row, i.column + t, t === 0);
+                            this.moveCursorTo(i.row, i.column + t, t === 0));
                     }),
                     (this.moveCursorToPosition = function (e) {
                         this.moveCursorTo(e.row, e.column);
                     }),
                     (this.moveCursorTo = function (e, t, n) {
                         var r = this.session.getFoldAt(e, t, 1);
-                        r && ((e = r.start.row), (t = r.start.column)),
-                            (this.$keepDesiredColumnOnChange = !0);
+                        (r && ((e = r.start.row), (t = r.start.column)),
+                            (this.$keepDesiredColumnOnChange = !0));
                         var i = this.session.getLine(e);
-                        /[\uDC00-\uDFFF]/.test(i.charAt(t)) &&
+                        (/[\uDC00-\uDFFF]/.test(i.charAt(t)) &&
                             i.charAt(t - 1) &&
                             (this.lead.row == e && this.lead.column == t + 1 ? (t -= 1) : (t += 1)),
                             this.lead.setPosition(e, t),
                             (this.$keepDesiredColumnOnChange = !1),
-                            n || (this.$desiredColumn = null);
+                            n || (this.$desiredColumn = null));
                     }),
                     (this.moveCursorToScreen = function (e, t, n) {
                         var r = this.session.screenToDocumentPosition(e, t);
                         this.moveCursorTo(r.row, r.column, n);
                     }),
                     (this.detach = function () {
-                        this.lead.detach(), this.anchor.detach(), (this.session = this.doc = null);
+                        (this.lead.detach(),
+                            this.anchor.detach(),
+                            (this.session = this.doc = null));
                     }),
                     (this.fromOrientedRange = function (e) {
-                        this.setSelectionRange(e, e.cursor == e.start),
-                            (this.$desiredColumn = e.desiredColumn || this.$desiredColumn);
+                        (this.setSelectionRange(e, e.cursor == e.start),
+                            (this.$desiredColumn = e.desiredColumn || this.$desiredColumn));
                     }),
                     (this.toOrientedRange = function (e) {
                         var t = this.getRange();
@@ -5013,7 +5017,7 @@
                         if (this.rangeCount)
                             var e = this.ranges.map(function (e) {
                                 var t = e.clone();
-                                return (t.isBackwards = e.cursor == e.start), t;
+                                return ((t.isBackwards = e.cursor == e.start), t);
                             });
                         else {
                             var e = this.getRange();
@@ -5027,14 +5031,15 @@
                                 this.toSingleRange(e[0]);
                                 for (var t = e.length; t--; ) {
                                     var n = o.fromPoints(e[t].start, e[t].end);
-                                    e[t].isBackwards && (n.cursor = n.start), this.addRange(n, !0);
+                                    (e[t].isBackwards && (n.cursor = n.start),
+                                        this.addRange(n, !0));
                                 }
                                 return;
                             }
                             e = e[0];
                         }
-                        this.rangeList && this.toSingleRange(e),
-                            this.setSelectionRange(e, e.isBackwards);
+                        (this.rangeList && this.toSingleRange(e),
+                            this.setSelectionRange(e, e.isBackwards));
                     }),
                     (this.isEqual = function (e) {
                         if ((e.length || this.rangeCount) && e.length != this.rangeCount) return !1;
@@ -5042,9 +5047,9 @@
                         for (var t = this.ranges.length; t--; )
                             if (!this.ranges[t].isEqual(e[t])) return !1;
                         return !0;
-                    });
+                    }));
             }).call(u.prototype),
-                (t.Selection = u);
+                (t.Selection = u));
         },
     ),
     define("ace/tokenizer", ["require", "exports", "module", "ace/config"], function (e, t, n) {
@@ -5052,7 +5057,7 @@
         var r = e("./config"),
             i = 2e3,
             s = function (e) {
-                (this.states = e), (this.regExps = {}), (this.matchMappings = {});
+                ((this.states = e), (this.regExps = {}), (this.matchMappings = {}));
                 for (var t in this.states) {
                     var n = this.states[t],
                         r = [],
@@ -5062,13 +5067,13 @@
                         u = [];
                     for (var a = 0; a < n.length; a++) {
                         var f = n[a];
-                        f.defaultToken && (s.defaultToken = f.defaultToken),
-                            f.caseInsensitive && (o = "gi");
+                        (f.defaultToken && (s.defaultToken = f.defaultToken),
+                            f.caseInsensitive && (o = "gi"));
                         if (f.regex == null) continue;
                         f.regex instanceof RegExp && (f.regex = f.regex.toString().slice(1, -1));
                         var l = f.regex,
                             c = new RegExp("(?:(" + l + ")|(.))").exec("a").length - 2;
-                        Array.isArray(f.token)
+                        (Array.isArray(f.token)
                             ? f.token.length == 1 || c == 1
                                 ? (f.token = f.token[0])
                                 : c - 1 != f.token.length
@@ -5093,17 +5098,17 @@
                             (s[i] = a),
                             (i += c),
                             r.push(l),
-                            f.onMatch || (f.onMatch = null);
+                            f.onMatch || (f.onMatch = null));
                     }
-                    r.length || ((s[0] = 0), r.push("$")),
+                    (r.length || ((s[0] = 0), r.push("$")),
                         u.forEach(function (e) {
                             e.splitRegex = this.createSplitterRegexp(e.regex, o);
                         }, this),
-                        (this.regExps[t] = new RegExp("(" + r.join(")|(") + ")|($)", o));
+                        (this.regExps[t] = new RegExp("(" + r.join(")|(") + ")|($)", o)));
                 }
             };
-        (function () {
-            (this.$setMaxTokenCount = function (e) {
+        ((function () {
+            ((this.$setMaxTokenCount = function (e) {
                 i = e | 0;
             }),
                 (this.$applyToken = function (e) {
@@ -5136,7 +5141,7 @@
                         var n = 0,
                             r = !1,
                             i = {};
-                        e.replace(
+                        (e.replace(
                             /(\\.)|(\((?:\?[=!])?)|(\))|([\[\]])/g,
                             function (e, t, s, o, u, a) {
                                 return (
@@ -5156,7 +5161,7 @@
                         ),
                             i.end != null &&
                                 /^\)*$/.test(e.substr(i.end)) &&
-                                (e = e.substring(0, i.start) + e.substr(i.end));
+                                (e = e.substring(0, i.start) + e.substr(i.end)));
                     }
                     return (
                         e.charAt(0) != "^" && (e = "^" + e),
@@ -5167,7 +5172,7 @@
                 (this.getLineTokens = function (e, t) {
                     if (t && typeof t != "string") {
                         var n = t.slice(0);
-                        (t = n[0]), t === "#tmp" && (n.shift(), (t = n.shift()));
+                        ((t = n[0]), t === "#tmp" && (n.shift(), (t = n.shift())));
                     } else var n = [];
                     var r = t || "start",
                         s = this.states[r];
@@ -5193,7 +5198,7 @@
                         }
                         for (var y = 0; y < a.length - 2; y++) {
                             if (a[y + 1] === undefined) continue;
-                            (d = s[o[y]]),
+                            ((d = s[o[y]]),
                                 d.onMatch ? (p = d.onMatch(v, r, n, e)) : (p = d.token),
                                 d.next &&
                                     (typeof d.next == "string" ? (r = d.next) : (r = d.next(r, n)),
@@ -5206,7 +5211,7 @@
                                     (l = m),
                                     (u = this.regExps[r]),
                                     (u.lastIndex = m)),
-                                d.consumeLineEnd && (l = m);
+                                d.consumeLineEnd && (l = m));
                             break;
                         }
                         if (v)
@@ -5215,7 +5220,7 @@
                                     ? (h.type && f.push(h), (h = { type: p, value: v }))
                                     : (h.value += v);
                             else if (p) {
-                                h.type && f.push(h), (h = { type: null, value: "" });
+                                (h.type && f.push(h), (h = { type: null, value: "" }));
                                 for (var y = 0; y < p.length; y++) f.push(p[y]);
                             }
                         if (l == e.length) break;
@@ -5227,9 +5232,9 @@
                                     line: e,
                                 });
                             while (l < e.length)
-                                h.type && f.push(h),
-                                    (h = { value: e.substring(l, (l += 2e3)), type: "overflow" });
-                            (r = "start"), (n = []);
+                                (h.type && f.push(h),
+                                    (h = { value: e.substring(l, (l += 2e3)), type: "overflow" }));
+                            ((r = "start"), (n = []));
                             break;
                         }
                     }
@@ -5239,9 +5244,9 @@
                         { tokens: f, state: n.length ? n : r }
                     );
                 }),
-                (this.reportError = r.reportError);
+                (this.reportError = r.reportError));
         }).call(s.prototype),
-            (t.Tokenizer = s);
+            (t.Tokenizer = s));
     }),
     define(
         "ace/mode/text_highlight_rules",
@@ -5254,8 +5259,8 @@
                         start: [{ token: "empty_line", regex: "^$" }, { defaultToken: "text" }],
                     };
                 };
-            (function () {
-                (this.addRules = function (e, t) {
+            ((function () {
+                ((this.addRules = function (e, t) {
                     if (!t) {
                         for (var n in e) this.$rules[n] = e[n];
                         return;
@@ -5265,12 +5270,12 @@
                         for (var i = 0; i < r.length; i++) {
                             var s = r[i];
                             if (s.next || s.onMatch)
-                                typeof s.next == "string" &&
+                                (typeof s.next == "string" &&
                                     s.next.indexOf(t) !== 0 &&
                                     (s.next = t + s.next),
                                     s.nextState &&
                                         s.nextState.indexOf(t) !== 0 &&
-                                        (s.nextState = t + s.nextState);
+                                        (s.nextState = t + s.nextState));
                         }
                         this.$rules[t + n] = r;
                     }
@@ -5291,11 +5296,11 @@
                             for (var u = 0; u < i.length; u++)
                                 f.apply(this.$rules[i[u]], r.deepCopy(n));
                         }
-                        this.$embeds || (this.$embeds = []), this.$embeds.push(t);
+                        (this.$embeds || (this.$embeds = []), this.$embeds.push(t));
                     }),
                     (this.getEmbeds = function () {
                         return this.$embeds;
-                    });
+                    }));
                 var e = function (e, t) {
                         return (
                             (e != "start" || t.length) && t.unshift(this.nextState, e),
@@ -5303,16 +5308,16 @@
                         );
                     },
                     t = function (e, t) {
-                        return t.shift(), t.shift() || "start";
+                        return (t.shift(), t.shift() || "start");
                     };
-                (this.normalizeRules = function () {
+                ((this.normalizeRules = function () {
                     function i(s) {
                         var o = r[s];
                         o.processed = !0;
                         for (var u = 0; u < o.length; u++) {
                             var a = o[u],
                                 f = null;
-                            Array.isArray(a) && ((f = a), (a = {})),
+                            (Array.isArray(a) && ((f = a), (a = {})),
                                 !a.regex &&
                                     a.start &&
                                     ((a.regex = a.start),
@@ -5326,17 +5331,17 @@
                                         },
                                     ),
                                     (a.token = a.token + ".start"),
-                                    (a.push = !0));
+                                    (a.push = !0)));
                             var l = a.next || a.push;
                             if (l && Array.isArray(l)) {
                                 var c = a.stateName;
-                                c ||
+                                (c ||
                                     ((c = a.token),
                                     typeof c != "string" && (c = c[0] || ""),
                                     r[c] && (c += n++)),
                                     (r[c] = l),
                                     (a.next = c),
-                                    i(c);
+                                    i(c));
                             } else l == "pop" && (a.next = t);
                             a.push &&
                                 ((a.nextState = a.next || a.push), (a.next = e), delete a.push);
@@ -5354,12 +5359,12 @@
                                     : (f = r[p]));
                             if (f) {
                                 var d = [u, 1].concat(f);
-                                a.noEscape &&
+                                (a.noEscape &&
                                     (d = d.filter(function (e) {
                                         return !e.next;
                                     })),
                                     o.splice.apply(o, d),
-                                    u--;
+                                    u--);
                             }
                             a.keywordMap &&
                                 ((a.token = this.createKeywordMapper(
@@ -5397,9 +5402,9 @@
                     }),
                     (this.getKeywords = function () {
                         return this.$keywords;
-                    });
+                    }));
             }).call(i.prototype),
-                (t.TextHighlightRules = i);
+                (t.TextHighlightRules = i));
         },
     ),
     define("ace/mode/behaviour", ["require", "exports", "module"], function (e, t, n) {
@@ -5407,8 +5412,8 @@
         var r = function () {
             this.$behaviours = {};
         };
-        (function () {
-            (this.add = function (e, t, n) {
+        ((function () {
+            ((this.add = function (e, t, n) {
                 switch (undefined) {
                     case this.$behaviours:
                         this.$behaviours = {};
@@ -5434,26 +5439,26 @@
                     for (var n = 0; n < e.length; n++)
                         this.$behaviours[e[n]] && (t[e[n]] = this.$behaviours[e[n]]);
                     return t;
-                });
+                }));
         }).call(r.prototype),
-            (t.Behaviour = r);
+            (t.Behaviour = r));
     }),
     define("ace/token_iterator", ["require", "exports", "module", "ace/range"], function (e, t, n) {
         "use strict";
         var r = e("./range").Range,
             i = function (e, t, n) {
-                (this.$session = e), (this.$row = t), (this.$rowTokens = e.getTokens(t));
+                ((this.$session = e), (this.$row = t), (this.$rowTokens = e.getTokens(t)));
                 var r = e.getTokenAt(t, n);
                 this.$tokenIndex = r ? r.index : -1;
             };
-        (function () {
-            (this.stepBackward = function () {
+        ((function () {
+            ((this.stepBackward = function () {
                 this.$tokenIndex -= 1;
                 while (this.$tokenIndex < 0) {
                     this.$row -= 1;
-                    if (this.$row < 0) return (this.$row = 0), null;
-                    (this.$rowTokens = this.$session.getTokens(this.$row)),
-                        (this.$tokenIndex = this.$rowTokens.length - 1);
+                    if (this.$row < 0) return ((this.$row = 0), null);
+                    ((this.$rowTokens = this.$session.getTokens(this.$row)),
+                        (this.$tokenIndex = this.$rowTokens.length - 1));
                 }
                 return this.$rowTokens[this.$tokenIndex];
             }),
@@ -5461,10 +5466,10 @@
                     this.$tokenIndex += 1;
                     var e;
                     while (this.$tokenIndex >= this.$rowTokens.length) {
-                        (this.$row += 1), e || (e = this.$session.getLength());
-                        if (this.$row >= e) return (this.$row = e - 1), null;
-                        (this.$rowTokens = this.$session.getTokens(this.$row)),
-                            (this.$tokenIndex = 0);
+                        ((this.$row += 1), e || (e = this.$session.getLength()));
+                        if (this.$row >= e) return ((this.$row = e - 1), null);
+                        ((this.$rowTokens = this.$session.getTokens(this.$row)),
+                            (this.$tokenIndex = 0));
                     }
                     return this.$rowTokens[this.$tokenIndex];
                 }),
@@ -5480,7 +5485,7 @@
                         n = e[t].start;
                     if (n !== undefined) return n;
                     n = 0;
-                    while (t > 0) (t -= 1), (n += e[t].value.length);
+                    while (t > 0) ((t -= 1), (n += e[t].value.length));
                     return n;
                 }),
                 (this.getCurrentTokenPosition = function () {
@@ -5490,9 +5495,9 @@
                     var e = this.$rowTokens[this.$tokenIndex],
                         t = this.getCurrentTokenColumn();
                     return new r(this.$row, t, this.$row, t + e.value.length);
-                });
+                }));
         }).call(i.prototype),
-            (t.TokenIterator = i);
+            (t.TokenIterator = i));
     }),
     define(
         "ace/mode/behaviour/cstyle",
@@ -5541,7 +5546,7 @@
                     };
                 },
                 d = function (e) {
-                    this.add("braces", "insertion", function (t, n, r, i, s) {
+                    (this.add("braces", "insertion", function (t, n, r, i, s) {
                         var u = r.getCursorPosition(),
                             a = i.doc.getLine(u.row);
                         if (s == "{") {
@@ -5568,7 +5573,8 @@
                                 });
                                 if (m !== null && d.isAutoInsertedClosing(u, a, s))
                                     return (
-                                        d.popAutoInsertedClosing(), { text: "", selection: [1, 1] }
+                                        d.popAutoInsertedClosing(),
+                                        { text: "", selection: [1, 1] }
                                     );
                             }
                         } else {
@@ -5608,7 +5614,7 @@
                                 h(n);
                                 var o = r.doc.getLine(i.start.row),
                                     u = o.substring(i.end.column, i.end.column + 1);
-                                if (u == "}") return i.end.column++, i;
+                                if (u == "}") return (i.end.column++, i);
                                 f.maybeInsertedBrackets--;
                             }
                         }),
@@ -5648,7 +5654,7 @@
                                 h(n);
                                 var o = r.doc.getLine(i.start.row),
                                     u = o.substring(i.start.column + 1, i.start.column + 2);
-                                if (u == ")") return i.end.column++, i;
+                                if (u == ")") return (i.end.column++, i);
                             }
                         }),
                         this.add("brackets", "insertion", function (e, t, n, r, i) {
@@ -5687,7 +5693,7 @@
                                 h(n);
                                 var o = r.doc.getLine(i.start.row),
                                     u = o.substring(i.start.column + 1, i.start.column + 2);
-                                if (u == "]") return i.end.column++, i;
+                                if (u == "]") return (i.end.column++, i);
                             }
                         }),
                         this.add("string_dquotes", "insertion", function (e, t, n, r, i) {
@@ -5717,7 +5723,8 @@
                                         b = !g || /string|escape/.test(g.type),
                                         w;
                                     if (v == o)
-                                        (w = y !== b), w && /string\.end/.test(g.type) && (w = !1);
+                                        ((w = y !== b),
+                                            w && /string\.end/.test(g.type) && (w = !1));
                                     else {
                                         if (y && !b) return null;
                                         if (y && b) return null;
@@ -5741,11 +5748,11 @@
                                 h(n);
                                 var u = r.doc.getLine(i.start.row),
                                     a = u.substring(i.start.column + 1, i.start.column + 2);
-                                if (a == o) return i.end.column++, i;
+                                if (a == o) return (i.end.column++, i);
                             }
-                        });
+                        }));
                 };
-            (d.isSaneInsertion = function (e, t) {
+            ((d.isSaneInsertion = function (e, t) {
                 var n = e.getCursorPosition(),
                     r = new s(t, n.row, n.column);
                 if (!this.$matchTokenType(r.getCurrentToken() || "text", u)) {
@@ -5764,20 +5771,20 @@
                 (d.recordAutoInsert = function (e, t, n) {
                     var r = e.getCursorPosition(),
                         i = t.doc.getLine(r.row);
-                    this.isAutoInsertedClosing(r, i, f.autoInsertedLineEnd[0]) ||
+                    (this.isAutoInsertedClosing(r, i, f.autoInsertedLineEnd[0]) ||
                         (f.autoInsertedBrackets = 0),
                         (f.autoInsertedRow = r.row),
                         (f.autoInsertedLineEnd = n + i.substr(r.column)),
-                        f.autoInsertedBrackets++;
+                        f.autoInsertedBrackets++);
                 }),
                 (d.recordMaybeInsert = function (e, t, n) {
                     var r = e.getCursorPosition(),
                         i = t.doc.getLine(r.row);
-                    this.isMaybeInsertedClosing(r, i) || (f.maybeInsertedBrackets = 0),
+                    (this.isMaybeInsertedClosing(r, i) || (f.maybeInsertedBrackets = 0),
                         (f.maybeInsertedRow = r.row),
                         (f.maybeInsertedLineStart = i.substr(0, r.column) + n),
                         (f.maybeInsertedLineEnd = i.substr(r.column)),
-                        f.maybeInsertedBrackets++;
+                        f.maybeInsertedBrackets++);
                 }),
                 (d.isAutoInsertedClosing = function (e, t, n) {
                     return (
@@ -5796,14 +5803,14 @@
                     );
                 }),
                 (d.popAutoInsertedClosing = function () {
-                    (f.autoInsertedLineEnd = f.autoInsertedLineEnd.substr(1)),
-                        f.autoInsertedBrackets--;
+                    ((f.autoInsertedLineEnd = f.autoInsertedLineEnd.substr(1)),
+                        f.autoInsertedBrackets--);
                 }),
                 (d.clearMaybeInsertedClosing = function () {
                     f && ((f.maybeInsertedBrackets = 0), (f.maybeInsertedRow = -1));
                 }),
                 r.inherits(d, i),
-                (t.CstyleBehaviour = d);
+                (t.CstyleBehaviour = d));
         },
     ),
     define("ace/unicode", ["require", "exports", "module"], function (e, t, n) {
@@ -5847,7 +5854,7 @@
             i = 0,
             s = [];
         for (var o = 0; o < r.length; o += 2)
-            s.push((i += r[o])), r[o + 1] && s.push(45, (i += r[o + 1]));
+            (s.push((i += r[o])), r[o + 1] && s.push(45, (i += r[o + 1])));
         t.wordChars = String.fromCharCode.apply(null, s);
     }),
     define(
@@ -5878,8 +5885,8 @@
                 c = function () {
                     this.HighlightRules = s;
                 };
-            (function () {
-                (this.$defaultBehaviour = new o()),
+            ((function () {
+                ((this.$defaultBehaviour = new o()),
                     (this.tokenRe = new RegExp("^[" + u.wordChars + "\\$_]+", "g")),
                     (this.nonTokenRe = new RegExp("^(?:[^" + u.wordChars + "\\$_]|\\s])+", "g")),
                     (this.getTokenizer = function () {
@@ -5913,15 +5920,15 @@
                                 v = function (e, t) {
                                     if (g(e, t)) return;
                                     if (!s || /\S/.test(e))
-                                        i.insertInLine({ row: t, column: e.length }, h),
-                                            i.insertInLine({ row: t, column: u }, c);
+                                        (i.insertInLine({ row: t, column: e.length }, h),
+                                            i.insertInLine({ row: t, column: u }, c));
                                 },
                                 m = function (e, t) {
                                     var n;
-                                    (n = e.match(d)) &&
+                                    ((n = e.match(d)) &&
                                         i.removeInLine(t, e.length - n[0].length, e.length),
                                         (n = e.match(p)) &&
-                                            i.removeInLine(t, n[1].length, n[0].length);
+                                            i.removeInLine(t, n[1].length, n[0].length));
                                 },
                                 g = function (e, n) {
                                     if (p.test(e)) return !0;
@@ -5936,14 +5943,14 @@
                             else
                                 var p = a.escapeRegExp(this.lineCommentStart),
                                     c = this.lineCommentStart;
-                            (p = new RegExp("^(\\s*)(?:" + p + ") ?")), (l = t.getUseSoftTabs());
+                            ((p = new RegExp("^(\\s*)(?:" + p + ") ?")), (l = t.getUseSoftTabs()));
                             var m = function (e, t) {
                                     var n = e.match(p);
                                     if (!n) return;
                                     var r = n[1].length,
                                         s = n[0].length;
-                                    !b(e, r, s) && n[0][s - 1] == " " && s--,
-                                        i.removeInLine(t, r, s);
+                                    (!b(e, r, s) && n[0][s - 1] == " " && s--,
+                                        i.removeInLine(t, r, s));
                                 },
                                 y = c + " ",
                                 v = function (e, t) {
@@ -5965,7 +5972,7 @@
                                 };
                         }
                         var E = Infinity;
-                        w(function (e, t) {
+                        (w(function (e, t) {
                             var n = e.search(/\S/);
                             n !== -1
                                 ? (n < u && (u = n), o && !g(e, t) && (o = !1))
@@ -5973,7 +5980,7 @@
                         }),
                             u == Infinity && ((u = E), (s = !1), (o = !1)),
                             l && u % f != 0 && (u = Math.floor(u / f) * f),
-                            w(o ? m : v);
+                            w(o ? m : v));
                     }),
                     (this.toggleBlockComment = function (e, t, n, r) {
                         var i = this.blockComment;
@@ -6009,16 +6016,16 @@
                                 }
                                 o = s.stepForward();
                             }
-                            d && t.remove(d),
-                                p && (t.remove(p), (c = p.start.row), (h = -i.start.length));
+                            (d && t.remove(d),
+                                p && (t.remove(p), (c = p.start.row), (h = -i.start.length)));
                         } else
-                            (h = i.start.length),
+                            ((h = i.start.length),
                                 (c = n.start.row),
                                 t.insert(n.end, i.end),
-                                t.insert(n.start, i.start);
-                        a.start.row == c && (a.start.column += h),
+                                t.insert(n.start, i.start));
+                        (a.start.row == c && (a.start.column += h),
                             a.end.row == c && (a.end.column += h),
-                            t.selection.fromOrientedRange(a);
+                            t.selection.fromOrientedRange(a));
                     }),
                     (this.getNextLineIndent = function (e, t, n) {
                         return this.$getIndent(t);
@@ -6034,16 +6041,16 @@
                         return null;
                     }),
                     (this.createModeDelegates = function (e) {
-                        (this.$embeds = []), (this.$modes = {});
+                        ((this.$embeds = []), (this.$modes = {}));
                         for (var t in e)
                             if (e[t]) {
                                 var n = e[t],
                                     i = n.prototype.$id,
                                     s = r.$modes[i];
-                                s || (r.$modes[i] = s = new n()),
+                                (s || (r.$modes[i] = s = new n()),
                                     r.$modes[t] || (r.$modes[t] = s),
                                     this.$embeds.push(t),
-                                    (this.$modes[t] = s);
+                                    (this.$modes[t] = s));
                             }
                         var o = [
                             "toggleBlockComment",
@@ -6128,9 +6135,9 @@
                             return { name: e, value: e, score: 0, meta: "keyword" };
                         });
                     }),
-                    (this.$id = "ace/mode/text");
+                    (this.$id = "ace/mode/text"));
             }).call(c.prototype),
-                (t.Mode = c);
+                (t.Mode = c));
         },
     ),
     define("ace/apply_delta", ["require", "exports", "module"], function (e, t, n) {
@@ -6142,11 +6149,11 @@
             return t.row >= 0 && t.row < e.length && t.column >= 0 && t.column <= e[t.row].length;
         }
         function s(e, t) {
-            t.action != "insert" &&
+            (t.action != "insert" &&
                 t.action != "remove" &&
                 r(t, "delta.action must be 'insert' or 'remove'"),
                 t.lines instanceof Array || r(t, "delta.lines must be an Array"),
-                (!t.start || !t.end) && r(t, "delta.start/end must be an present");
+                (!t.start || !t.end) && r(t, "delta.start/end must be an present"));
             var n = t.start;
             i(e, t.start) || r(t, "delta.start must be contained in document");
             var s = t.end;
@@ -6168,9 +6175,9 @@
                     if (o.length === 1) e[r] = s.substring(0, i) + t.lines[0] + s.substring(i);
                     else {
                         var u = [r, 1].concat(t.lines);
-                        e.splice.apply(e, u),
+                        (e.splice.apply(e, u),
                             (e[r] = s.substring(0, i) + e[r]),
-                            (e[r + t.lines.length - 1] += s.substring(i));
+                            (e[r + t.lines.length - 1] += s.substring(i)));
                     }
                     break;
                 case "remove":
@@ -6190,11 +6197,11 @@
             var r = e("./lib/oop"),
                 i = e("./lib/event_emitter").EventEmitter,
                 s = (t.Anchor = function (e, t, n) {
-                    (this.$onChange = this.onChange.bind(this)),
+                    ((this.$onChange = this.onChange.bind(this)),
                         this.attach(e),
                         typeof n == "undefined"
                             ? this.setPosition(t.row, t.column)
-                            : this.setPosition(t, n);
+                            : this.setPosition(t, n));
                 });
             (function () {
                 function e(e, t, n) {
@@ -6213,7 +6220,7 @@
                           ? { row: n.row + s, column: n.column + (n.row == a.row ? o : 0) }
                           : { row: u.row, column: u.column };
                 }
-                r.implement(this, i),
+                (r.implement(this, i),
                     (this.getPosition = function () {
                         return this.$clipPositionToDocument(this.row, this.column);
                     }),
@@ -6232,16 +6239,16 @@
                         n ? (r = { row: e, column: t }) : (r = this.$clipPositionToDocument(e, t));
                         if (this.row == r.row && this.column == r.column) return;
                         var i = { row: this.row, column: this.column };
-                        (this.row = r.row),
+                        ((this.row = r.row),
                             (this.column = r.column),
-                            this._signal("change", { old: i, value: r });
+                            this._signal("change", { old: i, value: r }));
                     }),
                     (this.detach = function () {
                         this.document.removeEventListener("change", this.$onChange);
                     }),
                     (this.attach = function (e) {
-                        (this.document = e || this.document),
-                            this.document.on("change", this.$onChange);
+                        ((this.document = e || this.document),
+                            this.document.on("change", this.$onChange));
                     }),
                     (this.$clipPositionToDocument = function (e, t) {
                         var n = {};
@@ -6259,7 +6266,7 @@
                             t < 0 && (n.column = 0),
                             n
                         );
-                    });
+                    }));
             }).call(s.prototype);
         },
     ),
@@ -6283,19 +6290,19 @@
                 o = e("./range").Range,
                 u = e("./anchor").Anchor,
                 a = function (e) {
-                    (this.$lines = [""]),
+                    ((this.$lines = [""]),
                         e.length === 0
                             ? (this.$lines = [""])
                             : Array.isArray(e)
                               ? this.insertMergedLines({ row: 0, column: 0 }, e)
-                              : this.insert({ row: 0, column: 0 }, e);
+                              : this.insert({ row: 0, column: 0 }, e));
                 };
-            (function () {
-                r.implement(this, s),
+            ((function () {
+                (r.implement(this, s),
                     (this.setValue = function (e) {
                         var t = this.getLength() - 1;
-                        this.remove(new o(0, 0, t, this.getLine(t).length)),
-                            this.insert({ row: 0, column: 0 }, e);
+                        (this.remove(new o(0, 0, t, this.getLine(t).length)),
+                            this.insert({ row: 0, column: 0 }, e));
                     }),
                     (this.getValue = function () {
                         return this.getAllLines().join(this.getNewLineCharacter());
@@ -6312,7 +6319,7 @@
                           }),
                     (this.$detectNewLine = function (e) {
                         var t = e.match(/^.*?(\r\n|\r|\n)/m);
-                        (this.$autoNewLine = t ? t[1] : "\n"), this._signal("changeNewLineMode");
+                        ((this.$autoNewLine = t ? t[1] : "\n"), this._signal("changeNewLineMode"));
                     }),
                     (this.getNewLineCharacter = function () {
                         switch (this.$newLineMode) {
@@ -6328,7 +6335,7 @@
                     (this.$newLineMode = "auto"),
                     (this.setNewLineMode = function (e) {
                         if (this.$newLineMode === e) return;
-                        (this.$newLineMode = e), this._signal("changeNewLineMode");
+                        ((this.$newLineMode = e), this._signal("changeNewLineMode"));
                     }),
                     (this.getNewLineMode = function () {
                         return this.$newLineMode;
@@ -6356,8 +6363,8 @@
                         if (e.start.row === e.end.row)
                             t = [this.getLine(e.start.row).substring(e.start.column, e.end.column)];
                         else {
-                            (t = this.getLines(e.start.row, e.end.row)),
-                                (t[0] = (t[0] || "").substring(e.start.column));
+                            ((t = this.getLines(e.start.row, e.end.row)),
+                                (t[0] = (t[0] || "").substring(e.start.column)));
                             var n = t.length - 1;
                             e.end.row - e.start.row == n &&
                                 (t[n] = t[n].substring(0, e.end.column));
@@ -6439,10 +6446,10 @@
                     (this.insertFullLines = function (e, t) {
                         e = Math.min(Math.max(e, 0), this.getLength());
                         var n = 0;
-                        e < this.getLength()
+                        (e < this.getLength()
                             ? ((t = t.concat([""])), (n = 0))
                             : ((t = [""].concat(t)), e--, (n = this.$lines[e].length)),
-                            this.insertMergedLines({ row: e, column: n }, t);
+                            this.insertMergedLines({ row: e, column: n }, t));
                     }),
                     (this.insertMergedLines = function (e, t) {
                         var n = this.clippedPos(e.row, e.column),
@@ -6485,8 +6492,8 @@
                         );
                     }),
                     (this.removeFullLines = function (e, t) {
-                        (e = Math.min(Math.max(0, e), this.getLength() - 1)),
-                            (t = Math.min(Math.max(0, t), this.getLength() - 1));
+                        ((e = Math.min(Math.max(0, e), this.getLength() - 1)),
+                            (t = Math.min(Math.max(0, t), this.getLength() - 1)));
                         var n = t == this.getLength() - 1 && e > 0,
                             r = t < this.getLength() - 1,
                             i = n ? e - 1 : e,
@@ -6521,7 +6528,7 @@
                         if (t == this.getTextRange(e)) return e.end;
                         this.remove(e);
                         var n;
-                        return t ? (n = this.insert(e.start, t)) : (n = e.start), n;
+                        return (t ? (n = this.insert(e.start, t)) : (n = e.start), n);
                     }),
                     (this.applyDeltas = function (e) {
                         for (var t = 0; t < e.length; t++) this.applyDelta(e[t]);
@@ -6549,7 +6556,7 @@
                         for (var o = 0, u = 0; o < r; o = u) {
                             u += t - 1;
                             var a = n.slice(o, u);
-                            a.push(""),
+                            (a.push(""),
                                 this.applyDelta(
                                     {
                                         start: this.pos(i + o, s),
@@ -6558,12 +6565,12 @@
                                         lines: a,
                                     },
                                     !0,
-                                );
+                                ));
                         }
-                        (e.lines = n.slice(o)),
+                        ((e.lines = n.slice(o)),
                             (e.start.row = i + o),
                             (e.start.column = s),
-                            this.applyDelta(e, !0);
+                            this.applyDelta(e, !0));
                     }),
                     (this.revertDelta = function (e) {
                         this.applyDelta({
@@ -6589,9 +6596,9 @@
                             s = Math.min(e.row, n.length);
                         for (var o = t || 0; o < s; ++o) i += n[o].length + r;
                         return i + e.column;
-                    });
+                    }));
             }).call(a.prototype),
-                (t.Document = a);
+                (t.Document = a));
         },
     ),
     define(
@@ -6602,11 +6609,11 @@
             var r = e("./lib/oop"),
                 i = e("./lib/event_emitter").EventEmitter,
                 s = function (e, t) {
-                    (this.running = !1),
+                    ((this.running = !1),
                         (this.lines = []),
                         (this.states = []),
                         (this.currentLine = 0),
-                        (this.tokenizer = e);
+                        (this.tokenizer = e));
                     var n = this;
                     this.$worker = function () {
                         if (!n.running) return;
@@ -6620,7 +6627,7 @@
                             u = 0;
                         n.running = !1;
                         while (t < o) {
-                            n.$tokenizeRow(t), (r = t);
+                            (n.$tokenizeRow(t), (r = t));
                             do t++;
                             while (n.lines[t]);
                             u++;
@@ -6629,23 +6636,28 @@
                                 break;
                             }
                         }
-                        (n.currentLine = t), r == -1 && (r = t), s <= r && n.fireUpdateEvent(s, r);
+                        ((n.currentLine = t),
+                            r == -1 && (r = t),
+                            s <= r && n.fireUpdateEvent(s, r));
                     };
                 };
-            (function () {
-                r.implement(this, i),
+            ((function () {
+                (r.implement(this, i),
                     (this.setTokenizer = function (e) {
-                        (this.tokenizer = e), (this.lines = []), (this.states = []), this.start(0);
+                        ((this.tokenizer = e),
+                            (this.lines = []),
+                            (this.states = []),
+                            this.start(0));
                     }),
                     (this.setDocument = function (e) {
-                        (this.doc = e), (this.lines = []), (this.states = []), this.stop();
+                        ((this.doc = e), (this.lines = []), (this.states = []), this.stop());
                     }),
                     (this.fireUpdateEvent = function (e, t) {
                         var n = { first: e, last: t };
                         this._signal("update", { data: n });
                     }),
                     (this.start = function (e) {
-                        (this.currentLine = Math.min(
+                        ((this.currentLine = Math.min(
                             e || 0,
                             this.currentLine,
                             this.doc.getLength(),
@@ -6653,7 +6665,7 @@
                             this.lines.splice(this.currentLine, this.lines.length),
                             this.states.splice(this.currentLine, this.states.length),
                             this.stop(),
-                            (this.running = setTimeout(this.$worker, 700));
+                            (this.running = setTimeout(this.$worker, 700)));
                     }),
                     (this.scheduleStart = function () {
                         this.running || (this.running = setTimeout(this.$worker, 700));
@@ -6663,25 +6675,26 @@
                             n = e.end.row - t;
                         if (n === 0) this.lines[t] = null;
                         else if (e.action == "remove")
-                            this.lines.splice(t, n + 1, null), this.states.splice(t, n + 1, null);
+                            (this.lines.splice(t, n + 1, null), this.states.splice(t, n + 1, null));
                         else {
                             var r = Array(n + 1);
-                            r.unshift(t, 1),
+                            (r.unshift(t, 1),
                                 this.lines.splice.apply(this.lines, r),
-                                this.states.splice.apply(this.states, r);
+                                this.states.splice.apply(this.states, r));
                         }
-                        (this.currentLine = Math.min(t, this.currentLine, this.doc.getLength())),
-                            this.stop();
+                        ((this.currentLine = Math.min(t, this.currentLine, this.doc.getLength())),
+                            this.stop());
                     }),
                     (this.stop = function () {
-                        this.running && clearTimeout(this.running), (this.running = !1);
+                        (this.running && clearTimeout(this.running), (this.running = !1));
                     }),
                     (this.getTokens = function (e) {
                         return this.lines[e] || this.$tokenizeRow(e);
                     }),
                     (this.getState = function (e) {
                         return (
-                            this.currentLine == e && this.$tokenizeRow(e), this.states[e] || "start"
+                            this.currentLine == e && this.$tokenizeRow(e),
+                            this.states[e] || "start"
                         );
                     }),
                     (this.$tokenizeRow = function (e) {
@@ -6696,9 +6709,9 @@
                                 : this.currentLine == e && (this.currentLine = e + 1),
                             (this.lines[e] = r.tokens)
                         );
-                    });
+                    }));
             }).call(s.prototype),
-                (t.BackgroundTokenizer = s);
+                (t.BackgroundTokenizer = s));
         },
     ),
     define(
@@ -6710,13 +6723,13 @@
                 i = e("./lib/oop"),
                 s = e("./range").Range,
                 o = function (e, t, n) {
-                    this.setRegexp(e), (this.clazz = t), (this.type = n || "text");
+                    (this.setRegexp(e), (this.clazz = t), (this.type = n || "text"));
                 };
-            (function () {
-                (this.MAX_RANGES = 500),
+            ((function () {
+                ((this.MAX_RANGES = 500),
                     (this.setRegexp = function (e) {
                         if (this.regExp + "" == e + "") return;
-                        (this.regExp = e), (this.cache = []);
+                        ((this.regExp = e), (this.cache = []));
                     }),
                     (this.update = function (e, t, n, i) {
                         if (!this.regExp) return;
@@ -6734,9 +6747,9 @@
                             for (var l = f.length; l--; )
                                 t.drawSingleLineMarker(e, f[l].toScreenRange(n), this.clazz, i);
                         }
-                    });
+                    }));
             }).call(o.prototype),
-                (t.SearchHighlight = o);
+                (t.SearchHighlight = o));
         },
     ),
     define(
@@ -6745,23 +6758,23 @@
         function (e, t, n) {
             "use strict";
             function i(e, t) {
-                (this.foldData = e), Array.isArray(t) ? (this.folds = t) : (t = this.folds = [t]);
+                ((this.foldData = e), Array.isArray(t) ? (this.folds = t) : (t = this.folds = [t]));
                 var n = t[t.length - 1];
-                (this.range = new r(t[0].start.row, t[0].start.column, n.end.row, n.end.column)),
+                ((this.range = new r(t[0].start.row, t[0].start.column, n.end.row, n.end.column)),
                     (this.start = this.range.start),
                     (this.end = this.range.end),
                     this.folds.forEach(function (e) {
                         e.setFoldLine(this);
-                    }, this);
+                    }, this));
             }
             var r = e("../range").Range;
-            (function () {
-                (this.shiftRow = function (e) {
-                    (this.start.row += e),
+            ((function () {
+                ((this.shiftRow = function (e) {
+                    ((this.start.row += e),
                         (this.end.row += e),
                         this.folds.forEach(function (t) {
-                            (t.start.row += e), (t.end.row += e);
-                        });
+                            ((t.start.row += e), (t.end.row += e));
+                        }));
                 }),
                     (this.addFold = function (e) {
                         if (e.sameRow) {
@@ -6769,7 +6782,7 @@
                                 throw new Error(
                                     "Can't add a fold to this FoldLine as it has no connection",
                                 );
-                            this.folds.push(e),
+                            (this.folds.push(e),
                                 this.folds.sort(function (e, t) {
                                     return -e.range.compareEnd(t.start.row, t.start.column);
                                 }),
@@ -6777,19 +6790,19 @@
                                     ? ((this.end.row = e.end.row), (this.end.column = e.end.column))
                                     : this.range.compareStart(e.end.row, e.end.column) < 0 &&
                                       ((this.start.row = e.start.row),
-                                      (this.start.column = e.start.column));
+                                      (this.start.column = e.start.column)));
                         } else if (e.start.row == this.end.row)
-                            this.folds.push(e),
+                            (this.folds.push(e),
                                 (this.end.row = e.end.row),
-                                (this.end.column = e.end.column);
+                                (this.end.column = e.end.column));
                         else {
                             if (e.end.row != this.start.row)
                                 throw new Error(
                                     "Trying to add fold to FoldRow that doesn't have a matching row",
                                 );
-                            this.folds.unshift(e),
+                            (this.folds.unshift(e),
                                 (this.start.row = e.start.row),
-                                (this.start.column = e.start.column);
+                                (this.start.column = e.start.column));
                         }
                         e.foldLine = this;
                     }),
@@ -6805,22 +6818,22 @@
                             a = !0;
                         t == null && ((t = this.end.row), (n = this.end.column));
                         for (var f = 0; f < i.length; f++) {
-                            (s = i[f]), (o = s.range.compareStart(t, n));
+                            ((s = i[f]), (o = s.range.compareStart(t, n)));
                             if (o == -1) {
                                 e(null, t, n, r, a);
                                 return;
                             }
-                            (u = e(null, s.start.row, s.start.column, r, a)),
-                                (u = !u && e(s.placeholder, s.start.row, s.start.column, r));
+                            ((u = e(null, s.start.row, s.start.column, r, a)),
+                                (u = !u && e(s.placeholder, s.start.row, s.start.column, r)));
                             if (u || o === 0) return;
-                            (a = !s.sameRow), (r = s.end.column);
+                            ((a = !s.sameRow), (r = s.end.column));
                         }
                         e(null, t, n, r, a);
                     }),
                     (this.getNextFoldTo = function (e, t) {
                         var n, r;
                         for (var i = 0; i < this.folds.length; i++) {
-                            (n = this.folds[i]), (r = n.range.compareEnd(e, t));
+                            ((n = this.folds[i]), (r = n.range.compareEnd(e, t)));
                             if (r == -1) return { fold: n, kind: "after" };
                             if (r === 0) return { fold: n, kind: "inside" };
                         }
@@ -6839,7 +6852,7 @@
                                 var o = s.indexOf(i);
                                 o === 0 && (this.start.column += n);
                                 for (o; o < s.length; o++) {
-                                    (i = s[o]), (i.start.column += n);
+                                    ((i = s[o]), (i.start.column += n));
                                     if (!i.sameRow) return;
                                     i.end.column += n;
                                 }
@@ -6855,11 +6868,11 @@
                             o = this.foldData,
                             u = s.indexOf(r),
                             a = s[u - 1];
-                        (this.end.row = a.end.row),
+                        ((this.end.row = a.end.row),
                             (this.end.column = a.end.column),
-                            (s = s.splice(u, s.length - u));
+                            (s = s.splice(u, s.length - u)));
                         var f = new i(o, s);
-                        return o.splice(o.indexOf(this) + 1, 0, f), f;
+                        return (o.splice(o.indexOf(this) + 1, 0, f), f);
                     }),
                     (this.merge = function (e) {
                         var t = e.folds;
@@ -6888,9 +6901,9 @@
                             t = r.end.column;
                         }
                         return { row: this.end.row, column: this.end.column + e };
-                    });
+                    }));
             }).call(i.prototype),
-                (t.FoldLine = i);
+                (t.FoldLine = i));
         },
     ),
     define("ace/range_list", ["require", "exports", "module", "ace/range"], function (e, t, n) {
@@ -6900,8 +6913,8 @@
             s = function () {
                 this.ranges = [];
             };
-        (function () {
-            (this.comparePoints = i),
+        ((function () {
+            ((this.comparePoints = i),
                 (this.pointIndex = function (e, t, n) {
                     var r = this.ranges;
                     for (var s = n || 0; s < r.length; s++) {
@@ -6924,7 +6937,7 @@
                         n = this.pointIndex(e.start, t);
                     n < 0 && (n = -n - 1);
                     var r = this.pointIndex(e.end, t, n);
-                    return r < 0 ? (r = -r - 1) : r++, this.ranges.splice(n, r - n, e);
+                    return (r < 0 ? (r = -r - 1) : r++, this.ranges.splice(n, r - n, e));
                 }),
                 (this.addList = function (e) {
                     var t = [];
@@ -6944,18 +6957,18 @@
                     var n = t[0],
                         r;
                     for (var s = 1; s < t.length; s++) {
-                        (r = n), (n = t[s]);
+                        ((r = n), (n = t[s]));
                         var o = i(r.end, n.start);
                         if (o < 0) continue;
                         if (o == 0 && !r.isEmpty() && !n.isEmpty()) continue;
-                        i(r.end, n.end) < 0 &&
+                        (i(r.end, n.end) < 0 &&
                             ((r.end.row = n.end.row), (r.end.column = n.end.column)),
                             t.splice(s, 1),
                             e.push(n),
                             (n = r),
-                            s--;
+                            s--);
                     }
-                    return (this.ranges = t), e;
+                    return ((this.ranges = t), e);
                 }),
                 (this.contains = function (e, t) {
                     return this.pointIndex({ row: e, column: t }) >= 0;
@@ -6982,14 +6995,14 @@
                     return this.ranges.splice(0, this.ranges.length);
                 }),
                 (this.attach = function (e) {
-                    this.session && this.detach(),
+                    (this.session && this.detach(),
                         (this.session = e),
                         (this.onChange = this.$onChange.bind(this)),
-                        this.session.on("change", this.onChange);
+                        this.session.on("change", this.onChange));
                 }),
                 (this.detach = function () {
                     if (!this.session) return;
-                    this.session.removeListener("change", this.onChange), (this.session = null);
+                    (this.session.removeListener("change", this.onChange), (this.session = null));
                 }),
                 (this.$onChange = function (e) {
                     var t = e.start,
@@ -7013,14 +7026,14 @@
                                 ((a.start.column += l), (a.start.row += f));
                             if (a.end.row == r && a.end.column >= t.column) {
                                 if (a.end.column == t.column && this.$insertRight) continue;
-                                a.end.column == t.column &&
+                                (a.end.column == t.column &&
                                     l > 0 &&
                                     o < u - 1 &&
                                     a.end.column > a.start.column &&
                                     a.end.column == s[o + 1].start.column &&
                                     (a.end.column -= l),
                                     (a.end.column += l),
-                                    (a.end.row += f);
+                                    (a.end.row += f));
                             }
                         }
                     } else {
@@ -7031,27 +7044,27 @@
                             if (a.start.row > i) break;
                             a.end.row < i && ((a.end.row = r), (a.end.column = t.column));
                             if (a.start.row < i || (a.start.row == i && a.start.column <= n.colum))
-                                (a.start.row = r), (a.start.column = t.column);
+                                ((a.start.row = r), (a.start.column = t.column));
                             if (a.end.row == i)
                                 if (a.end.column <= n.column) {
                                     if (f || a.end.column > t.column)
-                                        (a.end.column = t.column), (a.end.row = t.row);
-                                } else (a.end.column += l), (a.end.row += f);
+                                        ((a.end.column = t.column), (a.end.row = t.row));
+                                } else ((a.end.column += l), (a.end.row += f));
                             if (a.start.row == i)
                                 if (a.start.column <= n.column) {
                                     if (f || a.start.column > t.column)
-                                        (a.start.column = t.column), (a.start.row = t.row);
-                                } else (a.start.column += l), (a.start.row += f);
+                                        ((a.start.column = t.column), (a.start.row = t.row));
+                                } else ((a.start.column += l), (a.start.row += f));
                         }
                     }
                     if (f != 0 && o < u)
                         for (; o < u; o++) {
                             var a = s[o];
-                            (a.start.row += f), (a.end.row += f);
+                            ((a.start.row += f), (a.end.row += f));
                         }
-                });
+                }));
         }).call(s.prototype),
-            (t.RangeList = s);
+            (t.RangeList = s));
     }),
     define(
         "ace/edit_session/fold",
@@ -7059,39 +7072,39 @@
         function (e, t, n) {
             "use strict";
             function u(e, t) {
-                (e.row -= t.row), e.row == 0 && (e.column -= t.column);
+                ((e.row -= t.row), e.row == 0 && (e.column -= t.column));
             }
             function a(e, t) {
-                u(e.start, t), u(e.end, t);
+                (u(e.start, t), u(e.end, t));
             }
             function f(e, t) {
-                e.row == 0 && (e.column += t.column), (e.row += t.row);
+                (e.row == 0 && (e.column += t.column), (e.row += t.row));
             }
             function l(e, t) {
-                f(e.start, t), f(e.end, t);
+                (f(e.start, t), f(e.end, t));
             }
             var r = e("../range").Range,
                 i = e("../range_list").RangeList,
                 s = e("../lib/oop"),
                 o = (t.Fold = function (e, t) {
-                    (this.foldLine = null),
+                    ((this.foldLine = null),
                         (this.placeholder = t),
                         (this.range = e),
                         (this.start = e.start),
                         (this.end = e.end),
                         (this.sameRow = e.start.row == e.end.row),
-                        (this.subFolds = this.ranges = []);
+                        (this.subFolds = this.ranges = []));
                 });
-            s.inherits(o, i),
+            (s.inherits(o, i),
                 function () {
-                    (this.toString = function () {
+                    ((this.toString = function () {
                         return '"' + this.placeholder + '" ' + this.range.toString();
                     }),
                         (this.setFoldLine = function (e) {
-                            (this.foldLine = e),
+                            ((this.foldLine = e),
                                 this.subFolds.forEach(function (t) {
                                     t.setFoldLine(e);
-                                });
+                                }));
                         }),
                         (this.clone = function () {
                             var e = this.range.clone(),
@@ -7135,12 +7148,12 @@
                                         this.range,
                                 );
                             var f = this.subFolds.splice(r, o - r, e);
-                            return e.setFoldLine(this.foldLine), e;
+                            return (e.setFoldLine(this.foldLine), e);
                         }),
                         (this.restoreRange = function (e) {
                             return l(e, this.start);
-                        });
-                }.call(o.prototype);
+                        }));
+                }.call(o.prototype));
         },
     ),
     define(
@@ -7157,7 +7170,7 @@
         function (e, t, n) {
             "use strict";
             function u() {
-                (this.getFoldAt = function (e, t, n) {
+                ((this.getFoldAt = function (e, t, n) {
                     var r = this.getFoldLine(e);
                     if (!r) return null;
                     var i = r.folds;
@@ -7175,7 +7188,7 @@
                             n = e.end,
                             r = this.$foldData,
                             i = [];
-                        (t.column += 1), (n.column -= 1);
+                        ((t.column += 1), (n.column -= 1));
                         for (var s = 0; s < r.length; s++) {
                             var o = r[s].range.compareRange(e);
                             if (o == 2) continue;
@@ -7190,7 +7203,7 @@
                                 i.push(f);
                             }
                         }
-                        return (t.column -= 1), (n.column += 1), i;
+                        return ((t.column -= 1), (n.column += 1), i);
                     }),
                     (this.getFoldsInRangeList = function (e) {
                         if (Array.isArray(e)) {
@@ -7239,7 +7252,7 @@
                     (this.getFoldLine = function (e, t) {
                         var n = this.$foldData,
                             r = 0;
-                        t && (r = n.indexOf(t)), r == -1 && (r = 0);
+                        (t && (r = n.indexOf(t)), r == -1 && (r = 0));
                         for (r; r < n.length; r++) {
                             var i = n[r];
                             if (i.start.row <= e && i.end.row >= e) return i;
@@ -7250,7 +7263,7 @@
                     (this.getNextFoldLine = function (e, t) {
                         var n = this.$foldData,
                             r = 0;
-                        t && (r = n.indexOf(t)), r == -1 && (r = 0);
+                        (t && (r = n.indexOf(t)), r == -1 && (r = 0));
                         for (r; r < n.length; r++) {
                             var i = n[r];
                             if (i.end.row >= e) return i;
@@ -7285,10 +7298,10 @@
                         var n = this.$foldData,
                             r = !1,
                             o;
-                        e instanceof s
+                        (e instanceof s
                             ? (o = e)
                             : ((o = new s(t, e)), (o.collapseChildren = t.collapseChildren)),
-                            this.$clipRangeToDocument(o.range);
+                            this.$clipRangeToDocument(o.range));
                         var u = o.start.row,
                             a = o.start.column,
                             f = o.end.row,
@@ -7297,8 +7310,8 @@
                             var c = this.getFoldAt(u, a, 1),
                                 h = this.getFoldAt(f, l, -1);
                             if (c && h == c) return c.addSubFold(o);
-                            c && !c.range.isStart(u, a) && this.removeFold(c),
-                                h && !h.range.isEnd(f, l) && this.removeFold(h);
+                            (c && !c.range.isStart(u, a) && this.removeFold(c),
+                                h && !h.range.isEnd(f, l) && this.removeFold(h));
                             var p = this.getFoldsInRange(o.range);
                             p.length > 0 &&
                                 (this.removeFolds(p),
@@ -7308,11 +7321,11 @@
                             for (var d = 0; d < n.length; d++) {
                                 var v = n[d];
                                 if (f == v.start.row) {
-                                    v.addFold(o), (r = !0);
+                                    (v.addFold(o), (r = !0));
                                     break;
                                 }
                                 if (u == v.end.row) {
-                                    v.addFold(o), (r = !0);
+                                    (v.addFold(o), (r = !0));
                                     if (!o.sameRow) {
                                         var m = n[d + 1];
                                         if (m && m.start.row == f) {
@@ -7349,44 +7362,44 @@
                             s = t.folds;
                         if (s.length == 1) i.splice(i.indexOf(t), 1);
                         else if (t.range.isEnd(e.end.row, e.end.column))
-                            s.pop(),
+                            (s.pop(),
                                 (t.end.row = s[s.length - 1].end.row),
-                                (t.end.column = s[s.length - 1].end.column);
+                                (t.end.column = s[s.length - 1].end.column));
                         else if (t.range.isStart(e.start.row, e.start.column))
-                            s.shift(),
+                            (s.shift(),
                                 (t.start.row = s[0].start.row),
-                                (t.start.column = s[0].start.column);
+                                (t.start.column = s[0].start.column));
                         else if (e.sameRow) s.splice(s.indexOf(e), 1);
                         else {
                             var o = t.split(e.start.row, e.start.column);
-                            (s = o.folds),
+                            ((s = o.folds),
                                 s.shift(),
                                 (o.start.row = s[0].start.row),
-                                (o.start.column = s[0].start.column);
+                                (o.start.column = s[0].start.column));
                         }
-                        this.$updating ||
+                        (this.$updating ||
                             (this.$useWrapMode
                                 ? this.$updateWrapData(n, r)
                                 : this.$updateRowLengthCache(n, r)),
                             (this.$modified = !0),
-                            this._signal("changeFold", { data: e, action: "remove" });
+                            this._signal("changeFold", { data: e, action: "remove" }));
                     }),
                     (this.removeFolds = function (e) {
                         var t = [];
                         for (var n = 0; n < e.length; n++) t.push(e[n]);
-                        t.forEach(function (e) {
+                        (t.forEach(function (e) {
                             this.removeFold(e);
                         }, this),
-                            (this.$modified = !0);
+                            (this.$modified = !0));
                     }),
                     (this.expandFold = function (e) {
-                        this.removeFold(e),
+                        (this.removeFold(e),
                             e.subFolds.forEach(function (t) {
-                                e.restoreRange(t), this.addFold(t);
+                                (e.restoreRange(t), this.addFold(t));
                             }, this),
                             e.collapseChildren > 0 &&
                                 this.foldAll(e.start.row + 1, e.end.row, e.collapseChildren - 1),
-                            (e.subFolds = []);
+                            (e.subFolds = []));
                     }),
                     (this.expandFolds = function (e) {
                         e.forEach(function (e) {
@@ -7395,18 +7408,19 @@
                     }),
                     (this.unfold = function (e, t) {
                         var n, i;
-                        e == null
+                        (e == null
                             ? ((n = new r(0, 0, this.getLength(), 0)), (t = !0))
                             : typeof e == "number"
                               ? (n = new r(e, 0, e, this.getLine(e).length))
                               : "row" in e
                                 ? (n = r.fromPoints(e, e))
                                 : (n = e),
-                            (i = this.getFoldsInRangeList(n));
+                            (i = this.getFoldsInRangeList(n)));
                         if (t) this.removeFolds(i);
                         else {
                             var s = i;
-                            while (s.length) this.expandFolds(s), (s = this.getFoldsInRangeList(n));
+                            while (s.length)
+                                (this.expandFolds(s), (s = this.getFoldsInRangeList(n)));
                         }
                         if (i.length) return i;
                     }),
@@ -7422,10 +7436,10 @@
                         return n ? n.start.row : e;
                     }),
                     (this.getFoldDisplayLine = function (e, t, n, r, i) {
-                        r == null && (r = e.start.row),
+                        (r == null && (r = e.start.row),
                             i == null && (i = 0),
                             t == null && (t = e.end.row),
-                            n == null && (n = this.getLine(t).length);
+                            n == null && (n = this.getLine(t).length));
                         var s = this.doc,
                             o = "";
                         return (
@@ -7448,7 +7462,7 @@
                         var i = this.getFoldLine(e);
                         if (!i) {
                             var s;
-                            return (s = this.doc.getLine(e)), s.substring(r || 0, t || s.length);
+                            return ((s = this.doc.getLine(e)), s.substring(r || 0, t || s.length));
                         }
                         return this.getFoldDisplayLine(i, e, t, n, r);
                     }),
@@ -7513,8 +7527,8 @@
                             s = i.getCurrentToken(),
                             u = s.type;
                         if (s && /^comment|string/.test(u)) {
-                            (u = u.match(/comment|string/)[0]),
-                                u == "comment" && (u += "|doc-start");
+                            ((u = u.match(/comment|string/)[0]),
+                                u == "comment" && (u += "|doc-start"));
                             var a = new RegExp(u),
                                 f = new r();
                             if (n != 1) {
@@ -7522,9 +7536,9 @@
                                 while (s && a.test(s.type));
                                 i.stepForward();
                             }
-                            (f.start.row = i.getCurrentTokenRow()),
+                            ((f.start.row = i.getCurrentTokenRow()),
                                 (f.start.column = i.getCurrentTokenColumn() + 2),
-                                (i = new o(this, e, t));
+                                (i = new o(this, e, t)));
                             if (n != -1) {
                                 var l = -1;
                                 do {
@@ -7547,7 +7561,7 @@
                         n == undefined && (n = 1e5);
                         var r = this.foldWidgets;
                         if (!r) return;
-                        (t = t || this.getLength()), (e = e || 0);
+                        ((t = t || this.getLength()), (e = e || 0));
                         for (var i = e; i < t; i++) {
                             r[i] == null && (r[i] = this.getFoldWidget(i));
                             if (r[i] != "start") continue;
@@ -7573,21 +7587,21 @@
                                     "]",
                             );
                         if (this.$foldStyle == e) return;
-                        (this.$foldStyle = e), e == "manual" && this.unfold();
+                        ((this.$foldStyle = e), e == "manual" && this.unfold());
                         var t = this.$foldMode;
-                        this.$setFolding(null), this.$setFolding(t);
+                        (this.$setFolding(null), this.$setFolding(t));
                     }),
                     (this.$setFolding = function (e) {
                         if (this.$foldMode == e) return;
-                        (this.$foldMode = e),
+                        ((this.$foldMode = e),
                             this.off("change", this.$updateFoldWidgets),
                             this.off("tokenizerUpdate", this.$tokenizerUpdateFoldWidgets),
-                            this._signal("changeAnnotation");
+                            this._signal("changeAnnotation"));
                         if (!e || this.$foldStyle == "manual") {
                             this.foldWidgets = null;
                             return;
                         }
-                        (this.foldWidgets = []),
+                        ((this.foldWidgets = []),
                             (this.getFoldWidget = e.getFoldWidget.bind(e, this, this.$foldStyle)),
                             (this.getFoldWidgetRange = e.getFoldWidgetRange.bind(
                                 e,
@@ -7598,7 +7612,7 @@
                             (this.$tokenizerUpdateFoldWidgets =
                                 this.tokenizerUpdateFoldWidgets.bind(this)),
                             this.on("change", this.$updateFoldWidgets),
-                            this.on("tokenizerUpdate", this.$tokenizerUpdateFoldWidgets);
+                            this.on("tokenizerUpdate", this.$tokenizerUpdateFoldWidgets));
                     }),
                     (this.getParentFoldRangeData = function (e, t) {
                         var n = this.foldWidgets;
@@ -7639,11 +7653,14 @@
                             i = n === "end" ? -1 : 1,
                             s = this.getFoldAt(e, i === -1 ? 0 : r.length, i);
                         if (s)
-                            return t.children || t.all ? this.removeFold(s) : this.expandFold(s), s;
+                            return (
+                                t.children || t.all ? this.removeFold(s) : this.expandFold(s),
+                                s
+                            );
                         var o = this.getFoldWidgetRange(e, !0);
                         if (o && !o.isMultiLine()) {
                             s = this.getFoldAt(o.start.row, o.start.column, 1);
-                            if (s && o.isEqual(s.range)) return this.removeFold(s), s;
+                            if (s && o.isEqual(s.range)) return (this.removeFold(s), s);
                         }
                         if (t.siblings) {
                             var u = this.getParentFoldRangeData(e);
@@ -7679,7 +7696,7 @@
                         else if (e.action == "remove") this.foldWidgets.splice(t, n + 1, null);
                         else {
                             var r = Array(n + 1);
-                            r.unshift(t, 1), this.foldWidgets.splice.apply(this.foldWidgets, r);
+                            (r.unshift(t, 1), this.foldWidgets.splice.apply(this.foldWidgets, r));
                         }
                     }),
                     (this.tokenizerUpdateFoldWidgets = function (e) {
@@ -7687,7 +7704,7 @@
                         t.first != t.last &&
                             this.foldWidgets.length > t.first &&
                             this.foldWidgets.splice(t.first, this.foldWidgets.length);
-                    });
+                    }));
             }
             var r = e("../range").Range,
                 i = e("./fold_line").FoldLine,
@@ -7702,7 +7719,7 @@
         function (e, t, n) {
             "use strict";
             function s() {
-                (this.findMatchingBracket = function (e, t) {
+                ((this.findMatchingBracket = function (e, t) {
                     if (e.column == 0) return null;
                     var n = t || this.getLine(e.row).charAt(e.column - 1);
                     if (n == "") return null;
@@ -7728,15 +7745,15 @@
                         if (o[1]) {
                             var u = this.$findClosingBracket(o[1], e);
                             if (!u) return null;
-                            (r = i.fromPoints(e, u)),
+                            ((r = i.fromPoints(e, u)),
                                 n || (r.end.column++, r.start.column--),
-                                (r.cursor = r.end);
+                                (r.cursor = r.end));
                         } else {
                             var u = this.$findOpeningBracket(o[2], e);
                             if (!u) return null;
-                            (r = i.fromPoints(u, e)),
+                            ((r = i.fromPoints(u, e)),
                                 n || (r.start.column++, r.end.column--),
-                                (r.cursor = r.start);
+                                (r.cursor = r.start));
                         }
                         return r;
                     }),
@@ -7782,7 +7799,7 @@
                             do u = o.stepBackward();
                             while (u && !n.test(u.type));
                             if (u == null) break;
-                            (f = u.value), (a = f.length - 1);
+                            ((f = u.value), (a = f.length - 1));
                         }
                         return null;
                     }),
@@ -7824,7 +7841,7 @@
                             a = 0;
                         }
                         return null;
-                    });
+                    }));
             }
             var r = e("../token_iterator").TokenIterator,
                 i = e("../range").Range;
@@ -7865,7 +7882,7 @@
                 h = e("./background_tokenizer").BackgroundTokenizer,
                 p = e("./search_highlight").SearchHighlight,
                 d = function (e, t) {
-                    (this.$breakpoints = []),
+                    ((this.$breakpoints = []),
                         (this.$decorations = []),
                         (this.$frontMarkers = {}),
                         (this.$backMarkers = {}),
@@ -7877,16 +7894,16 @@
                             return this.join("\n");
                         }),
                         this.on("changeFold", this.onChangeFold.bind(this)),
-                        (this.$onChange = this.onChange.bind(this));
+                        (this.$onChange = this.onChange.bind(this)));
                     if (typeof e != "object" || !e.getLine) e = new c(e);
-                    this.setDocument(e),
+                    (this.setDocument(e),
                         (this.selection = new a(this)),
                         (this.$bidiHandler = new s(this)),
                         o.resetOptions(this),
                         this.setMode(t),
-                        o._signal("session", this);
+                        o._signal("session", this));
                 };
-            (d.$uid = 0),
+            ((d.$uid = 0),
                 function () {
                     function m(e) {
                         return e < 4352
@@ -7924,21 +7941,21 @@
                                   (e >= 65281 && e <= 65376) ||
                                   (e >= 65504 && e <= 65510);
                     }
-                    r.implement(this, u),
+                    (r.implement(this, u),
                         (this.setDocument = function (e) {
-                            this.doc && this.doc.removeListener("change", this.$onChange),
+                            (this.doc && this.doc.removeListener("change", this.$onChange),
                                 (this.doc = e),
                                 e.on("change", this.$onChange),
                                 this.bgTokenizer &&
                                     this.bgTokenizer.setDocument(this.getDocument()),
-                                this.resetCaches();
+                                this.resetCaches());
                         }),
                         (this.getDocument = function () {
                             return this.doc;
                         }),
                         (this.$resetRowCache = function (e) {
                             if (!e) {
-                                (this.$docRowCache = []), (this.$screenRowCache = []);
+                                ((this.$docRowCache = []), (this.$screenRowCache = []));
                                 return;
                             }
                             var t = this.$docRowCache.length,
@@ -7961,22 +7978,22 @@
                             return n - 1;
                         }),
                         (this.resetCaches = function () {
-                            (this.$modified = !0),
+                            ((this.$modified = !0),
                                 (this.$wrapData = []),
                                 (this.$rowLengthCache = []),
                                 this.$resetRowCache(0),
-                                this.bgTokenizer && this.bgTokenizer.start(0);
+                                this.bgTokenizer && this.bgTokenizer.start(0));
                         }),
                         (this.onChangeFold = function (e) {
                             var t = e.data;
                             this.$resetRowCache(t.start.row);
                         }),
                         (this.onChange = function (e) {
-                            (this.$modified = !0),
+                            ((this.$modified = !0),
                                 this.$bidiHandler.onChange(e),
-                                this.$resetRowCache(e.start.row);
+                                this.$resetRowCache(e.start.row));
                             var t = this.$updateInternalDataOnChange(e);
-                            !this.$fromUndo &&
+                            (!this.$fromUndo &&
                                 this.$undoManager &&
                                 (t &&
                                     t.length &&
@@ -7989,14 +8006,14 @@
                                 (this.mergeUndoDeltas = !0),
                                 this.$informUndoManager.schedule()),
                                 this.bgTokenizer && this.bgTokenizer.$updateOnChange(e),
-                                this._signal("change", e);
+                                this._signal("change", e));
                         }),
                         (this.setValue = function (e) {
-                            this.doc.setValue(e),
+                            (this.doc.setValue(e),
                                 this.selection.moveTo(0, 0),
                                 this.$resetRowCache(0),
                                 this.setUndoManager(this.$undoManager),
-                                this.getUndoManager().reset();
+                                this.getUndoManager().reset());
                         }),
                         (this.getValue = this.toString =
                             function () {
@@ -8029,17 +8046,17 @@
                             );
                         }),
                         (this.setUndoManager = function (e) {
-                            (this.$undoManager = e),
-                                this.$informUndoManager && this.$informUndoManager.cancel();
+                            ((this.$undoManager = e),
+                                this.$informUndoManager && this.$informUndoManager.cancel());
                             if (e) {
                                 var t = this;
-                                e.addSession(this),
+                                (e.addSession(this),
                                     (this.$syncInformUndoManager = function () {
-                                        t.$informUndoManager.cancel(), (t.mergeUndoDeltas = !1);
+                                        (t.$informUndoManager.cancel(), (t.mergeUndoDeltas = !1));
                                     }),
                                     (this.$informUndoManager = i.delayedCall(
                                         this.$syncInformUndoManager,
-                                    ));
+                                    )));
                             } else this.$syncInformUndoManager = function () {};
                         }),
                         (this.markUndoGroup = function () {
@@ -8094,16 +8111,16 @@
                             this.setOverwrite(!this.$overwrite);
                         }),
                         (this.addGutterDecoration = function (e, t) {
-                            this.$decorations[e] || (this.$decorations[e] = ""),
+                            (this.$decorations[e] || (this.$decorations[e] = ""),
                                 (this.$decorations[e] += " " + t),
-                                this._signal("changeBreakpoint", {});
+                                this._signal("changeBreakpoint", {}));
                         }),
                         (this.removeGutterDecoration = function (e, t) {
-                            (this.$decorations[e] = (this.$decorations[e] || "").replace(
+                            ((this.$decorations[e] = (this.$decorations[e] || "").replace(
                                 " " + t,
                                 "",
                             )),
-                                this._signal("changeBreakpoint", {});
+                                this._signal("changeBreakpoint", {}));
                         }),
                         (this.getBreakpoints = function () {
                             return this.$breakpoints;
@@ -8115,15 +8132,15 @@
                             this._signal("changeBreakpoint", {});
                         }),
                         (this.clearBreakpoints = function () {
-                            (this.$breakpoints = []), this._signal("changeBreakpoint", {});
+                            ((this.$breakpoints = []), this._signal("changeBreakpoint", {}));
                         }),
                         (this.setBreakpoint = function (e, t) {
-                            t === undefined && (t = "ace_breakpoint"),
+                            (t === undefined && (t = "ace_breakpoint"),
                                 t ? (this.$breakpoints[e] = t) : delete this.$breakpoints[e],
-                                this._signal("changeBreakpoint", {});
+                                this._signal("changeBreakpoint", {}));
                         }),
                         (this.clearBreakpoint = function (e) {
-                            delete this.$breakpoints[e], this._signal("changeBreakpoint", {});
+                            (delete this.$breakpoints[e], this._signal("changeBreakpoint", {}));
                         }),
                         (this.addMarker = function (e, t, n, r) {
                             var i = this.$markerId++,
@@ -8162,8 +8179,8 @@
                             var t = this.$frontMarkers[e] || this.$backMarkers[e];
                             if (!t) return;
                             var n = t.inFront ? this.$frontMarkers : this.$backMarkers;
-                            delete n[e],
-                                this._signal(t.inFront ? "changeFrontMarker" : "changeBackMarker");
+                            (delete n[e],
+                                this._signal(t.inFront ? "changeFrontMarker" : "changeBackMarker"));
                         }),
                         (this.getMarkers = function (e) {
                             return e ? this.$frontMarkers : this.$backMarkers;
@@ -8176,12 +8193,12 @@
                             this.$searchHighlight.setRegexp(e);
                         }),
                         (this.highlightLines = function (e, t, n, r) {
-                            typeof t != "number" && ((n = t), (t = e)), n || (n = "ace_step");
+                            (typeof t != "number" && ((n = t), (t = e)), n || (n = "ace_step"));
                             var i = new l(e, 0, t, Infinity);
-                            return (i.id = this.addMarker(i, n, "fullLine", r)), i;
+                            return ((i.id = this.addMarker(i, n, "fullLine", r)), i);
                         }),
                         (this.setAnnotations = function (e) {
-                            (this.$annotations = e), this._signal("changeAnnotation", {});
+                            ((this.$annotations = e), this._signal("changeAnnotation", {}));
                         }),
                         (this.getAnnotations = function () {
                             return this.$annotations || [];
@@ -8196,8 +8213,8 @@
                         (this.getWordRange = function (e, t) {
                             var n = this.getLine(e),
                                 r = !1;
-                            t > 0 && (r = !!n.charAt(t - 1).match(this.tokenRe)),
-                                r || (r = !!n.charAt(t).match(this.tokenRe));
+                            (t > 0 && (r = !!n.charAt(t - 1).match(this.tokenRe)),
+                                r || (r = !!n.charAt(t).match(this.tokenRe)));
                             if (r) var i = this.tokenRe;
                             else if (/^\s+$/.test(n.slice(t - 1, t + 1))) var i = /\s/;
                             else var i = this.nonTokenRe;
@@ -8231,7 +8248,7 @@
                         }),
                         (this.onReloadTokenizer = function (e) {
                             var t = e.data;
-                            this.bgTokenizer.start(t.first), this._signal("tokenizerUpdate", e);
+                            (this.bgTokenizer.start(t.first), this._signal("tokenizerUpdate", e));
                         }),
                         (this.$modes = o.$modes),
                         (this.$mode = null),
@@ -8245,32 +8262,32 @@
                             this.$modes["ace/mode/text"] ||
                                 (this.$modes["ace/mode/text"] = new f());
                             if (this.$modes[r] && !n) {
-                                this.$onChangeMode(this.$modes[r]), t && t();
+                                (this.$onChangeMode(this.$modes[r]), t && t());
                                 return;
                             }
-                            (this.$modeId = r),
+                            ((this.$modeId = r),
                                 o.loadModule(
                                     ["mode", r],
                                     function (e) {
                                         if (this.$modeId !== r) return t && t();
-                                        this.$modes[r] && !n
+                                        (this.$modes[r] && !n
                                             ? this.$onChangeMode(this.$modes[r])
                                             : e &&
                                               e.Mode &&
                                               ((e = new e.Mode(n)),
                                               n || ((this.$modes[r] = e), (e.$id = r)),
                                               this.$onChangeMode(e)),
-                                            t && t();
+                                            t && t());
                                     }.bind(this),
                                 ),
-                                this.$mode || this.$onChangeMode(this.$modes["ace/mode/text"], !0);
+                                this.$mode || this.$onChangeMode(this.$modes["ace/mode/text"], !0));
                         }),
                         (this.$onChangeMode = function (e, t) {
                             t || (this.$modeId = e.$id);
                             if (this.$mode === e) return;
-                            (this.$mode = e),
+                            ((this.$mode = e),
                                 this.$stopWorker(),
-                                this.$useWorker && this.$startWorker();
+                                this.$useWorker && this.$startWorker());
                             var n = e.getTokenizer();
                             if (n.addEventListener !== undefined) {
                                 var r = this.onReloadTokenizer.bind(this);
@@ -8283,7 +8300,7 @@
                                     i._signal("tokenizerUpdate", e);
                                 });
                             } else this.bgTokenizer.setTokenizer(n);
-                            this.bgTokenizer.setDocument(this.getDocument()),
+                            (this.bgTokenizer.setDocument(this.getDocument()),
                                 (this.tokenRe = e.tokenRe),
                                 (this.nonTokenRe = e.nonTokenRe),
                                 t ||
@@ -8291,7 +8308,7 @@
                                     this.$options.wrapMethod.set.call(this, this.$wrapMethod),
                                     this.$setFolding(e.foldingRules),
                                     this.bgTokenizer.start(0),
-                                    this._emit("changeMode"));
+                                    this._emit("changeMode")));
                         }),
                         (this.$stopWorker = function () {
                             this.$worker && (this.$worker.terminate(), (this.$worker = null));
@@ -8300,7 +8317,7 @@
                             try {
                                 this.$worker = this.$mode.createWorker(this);
                             } catch (e) {
-                                o.warn("Could not load worker", e), (this.$worker = null);
+                                (o.warn("Could not load worker", e), (this.$worker = null));
                             }
                         }),
                         (this.getMode = function () {
@@ -8309,7 +8326,7 @@
                         (this.$scrollTop = 0),
                         (this.setScrollTop = function (e) {
                             if (this.$scrollTop === e || isNaN(e)) return;
-                            (this.$scrollTop = e), this._signal("changeScrollTop", e);
+                            ((this.$scrollTop = e), this._signal("changeScrollTop", e));
                         }),
                         (this.getScrollTop = function () {
                             return this.$scrollTop;
@@ -8317,7 +8334,7 @@
                         (this.$scrollLeft = 0),
                         (this.setScrollLeft = function (e) {
                             if (this.$scrollLeft === e || isNaN(e)) return;
-                            (this.$scrollLeft = e), this._signal("changeScrollLeft", e);
+                            ((this.$scrollLeft = e), this._signal("changeScrollLeft", e));
                         }),
                         (this.getScrollLeft = function () {
                             return this.$scrollLeft;
@@ -8355,10 +8372,11 @@
                                     if (a > o) {
                                         a = s.end.row + 1;
                                         if (a >= u) break;
-                                        (s = this.$foldData[i++]), (o = s ? s.start.row : Infinity);
+                                        ((s = this.$foldData[i++]),
+                                            (o = s ? s.start.row : Infinity));
                                     }
-                                    n[a] == null && (n[a] = this.$getStringScreenWidth(t[a])[0]),
-                                        n[a] > r && (r = n[a]);
+                                    (n[a] == null && (n[a] = this.$getStringScreenWidth(t[a])[0]),
+                                        n[a] > r && (r = n[a]));
                                 }
                                 this.screenWidth = r;
                             }
@@ -8393,12 +8411,12 @@
                                     ? this.doc.revertDelta(r)
                                     : r.folds && this.addFolds(r.folds);
                             }
-                            !t &&
+                            (!t &&
                                 this.$undoSelect &&
                                 (e.selectionBefore
                                     ? this.selection.fromJSON(e.selectionBefore)
                                     : this.selection.setRange(this.$getUndoSelection(e, !0))),
-                                (this.$fromUndo = !1);
+                                (this.$fromUndo = !1));
                         }),
                         (this.redoChanges = function (e, t) {
                             if (!e.length) return;
@@ -8408,12 +8426,12 @@
                                 (r.action == "insert" || r.action == "remove") &&
                                     this.doc.applyDelta(r);
                             }
-                            !t &&
+                            (!t &&
                                 this.$undoSelect &&
                                 (e.selectionAfter
                                     ? this.selection.fromJSON(e.selectionAfter)
                                     : this.selection.setRange(this.$getUndoSelection(e, !1))),
-                                (this.$fromUndo = !1);
+                                (this.$fromUndo = !1));
                         }),
                         (this.setUndoSelect = function (e) {
                             this.$undoSelect = e;
@@ -8456,7 +8474,7 @@
                                 this.remove(e);
                                 var o = e.start.row - e.end.row,
                                     u = o ? -e.end.column : e.start.column - e.end.column;
-                                u &&
+                                (u &&
                                     (s.start.row == e.end.row &&
                                         s.start.column > e.end.column &&
                                         (s.start.column += u),
@@ -8465,7 +8483,7 @@
                                         (s.end.column += u)),
                                     o &&
                                         s.start.row >= e.end.row &&
-                                        ((s.start.row += o), (s.end.row += o));
+                                        ((s.start.row += o), (s.end.row += o)));
                             }
                             s.end = this.insert(s.start, r);
                             if (i.length) {
@@ -8499,16 +8517,16 @@
                                 r = this.getTabSize();
                             for (var i = t.start.row; i <= t.end.row; ++i) {
                                 var s = this.getLine(i);
-                                (n.start.row = i), (n.end.row = i);
+                                ((n.start.row = i), (n.end.row = i));
                                 for (var o = 0; o < r; ++o) if (s.charAt(o) != " ") break;
-                                o < r && s.charAt(o) == "	"
+                                (o < r && s.charAt(o) == "	"
                                     ? ((n.start.column = o), (n.end.column = o + 1))
                                     : ((n.start.column = 0), (n.end.column = o)),
-                                    this.remove(n);
+                                    this.remove(n));
                             }
                         }),
                         (this.$moveLines = function (e, t, n) {
-                            (e = this.getRowFoldStart(e)), (t = this.getRowFoldEnd(t));
+                            ((e = this.getRowFoldStart(e)), (t = this.getRowFoldEnd(t)));
                             if (n < 0) {
                                 var r = this.getRowFoldStart(e + n);
                                 if (r < 0) return 0;
@@ -8518,19 +8536,27 @@
                                 if (r > this.doc.getLength() - 1) return 0;
                                 var i = r - t;
                             } else {
-                                (e = this.$clipRowToDocument(e)), (t = this.$clipRowToDocument(t));
+                                ((e = this.$clipRowToDocument(e)),
+                                    (t = this.$clipRowToDocument(t)));
                                 var i = t - e + 1;
                             }
                             var s = new l(e, 0, t, Number.MAX_VALUE),
                                 o = this.getFoldsInRange(s).map(function (e) {
-                                    return (e = e.clone()), (e.start.row += i), (e.end.row += i), e;
+                                    return (
+                                        (e = e.clone()),
+                                        (e.start.row += i),
+                                        (e.end.row += i),
+                                        e
+                                    );
                                 }),
                                 u =
                                     n == 0
                                         ? this.doc.getLines(e, t)
                                         : this.doc.removeFullLines(e, t);
                             return (
-                                this.doc.insertFullLines(e + i, u), o.length && this.addFolds(o), i
+                                this.doc.insertFullLines(e + i, u),
+                                o.length && this.addFolds(o),
+                                i
                             );
                         }),
                         (this.moveLinesUp = function (e, t) {
@@ -8550,7 +8576,7 @@
                         }),
                         (this.$clipPositionToDocument = function (e, t) {
                             t = Math.max(0, t);
-                            if (e < 0) (e = 0), (t = 0);
+                            if (e < 0) ((e = 0), (t = 0));
                             else {
                                 var n = this.doc.getLength();
                                 e >= n
@@ -8582,12 +8608,12 @@
                         (this.$wrapLimitRange = { min: null, max: null }),
                         (this.setUseWrapMode = function (e) {
                             if (e != this.$useWrapMode) {
-                                (this.$useWrapMode = e),
+                                ((this.$useWrapMode = e),
                                     (this.$modified = !0),
-                                    this.$resetRowCache(0);
+                                    this.$resetRowCache(0));
                                 if (e) {
                                     var t = this.getLength();
-                                    (this.$wrapData = Array(t)), this.$updateWrapData(0, t - 1);
+                                    ((this.$wrapData = Array(t)), this.$updateWrapData(0, t - 1));
                                 }
                                 this._signal("changeWrapMode");
                             }
@@ -8597,10 +8623,10 @@
                         }),
                         (this.setWrapLimitRange = function (e, t) {
                             if (this.$wrapLimitRange.min !== e || this.$wrapLimitRange.max !== t)
-                                (this.$wrapLimitRange = { min: e, max: t }),
+                                ((this.$wrapLimitRange = { min: e, max: t }),
                                     (this.$modified = !0),
                                     this.$bidiHandler.markAsDirty(),
-                                    this.$useWrapMode && this._signal("changeWrapMode");
+                                    this.$useWrapMode && this._signal("changeWrapMode"));
                         }),
                         (this.adjustWrapLimit = function (e, t) {
                             var n = this.$wrapLimitRange;
@@ -8617,7 +8643,7 @@
                                 : !1;
                         }),
                         (this.$constrainWrapLimit = function (e, t, n) {
-                            return t && (e = Math.max(t, e)), n && (e = Math.min(n, e)), e;
+                            return (t && (e = Math.max(t, e)), n && (e = Math.min(n, e)), e);
                         }),
                         (this.getWrapLimit = function () {
                             return this.$wrapLimit;
@@ -8642,15 +8668,15 @@
                                 if (n === "remove") {
                                     this[t ? "$wrapData" : "$rowLengthCache"].splice(s, u);
                                     var f = this.$foldData;
-                                    (a = this.getFoldsInRange(e)), this.removeFolds(a);
+                                    ((a = this.getFoldsInRange(e)), this.removeFolds(a));
                                     var l = this.getFoldLine(i.row),
                                         c = 0;
                                     if (l) {
-                                        l.addRemoveChars(i.row, i.column, r.column - i.column),
-                                            l.shiftRow(-u);
+                                        (l.addRemoveChars(i.row, i.column, r.column - i.column),
+                                            l.shiftRow(-u));
                                         var h = this.getFoldLine(s);
-                                        h && h !== l && (h.merge(l), (l = h)),
-                                            (c = f.indexOf(l) + 1);
+                                        (h && h !== l && (h.merge(l), (l = h)),
+                                            (c = f.indexOf(l) + 1));
                                     }
                                     for (c; c < f.length; c++) {
                                         var l = f[c];
@@ -8667,7 +8693,7 @@
                                         c = 0;
                                     if (l) {
                                         var v = l.range.compareInside(r.row, r.column);
-                                        v == 0
+                                        (v == 0
                                             ? ((l = l.split(r.row, r.column)),
                                               l &&
                                                   (l.shiftRow(u),
@@ -8675,7 +8701,7 @@
                                             : v == -1 &&
                                               (l.addRemoveChars(s, 0, i.column - r.column),
                                               l.shiftRow(u)),
-                                            (c = f.indexOf(l) + 1);
+                                            (c = f.indexOf(l) + 1));
                                     }
                                     for (c; c < f.length; c++) {
                                         var l = f[c];
@@ -8683,11 +8709,11 @@
                                     }
                                 }
                             else {
-                                (u = Math.abs(e.start.column - e.end.column)),
+                                ((u = Math.abs(e.start.column - e.end.column)),
                                     n === "remove" &&
                                         ((a = this.getFoldsInRange(e)),
                                         this.removeFolds(a),
-                                        (u = -u));
+                                        (u = -u)));
                                 var l = this.getFoldLine(s);
                                 l && l.addRemoveChars(s, r.column, u);
                             }
@@ -8703,7 +8729,7 @@
                             );
                         }),
                         (this.$updateRowLengthCache = function (e, t, n) {
-                            (this.$rowLengthCache[e] = null), (this.$rowLengthCache[t] = null);
+                            ((this.$rowLengthCache[e] = null), (this.$rowLengthCache[t] = null));
                         }),
                         (this.$updateWrapData = function (e, t) {
                             var r = this.doc.getAllLines(),
@@ -8715,15 +8741,15 @@
                                 l = e;
                             t = Math.min(t, r.length - 1);
                             while (l <= t)
-                                (f = this.getFoldLine(l, f)),
+                                ((f = this.getFoldLine(l, f)),
                                     f
                                         ? ((a = []),
                                           f.walk(
                                               function (e, t, i, o) {
                                                   var u;
                                                   if (e != null) {
-                                                      (u = this.$getDisplayTokens(e, a.length)),
-                                                          (u[0] = n);
+                                                      ((u = this.$getDisplayTokens(e, a.length)),
+                                                          (u[0] = n));
                                                       for (var f = 1; f < u.length; f++) u[f] = s;
                                                   } else
                                                       u = this.$getDisplayTokens(
@@ -8739,8 +8765,8 @@
                                           (l = f.end.row + 1))
                                         : ((a = this.$getDisplayTokens(r[l])),
                                           (o[l] = this.$computeWrapSplits(a, u, i)),
-                                          l++);
-                        });
+                                          l++));
+                        }));
                     var e = 1,
                         t = 2,
                         n = 3,
@@ -8749,7 +8775,7 @@
                         c = 10,
                         d = 11,
                         v = 12;
-                    (this.$computeWrapSplits = function (e, r, i) {
+                    ((this.$computeWrapSplits = function (e, r, i) {
                         function g() {
                             var t = 0;
                             if (m === 0) return t;
@@ -8765,7 +8791,7 @@
                                         t += i;
                                     }
                                 }
-                            return h && p !== !1 && (t += i), Math.min(t, m);
+                            return (h && p !== !1 && (t += i), Math.min(t, m));
                         }
                         function y(t) {
                             var n = t - f;
@@ -8773,7 +8799,7 @@
                                 var i = e[r];
                                 if (i === 12 || i === 2) n -= 1;
                             }
-                            o.length || ((b = g()), (o.indent = b)), (l += n), o.push(l), (f = t);
+                            (o.length || ((b = g()), (o.indent = b)), (l += n), o.push(l), (f = t));
                         }
                         if (e.length == 0) return [];
                         var o = [],
@@ -8812,7 +8838,7 @@
                                 y(++w);
                                 continue;
                             }
-                            (w = f + r), e[w] == t && w--, y(w - b);
+                            ((w = f + r), e[w] == t && w--, y(w - b));
                         }
                         return o;
                     }),
@@ -8823,7 +8849,7 @@
                             for (var o = 0; o < n.length; o++) {
                                 var u = n.charCodeAt(o);
                                 if (u == 9) {
-                                    (s = this.getScreenTabSize(i.length + r)), i.push(d);
+                                    ((s = this.getScreenTabSize(i.length + r)), i.push(d));
                                     for (var f = 1; f < s; f++) i.push(v);
                                 } else
                                     u == 32
@@ -8838,15 +8864,15 @@
                         }),
                         (this.$getStringScreenWidth = function (e, t, n) {
                             if (t == 0) return [0, 0];
-                            t == null && (t = Infinity), (n = n || 0);
+                            (t == null && (t = Infinity), (n = n || 0));
                             var r, i;
                             for (i = 0; i < e.length; i++) {
-                                (r = e.charCodeAt(i)),
+                                ((r = e.charCodeAt(i)),
                                     r == 9
                                         ? (n += this.getScreenTabSize(n))
                                         : r >= 4352 && m(r)
                                           ? (n += 2)
-                                          : (n += 1);
+                                          : (n += 1));
                                 if (n > t) break;
                             }
                             return [n, i];
@@ -8919,20 +8945,20 @@
                             while (u <= e) {
                                 a = this.getRowLength(i);
                                 if (u + a > e || i >= p) break;
-                                (u += a),
+                                ((u += a),
                                     i++,
                                     i > v &&
                                         ((i = d.end.row + 1),
                                         (d = this.getNextFoldLine(i, d)),
                                         (v = d ? d.start.row : Infinity)),
-                                    h && (this.$docRowCache.push(i), this.$screenRowCache.push(u));
+                                    h && (this.$docRowCache.push(i), this.$screenRowCache.push(u)));
                             }
                             if (d && d.start.row <= i)
-                                (r = this.getFoldDisplayLine(d)), (i = d.start.row);
+                                ((r = this.getFoldDisplayLine(d)), (i = d.start.row));
                             else {
                                 if (u + a <= e || i > p)
                                     return { row: p, column: this.getLine(p).length };
-                                (r = this.getLine(i)), (d = null);
+                                ((r = this.getLine(i)), (d = null));
                             }
                             var m = 0,
                                 g = Math.floor(e - u);
@@ -8959,12 +8985,12 @@
                             if (typeof t == "undefined")
                                 var n = this.$clipPositionToDocument(e.row, e.column);
                             else n = this.$clipPositionToDocument(e, t);
-                            (e = n.row), (t = n.column);
+                            ((e = n.row), (t = n.column));
                             var r = 0,
                                 i = null,
                                 s = null;
-                            (s = this.getFoldAt(e, t, 1)),
-                                s && ((e = s.start.row), (t = s.start.column));
+                            ((s = this.getFoldAt(e, t, 1)),
+                                s && ((e = s.start.row), (t = s.start.column)));
                             var o,
                                 u = 0,
                                 a = this.$docRowCache,
@@ -8981,12 +9007,12 @@
                                 if (u >= p) {
                                     o = h.end.row + 1;
                                     if (o > e) break;
-                                    (h = this.getNextFoldLine(o, h)),
-                                        (p = h ? h.start.row : Infinity);
+                                    ((h = this.getNextFoldLine(o, h)),
+                                        (p = h ? h.start.row : Infinity));
                                 } else o = u + 1;
-                                (r += this.getRowLength(u)),
+                                ((r += this.getRowLength(u)),
                                     (u = o),
-                                    c && (this.$docRowCache.push(u), this.$screenRowCache.push(r));
+                                    c && (this.$docRowCache.push(u), this.$screenRowCache.push(r)));
                             }
                             var d = "";
                             h && u >= p
@@ -8997,9 +9023,9 @@
                                 var m = this.$wrapData[i];
                                 if (m) {
                                     var g = 0;
-                                    while (d.length >= m[g]) r++, g++;
-                                    (d = d.substring(m[g - 1] || 0, d.length)),
-                                        (v = g > 0 ? m.indent : 0);
+                                    while (d.length >= m[g]) (r++, g++);
+                                    ((d = d.substring(m[g - 1] || 0, d.length)),
+                                        (v = g > 0 ? m.indent : 0));
                                 }
                             }
                             return { row: r, column: v + this.$getStringScreenWidth(d)[0] };
@@ -9017,7 +9043,7 @@
                                 e = this.getLength();
                                 var n = this.$foldData;
                                 for (var r = 0; r < n.length; r++)
-                                    (t = n[r]), (e -= t.end.row - t.start.row);
+                                    ((t = n[r]), (e -= t.end.row - t.start.row));
                             } else {
                                 var i = this.$wrapData.length,
                                     s = 0,
@@ -9026,38 +9052,38 @@
                                     o = t ? t.start.row : Infinity;
                                 while (s < i) {
                                     var u = this.$wrapData[s];
-                                    (e += u ? u.length + 1 : 1),
+                                    ((e += u ? u.length + 1 : 1),
                                         s++,
                                         s > o &&
                                             ((s = t.end.row + 1),
                                             (t = this.$foldData[r++]),
-                                            (o = t ? t.start.row : Infinity));
+                                            (o = t ? t.start.row : Infinity)));
                                 }
                             }
-                            return this.lineWidgets && (e += this.$getWidgetScreenLength()), e;
+                            return (this.lineWidgets && (e += this.$getWidgetScreenLength()), e);
                         }),
                         (this.$setFontMetrics = function (e) {
                             if (!this.$enableVarChar) return;
                             this.$getStringScreenWidth = function (t, n, r) {
                                 if (n === 0) return [0, 0];
-                                n || (n = Infinity), (r = r || 0);
+                                (n || (n = Infinity), (r = r || 0));
                                 var i, s;
                                 for (s = 0; s < t.length; s++) {
-                                    (i = t.charAt(s)),
+                                    ((i = t.charAt(s)),
                                         i === "	"
                                             ? (r += this.getScreenTabSize(r))
-                                            : (r += e.getCharacterWidth(i));
+                                            : (r += e.getCharacterWidth(i)));
                                     if (r > n) break;
                                 }
                                 return [r, s];
                             };
                         }),
                         (this.destroy = function () {
-                            this.bgTokenizer &&
+                            (this.bgTokenizer &&
                                 (this.bgTokenizer.setDocument(null), (this.bgTokenizer = null)),
-                                this.$stopWorker();
+                                this.$stopWorker());
                         }),
-                        (this.isFullWidth = m);
+                        (this.isFullWidth = m));
                 }.call(d.prototype),
                 e("./edit_session/folding").Folding.call(d.prototype),
                 e("./edit_session/bracket_match").BracketMatch.call(d.prototype),
@@ -9076,7 +9102,7 @@
                             if (!e) this.setUseWrapMode(!1);
                             else {
                                 var t = typeof e == "number" ? e : null;
-                                this.setWrapLimitRange(t, t), this.setUseWrapMode(!0);
+                                (this.setWrapLimitRange(t, t), this.setUseWrapMode(!0));
                             }
                         },
                         get: function () {
@@ -9092,11 +9118,11 @@
                     },
                     wrapMethod: {
                         set: function (e) {
-                            (e = e == "auto" ? this.$mode.type != "text" : e != "text"),
+                            ((e = e == "auto" ? this.$mode.type != "text" : e != "text"),
                                 e != this.$wrapAsCode &&
                                     ((this.$wrapAsCode = e),
                                     this.$useWrapMode &&
-                                        ((this.$useWrapMode = !1), this.setUseWrapMode(!0)));
+                                        ((this.$useWrapMode = !1), this.setUseWrapMode(!0))));
                         },
                         initialValue: "auto",
                     },
@@ -9115,7 +9141,7 @@
                     },
                     useWorker: {
                         set: function (e) {
-                            (this.$useWorker = e), this.$stopWorker(), e && this.$startWorker();
+                            ((this.$useWorker = e), this.$stopWorker(), e && this.$startWorker());
                         },
                         initialValue: !0,
                     },
@@ -9123,10 +9149,10 @@
                     tabSize: {
                         set: function (e) {
                             if (isNaN(e) || this.$tabSize === e) return;
-                            (this.$modified = !0),
+                            ((this.$modified = !0),
                                 (this.$rowLengthCache = []),
                                 (this.$tabSize = e),
-                                this._signal("changeTabSize");
+                                this._signal("changeTabSize"));
                         },
                         initialValue: 4,
                         handlesSet: !0,
@@ -9163,7 +9189,7 @@
                         handlesSet: !0,
                     },
                 }),
-                (t.EditSession = d);
+                (t.EditSession = d));
         },
     ),
     define(
@@ -9183,9 +9209,9 @@
                 o = function () {
                     this.$options = {};
                 };
-            (function () {
-                (this.set = function (e) {
-                    return i.mixin(this.$options, e), this;
+            ((function () {
+                ((this.set = function (e) {
+                    return (i.mixin(this.$options, e), this);
                 }),
                     (this.getOptions = function () {
                         return r.copyObject(this.$options);
@@ -9234,7 +9260,7 @@
                                     v = p.length - p.match(u[0])[0].length,
                                     m = d.match(u[a - 1])[0].length;
                                 if (l && l.end.row === c && l.end.column > v) continue;
-                                o.push((l = new s(c, v, c + a - 1, m))), a > 2 && (c = c + a - 2);
+                                (o.push((l = new s(c, v, c + a - 1, m))), a > 2 && (c = c + a - 2));
                             }
                         } else
                             for (var g = 0; g < i.length; g++) {
@@ -9254,7 +9280,7 @@
                             while (g < h && o[h].end.column > E && o[h].end.row == n.end.row) h--;
                             o = o.slice(g, h + 1);
                             for (g = 0, h = o.length; g < h; g++)
-                                (o[g].start.row += n.start.row), (o[g].end.row += n.start.row);
+                                ((o[g].start.row += n.start.row), (o[g].end.row += n.start.row));
                         }
                         return o;
                     }),
@@ -9282,7 +9308,7 @@
                         if (e.needle instanceof RegExp) return (e.re = e.needle);
                         var n = e.needle;
                         if (!e.needle) return (e.re = !1);
-                        e.regExp || (n = r.escapeRegExp(n)), e.wholeWord && (n = u(n, e));
+                        (e.regExp || (n = r.escapeRegExp(n)), e.wholeWord && (n = u(n, e)));
                         var i = e.caseSensitive ? "gm" : "gmi";
                         e.$isMultiLine = !t && /[\n\r]/.test(n);
                         if (e.$isMultiLine) return (e.re = this.$assembleMultilineRegExp(n, i));
@@ -9311,8 +9337,8 @@
                             i = t.skipCurrent != 0,
                             s = t.range,
                             o = t.start;
-                        o || (o = s ? s[r ? "end" : "start"] : e.selection.getRange()),
-                            o.start && (o = o[i != r ? "end" : "start"]);
+                        (o || (o = s ? s[r ? "end" : "start"] : e.selection.getRange()),
+                            o.start && (o = o[i != r ? "end" : "start"]));
                         var u = s ? s.start.row : 0,
                             a = s ? s.end.row : e.getLength() - 1;
                         if (r)
@@ -9388,9 +9414,9 @@
                                 }
                             };
                         return { forEach: f };
-                    });
+                    }));
             }).call(o.prototype),
-                (t.Search = o);
+                (t.Search = o));
         },
     ),
     define(
@@ -9399,19 +9425,19 @@
         function (e, t, n) {
             "use strict";
             function o(e, t) {
-                (this.platform = t || (i.isMac ? "mac" : "win")),
+                ((this.platform = t || (i.isMac ? "mac" : "win")),
                     (this.commands = {}),
                     (this.commandKeyBinding = {}),
                     this.addCommands(e),
-                    (this.$singleCommand = !0);
+                    (this.$singleCommand = !0));
             }
             function u(e, t) {
-                o.call(this, e, t), (this.$singleCommand = !1);
+                (o.call(this, e, t), (this.$singleCommand = !1));
             }
             var r = e("../lib/keys"),
                 i = e("../lib/useragent"),
                 s = r.KEY_MODS;
-            (u.prototype = o.prototype),
+            ((u.prototype = o.prototype),
                 function () {
                     function e(e) {
                         return (
@@ -9419,14 +9445,14 @@
                             (e.isDefault ? -100 : 0)
                         );
                     }
-                    (this.addCommand = function (e) {
-                        this.commands[e.name] && this.removeCommand(e),
+                    ((this.addCommand = function (e) {
+                        (this.commands[e.name] && this.removeCommand(e),
                             (this.commands[e.name] = e),
-                            e.bindKey && this._buildKeyHash(e);
+                            e.bindKey && this._buildKeyHash(e));
                     }),
                         (this.removeCommand = function (e, t) {
                             var n = e && (typeof e == "string" ? e : e.name);
-                            (e = this.commands[n]), t || delete this.commands[n];
+                            ((e = this.commands[n]), t || delete this.commands[n]);
                             var r = this.commandKeyBinding;
                             for (var i in r) {
                                 var s = r[i];
@@ -9448,14 +9474,14 @@
                                 var r = "";
                                 if (e.indexOf(" ") != -1) {
                                     var i = e.split(/\s+/);
-                                    (e = i.pop()),
+                                    ((e = i.pop()),
                                         i.forEach(function (e) {
                                             var t = this.parseKeys(e),
                                                 n = s[t.hashId] + t.key;
-                                            (r += (r ? " " : "") + n),
-                                                this._addCommandToBinding(r, "chainKeys");
+                                            ((r += (r ? " " : "") + n),
+                                                this._addCommandToBinding(r, "chainKeys"));
                                         }, this),
-                                        (r += " ");
+                                        (r += " "));
                                 }
                                 var o = this.parseKeys(e),
                                     u = s[o.hashId] + o.key;
@@ -9468,10 +9494,10 @@
                             if (!n) delete i[t];
                             else if (!i[t] || this.$singleCommand) i[t] = n;
                             else {
-                                Array.isArray(i[t])
+                                (Array.isArray(i[t])
                                     ? (s = i[t].indexOf(n)) != -1 && i[t].splice(s, 1)
                                     : (i[t] = [i[t]]),
-                                    typeof r != "number" && (r = e(n));
+                                    typeof r != "number" && (r = e(n)));
                                 var o = i[t];
                                 for (s = 0; s < o.length; s++) {
                                     var u = o[s],
@@ -9489,7 +9515,7 @@
                                     if (typeof n == "string") return this.bindKey(n, t);
                                     typeof n == "function" && (n = { exec: n });
                                     if (typeof n != "object") return;
-                                    n.name || (n.name = t), this.addCommand(n);
+                                    (n.name || (n.name = t), this.addCommand(n));
                                 }, this);
                         }),
                         (this.removeCommands = function (e) {
@@ -9546,7 +9572,7 @@
                                 (o = this.commandKeyBinding[e.$keyChain] || o));
                             if (o)
                                 if (o == "chainKeys" || o[o.length - 1] == "chainKeys")
-                                    return (e.$keyChain = e.$keyChain || i), { command: "null" };
+                                    return ((e.$keyChain = e.$keyChain || i), { command: "null" });
                             if (e.$keyChain)
                                 if ((!!t && t != 4) || n.length != 1) {
                                     if (t == -1 || r > 0) e.$keyChain = "";
@@ -9555,10 +9581,10 @@
                         }),
                         (this.getStatusText = function (e, t) {
                             return t.$keyChain || "";
-                        });
+                        }));
                 }.call(o.prototype),
                 (t.HashHandler = o),
-                (t.MultiHashHandler = u);
+                (t.MultiHashHandler = u));
         },
     ),
     define(
@@ -9577,15 +9603,15 @@
                 i = e("../keyboard/hash_handler").MultiHashHandler,
                 s = e("../lib/event_emitter").EventEmitter,
                 o = function (e, t) {
-                    i.call(this, t, e),
+                    (i.call(this, t, e),
                         (this.byName = this.commands),
                         this.setDefaultHandler("exec", function (e) {
                             return e.command.exec(e.editor, e.args || {});
-                        });
+                        }));
                 };
-            r.inherits(o, i),
+            (r.inherits(o, i),
                 function () {
-                    r.implement(this, s),
+                    (r.implement(this, s),
                         (this.exec = function (e, t, n) {
                             if (Array.isArray(e)) {
                                 for (var r = e.length; r--; ) if (this.exec(e[r], t, n)) return !0;
@@ -9626,12 +9652,12 @@
                             if (this.$inReplay || !this.macro) return;
                             if (this.recording) return this.toggleRecording(e);
                             try {
-                                (this.$inReplay = !0),
+                                ((this.$inReplay = !0),
                                     this.macro.forEach(function (t) {
                                         typeof t == "string"
                                             ? this.exec(t, e)
                                             : this.exec(t[0], e, t[1]);
-                                    }, this);
+                                    }, this));
                             } finally {
                                 this.$inReplay = !1;
                             }
@@ -9644,9 +9670,9 @@
                                     e
                                 );
                             });
-                        });
+                        }));
                 }.call(o.prototype),
-                (t.CommandManager = o);
+                (t.CommandManager = o));
         },
     ),
     define(
@@ -9666,7 +9692,7 @@
                     bindKey: o("Ctrl-,", "Command-,"),
                     exec: function (e) {
                         i.loadModule("ace/ext/settings_menu", function (t) {
-                            t.init(e), e.showSettingsMenu();
+                            (t.init(e), e.showSettingsMenu());
                         });
                     },
                     readOnly: !0,
@@ -9713,8 +9739,8 @@
                     name: "gotoline",
                     bindKey: o("Ctrl-L", "Command-L"),
                     exec: function (e, t) {
-                        typeof t != "number" && (t = parseInt(prompt("Enter line number:"), 10)),
-                            isNaN(t) || e.gotoLine(t);
+                        (typeof t != "number" && (t = parseInt(prompt("Enter line number:"), 10)),
+                            isNaN(t) || e.gotoLine(t));
                     },
                     readOnly: !0,
                 },
@@ -9771,7 +9797,7 @@
                     name: "foldOther",
                     bindKey: o("Alt-0", "Command-Option-0"),
                     exec: function (e) {
-                        e.session.foldAll(), e.session.unfold(e.selection.getAllRanges());
+                        (e.session.foldAll(), e.session.unfold(e.selection.getAllRanges()));
                     },
                     scrollIntoView: "center",
                     readOnly: !0,
@@ -10186,7 +10212,7 @@
                     exec: function (e) {
                         var t = e.$copyWithEmptySelection && e.selection.isEmpty(),
                             n = t ? e.selection.getLineRange() : e.selection.getRange();
-                        e._emit("cut", n), n.isEmpty() || e.session.remove(n), e.clearSelection();
+                        (e._emit("cut", n), n.isEmpty() || e.session.remove(n), e.clearSelection());
                     },
                     scrollIntoView: "cursor",
                     multiSelectAction: "forEach",
@@ -10370,7 +10396,7 @@
                     bindKey: o("Ctrl-Shift-Backspace", null),
                     exec: function (e) {
                         var t = e.selection.getRange();
-                        (t.start.column = 0), e.session.remove(t);
+                        ((t.start.column = 0), e.session.remove(t));
                     },
                     multiSelectAction: "forEach",
                     scrollIntoView: "cursor",
@@ -10380,7 +10406,7 @@
                     bindKey: o("Ctrl-Shift-Delete", null),
                     exec: function (e) {
                         var t = e.selection.getRange();
-                        (t.end.column = Number.MAX_VALUE), e.session.remove(t);
+                        ((t.end.column = Number.MAX_VALUE), e.session.remove(t));
                     },
                     multiSelectAction: "forEach",
                     scrollIntoView: "cursor",
@@ -10498,9 +10524,9 @@
                     bindKey: o("Ctrl-Shift-L", "Command-Shift-L"),
                     exec: function (e) {
                         var t = e.selection.getRange();
-                        (t.start.column = t.end.column = 0),
+                        ((t.start.column = t.end.column = 0),
                             t.end.row++,
-                            e.selection.setRange(t, !1);
+                            e.selection.setRange(t, !1));
                     },
                     multiSelectAction: "forEach",
                     scrollIntoView: "cursor",
@@ -10523,9 +10549,9 @@
                             f = e.session.doc.getLine(n.row);
                         for (var l = n.row + 1; l <= i.row + 1; l++) {
                             var c = r.stringTrimLeft(r.stringTrimRight(e.session.doc.getLine(l)));
-                            c.length !== 0 && (c = " " + c), (f += c);
+                            (c.length !== 0 && (c = " " + c), (f += c));
                         }
-                        i.row + 1 < e.session.doc.getLength() - 1 &&
+                        (i.row + 1 < e.session.doc.getLength() - 1 &&
                             (f += e.session.doc.getNewLineCharacter()),
                             e.clearSelection(),
                             e.session.doc.replace(new s(n.row, 0, i.row + 2, 0), f),
@@ -10533,7 +10559,7 @@
                                 ? (e.selection.moveCursorTo(n.row, n.column),
                                   e.selection.selectTo(n.row, n.column + a))
                                 : ((o = e.session.doc.getLine(n.row).length > o ? o + 1 : o),
-                                  e.selection.moveCursorTo(n.row, o));
+                                  e.selection.moveCursorTo(n.row, o)));
                     },
                     multiSelectAction: "forEach",
                     readOnly: !0,
@@ -10548,7 +10574,7 @@
                             i = [];
                         r.length < 1 && (r = [e.selection.getRange()]);
                         for (var o = 0; o < r.length; o++)
-                            o == r.length - 1 &&
+                            (o == r.length - 1 &&
                                 (r[o].end.row !== t || r[o].end.column !== n) &&
                                 i.push(new s(r[o].end.row, r[o].end.column, t, n)),
                                 o === 0
@@ -10561,8 +10587,8 @@
                                               r[o].start.row,
                                               r[o].start.column,
                                           ),
-                                      );
-                        e.exitMultiSelectMode(), e.clearSelection();
+                                      ));
+                        (e.exitMultiSelectMode(), e.clearSelection());
                         for (var o = 0; o < i.length; o++) e.selection.addRange(i[o], !1);
                     },
                     readOnly: !0,
@@ -10622,7 +10648,7 @@
                 b = e("./clipboard"),
                 w = function (e, t, n) {
                     var r = e.getContainerElement();
-                    (this.container = r),
+                    ((this.container = r),
                         (this.renderer = e),
                         (this.id = "editor" + ++w.$uid),
                         (this.commands = new v(o.isMac ? "mac" : "win", m)),
@@ -10638,10 +10664,10 @@
                         this.$initOperationListeners(),
                         (this._$emitInputEvent = s.delayedCall(
                             function () {
-                                this._signal("input", {}),
+                                (this._signal("input", {}),
                                     this.session &&
                                         this.session.bgTokenizer &&
-                                        this.session.bgTokenizer.scheduleStart();
+                                        this.session.bgTokenizer.scheduleStart());
                             }.bind(this),
                         )),
                         this.on("change", function (e, t) {
@@ -10650,13 +10676,13 @@
                         this.setSession(t || (n && n.session) || new c("")),
                         g.resetOptions(this),
                         n && this.setOptions(n),
-                        g._signal("editor", this);
+                        g._signal("editor", this));
                 };
-            (w.$uid = 0),
+            ((w.$uid = 0),
                 function () {
-                    r.implement(this, d),
+                    (r.implement(this, d),
                         (this.$initOperationListeners = function () {
-                            this.commands.on("exec", this.startOperation.bind(this), !0),
+                            (this.commands.on("exec", this.startOperation.bind(this), !0),
                                 this.commands.on("afterExec", this.endOperation.bind(this), !0),
                                 (this.$opResetTimer = s.delayedCall(
                                     this.endOperation.bind(this, !0),
@@ -10664,23 +10690,23 @@
                                 this.on(
                                     "change",
                                     function () {
-                                        this.curOp ||
+                                        (this.curOp ||
                                             (this.startOperation(),
                                             (this.curOp.selectionBefore = this.$lastSel)),
-                                            (this.curOp.docChanged = !0);
+                                            (this.curOp.docChanged = !0));
                                     }.bind(this),
                                     !0,
                                 ),
                                 this.on(
                                     "changeSelection",
                                     function () {
-                                        this.curOp ||
+                                        (this.curOp ||
                                             (this.startOperation(),
                                             (this.curOp.selectionBefore = this.$lastSel)),
-                                            (this.curOp.selectionChanged = !0);
+                                            (this.curOp.selectionChanged = !0));
                                     }.bind(this),
                                     !0,
-                                );
+                                ));
                         }),
                         (this.curOp = null),
                         (this.prevOp = {}),
@@ -10689,7 +10715,7 @@
                                 if (!e || this.curOp.command) return;
                                 this.prevOp = this.curOp;
                             }
-                            e || ((this.previousCommand = null), (e = {})),
+                            (e || ((this.previousCommand = null), (e = {})),
                                 this.$opResetTimer.schedule(),
                                 (this.curOp = this.session.curOp =
                                     {
@@ -10697,7 +10723,7 @@
                                         args: e.args,
                                         scrollTop: this.renderer.scrollTop,
                                     }),
-                                (this.curOp.selectionBefore = this.selection.toJSON());
+                                (this.curOp.selectionBefore = this.selection.toJSON()));
                         }),
                         (this.endOperation = function (e) {
                             if (this.curOp) {
@@ -10738,11 +10764,11 @@
                                         this.renderer.animateScrolling(this.curOp.scrollTop);
                                 }
                                 var s = this.selection.toJSON();
-                                (this.curOp.selectionAfter = s),
+                                ((this.curOp.selectionAfter = s),
                                     (this.$lastSel = this.selection.toJSON()),
                                     this.session.getUndoManager().addSelection(s),
                                     (this.prevOp = this.curOp),
-                                    (this.curOp = null);
+                                    (this.curOp = null));
                             }
                         }),
                         (this.$mergeableCommands = ["backspace", "del", "insertstring"]),
@@ -10753,44 +10779,45 @@
                                 r = t.command && e.command.name == t.command.name;
                             if (e.command.name == "insertstring") {
                                 var i = e.args;
-                                this.mergeNextCommand === undefined && (this.mergeNextCommand = !0),
+                                (this.mergeNextCommand === undefined &&
+                                    (this.mergeNextCommand = !0),
                                     (r =
                                         r &&
                                         this.mergeNextCommand &&
                                         (!/\s/.test(i) || /\s/.test(t.args))),
-                                    (this.mergeNextCommand = !0);
+                                    (this.mergeNextCommand = !0));
                             } else r = r && n.indexOf(e.command.name) !== -1;
-                            this.$mergeUndoDeltas != "always" &&
+                            (this.$mergeUndoDeltas != "always" &&
                                 Date.now() - this.sequenceStartTime > 2e3 &&
                                 (r = !1),
                                 r
                                     ? (this.session.mergeUndoDeltas = !0)
                                     : n.indexOf(e.command.name) !== -1 &&
-                                      (this.sequenceStartTime = Date.now());
+                                      (this.sequenceStartTime = Date.now()));
                         }),
                         (this.setKeyboardHandler = function (e, t) {
                             if (e && typeof e == "string" && e != "ace") {
                                 this.$keybindingId = e;
                                 var n = this;
                                 g.loadModule(["keybinding", e], function (r) {
-                                    n.$keybindingId == e &&
+                                    (n.$keybindingId == e &&
                                         n.keyBinding.setKeyboardHandler(r && r.handler),
-                                        t && t();
+                                        t && t());
                                 });
                             } else
-                                (this.$keybindingId = null),
+                                ((this.$keybindingId = null),
                                     this.keyBinding.setKeyboardHandler(e),
-                                    t && t();
+                                    t && t());
                         }),
                         (this.getKeyboardHandler = function () {
                             return this.keyBinding.getKeyboardHandler();
                         }),
                         (this.setSession = function (e) {
                             if (this.session == e) return;
-                            this.curOp && this.endOperation(), (this.curOp = {});
+                            (this.curOp && this.endOperation(), (this.curOp = {}));
                             var t = this.session;
                             if (t) {
-                                this.session.off("change", this.$onDocumentChange),
+                                (this.session.off("change", this.$onDocumentChange),
                                     this.session.off("changeMode", this.$onChangeMode),
                                     this.session.off("tokenizerUpdate", this.$onTokenizerUpdate),
                                     this.session.off("changeTabSize", this.$onChangeTabSize),
@@ -10806,12 +10833,12 @@
                                     this.session.off("changeAnnotation", this.$onChangeAnnotation),
                                     this.session.off("changeOverwrite", this.$onCursorChange),
                                     this.session.off("changeScrollTop", this.$onScrollTopChange),
-                                    this.session.off("changeScrollLeft", this.$onScrollLeftChange);
+                                    this.session.off("changeScrollLeft", this.$onScrollLeftChange));
                                 var n = this.session.getSelection();
-                                n.off("changeCursor", this.$onCursorChange),
-                                    n.off("changeSelection", this.$onSelectionChange);
+                                (n.off("changeCursor", this.$onCursorChange),
+                                    n.off("changeSelection", this.$onSelectionChange));
                             }
-                            (this.session = e),
+                            ((this.session = e),
                                 e
                                     ? ((this.$onDocumentChange = this.onDocumentChange.bind(this)),
                                       e.on("change", this.$onDocumentChange),
@@ -10873,7 +10900,7 @@
                                 (this.curOp = null),
                                 t && t._signal("changeEditor", { oldEditor: this }),
                                 e && e._signal("changeEditor", { editor: this }),
-                                e && e.bgTokenizer && e.bgTokenizer.scheduleStart();
+                                e && e.bgTokenizer && e.bgTokenizer.scheduleStart());
                         }),
                         (this.getSession = function () {
                             return this.session;
@@ -10925,7 +10952,7 @@
                                 (this.session.$bracketHighlight = null));
                             if (this.$highlightPending) return;
                             var e = this;
-                            (this.$highlightPending = !0),
+                            ((this.$highlightPending = !0),
                                 setTimeout(function () {
                                     e.$highlightPending = !1;
                                     var t = e.session;
@@ -10940,12 +10967,12 @@
                                             "ace_bracket",
                                             "text",
                                         ));
-                                }, 50);
+                                }, 50));
                         }),
                         (this.$highlightTags = function () {
                             if (this.$highlightTagPending) return;
                             var e = this;
-                            (this.$highlightTagPending = !0),
+                            ((this.$highlightTagPending = !0),
                                 setTimeout(function () {
                                     e.$highlightTagPending = !1;
                                     var t = e.session;
@@ -10954,7 +10981,7 @@
                                         r = new y(e.session, n.row, n.column),
                                         i = r.getCurrentToken();
                                     if (!i || !/\b(?:tag-open|tag-name)/.test(i.type)) {
-                                        t.removeMarker(t.$tagHighlight), (t.$tagHighlight = null);
+                                        (t.removeMarker(t.$tagHighlight), (t.$tagHighlight = null));
                                         return;
                                     }
                                     if (i.type.indexOf("tag-open") != -1) {
@@ -10966,37 +10993,37 @@
                                         u = r.stepBackward();
                                     if (u.value == "<") {
                                         do
-                                            (u = i),
+                                            ((u = i),
                                                 (i = r.stepForward()),
                                                 i &&
                                                     i.value === s &&
                                                     i.type.indexOf("tag-name") !== -1 &&
                                                     (u.value === "<"
                                                         ? o++
-                                                        : u.value === "</" && o--);
+                                                        : u.value === "</" && o--));
                                         while (i && o >= 0);
                                     } else {
                                         do
-                                            (i = u),
+                                            ((i = u),
                                                 (u = r.stepBackward()),
                                                 i &&
                                                     i.value === s &&
                                                     i.type.indexOf("tag-name") !== -1 &&
                                                     (u.value === "<"
                                                         ? o++
-                                                        : u.value === "</" && o--);
+                                                        : u.value === "</" && o--));
                                         while (u && o <= 0);
                                         r.stepForward();
                                     }
                                     if (!i) {
-                                        t.removeMarker(t.$tagHighlight), (t.$tagHighlight = null);
+                                        (t.removeMarker(t.$tagHighlight), (t.$tagHighlight = null));
                                         return;
                                     }
                                     var a = r.getCurrentTokenRow(),
                                         f = r.getCurrentTokenColumn(),
                                         l = new p(a, f, a, f + i.value.length),
                                         c = t.$backMarkers[t.$tagHighlight];
-                                    t.$tagHighlight &&
+                                    (t.$tagHighlight &&
                                         c != undefined &&
                                         l.compareRange(c.range) !== 0 &&
                                         (t.removeMarker(t.$tagHighlight), (t.$tagHighlight = null)),
@@ -11005,15 +11032,15 @@
                                                 l,
                                                 "ace_bracket",
                                                 "text",
-                                            ));
-                                }, 50);
+                                            )));
+                                }, 50));
                         }),
                         (this.focus = function () {
                             var e = this;
-                            setTimeout(function () {
+                            (setTimeout(function () {
                                 e.isFocused() || e.textInput.focus();
                             }),
-                                this.textInput.focus();
+                                this.textInput.focus());
                         }),
                         (this.isFocused = function () {
                             return this.textInput.isFocused();
@@ -11023,17 +11050,17 @@
                         }),
                         (this.onFocus = function (e) {
                             if (this.$isFocused) return;
-                            (this.$isFocused = !0),
+                            ((this.$isFocused = !0),
                                 this.renderer.showCursor(),
                                 this.renderer.visualizeFocus(),
-                                this._emit("focus", e);
+                                this._emit("focus", e));
                         }),
                         (this.onBlur = function (e) {
                             if (!this.$isFocused) return;
-                            (this.$isFocused = !1),
+                            ((this.$isFocused = !1),
                                 this.renderer.hideCursor(),
                                 this.renderer.visualizeBlur(),
-                                this._emit("blur", e);
+                                this._emit("blur", e));
                         }),
                         (this.$cursorChange = function () {
                             this.renderer.updateCursor();
@@ -11041,10 +11068,10 @@
                         (this.onDocumentChange = function (e) {
                             var t = this.session.$useWrapMode,
                                 n = e.start.row == e.end.row ? e.end.row : Infinity;
-                            this.renderer.updateLines(e.start.row, n, t),
+                            (this.renderer.updateLines(e.start.row, n, t),
                                 this._signal("change", e),
                                 this.$cursorChange(),
-                                this.$updateHighlightActiveLine();
+                                this.$updateHighlightActiveLine());
                         }),
                         (this.onTokenizerUpdate = function (e) {
                             var t = e.data;
@@ -11057,11 +11084,11 @@
                             this.renderer.scrollToX(this.session.getScrollLeft());
                         }),
                         (this.onCursorChange = function () {
-                            this.$cursorChange(),
+                            (this.$cursorChange(),
                                 this.$highlightBrackets(),
                                 this.$highlightTags(),
                                 this.$updateHighlightActiveLine(),
-                                this._signal("changeSelection");
+                                this._signal("changeSelection"));
                         }),
                         (this.$updateHighlightActiveLine = function () {
                             var e = this.getSession(),
@@ -11069,22 +11096,22 @@
                             if (this.$highlightActiveLine) {
                                 if (this.$selectionStyle != "line" || !this.selection.isMultiLine())
                                     t = this.getCursorPosition();
-                                this.renderer.theme &&
+                                (this.renderer.theme &&
                                     this.renderer.theme.$selectionColorConflict &&
                                     !this.selection.isEmpty() &&
                                     (t = !1),
                                     this.renderer.$maxLines &&
                                         this.session.getLength() === 1 &&
                                         !(this.renderer.$minLines > 1) &&
-                                        (t = !1);
+                                        (t = !1));
                             }
                             if (e.$highlightLineMarker && !t)
-                                e.removeMarker(e.$highlightLineMarker.id),
-                                    (e.$highlightLineMarker = null);
+                                (e.removeMarker(e.$highlightLineMarker.id),
+                                    (e.$highlightLineMarker = null));
                             else if (!e.$highlightLineMarker && t) {
                                 var n = new p(t.row, t.column, t.row, Infinity);
-                                (n.id = e.addMarker(n, "ace_active-line", "screenLine")),
-                                    (e.$highlightLineMarker = n);
+                                ((n.id = e.addMarker(n, "ace_active-line", "screenLine")),
+                                    (e.$highlightLineMarker = n));
                             } else
                                 t &&
                                     ((e.$highlightLineMarker.start.row = t.row),
@@ -11094,8 +11121,8 @@
                         }),
                         (this.onSelectionChange = function (e) {
                             var t = this.session;
-                            t.$selectionMarker && t.removeMarker(t.$selectionMarker),
-                                (t.$selectionMarker = null);
+                            (t.$selectionMarker && t.removeMarker(t.$selectionMarker),
+                                (t.$selectionMarker = null));
                             if (!this.selection.isEmpty()) {
                                 var n = this.selection.getRange(),
                                     r = this.getSelectionStyle();
@@ -11103,7 +11130,7 @@
                             } else this.$updateHighlightActiveLine();
                             var i =
                                 this.$highlightSelectedWord && this.$getSelectionHighLightRegexp();
-                            this.session.highlight(i), this._signal("changeSelection");
+                            (this.session.highlight(i), this._signal("changeSelection"));
                         }),
                         (this.$getSelectionHighLightRegexp = function () {
                             var e = this.session,
@@ -11136,7 +11163,7 @@
                             this.renderer.setAnnotations(this.session.getAnnotations());
                         }),
                         (this.onChangeMode = function (e) {
-                            this.renderer.updateText(), this._emit("changeMode", e);
+                            (this.renderer.updateText(), this._emit("changeMode", e));
                         }),
                         (this.onChangeWrapLimit = function () {
                             this.renderer.updateFull();
@@ -11145,7 +11172,7 @@
                             this.renderer.onResize(!0);
                         }),
                         (this.onChangeFold = function () {
-                            this.$updateHighlightActiveLine(), this.renderer.updateFull();
+                            (this.$updateHighlightActiveLine(), this.renderer.updateFull());
                         }),
                         (this.getSelectedText = function () {
                             return this.session.getTextRange(this.getSelectionRange());
@@ -11164,7 +11191,11 @@
                                 }
                             }
                             var o = { text: e };
-                            return this._signal("copy", o), (b.lineMode = n ? o.text : ""), o.text;
+                            return (
+                                this._signal("copy", o),
+                                (b.lineMode = n ? o.text : ""),
+                                o.text
+                            );
                         }),
                         (this.onCopy = function () {
                             this.commands.exec("copy", this);
@@ -11177,7 +11208,7 @@
                             this.commands.exec("paste", this, n);
                         }),
                         (this.$handlePaste = function (e) {
-                            typeof e == "string" && (e = { text: e }), this._signal("paste", e);
+                            (typeof e == "string" && (e = { text: e }), this._signal("paste", e));
                             var t = e.text,
                                 n = t == b.lineMode,
                                 r = this.session;
@@ -11196,7 +11227,7 @@
                                     return this.commands.exec("insertstring", this, t);
                                 for (var o = s.length; o--; ) {
                                     var u = s[o];
-                                    u.isEmpty() || r.remove(u), r.insert(u.start, i[o]);
+                                    (u.isEmpty() || r.remove(u), r.insert(u.start, i[o]));
                                 }
                             }
                         }),
@@ -11225,10 +11256,10 @@
                             e == "	" && (e = this.session.getTabString());
                             if (!this.selection.isEmpty()) {
                                 var o = this.getSelectionRange();
-                                (i = this.session.remove(o)), this.clearSelection();
+                                ((i = this.session.remove(o)), this.clearSelection());
                             } else if (this.session.getOverwrite() && e.indexOf("\n") == -1) {
                                 var o = new p.fromPoints(i, i);
-                                (o.end.column += e.length), this.session.remove(o);
+                                ((o.end.column += e.length), this.session.remove(o));
                             }
                             if (e == "\n" || e == "\r\n") {
                                 var u = n.getLine(i.row);
@@ -11276,23 +11307,23 @@
                             if (!t) return this.keyBinding.onTextInput(e);
                             this.startOperation({ command: { name: "insertstring" } });
                             var n = this.applyComposition.bind(this, e, t);
-                            this.selection.rangeCount ? this.forEachSelection(n) : n(),
-                                this.endOperation();
+                            (this.selection.rangeCount ? this.forEachSelection(n) : n(),
+                                this.endOperation());
                         }),
                         (this.applyComposition = function (e, t) {
                             if (t.extendLeft || t.extendRight) {
                                 var n = this.selection.getRange();
-                                (n.start.column -= t.extendLeft),
+                                ((n.start.column -= t.extendLeft),
                                     (n.end.column += t.extendRight),
                                     this.selection.setRange(n),
-                                    !e && !n.isEmpty() && this.remove();
+                                    !e && !n.isEmpty() && this.remove());
                             }
                             (e || !this.selection.isEmpty()) && this.insert(e, !0);
                             if (t.restoreStart || t.restoreEnd) {
                                 var n = this.selection.getRange();
-                                (n.start.column -= t.restoreStart),
+                                ((n.start.column -= t.restoreStart),
                                     (n.end.column -= t.restoreEnd),
-                                    this.selection.setRange(n);
+                                    this.selection.setRange(n));
                             }
                         }),
                         (this.onCommandKey = function (e, t, n) {
@@ -11422,38 +11453,38 @@
                                 }
                                 i && (t = i);
                             }
-                            this.session.remove(t), this.clearSelection();
+                            (this.session.remove(t), this.clearSelection());
                         }),
                         (this.removeWordRight = function () {
-                            this.selection.isEmpty() && this.selection.selectWordRight(),
+                            (this.selection.isEmpty() && this.selection.selectWordRight(),
                                 this.session.remove(this.getSelectionRange()),
-                                this.clearSelection();
+                                this.clearSelection());
                         }),
                         (this.removeWordLeft = function () {
-                            this.selection.isEmpty() && this.selection.selectWordLeft(),
+                            (this.selection.isEmpty() && this.selection.selectWordLeft(),
                                 this.session.remove(this.getSelectionRange()),
-                                this.clearSelection();
+                                this.clearSelection());
                         }),
                         (this.removeToLineStart = function () {
-                            this.selection.isEmpty() && this.selection.selectLineStart(),
+                            (this.selection.isEmpty() && this.selection.selectLineStart(),
                                 this.session.remove(this.getSelectionRange()),
-                                this.clearSelection();
+                                this.clearSelection());
                         }),
                         (this.removeToLineEnd = function () {
                             this.selection.isEmpty() && this.selection.selectLineEnd();
                             var e = this.getSelectionRange();
-                            e.start.column == e.end.column &&
+                            (e.start.column == e.end.column &&
                                 e.start.row == e.end.row &&
                                 ((e.end.column = 0), e.end.row++),
                                 this.session.remove(e),
-                                this.clearSelection();
+                                this.clearSelection());
                         }),
                         (this.splitLine = function () {
                             this.selection.isEmpty() ||
                                 (this.session.remove(this.getSelectionRange()),
                                 this.clearSelection());
                             var e = this.getCursorPosition();
-                            this.insert("\n"), this.moveCursorToPosition(e);
+                            (this.insert("\n"), this.moveCursorToPosition(e));
                         }),
                         (this.transposeLetters = function () {
                             if (!this.selection.isEmpty()) return;
@@ -11463,29 +11494,29 @@
                             var n = this.session.getLine(e.row),
                                 r,
                                 i;
-                            t < n.length
+                            (t < n.length
                                 ? ((r = n.charAt(t) + n.charAt(t - 1)),
                                   (i = new p(e.row, t - 1, e.row, t + 1)))
                                 : ((r = n.charAt(t - 1) + n.charAt(t - 2)),
                                   (i = new p(e.row, t - 2, e.row, t))),
                                 this.session.replace(i, r),
-                                this.session.selection.moveToPosition(i.end);
+                                this.session.selection.moveToPosition(i.end));
                         }),
                         (this.toLowerCase = function () {
                             var e = this.getSelectionRange();
                             this.selection.isEmpty() && this.selection.selectWord();
                             var t = this.getSelectionRange(),
                                 n = this.session.getTextRange(t);
-                            this.session.replace(t, n.toLowerCase()),
-                                this.selection.setSelectionRange(e);
+                            (this.session.replace(t, n.toLowerCase()),
+                                this.selection.setSelectionRange(e));
                         }),
                         (this.toUpperCase = function () {
                             var e = this.getSelectionRange();
                             this.selection.isEmpty() && this.selection.selectWord();
                             var t = this.getSelectionRange(),
                                 n = this.session.getTextRange(t);
-                            this.session.replace(t, n.toUpperCase()),
-                                this.selection.setSelectionRange(e);
+                            (this.session.replace(t, n.toUpperCase()),
+                                this.selection.setSelectionRange(e));
                         }),
                         (this.indent = function () {
                             var e = this.session,
@@ -11512,8 +11543,8 @@
                                     l = s.stringRepeat(" ", f);
                             else {
                                 var f = a % u;
-                                while (i[t.start.column - 1] == " " && f) t.start.column--, f--;
-                                this.selection.setSelectionRange(t), (l = "	");
+                                while (i[t.start.column - 1] == " " && f) (t.start.column--, f--);
+                                (this.selection.setSelectionRange(t), (l = "	"));
                             }
                             return this.insert(l);
                         }),
@@ -11540,10 +11571,10 @@
                             var i = new p(0, 0, 0, 0);
                             for (var r = e.first; r <= e.last; r++) {
                                 var s = t.getLine(r);
-                                (i.start.row = r),
+                                ((i.start.row = r),
                                     (i.end.row = r),
                                     (i.end.column = s.length),
-                                    t.replace(i, n[r - e.first]);
+                                    t.replace(i, n[r - e.first]));
                             }
                         }),
                         (this.toggleCommentLines = function () {
@@ -11590,19 +11621,19 @@
                                                 : s.end,
                                         u = s.start + s.value.length - o,
                                         a = parseFloat(s.value);
-                                    (a *= Math.pow(10, u)),
+                                    ((a *= Math.pow(10, u)),
                                         o !== s.end && n < o
                                             ? (e *= Math.pow(10, s.end - n - 1))
                                             : (e *= Math.pow(10, s.end - n)),
                                         (a += e),
-                                        (a /= Math.pow(10, u));
+                                        (a /= Math.pow(10, u)));
                                     var f = a.toFixed(u),
                                         l = new p(t, s.start, t, s.end);
-                                    this.session.replace(l, f),
+                                    (this.session.replace(l, f),
                                         this.moveCursorTo(
                                             t,
                                             Math.max(s.start + 1, n + f.length - s.value.length),
-                                        );
+                                        ));
                                 }
                             } else this.toggleWord();
                         }),
@@ -11644,14 +11675,14 @@
                                 f = this;
                             n.match(/[A-Za-z0-9_]+/) &&
                                 i.forEach(function (t, i) {
-                                    (a = u + t.length),
+                                    ((a = u + t.length),
                                         o >= u &&
                                             o <= a &&
                                             ((n = t),
                                             f.selection.clearSelection(),
                                             f.moveCursorTo(e, u + r),
                                             f.selection.selectTo(e, a + r)),
-                                        (u = a);
+                                        (u = a));
                                 });
                             var l = this.$toggleWordPairs,
                                 c;
@@ -11698,7 +11729,7 @@
                         }),
                         (this.removeLines = function () {
                             var e = this.$getSelectedRows();
-                            this.session.removeFullLines(e.first, e.last), this.clearSelection();
+                            (this.session.removeFullLines(e.first, e.last), this.clearSelection());
                         }),
                         (this.duplicateSelection = function () {
                             var e = this.selection,
@@ -11711,7 +11742,7 @@
                             } else {
                                 var s = r ? n.start : n.end,
                                     o = t.insert(s, t.getTextRange(n), !1);
-                                (n.start = s), (n.end = o), e.setSelectionRange(n, r);
+                                ((n.start = s), (n.end = o), e.setSelectionRange(n, r));
                             }
                         }),
                         (this.moveLinesDown = function () {
@@ -11735,21 +11766,21 @@
                                 i = this.selection;
                             if (!i.inMultiSelectMode || this.inVirtualSelectionMode) {
                                 var s = i.toOrientedRange();
-                                (n = this.$getSelectedRows(s)),
+                                ((n = this.$getSelectedRows(s)),
                                     (r = this.session.$moveLines(n.first, n.last, t ? 0 : e)),
                                     t && e == -1 && (r = 0),
                                     s.moveBy(r, 0),
-                                    i.fromOrientedRange(s);
+                                    i.fromOrientedRange(s));
                             } else {
                                 var o = i.rangeList.ranges;
-                                i.rangeList.detach(this.session),
-                                    (this.inVirtualSelectionMode = !0);
+                                (i.rangeList.detach(this.session),
+                                    (this.inVirtualSelectionMode = !0));
                                 var u = 0,
                                     a = 0,
                                     f = o.length;
                                 for (var l = 0; l < f; l++) {
                                     var c = l;
-                                    o[l].moveBy(u, 0), (n = this.$getSelectedRows(o[l]));
+                                    (o[l].moveBy(u, 0), (n = this.$getSelectedRows(o[l])));
                                     var h = n.first,
                                         p = n.last;
                                     while (++l < f) {
@@ -11759,15 +11790,15 @@
                                         if (!t && d.first > p + 1) break;
                                         p = d.last;
                                     }
-                                    l--,
+                                    (l--,
                                         (u = this.session.$moveLines(h, p, t ? 0 : e)),
-                                        t && e == -1 && (c = l + 1);
-                                    while (c <= l) o[c].moveBy(u, 0), c++;
-                                    t || (u = 0), (a += u);
+                                        t && e == -1 && (c = l + 1));
+                                    while (c <= l) (o[c].moveBy(u, 0), c++);
+                                    (t || (u = 0), (a += u));
                                 }
-                                i.fromOrientedRange(i.ranges[0]),
+                                (i.fromOrientedRange(i.ranges[0]),
                                     i.rangeList.attach(this.session),
-                                    (this.inVirtualSelectionMode = !1);
+                                    (this.inVirtualSelectionMode = !1));
                             }
                         }),
                         (this.$getSelectedRows = function (e) {
@@ -11822,9 +11853,9 @@
                                   (this.selection.moveCursorBy(i, 0),
                                   this.selection.clearSelection());
                             var s = n.scrollTop;
-                            n.scrollBy(0, i * r.lineHeight),
+                            (n.scrollBy(0, i * r.lineHeight),
                                 t != null && n.scrollCursorIntoView(null, 0.5),
-                                n.animateScrolling(s);
+                                n.animateScrolling(s));
                         }),
                         (this.selectPageDown = function () {
                             this.$moveByPage(1, !0);
@@ -11897,11 +11928,11 @@
                                 if (s.value.match(/[{}()\[\]]/g))
                                     for (; f < s.value.length && !u; f++) {
                                         if (!c[s.value[f]]) continue;
-                                        (l =
+                                        ((l =
                                             c[s.value[f]] +
                                             "." +
                                             s.type.replace("rparen", "lparen")),
-                                            isNaN(a[l]) && (a[l] = 0);
+                                            isNaN(a[l]) && (a[l] = 0));
                                         switch (s.value[f]) {
                                             case "(":
                                             case "[":
@@ -11911,7 +11942,8 @@
                                             case ")":
                                             case "]":
                                             case "}":
-                                                a[l]--, a[l] === -1 && ((o = "bracket"), (u = !0));
+                                                (a[l]--,
+                                                    a[l] === -1 && ((o = "bracket"), (u = !0)));
                                         }
                                     }
                                 else
@@ -11928,13 +11960,13 @@
                             if (o === "bracket") {
                                 h = this.session.getBracketRange(n);
                                 if (!h) {
-                                    (h = new p(
+                                    ((h = new p(
                                         r.getCurrentTokenRow(),
                                         r.getCurrentTokenColumn() + f - 1,
                                         r.getCurrentTokenRow(),
                                         r.getCurrentTokenColumn() + f - 1,
                                     )),
-                                        (d = h.start);
+                                        (d = h.start));
                                     if (t || (d.row === n.row && Math.abs(d.column - n.column) < 2))
                                         h = this.session.getBracketRange(d);
                                 }
@@ -11950,7 +11982,7 @@
                                 if (h.compare(n.row, n.column) === 0) {
                                     u = !1;
                                     do
-                                        (s = i),
+                                        ((s = i),
                                             (i = r.stepBackward()),
                                             i &&
                                                 (i.type.indexOf("tag-close") !== -1 &&
@@ -11963,7 +11995,7 @@
                                                     (i.value === "<"
                                                         ? a[v]++
                                                         : i.value === "</" && a[v]--,
-                                                    a[v] === 0 && (u = !0)));
+                                                    a[v] === 0 && (u = !0))));
                                     while (i && !u);
                                 }
                                 s &&
@@ -11973,7 +12005,7 @@
                                         Math.abs(d.column - n.column) < 2 &&
                                         (d = h.end));
                             }
-                            (d = (h && h.cursor) || d),
+                            ((d = (h && h.cursor) || d),
                                 d &&
                                     (e
                                         ? h && t
@@ -11981,14 +12013,14 @@
                                             : h && h.isEqual(this.getSelectionRange())
                                               ? this.clearSelection()
                                               : this.selection.selectTo(d.row, d.column)
-                                        : this.selection.moveTo(d.row, d.column));
+                                        : this.selection.moveTo(d.row, d.column)));
                         }),
                         (this.gotoLine = function (e, t, n) {
-                            this.selection.clearSelection(),
+                            (this.selection.clearSelection(),
                                 this.session.unfold({ row: e - 1, column: t || 0 }),
                                 this.exitMultiSelectMode && this.exitMultiSelectMode(),
                                 this.moveCursorTo(e - 1, t || 0),
-                                this.isRowFullyVisible(e - 1) || this.scrollToLine(e - 1, !0, n);
+                                this.isRowFullyVisible(e - 1) || this.scrollToLine(e - 1, !0, n));
                         }),
                         (this.navigateTo = function (e, t) {
                             this.selection.moveTo(e, t);
@@ -11998,15 +12030,16 @@
                                 var t = this.selection.anchor.getPosition();
                                 return this.moveCursorToPosition(t);
                             }
-                            this.selection.clearSelection(),
-                                this.selection.moveCursorBy(-e || -1, 0);
+                            (this.selection.clearSelection(),
+                                this.selection.moveCursorBy(-e || -1, 0));
                         }),
                         (this.navigateDown = function (e) {
                             if (this.selection.isMultiLine() && this.selection.isBackwards()) {
                                 var t = this.selection.anchor.getPosition();
                                 return this.moveCursorToPosition(t);
                             }
-                            this.selection.clearSelection(), this.selection.moveCursorBy(e || 1, 0);
+                            (this.selection.clearSelection(),
+                                this.selection.moveCursorBy(e || 1, 0));
                         }),
                         (this.navigateLeft = function (e) {
                             if (!this.selection.isEmpty()) {
@@ -12029,22 +12062,22 @@
                             this.clearSelection();
                         }),
                         (this.navigateLineStart = function () {
-                            this.selection.moveCursorLineStart(), this.clearSelection();
+                            (this.selection.moveCursorLineStart(), this.clearSelection());
                         }),
                         (this.navigateLineEnd = function () {
-                            this.selection.moveCursorLineEnd(), this.clearSelection();
+                            (this.selection.moveCursorLineEnd(), this.clearSelection());
                         }),
                         (this.navigateFileEnd = function () {
-                            this.selection.moveCursorFileEnd(), this.clearSelection();
+                            (this.selection.moveCursorFileEnd(), this.clearSelection());
                         }),
                         (this.navigateFileStart = function () {
-                            this.selection.moveCursorFileStart(), this.clearSelection();
+                            (this.selection.moveCursorFileStart(), this.clearSelection());
                         }),
                         (this.navigateWordRight = function () {
-                            this.selection.moveCursorWordRight(), this.clearSelection();
+                            (this.selection.moveCursorWordRight(), this.clearSelection());
                         }),
                         (this.navigateWordLeft = function () {
-                            this.selection.moveCursorWordLeft(), this.clearSelection();
+                            (this.selection.moveCursorWordLeft(), this.clearSelection());
                         }),
                         (this.replace = function (e, t) {
                             t && this.$search.set(t);
@@ -12066,7 +12099,7 @@
                             this.selection.moveTo(0, 0);
                             for (var s = n.length - 1; s >= 0; --s)
                                 this.$tryReplace(n[s], e) && r++;
-                            return this.selection.setSelectionRange(i), r;
+                            return (this.selection.setSelectionRange(i), r);
                         }),
                         (this.$tryReplace = function (e, t) {
                             var n = this.session.getTextRange(e);
@@ -12079,24 +12112,24 @@
                             return this.$search.getOptions();
                         }),
                         (this.find = function (e, t, n) {
-                            t || (t = {}),
+                            (t || (t = {}),
                                 typeof e == "string" || e instanceof RegExp
                                     ? (t.needle = e)
-                                    : typeof e == "object" && r.mixin(t, e);
+                                    : typeof e == "object" && r.mixin(t, e));
                             var i = this.selection.getRange();
-                            t.needle == null &&
+                            (t.needle == null &&
                                 ((e = this.session.getTextRange(i) || this.$search.$options.needle),
                                 e ||
                                     ((i = this.session.getWordRange(i.start.row, i.start.column)),
                                     (e = this.session.getTextRange(i))),
                                 this.$search.set({ needle: e })),
                                 this.$search.set(t),
-                                t.start || this.$search.set({ start: i });
+                                t.start || this.$search.set({ start: i }));
                             var s = this.$search.find(this.session);
                             if (t.preventScroll) return s;
-                            if (s) return this.revealRange(s, n), s;
-                            t.backwards ? (i.start = i.end) : (i.end = i.start),
-                                this.selection.setRange(i);
+                            if (s) return (this.revealRange(s, n), s);
+                            (t.backwards ? (i.start = i.end) : (i.end = i.start),
+                                this.selection.setRange(i));
                         }),
                         (this.findNext = function (e, t) {
                             this.find({ skipCurrent: !0, backwards: !1 }, e, t);
@@ -12105,23 +12138,23 @@
                             this.find(e, { skipCurrent: !0, backwards: !0 }, t);
                         }),
                         (this.revealRange = function (e, t) {
-                            this.session.unfold(e), this.selection.setSelectionRange(e);
+                            (this.session.unfold(e), this.selection.setSelectionRange(e));
                             var n = this.renderer.scrollTop;
-                            this.renderer.scrollSelectionIntoView(e.start, e.end, 0.5),
-                                t !== !1 && this.renderer.animateScrolling(n);
+                            (this.renderer.scrollSelectionIntoView(e.start, e.end, 0.5),
+                                t !== !1 && this.renderer.animateScrolling(n));
                         }),
                         (this.undo = function () {
-                            this.session.getUndoManager().undo(this.session),
-                                this.renderer.scrollCursorIntoView(null, 0.5);
+                            (this.session.getUndoManager().undo(this.session),
+                                this.renderer.scrollCursorIntoView(null, 0.5));
                         }),
                         (this.redo = function () {
-                            this.session.getUndoManager().redo(this.session),
-                                this.renderer.scrollCursorIntoView(null, 0.5);
+                            (this.session.getUndoManager().redo(this.session),
+                                this.renderer.scrollCursorIntoView(null, 0.5));
                         }),
                         (this.destroy = function () {
-                            this.renderer.destroy(),
+                            (this.renderer.destroy(),
                                 this._signal("destroy", this),
-                                this.session && this.session.destroy();
+                                this.session && this.session.destroy());
                         }),
                         (this.setAutoScrollEditorIntoView = function (e) {
                             if (!e) return;
@@ -12131,8 +12164,8 @@
                             this.$scrollAnchor ||
                                 (this.$scrollAnchor = document.createElement("div"));
                             var i = this.$scrollAnchor;
-                            (i.style.cssText = "position:absolute"),
-                                this.container.insertBefore(i, this.container.firstChild);
+                            ((i.style.cssText = "position:absolute"),
+                                this.container.insertBefore(i, this.container.firstChild));
                             var s = this.on("changeSelection", function () {
                                     r = !0;
                                 }),
@@ -12149,7 +12182,7 @@
                                             s = e.$cursorLayer.$pixelPos,
                                             o = e.layerConfig,
                                             u = s.top - o.offset;
-                                        s.top >= 0 && u + t.top < 0
+                                        (s.top >= 0 && u + t.top < 0
                                             ? (r = !0)
                                             : s.top < o.height &&
                                                 s.top + t.top + o.lineHeight > window.innerHeight
@@ -12160,31 +12193,31 @@
                                                 (i.style.left = s.left + "px"),
                                                 (i.style.height = o.lineHeight + "px"),
                                                 i.scrollIntoView(r)),
-                                            (r = t = null);
+                                            (r = t = null));
                                     }
                                 });
                             this.setAutoScrollEditorIntoView = function (e) {
                                 if (e) return;
-                                delete this.setAutoScrollEditorIntoView,
+                                (delete this.setAutoScrollEditorIntoView,
                                     this.off("changeSelection", s),
                                     this.renderer.off("afterRender", u),
-                                    this.renderer.off("beforeRender", o);
+                                    this.renderer.off("beforeRender", o));
                             };
                         }),
                         (this.$resetCursorStyle = function () {
                             var e = this.$cursorStyle || "ace",
                                 t = this.renderer.$cursorLayer;
                             if (!t) return;
-                            t.setSmoothBlinking(/smooth/.test(e)),
+                            (t.setSmoothBlinking(/smooth/.test(e)),
                                 (t.isBlinking = !this.$readOnly && e != "wide"),
-                                i.setCssClass(t.element, "ace_slim-cursors", /slim/.test(e));
-                        });
+                                i.setCssClass(t.element, "ace_slim-cursors", /slim/.test(e)));
+                        }));
                 }.call(w.prototype),
                 g.defineOptions(w.prototype, "editor", {
                     selectionStyle: {
                         set: function (e) {
-                            this.onSelectionChange(),
-                                this._signal("changeSelectionStyle", { data: e });
+                            (this.onSelectionChange(),
+                                this._signal("changeSelectionStyle", { data: e }));
                         },
                         initialValue: "line",
                     },
@@ -12202,7 +12235,7 @@
                     },
                     readOnly: {
                         set: function (e) {
-                            this.textInput.setReadOnly(e), this.$resetCursorStyle();
+                            (this.textInput.setReadOnly(e), this.$resetCursorStyle());
                         },
                         initialValue: !1,
                     },
@@ -12258,9 +12291,9 @@
                     },
                     showLineNumbers: {
                         set: function (e) {
-                            this.renderer.$gutterLayer.setShowLineNumbers(e),
+                            (this.renderer.$gutterLayer.setShowLineNumbers(e),
                                 this.renderer.$loop.schedule(this.renderer.CHANGE_GUTTER),
-                                e && this.$relativeLineNumbers ? E.attach(this) : E.detach(this);
+                                e && this.$relativeLineNumbers ? E.attach(this) : E.detach(this));
                         },
                         initialValue: !0,
                     },
@@ -12307,7 +12340,7 @@
                     indentedSoftWrap: "session",
                     foldStyle: "session",
                     mode: "session",
-                });
+                }));
             var E = {
                 getText: function (e, t) {
                     return (
@@ -12324,15 +12357,15 @@
                     t.renderer.$loop.schedule(t.renderer.CHANGE_GUTTER);
                 },
                 attach: function (e) {
-                    (e.renderer.$gutterLayer.$renderer = this),
+                    ((e.renderer.$gutterLayer.$renderer = this),
                         e.on("changeSelection", this.update),
-                        this.update(null, e);
+                        this.update(null, e));
                 },
                 detach: function (e) {
-                    e.renderer.$gutterLayer.$renderer == this &&
+                    (e.renderer.$gutterLayer.$renderer == this &&
                         (e.renderer.$gutterLayer.$renderer = null),
                         e.off("changeSelection", this.update),
-                        this.update(null, e);
+                        this.update(null, e));
                 },
             };
             t.Editor = w;
@@ -12346,7 +12379,7 @@
                 if (r && !r[0].ignore) {
                     while (n < t - 1) {
                         var i = d(e[n], e[n + 1]);
-                        (e[n] = i[0]), (e[n + 1] = i[1]), n++;
+                        ((e[n] = i[0]), (e[n + 1] = i[1]), n++);
                     }
                     return !0;
                 }
@@ -12372,7 +12405,7 @@
                 }
                 var l = t ? f : u(a, r);
                 if (l > 0) {
-                    (a.row += i), (a.column += a.row == r.row ? s : 0);
+                    ((a.row += i), (a.column += a.row == r.row ? s : 0));
                     continue;
                 }
                 !t && l <= 0 && ((a.row = n.row), (a.column = n.column), l === 0 && (a.bias = 1));
@@ -12388,11 +12421,11 @@
             e = e || this;
             if (Array.isArray(e)) return e.map(c).join("\n");
             var t = "";
-            e.action
+            (e.action
                 ? ((t = e.action == "insert" ? "+" : "-"), (t += "[" + e.lines + "]"))
                 : e.value &&
                   (Array.isArray(e.value) ? (t = e.value.map(h).join("\n")) : (t = h(e.value))),
-                e.start && (t += h(e));
+                e.start && (t += h(e)));
             if (e.id || e.rev) t += "	(" + (e.id || e.rev) + ")";
             return t;
         }
@@ -12434,7 +12467,7 @@
                     if (!p(e[n], t[r])) {
                         while (n < e.length) {
                             while (r--) p(t[r], e[n]);
-                            (r = t.length), n++;
+                            ((r = t.length), n++);
                         }
                         return [e, t];
                     }
@@ -12486,11 +12519,11 @@
             return [t, e];
         }
         function m(e, t, n) {
-            g(e.start, t.start, t.end, n), g(e.end, t.start, t.end, n);
+            (g(e.start, t.start, t.end, n), g(e.end, t.start, t.end, n));
         }
         function g(e, t, n, r) {
-            e.row == (r == 1 ? t : n).row && (e.column += r * (n.column - t.column)),
-                (e.row += r * (n.row - t.row));
+            (e.row == (r == 1 ? t : n).row && (e.column += r * (n.column - t.column)),
+                (e.row += r * (n.row - t.row)));
         }
         function y(e, t) {
             var n = e.lines,
@@ -12499,7 +12532,7 @@
             var i = e.end.row - e.start.row,
                 s = n.splice(i, n.length),
                 o = i ? t.column : t.column - e.start.column;
-            n.push(s[0].substring(0, o)), (s[0] = s[0].substr(o));
+            (n.push(s[0].substring(0, o)), (s[0] = s[0].substr(o)));
             var u = { start: f(t), end: r, lines: s, action: e.action };
             return u;
         }
@@ -12510,11 +12543,11 @@
                 for (var i = 0; i < r.length; i++) {
                     var s = r[i],
                         o = v(s, t);
-                    (t = o[0]),
+                    ((t = o[0]),
                         o.length != 2 &&
                             (o[2]
                                 ? (r.splice(i + 1, 1, o[1], o[2]), i++)
-                                : o[1] || (r.splice(i, 1), i--));
+                                : o[1] || (r.splice(i, 1), i--)));
                 }
                 r.length || e.splice(n, 1);
             }
@@ -12527,19 +12560,19 @@
             }
         }
         var r = function () {
-            (this.$maxRev = 0), (this.$fromUndo = !1), this.reset();
+            ((this.$maxRev = 0), (this.$fromUndo = !1), this.reset());
         };
         (function () {
-            (this.addSession = function (e) {
+            ((this.addSession = function (e) {
                 this.$session = e;
             }),
                 (this.add = function (e, t, n) {
                     if (this.$fromUndo) return;
                     if (e == this.$lastDelta) return;
                     if (t === !1 || !this.lastDeltas)
-                        (this.lastDeltas = []),
+                        ((this.lastDeltas = []),
                             this.$undoStack.push(this.lastDeltas),
-                            (e.id = this.$rev = ++this.$maxRev);
+                            (e.id = this.$rev = ++this.$maxRev));
                     if (e.action == "remove" || e.action == "insert") this.$lastDelta = e;
                     this.lastDeltas.push(e);
                 }),
@@ -12547,7 +12580,7 @@
                     this.selections.push({ value: e, rev: t || this.$rev });
                 }),
                 (this.startNewGroup = function () {
-                    return (this.lastDeltas = null), this.$rev;
+                    return ((this.lastDeltas = null), this.$rev);
                 }),
                 (this.markIgnored = function (e, t) {
                     t == null && (t = this.$rev + 1);
@@ -12563,7 +12596,7 @@
                     var n = this.selections;
                     for (var r = n.length; r--; ) {
                         var i = n[r];
-                        if (i.rev < e) return t && (i = n[r + 1]), i;
+                        if (i.rev < e) return (t && (i = n[r + 1]), i);
                     }
                 }),
                 (this.getRevision = function () {
@@ -12594,11 +12627,11 @@
                     this.lastDeltas = null;
                     var n = this.$undoStack;
                     if (!i(n, n.length)) return;
-                    e || (e = this.$session),
+                    (e || (e = this.$session),
                         this.$redoStackBaseRev !== this.$rev &&
                             this.$redoStack.length &&
                             (this.$redoStack = []),
-                        (this.$fromUndo = !0);
+                        (this.$fromUndo = !0));
                     var r = n.pop(),
                         s = null;
                     return (
@@ -12610,14 +12643,14 @@
                     );
                 }),
                 (this.redo = function (e, t) {
-                    (this.lastDeltas = null), e || (e = this.$session), (this.$fromUndo = !0);
+                    ((this.lastDeltas = null), e || (e = this.$session), (this.$fromUndo = !0));
                     if (this.$redoStackBaseRev != this.$rev) {
                         var n = this.getDeltas(this.$redoStackBaseRev, this.$rev + 1);
-                        w(this.$redoStack, n),
+                        (w(this.$redoStack, n),
                             (this.$redoStackBaseRev = this.$rev),
                             this.$redoStack.forEach(function (e) {
                                 e[0].id = ++this.$maxRev;
-                            }, this);
+                            }, this));
                     }
                     var r = this.$redoStack.pop(),
                         i = null;
@@ -12631,17 +12664,17 @@
                     var e = this.$undoStack,
                         t = e[e.length - 1],
                         n = (t && t[0].id) || 0;
-                    (this.$redoStackBaseRev = n), (this.$rev = n);
+                    ((this.$redoStackBaseRev = n), (this.$rev = n));
                 }),
                 (this.reset = function () {
-                    (this.lastDeltas = null),
+                    ((this.lastDeltas = null),
                         (this.$lastDelta = null),
                         (this.$undoStack = []),
                         (this.$redoStack = []),
                         (this.$rev = 0),
                         (this.mark = 0),
                         (this.$redoStackBaseRev = this.$rev),
-                        (this.selections = []);
+                        (this.selections = []));
                 }),
                 (this.canUndo = function () {
                     return this.$undoStack.length > 0;
@@ -12650,7 +12683,7 @@
                     return this.$redoStack.length > 0;
                 }),
                 (this.bookmark = function (e) {
-                    e == undefined && (e = this.$rev), (this.mark = e);
+                    (e == undefined && (e = this.$rev), (this.mark = e));
                 }),
                 (this.isAtBookmark = function () {
                     return this.$rev === this.mark;
@@ -12663,7 +12696,7 @@
                 (this.markClean = this.bookmark),
                 (this.$prettyPrint = function (e) {
                     return e ? c(e) : c(this.$undoStack) + "\n---\n" + c(this.$redoStack);
-                });
+                }));
         }).call(r.prototype);
         var s = e("./range").Range,
             o = s.comparePoints,
@@ -12674,15 +12707,15 @@
         "use strict";
         var r = e("../lib/dom"),
             i = function (e, t) {
-                (this.element = e),
+                ((this.element = e),
                     (this.canvasHeight = t || 5e5),
                     (this.element.style.height = this.canvasHeight * 2 + "px"),
                     (this.cells = []),
                     (this.cellCache = []),
-                    (this.$offsetCoefficient = 0);
+                    (this.$offsetCoefficient = 0));
             };
-        (function () {
-            (this.moveContainer = function (e) {
+        ((function () {
+            ((this.moveContainer = function (e) {
                 r.translate(
                     this.element,
                     0,
@@ -12723,7 +12756,7 @@
                         var t = r.createFragment(this.element);
                         for (var n = 0; n < e.length; n++) t.appendChild(e[n].element);
                         this.element.appendChild(t);
-                    } else this.cells.push(e), this.element.appendChild(e.element);
+                    } else (this.cells.push(e), this.element.appendChild(e.element));
                 }),
                 (this.unshift = function (e) {
                     if (Array.isArray(e)) {
@@ -12734,28 +12767,28 @@
                             ? this.element.insertBefore(t, this.element.firstChild)
                             : this.element.appendChild(t);
                     } else
-                        this.cells.unshift(e),
-                            this.element.insertAdjacentElement("afterbegin", e.element);
+                        (this.cells.unshift(e),
+                            this.element.insertAdjacentElement("afterbegin", e.element));
                 }),
                 (this.last = function () {
                     return this.cells.length ? this.cells[this.cells.length - 1] : null;
                 }),
                 (this.$cacheCell = function (e) {
                     if (!e) return;
-                    e.element.remove(), this.cellCache.push(e);
+                    (e.element.remove(), this.cellCache.push(e));
                 }),
                 (this.createCell = function (e, t, n, i) {
                     var s = this.cellCache.pop();
                     if (!s) {
                         var o = r.createElement("div");
-                        i && i(o),
+                        (i && i(o),
                             this.element.appendChild(o),
-                            (s = { element: o, text: "", row: e });
+                            (s = { element: o, text: "", row: e }));
                     }
-                    return (s.row = e), s;
-                });
+                    return ((s.row = e), s);
+                }));
         }).call(i.prototype),
-            (t.Lines = i);
+            (t.Lines = i));
     }),
     define(
         "ace/layer/gutter",
@@ -12775,7 +12808,7 @@
                 var t = document.createTextNode("");
                 e.appendChild(t);
                 var n = r.createElement("span");
-                return e.appendChild(n), e;
+                return (e.appendChild(n), e);
             }
             var r = e("../lib/dom"),
                 i = e("../lib/oop"),
@@ -12783,7 +12816,7 @@
                 o = e("../lib/event_emitter").EventEmitter,
                 u = e("./lines").Lines,
                 a = function (e) {
-                    (this.element = r.createElement("div")),
+                    ((this.element = r.createElement("div")),
                         (this.element.className = "ace_layer ace_gutter-layer"),
                         e.appendChild(this.element),
                         this.setShowFoldWidgets(this.$showFoldWidgets),
@@ -12791,27 +12824,27 @@
                         (this.$annotations = []),
                         (this.$updateAnnotations = this.$updateAnnotations.bind(this)),
                         (this.$lines = new u(this.element)),
-                        (this.$lines.$offsetCoefficient = 1);
+                        (this.$lines.$offsetCoefficient = 1));
                 };
-            (function () {
-                i.implement(this, o),
+            ((function () {
+                (i.implement(this, o),
                     (this.setSession = function (e) {
-                        this.session &&
+                        (this.session &&
                             this.session.removeEventListener("change", this.$updateAnnotations),
                             (this.session = e),
-                            e && e.on("change", this.$updateAnnotations);
+                            e && e.on("change", this.$updateAnnotations));
                     }),
                     (this.addGutterDecoration = function (e, t) {
-                        window.console &&
+                        (window.console &&
                             console.warn &&
                             console.warn("deprecated use session.addGutterDecoration"),
-                            this.session.addGutterDecoration(e, t);
+                            this.session.addGutterDecoration(e, t));
                     }),
                     (this.removeGutterDecoration = function (e, t) {
-                        window.console &&
+                        (window.console &&
                             console.warn &&
                             console.warn("deprecated use session.removeGutterDecoration"),
-                            this.session.removeGutterDecoration(e, t);
+                            this.session.removeGutterDecoration(e, t));
                     }),
                     (this.setAnnotations = function (e) {
                         this.$annotations = [];
@@ -12821,8 +12854,8 @@
                                 i = this.$annotations[r];
                             i || (i = this.$annotations[r] = { text: [] });
                             var o = n.text;
-                            (o = o ? s.escapeHTML(o) : n.html || ""),
-                                i.text.indexOf(o) === -1 && i.text.push(o);
+                            ((o = o ? s.escapeHTML(o) : n.html || ""),
+                                i.text.indexOf(o) === -1 && i.text.push(o));
                             var u = n.type;
                             u == "error"
                                 ? (i.className = " ace_error")
@@ -12839,8 +12872,8 @@
                             if (e.action == "remove") this.$annotations.splice(t, n + 1, null);
                             else {
                                 var r = new Array(n + 1);
-                                r.unshift(t, 1),
-                                    this.$annotations.splice.apply(this.$annotations, r);
+                                (r.unshift(t, 1),
+                                    this.$annotations.splice.apply(this.$annotations, r));
                             }
                     }),
                     (this.update = function (e) {
@@ -12848,10 +12881,10 @@
                         var t = this.session,
                             n = e.firstRow,
                             r = Math.min(e.lastRow + e.gutterOffset, t.getLength() - 1);
-                        (this.oldLastRow = r),
+                        ((this.oldLastRow = r),
                             (this.config = e),
                             this.$lines.moveContainer(e),
-                            this.$updateCursorRow();
+                            this.$updateCursorRow());
                         var i = t.getNextFoldLine(n),
                             s = i ? i.start.row : Infinity,
                             o = null,
@@ -12866,15 +12899,15 @@
                                 while (this.$lines.getLength() > u + 1) this.$lines.pop();
                                 break;
                             }
-                            (o = this.$lines.get(++u)),
+                            ((o = this.$lines.get(++u)),
                                 o
                                     ? (o.row = a)
                                     : ((o = this.$lines.createCell(a, e, this.session, f)),
                                       this.$lines.push(o)),
                                 this.$renderCell(o, e, i, a),
-                                a++;
+                                a++);
                         }
-                        this._signal("afterRender"), this.$updateGutterWidth(e);
+                        (this._signal("afterRender"), this.$updateGutterWidth(e));
                     }),
                     (this.$updateGutterWidth = function (e) {
                         var t = this.session,
@@ -12884,13 +12917,13 @@
                         if (this.$fixedWidth || t.$useWrapMode) i = t.getLength() + r;
                         var s = n ? n.getWidth(t, i, e) : i.toString().length * e.characterWidth,
                             o = this.$padding || this.$computePadding();
-                        (s += o.left + o.right),
+                        ((s += o.left + o.right),
                             s !== this.gutterWidth &&
                                 !isNaN(s) &&
                                 ((this.gutterWidth = s),
                                 (this.element.parentNode.style.width = this.element.style.width =
                                     Math.ceil(this.gutterWidth) + "px"),
-                                this._signal("changeGutterWidth", s));
+                                this._signal("changeGutterWidth", s)));
                     }),
                     (this.$updateCursorRow = function () {
                         if (!this.$highlightGutterLine) return;
@@ -12919,16 +12952,16 @@
                                     if (!(n > 0 && i && i.start.row == t[n - 1].row)) break;
                                     r = t[n - 1];
                                 }
-                                (r.element.className =
+                                ((r.element.className =
                                     "ace_gutter-active-line " + r.element.className),
-                                    (this.$cursorCell = r);
+                                    (this.$cursorCell = r));
                                 break;
                             }
                         }
                     }),
                     (this.scrollLines = function (e) {
                         var t = this.config;
-                        (this.config = e), this.$updateCursorRow();
+                        ((this.config = e), this.$updateCursorRow());
                         if (this.$lines.pageChanged(t, e)) return this.update(e);
                         this.$lines.moveContainer(e);
                         var n = Math.min(e.lastRow + e.gutterOffset, this.session.getLength() - 1),
@@ -12946,12 +12979,12 @@
                         if (r > n)
                             for (var i = this.session.getFoldedRowCount(n + 1, r); i > 0; i--)
                                 this.$lines.pop();
-                        e.firstRow < t.firstRow &&
+                        (e.firstRow < t.firstRow &&
                             this.$lines.unshift(this.$renderLines(e, e.firstRow, t.firstRow - 1)),
                             n > r && this.$lines.push(this.$renderLines(e, r + 1, n)),
                             this.updateLineHighlight(),
                             this._signal("afterRender"),
-                            this.$updateGutterWidth(e);
+                            this.$updateGutterWidth(e));
                     }),
                     (this.$renderLines = function (e, t, n) {
                         var r = [],
@@ -12965,7 +12998,7 @@
                                 (o = s ? s.start.row : Infinity));
                             if (i > n) break;
                             var u = this.$lines.createCell(i, e, this.session, f);
-                            this.$renderCell(u, e, s, i), r.push(u), i++;
+                            (this.$renderCell(u, e, s, i), r.push(u), i++);
                         }
                         return r;
                     }),
@@ -12981,7 +13014,7 @@
                             p = this.$showFoldWidgets && o.foldWidgets,
                             d = n ? n.start.row : Number.MAX_VALUE,
                             v = "ace_gutter-cell ";
-                        this.$highlightGutterLine &&
+                        (this.$highlightGutterLine &&
                             (i == this.$cursorRow ||
                                 (n &&
                                     i < this.$cursorRow &&
@@ -12999,20 +13032,20 @@
                             l[i] && (v += l[i]),
                             c[i] && (v += c[i]),
                             this.$annotations[i] && (v += this.$annotations[i].className),
-                            s.className != v && (s.className = v);
+                            s.className != v && (s.className = v));
                         if (p) {
                             var m = p[i];
                             m == null && (m = p[i] = o.getFoldWidget(i));
                         }
                         if (m) {
                             var v = "ace_fold-widget ace_" + m;
-                            m == "start" && i == d && i < n.end.row
+                            (m == "start" && i == d && i < n.end.row
                                 ? (v += " ace_closed")
                                 : (v += " ace_open"),
-                                a.className != v && (a.className = v);
+                                a.className != v && (a.className = v));
                             var g = t.lineHeight + "px";
-                            r.setStyle(a.style, "height", g),
-                                r.setStyle(a.style, "display", "inline-block");
+                            (r.setStyle(a.style, "height", g),
+                                r.setStyle(a.style, "display", "inline-block"));
                         } else a && r.setStyle(a.style, "display", "none");
                         var y = (h ? h.getText(o, i) : i + f).toString();
                         return (
@@ -13054,11 +13087,11 @@
                     }),
                     (this.$showFoldWidgets = !0),
                     (this.setShowFoldWidgets = function (e) {
-                        e
+                        (e
                             ? r.addCssClass(this.element, "ace_folding-enabled")
                             : r.removeCssClass(this.element, "ace_folding-enabled"),
                             (this.$showFoldWidgets = e),
-                            (this.$padding = null);
+                            (this.$padding = null));
                     }),
                     (this.getShowFoldWidgets = function () {
                         return this.$showFoldWidgets;
@@ -13083,9 +13116,9 @@
                             n = this.element.getBoundingClientRect();
                         if (e.x < t.left + n.left) return "markers";
                         if (this.$showFoldWidgets && e.x > n.right - t.right) return "foldWidgets";
-                    });
+                    }));
             }).call(a.prototype),
-                (t.Gutter = a);
+                (t.Gutter = a));
         },
     ),
     define(
@@ -13096,15 +13129,15 @@
             var r = e("../range").Range,
                 i = e("../lib/dom"),
                 s = function (e) {
-                    (this.element = i.createElement("div")),
+                    ((this.element = i.createElement("div")),
                         (this.element.className = "ace_layer ace_marker-layer"),
-                        e.appendChild(this.element);
+                        e.appendChild(this.element));
                 };
-            (function () {
+            ((function () {
                 function e(e, t, n, r) {
                     return (e ? 1 : 0) | (t ? 2 : 0) | (n ? 4 : 0) | (r ? 8 : 0);
                 }
-                (this.$padding = 0),
+                ((this.$padding = 0),
                     (this.setPadding = function (e) {
                         this.$padding = e;
                     }),
@@ -13116,17 +13149,17 @@
                     }),
                     (this.elt = function (e, t) {
                         var n = this.i != -1 && this.element.childNodes[this.i];
-                        n
+                        (n
                             ? this.i++
                             : ((n = document.createElement("div")),
                               this.element.appendChild(n),
                               (this.i = -1)),
                             (n.style.cssText = t),
-                            (n.className = e);
+                            (n.className = e));
                     }),
                     (this.update = function (e) {
                         if (!e) return;
-                        (this.config = e), (this.i = 0);
+                        ((this.config = e), (this.i = 0));
                         var t;
                         for (var n in this.markers) {
                             var r = this.markers[n];
@@ -13174,7 +13207,7 @@
                             p = u.getScreenLastRowColumn(l),
                             d = new r(l, n.start.column, l, h);
                         for (; l <= f; l++)
-                            (d.start.row = d.end.row = l),
+                            ((d.start.row = d.end.row = l),
                                 (d.start.column = l == a ? n.start.column : u.getRowWrapIndent(l)),
                                 (d.end.column = p),
                                 (c = h),
@@ -13200,7 +13233,7 @@
                                     s,
                                     l == f ? 0 : 1,
                                     o,
-                                );
+                                ));
                     }),
                     (this.drawMultiLineMarker = function (e, t, n, r, i) {
                         var s = this.$padding,
@@ -13210,7 +13243,7 @@
                         i = i || "";
                         if (this.session.$bidiHandler.isBidiRow(t.start.row)) {
                             var f = t.clone();
-                            (f.end.row = f.start.row),
+                            ((f.end.row = f.start.row),
                                 (f.end.column = this.session.getLine(f.start.row).length),
                                 this.drawBidiSingleLineMarker(
                                     e,
@@ -13219,7 +13252,7 @@
                                     r,
                                     null,
                                     i,
-                                );
+                                ));
                         } else
                             this.elt(
                                 n + " ace_br1 ace_start",
@@ -13236,9 +13269,9 @@
                             );
                         if (this.session.$bidiHandler.isBidiRow(t.end.row)) {
                             var f = t.clone();
-                            (f.start.row = f.end.row),
+                            ((f.start.row = f.end.row),
                                 (f.start.column = 0),
-                                this.drawBidiSingleLineMarker(e, f, n + " ace_br12", r, null, i);
+                                this.drawBidiSingleLineMarker(e, f, n + " ace_br12", r, null, i));
                         } else {
                             u = this.$getTop(t.end.row, r);
                             var l = t.end.column * r.characterWidth;
@@ -13333,7 +13366,7 @@
                     (this.drawFullLineMarker = function (e, t, n, r, i) {
                         var s = this.$getTop(t.start.row, r),
                             o = r.lineHeight;
-                        t.start.row != t.end.row && (o += this.$getTop(t.end.row, r) - s),
+                        (t.start.row != t.end.row && (o += this.$getTop(t.end.row, r) - s),
                             this.elt(
                                 n,
                                 "height:" +
@@ -13344,7 +13377,7 @@
                                     "px;" +
                                     "left:0;right:0;" +
                                     (i || ""),
-                            );
+                            ));
                     }),
                     (this.drawScreenLineMarker = function (e, t, n, r, i) {
                         var s = this.$getTop(t.start.row, r),
@@ -13360,9 +13393,9 @@
                                 "left:0;right:0;" +
                                 (i || ""),
                         );
-                    });
+                    }));
             }).call(s.prototype),
-                (t.Marker = s);
+                (t.Marker = s));
         },
     ),
     define(
@@ -13385,15 +13418,15 @@
                 o = e("./lines").Lines,
                 u = e("../lib/event_emitter").EventEmitter,
                 a = function (e) {
-                    (this.dom = i),
+                    ((this.dom = i),
                         (this.element = this.dom.createElement("div")),
                         (this.element.className = "ace_layer ace_text-layer"),
                         e.appendChild(this.element),
                         (this.$updateEolChar = this.$updateEolChar.bind(this)),
-                        (this.$lines = new o(this.element));
+                        (this.$lines = new o(this.element)));
                 };
-            (function () {
-                r.implement(this, u),
+            ((function () {
+                (r.implement(this, u),
                     (this.EOF_CHAR = "\u00b6"),
                     (this.EOL_CHAR_LF = "\u00ac"),
                     (this.EOL_CHAR_CRLF = "\u00a4"),
@@ -13406,10 +13439,10 @@
                         var e = this.session.doc,
                             t = e.getNewLineCharacter() == "\n" && e.getNewLineMode() != "windows",
                             n = t ? this.EOL_CHAR_LF : this.EOL_CHAR_CRLF;
-                        if (this.EOL_CHAR != n) return (this.EOL_CHAR = n), !0;
+                        if (this.EOL_CHAR != n) return ((this.EOL_CHAR = n), !0);
                     }),
                     (this.setPadding = function (e) {
-                        (this.$padding = e), (this.element.style.margin = "0 " + e + "px");
+                        ((this.$padding = e), (this.element.style.margin = "0 " + e + "px"));
                     }),
                     (this.getLineHeight = function () {
                         return this.$fontMetrics.$characterSize.height || 0;
@@ -13418,14 +13451,14 @@
                         return this.$fontMetrics.$characterSize.width || 0;
                     }),
                     (this.$setFontMetrics = function (e) {
-                        (this.$fontMetrics = e),
+                        ((this.$fontMetrics = e),
                             this.$fontMetrics.on(
                                 "changeCharacterSize",
                                 function (e) {
                                     this._signal("changeCharacterSize", e);
                                 }.bind(this),
                             ),
-                            this.$pollSizeChanges();
+                            this.$pollSizeChanges());
                     }),
                     (this.checkForSizeChanges = function () {
                         this.$fontMetrics.checkForSizeChanges();
@@ -13434,7 +13467,7 @@
                         return (this.$pollSizeChangesTimer = this.$fontMetrics.$pollSizeChanges());
                     }),
                     (this.setSession = function (e) {
-                        (this.session = e), e && this.$computeTabString();
+                        ((this.session = e), e && this.$computeTabString());
                     }),
                     (this.showInvisibles = !1),
                     (this.setShowInvisibles = function (e) {
@@ -13457,9 +13490,9 @@
                             for (var n = 1; n < e + 1; n++)
                                 if (this.showInvisibles) {
                                     var r = this.dom.createElement("span");
-                                    (r.className = "ace_invisible ace_invisible_tab"),
+                                    ((r.className = "ace_invisible ace_invisible_tab"),
                                         (r.textContent = s.stringRepeat(this.TAB_CHAR, n)),
-                                        t.push(r);
+                                        t.push(r));
                                 } else
                                     t.push(
                                         this.dom.createTextNode(
@@ -13473,22 +13506,22 @@
                                     o = "",
                                     u = "";
                                 if (this.showInvisibles) {
-                                    (i += " ace_invisible"),
+                                    ((i += " ace_invisible"),
                                         (o = " ace_invisible_space"),
-                                        (u = " ace_invisible_tab");
+                                        (u = " ace_invisible_tab"));
                                     var a = s.stringRepeat(this.SPACE_CHAR, this.tabSize),
                                         f = s.stringRepeat(this.TAB_CHAR, this.tabSize);
                                 } else
                                     var a = s.stringRepeat(" ", this.tabSize),
                                         f = a;
                                 var r = this.dom.createElement("span");
-                                (r.className = i + o),
+                                ((r.className = i + o),
                                     (r.textContent = a),
-                                    (this.$tabStrings[" "] = r);
+                                    (this.$tabStrings[" "] = r));
                                 var r = this.dom.createElement("span");
-                                (r.className = i + u),
+                                ((r.className = i + u),
                                     (r.textContent = f),
-                                    (this.$tabStrings["	"] = r);
+                                    (this.$tabStrings["	"] = r));
                             }
                         }),
                     (this.updateLines = function (e, t, n) {
@@ -13522,7 +13555,8 @@
                             if (u > i) break;
                             var c = s[o++];
                             if (c) {
-                                this.dom.removeChildren(c), this.$renderLine(c, u, u == l ? a : !1);
+                                (this.dom.removeChildren(c),
+                                    this.$renderLine(c, u, u == l ? a : !1));
                                 var h = e.lineHeight * this.session.getRowLength(u) + "px";
                                 c.style.height != h && ((f = !0), (c.style.height = h));
                             }
@@ -13560,14 +13594,14 @@
                                 i--
                             )
                                 this.$lines.pop();
-                        e.firstRow < t.firstRow &&
+                        (e.firstRow < t.firstRow &&
                             this.$lines.unshift(
                                 this.$renderLinesFragment(e, e.firstRow, t.firstRow - 1),
                             ),
                             e.lastRow > t.lastRow &&
                                 this.$lines.push(
                                     this.$renderLinesFragment(e, t.lastRow + 1, e.lastRow),
-                                );
+                                ));
                     }),
                     (this.$renderLinesFragment = function (e, t, n) {
                         var r = [],
@@ -13582,7 +13616,7 @@
                             if (s > n) break;
                             var a = this.$lines.createCell(s, e, this.session),
                                 f = a.element;
-                            this.dom.removeChildren(f),
+                            (this.dom.removeChildren(f),
                                 i.setStyle(
                                     f.style,
                                     "height",
@@ -13598,12 +13632,12 @@
                                     ? (f.className = "ace_line_group")
                                     : (f.className = "ace_line"),
                                 r.push(a),
-                                s++;
+                                s++);
                         }
                         return r;
                     }),
                     (this.update = function (e) {
-                        this.$lines.moveContainer(e), (this.config = e);
+                        (this.$lines.moveContainer(e), (this.config = e));
                         var t = e.firstRow,
                             n = e.lastRow,
                             r = this.$lines;
@@ -13626,52 +13660,52 @@
                                 v = f[5];
                             if (!o.showInvisibles && h) continue;
                             var m = l != f.index ? r.slice(l, f.index) : "";
-                            (l = f.index + f[0].length),
-                                m && a.appendChild(this.dom.createTextNode(m, this.element));
+                            ((l = f.index + f[0].length),
+                                m && a.appendChild(this.dom.createTextNode(m, this.element)));
                             if (c) {
                                 var g = o.session.getScreenTabSize(t + f.index);
-                                a.appendChild(o.$tabStrings[g].cloneNode(!0)), (t += g - 1);
+                                (a.appendChild(o.$tabStrings[g].cloneNode(!0)), (t += g - 1));
                             } else if (h)
                                 if (o.showInvisibles) {
                                     var y = this.dom.createElement("span");
-                                    (y.className = "ace_invisible ace_invisible_space"),
+                                    ((y.className = "ace_invisible ace_invisible_space"),
                                         (y.textContent = s.stringRepeat(o.SPACE_CHAR, h.length)),
-                                        a.appendChild(y);
+                                        a.appendChild(y));
                                 } else a.appendChild(this.com.createTextNode(h, this.element));
                             else if (p) {
                                 var y = this.dom.createElement("span");
-                                (y.className = "ace_invisible ace_invisible_space ace_invalid"),
+                                ((y.className = "ace_invisible ace_invisible_space ace_invalid"),
                                     (y.textContent = s.stringRepeat(o.SPACE_CHAR, p.length)),
-                                    a.appendChild(y);
+                                    a.appendChild(y));
                             } else if (d) {
                                 var b = o.showInvisibles ? o.SPACE_CHAR : "";
                                 t += 1;
                                 var y = this.dom.createElement("span");
-                                (y.style.width = o.config.characterWidth * 2 + "px"),
+                                ((y.style.width = o.config.characterWidth * 2 + "px"),
                                     (y.className = o.showInvisibles
                                         ? "ace_cjk ace_invisible ace_invisible_space"
                                         : "ace_cjk"),
                                     (y.textContent = o.showInvisibles ? o.SPACE_CHAR : ""),
-                                    a.appendChild(y);
+                                    a.appendChild(y));
                             } else if (v) {
                                 t += 1;
                                 var y = i.createElement("span");
-                                (y.style.width = o.config.characterWidth * 2 + "px"),
+                                ((y.style.width = o.config.characterWidth * 2 + "px"),
                                     (y.className = "ace_cjk"),
                                     (y.textContent = v),
-                                    a.appendChild(y);
+                                    a.appendChild(y));
                             }
                         }
                         a.appendChild(this.dom.createTextNode(l ? r.slice(l) : r, this.element));
                         if (!this.$textToken[n.type]) {
                             var w = "ace_" + n.type.replace(/\./g, " ace_"),
                                 y = this.dom.createElement("span");
-                            n.type == "fold" &&
+                            (n.type == "fold" &&
                                 (y.style.width =
                                     n.value.length * this.config.characterWidth + "px"),
                                 (y.className = w),
                                 y.appendChild(a),
-                                e.appendChild(y);
+                                e.appendChild(y));
                         } else e.appendChild(a);
                         return t + r.length;
                     }),
@@ -13711,15 +13745,15 @@
                             var l = t[f],
                                 c = l.value;
                             if (f == 0 && this.displayIndentGuides) {
-                                (r = c.length), (c = this.renderIndentGuide(a, c, o));
+                                ((r = c.length), (c = this.renderIndentGuide(a, c, o)));
                                 if (!c) continue;
                                 r -= c.length;
                             }
                             if (r + c.length < o)
-                                (u = this.$renderToken(a, u, l, c)), (r += c.length);
+                                ((u = this.$renderToken(a, u, l, c)), (r += c.length));
                             else {
                                 while (r + c.length >= o)
-                                    (u = this.$renderToken(a, u, l, c.substring(0, o - r))),
+                                    ((u = this.$renderToken(a, u, l, c.substring(0, o - r))),
                                         (c = c.substring(o - r)),
                                         (r = o),
                                         (a = this.$createLineElement()),
@@ -13732,7 +13766,7 @@
                                         ),
                                         i++,
                                         (u = 0),
-                                        (o = n[i] || Number.MAX_VALUE);
+                                        (o = n[i] || Number.MAX_VALUE));
                                 c.length != 0 &&
                                     ((r += c.length), (u = this.$renderToken(a, u, l, c)));
                             }
@@ -13742,10 +13776,10 @@
                         var n = 0,
                             r = t[0],
                             i = r.value;
-                        this.displayIndentGuides && (i = this.renderIndentGuide(e, i)),
-                            i && (n = this.$renderToken(e, n, r, i));
+                        (this.displayIndentGuides && (i = this.renderIndentGuide(e, i)),
+                            i && (n = this.$renderToken(e, n, r, i)));
                         for (var s = 1; s < t.length; s++) {
-                            (r = t[s]), (i = r.value);
+                            ((r = t[s]), (i = r.value));
                             if (n + i.length > this.MAX_LINE_LENGTH)
                                 return this.$renderOverflowMessage(e, n, r, i);
                             n = this.$renderToken(e, n, r, i);
@@ -13754,11 +13788,11 @@
                     (this.$renderOverflowMessage = function (e, t, n, r) {
                         this.$renderToken(e, t, n, r.slice(0, this.MAX_LINE_LENGTH - t));
                         var i = this.dom.createElement("span");
-                        (i.className = "ace_inline_button ace_keyword ace_toggle_wrap"),
+                        ((i.className = "ace_inline_button ace_keyword ace_toggle_wrap"),
                             (i.style.position = "absolute"),
                             (i.style.right = "0"),
                             (i.textContent = "<click to see more...>"),
-                            e.appendChild(i);
+                            e.appendChild(i));
                     }),
                     (this.$renderLine = function (e, t, n) {
                         !n && n != 0 && (n = this.session.getFoldLine(t));
@@ -13772,9 +13806,9 @@
                                 var i = e.lastChild;
                             } else {
                                 var i = e;
-                                this.$useLineGroups() &&
+                                (this.$useLineGroups() &&
                                     ((i = this.$createLineElement()), e.appendChild(i)),
-                                    this.$renderSimpleLine(i, r);
+                                    this.$renderSimpleLine(i, r));
                             }
                         } else
                             this.$useLineGroups() &&
@@ -13782,12 +13816,12 @@
                         if (this.showInvisibles && i) {
                             n && (t = n.end.row);
                             var o = this.dom.createElement("span");
-                            (o.className = "ace_invisible ace_invisible_eol"),
+                            ((o.className = "ace_invisible ace_invisible_eol"),
                                 (o.textContent =
                                     t == this.session.getLength() - 1
                                         ? this.EOF_CHAR
                                         : this.EOL_CHAR),
-                                i.appendChild(o);
+                                i.appendChild(o));
                         }
                     }),
                     (this.$getFoldLineTokens = function (e, t) {
@@ -13795,23 +13829,23 @@
                             var i = 0,
                                 s = 0;
                             while (s + e[i].value.length < t) {
-                                (s += e[i].value.length), i++;
+                                ((s += e[i].value.length), i++);
                                 if (i == e.length) return;
                             }
                             if (s != t) {
                                 var o = e[i].value.substring(t - s);
-                                o.length > n - t && (o = o.substring(0, n - t)),
+                                (o.length > n - t && (o = o.substring(0, n - t)),
                                     r.push({ type: e[i].type, value: o }),
                                     (s = t + o.length),
-                                    (i += 1);
+                                    (i += 1));
                             }
                             while (s < n && i < e.length) {
                                 var o = e[i].value;
-                                o.length + s > n
+                                (o.length + s > n
                                     ? r.push({ type: e[i].type, value: o.substring(0, n - s) })
                                     : r.push(e[i]),
                                     (s += o.length),
-                                    (i += 1);
+                                    (i += 1));
                             }
                         }
                         var n = this.session,
@@ -13833,16 +13867,16 @@
                     (this.$useLineGroups = function () {
                         return this.session.getUseWrapMode();
                     }),
-                    (this.destroy = function () {});
+                    (this.destroy = function () {}));
             }).call(a.prototype),
-                (t.Text = a);
+                (t.Text = a));
         },
     ),
     define("ace/layer/cursor", ["require", "exports", "module", "ace/lib/dom"], function (e, t, n) {
         "use strict";
         var r = e("../lib/dom"),
             i = function (e) {
-                (this.element = r.createElement("div")),
+                ((this.element = r.createElement("div")),
                     (this.element.className = "ace_layer ace_cursor-layer"),
                     e.appendChild(this.element),
                     (this.isVisible = !1),
@@ -13852,10 +13886,10 @@
                     (this.cursors = []),
                     (this.cursor = this.addCursor()),
                     r.addCssClass(this.element, "ace_hidden-cursors"),
-                    (this.$updateCursors = this.$updateOpacity.bind(this));
+                    (this.$updateCursors = this.$updateOpacity.bind(this)));
             };
-        (function () {
-            (this.$updateOpacity = function (e) {
+        ((function () {
+            ((this.$updateOpacity = function (e) {
                 var t = this.cursors;
                 for (var n = t.length; n--; ) r.setStyle(t[n].style, "opacity", e ? "" : "0");
             }),
@@ -13904,27 +13938,27 @@
                 (this.removeCursor = function () {
                     if (this.cursors.length > 1) {
                         var e = this.cursors.pop();
-                        return e.parentNode.removeChild(e), e;
+                        return (e.parentNode.removeChild(e), e);
                     }
                 }),
                 (this.hideCursor = function () {
-                    (this.isVisible = !1),
+                    ((this.isVisible = !1),
                         r.addCssClass(this.element, "ace_hidden-cursors"),
-                        this.restartTimer();
+                        this.restartTimer());
                 }),
                 (this.showCursor = function () {
-                    (this.isVisible = !0),
+                    ((this.isVisible = !0),
                         r.removeCssClass(this.element, "ace_hidden-cursors"),
-                        this.restartTimer();
+                        this.restartTimer());
                 }),
                 (this.restartTimer = function () {
                     var e = this.$updateCursors;
-                    clearInterval(this.intervalId),
+                    (clearInterval(this.intervalId),
                         clearTimeout(this.timeoutId),
                         this.$stopCssAnimation(),
                         this.smoothBlinking &&
                             r.removeCssClass(this.element, "ace_smooth-blinking"),
-                        e(!0);
+                        e(!0));
                     if (!this.isBlinking || !this.blinkInterval || !this.isVisible) {
                         this.$stopCssAnimation();
                         return;
@@ -13942,10 +13976,10 @@
                                 e(!1);
                             }, 0.6 * this.blinkInterval);
                         }.bind(this);
-                        (this.intervalId = setInterval(function () {
-                            e(!0), t();
+                        ((this.intervalId = setInterval(function () {
+                            (e(!0), t());
                         }, this.blinkInterval)),
-                            t();
+                            t());
                     }
                 }),
                 (this.getPixelPosition = function (e, t) {
@@ -13985,7 +14019,7 @@
                     }
                     while (this.cursors.length > i) this.removeCursor();
                     var f = this.session.getOverwrite();
-                    this.$setOverwrite(f), (this.$pixelPos = o), this.restartTimer();
+                    (this.$setOverwrite(f), (this.$pixelPos = o), this.restartTimer());
                 }),
                 (this.drawCursor = null),
                 (this.$setOverwrite = function (e) {
@@ -13996,10 +14030,10 @@
                             : r.removeCssClass(this.element, "ace_overwrite-cursors"));
                 }),
                 (this.destroy = function () {
-                    clearInterval(this.intervalId), clearTimeout(this.timeoutId);
-                });
+                    (clearInterval(this.intervalId), clearTimeout(this.timeoutId));
+                }));
         }).call(i.prototype),
-            (t.Cursor = i);
+            (t.Cursor = i));
     }),
     define(
         "ace/scrollbar",
@@ -14020,7 +14054,7 @@
                 o = e("./lib/event_emitter").EventEmitter,
                 u = 32768,
                 a = function (e) {
-                    (this.element = i.createElement("div")),
+                    ((this.element = i.createElement("div")),
                         (this.element.className = "ace_scrollbar ace_scrollbar" + this.classSuffix),
                         (this.inner = i.createElement("div")),
                         (this.inner.className = "ace_scrollbar-inner"),
@@ -14029,28 +14063,28 @@
                         this.setVisible(!1),
                         (this.skipEvent = !1),
                         s.addListener(this.element, "scroll", this.onScroll.bind(this)),
-                        s.addListener(this.element, "mousedown", s.preventDefault);
+                        s.addListener(this.element, "mousedown", s.preventDefault));
                 };
             (function () {
-                r.implement(this, o),
+                (r.implement(this, o),
                     (this.setVisible = function (e) {
-                        (this.element.style.display = e ? "" : "none"),
+                        ((this.element.style.display = e ? "" : "none"),
                             (this.isVisible = e),
-                            (this.coeff = 1);
-                    });
+                            (this.coeff = 1));
+                    }));
             }).call(a.prototype);
             var f = function (e, t) {
-                a.call(this, e),
+                (a.call(this, e),
                     (this.scrollTop = 0),
                     (this.scrollHeight = 0),
                     (t.$scrollbarWidth = this.width = i.scrollbarWidth(e.ownerDocument)),
                     (this.inner.style.width = this.element.style.width =
                         (this.width || 15) + 5 + "px"),
-                    (this.$minWidth = 0);
+                    (this.$minWidth = 0));
             };
-            r.inherits(f, a),
+            (r.inherits(f, a),
                 function () {
-                    (this.classSuffix = "-v"),
+                    ((this.classSuffix = "-v"),
                         (this.onScroll = function () {
                             if (!this.skipEvent) {
                                 this.scrollTop = this.element.scrollTop;
@@ -14070,34 +14104,34 @@
                         }),
                         (this.setInnerHeight = this.setScrollHeight =
                             function (e) {
-                                (this.scrollHeight = e),
+                                ((this.scrollHeight = e),
                                     e > u
                                         ? ((this.coeff = u / e), (e = u))
                                         : this.coeff != 1 && (this.coeff = 1),
-                                    (this.inner.style.height = e + "px");
+                                    (this.inner.style.height = e + "px"));
                             }),
                         (this.setScrollTop = function (e) {
                             this.scrollTop != e &&
                                 ((this.skipEvent = !0),
                                 (this.scrollTop = e),
                                 (this.element.scrollTop = e * this.coeff));
-                        });
-                }.call(f.prototype);
+                        }));
+                }.call(f.prototype));
             var l = function (e, t) {
-                a.call(this, e),
+                (a.call(this, e),
                     (this.scrollLeft = 0),
                     (this.height = t.$scrollbarWidth),
                     (this.inner.style.height = this.element.style.height =
-                        (this.height || 15) + 5 + "px");
+                        (this.height || 15) + 5 + "px"));
             };
-            r.inherits(l, a),
+            (r.inherits(l, a),
                 function () {
-                    (this.classSuffix = "-h"),
+                    ((this.classSuffix = "-h"),
                         (this.onScroll = function () {
-                            this.skipEvent ||
+                            (this.skipEvent ||
                                 ((this.scrollLeft = this.element.scrollLeft),
                                 this._emit("scroll", { data: this.scrollLeft })),
-                                (this.skipEvent = !1);
+                                (this.skipEvent = !1));
                         }),
                         (this.getHeight = function () {
                             return this.isVisible ? this.height : 0;
@@ -14115,36 +14149,36 @@
                             this.scrollLeft != e &&
                                 ((this.skipEvent = !0),
                                 (this.scrollLeft = this.element.scrollLeft = e));
-                        });
+                        }));
                 }.call(l.prototype),
                 (t.ScrollBar = f),
                 (t.ScrollBarV = f),
                 (t.ScrollBarH = l),
                 (t.VScrollBar = f),
-                (t.HScrollBar = l);
+                (t.HScrollBar = l));
         },
     ),
     define("ace/renderloop", ["require", "exports", "module", "ace/lib/event"], function (e, t, n) {
         "use strict";
         var r = e("./lib/event"),
             i = function (e, t) {
-                (this.onRender = e),
+                ((this.onRender = e),
                     (this.pending = !1),
                     (this.changes = 0),
-                    (this.window = t || window);
+                    (this.window = t || window));
                 var n = this;
                 this._flush = function (e) {
                     var t = n.changes;
-                    t && (r.blockIdle(100), (n.changes = 0), n.onRender(t)),
-                        n.changes && n.schedule();
+                    (t && (r.blockIdle(100), (n.changes = 0), n.onRender(t)),
+                        n.changes && n.schedule());
                 };
             };
-        (function () {
+        ((function () {
             this.schedule = function (e) {
-                (this.changes = this.changes | e), this.changes && r.nextFrame(this._flush);
+                ((this.changes = this.changes | e), this.changes && r.nextFrame(this._flush));
             };
         }).call(i.prototype),
-            (t.RenderLoop = i);
+            (t.RenderLoop = i));
     }),
     define(
         "ace/layer/font_metrics",
@@ -14170,7 +14204,7 @@
                 l = typeof ResizeObserver == "function",
                 c = 200,
                 h = (t.FontMetrics = function (e) {
-                    (this.el = i.createElement("div")),
+                    ((this.el = i.createElement("div")),
                         this.$setMeasureNodeStyles(this.el.style, !0),
                         (this.$main = i.createElement("div")),
                         this.$setMeasureNodeStyles(this.$main.style),
@@ -14181,19 +14215,19 @@
                         e.appendChild(this.el),
                         (this.$measureNode.innerHTML = s.stringRepeat("X", f)),
                         (this.$characterSize = { width: 0, height: 0 }),
-                        l ? this.$addObserver() : this.checkForSizeChanges();
+                        l ? this.$addObserver() : this.checkForSizeChanges());
                 });
             (function () {
-                r.implement(this, a),
+                (r.implement(this, a),
                     (this.$characterSize = { width: 0, height: 0 }),
                     (this.$setMeasureNodeStyles = function (e, t) {
-                        (e.width = e.height = "auto"),
+                        ((e.width = e.height = "auto"),
                             (e.left = e.top = "0px"),
                             (e.visibility = "hidden"),
                             (e.position = "absolute"),
                             (e.whiteSpace = "pre"),
                             u.isIE < 8 ? (e["font-family"] = "inherit") : (e.font = "inherit"),
-                            (e.overflow = t ? "hidden" : "visible");
+                            (e.overflow = t ? "hidden" : "visible"));
                     }),
                     (this.checkForSizeChanges = function (e) {
                         e === undefined && (e = this.$measureSizes());
@@ -14204,28 +14238,28 @@
                         ) {
                             this.$measureNode.style.fontWeight = "bold";
                             var t = this.$measureSizes();
-                            (this.$measureNode.style.fontWeight = ""),
+                            ((this.$measureNode.style.fontWeight = ""),
                                 (this.$characterSize = e),
                                 (this.charSizes = Object.create(null)),
                                 (this.allowBoldFonts =
                                     t && t.width === e.width && t.height === e.height),
-                                this._emit("changeCharacterSize", { data: e });
+                                this._emit("changeCharacterSize", { data: e }));
                         }
                     }),
                     (this.$addObserver = function () {
                         var e = this;
-                        (this.$observer = new window.ResizeObserver(function (t) {
+                        ((this.$observer = new window.ResizeObserver(function (t) {
                             var n = t[0].contentRect;
                             e.checkForSizeChanges({ height: n.height, width: n.width / f });
                         })),
-                            this.$observer.observe(this.$measureNode);
+                            this.$observer.observe(this.$measureNode));
                     }),
                     (this.$pollSizeChanges = function () {
                         if (this.$pollSizeChangesTimer || this.$observer)
                             return this.$pollSizeChangesTimer;
                         var e = this;
                         return (this.$pollSizeChangesTimer = o.onIdle(function t() {
-                            e.checkForSizeChanges(), o.onIdle(t, 500);
+                            (e.checkForSizeChanges(), o.onIdle(t, 500));
                         }, 500));
                     }),
                     (this.setPolling = function (e) {
@@ -14257,11 +14291,11 @@
                         );
                     }),
                     (this.destroy = function () {
-                        clearInterval(this.$pollSizeChangesTimer),
+                        (clearInterval(this.$pollSizeChangesTimer),
                             this.$observer && this.$observer.disconnect(),
                             this.el &&
                                 this.el.parentNode &&
-                                this.el.parentNode.removeChild(this.el);
+                                this.el.parentNode.removeChild(this.el));
                     }),
                     (this.$getZoom = function e(t) {
                         return t ? (window.getComputedStyle(t).zoom || 1) * e(t.parentElement) : 1;
@@ -14317,7 +14351,7 @@
                         var b = i(e, a),
                             w = r(i(d, o(p[0], b)), i(v, o(p[1], b)), b);
                         return o(c, w);
-                    });
+                    }));
             }).call(h.prototype);
         },
     ),
@@ -14362,7 +14396,7 @@
             i.importCssString(v, "ace_editor.css");
             var y = function (e, t) {
                 var n = this;
-                (this.container = e || i.createElement("div")),
+                ((this.container = e || i.createElement("div")),
                     i.addCssClass(this.container, "ace_editor"),
                     i.HI_DPI && i.addCssClass(this.container, "ace_hidpi"),
                     this.setTheme(t),
@@ -14378,9 +14412,9 @@
                     this.scroller.appendChild(this.content),
                     (this.$gutterLayer = new o(this.$gutter)),
                     this.$gutterLayer.on("changeGutterWidth", this.onGutterResize.bind(this)),
-                    (this.$markerBack = new u(this.content));
+                    (this.$markerBack = new u(this.content)));
                 var r = (this.$textLayer = new a(this.content));
-                (this.canvas = r.element),
+                ((this.canvas = r.element),
                     (this.$markerFront = new u(this.content)),
                     (this.$cursorLayer = new f(this.content)),
                     (this.$horizScroll = !1),
@@ -14399,9 +14433,9 @@
                     (this.$fontMetrics = new p(this.container)),
                     this.$textLayer.$setFontMetrics(this.$fontMetrics),
                     this.$textLayer.addEventListener("changeCharacterSize", function (e) {
-                        n.updateCharacterSize(),
+                        (n.updateCharacterSize(),
                             n.onResize(!0, n.gutterWidth, n.$size.width, n.$size.height),
-                            n._signal("changeCharacterSize", e);
+                            n._signal("changeCharacterSize", e));
                     }),
                     (this.$size = {
                         width: 0,
@@ -14435,10 +14469,10 @@
                     this.updateCharacterSize(),
                     this.setPadding(4),
                     s.resetOptions(this),
-                    s._emit("renderer", this);
+                    s._emit("renderer", this));
             };
-            (function () {
-                (this.CHANGE_CURSOR = 1),
+            ((function () {
+                ((this.CHANGE_CURSOR = 1),
                     (this.CHANGE_MARKER = 2),
                     (this.CHANGE_GUTTER = 4),
                     (this.CHANGE_SCROLL = 8),
@@ -14451,17 +14485,17 @@
                     (this.CHANGE_H_SCROLL = 1024),
                     r.implement(this, d),
                     (this.updateCharacterSize = function () {
-                        this.$textLayer.allowBoldFonts != this.$allowBoldFonts &&
+                        (this.$textLayer.allowBoldFonts != this.$allowBoldFonts &&
                             ((this.$allowBoldFonts = this.$textLayer.allowBoldFonts),
                             this.setStyle("ace_nobold", !this.$allowBoldFonts)),
                             (this.layerConfig.characterWidth = this.characterWidth =
                                 this.$textLayer.getCharacterWidth()),
                             (this.layerConfig.lineHeight = this.lineHeight =
                                 this.$textLayer.getLineHeight()),
-                            this.$updatePrintMargin();
+                            this.$updatePrintMargin());
                     }),
                     (this.setSession = function (e) {
-                        this.session &&
+                        (this.session &&
                             this.session.doc.off("changeNewLineMode", this.onChangeNewLineMode),
                             (this.session = e),
                             e &&
@@ -14472,23 +14506,23 @@
                             this.$markerBack.setSession(e),
                             this.$markerFront.setSession(e),
                             this.$gutterLayer.setSession(e),
-                            this.$textLayer.setSession(e);
+                            this.$textLayer.setSession(e));
                         if (!e) return;
-                        this.$loop.schedule(this.CHANGE_FULL),
+                        (this.$loop.schedule(this.CHANGE_FULL),
                             this.session.$setFontMetrics(this.$fontMetrics),
                             (this.scrollBarH.scrollLeft = this.scrollBarV.scrollTop = null),
                             (this.onChangeNewLineMode = this.onChangeNewLineMode.bind(this)),
                             this.onChangeNewLineMode(),
-                            this.session.doc.on("changeNewLineMode", this.onChangeNewLineMode);
+                            this.session.doc.on("changeNewLineMode", this.onChangeNewLineMode));
                     }),
                     (this.updateLines = function (e, t, n) {
-                        t === undefined && (t = Infinity),
+                        (t === undefined && (t = Infinity),
                             this.$changedLines
                                 ? (this.$changedLines.firstRow > e &&
                                       (this.$changedLines.firstRow = e),
                                   this.$changedLines.lastRow < t &&
                                       (this.$changedLines.lastRow = t))
-                                : (this.$changedLines = { firstRow: e, lastRow: t });
+                                : (this.$changedLines = { firstRow: e, lastRow: t }));
                         if (this.$changedLines.lastRow < this.layerConfig.firstRow) {
                             if (!n) return;
                             this.$changedLines.lastRow = this.layerConfig.lastRow;
@@ -14497,13 +14531,13 @@
                         this.$loop.schedule(this.CHANGE_LINES);
                     }),
                     (this.onChangeNewLineMode = function () {
-                        this.$loop.schedule(this.CHANGE_TEXT),
+                        (this.$loop.schedule(this.CHANGE_TEXT),
                             this.$textLayer.$updateEolChar(),
-                            this.session.$bidiHandler.setEolChar(this.$textLayer.EOL_CHAR);
+                            this.session.$bidiHandler.setEolChar(this.$textLayer.EOL_CHAR));
                     }),
                     (this.onChangeTabSize = function () {
-                        this.$loop.schedule(this.CHANGE_TEXT | this.CHANGE_MARKER),
-                            this.$textLayer.onChangeTabSize();
+                        (this.$loop.schedule(this.CHANGE_TEXT | this.CHANGE_MARKER),
+                            this.$textLayer.onChangeTabSize());
                     }),
                     (this.updateText = function () {
                         this.$loop.schedule(this.CHANGE_TEXT);
@@ -14524,16 +14558,16 @@
                         if (this.resizing > 2) return;
                         this.resizing > 0 ? this.resizing++ : (this.resizing = e ? 1 : 0);
                         var i = this.container;
-                        r || (r = i.clientHeight || i.scrollHeight),
-                            n || (n = i.clientWidth || i.scrollWidth);
+                        (r || (r = i.clientHeight || i.scrollHeight),
+                            n || (n = i.clientWidth || i.scrollWidth));
                         var s = this.$updateCachedSize(e, t, n, r);
                         if (!this.$size.scrollerHeight || (!n && !r)) return (this.resizing = 0);
-                        e && (this.$gutterLayer.$padding = null),
+                        (e && (this.$gutterLayer.$padding = null),
                             e
                                 ? this.$renderChanges(s | this.$changes, !0)
                                 : this.$loop.schedule(s | this.$changes),
                             this.resizing && (this.resizing = 0),
-                            (this.scrollBarV.scrollLeft = this.scrollBarV.scrollTop = null);
+                            (this.scrollBarV.scrollLeft = this.scrollBarV.scrollTop = null));
                     }),
                     (this.$updateCachedSize = function (e, t, n, r) {
                         r -= this.$extraHeight || 0;
@@ -14555,7 +14589,7 @@
                                 this.scrollBarH.getHeight() + "px"),
                             (s |= this.CHANGE_SCROLL));
                         if (n && (e || o.width != n)) {
-                            (s |= this.CHANGE_SIZE),
+                            ((s |= this.CHANGE_SIZE),
                                 (o.width = n),
                                 t == null && (t = this.$showGutter ? this.$gutter.offsetWidth : 0),
                                 (this.gutterWidth = t),
@@ -14569,15 +14603,15 @@
                                     0,
                                     n - t - this.scrollBarV.getWidth() - this.margin.h,
                                 )),
-                                i.setStyle(this.$gutter.style, "left", this.margin.left + "px");
+                                i.setStyle(this.$gutter.style, "left", this.margin.left + "px"));
                             var a = this.scrollBarV.getWidth() + "px";
-                            i.setStyle(this.scrollBarH.element.style, "right", a),
+                            (i.setStyle(this.scrollBarH.element.style, "right", a),
                                 i.setStyle(this.scroller.style, "right", a),
                                 i.setStyle(
                                     this.scroller.style,
                                     "bottom",
                                     this.scrollBarH.getHeight(),
-                                );
+                                ));
                             if (
                                 (this.session &&
                                     this.session.getUseWrapMode() &&
@@ -14586,11 +14620,11 @@
                             )
                                 s |= this.CHANGE_FULL;
                         }
-                        return (o.$dirty = !n || !r), s && this._signal("resize", u), s;
+                        return ((o.$dirty = !n || !r), s && this._signal("resize", u), s);
                     }),
                     (this.onGutterResize = function (e) {
                         var t = this.$showGutter ? e : 0;
-                        t != this.gutterWidth &&
+                        (t != this.gutterWidth &&
                             (this.$changes |= this.$updateCachedSize(
                                 !0,
                                 t,
@@ -14601,7 +14635,7 @@
                                 ? this.$loop.schedule(this.CHANGE_FULL)
                                 : this.$size.$dirty
                                   ? this.$loop.schedule(this.CHANGE_FULL)
-                                  : this.$computeLayerConfig();
+                                  : this.$computeLayerConfig());
                     }),
                     (this.adjustWrapLimit = function () {
                         var e = this.$size.scrollerWidth - this.$padding * 2,
@@ -14618,8 +14652,8 @@
                         return this.$animatedScroll;
                     }),
                     (this.setShowInvisibles = function (e) {
-                        this.setOption("showInvisibles", e),
-                            this.session.$bidiHandler.setShowInvisibles(e);
+                        (this.setOption("showInvisibles", e),
+                            this.session.$bidiHandler.setShowInvisibles(e));
                     }),
                     (this.getShowInvisibles = function () {
                         return this.getOption("showInvisibles");
@@ -14664,19 +14698,19 @@
                         if (!this.$showPrintMargin && !this.$printMarginEl) return;
                         if (!this.$printMarginEl) {
                             var e = i.createElement("div");
-                            (e.className = "ace_layer ace_print-margin-layer"),
+                            ((e.className = "ace_layer ace_print-margin-layer"),
                                 (this.$printMarginEl = i.createElement("div")),
                                 (this.$printMarginEl.className = "ace_print-margin"),
                                 e.appendChild(this.$printMarginEl),
-                                this.content.insertBefore(e, this.content.firstChild);
+                                this.content.insertBefore(e, this.content.firstChild));
                         }
                         var t = this.$printMarginEl.style;
-                        (t.left =
+                        ((t.left =
                             Math.round(
                                 this.characterWidth * this.$printMarginColumn + this.$padding,
                             ) + "px"),
                             (t.visibility = this.$showPrintMargin ? "visible" : "hidden"),
-                            this.session && this.session.$wrap == -1 && this.adjustWrapLimit();
+                            this.session && this.session.$wrap == -1 && this.adjustWrapLimit());
                     }),
                     (this.getContainerElement = function () {
                         return this.container;
@@ -14712,10 +14746,10 @@
                         if (!n) s += this.lineHeight;
                         else if (n.useTextareaForIME) {
                             var f = this.textarea.value;
-                            (a = this.characterWidth * this.session.$getStringScreenWidth(f)[0]),
-                                (u += 2);
+                            ((a = this.characterWidth * this.session.$getStringScreenWidth(f)[0]),
+                                (u += 2));
                         } else s += this.lineHeight + 2;
-                        (o -= this.scrollLeft),
+                        ((o -= this.scrollLeft),
                             o > this.$size.scrollerWidth - a && (o = this.$size.scrollerWidth - a),
                             (o += this.gutterWidth + this.margin.left),
                             i.setStyle(e, "height", u + "px"),
@@ -14724,7 +14758,7 @@
                                 this.textarea,
                                 Math.min(o, this.$size.scrollerWidth - a),
                                 Math.min(s, this.$size.height - u),
-                            );
+                            ));
                     }),
                     (this.getFirstVisibleRow = function () {
                         return this.layerConfig.firstRow;
@@ -14745,17 +14779,17 @@
                     }),
                     (this.$padding = null),
                     (this.setPadding = function (e) {
-                        (this.$padding = e),
+                        ((this.$padding = e),
                             this.$textLayer.setPadding(e),
                             this.$cursorLayer.setPadding(e),
                             this.$markerFront.setPadding(e),
                             this.$markerBack.setPadding(e),
                             this.$loop.schedule(this.CHANGE_FULL),
-                            this.$updatePrintMargin();
+                            this.$updatePrintMargin());
                     }),
                     (this.setScrollMargin = function (e, t, n, r) {
                         var i = this.scrollMargin;
-                        (i.top = e | 0),
+                        ((i.top = e | 0),
                             (i.bottom = t | 0),
                             (i.right = r | 0),
                             (i.left = n | 0),
@@ -14765,11 +14799,11 @@
                                 this.scrollTop <= 0 &&
                                 this.session &&
                                 this.session.setScrollTop(-i.top),
-                            this.updateFull();
+                            this.updateFull());
                     }),
                     (this.setMargin = function (e, t, n, r) {
                         var i = this.margin;
-                        (i.top = e | 0),
+                        ((i.top = e | 0),
                             (i.bottom = t | 0),
                             (i.right = r | 0),
                             (i.left = n | 0),
@@ -14781,7 +14815,7 @@
                                 this.$size.width,
                                 this.$size.height,
                             ),
-                            this.updateFull();
+                            this.updateFull());
                     }),
                     (this.getHScrollBarAlwaysVisible = function () {
                         return this.$hScrollBarAlwaysVisible;
@@ -14798,19 +14832,21 @@
                     (this.$updateScrollBarV = function () {
                         var e = this.layerConfig.maxHeight,
                             t = this.$size.scrollerHeight;
-                        !this.$maxLines &&
+                        (!this.$maxLines &&
                             this.$scrollPastEnd &&
                             ((e -= (t - this.lineHeight) * this.$scrollPastEnd),
                             this.scrollTop > e - t &&
                                 ((e = this.scrollTop + t), (this.scrollBarV.scrollTop = null))),
                             this.scrollBarV.setScrollHeight(e + this.scrollMargin.v),
-                            this.scrollBarV.setScrollTop(this.scrollTop + this.scrollMargin.top);
+                            this.scrollBarV.setScrollTop(this.scrollTop + this.scrollMargin.top));
                     }),
                     (this.$updateScrollBarH = function () {
-                        this.scrollBarH.setScrollWidth(
+                        (this.scrollBarH.setScrollWidth(
                             this.layerConfig.width + 2 * this.$padding + this.scrollMargin.h,
                         ),
-                            this.scrollBarH.setScrollLeft(this.scrollLeft + this.scrollMargin.left);
+                            this.scrollBarH.setScrollLeft(
+                                this.scrollLeft + this.scrollMargin.left,
+                            ));
                     }),
                     (this.$frozen = !1),
                     (this.freeze = function () {
@@ -14830,12 +14866,12 @@
                             this.$changes |= e;
                             return;
                         }
-                        if (this.$size.$dirty) return (this.$changes |= e), this.onResize(!0);
-                        this.lineHeight || this.$textLayer.checkForSizeChanges(),
+                        if (this.$size.$dirty) return ((this.$changes |= e), this.onResize(!0));
+                        (this.lineHeight || this.$textLayer.checkForSizeChanges(),
                             this._signal("beforeRender"),
                             this.session &&
                                 this.session.$bidiHandler &&
-                                this.session.$bidiHandler.updateCharacterWidths(this.$fontMetrics);
+                                this.session.$bidiHandler.updateCharacterWidths(this.$fontMetrics));
                         var n = this.layerConfig;
                         if (
                             e & this.CHANGE_FULL ||
@@ -14858,14 +14894,14 @@
                                     (e |= this.CHANGE_SCROLL),
                                     (e |= this.$computeLayerConfig()));
                             }
-                            (n = this.layerConfig),
+                            ((n = this.layerConfig),
                                 this.$updateScrollBarV(),
                                 e & this.CHANGE_H_SCROLL && this.$updateScrollBarH(),
-                                i.translate(this.content, -this.scrollLeft, -n.offset);
+                                i.translate(this.content, -this.scrollLeft, -n.offset));
                             var s = n.width + 2 * this.$padding + "px",
                                 o = n.minHeight + "px";
-                            i.setStyle(this.content.style, "width", s),
-                                i.setStyle(this.content.style, "height", o);
+                            (i.setStyle(this.content.style, "width", s),
+                                i.setStyle(this.content.style, "height", o));
                         }
                         e & this.CHANGE_H_SCROLL &&
                             (i.translate(this.content, -this.scrollLeft, -n.offset),
@@ -14874,17 +14910,17 @@
                                     ? "ace_scroller"
                                     : "ace_scroller ace_scroll-left"));
                         if (e & this.CHANGE_FULL) {
-                            this.$textLayer.update(n),
+                            (this.$textLayer.update(n),
                                 this.$showGutter && this.$gutterLayer.update(n),
                                 this.$markerBack.update(n),
                                 this.$markerFront.update(n),
                                 this.$cursorLayer.update(n),
                                 this.$moveTextAreaToCursor(),
-                                this._signal("afterRender");
+                                this._signal("afterRender"));
                             return;
                         }
                         if (e & this.CHANGE_SCROLL) {
-                            e & this.CHANGE_TEXT || e & this.CHANGE_LINES
+                            (e & this.CHANGE_TEXT || e & this.CHANGE_LINES
                                 ? this.$textLayer.update(n)
                                 : this.$textLayer.scrollLines(n),
                                 this.$showGutter &&
@@ -14895,10 +14931,10 @@
                                 this.$markerFront.update(n),
                                 this.$cursorLayer.update(n),
                                 this.$moveTextAreaToCursor(),
-                                this._signal("afterRender");
+                                this._signal("afterRender"));
                             return;
                         }
-                        e & this.CHANGE_TEXT
+                        (e & this.CHANGE_TEXT
                             ? (this.$textLayer.update(n),
                               this.$showGutter && this.$gutterLayer.update(n))
                             : e & this.CHANGE_LINES
@@ -14916,7 +14952,7 @@
                                 this.$markerFront.update(n),
                             e & (this.CHANGE_MARKER | this.CHANGE_MARKER_BACK) &&
                                 this.$markerBack.update(n),
-                            this._signal("afterRender");
+                            this._signal("afterRender"));
                     }),
                     (this.$autosize = function () {
                         var e = this.session.getScreenLength() * this.lineHeight,
@@ -14925,10 +14961,10 @@
                                 Math.min(t, Math.max((this.$minLines || 1) * this.lineHeight, e)) +
                                 this.scrollMargin.v +
                                 (this.$extraHeight || 0);
-                        this.$horizScroll && (n += this.scrollBarH.getHeight()),
+                        (this.$horizScroll && (n += this.scrollBarH.getHeight()),
                             this.$maxPixelHeight &&
                                 n > this.$maxPixelHeight &&
-                                (n = this.$maxPixelHeight);
+                                (n = this.$maxPixelHeight));
                         var r = n <= 2 * this.lineHeight,
                             i = !r && e > t;
                         if (
@@ -14939,10 +14975,10 @@
                             i != this.$vScroll &&
                                 ((this.$vScroll = i), this.scrollBarV.setVisible(i));
                             var s = this.container.clientWidth;
-                            (this.container.style.height = n + "px"),
+                            ((this.container.style.height = n + "px"),
                                 this.$updateCachedSize(!0, this.$gutterWidth, s, n),
                                 (this.desiredHeight = n),
-                                this._signal("autosize");
+                                this._signal("autosize"));
                         }
                     }),
                     (this.$computeLayerConfig = function () {
@@ -14968,7 +15004,7 @@
                                     : 0;
                         i += c;
                         var h = this.scrollMargin;
-                        this.session.setScrollTop(
+                        (this.session.setScrollTop(
                             Math.max(
                                 -h.top,
                                 Math.min(this.scrollTop, i - t.scrollerHeight + h.bottom),
@@ -14982,7 +15018,7 @@
                                         s + 2 * this.$padding - t.scrollerWidth + h.right,
                                     ),
                                 ),
-                            );
+                            ));
                         var p =
                                 !n &&
                                 (this.$vScrollBarAlwaysVisible ||
@@ -14998,18 +15034,18 @@
                             w = this.lineHeight;
                         m = e.screenToDocumentRow(m, 0);
                         var E = e.getFoldLine(m);
-                        E && (m = E.start.row),
+                        (E && (m = E.start.row),
                             (y = e.documentToScreenRow(m, 0)),
                             (b = e.getRowLength(m) * w),
                             (g = Math.min(e.screenToDocumentRow(g, 0), e.getLength() - 1)),
                             (l = t.scrollerHeight + e.getRowLength(g) * w + b),
-                            (f = this.scrollTop - y * w);
+                            (f = this.scrollTop - y * w));
                         var S = 0;
                         if (this.layerConfig.width != s || u) S = this.CHANGE_H_SCROLL;
                         if (u || d)
-                            (S = this.$updateCachedSize(!0, this.gutterWidth, t.width, t.height)),
+                            ((S = this.$updateCachedSize(!0, this.gutterWidth, t.width, t.height)),
                                 this._signal("scrollbarVisibilityChanged"),
-                                d && (s = this.$getLongestLine());
+                                d && (s = this.$getLongestLine()));
                         return (
                             (this.layerConfig = {
                                 width: s,
@@ -15041,11 +15077,11 @@
                         if (e > n.lastRow + 1) return;
                         if (t < n.firstRow) return;
                         if (t === Infinity) {
-                            this.$showGutter && this.$gutterLayer.update(n),
-                                this.$textLayer.update(n);
+                            (this.$showGutter && this.$gutterLayer.update(n),
+                                this.$textLayer.update(n));
                             return;
                         }
-                        return this.$textLayer.updateLines(n, e, t), !0;
+                        return (this.$textLayer.updateLines(n, e, t), !0);
                     }),
                     (this.$getLongestLine = function () {
                         var e = this.session.getScreenWidth();
@@ -15061,12 +15097,12 @@
                         );
                     }),
                     (this.updateFrontMarkers = function () {
-                        this.$markerFront.setMarkers(this.session.getMarkers(!0)),
-                            this.$loop.schedule(this.CHANGE_MARKER_FRONT);
+                        (this.$markerFront.setMarkers(this.session.getMarkers(!0)),
+                            this.$loop.schedule(this.CHANGE_MARKER_FRONT));
                     }),
                     (this.updateBackMarkers = function () {
-                        this.$markerBack.setMarkers(this.session.getMarkers()),
-                            this.$loop.schedule(this.CHANGE_MARKER_BACK);
+                        (this.$markerBack.setMarkers(this.session.getMarkers()),
+                            this.$loop.schedule(this.CHANGE_MARKER_BACK));
                     }),
                     (this.addGutterDecoration = function (e, t) {
                         this.$gutterLayer.addGutterDecoration(e, t);
@@ -15078,8 +15114,8 @@
                         this.$loop.schedule(this.CHANGE_GUTTER);
                     }),
                     (this.setAnnotations = function (e) {
-                        this.$gutterLayer.setAnnotations(e),
-                            this.$loop.schedule(this.CHANGE_GUTTER);
+                        (this.$gutterLayer.setAnnotations(e),
+                            this.$loop.schedule(this.CHANGE_GUTTER));
                     }),
                     (this.updateCursor = function () {
                         this.$loop.schedule(this.CHANGE_CURSOR);
@@ -15091,7 +15127,7 @@
                         this.$cursorLayer.showCursor();
                     }),
                     (this.scrollSelectionIntoView = function (e, t, n) {
-                        this.scrollCursorIntoView(e, n), this.scrollCursorIntoView(t, n);
+                        (this.scrollCursorIntoView(e, n), this.scrollCursorIntoView(t, n));
                     }),
                     (this.scrollCursorIntoView = function (e, t, n) {
                         if (this.$size.scrollerHeight === 0) return;
@@ -15154,7 +15190,7 @@
                         var n = this.$cursorLayer.getPixelPosition(e),
                             r = this.$size.scrollerHeight - this.lineHeight,
                             i = n.top - r * (t || 0);
-                        return this.session.setScrollTop(i), i;
+                        return (this.session.setScrollTop(i), i);
                     }),
                     (this.STEPS = 8),
                     (this.$calcSteps = function (e, t) {
@@ -15172,7 +15208,7 @@
                             s = i.top;
                         t && (s -= this.$size.scrollerHeight / 2);
                         var o = this.scrollTop;
-                        this.session.setScrollTop(s), n !== !1 && this.animateScrolling(o, r);
+                        (this.session.setScrollTop(s), n !== !1 && this.animateScrolling(o, r));
                     }),
                     (this.animateScrolling = function (e, t) {
                         var n = this.scrollTop;
@@ -15187,7 +15223,7 @@
                             }
                         }
                         var s = r.$calcSteps(e, n);
-                        (this.$scrollAnimation = { from: e, to: n, steps: s }),
+                        ((this.$scrollAnimation = { from: e, to: n, steps: s }),
                             clearInterval(this.$timer),
                             r.session.setScrollTop(s.shift()),
                             (r.session.$scrollTop = n),
@@ -15202,22 +15238,22 @@
                                       : ((r.$timer = clearInterval(r.$timer)),
                                         (r.$scrollAnimation = null),
                                         t && t());
-                            }, 10));
+                            }, 10)));
                     }),
                     (this.scrollToY = function (e) {
                         this.scrollTop !== e &&
                             (this.$loop.schedule(this.CHANGE_SCROLL), (this.scrollTop = e));
                     }),
                     (this.scrollToX = function (e) {
-                        this.scrollLeft !== e && (this.scrollLeft = e),
-                            this.$loop.schedule(this.CHANGE_H_SCROLL);
+                        (this.scrollLeft !== e && (this.scrollLeft = e),
+                            this.$loop.schedule(this.CHANGE_H_SCROLL));
                     }),
                     (this.scrollTo = function (e, t) {
-                        this.session.setScrollTop(t), this.session.setScrollLeft(t);
+                        (this.session.setScrollTop(t), this.session.setScrollLeft(t));
                     }),
                     (this.scrollBy = function (e, t) {
-                        t && this.session.setScrollTop(this.session.getScrollTop() + t),
-                            e && this.session.setScrollLeft(this.session.getScrollLeft() + e);
+                        (t && this.session.setScrollTop(this.session.getScrollTop() + t),
+                            e && this.session.setScrollLeft(this.session.getScrollLeft() + e));
                     }),
                     (this.isScrollableBy = function (e, t) {
                         if (t < 0 && this.session.getScrollTop() >= 1 - this.scrollMargin.top)
@@ -15246,7 +15282,7 @@
                         if (this.$hasCssTransforms) {
                             n = { top: 0, left: 0 };
                             var r = this.$fontMetrics.transformCoordinates([e, t]);
-                            (e = r[1] - this.gutterWidth - this.margin.left), (t = r[0]);
+                            ((e = r[1] - this.gutterWidth - this.margin.left), (t = r[0]));
                         } else n = this.scroller.getBoundingClientRect();
                         var i = e + this.scrollLeft - n.left - this.$padding,
                             s = i / this.characterWidth,
@@ -15259,7 +15295,7 @@
                         if (this.$hasCssTransforms) {
                             n = { top: 0, left: 0 };
                             var r = this.$fontMetrics.transformCoordinates([e, t]);
-                            (e = r[1] - this.gutterWidth - this.margin.left), (t = r[0]);
+                            ((e = r[1] - this.gutterWidth - this.margin.left), (t = r[0]));
                         } else n = this.scroller.getBoundingClientRect();
                         var i = e + this.scrollLeft - n.left - this.$padding,
                             s = i / this.characterWidth,
@@ -15288,7 +15324,7 @@
                         i.removeCssClass(this.container, "ace_focus");
                     }),
                     (this.showComposition = function (e) {
-                        (this.$composition = e),
+                        ((this.$composition = e),
                             e.cssText ||
                                 ((e.cssText = this.textarea.style.cssText),
                                 (e.keepTextAreaAtCursor = this.$keepTextAreaAtCursor)),
@@ -15303,22 +15339,22 @@
                                       e.markerRange,
                                       "ace_composition_marker",
                                       "text",
-                                  ));
+                                  )));
                     }),
                     (this.setCompositionText = function (e) {
                         var t = this.session.selection.cursor;
-                        this.addToken(e, "composition_placeholder", t.row, t.column),
-                            this.$moveTextAreaToCursor();
+                        (this.addToken(e, "composition_placeholder", t.row, t.column),
+                            this.$moveTextAreaToCursor());
                     }),
                     (this.hideComposition = function () {
                         if (!this.$composition) return;
-                        this.$composition.markerId &&
+                        (this.$composition.markerId &&
                             this.session.removeMarker(this.$composition.markerId),
                             i.removeCssClass(this.textarea, "ace_composition"),
                             (this.$keepTextAreaAtCursor = this.$composition.keepTextAreaAtCursor),
                             (this.textarea.style.cssText = this.$composition.cssText),
                             (this.$composition = null),
-                            (this.$cursorLayer.element.style.display = "");
+                            (this.$cursorLayer.element.style.display = ""));
                     }),
                     (this.addToken = function (e, t, n, r) {
                         var i = this.session;
@@ -15352,26 +15388,26 @@
                                 throw new Error(
                                     "couldn't load module " + e + " or it didn't call define",
                                 );
-                            r.$id && (n.$themeId = r.$id),
+                            (r.$id && (n.$themeId = r.$id),
                                 i.importCssString(r.cssText, r.cssClass, n.container),
-                                n.theme && i.removeCssClass(n.container, n.theme.cssClass);
+                                n.theme && i.removeCssClass(n.container, n.theme.cssClass));
                             var s =
                                 "padding" in r
                                     ? r.padding
                                     : "padding" in (n.theme || {})
                                       ? 4
                                       : n.$padding;
-                            n.$padding && s != n.$padding && n.setPadding(s),
+                            (n.$padding && s != n.$padding && n.setPadding(s),
                                 (n.$theme = r.cssClass),
                                 (n.theme = r),
                                 i.addCssClass(n.container, r.cssClass),
                                 i.setCssClass(n.container, "ace_dark", r.isDark),
                                 n.$size && ((n.$size.width = 0), n.$updateSizeAsync()),
                                 n._dispatchEvent("themeLoaded", { theme: r }),
-                                t && t();
+                                t && t());
                         }
                         var n = this;
-                        (this.$themeId = e), n._dispatchEvent("themeChange", { theme: e });
+                        ((this.$themeId = e), n._dispatchEvent("themeChange", { theme: e }));
                         if (!e || typeof e == "string") {
                             var r = e || this.$options.theme.initialValue;
                             s.loadModule(["theme", r], o);
@@ -15396,8 +15432,8 @@
                         i.importCssString(v, "ace_editor.css", this.container);
                     }),
                     (this.destroy = function () {
-                        this.$fontMetrics.destroy(), this.$cursorLayer.destroy();
-                    });
+                        (this.$fontMetrics.destroy(), this.$cursorLayer.destroy());
+                    }));
             }).call(y.prototype),
                 s.defineOptions(y.prototype, "renderer", {
                     animatedScroll: { initialValue: !1 },
@@ -15422,9 +15458,9 @@
                     },
                     printMargin: {
                         set: function (e) {
-                            typeof e == "number" && (this.$printMarginColumn = e),
+                            (typeof e == "number" && (this.$printMarginColumn = e),
                                 (this.$showPrintMargin = !!e),
-                                this.$updatePrintMargin();
+                                this.$updatePrintMargin());
                         },
                         get: function () {
                             return this.$showPrintMargin && this.$printMarginColumn;
@@ -15432,9 +15468,9 @@
                     },
                     showGutter: {
                         set: function (e) {
-                            (this.$gutter.style.display = e ? "block" : "none"),
+                            ((this.$gutter.style.display = e ? "block" : "none"),
                                 this.$loop.schedule(this.CHANGE_FULL),
-                                this.onGutterResize();
+                                this.onGutterResize());
                         },
                         initialValue: !0,
                     },
@@ -15446,8 +15482,8 @@
                     },
                     showFoldWidgets: {
                         set: function (e) {
-                            this.$gutterLayer.setShowFoldWidgets(e),
-                                this.$loop.schedule(this.CHANGE_GUTTER);
+                            (this.$gutterLayer.setShowFoldWidgets(e),
+                                this.$loop.schedule(this.CHANGE_GUTTER));
                         },
                         initialValue: !0,
                     },
@@ -15460,8 +15496,8 @@
                     },
                     highlightGutterLine: {
                         set: function (e) {
-                            this.$gutterLayer.setHighlightGutterLine(e),
-                                this.$loop.schedule(this.CHANGE_GUTTER);
+                            (this.$gutterLayer.setHighlightGutterLine(e),
+                                this.$loop.schedule(this.CHANGE_GUTTER));
                         },
                         initialValue: !0,
                     },
@@ -15481,15 +15517,15 @@
                     },
                     fontSize: {
                         set: function (e) {
-                            typeof e == "number" && (e += "px"),
+                            (typeof e == "number" && (e += "px"),
                                 (this.container.style.fontSize = e),
-                                this.updateFontSize();
+                                this.updateFontSize());
                         },
                         initialValue: 12,
                     },
                     fontFamily: {
                         set: function (e) {
-                            (this.container.style.fontFamily = e), this.updateFontSize();
+                            ((this.container.style.fontFamily = e), this.updateFontSize());
                         },
                     },
                     maxLines: {
@@ -15499,8 +15535,8 @@
                     },
                     minLines: {
                         set: function (e) {
-                            this.$minLines < 562949953421311 || (this.$minLines = 0),
-                                this.updateFull();
+                            (this.$minLines < 562949953421311 || (this.$minLines = 0),
+                                this.updateFull());
                         },
                     },
                     maxPixelHeight: {
@@ -15513,15 +15549,15 @@
                         set: function (e) {
                             e = +e || 0;
                             if (this.$scrollPastEnd == e) return;
-                            (this.$scrollPastEnd = e), this.$loop.schedule(this.CHANGE_SCROLL);
+                            ((this.$scrollPastEnd = e), this.$loop.schedule(this.CHANGE_SCROLL));
                         },
                         initialValue: 0,
                         handlesSet: !0,
                     },
                     fixedWidthGutter: {
                         set: function (e) {
-                            (this.$gutterLayer.$fixedWidth = !!e),
-                                this.$loop.schedule(this.CHANGE_GUTTER);
+                            ((this.$gutterLayer.$fixedWidth = !!e),
+                                this.$loop.schedule(this.CHANGE_GUTTER));
                         },
                     },
                     theme: {
@@ -15537,7 +15573,7 @@
                     hasCssTransforms: {},
                     useTextareaForIME: { initialValue: !m.isMobile && !m.isIE },
                 }),
-                (t.VirtualRenderer = y);
+                (t.VirtualRenderer = y));
         },
     ),
     define(
@@ -15560,7 +15596,7 @@
                 } catch (n) {
                     var r = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder,
                         s = new r();
-                    return s.append(t), s.getBlob("application/javascript");
+                    return (s.append(t), s.getBlob("application/javascript"));
                 }
             }
             function a(e) {
@@ -15576,10 +15612,10 @@
                 s = e("../lib/event_emitter").EventEmitter,
                 o = e("../config"),
                 f = function (t, n, r, i, s) {
-                    (this.$sendDeltaQueue = this.$sendDeltaQueue.bind(this)),
+                    ((this.$sendDeltaQueue = this.$sendDeltaQueue.bind(this)),
                         (this.changeListener = this.changeListener.bind(this)),
                         (this.onMessage = this.onMessage.bind(this)),
-                        e.nameToUrl && !e.toUrl && (e.toUrl = e.nameToUrl);
+                        e.nameToUrl && !e.toUrl && (e.toUrl = e.nameToUrl));
                     if (o.get("packaged") || !e.toUrl) i = i || o.moduleUrl(n, "worker");
                     else {
                         var u = this.$normalizePath;
@@ -15589,15 +15625,15 @@
                             f[t] = u(e.toUrl(t, null, "_").replace(/(\.js)?(\?.*)?$/, ""));
                         });
                     }
-                    (this.$worker = a(i)),
+                    ((this.$worker = a(i)),
                         s && this.send("importScripts", s),
                         this.$worker.postMessage({ init: !0, tlns: f, module: n, classname: r }),
                         (this.callbackId = 1),
                         (this.callbacks = {}),
-                        (this.$worker.onmessage = this.onMessage);
+                        (this.$worker.onmessage = this.onMessage));
                 };
             (function () {
-                r.implement(this, s),
+                (r.implement(this, s),
                     (this.onMessage = function (e) {
                         var t = e.data;
                         switch (t.type) {
@@ -15622,12 +15658,12 @@
                         return i.qualifyURL(e);
                     }),
                     (this.terminate = function () {
-                        this._signal("terminate", {}),
+                        (this._signal("terminate", {}),
                             (this.deltaQueue = null),
                             this.$worker.terminate(),
                             (this.$worker = null),
                             this.$doc && this.$doc.off("change", this.changeListener),
-                            (this.$doc = null);
+                            (this.$doc = null));
                     }),
                     (this.send = function (e, t) {
                         this.$worker.postMessage({ command: e, args: t });
@@ -15635,71 +15671,71 @@
                     (this.call = function (e, t, n) {
                         if (n) {
                             var r = this.callbackId++;
-                            (this.callbacks[r] = n), t.push(r);
+                            ((this.callbacks[r] = n), t.push(r));
                         }
                         this.send(e, t);
                     }),
                     (this.emit = function (e, t) {
                         try {
-                            t.data &&
+                            (t.data &&
                                 t.data.err &&
                                 (t.data.err = {
                                     message: t.data.err.message,
                                     stack: t.data.err.stack,
                                     code: t.data.err.code,
                                 }),
-                                this.$worker.postMessage({ event: e, data: { data: t.data } });
+                                this.$worker.postMessage({ event: e, data: { data: t.data } }));
                         } catch (n) {
                             console.error(n.stack);
                         }
                     }),
                     (this.attachToDocument = function (e) {
-                        this.$doc && this.terminate(),
+                        (this.$doc && this.terminate(),
                             (this.$doc = e),
                             this.call("setValue", [e.getValue()]),
-                            e.on("change", this.changeListener);
+                            e.on("change", this.changeListener));
                     }),
                     (this.changeListener = function (e) {
-                        this.deltaQueue ||
+                        (this.deltaQueue ||
                             ((this.deltaQueue = []), setTimeout(this.$sendDeltaQueue, 0)),
                             e.action == "insert"
                                 ? this.deltaQueue.push(e.start, e.lines)
-                                : this.deltaQueue.push(e.start, e.end);
+                                : this.deltaQueue.push(e.start, e.end));
                     }),
                     (this.$sendDeltaQueue = function () {
                         var e = this.deltaQueue;
                         if (!e) return;
-                        (this.deltaQueue = null),
+                        ((this.deltaQueue = null),
                             e.length > 50 && e.length > this.$doc.getLength() >> 1
                                 ? this.call("setValue", [this.$doc.getValue()])
-                                : this.emit("change", { data: e });
-                    });
+                                : this.emit("change", { data: e }));
+                    }));
             }).call(f.prototype);
             var l = function (e, t, n) {
-                (this.$sendDeltaQueue = this.$sendDeltaQueue.bind(this)),
+                ((this.$sendDeltaQueue = this.$sendDeltaQueue.bind(this)),
                     (this.changeListener = this.changeListener.bind(this)),
                     (this.callbackId = 1),
                     (this.callbacks = {}),
-                    (this.messageBuffer = []);
+                    (this.messageBuffer = []));
                 var r = null,
                     i = !1,
                     u = Object.create(s),
                     a = this;
-                (this.$worker = {}),
+                ((this.$worker = {}),
                     (this.$worker.terminate = function () {}),
                     (this.$worker.postMessage = function (e) {
-                        a.messageBuffer.push(e), r && (i ? setTimeout(f) : f());
+                        (a.messageBuffer.push(e), r && (i ? setTimeout(f) : f()));
                     }),
                     (this.setEmitSync = function (e) {
                         i = e;
-                    });
+                    }));
                 var f = function () {
                     var e = a.messageBuffer.shift();
                     e.command
                         ? r[e.command].apply(r, e.args)
                         : e.event && u._signal(e.event, e.data);
                 };
-                (u.postMessage = function (e) {
+                ((u.postMessage = function (e) {
                     a.onMessage({ data: e });
                 }),
                     (u.callback = function (e, t) {
@@ -15711,12 +15747,12 @@
                     o.loadModule(["worker", t], function (e) {
                         r = new e[n](u);
                         while (a.messageBuffer.length) f();
-                    });
+                    }));
             };
-            (l.prototype = f.prototype),
+            ((l.prototype = f.prototype),
                 (t.UIWorkerClient = l),
                 (t.WorkerClient = f),
-                (t.createWorker = a);
+                (t.createWorker = a));
         },
     ),
     define(
@@ -15729,7 +15765,7 @@
                 s = e("./lib/oop"),
                 o = function (e, t, n, r, i, s) {
                     var o = this;
-                    (this.length = t),
+                    ((this.length = t),
                         (this.session = e),
                         (this.doc = e.getDocument()),
                         (this.mainClass = i),
@@ -15742,24 +15778,24 @@
                                 o.onCursorChange();
                             });
                         }),
-                        (this.$pos = n);
+                        (this.$pos = n));
                     var u = e.getUndoManager().$undoStack ||
                         e.getUndoManager().$undostack || { length: -1 };
-                    (this.$undoStackDepth = u.length),
+                    ((this.$undoStackDepth = u.length),
                         this.setup(),
-                        e.selection.on("changeCursor", this.$onCursorChange);
+                        e.selection.on("changeCursor", this.$onCursorChange));
                 };
-            (function () {
-                s.implement(this, i),
+            ((function () {
+                (s.implement(this, i),
                     (this.setup = function () {
                         var e = this,
                             t = this.doc,
                             n = this.session;
-                        (this.selectionBefore = n.selection.toJSON()),
+                        ((this.selectionBefore = n.selection.toJSON()),
                             n.selection.inMultiSelectMode && n.selection.toSingleRange(),
-                            (this.pos = t.createAnchor(this.$pos.row, this.$pos.column));
+                            (this.pos = t.createAnchor(this.$pos.row, this.$pos.column)));
                         var i = this.pos;
-                        (i.$insertRight = !0),
+                        ((i.$insertRight = !0),
                             i.detach(),
                             (i.markerId = n.addMarker(
                                 new r(i.row, i.column, i.row, i.column + this.length),
@@ -15770,15 +15806,15 @@
                             (this.others = []),
                             this.$others.forEach(function (n) {
                                 var r = t.createAnchor(n.row, n.column);
-                                (r.$insertRight = !0), r.detach(), e.others.push(r);
+                                ((r.$insertRight = !0), r.detach(), e.others.push(r));
                             }),
-                            n.setUndoSelect(!1);
+                            n.setUndoSelect(!1));
                     }),
                     (this.showOtherMarkers = function () {
                         if (this.othersActive) return;
                         var e = this.session,
                             t = this;
-                        (this.othersActive = !0),
+                        ((this.othersActive = !0),
                             this.others.forEach(function (n) {
                                 n.markerId = e.addMarker(
                                     new r(n.row, n.column, n.row, n.column + t.length),
@@ -15786,7 +15822,7 @@
                                     null,
                                     !1,
                                 );
-                            });
+                            }));
                     }),
                     (this.hideOtherMarkers = function () {
                         if (!this.othersActive) return;
@@ -15808,7 +15844,7 @@
                                 t.start.column >= this.pos.column &&
                                 t.start.column <= this.pos.column + this.length + 1,
                             s = t.start.column - this.pos.column;
-                        this.updateAnchors(e), i && (this.length += n);
+                        (this.updateAnchors(e), i && (this.length += n));
                         if (i && !this.session.$fromUndo)
                             if (e.action === "insert")
                                 for (var o = this.others.length - 1; o >= 0; o--) {
@@ -15822,7 +15858,7 @@
                                         a = { row: u.row, column: u.column + s };
                                     this.doc.remove(new r(a.row, a.column, a.row, a.column - n));
                                 }
-                        (this.$updating = !1), this.updateMarkers();
+                        ((this.$updating = !1), this.updateMarkers());
                     }),
                     (this.updateAnchors = function (e) {
                         this.pos.onChange(e);
@@ -15834,13 +15870,13 @@
                         var e = this,
                             t = this.session,
                             n = function (n, i) {
-                                t.removeMarker(n.markerId),
+                                (t.removeMarker(n.markerId),
                                     (n.markerId = t.addMarker(
                                         new r(n.row, n.column, n.row, n.column + e.length),
                                         i,
                                         null,
                                         !1,
-                                    ));
+                                    )));
                             };
                         n(this.pos, this.mainClass);
                         for (var i = this.others.length; i--; ) n(this.others[i], this.othersClass);
@@ -15855,7 +15891,7 @@
                             : (this.hideOtherMarkers(), this._emit("cursorLeave", e));
                     }),
                     (this.detach = function () {
-                        this.session.removeMarker(this.pos && this.pos.markerId),
+                        (this.session.removeMarker(this.pos && this.pos.markerId),
                             this.hideOtherMarkers(),
                             this.doc.removeEventListener("change", this.$onUpdate),
                             this.session.selection.removeEventListener(
@@ -15863,7 +15899,7 @@
                                 this.$onCursorChange,
                             ),
                             this.session.setUndoSelect(!0),
-                            (this.session = null);
+                            (this.session = null));
                     }),
                     (this.cancel = function () {
                         if (this.$undoStackDepth === -1) return;
@@ -15872,9 +15908,9 @@
                         for (var n = 0; n < t; n++) e.undo(this.session, !0);
                         this.selectionBefore &&
                             this.session.selection.fromJSON(this.selectionBefore);
-                    });
+                    }));
             }).call(o.prototype),
-                (t.PlaceHolder = o);
+                (t.PlaceHolder = o));
         },
     ),
     define(
@@ -15910,7 +15946,7 @@
                     m = e.x,
                     g = e.y,
                     y = function (e) {
-                        (m = e.clientX), (g = e.clientY);
+                        ((m = e.clientX), (g = e.clientY));
                     },
                     b = l.session,
                     w = l.renderer.pixelToScreenCoordinates(m, g),
@@ -15932,27 +15968,27 @@
                         l.addSelectionMarker(x);
                     }
                     var T = c.rangeList.rangeAtPoint(p);
-                    (l.inVirtualSelectionMode = !0),
+                    ((l.inVirtualSelectionMode = !0),
                         o && ((T = null), (x = c.ranges[0] || x), l.removeSelectionMarker(x)),
                         l.once("mouseup", function () {
                             var e = c.toOrientedRange();
-                            T && e.isEmpty() && s(T.cursor, e.cursor)
+                            (T && e.isEmpty() && s(T.cursor, e.cursor)
                                 ? c.substractPoint(e.cursor)
                                 : (o
                                       ? c.substractPoint(x.cursor)
                                       : x && (l.removeSelectionMarker(x), c.addRange(x)),
                                   c.addRange(e)),
-                                (l.inVirtualSelectionMode = !1);
-                        });
+                                (l.inVirtualSelectionMode = !1));
+                        }));
                 } else if (S == "block") {
-                    e.stop(), (l.inVirtualSelectionMode = !0);
+                    (e.stop(), (l.inVirtualSelectionMode = !0));
                     var N,
                         C = [],
                         k = function () {
                             var e = l.renderer.pixelToScreenCoordinates(m, g),
                                 t = b.screenToDocumentPosition(e.row, e.column, e.offsetX);
                             if (s(E, e) && s(t, c.lead)) return;
-                            (E = e),
+                            ((E = e),
                                 l.selection.moveToPosition(t),
                                 l.renderer.scrollCursorIntoView(),
                                 l.removeSelectionMarkers(C),
@@ -15962,22 +15998,22 @@
                                     C[0].isEmpty() &&
                                     (C[0] = l.$mouseHandler.$clickSelection.clone()),
                                 C.forEach(l.addSelectionMarker, l),
-                                l.updateSelectionMarkers();
+                                l.updateSelectionMarkers());
                         };
-                    h && !a
+                    (h && !a
                         ? c.toSingleRange()
                         : !h && a && ((N = c.toOrientedRange()), l.addSelectionMarker(N)),
                         o ? (w = b.documentToScreenPosition(c.lead)) : c.moveToPosition(p),
-                        (E = { row: -1, column: -1 });
+                        (E = { row: -1, column: -1 }));
                     var L = function (e) {
-                            k(),
+                            (k(),
                                 clearInterval(O),
                                 l.removeSelectionMarkers(C),
                                 C.length || (C = [c.toOrientedRange()]),
-                                N && (l.removeSelectionMarker(N), c.toSingleRange(N));
+                                N && (l.removeSelectionMarker(N), c.toSingleRange(N)));
                             for (var t = 0; t < C.length; t++) c.addRange(C[t]);
-                            (l.inVirtualSelectionMode = !1),
-                                (l.$mouseHandler.$clickSelection = null);
+                            ((l.inVirtualSelectionMode = !1),
+                                (l.$mouseHandler.$clickSelection = null));
                         },
                         A = k;
                     r.capture(l.container, y, L);
@@ -15996,7 +16032,7 @@
         "ace/commands/multi_select_commands",
         ["require", "exports", "module", "ace/keyboard/hash_handler"],
         function (e, t, n) {
-            (t.defaultCommands = [
+            ((t.defaultCommands = [
                 {
                     name: "addCursorAbove",
                     exec: function (e) {
@@ -16108,7 +16144,7 @@
                             return e && e.inMultiSelectMode;
                         },
                     },
-                ]);
+                ]));
             var r = e("../keyboard/hash_handler").HashHandler;
             t.keyboardHandler = new r(t.multiSelectCommands);
         },
@@ -16145,7 +16181,7 @@
             }
             function m(e) {
                 if (e.$multiselectOnSessionChange) return;
-                (e.$onAddRange = e.$onAddRange.bind(e)),
+                ((e.$onAddRange = e.$onAddRange.bind(e)),
                     (e.$onRemoveRange = e.$onRemoveRange.bind(e)),
                     (e.$onMultiSelect = e.$onMultiSelect.bind(e)),
                     (e.$onSingleSelect = e.$onSingleSelect.bind(e)),
@@ -16155,7 +16191,7 @@
                     e.on("changeSession", e.$multiselectOnSessionChange),
                     e.on("mousedown", o),
                     e.commands.addCommands(f.defaultCommands),
-                    g(e);
+                    g(e));
             }
             function g(e) {
                 function r(t) {
@@ -16163,14 +16199,14 @@
                 }
                 var t = e.textInput.getElement(),
                     n = !1;
-                u.addListener(t, "keydown", function (t) {
+                (u.addListener(t, "keydown", function (t) {
                     var i = t.keyCode == 18 && !(t.ctrlKey || t.shiftKey || t.metaKey);
                     e.$blockSelectEnabled && i
                         ? n || (e.renderer.setMouseCursor("crosshair"), (n = !0))
                         : n && r();
                 }),
                     u.addListener(t, "keyup", r),
-                    u.addListener(t, "blur", r);
+                    u.addListener(t, "blur", r));
             }
             var r = e("./range_list").RangeList,
                 i = e("./range").Range,
@@ -16183,26 +16219,27 @@
             var l = e("./search").Search,
                 c = new l(),
                 p = e("./edit_session").EditSession;
-            (function () {
+            ((function () {
                 this.getSelectionMarkers = function () {
                     return this.$selectionMarkers;
                 };
             }).call(p.prototype),
                 function () {
-                    (this.ranges = null),
+                    ((this.ranges = null),
                         (this.rangeList = null),
                         (this.addRange = function (e, t) {
                             if (!e) return;
                             if (!this.inMultiSelectMode && this.rangeCount === 0) {
                                 var n = this.toOrientedRange();
-                                this.rangeList.add(n), this.rangeList.add(e);
+                                (this.rangeList.add(n), this.rangeList.add(e));
                                 if (this.rangeList.ranges.length != 2)
                                     return (
-                                        this.rangeList.removeAll(), t || this.fromOrientedRange(e)
+                                        this.rangeList.removeAll(),
+                                        t || this.fromOrientedRange(e)
                                     );
-                                this.rangeList.removeAll(),
+                                (this.rangeList.removeAll(),
                                     this.rangeList.add(n),
-                                    this.$onAddRange(n);
+                                    this.$onAddRange(n));
                             }
                             e.cursor || (e.cursor = e.end);
                             var r = this.rangeList.add(e);
@@ -16221,32 +16258,32 @@
                         (this.toSingleRange = function (e) {
                             e = e || this.ranges[0];
                             var t = this.rangeList.removeAll();
-                            t.length && this.$onRemoveRange(t), e && this.fromOrientedRange(e);
+                            (t.length && this.$onRemoveRange(t), e && this.fromOrientedRange(e));
                         }),
                         (this.substractPoint = function (e) {
                             var t = this.rangeList.substractPoint(e);
-                            if (t) return this.$onRemoveRange(t), t[0];
+                            if (t) return (this.$onRemoveRange(t), t[0]);
                         }),
                         (this.mergeOverlappingRanges = function () {
                             var e = this.rangeList.merge();
                             e.length && this.$onRemoveRange(e);
                         }),
                         (this.$onAddRange = function (e) {
-                            (this.rangeCount = this.rangeList.ranges.length),
+                            ((this.rangeCount = this.rangeList.ranges.length),
                                 this.ranges.unshift(e),
-                                this._signal("addRange", { range: e });
+                                this._signal("addRange", { range: e }));
                         }),
                         (this.$onRemoveRange = function (e) {
                             this.rangeCount = this.rangeList.ranges.length;
                             if (this.rangeCount == 1 && this.inMultiSelectMode) {
                                 var t = this.rangeList.ranges.pop();
-                                e.push(t), (this.rangeCount = 0);
+                                (e.push(t), (this.rangeCount = 0));
                             }
                             for (var n = e.length; n--; ) {
                                 var r = this.ranges.indexOf(e[n]);
                                 this.ranges.splice(r, 1);
                             }
-                            this._signal("removeRange", { ranges: e }),
+                            (this._signal("removeRange", { ranges: e }),
                                 this.rangeCount === 0 &&
                                     this.inMultiSelectMode &&
                                     ((this.inMultiSelectMode = !1),
@@ -16254,11 +16291,11 @@
                                     (this.session.$undoSelect = !0),
                                     this.rangeList.detach(this.session)),
                                 (t = t || this.ranges[0]),
-                                t && !t.isEqual(this.getRange()) && this.fromOrientedRange(t);
+                                t && !t.isEqual(this.getRange()) && this.fromOrientedRange(t));
                         }),
                         (this.$initRangeList = function () {
                             if (this.rangeList) return;
-                            (this.rangeList = new r()), (this.ranges = []), (this.rangeCount = 0);
+                            ((this.rangeList = new r()), (this.ranges = []), (this.rangeCount = 0));
                         }),
                         (this.getAllRanges = function () {
                             return this.rangeCount
@@ -16270,8 +16307,8 @@
                                 var e = this.rangeList.ranges,
                                     t = e[e.length - 1],
                                     n = i.fromPoints(e[0].start, t.end);
-                                this.toSingleRange(),
-                                    this.setSelectionRange(n, t.cursor == t.start);
+                                (this.toSingleRange(),
+                                    this.setSelectionRange(n, t.cursor == t.start));
                             } else {
                                 var n = this.getRange(),
                                     r = this.isBackwards(),
@@ -16284,18 +16321,18 @@
                                     else
                                         var u = n.start,
                                             a = n.end;
-                                    this.addRange(i.fromPoints(a, a)),
-                                        this.addRange(i.fromPoints(u, u));
+                                    (this.addRange(i.fromPoints(a, a)),
+                                        this.addRange(i.fromPoints(u, u)));
                                     return;
                                 }
                                 var f = [],
                                     l = this.getLineRange(s, !0);
-                                (l.start.column = n.start.column), f.push(l);
+                                ((l.start.column = n.start.column), f.push(l));
                                 for (var c = s + 1; c < o; c++) f.push(this.getLineRange(c, !0));
-                                (l = this.getLineRange(o, !0)),
+                                ((l = this.getLineRange(o, !0)),
                                     (l.end.column = n.end.column),
                                     f.push(l),
-                                    f.forEach(this.addRange, this);
+                                    f.forEach(this.addRange, this));
                             }
                         }),
                         (this.toggleBlockSelection = function () {
@@ -16303,8 +16340,8 @@
                                 var e = this.rangeList.ranges,
                                     t = e[e.length - 1],
                                     n = i.fromPoints(e[0].start, t.end);
-                                this.toSingleRange(),
-                                    this.setSelectionRange(n, t.cursor == t.start);
+                                (this.toSingleRange(),
+                                    this.setSelectionRange(n, t.cursor == t.start));
                             } else {
                                 var r = this.session.documentToScreenPosition(this.cursor),
                                     s = this.session.documentToScreenPosition(this.anchor),
@@ -16332,7 +16369,7 @@
                             else
                                 var c = t.row,
                                     h = e.row;
-                            o < 0 && (o = 0), c < 0 && (c = 0), c == h && (n = !0);
+                            (o < 0 && (o = 0), c < 0 && (c = 0), c == h && (n = !0));
                             var p;
                             for (var d = c; d <= h; d++) {
                                 var m = i.fromPoints(
@@ -16343,7 +16380,7 @@
                                     if (p && v(m.end, p)) break;
                                     p = m.end;
                                 }
-                                (m.cursor = s ? m.start : m.end), r.push(m);
+                                ((m.cursor = s ? m.start : m.end), r.push(m));
                             }
                             l && r.reverse();
                             if (!n) {
@@ -16356,12 +16393,12 @@
                                 for (var b = g; b >= y; b--) r[b].isEmpty() && r.splice(b, 1);
                             }
                             return r;
-                        });
-                }.call(s.prototype);
+                        }));
+                }.call(s.prototype));
             var d = e("./editor").Editor;
-            (function () {
-                (this.updateSelectionMarkers = function () {
-                    this.renderer.updateCursor(), this.renderer.updateBackMarkers();
+            ((function () {
+                ((this.updateSelectionMarkers = function () {
+                    (this.renderer.updateCursor(), this.renderer.updateBackMarkers());
                 }),
                     (this.addSelectionMarker = function (e) {
                         e.cursor || (e.cursor = e.end);
@@ -16378,9 +16415,9 @@
                         if (!e.marker) return;
                         this.session.removeMarker(e.marker);
                         var t = this.session.$selectionMarkers.indexOf(e);
-                        t != -1 && this.session.$selectionMarkers.splice(t, 1),
+                        (t != -1 && this.session.$selectionMarkers.splice(t, 1),
                             (this.session.selectionMarkerCount =
-                                this.session.$selectionMarkers.length);
+                                this.session.$selectionMarkers.length));
                     }),
                     (this.removeSelectionMarkers = function (e) {
                         var t = this.session.$selectionMarkers;
@@ -16394,33 +16431,33 @@
                         this.session.selectionMarkerCount = t.length;
                     }),
                     (this.$onAddRange = function (e) {
-                        this.addSelectionMarker(e.range),
+                        (this.addSelectionMarker(e.range),
                             this.renderer.updateCursor(),
-                            this.renderer.updateBackMarkers();
+                            this.renderer.updateBackMarkers());
                     }),
                     (this.$onRemoveRange = function (e) {
-                        this.removeSelectionMarkers(e.ranges),
+                        (this.removeSelectionMarkers(e.ranges),
                             this.renderer.updateCursor(),
-                            this.renderer.updateBackMarkers();
+                            this.renderer.updateBackMarkers());
                     }),
                     (this.$onMultiSelect = function (e) {
                         if (this.inMultiSelectMode) return;
-                        (this.inMultiSelectMode = !0),
+                        ((this.inMultiSelectMode = !0),
                             this.setStyle("ace_multiselect"),
                             this.keyBinding.addKeyboardHandler(f.keyboardHandler),
                             this.commands.setDefaultHandler("exec", this.$onMultiSelectExec),
                             this.renderer.updateCursor(),
-                            this.renderer.updateBackMarkers();
+                            this.renderer.updateBackMarkers());
                     }),
                     (this.$onSingleSelect = function (e) {
                         if (this.session.multiSelect.inVirtualMode) return;
-                        (this.inMultiSelectMode = !1),
+                        ((this.inMultiSelectMode = !1),
                             this.unsetStyle("ace_multiselect"),
                             this.keyBinding.removeKeyboardHandler(f.keyboardHandler),
                             this.commands.removeDefaultHandler("exec", this.$onMultiSelectExec),
                             this.renderer.updateCursor(),
                             this.renderer.updateBackMarkers(),
-                            this._emit("changeSelection");
+                            this._emit("changeSelection"));
                     }),
                     (this.$onMultiSelectExec = function (e) {
                         var t = e.command,
@@ -16428,8 +16465,8 @@
                         if (!n.multiSelect) return;
                         if (!t.multiSelectAction) {
                             var r = t.exec(n, e.args || {});
-                            n.multiSelect.addRange(n.multiSelect.toOrientedRange()),
-                                n.multiSelect.mergeOverlappingRanges();
+                            (n.multiSelect.addRange(n.multiSelect.toOrientedRange()),
+                                n.multiSelect.mergeOverlappingRanges());
                         } else
                             t.multiSelectAction == "forEach"
                                 ? (r = n.forEachSelection(t, e.args))
@@ -16456,18 +16493,18 @@
                         this.inVirtualSelectionMode = !0;
                         for (var p = f.length; p--; ) {
                             if (i) while (p > 0 && f[p].start.row == f[p - 1].end.row) p--;
-                            h.fromOrientedRange(f[p]),
+                            (h.fromOrientedRange(f[p]),
                                 (h.index = p),
-                                (this.selection = o.selection = h);
+                                (this.selection = o.selection = h));
                             var d = e.exec ? e.exec(this, t || {}) : e(this, t || {});
-                            !l && d !== undefined && (l = d), h.toOrientedRange(f[p]);
+                            (!l && d !== undefined && (l = d), h.toOrientedRange(f[p]));
                         }
-                        h.detach(),
+                        (h.detach(),
                             (this.selection = o.selection = u),
                             (this.inVirtualSelectionMode = !1),
                             (u._eventRegistry = c),
                             u.mergeOverlappingRanges(),
-                            u.ranges[0] && u.fromOrientedRange(u.ranges[0]);
+                            u.ranges[0] && u.fromOrientedRange(u.ranges[0]));
                         var v = this.renderer.$scrollAnimation;
                         return (
                             this.onCursorChange(),
@@ -16488,7 +16525,7 @@
                             for (var r = 0; r < t.length; r++)
                                 n.push(this.session.getTextRange(t[r]));
                             var i = this.session.getDocument().getNewLineCharacter();
-                            (e = n.join(i)), e.length == (n.length - 1) * i.length && (e = "");
+                            ((e = n.join(i)), e.length == (n.length - 1) * i.length && (e = ""));
                         } else
                             this.selection.isEmpty() ||
                                 (e = this.session.getTextRange(this.getSelectionRange()));
@@ -16511,7 +16548,7 @@
                         }
                     }),
                     (this.findAll = function (e, t, n) {
-                        (t = t || {}), (t.needle = e || t.needle);
+                        ((t = t || {}), (t.needle = e || t.needle));
                         if (t.needle == undefined) {
                             var r = this.selection.isEmpty()
                                 ? this.selection.getWordRange()
@@ -16525,7 +16562,8 @@
                         n || s.toSingleRange(i[0]);
                         for (var o = i.length; o--; ) s.addRange(i[o], !0);
                         return (
-                            r && s.rangeList.rangeAtPoint(r.start) && s.addRange(r, !0), i.length
+                            r && s.rangeList.rangeAtPoint(r.start) && s.addRange(r, !0),
+                            i.length
                         );
                     }),
                     (this.selectMoreLines = function (e, t) {
@@ -16548,7 +16586,7 @@
                         f.desiredColumn = s.column;
                         if (!this.selection.inMultiSelectMode) this.selection.addRange(n);
                         else if (t) var l = n.cursor;
-                        this.selection.addRange(f), l && this.selection.substractPoint(l);
+                        (this.selection.addRange(f), l && this.selection.substractPoint(l));
                     }),
                     (this.transposeSelections = function (e) {
                         var t = this.session,
@@ -16558,10 +16596,10 @@
                             var s = r[i];
                             if (s.isEmpty()) {
                                 var o = t.getWordRange(s.start.row, s.start.column);
-                                (s.start.row = o.start.row),
+                                ((s.start.row = o.start.row),
                                     (s.start.column = o.start.column),
                                     (s.end.row = o.end.row),
-                                    (s.end.column = o.end.column);
+                                    (s.end.column = o.end.column));
                             }
                         }
                         n.mergeOverlappingRanges();
@@ -16574,9 +16612,9 @@
                         for (var i = r.length; i--; ) {
                             var s = r[i],
                                 o = s.clone();
-                            t.replace(s, u[i]),
+                            (t.replace(s, u[i]),
                                 (s.start.row = o.start.row),
-                                (s.start.column = o.start.column);
+                                (s.start.column = o.start.column));
                         }
                         n.fromOrientedRange(n.ranges[0]);
                     }),
@@ -16585,19 +16623,19 @@
                             i = r.multiSelect,
                             s = i.toOrientedRange();
                         if (s.isEmpty()) {
-                            (s = r.getWordRange(s.start.row, s.start.column)),
+                            ((s = r.getWordRange(s.start.row, s.start.column)),
                                 (s.cursor = e == -1 ? s.start : s.end),
-                                this.multiSelect.addRange(s);
+                                this.multiSelect.addRange(s));
                             if (n) return;
                         }
                         var o = r.getTextRange(s),
                             u = h(r, o, e);
-                        u &&
+                        (u &&
                             ((u.cursor = e == -1 ? u.start : u.end),
                             this.session.unfold(u),
                             this.multiSelect.addRange(u),
                             this.renderer.scrollCursorIntoView(null, 0.5)),
-                            t && this.multiSelect.substractPoint(s.cursor);
+                            t && this.multiSelect.substractPoint(s.cursor));
                     }),
                     (this.alignCursors = function () {
                         var e = this.session,
@@ -16620,14 +16658,14 @@
                                 while (/[=:]/.test(h) && ++f < c);
                                 do h = this.session.getLine(u);
                                 while (/[=:]/.test(h) && --u > 0);
-                                u < 0 && (u = 0), f >= c && (f = c - 1);
+                                (u < 0 && (u = 0), f >= c && (f = c - 1));
                             }
                             var p = this.session.removeFullLines(u, f);
-                            (p = this.$reAlignText(p, l)),
+                            ((p = this.$reAlignText(p, l)),
                                 this.session.insert({ row: u, column: 0 }, p.join("\n") + "\n"),
                                 l ||
                                     ((o.start.column = 0), (o.end.column = p[p.length - 1].length)),
-                                this.selection.setRange(o);
+                                this.selection.setRange(o));
                         } else {
                             s.forEach(function (e) {
                                 t.substractPoint(e.cursor);
@@ -16645,20 +16683,20 @@
                                         i
                                     );
                                 });
-                            n.forEach(function (t, n) {
+                            (n.forEach(function (t, n) {
                                 var r = t.cursor,
                                     s = d - r.column,
                                     o = m[n] - v;
-                                s > o
+                                (s > o
                                     ? e.insert(r, a.stringRepeat(" ", s - o))
                                     : e.remove(new i(r.row, r.column, r.row, r.column - s + o)),
                                     (t.start.column = t.end.column = d),
                                     (t.start.row = t.end.row = r.row),
-                                    (t.cursor = t.end);
+                                    (t.cursor = t.end));
                             }),
                                 t.fromOrientedRange(n[0]),
                                 this.renderer.updateCursor(),
-                                this.renderer.updateBackMarkers();
+                                this.renderer.updateBackMarkers());
                         }
                     }),
                     (this.$reAlignText = function (e, t) {
@@ -16710,18 +16748,18 @@
                                     : [e];
                             })
                             .map(t ? f : n ? (r ? l : f) : c);
-                    });
+                    }));
             }).call(d.prototype),
                 (t.onSessionChange = function (e) {
                     var t = e.session;
-                    t &&
+                    (t &&
                         !t.multiSelect &&
                         ((t.$selectionMarkers = []),
                         t.selection.$initRangeList(),
                         (t.multiSelect = t.selection)),
-                        (this.multiSelect = t && t.multiSelect);
+                        (this.multiSelect = t && t.multiSelect));
                     var n = e.oldSession;
-                    n &&
+                    (n &&
                         (n.multiSelect.off("addRange", this.$onAddRange),
                         n.multiSelect.off("removeRange", this.$onRemoveRange),
                         n.multiSelect.off("multiSelect", this.$onMultiSelect),
@@ -16739,18 +16777,18 @@
                             this.inMultiSelectMode != t.selection.inMultiSelectMode &&
                             (t.selection.inMultiSelectMode
                                 ? this.$onMultiSelect()
-                                : this.$onSingleSelect());
+                                : this.$onSingleSelect()));
                 }),
                 (t.MultiSelect = m),
                 e("./config").defineOptions(d.prototype, "editor", {
                     enableMultiselect: {
                         set: function (e) {
-                            m(this),
+                            (m(this),
                                 e
                                     ? (this.on("changeSession", this.$multiselectOnSessionChange),
                                       this.on("mousedown", o))
                                     : (this.off("changeSession", this.$multiselectOnSessionChange),
-                                      this.off("mousedown", o));
+                                      this.off("mousedown", o)));
                         },
                         value: !0,
                     },
@@ -16760,7 +16798,7 @@
                         },
                         value: !0,
                     },
-                });
+                }));
         },
     ),
     define(
@@ -16771,7 +16809,7 @@
             var r = e("../../range").Range,
                 i = (t.FoldMode = function () {});
             (function () {
-                (this.foldingStartMarker = null),
+                ((this.foldingStartMarker = null),
                     (this.foldingStopMarker = null),
                     (this.getFoldWidget = function (e, t, n) {
                         var r = e.getLine(n);
@@ -16823,8 +16861,8 @@
                         var o = { row: n, column: i },
                             u = e.$findOpeningBracket(t, o);
                         if (!u) return;
-                        return u.column++, o.column--, r.fromPoints(u, o);
-                    });
+                        return (u.column++, o.column--, r.fromPoints(u, o));
+                    }));
             }).call(i.prototype);
         },
     ),
@@ -16833,11 +16871,11 @@
         ["require", "exports", "module", "ace/lib/dom"],
         function (e, t, n) {
             "use strict";
-            (t.isDark = !1),
+            ((t.isDark = !1),
                 (t.cssClass = "ace-tm"),
                 (t.cssText =
                     '.ace-tm .ace_gutter {background: #f0f0f0;color: #333;}.ace-tm .ace_print-margin {width: 1px;background: #e8e8e8;}.ace-tm .ace_fold {background-color: #6B72E6;}.ace-tm {background-color: #FFFFFF;color: black;}.ace-tm .ace_cursor {color: black;}.ace-tm .ace_invisible {color: rgb(191, 191, 191);}.ace-tm .ace_storage,.ace-tm .ace_keyword {color: blue;}.ace-tm .ace_constant {color: rgb(197, 6, 11);}.ace-tm .ace_constant.ace_buildin {color: rgb(88, 72, 246);}.ace-tm .ace_constant.ace_language {color: rgb(88, 92, 246);}.ace-tm .ace_constant.ace_library {color: rgb(6, 150, 14);}.ace-tm .ace_invalid {background-color: rgba(255, 0, 0, 0.1);color: red;}.ace-tm .ace_support.ace_function {color: rgb(60, 76, 114);}.ace-tm .ace_support.ace_constant {color: rgb(6, 150, 14);}.ace-tm .ace_support.ace_type,.ace-tm .ace_support.ace_class {color: rgb(109, 121, 222);}.ace-tm .ace_keyword.ace_operator {color: rgb(104, 118, 135);}.ace-tm .ace_string {color: rgb(3, 106, 7);}.ace-tm .ace_comment {color: rgb(76, 136, 107);}.ace-tm .ace_comment.ace_doc {color: rgb(0, 102, 255);}.ace-tm .ace_comment.ace_doc.ace_tag {color: rgb(128, 159, 191);}.ace-tm .ace_constant.ace_numeric {color: rgb(0, 0, 205);}.ace-tm .ace_variable {color: rgb(49, 132, 149);}.ace-tm .ace_xml-pe {color: rgb(104, 104, 91);}.ace-tm .ace_entity.ace_name.ace_function {color: #0000A2;}.ace-tm .ace_heading {color: rgb(12, 7, 255);}.ace-tm .ace_list {color:rgb(185, 6, 144);}.ace-tm .ace_meta.ace_tag {color:rgb(0, 22, 142);}.ace-tm .ace_string.ace_regex {color: rgb(255, 0, 0)}.ace-tm .ace_marker-layer .ace_selection {background: rgb(181, 213, 255);}.ace-tm.ace_multiselect .ace_selection.ace_start {box-shadow: 0 0 3px 0px white;}.ace-tm .ace_marker-layer .ace_step {background: rgb(252, 255, 0);}.ace-tm .ace_marker-layer .ace_stack {background: rgb(164, 229, 101);}.ace-tm .ace_marker-layer .ace_bracket {margin: -1px 0 0 -1px;border: 1px solid rgb(192, 192, 192);}.ace-tm .ace_marker-layer .ace_active-line {background: rgba(0, 0, 0, 0.07);}.ace-tm .ace_gutter-active-line {background-color : #dcdcdc;}.ace-tm .ace_marker-layer .ace_selected-word {background: rgb(250, 250, 255);border: 1px solid rgb(200, 200, 250);}.ace-tm .ace_indent-guide {background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAE0lEQVQImWP4////f4bLly//BwAmVgd1/w11/gAAAABJRU5ErkJggg==") right repeat-y;}'),
-                (t.$id = "ace/theme/textmate");
+                (t.$id = "ace/theme/textmate"));
             var r = e("../lib/dom");
             r.importCssString(t.cssText, t.cssClass);
         },
@@ -16848,7 +16886,7 @@
         function (e, t, n) {
             "use strict";
             function o(e) {
-                (this.session = e),
+                ((this.session = e),
                     (this.session.widgetManager = this),
                     (this.session.getRowLength = this.getRowLength),
                     (this.session.$getWidgetScreenLength = this.$getWidgetScreenLength),
@@ -16859,13 +16897,13 @@
                     (this.$onChangeEditor = this.$onChangeEditor.bind(this)),
                     this.session.on("change", this.updateOnChange),
                     this.session.on("changeFold", this.updateOnFold),
-                    this.session.on("changeEditor", this.$onChangeEditor);
+                    this.session.on("changeEditor", this.$onChangeEditor));
             }
             var r = e("./lib/oop"),
                 i = e("./lib/dom"),
                 s = e("./range").Range;
-            (function () {
-                (this.getRowLength = function (e) {
+            ((function () {
+                ((this.getRowLength = function (e) {
                     var t;
                     return (
                         this.lineWidgets
@@ -16891,20 +16929,20 @@
                     (this.attach = function (e) {
                         e && e.widgetManager && e.widgetManager != this && e.widgetManager.detach();
                         if (this.editor == e) return;
-                        this.detach(),
+                        (this.detach(),
                             (this.editor = e),
                             e &&
                                 ((e.widgetManager = this),
                                 e.renderer.on("beforeRender", this.measureWidgets),
-                                e.renderer.on("afterRender", this.renderWidgets));
+                                e.renderer.on("afterRender", this.renderWidgets)));
                     }),
                     (this.detach = function (e) {
                         var t = this.editor;
                         if (!t) return;
-                        (this.editor = null),
+                        ((this.editor = null),
                             (t.widgetManager = null),
                             t.renderer.off("beforeRender", this.measureWidgets),
-                            t.renderer.off("afterRender", this.renderWidgets);
+                            t.renderer.off("afterRender", this.renderWidgets));
                         var n = this.session.lineWidgets;
                         n &&
                             n.forEach(function (e) {
@@ -16937,40 +16975,40 @@
                         if (r !== 0)
                             if (e.action == "remove") {
                                 var i = t.splice(n + 1, r);
-                                i.forEach(function (e) {
+                                (i.forEach(function (e) {
                                     e && this.removeLineWidget(e);
                                 }, this),
-                                    this.$updateRows();
+                                    this.$updateRows());
                             } else {
                                 var s = new Array(r);
-                                s.unshift(n, 0), t.splice.apply(t, s), this.$updateRows();
+                                (s.unshift(n, 0), t.splice.apply(t, s), this.$updateRows());
                             }
                     }),
                     (this.$updateRows = function () {
                         var e = this.session.lineWidgets;
                         if (!e) return;
                         var t = !0;
-                        e.forEach(function (e, n) {
+                        (e.forEach(function (e, n) {
                             if (e) {
-                                (t = !1), (e.row = n);
-                                while (e.$oldWidget) (e.$oldWidget.row = n), (e = e.$oldWidget);
+                                ((t = !1), (e.row = n));
+                                while (e.$oldWidget) ((e.$oldWidget.row = n), (e = e.$oldWidget));
                             }
                         }),
-                            t && (this.session.lineWidgets = null);
+                            t && (this.session.lineWidgets = null));
                     }),
                     (this.addLineWidget = function (e) {
                         this.session.lineWidgets ||
                             (this.session.lineWidgets = new Array(this.session.getLength()));
                         var t = this.session.lineWidgets[e.row];
-                        t &&
+                        (t &&
                             ((e.$oldWidget = t),
                             t.el &&
                                 t.el.parentNode &&
                                 (t.el.parentNode.removeChild(t.el), (t._inDocument = !1))),
                             (this.session.lineWidgets[e.row] = e),
-                            (e.session = this.session);
+                            (e.session = this.session));
                         var n = this.editor.renderer;
-                        e.html &&
+                        (e.html &&
                             !e.el &&
                             ((e.el = i.createElement("div")), (e.el.innerHTML = e.html)),
                             e.el &&
@@ -16982,7 +17020,7 @@
                             e.coverGutter || (e.el.style.zIndex = 3),
                             e.pixelHeight == null && (e.pixelHeight = e.el.offsetHeight),
                             e.rowCount == null &&
-                                (e.rowCount = e.pixelHeight / n.layerConfig.lineHeight);
+                                (e.rowCount = e.pixelHeight / n.layerConfig.lineHeight));
                         var r = this.session.getFoldAt(e.row, 0);
                         e.$fold = r;
                         if (r) {
@@ -17000,9 +17038,9 @@
                         );
                     }),
                     (this.removeLineWidget = function (e) {
-                        (e._inDocument = !1),
+                        ((e._inDocument = !1),
                             (e.session = null),
-                            e.el && e.el.parentNode && e.el.parentNode.removeChild(e.el);
+                            e.el && e.el.parentNode && e.el.parentNode.removeChild(e.el));
                         if (e.editor && e.editor.destroy)
                             try {
                                 e.editor.destroy();
@@ -17010,8 +17048,8 @@
                         if (this.session.lineWidgets) {
                             var n = this.session.lineWidgets[e.row];
                             if (n == e)
-                                (this.session.lineWidgets[e.row] = e.$oldWidget),
-                                    e.$oldWidget && this.onWidgetChanged(e.$oldWidget);
+                                ((this.session.lineWidgets[e.row] = e.$oldWidget),
+                                    e.$oldWidget && this.onWidgetChanged(e.$oldWidget));
                             else
                                 while (n) {
                                     if (n.$oldWidget == e) {
@@ -17021,19 +17059,19 @@
                                     n = n.$oldWidget;
                                 }
                         }
-                        this.session._emit("changeFold", { data: { start: { row: e.row } } }),
-                            this.$updateRows();
+                        (this.session._emit("changeFold", { data: { start: { row: e.row } } }),
+                            this.$updateRows());
                     }),
                     (this.getWidgetsAtRow = function (e) {
                         var t = this.session.lineWidgets,
                             n = t && t[e],
                             r = [];
-                        while (n) r.push(n), (n = n.$oldWidget);
+                        while (n) (r.push(n), (n = n.$oldWidget));
                         return r;
                     }),
                     (this.onWidgetChanged = function (e) {
-                        this.session._changedWidgets.push(e),
-                            this.editor && this.editor.renderer.updateFull();
+                        (this.session._changedWidgets.push(e),
+                            this.editor && this.editor.renderer.updateFull());
                     }),
                     (this.measureWidgets = function (e, t) {
                         var n = this.session._changedWidgets,
@@ -17046,21 +17084,21 @@
                             if (o.session != this.session) continue;
                             if (!o._inDocument) {
                                 if (this.session.lineWidgets[o.row] != o) continue;
-                                (o._inDocument = !0), t.container.appendChild(o.el);
+                                ((o._inDocument = !0), t.container.appendChild(o.el));
                             }
-                            (o.h = o.el.offsetHeight),
+                            ((o.h = o.el.offsetHeight),
                                 o.fixedWidth ||
                                     ((o.w = o.el.offsetWidth),
-                                    (o.screenWidth = Math.ceil(o.w / r.characterWidth)));
+                                    (o.screenWidth = Math.ceil(o.w / r.characterWidth))));
                             var u = o.h / r.lineHeight;
-                            o.coverLine &&
+                            (o.coverLine &&
                                 ((u -= this.session.getRowLineCount(o.row)), u < 0 && (u = 0)),
-                                o.rowCount != u && ((o.rowCount = u), o.row < i && (i = o.row));
+                                o.rowCount != u && ((o.rowCount = u), o.row < i && (i = o.row)));
                         }
-                        i != Infinity &&
+                        (i != Infinity &&
                             (this.session._emit("changeFold", { data: { start: { row: i } } }),
                             (this.session.lineWidgetWidth = null)),
-                            (this.session._changedWidgets = []);
+                            (this.session._changedWidgets = []));
                     }),
                     (this.renderWidgets = function (e, t) {
                         var n = t.layerConfig,
@@ -17069,9 +17107,9 @@
                         var i = Math.min(this.firstRow, n.firstRow),
                             s = Math.max(this.lastRow, n.lastRow, r.length);
                         while (i > 0 && !r[i]) i--;
-                        (this.firstRow = n.firstRow),
+                        ((this.firstRow = n.firstRow),
                             (this.lastRow = n.lastRow),
-                            (t.$cursorLayer.config = n);
+                            (t.$cursorLayer.config = n));
                         for (var o = i; o <= s; o++) {
                             var u = r[o];
                             if (!u || !u.el) continue;
@@ -17081,22 +17119,22 @@
                             }
                             u._inDocument || ((u._inDocument = !0), t.container.appendChild(u.el));
                             var a = t.$cursorLayer.getPixelPosition({ row: o, column: 0 }, !0).top;
-                            u.coverLine ||
+                            (u.coverLine ||
                                 (a += n.lineHeight * this.session.getRowLineCount(u.row)),
-                                (u.el.style.top = a - n.offset + "px");
+                                (u.el.style.top = a - n.offset + "px"));
                             var f = u.coverGutter ? 0 : t.gutterWidth;
-                            u.fixedWidth || (f -= t.scrollLeft),
+                            (u.fixedWidth || (f -= t.scrollLeft),
                                 (u.el.style.left = f + "px"),
                                 u.fullWidth &&
                                     u.screenWidth &&
                                     (u.el.style.minWidth = n.width + 2 * n.padding + "px"),
                                 u.fixedWidth
                                     ? (u.el.style.right = t.scrollBar.getWidth() + "px")
-                                    : (u.el.style.right = "");
+                                    : (u.el.style.right = ""));
                         }
-                    });
+                    }));
             }).call(o.prototype),
-                (t.LineWidgets = o);
+                (t.LineWidgets = o));
         },
     ),
     define(
@@ -17122,10 +17160,10 @@
                 var r = e.getAnnotations().sort(s.comparePoints);
                 if (!r.length) return;
                 var i = o(r, { row: t, column: -1 }, s.comparePoints);
-                i < 0 && (i = -i - 1),
+                (i < 0 && (i = -i - 1),
                     i >= r.length
                         ? (i = n > 0 ? 0 : r.length - 1)
-                        : i === 0 && n < 0 && (i = r.length - 1);
+                        : i === 0 && n < 0 && (i = r.length - 1));
                 var u = r[i];
                 if (!u || !n) return;
                 if (u.row === t) {
@@ -17135,14 +17173,14 @@
                 }
                 var a = [];
                 t = u.row;
-                do a[n < 0 ? "unshift" : "push"](u), (u = r[(i += n)]);
+                do (a[n < 0 ? "unshift" : "push"](u), (u = r[(i += n)]));
                 while (u && u.row == t);
                 return a.length && a;
             }
             var r = e("../line_widgets").LineWidgets,
                 i = e("../lib/dom"),
                 s = e("../range").Range;
-            (t.showErrorMarker = function (e, t) {
+            ((t.showErrorMarker = function (e, t) {
                 var n = e.session;
                 n.widgetManager || ((n.widgetManager = new r(n)), n.widgetManager.attach(e));
                 var s = e.getCursorPosition(),
@@ -17155,14 +17193,14 @@
                     l;
                 if (f) {
                     var c = f[0];
-                    (s.column = (c.pos && typeof c.column != "number" ? c.pos.sc : c.column) || 0),
+                    ((s.column = (c.pos && typeof c.column != "number" ? c.pos.sc : c.column) || 0),
                         (s.row = c.row),
-                        (l = e.renderer.$gutterLayer.$annotations[s.row]);
+                        (l = e.renderer.$gutterLayer.$annotations[s.row]));
                 } else {
                     if (a) return;
                     l = { text: ["Looks good!"], className: "ace_ok" };
                 }
-                e.session.unfold(s.row), e.selection.moveToPosition(s);
+                (e.session.unfold(s.row), e.selection.moveToPosition(s));
                 var h = {
                         row: s.row,
                         fixedWidth: !0,
@@ -17174,23 +17212,23 @@
                     d = h.el.appendChild(i.createElement("div"));
                 d.className = "error_widget_arrow " + l.className;
                 var v = e.renderer.$cursorLayer.getPixelPosition(s).left;
-                (d.style.left = v + e.renderer.gutterWidth - 5 + "px"),
+                ((d.style.left = v + e.renderer.gutterWidth - 5 + "px"),
                     (h.el.className = "error_widget_wrapper"),
                     (p.className = "error_widget " + l.className),
                     (p.innerHTML = l.text.join("<br>")),
-                    p.appendChild(i.createElement("div"));
+                    p.appendChild(i.createElement("div")));
                 var m = function (e, t, n) {
                     if (t === 0 && (n === "esc" || n === "return"))
-                        return h.destroy(), { command: "null" };
+                        return (h.destroy(), { command: "null" });
                 };
-                (h.destroy = function () {
+                ((h.destroy = function () {
                     if (e.$mouseHandler.isMousePressed) return;
-                    e.keyBinding.removeKeyboardHandler(m),
+                    (e.keyBinding.removeKeyboardHandler(m),
                         n.widgetManager.removeLineWidget(h),
                         e.off("changeSelection", h.destroy),
                         e.off("changeSession", h.destroy),
                         e.off("mouseup", h.destroy),
-                        e.off("change", h.destroy);
+                        e.off("change", h.destroy));
                 }),
                     e.keyBinding.addKeyboardHandler(m),
                     e.on("changeSelection", h.destroy),
@@ -17199,12 +17237,12 @@
                     e.on("change", h.destroy),
                     e.session.widgetManager.addLineWidget(h),
                     (h.el.onmousedown = e.focus.bind(e)),
-                    e.renderer.scrollCursorIntoView(null, 0.5, { bottom: h.el.offsetHeight });
+                    e.renderer.scrollCursorIntoView(null, 0.5, { bottom: h.el.offsetHeight }));
             }),
                 i.importCssString(
                     "    .error_widget_wrapper {        background: inherit;        color: inherit;        border:none    }    .error_widget {        border-top: solid 2px;        border-bottom: solid 2px;        margin: 5px 0;        padding: 10px 40px;        white-space: pre-wrap;    }    .error_widget.ace_error, .error_widget_arrow.ace_error{        border-color: #ff5a5a    }    .error_widget.ace_warning, .error_widget_arrow.ace_warning{        border-color: #F1D817    }    .error_widget.ace_info, .error_widget_arrow.ace_info{        border-color: #5a5a5a    }    .error_widget.ace_ok, .error_widget_arrow.ace_ok{        border-color: #5aaa5a    }    .error_widget_arrow {        position: absolute;        border: solid 5px;        border-top-color: transparent!important;        border-right-color: transparent!important;        border-left-color: transparent!important;        top: -5px;    }",
                     "",
-                );
+                ));
         },
     ),
     define(
@@ -17240,7 +17278,7 @@
                 u = e("./edit_session").EditSession,
                 a = e("./undomanager").UndoManager,
                 f = e("./virtual_renderer").VirtualRenderer;
-            e("./worker/worker_client"),
+            (e("./worker/worker_client"),
                 e("./keyboard/hash_handler"),
                 e("./placeholder"),
                 e("./multi_select"),
@@ -17260,9 +17298,9 @@
                     var u = "";
                     if (e && /input|textarea/i.test(e.tagName)) {
                         var a = e;
-                        (u = a.value),
+                        ((u = a.value),
                             (e = r.createElement("pre")),
-                            a.parentNode.replaceChild(e, a);
+                            a.parentNode.replaceChild(e, a));
                     } else e && ((u = e.textContent), (e.innerHTML = ""));
                     var l = t.createEditSession(u),
                         c = new o(new f(e), l, n),
@@ -17271,8 +17309,8 @@
                         a && (h.textarea = a),
                         i.addListener(window, "resize", h.onResize),
                         c.on("destroy", function () {
-                            i.removeListener(window, "resize", h.onResize),
-                                (h.editor.container.env = null);
+                            (i.removeListener(window, "resize", h.onResize),
+                                (h.editor.container.env = null));
                         }),
                         (c.container.env = c.env = h),
                         c
@@ -17280,15 +17318,15 @@
                 }),
                 (t.createEditSession = function (e, t) {
                     var n = new u(e, t);
-                    return n.setUndoManager(new a()), n;
+                    return (n.setUndoManager(new a()), n);
                 }),
                 (t.Range = s),
                 (t.EditSession = u),
                 (t.UndoManager = a),
                 (t.VirtualRenderer = f),
-                (t.version = "1.4.1");
+                (t.version = "1.4.1"));
         },
-    );
+    ));
 (function () {
     window.require(["ace/ace"], function (a) {
         if (a) {

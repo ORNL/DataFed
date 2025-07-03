@@ -8,7 +8,7 @@ define("ace/ext/beautify", ["require", "exports", "module", "ace/token_iterator"
         return e.type.lastIndexOf(t + ".xml") > -1;
     }
     var r = e("../token_iterator").TokenIterator;
-    (t.singletonTags = [
+    ((t.singletonTags = [
         "area",
         "base",
         "br",
@@ -91,12 +91,12 @@ define("ace/ext/beautify", ["require", "exports", "module", "ace/token_iterator"
                     p = p.replace(/ +$/, "");
                 },
                 j = function () {
-                    (p = p.trimRight()), (l = !1);
+                    ((p = p.trimRight()), (l = !1));
                 };
             while (s !== null) {
-                (T = n.getCurrentTokenRow()), (C = n.$rowTokens), (f = n.stepForward());
+                ((T = n.getCurrentTokenRow()), (C = n.$rowTokens), (f = n.stepForward()));
                 if (typeof s != "undefined") {
-                    (d = s.value),
+                    ((d = s.value),
                         (w = 0),
                         (M = v === "style" || e.$modeId === "ace/mode/css"),
                         i(s, "tag-open")
@@ -114,14 +114,14 @@ define("ace/ext/beautify", ["require", "exports", "module", "ace/token_iterator"
                             s.type === "paren.rparen" &&
                             s.value.substr(0, 1) === "}" &&
                             N++,
-                        T !== x && ((N = T), x && (N -= x));
+                        T !== x && ((N = T), x && (N -= x)));
                     if (N) {
                         j();
                         for (; N > 0; N--) p += "\n";
-                        (l = !0),
+                        ((l = !0),
                             !i(s, "comment") &&
                                 !s.type.match(/^(comment|string)$/) &&
-                                (d = d.trimLeft());
+                                (d = d.trimLeft()));
                     }
                     if (d) {
                         s.type === "keyword" &&
@@ -182,10 +182,10 @@ define("ace/ext/beautify", ["require", "exports", "module", "ace/token_iterator"
                                 b++;
                                 for (L = m; L > g; L--) D[L] = b;
                             } else m < g && (b = D[m]);
-                            (g = m), (y = b), w && (b -= w), A && !E && (b++, (A = !1));
+                            ((g = m), (y = b), w && (b -= w), A && !E && (b++, (A = !1)));
                             for (L = 0; L < b; L++) p += o;
                         }
-                        s.type === "keyword" && d.match(/^(case|default)$/) && ((P[m] = d), m++),
+                        (s.type === "keyword" && d.match(/^(case|default)$/) && ((P[m] = d), m++),
                             s.type === "keyword" &&
                                 d.match(/^(break)$/) &&
                                 P[m - 1] &&
@@ -195,36 +195,36 @@ define("ace/ext/beautify", ["require", "exports", "module", "ace/token_iterator"
                                 ((E += (d.match(/\(/g) || []).length), (m += d.length)),
                             s.type === "keyword" && d.match(/^(if|else|elseif|for|while)$/)
                                 ? ((A = !0), (E = 0))
-                                : !E && d.trim() && s.type !== "comment" && (A = !1);
+                                : !E && d.trim() && s.type !== "comment" && (A = !1));
                         if (s.type === "paren.rparen") {
                             E -= (d.match(/\)/g) || []).length;
                             for (L = 0; L < d.length; L++)
-                                m--, d.substr(L, 1) === "}" && P[m] === "case" && m--;
+                                (m--, d.substr(L, 1) === "}" && P[m] === "case" && m--);
                         }
-                        c && !l && (B(), p.substr(-1) !== "\n" && (p += " ")),
+                        (c && !l && (B(), p.substr(-1) !== "\n" && (p += " ")),
                             (p += d),
                             h && (p += " "),
                             (l = !1),
                             (c = !1),
-                            (h = !1);
+                            (h = !1));
                         if (
                             (i(s, "tag-close") && (_ || a.indexOf(v) !== -1)) ||
                             (i(s, "doctype") && d === ">")
                         )
                             _ && f && f.value === "</" ? (N = -1) : (N = 1);
-                        i(s, "tag-open") && d === "</"
+                        (i(s, "tag-open") && d === "</"
                             ? m--
                             : i(s, "tag-open") && d === "<" && u.indexOf(f.value) === -1
                               ? m++
                               : i(s, "tag-name")
                                 ? (v = d)
                                 : i(s, "tag-close") && d === "/>" && u.indexOf(v) === -1 && m--,
-                            (x = T);
+                            (x = T));
                     }
                 }
                 s = f;
             }
-            (p = p.trim()), e.doc.setValue(p);
+            ((p = p.trim()), e.doc.setValue(p));
         }),
         (t.commands = [
             {
@@ -234,7 +234,7 @@ define("ace/ext/beautify", ["require", "exports", "module", "ace/token_iterator"
                 },
                 bindKey: "Ctrl-Shift-B",
             },
-        ]);
+        ]));
 });
 (function () {
     window.require(["ace/ext/beautify"], function (m) {

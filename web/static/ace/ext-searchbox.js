@@ -25,22 +25,24 @@ define("ace/ext/searchbox", [
             ),
         c = function (e, t, n) {
             var i = r.createElement("div");
-            (i.innerHTML = l),
+            ((i.innerHTML = l),
                 (this.element = i.firstChild),
                 (this.setSession = this.setSession.bind(this)),
                 this.$init(),
                 this.setEditor(e),
-                r.importCssString(o, "ace_searchbox", e.container);
+                r.importCssString(o, "ace_searchbox", e.container));
         };
-    (function () {
-        (this.setEditor = function (e) {
-            (e.searchBox = this), e.renderer.scroller.appendChild(this.element), (this.editor = e);
+    ((function () {
+        ((this.setEditor = function (e) {
+            ((e.searchBox = this),
+                e.renderer.scroller.appendChild(this.element),
+                (this.editor = e));
         }),
             (this.setSession = function (e) {
-                (this.searchRange = null), this.$syncOptions(!0);
+                ((this.searchRange = null), this.$syncOptions(!0));
             }),
             (this.$initElements = function (e) {
-                (this.searchBox = e.querySelector(".ace_search_form")),
+                ((this.searchBox = e.querySelector(".ace_search_form")),
                     (this.replaceBox = e.querySelector(".ace_replace_form")),
                     (this.searchOption = e.querySelector("[action=searchInSelection]")),
                     (this.replaceOption = e.querySelector("[action=toggleReplace]")),
@@ -49,25 +51,25 @@ define("ace/ext/searchbox", [
                     (this.wholeWordOption = e.querySelector("[action=toggleWholeWords]")),
                     (this.searchInput = this.searchBox.querySelector(".ace_search_field")),
                     (this.replaceInput = this.replaceBox.querySelector(".ace_search_field")),
-                    (this.searchCounter = e.querySelector(".ace_search_counter"));
+                    (this.searchCounter = e.querySelector(".ace_search_counter")));
             }),
             (this.$init = function () {
                 var e = this.element;
                 this.$initElements(e);
                 var t = this;
-                s.addListener(e, "mousedown", function (e) {
-                    setTimeout(function () {
+                (s.addListener(e, "mousedown", function (e) {
+                    (setTimeout(function () {
                         t.activeInput.focus();
                     }, 0),
-                        s.stopPropagation(e);
+                        s.stopPropagation(e));
                 }),
                     s.addListener(e, "click", function (e) {
                         var n = e.target || e.srcElement,
                             r = n.getAttribute("action");
-                        r && t[r]
+                        (r && t[r]
                             ? t[r]()
                             : t.$searchBarKb.commands[r] && t.$searchBarKb.commands[r].exec(t),
-                            s.stopPropagation(e);
+                            s.stopPropagation(e));
                     }),
                     s.addCommandKeyListener(e, function (e, n, r) {
                         var i = a.keyCodeToString(r),
@@ -81,11 +83,11 @@ define("ace/ext/searchbox", [
                         t.$onChange.schedule(20);
                     }),
                     s.addListener(this.searchInput, "focus", function () {
-                        (t.activeInput = t.searchInput), t.searchInput.value && t.highlight();
+                        ((t.activeInput = t.searchInput), t.searchInput.value && t.highlight());
                     }),
                     s.addListener(this.replaceInput, "focus", function () {
-                        (t.activeInput = t.replaceInput), t.searchInput.value && t.highlight();
-                    });
+                        ((t.activeInput = t.replaceInput), t.searchInput.value && t.highlight());
+                    }));
             }),
             (this.$closeSearchBarKb = new u([
                 {
@@ -100,13 +102,13 @@ define("ace/ext/searchbox", [
             this.$searchBarKb.bindKeys({
                 "Ctrl-f|Command-f": function (e) {
                     var t = (e.isReplace = !e.isReplace);
-                    (e.replaceBox.style.display = t ? "" : "none"),
+                    ((e.replaceBox.style.display = t ? "" : "none"),
                         (e.replaceOption.checked = !1),
                         e.$syncOptions(),
-                        e.searchInput.focus();
+                        e.searchInput.focus());
                 },
                 "Ctrl-H|Command-Option-F": function (e) {
-                    (e.replaceOption.checked = !0), e.$syncOptions(), e.replaceInput.focus();
+                    ((e.replaceOption.checked = !0), e.$syncOptions(), e.replaceInput.focus());
                 },
                 "Ctrl-G|Command-G": function (e) {
                     e.findNext();
@@ -120,13 +122,13 @@ define("ace/ext/searchbox", [
                     });
                 },
                 Return: function (e) {
-                    e.activeInput == e.replaceInput && e.replace(), e.findNext();
+                    (e.activeInput == e.replaceInput && e.replace(), e.findNext());
                 },
                 "Shift-Return": function (e) {
-                    e.activeInput == e.replaceInput && e.replace(), e.findPrev();
+                    (e.activeInput == e.replaceInput && e.replace(), e.findPrev());
                 },
                 "Alt-Return": function (e) {
-                    e.activeInput == e.replaceInput && e.replaceAll(), e.findAll();
+                    (e.activeInput == e.replaceInput && e.replaceAll(), e.findAll());
                 },
                 Tab: function (e) {
                     (e.activeInput == e.replaceInput ? e.searchInput : e.replaceInput).focus();
@@ -137,43 +139,44 @@ define("ace/ext/searchbox", [
                     name: "toggleRegexpMode",
                     bindKey: { win: "Alt-R|Alt-/", mac: "Ctrl-Alt-R|Ctrl-Alt-/" },
                     exec: function (e) {
-                        (e.regExpOption.checked = !e.regExpOption.checked), e.$syncOptions();
+                        ((e.regExpOption.checked = !e.regExpOption.checked), e.$syncOptions());
                     },
                 },
                 {
                     name: "toggleCaseSensitive",
                     bindKey: { win: "Alt-C|Alt-I", mac: "Ctrl-Alt-R|Ctrl-Alt-I" },
                     exec: function (e) {
-                        (e.caseSensitiveOption.checked = !e.caseSensitiveOption.checked),
-                            e.$syncOptions();
+                        ((e.caseSensitiveOption.checked = !e.caseSensitiveOption.checked),
+                            e.$syncOptions());
                     },
                 },
                 {
                     name: "toggleWholeWords",
                     bindKey: { win: "Alt-B|Alt-W", mac: "Ctrl-Alt-B|Ctrl-Alt-W" },
                     exec: function (e) {
-                        (e.wholeWordOption.checked = !e.wholeWordOption.checked), e.$syncOptions();
+                        ((e.wholeWordOption.checked = !e.wholeWordOption.checked),
+                            e.$syncOptions());
                     },
                 },
                 {
                     name: "toggleReplace",
                     exec: function (e) {
-                        (e.replaceOption.checked = !e.replaceOption.checked), e.$syncOptions();
+                        ((e.replaceOption.checked = !e.replaceOption.checked), e.$syncOptions());
                     },
                 },
                 {
                     name: "searchInSelection",
                     exec: function (e) {
-                        (e.searchOption.checked = !e.searchRange),
+                        ((e.searchOption.checked = !e.searchRange),
                             e.setSearchRange(
                                 e.searchOption.checked && e.editor.getSelectionRange(),
                             ),
-                            e.$syncOptions();
+                            e.$syncOptions());
                     },
                 },
             ]),
             (this.setSearchRange = function (e) {
-                (this.searchRange = e),
+                ((this.searchRange = e),
                     e
                         ? (this.searchRangeMarker = this.editor.session.addMarker(
                               e,
@@ -181,10 +184,10 @@ define("ace/ext/searchbox", [
                           ))
                         : this.searchRangeMarker &&
                           (this.editor.session.removeMarker(this.searchRangeMarker),
-                          (this.searchRangeMarker = null));
+                          (this.searchRangeMarker = null)));
             }),
             (this.$syncOptions = function (e) {
-                r.setCssClass(this.replaceOption, "checked", this.searchRange),
+                (r.setCssClass(this.replaceOption, "checked", this.searchRange),
                     r.setCssClass(this.searchOption, "checked", this.searchOption.checked),
                     (this.replaceOption.textContent = this.replaceOption.checked ? "-" : "+"),
                     r.setCssClass(this.regExpOption, "checked", this.regExpOption.checked),
@@ -195,11 +198,11 @@ define("ace/ext/searchbox", [
                         this.caseSensitiveOption.checked,
                     ),
                     (this.replaceBox.style.display = this.replaceOption.checked ? "" : "none"),
-                    this.find(!1, !1, e);
+                    this.find(!1, !1, e));
             }),
             (this.highlight = function (e) {
-                this.editor.session.highlight(e || this.editor.$search.$options.re),
-                    this.editor.renderer.updateBackMarkers();
+                (this.editor.session.highlight(e || this.editor.$search.$options.re),
+                    this.editor.renderer.updateBackMarkers());
             }),
             (this.find = function (e, t, n) {
                 var i = this.editor.find(this.searchInput.value, {
@@ -213,10 +216,10 @@ define("ace/ext/searchbox", [
                         range: this.searchRange,
                     }),
                     s = !i && this.searchInput.value;
-                r.setCssClass(this.searchBox, "ace_nomatch", s),
+                (r.setCssClass(this.searchBox, "ace_nomatch", s),
                     this.editor._emit("findSearchBox", { match: !s }),
                     this.highlight(),
-                    this.updateCounter();
+                    this.updateCounter());
             }),
             (this.updateCounter = function () {
                 var e = this.editor,
@@ -233,7 +236,7 @@ define("ace/ext/searchbox", [
                     var o = (t.lastIndex = 0),
                         u;
                     while ((u = t.exec(i))) {
-                        n++, (o = u.index), o <= s && r++;
+                        (n++, (o = u.index), o <= s && r++);
                         if (n > f) break;
                         if (!u[0]) {
                             t.lastIndex = o += 1;
@@ -256,10 +259,10 @@ define("ace/ext/searchbox", [
                         wholeWord: this.wholeWordOption.checked,
                     }),
                     t = !e && this.searchInput.value;
-                r.setCssClass(this.searchBox, "ace_nomatch", t),
+                (r.setCssClass(this.searchBox, "ace_nomatch", t),
                     this.editor._emit("findSearchBox", { match: !t }),
                     this.highlight(),
-                    this.hide();
+                    this.hide());
             }),
             (this.replace = function () {
                 this.editor.getReadOnly() || this.editor.replace(this.replaceInput.value);
@@ -272,15 +275,15 @@ define("ace/ext/searchbox", [
                 this.editor.getReadOnly() || this.editor.replaceAll(this.replaceInput.value);
             }),
             (this.hide = function () {
-                (this.active = !1),
+                ((this.active = !1),
                     this.setSearchRange(null),
                     this.editor.off("changeSession", this.setSession),
                     (this.element.style.display = "none"),
                     this.editor.keyBinding.removeKeyboardHandler(this.$closeSearchBarKb),
-                    this.editor.focus();
+                    this.editor.focus());
             }),
             (this.show = function (e, t) {
-                (this.active = !0),
+                ((this.active = !0),
                     this.editor.on("changeSession", this.setSession),
                     (this.element.style.display = ""),
                     (this.replaceOption.checked = t),
@@ -288,18 +291,18 @@ define("ace/ext/searchbox", [
                     this.searchInput.focus(),
                     this.searchInput.select(),
                     this.editor.keyBinding.addKeyboardHandler(this.$closeSearchBarKb),
-                    this.$syncOptions(!0);
+                    this.$syncOptions(!0));
             }),
             (this.isFocused = function () {
                 var e = document.activeElement;
                 return e == this.searchInput || e == this.replaceInput;
-            });
+            }));
     }).call(c.prototype),
         (t.SearchBox = c),
         (t.Search = function (e, t) {
             var n = e.searchBox || new c(e);
             n.show(e.session.getTextRange(), t);
-        });
+        }));
 });
 (function () {
     window.require(["ace/ext/searchbox"], function (m) {

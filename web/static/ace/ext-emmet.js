@@ -1,4 +1,4 @@
-define(
+(define(
     "ace/snippets",
     [
         "require",
@@ -25,10 +25,10 @@ define(
             f = e("./tokenizer").Tokenizer,
             l = o.comparePoints,
             c = function () {
-                (this.snippetMap = {}), (this.snippetNameMap = {});
+                ((this.snippetMap = {}), (this.snippetNameMap = {}));
             };
         (function () {
-            r.implement(this, i),
+            (r.implement(this, i),
                 (this.getTokenizer = function () {
                     function e(e, t, n) {
                         return (
@@ -88,7 +88,7 @@ define(
                                     regex: /\$\{[\dA-Z_a-z]+/,
                                     onMatch: function (t, n, r) {
                                         var i = e(t.substr(1), n, r);
-                                        return r.unshift(i[0]), i;
+                                        return (r.unshift(i[0]), i);
                                     },
                                     next: "snippetVar",
                                 },
@@ -120,7 +120,7 @@ define(
                                 {
                                     regex: "`" + t("`") + "*`",
                                     onMatch: function (e, t, n) {
-                                        return (n[0].code = e.splice(1, -1)), "";
+                                        return ((n[0].code = e.splice(1, -1)), "");
                                     },
                                     next: "start",
                                 },
@@ -227,7 +227,7 @@ define(
                             }
                             return e.join("");
                         });
-                    return (this.variables.__ = null), u;
+                    return ((this.variables.__ = null), u);
                 }),
                 (this.resolveVariables = function (e, t) {
                     function o(t) {
@@ -245,13 +245,13 @@ define(
                                 if (i.processed < r) continue;
                                 if (i.text) {
                                     var s = this.getVariableValue(t, i.text);
-                                    s && i.fmtString && (s = this.tmStrFormat(s, i)),
+                                    (s && i.fmtString && (s = this.tmStrFormat(s, i)),
                                         (i.processed = r),
                                         i.expectIf == null
                                             ? s && (n.push(s), o(i))
                                             : s
                                               ? (i.skip = i.elseBranch)
-                                              : o(i);
+                                              : o(i));
                                 } else
                                     i.tabstopId != null
                                         ? n.push(i)
@@ -279,18 +279,18 @@ define(
                         r = e.session.getLine(n.row),
                         i = e.session.getTabString(),
                         s = r.match(/^\s*/)[0];
-                    n.column < s.length && (s = s.slice(0, n.column)), (t = t.replace(/\r/g, ""));
+                    (n.column < s.length && (s = s.slice(0, n.column)), (t = t.replace(/\r/g, "")));
                     var o = this.tokenizeTmSnippet(t);
-                    (o = this.resolveVariables(o, e)),
+                    ((o = this.resolveVariables(o, e)),
                         (o = o.map(function (e) {
                             return e == "\n"
                                 ? e + s
                                 : typeof e == "string"
                                   ? e.replace(/\t/g, i)
                                   : e;
-                        }));
+                        })));
                     var u = [];
-                    o.forEach(function (e, t) {
+                    (o.forEach(function (e, t) {
                         if (typeof e != "object") return;
                         var n = e.tabstopId,
                             r = u[n];
@@ -311,7 +311,7 @@ define(
                     }),
                         u.forEach(function (e) {
                             e.length = 0;
-                        });
+                        }));
                     var a = {};
                     for (var l = 0; l < o.length; l++) {
                         var c = o[l];
@@ -324,11 +324,11 @@ define(
                         }
                         var v = u[p],
                             m = typeof v.value == "string" ? [v.value] : f(v.value);
-                        m.unshift(l + 1, Math.max(0, d - l)),
+                        (m.unshift(l + 1, Math.max(0, d - l)),
                             m.push(c),
                             (a[p] = c),
                             o.splice.apply(o, m),
-                            v.indexOf(c) === -1 && v.push(c);
+                            v.indexOf(c) === -1 && v.push(c));
                     }
                     var g = 0,
                         y = 0,
@@ -336,10 +336,10 @@ define(
                     o.forEach(function (e) {
                         if (typeof e == "string") {
                             var t = e.split("\n");
-                            t.length > 1
+                            (t.length > 1
                                 ? ((y = t[t.length - 1].length), (g += t.length - 1))
                                 : (y += e.length),
-                                (b += e);
+                                (b += e));
                         } else
                             e.start
                                 ? (e.end = { row: g, column: y })
@@ -354,14 +354,14 @@ define(
                 (this.insertSnippet = function (e, t) {
                     var n = this;
                     if (e.inVirtualSelectionMode) return n.insertSnippetForSelection(e, t);
-                    e.forEachSelection(
+                    (e.forEachSelection(
                         function () {
                             n.insertSnippetForSelection(e, t);
                         },
                         null,
                         { keepOrder: !0 },
                     ),
-                        e.tabstopManager && e.tabstopManager.tabNext();
+                        e.tabstopManager && e.tabstopManager.tabNext());
                 }),
                 (this.$getScope = function (e) {
                     var t = e.session.$mode.$id || "";
@@ -370,13 +370,13 @@ define(
                         t === "php" && !e.session.$mode.inlinePhp && (t = "html");
                         var n = e.getCursorPosition(),
                             r = e.session.getState(n.row);
-                        typeof r == "object" && (r = r[0]),
+                        (typeof r == "object" && (r = r[0]),
                             r.substring &&
                                 (r.substring(0, 3) == "js-"
                                     ? (t = "javascript")
                                     : r.substring(0, 4) == "css-"
                                       ? (t = "css")
-                                      : r.substring(0, 4) == "php-" && (t = "php"));
+                                      : r.substring(0, 4) == "php-" && (t = "php")));
                     }
                     return t;
                 }),
@@ -399,7 +399,7 @@ define(
                             null,
                             { keepOrder: !0 },
                         );
-                    return r && e.tabstopManager && e.tabstopManager.tabNext(), r;
+                    return (r && e.tabstopManager && e.tabstopManager.tabNext(), r);
                 }),
                 (this.expandSnippetForSelection = function (e, t) {
                     var n = e.getCursorPosition(),
@@ -411,7 +411,7 @@ define(
                     return (
                         this.getActiveScopes(e).some(function (e) {
                             var t = o[e];
-                            return t && (u = this.findMatchingSnippet(t, i, s)), !!u;
+                            return (t && (u = this.findMatchingSnippet(t, i, s)), !!u);
                         }, this),
                         u
                             ? t && t.dryRun
@@ -449,7 +449,8 @@ define(
                 (this.register = function (e, t) {
                     function o(e) {
                         return (
-                            e && !/^\^?\(.*\)\$?$|^\\b$/.test(e) && (e = "(?:" + e + ")"), e || ""
+                            e && !/^\^?\(.*\)\$?$|^\\b$/.test(e) && (e = "(?:" + e + ")"),
+                            e || ""
                         );
                     }
                     function u(e, t, n) {
@@ -463,31 +464,31 @@ define(
                         );
                     }
                     function a(e) {
-                        e.scope || (e.scope = t || "_"),
+                        (e.scope || (e.scope = t || "_"),
                             (t = e.scope),
-                            n[t] || ((n[t] = []), (r[t] = {}));
+                            n[t] || ((n[t] = []), (r[t] = {})));
                         var o = r[t];
                         if (e.name) {
                             var a = o[e.name];
-                            a && i.unregister(a), (o[e.name] = e);
+                            (a && i.unregister(a), (o[e.name] = e));
                         }
-                        n[t].push(e),
+                        (n[t].push(e),
                             e.tabTrigger &&
                                 !e.trigger &&
                                 (!e.guard && /^\w/.test(e.tabTrigger) && (e.guard = "\\b"),
-                                (e.trigger = s.escapeRegExp(e.tabTrigger)));
+                                (e.trigger = s.escapeRegExp(e.tabTrigger))));
                         if (!e.trigger && !e.guard && !e.endTrigger && !e.endGuard) return;
-                        (e.startRe = u(e.trigger, e.guard, !0)),
+                        ((e.startRe = u(e.trigger, e.guard, !0)),
                             (e.triggerRe = new RegExp(e.trigger)),
                             (e.endRe = u(e.endTrigger, e.endGuard, !0)),
-                            (e.endTriggerRe = new RegExp(e.endTrigger));
+                            (e.endTriggerRe = new RegExp(e.endTrigger)));
                     }
                     var n = this.snippetMap,
                         r = this.snippetNameMap,
                         i = this;
-                    e || (e = []),
+                    (e || (e = []),
                         e && e.content ? a(e) : Array.isArray(e) && e.forEach(a),
-                        this._signal("registerSnippets", { scope: t });
+                        this._signal("registerSnippets", { scope: t }));
                 }),
                 (this.unregister = function (e, t) {
                     function i(e) {
@@ -512,18 +513,18 @@ define(
                     while ((i = r.exec(e))) {
                         if (i[1])
                             try {
-                                (n = JSON.parse(i[1])), t.push(n);
+                                ((n = JSON.parse(i[1])), t.push(n));
                             } catch (s) {}
-                        if (i[4]) (n.content = i[4].replace(/^\t/gm, "")), t.push(n), (n = {});
+                        if (i[4]) ((n.content = i[4].replace(/^\t/gm, "")), t.push(n), (n = {}));
                         else {
                             var o = i[2],
                                 u = i[3];
                             if (o == "regex") {
                                 var a = /\/((?:[^\/\\]|\\.)*)|$/g;
-                                (n.guard = a.exec(u)[1]),
+                                ((n.guard = a.exec(u)[1]),
                                     (n.trigger = a.exec(u)[1]),
                                     (n.endTrigger = a.exec(u)[1]),
-                                    (n.endGuard = a.exec(u)[1]);
+                                    (n.endGuard = a.exec(u)[1]));
                             } else
                                 o == "snippet"
                                     ? ((n.tabTrigger = u.match(/^\S*/)[0]), n.name || (n.name = u))
@@ -538,26 +539,26 @@ define(
                     return (
                         this.getActiveScopes(t).some(function (t) {
                             var i = n[t];
-                            return i && (r = i[e]), !!r;
+                            return (i && (r = i[e]), !!r);
                         }, this),
                         r
                     );
-                });
+                }));
         }).call(c.prototype);
         var h = function (e) {
             if (e.tabstopManager) return e.tabstopManager;
-            (e.tabstopManager = this),
+            ((e.tabstopManager = this),
                 (this.$onChange = this.onChange.bind(this)),
                 (this.$onChangeSelection = s.delayedCall(
                     this.onChangeSelection.bind(this),
                 ).schedule),
                 (this.$onChangeSession = this.onChangeSession.bind(this)),
                 (this.$onAfterExec = this.onAfterExec.bind(this)),
-                this.attach(e);
+                this.attach(e));
         };
         (function () {
-            (this.attach = function (e) {
-                (this.index = 0),
+            ((this.attach = function (e) {
+                ((this.index = 0),
                     (this.ranges = []),
                     (this.tabstops = []),
                     (this.$openTabstops = null),
@@ -567,10 +568,10 @@ define(
                     this.editor.on("changeSelection", this.$onChangeSelection),
                     this.editor.on("changeSession", this.$onChangeSession),
                     this.editor.commands.on("afterExec", this.$onAfterExec),
-                    this.editor.keyBinding.addKeyboardHandler(this.keyboardHandler);
+                    this.editor.keyBinding.addKeyboardHandler(this.keyboardHandler));
             }),
                 (this.detach = function () {
-                    this.tabstops.forEach(this.removeTabstopMarkers, this),
+                    (this.tabstops.forEach(this.removeTabstopMarkers, this),
                         (this.ranges = null),
                         (this.tabstops = null),
                         (this.selectedTabstop = null),
@@ -580,7 +581,7 @@ define(
                         this.editor.commands.removeListener("afterExec", this.$onAfterExec),
                         this.editor.keyBinding.removeKeyboardHandler(this.keyboardHandler),
                         (this.editor.tabstopManager = null),
-                        (this.editor = null);
+                        (this.editor = null));
                 }),
                 (this.onChange = function (e) {
                     var t = e,
@@ -606,14 +607,14 @@ define(
                         var d = h[p];
                         if (d.end.row < r.row) continue;
                         if (n && l(r, d.start) < 0 && l(i, d.end) > 0) {
-                            this.removeRange(d), p--;
+                            (this.removeRange(d), p--);
                             continue;
                         }
-                        d.start.row == s && d.start.column > r.column && (d.start.column += a),
+                        (d.start.row == s && d.start.column > r.column && (d.start.column += a),
                             d.end.row == s && d.end.column >= r.column && (d.end.column += a),
                             d.start.row >= s && (d.start.row += u),
                             d.end.row >= s && (d.end.row += u),
-                            l(d.start, d.end) > 0 && this.removeRange(d);
+                            l(d.start, d.end) > 0 && this.removeRange(d));
                     }
                     h.length || this.detach();
                 }),
@@ -653,17 +654,17 @@ define(
                 (this.tabNext = function (e) {
                     var t = this.tabstops.length,
                         n = this.index + (e || 1);
-                    (n = Math.min(Math.max(n, 1), t)),
+                    ((n = Math.min(Math.max(n, 1), t)),
                         n == t && (n = 0),
                         this.selectTabstop(n),
-                        n === 0 && this.detach();
+                        n === 0 && this.detach());
                 }),
                 (this.selectTabstop = function (e) {
                     this.$openTabstops = null;
                     var t = this.tabstops[this.index];
-                    t && this.addTabstopMarkers(t),
+                    (t && this.addTabstopMarkers(t),
                         (this.index = e),
-                        (t = this.tabstops[this.index]);
+                        (t = this.tabstops[this.index]));
                     if (!t || !t.length) return;
                     this.selectedTabstop = t;
                     if (!this.editor.inVirtualSelectionMode) {
@@ -681,17 +682,17 @@ define(
                     this.$openTabstops || (this.$openTabstops = []);
                     if (!e[0]) {
                         var r = o.fromPoints(n, n);
-                        v(r.start, t), v(r.end, t), (e[0] = [r]), (e[0].index = 0);
+                        (v(r.start, t), v(r.end, t), (e[0] = [r]), (e[0].index = 0));
                     }
                     var i = this.index,
                         s = [i + 1, 0],
                         u = this.ranges;
-                    e.forEach(function (e, n) {
+                    (e.forEach(function (e, n) {
                         var r = this.$openTabstops[n] || e;
                         for (var i = e.length; i--; ) {
                             var a = e[i],
                                 f = o.fromPoints(a.start, a.end || a.start);
-                            d(f.start, t),
+                            (d(f.start, t),
                                 d(f.end, t),
                                 (f.original = a),
                                 (f.tabstop = r),
@@ -699,15 +700,15 @@ define(
                                 r != e ? r.unshift(f) : (r[i] = f),
                                 a.fmtString
                                     ? ((f.linked = !0), (r.hasLinkedRanges = !0))
-                                    : r.firstNonLinked || (r.firstNonLinked = f);
+                                    : r.firstNonLinked || (r.firstNonLinked = f));
                         }
-                        r.firstNonLinked || (r.hasLinkedRanges = !1),
+                        (r.firstNonLinked || (r.hasLinkedRanges = !1),
                             r === e && (s.push(r), (this.$openTabstops[n] = r)),
-                            this.addTabstopMarkers(r);
+                            this.addTabstopMarkers(r));
                     }, this),
                         s.length > 2 &&
                             (this.tabstops.length && s.push(s.splice(2, 1)[0]),
-                            this.tabstops.splice.apply(this.tabstops, s));
+                            this.tabstops.splice.apply(this.tabstops, s)));
                 }),
                 (this.addTabstopMarkers = function (e) {
                     var t = this.editor.session;
@@ -718,19 +719,19 @@ define(
                 (this.removeTabstopMarkers = function (e) {
                     var t = this.editor.session;
                     e.forEach(function (e) {
-                        t.removeMarker(e.markerId), (e.markerId = null);
+                        (t.removeMarker(e.markerId), (e.markerId = null));
                     });
                 }),
                 (this.removeRange = function (e) {
                     var t = e.tabstop.indexOf(e);
-                    e.tabstop.splice(t, 1),
+                    (e.tabstop.splice(t, 1),
                         (t = this.ranges.indexOf(e)),
                         this.ranges.splice(t, 1),
                         this.editor.session.removeMarker(e.markerId),
                         e.tabstop.length ||
                             ((t = this.tabstops.indexOf(e.tabstop)),
                             t != -1 && this.tabstops.splice(t, 1),
-                            this.tabstops.length || this.detach());
+                            this.tabstops.length || this.detach()));
                 }),
                 (this.keyboardHandler = new a()),
                 this.keyboardHandler.bindKeys({
@@ -747,34 +748,34 @@ define(
                     Return: function (e) {
                         return !1;
                     },
-                });
+                }));
         }).call(h.prototype);
         var p = {};
-        (p.onChange = u.prototype.onChange),
+        ((p.onChange = u.prototype.onChange),
             (p.setPosition = function (e, t) {
-                (this.pos.row = e), (this.pos.column = t);
+                ((this.pos.row = e), (this.pos.column = t));
             }),
             (p.update = function (e, t, n) {
-                (this.$insertRight = n), (this.pos = e), this.onChange(t);
-            });
+                ((this.$insertRight = n), (this.pos = e), this.onChange(t));
+            }));
         var d = function (e, t) {
-                e.row == 0 && (e.column += t.column), (e.row += t.row);
+                (e.row == 0 && (e.column += t.column), (e.row += t.row));
             },
             v = function (e, t) {
-                e.row == t.row && (e.column -= t.column), (e.row -= t.row);
+                (e.row == t.row && (e.column -= t.column), (e.row -= t.row));
             };
-        e("./lib/dom").importCssString(
+        (e("./lib/dom").importCssString(
             ".ace_snippet-marker {    -moz-box-sizing: border-box;    box-sizing: border-box;    background: rgba(194, 193, 208, 0.09);    border: 1px dotted rgba(211, 208, 235, 0.62);    position: absolute;}",
         ),
-            (t.snippetManager = new c());
+            (t.snippetManager = new c()));
         var m = e("./editor").Editor;
         (function () {
-            (this.insertSnippet = function (e, n) {
+            ((this.insertSnippet = function (e, n) {
                 return t.snippetManager.insertSnippet(this, e, n);
             }),
                 (this.expandSnippet = function (e) {
                     return t.snippetManager.expandWithTab(this, e);
-                });
+                }));
         }).call(m.prototype);
     },
 ),
@@ -808,13 +809,13 @@ define(
                 a;
             f.prototype = {
                 setupContext: function (e) {
-                    (this.ace = e),
+                    ((this.ace = e),
                         (this.indentation = e.session.getTabString()),
-                        u || (u = window.emmet);
+                        u || (u = window.emmet));
                     var t = u.resources || u.require("resources");
-                    t.setVariable("indentation", this.indentation),
+                    (t.setVariable("indentation", this.indentation),
                         (this.$syntax = null),
-                        (this.$syntax = this.getSyntax());
+                        (this.$syntax = this.getSyntax()));
                 },
                 getSelectionRange: function () {
                     var e = this.ace.getSelectionRange(),
@@ -848,15 +849,15 @@ define(
                     return this.ace.session.getLine(e);
                 },
                 replaceContent: function (e, t, n, r) {
-                    n == null && (n = t == null ? this.getContent().length : t),
-                        t == null && (t = 0);
+                    (n == null && (n = t == null ? this.getContent().length : t),
+                        t == null && (t = 0));
                     var i = this.ace,
                         u = i.session.doc,
                         a = o.fromPoints(u.indexToPosition(t), u.indexToPosition(n));
-                    i.session.remove(a),
+                    (i.session.remove(a),
                         (a.end = a.start),
                         (e = this.$updateTabstops(e)),
-                        s.insertSnippet(i, e);
+                        s.insertSnippet(i, e));
                 },
                 getContent: function () {
                     return this.ace.getValue();
@@ -867,10 +868,10 @@ define(
                     if (e == "html" || e == "php") {
                         var t = this.ace.getCursorPosition(),
                             n = this.ace.session.getState(t.row);
-                        typeof n != "string" && (n = n[0]),
+                        (typeof n != "string" && (n = n[0]),
                             n &&
                                 ((n = n.split("-")),
-                                n.length > 1 ? (e = n[0]) : e == "php" && (e = "html"));
+                                n.length > 1 ? (e = n[0]) : e == "php" && (e = "html")));
                     }
                     return e;
                 },
@@ -924,7 +925,7 @@ define(
                                 var u = e.placeholder;
                                 u && (u = i.processText(u, a));
                                 var f = "${" + s + (u ? ":" + u : "") + "}";
-                                return o && (r = [e.start, f]), f;
+                                return (o && (r = [e.start, f]), f);
                             },
                             escape: function (e) {
                                 return e == "$" ? "\\$" : e == "\\" ? "\\\\" : e;
@@ -964,7 +965,7 @@ define(
                     wrap_with_abbreviation: { mac: "shift+ctrl+a", win: "shift+ctrl+a" },
                 },
                 c = new f();
-            (t.commands = new r()),
+            ((t.commands = new r()),
                 (t.runEmmetCommand = function d(e) {
                     try {
                         c.setupContext(e);
@@ -981,13 +982,13 @@ define(
                             }, 0);
                         var s = n.run(this.action, c);
                     } catch (o) {
-                        if (!u) return t.load(d.bind(this, e)), !0;
-                        e._signal("changeStatus", typeof o == "string" ? o : o.message),
+                        if (!u) return (t.load(d.bind(this, e)), !0);
+                        (e._signal("changeStatus", typeof o == "string" ? o : o.message),
                             console.log(o),
-                            (s = !1);
+                            (s = !1));
                     }
                     return s;
-                });
+                }));
             for (var h in l)
                 t.commands.addCommand({
                     name: "emmet:" + h,
@@ -996,7 +997,7 @@ define(
                     exec: t.runEmmetCommand,
                     multiSelectAction: "forEach",
                 });
-            (t.updateCommands = function (e, n) {
+            ((t.updateCommands = function (e, n) {
                 n
                     ? e.keyBinding.addKeyboardHandler(t.commands)
                     : e.keyBinding.removeKeyboardHandler(t.commands);
@@ -1013,37 +1014,37 @@ define(
                         i = t.isSupportedMode(r);
                     if (i && r.$modes)
                         try {
-                            c.setupContext(e), /js|php/.test(c.getSyntax()) && (i = !1);
+                            (c.setupContext(e), /js|php/.test(c.getSyntax()) && (i = !1));
                         } catch (s) {}
                     return i;
-                });
+                }));
             var p = function (e, n) {
                 var r = n;
                 if (!r) return;
                 var i = t.isSupportedMode(r.session.$mode);
-                e.enableEmmet === !1 && (i = !1), i && t.load(), t.updateCommands(r, i);
+                (e.enableEmmet === !1 && (i = !1), i && t.load(), t.updateCommands(r, i));
             };
-            (t.load = function (t) {
+            ((t.load = function (t) {
                 typeof a == "string" &&
                     e("ace/config").loadModule(a, function () {
-                        (a = null), t && t();
+                        ((a = null), t && t());
                     });
             }),
                 (t.AceEmmetEditor = f),
                 e("ace/config").defineOptions(i.prototype, "editor", {
                     enableEmmet: {
                         set: function (e) {
-                            this[e ? "on" : "removeListener"]("changeMode", p),
-                                p({ enableEmmet: !!e }, this);
+                            (this[e ? "on" : "removeListener"]("changeMode", p),
+                                p({ enableEmmet: !!e }, this));
                         },
                         value: !0,
                     },
                 }),
                 (t.setCore = function (e) {
                     typeof e == "string" ? (a = e) : (u = e);
-                });
+                }));
         },
-    );
+    ));
 (function () {
     window.require(["ace/ext/emmet"], function (m) {
         if (typeof module == "object" && typeof exports == "object" && module) {
