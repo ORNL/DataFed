@@ -18,6 +18,7 @@
 // Standard includes
 #include "common/TraceException.hpp"
 #include "unistd.h"
+#include <fstream>
 #include <memory>
 #include <sstream>
 
