@@ -31,5 +31,5 @@ fi
 
 # Needs to append to the ./build-args.sh file not overwrite.
 cat << EOF >> "$BUILD_ARG_FILE"
-BASE_IMAGE=ubuntu:focal
+BASE_IMAGE=debian:bookworm-slim
 EOF
