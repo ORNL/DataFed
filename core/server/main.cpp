@@ -136,7 +136,7 @@ int main(int a_argc, char **a_argv) {
 
       if (gen_keys) {
         string pub_key, priv_key;
-        unsigned char token_key[KEY_LENGTH];
+        unsigned char token_key[CipherEngine::KEY_LENGTH];
         generateKeys(pub_key, priv_key);
         CipherEngine::generateEncryptionKey(token_key);
 
