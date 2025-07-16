@@ -238,12 +238,12 @@ return obj.getString(token);
 bool
 TaskWorker::tokenNeedsUpdate(const Value::Object &obj)
 {
-    if(!obj.has("acc_tok_iv"))
+    if(!obj.has("acc_tok_iv") || !obj.has("acc_tok_len") || !obj.has("ref_tok_iv") || !obj.has("ref_tok_len"))
     {
         return true;
     }
 
-    return obj.getString("acc_tok_iv").empty();
+    return false;
 }
 
 std::string 
@@ -300,7 +300,7 @@ TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
 
   //if the token expired or needs to be updated
   if ((expires_in < 3600) or needs_update) {
-
+    std::cout << "NEEDS UPDATE" << std::endl;
     me.m_db.setClient(uid);
 
     if (token_type ==

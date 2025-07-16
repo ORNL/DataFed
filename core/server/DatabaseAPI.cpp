@@ -335,7 +335,7 @@ void DatabaseAPI::userGetAccessToken(
     std::string &a_acc_tok, std::string &a_ref_tok, uint32_t &a_expires_in,
     const std::string collection_id, const std::string collection_type,
     bool &needs_consent, int &token_type, // TODO: use underlying type?
-    std::string &scopes, LogContext log_context) {
+    std::string &scopes, bool &needs_encrypted, LogContext log_context) {
 
   DL_DEBUG(log_context, "User Get Access Token");
 
@@ -364,9 +364,24 @@ void DatabaseAPI::userGetAccessToken(
   const Value::Object &obj = result.asObject();
 
   std::string access = obj.getString("access");
-  encoded_access_obj.encrypted_msg_len = obj.getNumber("access_len");
-
   std::string refresh = obj.getString("refresh");
+  
+  a_expires_in = (uint32_t)obj.getNumber("expires_in");
+  needs_consent = obj.getBool("needs_consent");
+  token_type = (int)obj.getNumber("token_type");
+  // NOTE: scopes will be a blank string for token_type=GLOBUS_DEFAULT
+  scopes = obj.getString("scopes");
+ 
+  //ADD A NEEDS ENCRYPTED HERE (make into a function after getting working)
+  if(!obj.has("access_len") or !obj.has("refresh_len") or !obj.has("access_iv") or !obj.has("refresh_iv"))
+  {
+
+    std::cout << "REFRESH TOK" << std::endl;
+    needs_encrypted = true;
+    return;
+  }
+
+  encoded_access_obj.encrypted_msg_len = obj.getNumber("access_len");
   encoded_refresh_obj.encrypted_msg_len = obj.getNumber("refresh_len");
 
   // Allocate and copy to char*
@@ -394,11 +409,6 @@ void DatabaseAPI::userGetAccessToken(
   //Decryption for acc token and ref token
   a_acc_tok = cipher.decrypt(encoded_access_obj, log_context);
   a_ref_tok = cipher.decrypt(encoded_refresh_obj, log_context);
-  a_expires_in = (uint32_t)obj.getNumber("expires_in");
-  needs_consent = obj.getBool("needs_consent");
-  token_type = (int)obj.getNumber("token_type");
-  // NOTE: scopes will be a blank string for token_type=GLOBUS_DEFAULT
-  scopes = obj.getString("scopes");
 
   TRANSLATE_END(result, log_context)
 }
@@ -413,6 +423,7 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
 
   unsigned char token_key[CipherEngine::KEY_LENGTH];
 
+  std::cout << "SETTING ACCESS TOKEN" << std::endl;
   DL_DEBUG(log_context, "Setting Access Token");
   //grab the token_key
   readFile(cipher_key_file_path + "datafed-token-key.txt", CipherEngine::KEY_LENGTH, token_key);

@@ -68,7 +68,9 @@ public:
                           const std::string collection_type,
                           bool &needs_consent,
                           int &token_type, // TODO: use underlying type?
-                          std::string &scopes, LogContext log_context);
+                          std::string &scopes,
+                          bool &needs_encrypted,
+                          LogContext log_context);
   void getExpiringAccessTokens(uint32_t a_expires_in,
                                std::vector<UserTokenInfo> &a_expiring_tokens,
                                LogContext log_context);
