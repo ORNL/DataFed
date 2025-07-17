@@ -375,8 +375,6 @@ void DatabaseAPI::userGetAccessToken(
   //ADD A NEEDS ENCRYPTED HERE (make into a function after getting working)
   if(!obj.has("access_len") or !obj.has("refresh_len") or !obj.has("access_iv") or !obj.has("refresh_iv"))
   {
-
-    std::cout << "REFRESH TOK" << std::endl;
     needs_encrypted = true;
     return;
   }
@@ -423,7 +421,6 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
 
   unsigned char token_key[CipherEngine::KEY_LENGTH];
 
-  std::cout << "SETTING ACCESS TOKEN" << std::endl;
   DL_DEBUG(log_context, "Setting Access Token");
   //grab the token_key
   readFile(cipher_key_file_path + "datafed-token-key.txt", CipherEngine::KEY_LENGTH, token_key);

@@ -300,7 +300,6 @@ TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
 
   //if the token expired or needs to be updated
   if ((expires_in < 3600) or needs_update) {
-    std::cout << "NEEDS UPDATE" << std::endl;
     me.m_db.setClient(uid);
 
     if (token_type ==
