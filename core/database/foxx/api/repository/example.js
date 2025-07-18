@@ -9,7 +9,12 @@ const { RepositoryType, Result } = require("./types");
 const { createRepositoryByType } = require("./factory");
 const { RepositoryOps } = require("./operations");
 
-// Example 1: Creating repositories using factory pattern
+/**
+ * Example 1: Creating repositories using factory pattern
+ * Factory pattern is common in Rust for complex object construction
+ * @returns {Promise<{globus: *, metadata: *}>}
+ * @see: https://doc.rust-lang.org/book/ch17-03-oo-design-patterns.html
+ */
 async function createRepositoryExample() {
     // Create a Globus repository
     const globusConfig = {
@@ -51,7 +56,12 @@ async function createRepositoryExample() {
     return { globus: globusResult.value, metadata: metadataResult.value };
 }
 
-// Example 2: Using trait-like operations
+/**
+ * Example 2: Using trait-like operations
+ * Using traits allows polymorphic behavior without knowing concrete types
+ * @returns {Promise<*>}
+ * @see: https://doc.rust-lang.org/book/ch10-02-traits.html#traits-as-parameters
+ */
 async function useRepositoryOperations() {
     // Find a repository
     const findResult = RepositoryOps.find("repo/science_data_repo");
@@ -96,7 +106,13 @@ async function useRepositoryOperations() {
     return allocation;
 }
 
-// Example 3: Pattern matching on repository types
+/**
+ * Example 3: Pattern matching on repository types
+ * Pattern matching is fundamental in Rust for handling enum variants
+ * @param repository
+ * @returns {{ok: boolean, error: *}|{ok: boolean, value: *}}
+ * @see: https://doc.rust-lang.org/book/ch06-02-match.html
+ */
 function handleRepositoryByType(repository) {
     // Similar to Rust match expression
     switch (repository.type) {
@@ -133,12 +149,17 @@ function handleMetadataRepository(repoData) {
     });
 }
 
-// Example 4: Error handling with Result pattern
+/**
+ * Example 4: Error handling with Result pattern
+ * Early returns emulate Rust's ? operator for error propagation
+ * @returns {Promise<{ok: boolean, value: *}|{ok: boolean, error: *}|*>}
+ * @see: https://doc.rust-lang.org/book/ch09-02-recoverable-errors-with-result.html#a-shortcut-for-propagating-errors-the--operator
+ */
 async function robustRepositoryOperation() {
     // Chain operations with early return on error
     const findResult = RepositoryOps.find("repo/test_repo");
     if (!findResult.ok) {
-        return findResult; // Propagate error
+        return findResult; // Propagate error - like ? in Rust
     }
 
     const repository = findResult.value;
@@ -160,7 +181,12 @@ async function robustRepositoryOperation() {
     });
 }
 
-// Example 5: Composition over inheritance
+/**
+ * Example 5: Composition over inheritance
+ * Rust doesn't have inheritance - prefer composition of behaviors
+ * @type {{logAccess: RepositoryBehaviors.logAccess, checkQuota: ((function(*, *): ({ok: boolean, error: *}|*))|*), allocateWithQuotaCheck: ((function(*, *): Promise<{ok: boolean, error: *}|*|{ok: boolean, value: *}>)|*)}}
+ * @see: https://doc.rust-lang.org/book/ch17-03-oo-design-patterns.html
+ */
 const RepositoryBehaviors = {
     // Shared behaviors as standalone functions
     logAccess: (repository, userId) => {
@@ -193,7 +219,6 @@ const RepositoryBehaviors = {
     },
 };
 
-// Export examples for testing
 module.exports = {
     createRepositoryExample,
     useRepositoryOperations,
