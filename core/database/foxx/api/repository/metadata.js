@@ -6,9 +6,15 @@ const g_lib = require("../support");
 const g_db = require("@arangodb").db;
 
 /**
- * Metadata-only repository implementation
- * Implements repository operations for repositories that only store metadata
- * without actual data storage backend
+ * @module metadata
+ * @description Metadata-only repository implementation
+ * Implements repository operations for repositories that only store metadata without actual data storage backend
+ */
+
+/**
+ * This module provides a different trait implementation for metadata repositories
+ * demonstrating how the same trait can have different implementations per type
+ * @see: https://doc.rust-lang.org/book/ch10-02-traits.html#implementing-a-trait-on-a-type
  */
 
 // Validate metadata repository (already validated in factory)
@@ -35,7 +41,7 @@ const createAllocation = (repoData, params) => {
             path: params.path || `/${params.subject}`,
             metadata: params.metadata || {},
             created: new Date().toISOString(),
-            type: "metadata_only"
+            type: "metadata_only",
         };
 
         // Save to allocations collection (would need to be created)
@@ -46,24 +52,24 @@ const createAllocation = (repoData, params) => {
             subject: allocation.subject,
             size: allocation.size,
             path: allocation.path,
-            status: "completed"
+            status: "completed",
         };
 
         return Result.ok(createAllocationResult(ExecutionMethod.DIRECT, result));
     } catch (e) {
         return Result.err({
             code: g_lib.ERR_INTERNAL_FAULT,
-            message: `Failed to create metadata allocation: ${e.message}`
+            message: `Failed to create metadata allocation: ${e.message}`,
         });
     }
 };
 
 // Delete allocation from metadata repository (direct/synchronous)
 const deleteAllocation = (repoData, subjectId) => {
-    if (!subjectId || typeof subjectId !== 'string') {
+    if (!subjectId || typeof subjectId !== "string") {
         return Result.err({
             code: g_lib.ERR_INVALID_PARAM,
-            message: "Subject ID is required for allocation deletion"
+            message: "Subject ID is required for allocation deletion",
         });
     }
 
@@ -74,14 +80,14 @@ const deleteAllocation = (repoData, subjectId) => {
             repo_id: repoData._id,
             subject: subjectId,
             status: "completed",
-            message: "Metadata allocation removed"
+            message: "Metadata allocation removed",
         };
 
         return Result.ok(createAllocationResult(ExecutionMethod.DIRECT, result));
     } catch (e) {
         return Result.err({
             code: g_lib.ERR_INTERNAL_FAULT,
-            message: `Failed to delete metadata allocation: ${e.message}`
+            message: `Failed to delete metadata allocation: ${e.message}`,
         });
     }
 };
@@ -100,21 +106,27 @@ const getCapacityInfo = (repoData) => {
             used_capacity: 0, // Would track metadata record count/size
             available_capacity: repoData.capacity,
             supports_quotas: false,
-            is_metadata_only: true
+            is_metadata_only: true,
         });
     } catch (e) {
         return Result.err({
             code: g_lib.ERR_INTERNAL_FAULT,
-            message: `Failed to get capacity info: ${e.message}`
+            message: `Failed to get capacity info: ${e.message}`,
         });
     }
 };
 
-// Export all operations (trait implementation)
+/**
+ * Export all operations (trait implementation)
+ * These exports define the trait implementation for metadata repository type
+ * Note how the same interface has different behavior than Globus implementation
+ * @type {{validate: (function(*): {ok: boolean, value: *}), createAllocation: ((function(*, *): ({ok: boolean, error: *}|{ok: boolean, value: *}|undefined))|*), deleteAllocation: ((function(*, *): ({ok: boolean, error: *}|undefined))|*), supportsDataOperations: (function(*): {ok: boolean, value: *}), getCapacityInfo: ((function(*): ({ok: boolean, value: *}|undefined))|*)}}
+ * @see: https://doc.rust-lang.org/book/ch17-02-trait-objects.html
+ */
 module.exports = {
     validate,
     createAllocation,
     deleteAllocation,
     supportsDataOperations,
-    getCapacityInfo
+    getCapacityInfo,
 };
