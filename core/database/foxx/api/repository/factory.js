@@ -1,11 +1,11 @@
 "use strict";
 
-const { 
-    RepositoryType, 
-    Result, 
+const {
+    RepositoryType,
+    Result,
     createRepository,
     createRepositoryData,
-    createGlobusConfig
+    createGlobusConfig,
 } = require("./types");
 const { validateGlobusConfig, validateMetadataConfig } = require("./validation");
 const globusRepo = require("./globus");
@@ -17,17 +17,28 @@ const g_lib = require("../support");
  * Uses switch/case for type-based polymorphism instead of inheritance
  */
 
-// Create repository based on type (similar to Rust match expression)
+/**
+ * Create repository based on type (similar to Rust match expression)
+ * Rust's match expression provides exhaustive pattern matching
+ * JavaScript's switch is used here to emulate this pattern
+ * @param config
+ * @returns {{ok: boolean, error: *}|{ok: boolean, value: *}}
+ * @see: https://doc.rust-lang.org/book/ch06-02-match.html
+ */
 const createRepositoryByType = (config) => {
     // Validate common fields
     if (!config.id || !config.type || !config.title || !config.capacity || !config.admins) {
         return Result.err({
             code: g_lib.ERR_INVALID_PARAM,
-            message: "Missing required repository fields"
+            message: "Missing required repository fields",
         });
     }
 
-    // Type-based creation using switch (Rust match pattern)
+    /**
+     * Type-based creation using switch (Rust match pattern)
+     * Each case is like a match arm in Rust, handling a specific variant
+     * @see: https://doc.rust-lang.org/book/ch18-03-pattern-syntax.html
+     */
     switch (config.type) {
         case RepositoryType.GLOBUS: {
             const validationResult = validateGlobusConfig(config);
@@ -41,7 +52,7 @@ const createRepositoryByType = (config) => {
                 pub_key: config.pub_key,
                 address: config.address,
                 exp_path: config.exp_path,
-                domain: config.domain
+                domain: config.domain,
             });
 
             const repoData = createRepositoryData({
@@ -51,7 +62,7 @@ const createRepositoryByType = (config) => {
                 desc: config.desc,
                 capacity: config.capacity,
                 admins: config.admins,
-                typeSpecific: globusConfig
+                typeSpecific: globusConfig,
             });
 
             return Result.ok(createRepository(RepositoryType.GLOBUS, repoData));
@@ -69,21 +80,31 @@ const createRepositoryByType = (config) => {
                 title: config.title,
                 desc: config.desc,
                 capacity: config.capacity,
-                admins: config.admins
+                admins: config.admins,
             });
 
             return Result.ok(createRepository(RepositoryType.METADATA_ONLY, repoData));
         }
 
         default:
+            /**
+             * In Rust, match must be exhaustive - all cases must be handled
+             * The default case ensures we handle unknown variants
+             * @see: https://doc.rust-lang.org/book/ch06-02-match.html#matching-with-option-t
+             */
             return Result.err({
                 code: g_lib.ERR_INVALID_PARAM,
-                message: `Unknown repository type: ${config.type}`
+                message: `Unknown repository type: ${config.type}`,
             });
     }
 };
 
-// Get repository implementation based on type
+/**
+ * Get repository implementation based on type
+ * This emulates Rust's trait object dynamic dispatch
+ * @param repositoryType
+ * @see: https://doc.rust-lang.org/book/ch17-02-trait-objects.html
+ */
 const getRepositoryImplementation = (repositoryType) => {
     switch (repositoryType) {
         case RepositoryType.GLOBUS:
@@ -95,20 +116,28 @@ const getRepositoryImplementation = (repositoryType) => {
     }
 };
 
-// Execute operation on repository using dynamic dispatch
+/**
+ * Execute operation on repository using dynamic dispatch
+ * This pattern emulates Rust's trait method dispatch
+ * @param repository
+ * @param operation
+ * @param args
+ * @returns {{ok: boolean, error: *}|*}
+ * @see: https://doc.rust-lang.org/book/ch17-02-trait-objects.html#trait-objects-perform-dynamic-dispatch
+ */
 const executeRepositoryOperation = (repository, operation, ...args) => {
     const impl = getRepositoryImplementation(repository.type);
     if (!impl) {
         return Result.err({
             code: g_lib.ERR_INVALID_PARAM,
-            message: `No implementation for repository type: ${repository.type}`
+            message: `No implementation for repository type: ${repository.type}`,
         });
     }
 
-    if (typeof impl[operation] !== 'function') {
+    if (typeof impl[operation] !== "function") {
         return Result.err({
             code: g_lib.ERR_NOT_IMPLEMENTED,
-            message: `Operation '${operation}' not implemented for type: ${repository.type}`
+            message: `Operation '${operation}' not implemented for type: ${repository.type}`,
         });
     }
 
@@ -118,5 +147,5 @@ const executeRepositoryOperation = (repository, operation, ...args) => {
 module.exports = {
     createRepositoryByType,
     getRepositoryImplementation,
-    executeRepositoryOperation
+    executeRepositoryOperation,
 };
