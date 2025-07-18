@@ -7,9 +7,16 @@ const pathModule = require("../posix_path");
 /**
  * Standalone validation functions following Rust patterns
  * Pure functions that return Result types for error handling
+ * 
+ * See: https://doc.rust-lang.org/book/ch03-03-how-functions-work.html
+ * Functions in Rust are expressions that can return values
+ * 
+ * See: https://doc.rust-lang.org/book/ch09-00-error-handling.html
+ * Rust emphasizes explicit error handling through Result types
  */
 
 // Validate common repository fields
+// Pure function - no side effects, deterministic output
 const validateCommonFields = (config) => {
     const errors = [];
 
@@ -30,6 +37,8 @@ const validateCommonFields = (config) => {
     }
 
     if (errors.length > 0) {
+        // See: https://doc.rust-lang.org/book/ch09-02-recoverable-errors-with-result.html#propagating-errors
+        // Early return with error - similar to Rust's ? operator
         return Result.err({
             code: g_lib.ERR_INVALID_PARAM,
             message: errors.join("; ")
