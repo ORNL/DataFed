@@ -84,13 +84,14 @@ class Repo {
 
             // Use new repository operations to find the repo
             const findResult = RepositoryOps.find(this.#repo_id);
-            
+
             if (findResult.ok) {
                 this.#exists = true;
                 this.#repository = findResult.value;
             } else {
                 this.#exists = false;
-                this.#error = findResult.error.code === 404 ? g_lib.ERR_NOT_FOUND : g_lib.ERR_INTERNAL_FAULT;
+                this.#error =
+                    findResult.error.code === 404 ? g_lib.ERR_NOT_FOUND : g_lib.ERR_INTERNAL_FAULT;
                 this.#err_msg = findResult.error.message;
             }
         }
@@ -153,7 +154,7 @@ class Repo {
         const repoData = this.#repository.data;
         if (!repoData.path) {
             // Metadata-only repos don't have paths
-            if (repoData.type === 'metadata_only') {
+            if (repoData.type === "metadata_only") {
                 return PathType.UNKNOWN;
             }
             throw [g_lib.ERR_INTERNAL_FAULT, "Repo document is missing path: " + this.#repo_id];
