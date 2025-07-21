@@ -12,7 +12,7 @@
  * @type {Readonly<{GLOBUS: string, METADATA_ONLY: string}>}
  * @see https://doc.rust-lang.org/book/ch06-01-defining-an-enum.html
  */
-const RepositoryType = Object.freeze({
+const RepositoryType = object.freeze({
     GLOBUS: "globus",
     METADATA_ONLY: "metadata_only",
 });
@@ -32,14 +32,14 @@ const Result = {
 /**
  * Repository structure using composition
  * Rust favors composition over inheritance - structs contain data, traits define behavior
- * @param {Object} config - Configuration object
+ * @param {object} config - Configuration object
  * @param {string} config.id - Repository ID
  * @param {string} config.type - Repository type (globus or metadata_only)
  * @param {string} config.title - Repository title
  * @param {string} [config.desc] - Repository description
  * @param {number} config.capacity - Storage capacity in bytes
  * @param {string[]} config.admins - Array of admin user IDs
- * @param {Object} [config.typeSpecific={}] - Type-specific configuration fields
+ * @param {object} [config.typeSpecific={}] - Type-specific configuration fields
  * @returns {{_key: string, _id: string, type: string, title: string, desc: string, capacity: number, admins: string[]}} Repository data object with ArangoDB fields
  * @see https://doc.rust-lang.org/book/ch05-01-defining-structs.html
  */
@@ -65,7 +65,7 @@ const createRepositoryData = ({
 
 /**
  * Globus-specific configuration
- * @param {Object} config - Globus configuration object
+ * @param {object} config - Globus configuration object
  * @param {string} config.endpoint - Globus endpoint identifier
  * @param {string} config.path - Repository path on filesystem
  * @param {string} config.pub_key - Public SSH key for authentication
@@ -88,8 +88,8 @@ const createGlobusConfig = ({ endpoint, path, pub_key, address, exp_path, domain
  * Rust enums can contain data, creating tagged unions (also called algebraic data types)
  * This pattern enables type-safe polymorphism without inheritance
  * @param {string} type - Repository type (from RepositoryType enum)
- * @param {Object} data - Repository data object
- * @returns {{type: string, data: Object}} Tagged union with type and data fields
+ * @param {object} data - Repository data object
+ * @returns {{type: string, data: object}} Tagged union with type and data fields
  * @see https://doc.rust-lang.org/book/ch06-01-defining-an-enum.html#enum-values
  */
 const createRepository = (type, data) => ({
@@ -102,7 +102,7 @@ const createRepository = (type, data) => ({
  * Another enum-like constant representing different execution strategies
  * @type {Readonly<{TASK: string, DIRECT: string}>}
  */
-const ExecutionMethod = Object.freeze({
+const ExecutionMethod = object.freeze({
     TASK: "task",
     DIRECT: "direct",
 });
@@ -110,8 +110,8 @@ const ExecutionMethod = Object.freeze({
 /**
  * Allocation result structure
  * @param {string} method - Execution method (TASK or DIRECT)
- * @param {Object} payload - Result payload (task info or direct result)
- * @returns {{execution_method: string, task?: Object, result?: Object}} Allocation result with execution method and appropriate payload
+ * @param {object} payload - Result payload (task info or direct result)
+ * @returns {{execution_method: string, task?: object, result?: object}} Allocation result with execution method and appropriate payload
  */
 const createAllocationResult = (method, payload) => ({
     execution_method: method,

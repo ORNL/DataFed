@@ -114,12 +114,12 @@ const getCapacityInfo = (repoData) => {
  * Export all operations (trait implementation)
  * These exports define the trait implementation for Globus repository type
  * allowing polymorphic behavior through dynamic dispatch
- * @type {Object}
- * @property {function(Object): {ok: boolean, value: boolean}} validate - Validate Globus repository
- * @property {function(Object, Object): {ok: boolean, error?: *, value?: *}} createAllocation - Create allocation in Globus repository
- * @property {function(Object, string): {ok: boolean, error?: *, value?: *}} deleteAllocation - Delete allocation from Globus repository
- * @property {function(Object): {ok: boolean, value: boolean}} supportsDataOperations - Check if supports data operations
- * @property {function(Object): {ok: boolean, error?: *, value?: *}} getCapacityInfo - Get capacity information
+ * @type {object}
+ * @property {function(object): {ok: boolean, value: boolean}} validate - Validate Globus repository
+ * @property {function(object, object): {ok: boolean, error?: *, value?: *}} createAllocation - Create allocation in Globus repository
+ * @property {function(object, string): {ok: boolean, error?: *, value?: *}} deleteAllocation - Delete allocation from Globus repository
+ * @property {function(object): {ok: boolean, value: boolean}} supportsDataOperations - Check if supports data operations
+ * @property {function(object): {ok: boolean, error?: *, value?: *}} getCapacityInfo - Get capacity information
  * @see https://doc.rust-lang.org/book/ch17-02-trait-objects.html
  */
 module.exports = {
