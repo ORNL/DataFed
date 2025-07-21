@@ -285,7 +285,7 @@ TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
   bool encrypted = true;
   GlobusAPI::EndpointInfo ep_info;
 
-  uint32_t expires_in = obj.getNumber("acc_tok_exp_in");
+  uint32_t expires_in = obj.getNumber("access_exp_in");
   uint32_t token_type =
       obj.getNumber("token_type"); // TODO: use enum if possible
   string collection_id;

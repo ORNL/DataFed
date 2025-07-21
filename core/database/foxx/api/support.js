@@ -840,16 +840,20 @@ module.exports = (function () {
     /** Get access token based on u._id
      *
      * @param {string} a_user_id - User ID field from database
-     * @returns {{acc_tok: string, ref_tok: string, acc_tok_exp_in: (number|number)}} - Access and refresh tokens, access expiration
+     * @returns {{access_token: string, refresh_token: string, access_exp_in: (number|number)}} - Access and refresh tokens, access expiration
      * @throws Error - When user document does not exist, or when globus_token document does not exist
      */
     obj.getAccessToken = function (a_user_id) {
         let user = obj.db.u.document(a_user_id); // default to user token
         const exp_in = user.expiration - Math.floor(Date.now() / 1000);
         const result = {
-            acc_tok: user.access,
-            ref_tok: user.refresh,
-            acc_tok_exp_in: exp_in > 0 ? exp_in : 0,
+            access_token: user.access,
+            refresh_token: user.refresh,
+            access_exp_in: exp_in > 0 ? exp_in : 0,
+            access_iv: user.access_iv,
+            access_len: user.access_len,
+            refresh_iv: user.refresh_iv,
+            refresh_len: user.refresh_len,
         };
 
         return result;
