@@ -112,7 +112,7 @@ router
                         g_db.admin.save({ _from: saved._id, _to: admin }),
                     );
 
-                    res.send([cleanRepoData(saved)]);
+                    res.send(cleanRepoData(saved));
                 },
             });
         } catch (e) {
