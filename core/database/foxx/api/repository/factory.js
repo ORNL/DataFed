@@ -21,7 +21,7 @@ const g_lib = require("../support");
  * Create repository based on type (similar to Rust match expression)
  * Rust's match expression provides exhaustive pattern matching
  * JavaScript's switch is used here to emulate this pattern
- * @param {Object} config - Repository configuration object
+ * @param {object} config - Repository configuration object
  * @param {string} config.id - Repository ID
  * @param {string} config.type - Repository type (from RepositoryType enum)
  * @param {string} config.title - Repository title
@@ -115,7 +115,7 @@ const createRepositoryByType = (config) => {
  * Get repository implementation based on type
  * This emulates Rust's trait object dynamic dispatch
  * @param {string} repositoryType - Repository type from RepositoryType enum
- * @returns {Object|null} Repository implementation object or null if not found
+ * @returns {object|null} Repository implementation object or null if not found
  * @see https://doc.rust-lang.org/book/ch17-02-trait-objects.html
  */
 const getRepositoryImplementation = (repositoryType) => {
@@ -132,7 +132,7 @@ const getRepositoryImplementation = (repositoryType) => {
 /**
  * Execute operation on repository using dynamic dispatch
  * This pattern emulates Rust's trait method dispatch
- * @param {Object} repository - Repository object with type and data fields
+ * @param {object} repository - Repository object with type and data fields
  * @param {string} operation - Operation name to execute
  * @param {...*} args - Additional arguments to pass to the operation
  * @returns {{ok: boolean, error: *}|*} Result of the operation

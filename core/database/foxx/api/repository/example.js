@@ -12,7 +12,7 @@ const { RepositoryOps } = require("./operations");
 /**
  * Example 1: Creating repositories using factory pattern
  * Factory pattern is common in Rust for complex object construction
- * @returns {Promise<{globus: *, metadata: *}>} Object containing created repositories
+ * @returns {Promise<{globus: *, metadata: *}>} object containing created repositories
  * @see https://doc.rust-lang.org/book/ch17-03-oo-design-patterns.html
  */
 async function createRepositoryExample() {
@@ -109,7 +109,7 @@ async function useRepositoryOperations() {
 /**
  * Example 3: Pattern matching on repository types
  * Pattern matching is fundamental in Rust for handling enum variants
- * @param {Object} repository - Repository object with type and data fields
+ * @param {object} repository - Repository object with type and data fields
  * @returns {{ok: boolean, error?: *, value?: *}} Result of handling repository
  * @see https://doc.rust-lang.org/book/ch06-02-match.html
  */
@@ -184,10 +184,10 @@ async function robustRepositoryOperation() {
 /**
  * Example 5: Composition over inheritance
  * Rust doesn't have inheritance - prefer composition of behaviors
- * @type {Object}
- * @property {function(Object, string): void} logAccess - Log repository access
- * @property {function(Object, number): {ok: boolean, error?: *, value?: *}} checkQuota - Check repository quota
- * @property {function(Object, Object): Promise<{ok: boolean, error?: *, value?: *}>} allocateWithQuotaCheck - Allocate with quota check
+ * @type {object}
+ * @property {function(object, string): void} logAccess - Log repository access
+ * @property {function(object, number): {ok: boolean, error?: *, value?: *}} checkQuota - Check repository quota
+ * @property {function(object, object): Promise<{ok: boolean, error?: *, value?: *}>} allocateWithQuotaCheck - Allocate with quota check
  * @see https://doc.rust-lang.org/book/ch17-03-oo-design-patterns.html
  */
 const RepositoryBehaviors = {
