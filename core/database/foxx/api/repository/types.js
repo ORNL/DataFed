@@ -12,7 +12,7 @@
  * @type {Readonly<{GLOBUS: string, METADATA_ONLY: string}>}
  * @see https://doc.rust-lang.org/book/ch06-01-defining-an-enum.html
  */
-const RepositoryType = Object.freeze({
+const RepositoryType = object.freeze({
     GLOBUS: "globus",
     METADATA_ONLY: "metadata_only",
 });
@@ -102,7 +102,7 @@ const createRepository = (type, data) => ({
  * Another enum-like constant representing different execution strategies
  * @type {Readonly<{TASK: string, DIRECT: string}>}
  */
-const ExecutionMethod = Object.freeze({
+const ExecutionMethod = object.freeze({
     TASK: "task",
     DIRECT: "direct",
 });
