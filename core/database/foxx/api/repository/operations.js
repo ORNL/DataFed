@@ -12,17 +12,17 @@ const g_db = require("@arangodb").db;
 
 /**
  * Repository operations following Rust trait patterns
- * @type {Object}
- * @property {function(Object): {ok: boolean, error?: *, value?: *}} validate - Validate repository configuration
- * @property {function(Object, Object): {ok: boolean, error?: *, value?: *}} createAllocation - Create allocation for repository
- * @property {function(Object, string): {ok: boolean, error?: *, value?: *}} deleteAllocation - Delete allocation from repository
- * @property {function(Object): {ok: boolean, error?: *, value?: *}} supportsDataOperations - Check if repository supports data operations
- * @property {function(Object): {ok: boolean, error?: *, value?: *}} getCapacityInfo - Get repository capacity information
- * @property {function(Object): {ok: boolean, error?: *, value?: *}} save - Save repository to database
- * @property {function(Object, Object): {ok: boolean, error?: *, value?: *}} update - Update repository in database
+ * @type {object}
+ * @property {function(object): {ok: boolean, error?: *, value?: *}} validate - Validate repository configuration
+ * @property {function(object, object): {ok: boolean, error?: *, value?: *}} createAllocation - Create allocation for repository
+ * @property {function(object, string): {ok: boolean, error?: *, value?: *}} deleteAllocation - Delete allocation from repository
+ * @property {function(object): {ok: boolean, error?: *, value?: *}} supportsDataOperations - Check if repository supports data operations
+ * @property {function(object): {ok: boolean, error?: *, value?: *}} getCapacityInfo - Get repository capacity information
+ * @property {function(object): {ok: boolean, error?: *, value?: *}} save - Save repository to database
+ * @property {function(object, object): {ok: boolean, error?: *, value?: *}} update - Update repository in database
  * @property {function(string): {ok: boolean, error?: *, value?: *}} find - Find repository by ID
- * @property {function(Object=): {ok: boolean, error?: *, value?: *}} list - List repositories with optional filter
- * @property {function(Object, string, string): {ok: boolean, value: boolean}} checkPermission - Check repository permissions
+ * @property {function(object=): {ok: boolean, error?: *, value?: *}} list - List repositories with optional filter
+ * @property {function(object, string, string): {ok: boolean, value: boolean}} checkPermission - Check repository permissions
  * @see https://doc.rust-lang.org/book/ch10-02-traits.html
  * @description Traits define shared behavior in an abstract way
  * @see https://doc.rust-lang.org/book/ch05-03-method-syntax.html
