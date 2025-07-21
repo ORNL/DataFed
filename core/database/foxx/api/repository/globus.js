@@ -14,7 +14,7 @@ const g_lib = require("../support");
 /**
  * This module acts like a trait implementation for the Globus repository type
  * Each function implements a trait method for this specific type
- * @see: https://doc.rust-lang.org/book/ch10-02-traits.html#implementing-a-trait-on-a-type
+ * @see https://doc.rust-lang.org/book/ch10-02-traits.html#implementing-a-trait-on-a-type
  */
 
 // Validate Globus repository (already validated in factory)
@@ -114,7 +114,12 @@ const getCapacityInfo = (repoData) => {
  * Export all operations (trait implementation)
  * These exports define the trait implementation for Globus repository type
  * allowing polymorphic behavior through dynamic dispatch
- * @type {{validate: (function(*): {ok: boolean, value: *}), createAllocation: ((function(*, *): ({ok: boolean, error: *}|{ok: boolean, value: *}|undefined))|*), deleteAllocation: ((function(*, *): ({ok: boolean, error: *}|undefined))|*), supportsDataOperations: (function(*): {ok: boolean, value: *}), getCapacityInfo: ((function(*): ({ok: boolean, value: *}|undefined))|*)}}
+ * @type {Object}
+ * @property {function(Object): {ok: boolean, value: boolean}} validate - Validate Globus repository
+ * @property {function(Object, Object): {ok: boolean, error?: *, value?: *}} createAllocation - Create allocation in Globus repository
+ * @property {function(Object, string): {ok: boolean, error?: *, value?: *}} deleteAllocation - Delete allocation from Globus repository
+ * @property {function(Object): {ok: boolean, value: boolean}} supportsDataOperations - Check if supports data operations
+ * @property {function(Object): {ok: boolean, error?: *, value?: *}} getCapacityInfo - Get capacity information
  * @see https://doc.rust-lang.org/book/ch17-02-trait-objects.html
  */
 module.exports = {
