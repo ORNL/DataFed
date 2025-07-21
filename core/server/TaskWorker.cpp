@@ -254,8 +254,8 @@ TaskWorker::enumToString(Token_Name token_name)
 
 std::map<TaskWorker::Token_Name, std::string> TaskWorker::tokenNameToString =
 {
-    { TaskWorker::Token_Name::ACCESS, "acc_tok" },
-    { TaskWorker::Token_Name::REFRESH, "ref_tok" }
+    { TaskWorker::Token_Name::ACCESS, "access_token" },
+    { TaskWorker::Token_Name::REFRESH, "refresh_token" }
 };
 
 ICommunicator::Response
