@@ -14,17 +14,31 @@ const g_lib = require("../support");
  * Rust emphasizes explicit error handling through Result types
  */
 
+// Validate that a value is a non-empty string
+// Reusable helper following DRY principle
+const validateNonEmptyString = (value, fieldName) => {
+    if (!value || typeof value !== "string" || value.trim() === "") {
+        return Result.err({
+            code: g_lib.ERR_INVALID_PARAM,
+            message: `${fieldName} is required and must be a non-empty string`,
+        });
+    }
+    return Result.ok(true);
+};
+
 // Validate common repository fields
 // Pure function - no side effects, deterministic output
 const validateCommonFields = (config) => {
     const errors = [];
 
-    if (!config.id || typeof config.id !== "string" || config.id.trim() === "") {
-        errors.push("Repository ID is required and must be a non-empty string");
+    const idValidation = validateNonEmptyString(config.id, "Repository ID");
+    if (!idValidation.ok) {
+        errors.push(idValidation.error.message);
     }
 
-    if (!config.title || typeof config.title !== "string" || config.title.trim() === "") {
-        errors.push("Repository title is required and must be a non-empty string");
+    const titleValidation = validateNonEmptyString(config.title, "Repository title");
+    if (!titleValidation.ok) {
+        errors.push(titleValidation.error.message);
     }
 
     if (typeof config.capacity !== "number" || config.capacity <= 0) {
@@ -86,7 +100,7 @@ const validateRepositoryPath = (path, repoId) => {
 
     // Extract last component
     const idx = normalizedPath.lastIndexOf("/", normalizedPath.length - 2);
-    const lastComponent = normalizedPath.substr(idx + 1, normalizedPath.length - idx - 2);
+    const lastComponent = normalizedPath.slice(idx + 1, normalizedPath.length - 1);
 
     if (lastComponent !== repoId) {
         return Result.err({
@@ -108,20 +122,24 @@ const validateGlobusConfig = (config) => {
     const errors = [];
 
     // Validate required Globus fields
-    if (!config.pub_key || typeof config.pub_key !== "string") {
-        errors.push("Public key is required for Globus repositories");
+    const pubKeyValidation = validateNonEmptyString(config.pub_key, "Public key");
+    if (!pubKeyValidation.ok) {
+        errors.push(pubKeyValidation.error.message);
     }
 
-    if (!config.address || typeof config.address !== "string") {
-        errors.push("Address is required for Globus repositories");
+    const addressValidation = validateNonEmptyString(config.address, "Address");
+    if (!addressValidation.ok) {
+        errors.push(addressValidation.error.message);
     }
 
-    if (!config.endpoint || typeof config.endpoint !== "string") {
-        errors.push("Endpoint is required for Globus repositories");
+    const endpointValidation = validateNonEmptyString(config.endpoint, "Endpoint");
+    if (!endpointValidation.ok) {
+        errors.push(endpointValidation.error.message);
     }
 
-    if (!config.domain || typeof config.domain !== "string") {
-        errors.push("Domain is required for Globus repositories");
+    const domainValidation = validateNonEmptyString(config.domain, "Domain");
+    if (!domainValidation.ok) {
+        errors.push(domainValidation.error.message);
     }
 
     if (errors.length > 0) {
@@ -174,8 +192,9 @@ const validateMetadataConfig = (config) => {
 const validateAllocationParams = (params) => {
     const errors = [];
 
-    if (!params.subject || typeof params.subject !== "string") {
-        errors.push("Allocation subject is required");
+    const subjectValidation = validateNonEmptyString(params.subject, "Allocation subject");
+    if (!subjectValidation.ok) {
+        errors.push(subjectValidation.error.message);
     }
 
     if (typeof params.size !== "number" || params.size <= 0) {
@@ -197,6 +216,7 @@ const validateAllocationParams = (params) => {
 };
 
 module.exports = {
+    validateNonEmptyString,
     validateCommonFields,
     validatePOSIXPath,
     validateRepositoryPath,
