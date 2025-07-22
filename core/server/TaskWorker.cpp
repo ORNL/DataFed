@@ -226,8 +226,6 @@ TaskWorker::prepToken(const Value::Object &obj,std::string token, const std::str
     }
     else
     {
-        DL_WARNING(log_context, "Token Isn't Encrypted, starting encryption and refresh process");
-
         return obj.getString(token);
     }
 return obj.getString(token);
