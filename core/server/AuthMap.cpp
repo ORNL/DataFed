@@ -1,8 +1,6 @@
-
 // Local private includes
 #include "AuthMap.hpp"
 #include "DatabaseAPI.hpp"
-#include "Config.hpp"
 using namespace std;
 
 namespace SDMS {
