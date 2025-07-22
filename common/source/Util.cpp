@@ -85,7 +85,7 @@ size_t curlBodyReadCB(char *ptr, size_t size, size_t nmemb, void *userdata) {
   return len;
 }
 
-void generateZMQKeys(std::string &a_pub_key, std::string &a_priv_key) {
+void generateKeys(std::string &a_pub_key, std::string &a_priv_key) {
   char public_key[41];
   char secret_key[41];
 
@@ -96,10 +96,6 @@ void generateZMQKeys(std::string &a_pub_key, std::string &a_priv_key) {
   a_priv_key = secret_key;
 }
 
-void generateKeys(std::string &a_pub_key, std::string &a_priv_key)
-{
-    generateZMQKeys(a_pub_key, a_priv_key);
-}
 void hexDump(const char *a_buffer, const char *a_buffer_end, ostream &a_out) {
   const unsigned char *p = (unsigned char *)a_buffer;
   const unsigned char *e = (unsigned char *)a_buffer_end;

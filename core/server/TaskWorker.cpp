@@ -222,9 +222,7 @@ TaskWorker::prepToken(const Value::Object &obj,std::string token, const std::str
         std::memcpy(encoded_obj.iv.get(), iv_str.c_str(), iv_str.size() + 1);     // copy including '\0'
 
         //Decrypt it:
-        string decrypted_token = cipher.decrypt(encoded_obj, log_context);
-
-        return decrypted_token;
+        return cipher.decrypt(encoded_obj, log_context);
     }
     else
     {

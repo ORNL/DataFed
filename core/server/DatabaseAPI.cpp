@@ -337,7 +337,6 @@ void DatabaseAPI::userGetAccessToken(
     bool &needs_consent, int &token_type, // TODO: use underlying type?
     std::string &scopes, bool &needs_encrypted, LogContext log_context) {
 
-  DL_DEBUG(log_context, "User Get Access Token");
 
   Value result;
   std::vector<std::pair<std::string, std::string>> params = {};
@@ -352,7 +351,6 @@ void DatabaseAPI::userGetAccessToken(
   TRANSLATE_BEGIN()
   unsigned char token_key[CipherEngine::KEY_LENGTH];
 
-  DL_DEBUG(log_context, "Attempting to grab token key");
   //grab the token_key
   readFile(cipher_key_file_path + "datafed-token-key.txt", CipherEngine::KEY_LENGTH, token_key);
 
@@ -421,7 +419,6 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
 
   unsigned char token_key[CipherEngine::KEY_LENGTH];
 
-  DL_DEBUG(log_context, "Setting Access Token");
   //grab the token_key
   readFile(cipher_key_file_path + "datafed-token-key.txt", CipherEngine::KEY_LENGTH, token_key);
   CipherEngine cipher(token_key);

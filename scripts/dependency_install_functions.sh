@@ -463,7 +463,6 @@ install_nvm() {
     # will use it to set the install path
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
     mkdir -p "${NVM_DIR}"
-    #curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${DATAFED_NVM_VERSION}/install.sh" | bash
     PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/bin/:$PATH" "$DATAFED_DEPENDENCIES_INSTALL_PATH/bin/"curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${DATAFED_NVM_VERSION}/install.sh" | bash
     # Mark nvm as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${NVM_FLAG_PREFIX}${DATAFED_NVM_VERSION}"
@@ -593,7 +592,7 @@ install_openssl() {
     git clone https://github.com/openssl/openssl "${PROJECT_ROOT}/external/openssl"
     cd "${PROJECT_ROOT}/external/openssl"
     git checkout "$DATAFED_OPENSSL_COMMIT"
-    #./config --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+    # Build as a static library only
     ./Configure no-shared no-dso linux-x86_64 --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     make -j 8
 

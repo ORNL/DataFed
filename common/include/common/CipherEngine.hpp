@@ -5,7 +5,7 @@
 //Local public includes
 #include "DynaLog.hpp"
 
-//Local include
+// Standard includes
 #include <string>
 #include <memory>
 
@@ -13,7 +13,7 @@ namespace SDMS{
 
 /**
  * @class CipherEngine
- * @brief Provides symmetric encryption and decryption functoinalities using a 256-bit key.
+ * @brief Provides symmetric encryption and decryption functionalities using a 256-bit key.
  */
 class CipherEngine
 {
@@ -25,7 +25,7 @@ class CipherEngine
          * @param log_context Context for logging
          * @return Base64 encoded null-terminated char array
          */
-        std::unique_ptr<char[]> encode64(const unsigned char* input, const int length, LogContext log_context);
+        std::unique_ptr<char[]> encode64(const unsigned char* input, const int length, LogContext log_context) const;
 
         /**
          * @brief Base64 decodes an input of a specified length and returns the output
@@ -34,7 +34,7 @@ class CipherEngine
          * @param log_context Context for logging
          * @return Decoded bytes
          */
-        std::unique_ptr<unsigned char[]> decode64(const char* input, const int length, LogContext log_context);
+        std::unique_ptr<unsigned char[]> decode64(const char* input, const int length, LogContext log_context) const;
 
     public:
         /** Base64 encoded block size (always 4) */

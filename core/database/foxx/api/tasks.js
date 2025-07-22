@@ -1319,13 +1319,7 @@ var tasks_func = (function () {
                         uid: a_task.client,
                         type: a_task.type,
                         encrypt: state.encrypt,
-                        access_token: tokens.access_token,
-                        refresh_token: tokens.refresh_token,
-                        access_exp_in: tokens.access_exp_in,
-                        access_iv: tokens.access_iv,
-                        access_len: tokens.access_len,
-                        refresh_iv: tokens.refresh_iv,
-                        refresh_len: tokens.refresh_len,
+                        ...tokens,
                     };
                     params = Object.assign(params, xfr);
                     reply = {

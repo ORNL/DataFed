@@ -29,7 +29,7 @@ namespace SDMS{
         abort();
     } 
     
-    std::unique_ptr<char[]> CipherEngine::encode64(const unsigned char* input,const int length, LogContext log_context)
+    std::unique_ptr<char[]> CipherEngine::encode64(const unsigned char* input,const int length, LogContext log_context) const
     {
         // Calculate the padded length based on the input length:
         // (length + 2) / 3 gives the number of 3-byte blocks (rounded up), multiplied by 4 gives the number of base64 characters required.
@@ -42,7 +42,7 @@ namespace SDMS{
         return output;
     }
 
-    std::unique_ptr<unsigned char[]> CipherEngine::decode64(const char* input,const int length, LogContext log_context) {
+    std::unique_ptr<unsigned char[]> CipherEngine::decode64(const char* input,const int length, LogContext log_context) const {
         // Calculate the padded length, the number of original decoded bytes
         // (length / 4) gives the number of 4-byte blocks of base64 data, multiplied by 3 gives the decoded byte length
         const int paddedLength = ((length/SDMS::CipherEngine::BASE64_ENCODED_BLOCK_SIZE)*SDMS::CipherEngine::BASE64_INPUT_BLOCK_SIZE);

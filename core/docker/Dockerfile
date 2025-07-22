@@ -45,8 +45,7 @@ RUN ${BUILD_DIR}/scripts/generate_datafed.sh && \
 		-DBUILD_WEB_SERVER=False		\
 		-DBUILD_DOCS=False					\
 		-DBUILD_PYTHON_CLIENT=False	\
-		-DBUILD_FOXX=False \
-        -DCMAKE_BUILD_TYPE=Debug
+		-DBUILD_FOXX=False
 RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build -j 8
 RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build --target install
 
