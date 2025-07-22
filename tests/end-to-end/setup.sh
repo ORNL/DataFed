@@ -220,13 +220,6 @@ exit 0
 #  "id" : "$DATAFED_REPO_ID",
 #  "title" : "$DATAFED_REPO_TITLE",
 #  "desc" : "$DATAFED_REPO_DESCRIPTION", 
-#  "domain" : "$DATAFED_REPO_DOMAIN", 
-#  "capacity" : "$DATAFED_REPO_CAPACITY", 
-#  "pub_key" : "$DATAFED_REPO_PUBLIC_KEY", 
-#  "address" : "$DATAFED_REPO_SERVER_ADDRESS", 
-#  "endpoint" : "$DATAFED_REPO_ENDPOINT_UUID", 
-#  "path" : "$DATAFED_REPO_RELATIVE_PATH", 
-#  "exp_path" : "$DATAFED_REPO_EXPORT_PATH", 
 #  "admins" : ["u/datafed89"]
 #}
 #EOF
