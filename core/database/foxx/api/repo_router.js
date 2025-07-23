@@ -8,6 +8,8 @@ const g_db = require("@arangodb").db;
 const g_lib = require("./support");
 const g_tasks = require("./tasks");
 const { validateGlobusConfig, validatePartialGlobusConfig } = require("./repository/validation");
+const { RepositoryOps } = require("./repository/operations");
+const { RepositoryType } = require("./repository/types");
 
 module.exports = router;
 
@@ -677,15 +679,33 @@ router
                         subject_id = req.queryParams.subject;
                     else subject_id = g_lib.getUserFromClientID(req.queryParams.subject)._id;
 
-                    var result = g_tasks.taskInitAllocCreate(
-                        client,
-                        req.queryParams.repo,
-                        subject_id,
-                        req.queryParams.data_limit,
-                        req.queryParams.rec_limit,
-                    );
+                    // Find the repository using the new type system
+                    var findResult = RepositoryOps.find(req.queryParams.repo);
+                    if (!findResult.ok) {
+                        throw [findResult.error.code, findResult.error.message];
+                    }
 
-                    res.send(result);
+                    var repository = findResult.value;
+
+                    // Check permissions
+                    var permResult = RepositoryOps.checkPermission(repository, client._id, "admin");
+                    if (!permResult.ok || !permResult.value) {
+                        throw g_lib.ERR_PERM_DENIED;
+                    }
+
+                    // Create allocation using the new system
+                    var allocResult = RepositoryOps.createAllocation(repository, {
+                        subject: subject_id,
+                        size: req.queryParams.data_limit,
+                        rec_limit: req.queryParams.rec_limit,
+                    });
+
+                    if (!allocResult.ok) {
+                        throw [allocResult.error.code, allocResult.error.message];
+                    }
+
+                    // Return the new response format
+                    res.send(allocResult.value);
                 },
             });
         } catch (e) {
@@ -707,7 +727,7 @@ router
     )
     .summary("Create user/project repo allocation")
     .description(
-        "Create user repo/project allocation. Only repo admin can set allocations. Returns a task document.",
+        "Create user repo/project allocation. Only repo admin can set allocations. Returns either a task (for Globus repos) or direct result (for metadata-only repos).",
     );
 
 router
@@ -727,13 +747,29 @@ router
                         subject_id = req.queryParams.subject;
                     else subject_id = g_lib.getUserFromClientID(req.queryParams.subject)._id;
 
-                    var result = g_tasks.taskInitAllocDelete(
-                        client,
-                        req.queryParams.repo,
-                        subject_id,
-                    );
+                    // Find the repository using the new type system
+                    var findResult = RepositoryOps.find(req.queryParams.repo);
+                    if (!findResult.ok) {
+                        throw [findResult.error.code, findResult.error.message];
+                    }
 
-                    res.send(result);
+                    var repository = findResult.value;
+
+                    // Check permissions
+                    var permResult = RepositoryOps.checkPermission(repository, client._id, "admin");
+                    if (!permResult.ok || !permResult.value) {
+                        throw g_lib.ERR_PERM_DENIED;
+                    }
+
+                    // Delete allocation using the new system
+                    var deleteResult = RepositoryOps.deleteAllocation(repository, subject_id);
+
+                    if (!deleteResult.ok) {
+                        throw [deleteResult.error.code, deleteResult.error.message];
+                    }
+
+                    // Return the new response format
+                    res.send(deleteResult.value);
                 },
             });
         } catch (e) {
@@ -745,7 +781,7 @@ router
     .queryParam("repo", joi.string().required(), "Repo ID")
     .summary("Delete user/project repo allocation")
     .description(
-        "Delete user repo/project allocation. Only repo admin can set allocations. Returns a task document.",
+        "Delete user repo/project allocation. Only repo admin can set allocations. Returns either a task (for Globus repos) or direct result (for metadata-only repos).",
     );
 
 router
