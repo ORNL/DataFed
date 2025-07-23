@@ -370,12 +370,8 @@ void DatabaseAPI::userGetAccessToken(
   // NOTE: scopes will be a blank string for token_type=GLOBUS_DEFAULT
   scopes = obj.getString("scopes");
  
-  //ADD A NEEDS ENCRYPTED HERE (make into a function after getting working)
-  if(!obj.has("access_len") or !obj.has("refresh_len") or !obj.has("access_iv") or !obj.has("refresh_iv"))
-  {
-    needs_encrypted = true;
-    return;
-  }
+  
+  needs_encrypted = CipherEngine::tokenNeedsUpdate(obj);
 
   encoded_access_obj.encrypted_msg_len = obj.getNumber("access_len");
   encoded_refresh_obj.encrypted_msg_len = obj.getNumber("refresh_len");

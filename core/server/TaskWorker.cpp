@@ -209,17 +209,27 @@ TaskWorker::prepToken(const Value::Object &obj,std::string token, const std::str
 
         CipherEngine::CipherString encoded_obj;
 
+        //Checks which token we are prepping
+        if(token.compare("access_token"))
+        {
+          encoded_obj.encrypted_msg_len = obj.getNumber("access_len");
+          string iv_str = obj.getString("access_iv");
+          //Prep IV into a char[]
+          encoded_obj.iv = std::unique_ptr<char[]>(new char[iv_str.size() + 1]);  // +1 for null terminator
+          std::memcpy(encoded_obj.iv.get(), iv_str.c_str(), iv_str.size() + 1);     // copy including '\0'
+        }
+        else{
+          encoded_obj.encrypted_msg_len = obj.getNumber("refresh_len");
+          string iv_str = obj.getString("refresh_iv");
+          //Prep IV into a char[]
+          encoded_obj.iv = std::unique_ptr<char[]>(new char[iv_str.size() + 1]);  // +1 for null terminator
+          std::memcpy(encoded_obj.iv.get(), iv_str.c_str(), iv_str.size() + 1);     // copy including '\0'
+        }
         //Prep Token into a char[]
         string token_str = obj.getString(token);  // assume known size
         encoded_obj.encrypted_msg = std::unique_ptr<char[]>(new char[token_str.size() + 1]);  // +1 for null terminator
         std::memcpy(encoded_obj.encrypted_msg.get(), token_str.c_str(), token_str.size() + 1);     // copy including '\0'
-
-        encoded_obj.encrypted_msg_len = obj.getNumber(token+"_len");
-
-        //Prep IV into a char[]
-        string iv_str = obj.getString(token + "_iv");  // assume known size
-        encoded_obj.iv = std::unique_ptr<char[]>(new char[iv_str.size() + 1]);  // +1 for null terminator
-        std::memcpy(encoded_obj.iv.get(), iv_str.c_str(), iv_str.size() + 1);     // copy including '\0'
+        
 
         //Decrypt it:
         return cipher.decrypt(encoded_obj, log_context);
@@ -229,17 +239,6 @@ TaskWorker::prepToken(const Value::Object &obj,std::string token, const std::str
         return obj.getString(token);
     }
 return obj.getString(token);
-}
-
-bool
-TaskWorker::tokenNeedsUpdate(const Value::Object &obj)
-{
-    if(!obj.has("acc_tok_iv") || !obj.has("acc_tok_len") || !obj.has("ref_tok_iv") || !obj.has("ref_tok_len"))
-    {
-        return true;
-    }
-
-    return false;
 }
 
 std::string 
@@ -264,7 +263,7 @@ TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
   const Value::Object &obj = a_task_params.asObject();
 
   //TokenPrepFuncs
-  needs_update = tokenNeedsUpdate(obj);
+  needs_update = CipherEngine::tokenNeedsUpdate(obj);
 
   //Update the tokens to be unencrypted
   string acc_tok = prepToken(obj, enumToString(access_token_name), me.m_db.cipher_key_file_path, needs_update, log_context);

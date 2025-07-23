@@ -4,6 +4,7 @@
 
 //Local public includes
 #include "DynaLog.hpp"
+#include "common/libjson.hpp"
 
 // Standard includes
 #include <string>
@@ -143,6 +144,7 @@ class CipherEngine
          */
         std::string decrypt(const CipherString& encrypted_string, LogContext log_context);
 
+        static bool tokenNeedsUpdate(const libjson::Value::Object &obj);
     private:
         unsigned char key[KEY_LENGTH]; /**< Encryption key bytes */
 

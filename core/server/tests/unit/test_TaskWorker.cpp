@@ -27,7 +27,7 @@ using namespace SDMS::Core;
 class TaskWorkerTestAccess : public TaskWorker {
 public:
     static bool tokenNeedsUpdate(const libjson::Value::Object &obj) {
-        return TaskWorker::tokenNeedsUpdate(obj);
+        return SDMS::CipherEngine::tokenNeedsUpdate(obj);
     }
 
     static std::string prepToken(const libjson::Value::Object &obj, const std::string &token, const std::string &cipher_key_path, bool needs_update, SDMS::LogContext log_context) {
@@ -86,10 +86,12 @@ BOOST_AUTO_TEST_CASE(testing_encrypted_token)
     SDMS::CipherEngine::CipherString returnObj = testCipher.encrypt(test_token, log_context);
 
     // Create a JSON object with the encrypted token and IV for testing
-    test_params.fromString("{\"acc_tok\":\"" + std::string(returnObj.encrypted_msg.get()) +
-                           "\",\"acc_tok_iv\":\"" + std::string(returnObj.iv.get()) +
-                           "\",\"acc_tok_len\":96}");
-
+    test_params.fromString("{\"access_token\":\"" + std::string(returnObj.encrypted_msg.get()) +
+                       "\",\"access_iv\":\"" + std::string(returnObj.iv.get()) +
+                       "\",\"access_len\":96," +
+                       "\"refresh_token\":\"" + std::string(returnObj.encrypted_msg.get())  +
+                       "\",\"refresh_iv\":\"" + std::string(returnObj.iv.get())  +
+                       "\",\"refresh_len\":96}");
     const libjson::Value::Object &obj = test_params.asObject();
 
     // Check whether the token needs to be updated (based on IV, length, etc.)
@@ -108,13 +110,17 @@ BOOST_AUTO_TEST_CASE(testing_unencrypted_token)
 {
     SDMS::LogContext log_context;
     bool needs_update = false;
- 
-    // Prepare test parameters with an unencrypted token (empty IV and zero length)
+    // Declare test_params
     libjson::Value test_params;
-    test_params.fromString("{\"acc_tok\":\"1234567890yoDa56Bx5yobvJYEjdGr2YpGYJybE7x4Bq42pQ3zuXCb8YQyn0EqEB7vjPx3GlNlKwkEsMn1234567890\","
-                           "\"acc_tok_iv\":\"\",\"acc_tok_len\":0}");
 
-    const libjson::Value::Object &obj = test_params.asObject();
+    // Prepare test parameters with an unencrypted token (empty IV and zero length)
+    test_params.fromString(std::string("{\"access_token\":\"") + "to" +
+                       "\",\"access_iv\":\"" + "yo" +
+                       "\",\"access_len\":96," +
+                       "\"refresh_token\":\"" + "" +
+                       "\",\"refresh_iv\":\"" + "lalalalalalalalala" +
+                       "\",\"refresh_len\":96}"); 
+   const libjson::Value::Object &obj = test_params.asObject();
     std::string cipher_key_path = "";
 
     // Check whether the unencrypted token should be updated

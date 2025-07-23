@@ -38,7 +38,6 @@ public:
   static std::map<Token_Name, std::string> tokenNameToString;
   static std::string enumToString(Token_Name token_name);
 protected:
-  static bool tokenNeedsUpdate(const libjson::Value::Object &obj);
   static std::string prepToken(const libjson::Value::Object &obj, std::string token, const std::string& cipher_key_path, bool needs_update, LogContext log_context);
 private:
   typedef ICommunicator::Response (*task_function_t)(

@@ -4,6 +4,7 @@
 // Local Public includes
 #include "common/TraceException.hpp"
 #include "common/DynaLog.hpp"
+#include "common/libjson.hpp"
 
 // Third party includes
 #include <openssl/conf.h>
@@ -21,6 +22,7 @@
 #include <fstream>
 #include <iomanip>
 using namespace std;
+using namespace libjson;
 namespace SDMS{
       
     void CipherEngine::handleErrors(void)
@@ -75,7 +77,31 @@ namespace SDMS{
         }
     }
 
+bool CipherEngine::tokenNeedsUpdate(const Value::Object &obj)
+    {
 
+    //checking for existance
+    if(!obj.has("access_iv") ||
+       !obj.has("access_len") ||
+       !obj.has("refresh_iv") ||
+       !obj.has("refresh_len"))
+    {
+      return true;
+    }
+
+    //Checking if it does exist that it isnt empty
+    if(obj.getValue("refresh_token").asString().length() == 0 ||
+       obj.getValue("access_token").asString().length() == 0 ||
+       obj.getValue("access_iv").asString().length() == 0 ||
+       obj.getNumber("access_len") == 0 ||
+       obj.getValue("refresh_iv").asString().length() == 0 ||
+       obj.getNumber("refresh_len") == 0)
+    {
+        return true;
+    }
+
+    return false;
+    }
     CipherEngine::CipherBytes CipherEngine::encryptAlgorithm(unsigned char *iv, const string& msg, LogContext log_context)
     {
         EVP_CIPHER_CTX *ctx = nullptr;
