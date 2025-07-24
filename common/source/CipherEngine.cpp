@@ -27,8 +27,10 @@ namespace SDMS{
       
     void CipherEngine::handleErrors(void)
     {
-        ERR_print_errors_fp(stderr);
-        abort();
+        unsigned long err = ERR_get_error();
+        char err_buf[256];
+        ERR_error_string_n(err, err_buf, sizeof(err_buf));
+        throw TraceException(__FILE__, __LINE__, 0, std::string("OpenSSL Error: ") + err_buf);
     } 
     
     std::unique_ptr<char[]> CipherEngine::encode64(const unsigned char* input,const int length, LogContext log_context) const
@@ -90,8 +92,8 @@ bool CipherEngine::tokenNeedsUpdate(const Value::Object &obj)
     }
 
     //Checking if it does exist that it isnt empty
-    if(obj.getValue("refresh_token").asString().length() == 0 ||
-       obj.getValue("access_token").asString().length() == 0 ||
+    if(obj.getValue("refresh").asString().length() == 0 ||
+       obj.getValue("access").asString().length() == 0 ||
        obj.getValue("access_iv").asString().length() == 0 ||
        obj.getNumber("access_len") == 0 ||
        obj.getValue("refresh_iv").asString().length() == 0 ||
