@@ -47,7 +47,6 @@ BOOST_GLOBAL_FIXTURE(GlobalProtobufTeardown);
 
 
 
-
 BOOST_AUTO_TEST_SUITE(TaskWorkerTest)
 
 // Create a test case for handling encrypted tokens
@@ -86,17 +85,16 @@ BOOST_AUTO_TEST_CASE(testing_encrypted_token)
     SDMS::CipherEngine::CipherString returnObj = testCipher.encrypt(test_token, log_context);
 
     // Create a JSON object with the encrypted token and IV for testing
-    test_params.fromString("{\"access_token\":\"" + std::string(returnObj.encrypted_msg.get()) +
+    test_params.fromString("{\"access\":\"" + std::string(returnObj.encrypted_msg.get()) +
                        "\",\"access_iv\":\"" + std::string(returnObj.iv.get()) +
                        "\",\"access_len\":96," +
-                       "\"refresh_token\":\"" + std::string(returnObj.encrypted_msg.get())  +
+                       "\"refresh\":\"" + std::string(returnObj.encrypted_msg.get())  +
                        "\",\"refresh_iv\":\"" + std::string(returnObj.iv.get())  +
                        "\",\"refresh_len\":96}");
     const libjson::Value::Object &obj = test_params.asObject();
 
     // Check whether the token needs to be updated (based on IV, length, etc.)
     needs_update = TaskWorkerTestAccess::tokenNeedsUpdate(obj);
-
     // Decrypt or prepare the token using the access function
     std::string acc_tok = TaskWorkerTestAccess::prepToken(obj, TaskWorker::enumToString(TaskWorker::Token_Name::ACCESS), cipher_key_path, needs_update, log_context);
 
@@ -114,13 +112,13 @@ BOOST_AUTO_TEST_CASE(testing_unencrypted_token)
     libjson::Value test_params;
 
     // Prepare test parameters with an unencrypted token (empty IV and zero length)
-    test_params.fromString(std::string("{\"access_token\":\"") + "to" +
-                       "\",\"access_iv\":\"" + "yo" +
-                       "\",\"access_len\":96," +
-                       "\"refresh_token\":\"" + "" +
-                       "\",\"refresh_iv\":\"" + "lalalalalalalalala" +
-                       "\",\"refresh_len\":96}"); 
-   const libjson::Value::Object &obj = test_params.asObject();
+    test_params.fromString("{\"access\":\"ENC_TOKEN_ABC123\","
+                       "\"access_iv\":\"IV_ABC123\","
+                       "\"access_len\":96,"
+                       "\"refresh\":\"\","
+                       "\"refresh_iv\":\"IV_REFRESH_ABC123\","
+                       "\"refresh_len\":96}");
+    const libjson::Value::Object &obj = test_params.asObject();
     std::string cipher_key_path = "";
 
     // Check whether the unencrypted token should be updated

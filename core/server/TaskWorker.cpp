@@ -206,17 +206,22 @@ TaskWorker::prepToken(const Value::Object &obj,std::string token, const std::str
         unsigned char token_key[SDMS::CipherEngine::KEY_LENGTH];
         readFile(cipher_key_path + "datafed-token-key.txt", SDMS::CipherEngine::KEY_LENGTH, token_key);
         CipherEngine cipher(token_key);
-
         CipherEngine::CipherString encoded_obj;
 
         //Checks which token we are prepping
-        if(token.compare("access_token"))
+        if(token.compare("access"))
         {
           encoded_obj.encrypted_msg_len = obj.getNumber("access_len");
           string iv_str = obj.getString("access_iv");
+
           //Prep IV into a char[]
           encoded_obj.iv = std::unique_ptr<char[]>(new char[iv_str.size() + 1]);  // +1 for null terminator
           std::memcpy(encoded_obj.iv.get(), iv_str.c_str(), iv_str.size() + 1);     // copy including '\0'
+
+          //Prep Token into a char[]
+          string token_str = obj.getString("access");  // assume known size
+          encoded_obj.encrypted_msg = std::unique_ptr<char[]>(new char[token_str.size() + 1]);  // +1 for null terminator
+          std::memcpy(encoded_obj.encrypted_msg.get(), token_str.c_str(), token_str.size() + 1);     // copy including '\0'
         }
         else{
           encoded_obj.encrypted_msg_len = obj.getNumber("refresh_len");
@@ -224,12 +229,11 @@ TaskWorker::prepToken(const Value::Object &obj,std::string token, const std::str
           //Prep IV into a char[]
           encoded_obj.iv = std::unique_ptr<char[]>(new char[iv_str.size() + 1]);  // +1 for null terminator
           std::memcpy(encoded_obj.iv.get(), iv_str.c_str(), iv_str.size() + 1);     // copy including '\0'
+          //Prep Token into a char[]
+          string token_str = obj.getString("refresh");  // assume known size
+          encoded_obj.encrypted_msg = std::unique_ptr<char[]>(new char[token_str.size() + 1]);  // +1 for null terminator
+          std::memcpy(encoded_obj.encrypted_msg.get(), token_str.c_str(), token_str.size() + 1);     // copy including '\0'
         }
-        //Prep Token into a char[]
-        string token_str = obj.getString(token);  // assume known size
-        encoded_obj.encrypted_msg = std::unique_ptr<char[]>(new char[token_str.size() + 1]);  // +1 for null terminator
-        std::memcpy(encoded_obj.encrypted_msg.get(), token_str.c_str(), token_str.size() + 1);     // copy including '\0'
-        
 
         //Decrypt it:
         return cipher.decrypt(encoded_obj, log_context);
@@ -249,8 +253,8 @@ TaskWorker::enumToString(Token_Name token_name)
 
 std::map<TaskWorker::Token_Name, std::string> TaskWorker::tokenNameToString =
 {
-    { TaskWorker::Token_Name::ACCESS, "access_token" },
-    { TaskWorker::Token_Name::REFRESH, "refresh_token" }
+    { TaskWorker::Token_Name::ACCESS, "access" },
+    { TaskWorker::Token_Name::REFRESH, "refresh" }
 };
 
 ICommunicator::Response

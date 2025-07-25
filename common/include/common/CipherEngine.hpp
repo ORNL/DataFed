@@ -1,6 +1,8 @@
 #ifndef CIPHER_ENGINE_HPP
 #define CIPHER_ENGINE_HPP
 #pragma once
+//Third party include
+#include <openssl/evp.h>
 
 //Local public includes
 #include "DynaLog.hpp"
