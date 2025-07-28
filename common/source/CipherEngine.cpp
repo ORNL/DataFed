@@ -21,7 +21,6 @@
 #include <vector>
 #include <fstream>
 #include <iomanip>
-using namespace std;
 using namespace libjson;
 namespace SDMS{
       
@@ -104,7 +103,7 @@ bool CipherEngine::tokenNeedsUpdate(const Value::Object &obj)
 
     return false;
     }
-    CipherEngine::CipherBytes CipherEngine::encryptAlgorithm(unsigned char *iv, const string& msg, LogContext log_context)
+    CipherEngine::CipherBytes CipherEngine::encryptAlgorithm(unsigned char *iv, const std::string& msg, LogContext log_context)
     {
         if (msg.length() > MAX_MSG_LENGTH) {
             throw TraceException(__FILE__, __LINE__, 0, std::string("Message too long for encryption"));
@@ -118,7 +117,7 @@ bool CipherEngine::tokenNeedsUpdate(const Value::Object &obj)
             bytes_result.iv[i] = iv[i];
         }
 
-       vector<unsigned char> msg_unsigned(msg.begin(), msg.end());
+        std::vector<unsigned char> msg_unsigned(msg.begin(), msg.end());
 
         /* Create and initialise the context */
         if(!(ctx = EVP_CIPHER_CTX_new()))
@@ -174,14 +173,14 @@ bool CipherEngine::tokenNeedsUpdate(const Value::Object &obj)
         return encoded_string_result;
     }
 
-    CipherEngine::CipherString CipherEngine::encrypt(unsigned char *iv,const string& msg, LogContext log_context)
+    CipherEngine::CipherString CipherEngine::encrypt(unsigned char *iv,const std::string& msg, LogContext log_context)
     {
         CipherEngine::CipherBytes unencoded_bytes;
         unencoded_bytes = encryptAlgorithm(iv, msg, log_context);
         return encodeBytes(unencoded_bytes, log_context);
     }
 
-    CipherEngine::CipherString CipherEngine::encrypt(const string& msg, LogContext log_context)
+    CipherEngine::CipherString CipherEngine::encrypt(const std::string& msg, LogContext log_context)
     {
         unsigned char iv[SDMS::CipherEngine::IV_LENGTH] = {};
         generateIV(iv);
