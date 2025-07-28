@@ -36,6 +36,7 @@ namespace SDMS{
     {
         // Calculate the padded length based on the input length:
         // (length + 2) / 3 gives the number of 3-byte blocks (rounded up), multiplied by 4 gives the number of base64 characters required.
+        // Allocate memory for the output buffer; std::make_unique will throw std::bad_alloc if allocation fails.
         const int paddedLength = SDMS::CipherEngine::BASE64_ENCODED_BLOCK_SIZE*((length + (SDMS::CipherEngine::BASE64_INPUT_BLOCK_SIZE-1))/SDMS::CipherEngine::BASE64_INPUT_BLOCK_SIZE);
         auto output = std::make_unique<char[]>(paddedLength+SDMS::CipherEngine::NULL_TERMINATOR_SIZE);
         std::fill_n(output.get(), paddedLength + SDMS::CipherEngine::NULL_TERMINATOR_SIZE, 0);  // manually zero-initialize
@@ -48,6 +49,7 @@ namespace SDMS{
     std::unique_ptr<unsigned char[]> CipherEngine::decode64(const char* input,const int length, LogContext log_context) const {
         // Calculate the padded length, the number of original decoded bytes
         // (length / 4) gives the number of 4-byte blocks of base64 data, multiplied by 3 gives the decoded byte length
+        // Allocate memory for the output buffer; std::make_unique will throw std::bad_alloc if allocation fails.
         const int paddedLength = ((length/SDMS::CipherEngine::BASE64_ENCODED_BLOCK_SIZE)*SDMS::CipherEngine::BASE64_INPUT_BLOCK_SIZE);
         auto output = std::make_unique<unsigned char[]>(paddedLength+SDMS::CipherEngine::NULL_TERMINATOR_SIZE);
         std::fill_n(output.get(), paddedLength+SDMS::CipherEngine::NULL_TERMINATOR_SIZE, 0);
