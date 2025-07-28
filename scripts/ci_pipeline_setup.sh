@@ -173,6 +173,11 @@ wait_for_running_infrastructure_pipelines_to_finish() {
     echo "Error detected with GITLAB_DATAFEDCI_REPO_API_TOKEN"
     echo "$all_other_pipelines"
     exit 2
+  elif [[ "$all_other_pipelines" == *"Unauthorized"* ]]
+  then
+    echo "Error detected with GITLAB_DATAFEDCI_REPO_API_TOKEN"
+    echo "$all_other_pipelines"
+    exit 3
   fi
 
   local count=0
