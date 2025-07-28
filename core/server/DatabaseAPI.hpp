@@ -22,6 +22,8 @@ namespace Core {
 
 class DatabaseAPI {
 public:
+
+
   struct UserTokenInfo {
     std::string uid;
     std::string access_token;
@@ -29,8 +31,7 @@ public:
     uint32_t expiration;
   };
 
-  DatabaseAPI(const std::string &a_db_url, const std::string &a_db_user,
-              const std::string &a_db_pass);
+  DatabaseAPI(const std::string &a_db_url, const std::string &a_db_user, const std::string &a_db_pass, const std::string &cipher_key_file_path);
   ~DatabaseAPI();
 
   void serverPing(LogContext log_context);
@@ -67,7 +68,9 @@ public:
                           const std::string collection_type,
                           bool &needs_consent,
                           int &token_type, // TODO: use underlying type?
-                          std::string &scopes, LogContext log_context);
+                          std::string &scopes,
+                          bool &needs_encrypted,
+                          LogContext log_context);
   void getExpiringAccessTokens(uint32_t a_expires_in,
                                std::vector<UserTokenInfo> &a_expiring_tokens,
                                LogContext log_context);
@@ -333,6 +336,7 @@ public:
       LogContext);
   void metricsPurge(uint32_t a_timestamp, LogContext);
 
+  std::string cipher_key_file_path;
 private:
   long dbGet(const char *a_url_path,
              const std::vector<std::pair<std::string, std::string>> &a_params,

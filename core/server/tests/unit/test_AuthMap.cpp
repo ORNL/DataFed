@@ -30,9 +30,10 @@ BOOST_AUTO_TEST_CASE(testing_AuthMap) {
   std::string db_url = "https://db/sdms/blah";
   std::string db_user = "greatestone";
   std::string db_pass = "1234";
+  std::string cred_dir = "/opt/datafed/keys";
 
   AuthMap auth_map(active_transient_key_time, active_session_key_time, db_url,
-                   db_user, db_pass);
+                   db_user, db_pass, cred_dir);
 
   BOOST_TEST(auth_map.size(PublicKeyType::TRANSIENT) == 0);
   std::string new_pub_key = "ugh";

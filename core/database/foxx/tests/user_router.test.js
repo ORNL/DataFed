@@ -20,6 +20,10 @@ describe("unit_user_router: the Foxx microservice user_router token/set endpoint
             _key: "testUser" + param_index,
             access: "access_token" + param_index,
             refresh: "refresh_token" + param_index,
+            access_len: 96,
+            access_iv: "access_iv" + param_index,
+            refresh_len: 96,
+            refresh_iv: "refresh_iv" + param_index,
         };
     });
     const test_uuid = "1cbaaee5-b938-4a4e-87a8-f1ec4d5d92f9"; // fake UUID
@@ -34,7 +38,7 @@ describe("unit_user_router: the Foxx microservice user_router token/set endpoint
         // NOTE: the get request has query params instead of a body
         const query_params = test_params[0];
         // TODO: make encoded query params less hard coded
-        const request_string = `${usr_base_url}/token/set?client=${query_params._key}&access=${query_params.access}&refresh=${query_params.refresh}&expires_in=500000`;
+        const request_string = `${usr_base_url}/token/set?client=${query_params._key}&access=${query_params.access}&refresh=${query_params.refresh}&expires_in=500000&access_len=${query_params.access_len}&access_iv=${query_params.access_iv}&refresh_len=${query_params.refresh_len}&refresh_iv=${query_params.refresh_iv}`;
 
         // act
         const response = request.get(request_string);
@@ -54,7 +58,7 @@ describe("unit_user_router: the Foxx microservice user_router token/set endpoint
             type: test_edge_params.type,
         };
         // TODO: make encoded query params less hard coded
-        const request_string = `${usr_base_url}/token/set?client=${query_params._key}&access=${query_params.access}&refresh=${query_params.refresh}&expires_in=500000&type=${query_params.type}`;
+        const request_string = `${usr_base_url}/token/set?client=${query_params._key}&access=${query_params.access}&refresh=${query_params.refresh}&expires_in=500000&type=${query_params.type}&access_len=${query_params.access_len}&access_iv=${query_params.access_iv}&refresh_len=${query_params.refresh_len}&refresh_iv=${query_params.refresh_iv}`;
 
         // act
         const response = request.get(request_string);
@@ -76,7 +80,7 @@ describe("unit_user_router: the Foxx microservice user_router token/set endpoint
             other_token_data: test_edge_params.other_token_data,
         };
         // TODO: make encoded query params less hard coded
-        const request_string = `${usr_base_url}/token/set?client=${query_params._key}&access=${query_params.access}&refresh=${query_params.refresh}&expires_in=500000&other_token_data=${query_params.other_token_data}`;
+        const request_string = `${usr_base_url}/token/set?client=${query_params._key}&access=${query_params.access}&refresh=${query_params.refresh}&expires_in=500000&access_len=${query_params.access_len}&access_iv=${query_params.access_iv}&refresh_len=${query_params.refresh_len}&refresh_iv=${query_params.refresh_iv}&other_token_data=${query_params.other_token_data}`;
 
         // act
         const response = request.get(request_string);
@@ -99,7 +103,7 @@ describe("unit_user_router: the Foxx microservice user_router token/set endpoint
             other_token_data: test_edge_params.other_token_data,
         };
         // TODO: make encoded query params less hard coded
-        const request_string = `${usr_base_url}/token/set?client=${query_params._key}&access=${query_params.access}&refresh=${query_params.refresh}&expires_in=500000&type=${query_params.type}&other_token_data=${query_params.other_token_data}`;
+        const request_string = `${usr_base_url}/token/set?client=${query_params._key}&access=${query_params.access}&refresh=${query_params.refresh}&expires_in=500000&access_len=${query_params.access_len}&access_iv=${query_params.access_iv}&refresh_len=${query_params.refresh_len}&refresh_iv=${query_params.refresh_iv}&type=${query_params.type}&other_token_data=${query_params.other_token_data}`;
 
         // act
         const response = request.get(request_string);
@@ -120,6 +124,10 @@ describe("unit_user_router: the Foxx microservice user_router token/set endpoint
             user_key: local_test_params._key,
             access: local_test_params.access,
             refresh: local_test_params.refresh,
+            access_len: local_test_params.access_len,
+            access_iv: local_test_params.access_iv,
+            refresh_len: local_test_params.refresh_len,
+            refresh_iv: local_test_params.refresh_iv,
             ...test_edge_params,
         };
 
@@ -134,7 +142,7 @@ describe("unit_user_router: the Foxx microservice user_router token/set endpoint
         delete expected.user_key;
 
         // TODO: make encoded query params less hard coded
-        const request_string = `${usr_base_url}/token/set?client=${query_params.user_key}&access=${query_params.access}&refresh=${query_params.refresh}&expires_in=500000&type=${query_params.type}&other_token_data=${query_params.other_token_data}`;
+        const request_string = `${usr_base_url}/token/set?client=${query_params.user_key}&access=${query_params.access}&refresh=${query_params.refresh}&expires_in=500000&type=${query_params.type}&access_len=${query_params.access_len}&access_iv=${query_params.access_iv}&refresh_len=${query_params.refresh_len}&refresh_iv=${query_params.refresh_iv}&other_token_data=${query_params.other_token_data}`;
 
         // act
         const response = request.get(request_string);
@@ -161,6 +169,10 @@ describe("unit_user_router: the Foxx microservice user_router token/get endpoint
     const get_token_test_user = "getTokenUser";
     const test_access_token = "test_access_token";
     const test_refresh_token = "test_refresh_token";
+    const test_access_len = "96";
+    const test_access_iv = "test_access_iv";
+    const test_refresh_len = "96";
+    const test_refresh_iv = "test_refresh_iv";
     const test_globus_access_token = "test_globus_access_token";
     const test_globus_refresh_token = "test_globus_refresh_token";
     const test_globus_token_type = g_lib.AccessTokenType.GLOBUS_TRANSFER;
@@ -168,11 +180,11 @@ describe("unit_user_router: the Foxx microservice user_router token/get endpoint
     const test_expires_in = "12345689";
     before(() => {
         // One time set up of some test user data
-        const default_token_query_string = `${usr_base_url}/token/set?client=${get_token_test_user}&access=${test_access_token}&refresh=${test_refresh_token}&expires_in=${test_expires_in}`;
+        const default_token_query_string = `${usr_base_url}/token/set?client=${get_token_test_user}&access=${test_access_token}&refresh=${test_refresh_token}&expires_in=${test_expires_in}&access_len=${test_access_len}&access_iv=${test_access_iv}&refresh_len=${test_refresh_len}&refresh_iv=${test_refresh_iv}`;
         const default_token_response = request.get(default_token_query_string);
         expect(default_token_response.status).to.equal(204);
 
-        const collection_token_query_string = `${usr_base_url}/token/set?client=${get_token_test_user}&access=${test_globus_access_token}&refresh=${test_globus_refresh_token}&expires_in=500000&type=${test_globus_token_type}&other_token_data=${test_other_token_data}`;
+        const collection_token_query_string = `${usr_base_url}/token/set?client=${get_token_test_user}&access=${test_globus_access_token}&refresh=${test_globus_refresh_token}&expires_in=500000&access_len=${test_access_len}&access_iv=${test_access_iv}&refresh_len=${test_refresh_len}&refresh_iv=${test_refresh_iv}&type=${test_globus_token_type}&other_token_data=${test_other_token_data}`;
         const collection_token_response = request.get(collection_token_query_string);
         expect(collection_token_response.status).to.equal(204);
     });

@@ -24,4 +24,12 @@ then
   "${DATAFED_INSTALL_PATH}/core/datafed-core" --gen-keys
   mv datafed-core-key.pub "${DATAFED_INSTALL_PATH}/keys/"
   mv datafed-core-key.priv "${DATAFED_INSTALL_PATH}/keys/"
+  mv datafed-token-key.txt "${DATAFED_INSTALL_PATH}/keys/"
+fi  
+if [ ! -f "${DATAFED_INSTALL_PATH}/keys/datafed-token-key.txt" ]
+then
+  #Generate token key
+  echo "No token key found in: ${DATAFED_INSTALL_PATH}/keys/ creating it"
+  "${DATAFED_INSTALL_PATH}/core/datafed-core" --gen-keys
+  mv datafed-token-key.txt "${DATAFED_INSTALL_PATH}/keys/"
 fi

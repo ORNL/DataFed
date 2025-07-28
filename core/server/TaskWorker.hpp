@@ -17,16 +17,28 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include <map>
 #include <unordered_map>
 
 namespace SDMS {
 namespace Core {
 
 class TaskWorker : public ITaskWorker {
+
 public:
   TaskWorker(ITaskMgr &a_mgr, uint32_t a_id, LogContext log_context);
   ~TaskWorker();
 
+  enum class Token_Name
+  {
+    ACCESS,
+    REFRESH
+  };
+
+  static std::map<Token_Name, std::string> tokenNameToString;
+  static std::string enumToString(Token_Name token_name);
+protected:
+  static std::string prepToken(const libjson::Value::Object &obj, std::string token, const std::string& cipher_key_path, bool needs_update, LogContext log_context);
 private:
   typedef ICommunicator::Response (*task_function_t)(
       TaskWorker &me, const libjson::Value &a_task_params,

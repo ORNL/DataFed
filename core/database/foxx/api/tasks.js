@@ -443,12 +443,16 @@ var tasks_func = (function () {
                 uid: a_task.client,
                 type: a_task.type,
                 encrypt: state.encrypt,
-                acc_tok: tokens.acc_tok,
-                ref_tok: tokens.ref_tok,
-                acc_tok_exp_in: tokens.acc_tok_exp_in,
+                access_token: tokens.access_token,
+                refresh_token: tokens.refresh_token,
+                access_exp_in: tokens.access_exp_in,
                 token_type: extra_token_format.token_type,
                 scopes: extra_token_format.scopes,
                 collection_id: state.collection_info.collection_id,
+                access_iv: tokens.access_iv,
+                access_len: tokens.access_len,
+                refresh_iv: tokens.refresh_iv,
+                refresh_len: tokens.refresh_len,
             };
             params = Object.assign(params, state.xfr[a_task.step - 1]);
 
@@ -590,12 +594,16 @@ var tasks_func = (function () {
                 uid: a_task.client,
                 type: a_task.type,
                 encrypt: state.encrypt,
-                acc_tok: tokens.acc_tok,
-                ref_tok: tokens.ref_tok,
-                acc_tok_exp_in: tokens.acc_tok_exp_in,
+                access_token: tokens.access_token,
+                refresh_token: tokens.refresh_token,
+                access_exp_in: tokens.access_exp_in,
                 token_type: extra_token_format.token_type,
                 scopes: extra_token_format.scopes,
                 collection_id: state.collection_info.collection_id,
+                access_iv: tokens.access_iv,
+                access_len: tokens.access_len,
+                refresh_iv: tokens.refresh_iv,
+                refresh_len: tokens.refresh_len,
             };
             params = Object.assign(params, state.xfr[a_task.step - 1]);
             reply = {
@@ -920,9 +928,13 @@ var tasks_func = (function () {
                         uid: a_task.client,
                         type: a_task.type,
                         encrypt: state.encrypt,
-                        acc_tok: tokens.acc_tok,
-                        ref_tok: tokens.ref_tok,
-                        acc_tok_exp_in: tokens.acc_tok_exp_in,
+                        access_token: tokens.access_token,
+                        refresh_token: tokens.refresh_token,
+                        access_exp_in: tokens.access_exp_in,
+                        access_iv: tokens.access_iv,
+                        access_len: tokens.access_len,
+                        refresh_iv: tokens.refresh_iv,
+                        refresh_len: tokens.refresh_len,
                     };
                     params = Object.assign(params, xfr);
                     reply = {
@@ -1307,9 +1319,7 @@ var tasks_func = (function () {
                         uid: a_task.client,
                         type: a_task.type,
                         encrypt: state.encrypt,
-                        acc_tok: tokens.acc_tok,
-                        ref_tok: tokens.ref_tok,
-                        acc_tok_exp_in: tokens.acc_tok_exp_in,
+                        ...tokens,
                     };
                     params = Object.assign(params, xfr);
                     reply = {

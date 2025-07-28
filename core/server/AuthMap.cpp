@@ -1,8 +1,6 @@
-
 // Local private includes
 #include "AuthMap.hpp"
 #include "DatabaseAPI.hpp"
-
 using namespace std;
 
 namespace SDMS {
@@ -28,6 +26,7 @@ AuthMap::AuthMap(const AuthMap &auth_map) {
   m_db_url = auth_map.m_db_url;
   m_db_user = auth_map.m_db_user;
   m_db_pass = auth_map.m_db_pass;
+  m_cred_dir = auth_map.m_cred_dir;
 }
 
 AuthMap &AuthMap::operator=(const AuthMap &&auth_map) {
@@ -62,6 +61,7 @@ AuthMap &AuthMap::operator=(const AuthMap &&auth_map) {
   m_db_url = auth_map.m_db_url;
   m_db_user = auth_map.m_db_user;
   m_db_pass = auth_map.m_db_pass;
+  m_cred_dir = auth_map.m_cred_dir;
   return *this;
 }
 
@@ -197,7 +197,7 @@ bool AuthMap::hasKey(const PublicKeyType pub_key_type,
       return true;
 
     // Check to see if it is a user key
-    DatabaseAPI db(m_db_url, m_db_user, m_db_pass);
+    DatabaseAPI db(m_db_url, m_db_user, m_db_pass, m_cred_dir);
     std::string uid;
     if (db.uidByPubKey(public_key, uid)) {
       return true;
@@ -234,7 +234,7 @@ std::string AuthMap::getUID(const PublicKeyType pub_key_type,
     }
 
     // It must be a persistent user key
-    DatabaseAPI db(m_db_url, m_db_user, m_db_pass);
+    DatabaseAPI db(m_db_url, m_db_user, m_db_pass, m_cred_dir);
     std::string uid;
     if (db.uidByPubKey(public_key, uid)) {
       return uid;

@@ -96,10 +96,8 @@ RUN mkdir -p ${DATAFED_INSTALL_PATH}/authz
 RUN mkdir -p /mnt/datafed
 
 # This is necessary for curl, which is used the entrypoint script
-COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libssl.so   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libssl.so
-COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libssl.so.1.1   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libssl.so.1.1
-COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libcrypto.so   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libcrypto.so
-COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libcrypto.so.1.1   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libcrypto.so.1.1
+COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libssl.a   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libssl.a
+COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libcrypto.a   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libcrypto.so
 COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/python   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/python
 COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/python3.9   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/python3.9
 

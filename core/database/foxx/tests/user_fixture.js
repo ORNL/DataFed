@@ -49,6 +49,10 @@ if (!db._collection("u")) {
                     access: "access for " + uid,
                     refresh: "refresh for " + uid,
                     expiration: current_time + 123456789,
+                    access_iv: "access iv for " + uid,
+                    access_len: 96,
+                    refresh_iv: "refresh iv for " + uid,
+                    refresh_len: 96,
                     ...minimal_user_data,
                 };
             } else {

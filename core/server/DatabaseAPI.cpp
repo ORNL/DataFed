@@ -7,6 +7,7 @@
 #include "common/SDMS.pb.h"
 #include "common/TraceException.hpp"
 #include "common/Util.hpp"
+#include "common/CipherEngine.hpp"
 
 // Third party includes
 #include <boost/algorithm/string.hpp>
@@ -14,12 +15,14 @@
 #include <google/protobuf/util/json_util.h>
 #include <nlohmann/json.hpp>
 #include <zmq.h>
-
+#include <openssl/bio.h>
 // Standard includes
+#include <typeinfo>
 #include <algorithm>
 #include <cctype>
 #include <memory>
 #include <unistd.h>
+#include <vector>
 
 using namespace std;
 
@@ -40,8 +43,9 @@ using namespace libjson;
 
 DatabaseAPI::DatabaseAPI(const std::string &a_db_url,
                          const std::string &a_db_user,
-                         const std::string &a_db_pass)
-    : m_client(0), m_db_url(a_db_url) {
+                         const std::string &a_db_pass,
+                         const std::string &cipher_key_file_path)
+    : cipher_key_file_path(cipher_key_file_path), m_client(0), m_db_url(a_db_url) {
   m_curl = curl_easy_init();
   if (!m_curl)
     EXCEPT(ID_INTERNAL_ERROR, "libcurl init failed");
@@ -331,10 +335,11 @@ void DatabaseAPI::userGetAccessToken(
     std::string &a_acc_tok, std::string &a_ref_tok, uint32_t &a_expires_in,
     const std::string collection_id, const std::string collection_type,
     bool &needs_consent, int &token_type, // TODO: use underlying type?
-    std::string &scopes, LogContext log_context) {
+    std::string &scopes, bool &needs_encrypted, LogContext log_context) {
+
+
   Value result;
   std::vector<std::pair<std::string, std::string>> params = {};
-
   if (!collection_id.empty()) {
     params.push_back({"collection_id", collection_id});
   }
@@ -344,16 +349,58 @@ void DatabaseAPI::userGetAccessToken(
   dbGet("usr/token/get", params, result, log_context);
 
   TRANSLATE_BEGIN()
+  unsigned char token_key[CipherEngine::KEY_LENGTH];
+
+  //grab the token_key
+  readFile(cipher_key_file_path + "datafed-token-key.txt", CipherEngine::KEY_LENGTH, token_key);
+
+  CipherEngine cipher(token_key);
+
+  CipherEngine::CipherString encoded_refresh_obj;
+  CipherEngine::CipherString encoded_access_obj;
 
   const Value::Object &obj = result.asObject();
 
-  a_acc_tok = obj.getString("access");
-  a_ref_tok = obj.getString("refresh");
+  std::string access = obj.getString("access");
+  std::string refresh = obj.getString("refresh");
+  
   a_expires_in = (uint32_t)obj.getNumber("expires_in");
   needs_consent = obj.getBool("needs_consent");
   token_type = (int)obj.getNumber("token_type");
   // NOTE: scopes will be a blank string for token_type=GLOBUS_DEFAULT
   scopes = obj.getString("scopes");
+ 
+  
+  needs_encrypted = CipherEngine::tokenNeedsUpdate(obj);
+
+  encoded_access_obj.encrypted_msg_len = obj.getNumber("access_len");
+  encoded_refresh_obj.encrypted_msg_len = obj.getNumber("refresh_len");
+
+  // Allocate and copy to char*
+  encoded_access_obj.encrypted_msg = std::make_unique<char[]>(CipherEngine::ENCODED_MSG_LENGTH + 1); // add 1 for null terminator
+  memcpy(encoded_access_obj.encrypted_msg.get(), access.c_str(), CipherEngine::ENCODED_MSG_LENGTH);
+  encoded_access_obj.encrypted_msg[CipherEngine::ENCODED_MSG_LENGTH] = '\0'; // null terminate
+
+  // Do the same for IV
+  std::string access_iv = obj.getString("access_iv");
+  encoded_access_obj.iv = std::make_unique<char[]>(CipherEngine::ENCODED_IV_LENGTH+1); // add 1 for null terminator
+  memcpy(encoded_access_obj.iv.get(), access_iv.c_str(), CipherEngine::ENCODED_IV_LENGTH);
+  encoded_access_obj.iv[CipherEngine::ENCODED_IV_LENGTH] = '\0'; //null terminate
+
+  // Allocate and copy to char*
+  encoded_refresh_obj.encrypted_msg = std::make_unique<char[]>(CipherEngine::ENCODED_MSG_LENGTH+1); // add 1 for null terminator
+  memcpy(encoded_refresh_obj.encrypted_msg.get(), refresh.c_str(), CipherEngine::ENCODED_MSG_LENGTH);
+  encoded_refresh_obj.encrypted_msg[CipherEngine::ENCODED_MSG_LENGTH] = '\0'; // null terminate
+
+  // Do the same for IV
+  std::string refresh_iv = obj.getString("refresh_iv");
+  encoded_refresh_obj.iv = std::make_unique<char[]>(CipherEngine::ENCODED_IV_LENGTH + 1); //add 1 for null terminator
+  memcpy(encoded_refresh_obj.iv.get(), refresh_iv.c_str(), CipherEngine::ENCODED_IV_LENGTH);
+  encoded_refresh_obj.iv[CipherEngine::ENCODED_IV_LENGTH] = '\0'; // null terminate
+
+  //Decryption for acc token and ref token
+  a_acc_tok = cipher.decrypt(encoded_access_obj, log_context);
+  a_ref_tok = cipher.decrypt(encoded_refresh_obj, log_context);
 
   TRANSLATE_END(result, log_context)
 }
@@ -365,10 +412,29 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
                                      const std::string &other_token_data,
                                      LogContext log_context) {
   string result;
+
+  unsigned char token_key[CipherEngine::KEY_LENGTH];
+
+  //grab the token_key
+  readFile(cipher_key_file_path + "datafed-token-key.txt", CipherEngine::KEY_LENGTH, token_key);
+  CipherEngine cipher(token_key);
+
+  //encrypting the access token
+  CipherEngine::CipherString access_obj = cipher.encrypt(a_acc_tok, log_context);
+
+  CipherEngine::CipherString refresh_obj = cipher.encrypt(a_ref_tok, log_context);
+
   std::vector<pair<string, string>> params = {
-      {"access", a_acc_tok},
-      {"refresh", a_ref_tok},
-      {"expires_in", to_string(a_expires_in)}};
+      {"access", std::string(access_obj.encrypted_msg.get())}, //a_acc_tok shift to encrypted_access_string
+      {"refresh", std::string(refresh_obj.encrypted_msg.get())}, //a_ref_tok shift to encrypted_refresh_string
+      {"expires_in", to_string(a_expires_in)},
+      {"access_iv", std::string(access_obj.iv.get())},
+      {"access_len",to_string(access_obj.encrypted_msg_len)},
+      {"refresh_iv", std::string(refresh_obj.iv.get())},
+      {"refresh_len", to_string(refresh_obj.encrypted_msg_len)}
+  };
+
+
   if (token_type != SDMS::AccessTokenType::ACCESS_SENTINEL) {
     params.push_back({"type", to_string(token_type)});
   }

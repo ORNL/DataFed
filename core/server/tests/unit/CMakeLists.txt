@@ -2,7 +2,8 @@
 foreach(PROG
     test_AuthMap
     test_AuthenticationManager
-)
+    test_TaskWorker
+    )
 
   file(GLOB ${PROG}_SOURCES ${PROG}*.cpp)
   add_executable(unit_${PROG} ${${PROG}_SOURCES})

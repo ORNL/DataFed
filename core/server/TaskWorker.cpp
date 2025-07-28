@@ -5,14 +5,17 @@
 #include "ITaskMgr.hpp"
 
 // Common public includes
+#include "common/CipherEngine.hpp"
 #include "common/CommunicatorFactory.hpp"
 #include "common/CredentialFactory.hpp"
+#include "DatabaseAPI.hpp"
 #include "common/DynaLog.hpp"
 #include "common/ICommunicator.hpp"
 #include "common/IMessage.hpp"
 #include "common/MessageFactory.hpp"
 #include "common/SDMS.pb.h"
 #include "common/SocketOptions.hpp"
+#include "common/Util.hpp"
 
 // Standard includes
 #include "common/TraceException.hpp"
@@ -33,7 +36,7 @@ TaskWorker::TaskWorker(ITaskMgr &a_mgr, uint32_t a_worker_id,
                        LogContext log_context)
     : ITaskWorker(a_worker_id, log_context), m_mgr(a_mgr),
       m_db(Config::getInstance().db_url, Config::getInstance().db_user,
-           Config::getInstance().db_pass) {
+           Config::getInstance().db_pass, Config::getInstance().cred_dir) {
 
   log_context.thread_name += "-TaskWorker";
   log_context.thread_id = a_worker_id;
@@ -190,11 +193,85 @@ void TaskWorker::workerThread(LogContext log_context) {
   } // End of outer while loop
 }
 
+
+//Checks if the tokens are encrypted, if not then it returns the token, if it is encrypted it unencrypts it and returns the unencrypted token
+std::string
+TaskWorker::prepToken(const Value::Object &obj,std::string token, const std::string& cipher_key_path,bool needs_update, LogContext log_context)
+{
+
+    //if the token's encryption already exists
+    if(!needs_update)
+    {
+        //TOKEN IS ENCRYPTED
+        unsigned char token_key[SDMS::CipherEngine::KEY_LENGTH];
+        readFile(cipher_key_path + "datafed-token-key.txt", SDMS::CipherEngine::KEY_LENGTH, token_key);
+        CipherEngine cipher(token_key);
+        CipherEngine::CipherString encoded_obj;
+
+        //Checks which token we are prepping
+        if(token.compare("access"))
+        {
+          encoded_obj.encrypted_msg_len = obj.getNumber("access_len");
+          string iv_str = obj.getString("access_iv");
+
+          //Prep IV into a char[]
+          encoded_obj.iv = std::unique_ptr<char[]>(new char[iv_str.size() + 1]);  // +1 for null terminator
+          std::memcpy(encoded_obj.iv.get(), iv_str.c_str(), iv_str.size() + 1);     // copy including '\0'
+
+          //Prep Token into a char[]
+          string token_str = obj.getString("access");  // assume known size
+          encoded_obj.encrypted_msg = std::unique_ptr<char[]>(new char[token_str.size() + 1]);  // +1 for null terminator
+          std::memcpy(encoded_obj.encrypted_msg.get(), token_str.c_str(), token_str.size() + 1);     // copy including '\0'
+        }
+        else{
+          encoded_obj.encrypted_msg_len = obj.getNumber("refresh_len");
+          string iv_str = obj.getString("refresh_iv");
+          //Prep IV into a char[]
+          encoded_obj.iv = std::unique_ptr<char[]>(new char[iv_str.size() + 1]);  // +1 for null terminator
+          std::memcpy(encoded_obj.iv.get(), iv_str.c_str(), iv_str.size() + 1);     // copy including '\0'
+          //Prep Token into a char[]
+          string token_str = obj.getString("refresh");  // assume known size
+          encoded_obj.encrypted_msg = std::unique_ptr<char[]>(new char[token_str.size() + 1]);  // +1 for null terminator
+          std::memcpy(encoded_obj.encrypted_msg.get(), token_str.c_str(), token_str.size() + 1);     // copy including '\0'
+        }
+
+        //Decrypt it:
+        return cipher.decrypt(encoded_obj, log_context);
+    }
+    else
+    {
+        return obj.getString(token);
+    }
+return obj.getString(token);
+}
+
+std::string 
+TaskWorker::enumToString(Token_Name token_name)
+{
+    return tokenNameToString[token_name];
+}
+
+std::map<TaskWorker::Token_Name, std::string> TaskWorker::tokenNameToString =
+{
+    { TaskWorker::Token_Name::ACCESS, "access" },
+    { TaskWorker::Token_Name::REFRESH, "refresh" }
+};
+
 ICommunicator::Response
 TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
                                LogContext log_context) {
 
+  Token_Name access_token_name = Token_Name::ACCESS;
+  Token_Name refresh_token_name = Token_Name::REFRESH;
+  bool needs_update = false;
   const Value::Object &obj = a_task_params.asObject();
+
+  //TokenPrepFuncs
+  needs_update = CipherEngine::tokenNeedsUpdate(obj);
+
+  //Update the tokens to be unencrypted
+  string acc_tok = prepToken(obj, enumToString(access_token_name), me.m_db.cipher_key_file_path, needs_update, log_context);
+  string ref_tok = prepToken(obj, enumToString(refresh_token_name), me.m_db.cipher_key_file_path, needs_update, log_context);
 
   const string &uid = obj.getString("uid");
   TaskType type = (TaskType)obj.getNumber("type");
@@ -207,9 +284,7 @@ TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
   bool encrypted = true;
   GlobusAPI::EndpointInfo ep_info;
 
-  string acc_tok = obj.getString("acc_tok");
-  string ref_tok = obj.getString("ref_tok");
-  uint32_t expires_in = obj.getNumber("acc_tok_exp_in");
+  uint32_t expires_in = obj.getNumber("access_exp_in");
   uint32_t token_type =
       obj.getNumber("token_type"); // TODO: use enum if possible
   string collection_id;
@@ -222,8 +297,8 @@ TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
 
   DL_TRACE(log_context, ">>>> Token Expires in: " << expires_in);
 
-  if (expires_in < 3600) {
-
+  //if the token expired or needs to be updated
+  if ((expires_in < 3600) or needs_update) {
     me.m_db.setClient(uid);
 
     if (token_type ==

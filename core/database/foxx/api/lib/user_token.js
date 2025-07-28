@@ -128,6 +128,10 @@ class UserToken {
             expires_in: 0,
             token_type: g_lib.AccessTokenType.ACCESS_SENTINEL,
             scopes: "",
+            access_iv: "",
+            access_len: 0,
+            refresh_iv: "",
+            refresh_len: 0,
         };
         if (needs_consent) {
             // short circuit when consent flow is required
@@ -148,15 +152,23 @@ class UserToken {
         } else {
             result_token.token_type = g_lib.AccessTokenType.GLOBUS_DEFAULT;
         }
+        result_token.access_iv = token_document.access_iv;
+        result_token.access_len = token_document.access_len;
+        result_token.refresh_iv = token_document.refresh_iv;
+        result_token.refresh_len = token_document.refresh_len;
         return result_token;
     }
 
     static formatUserTokenForTransferTask(token_doc) {
         const exp_in = token_doc.expiration - Math.floor(Date.now() / 1000);
         return Object.freeze({
-            acc_tok: token_doc.access,
-            ref_tok: token_doc.refresh,
-            acc_tok_exp_in: exp_in > 0 ? exp_in : 0,
+            access_token: token_doc.access,
+            refresh_token: token_doc.refresh,
+            access_exp_in: exp_in > 0 ? exp_in : 0,
+            access_iv: token_doc.access_iv,
+            access_len: token_doc.access_len,
+            refresh_iv: token_doc.refresh_iv,
+            refresh_len: token_doc.refresh_len,
         });
     }
 }

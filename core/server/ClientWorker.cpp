@@ -44,7 +44,7 @@ ClientWorker::ClientWorker(ICoreServer &a_core, size_t a_tid,
                            LogContext log_context_in)
     : m_config(Config::getInstance()), m_core(a_core), m_tid(a_tid),
       m_run(true),
-      m_db_client(m_config.db_url, m_config.db_user, m_config.db_pass),
+      m_db_client(m_config.db_url, m_config.db_user, m_config.db_pass, m_config.cred_dir),
       m_log_context(log_context_in) {
   // This should be hidden behind a factory or some other builder
   m_msg_mapper = std::unique_ptr<IMessageMapper>(new ProtoBufMap);
@@ -1363,6 +1363,7 @@ std::unique_ptr<IMessage> ClientWorker::procUserGetAccessTokenRequest(
   string acc_tok, ref_tok;
   uint32_t expires_in;
   bool needs_consent;
+  bool needs_encrypted = false;
   int token_type;
   string scopes;
 
@@ -1379,11 +1380,11 @@ std::unique_ptr<IMessage> ClientWorker::procUserGetAccessTokenRequest(
   m_db_client.setClient(a_uid);
   m_db_client.userGetAccessToken(acc_tok, ref_tok, expires_in, collection_id,
                                  collection_type, needs_consent, token_type,
-                                 scopes, log_context);
+                                 scopes, needs_encrypted, log_context);
 
   if (needs_consent) {
     // short circuit to reply
-  } else if (expires_in < 300) {
+  } else if (expires_in < 300 || needs_encrypted) {
     DL_INFO(log_context, "Refreshing access token for " << a_uid);
     if (token_type == AccessTokenType::GLOBUS_DEFAULT) {
       m_globus_api.refreshAccessToken(ref_tok, acc_tok, expires_in);
