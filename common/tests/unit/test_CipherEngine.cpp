@@ -150,11 +150,11 @@ BOOST_AUTO_TEST_CASE(test_EncryptionDecryptionJSONValue)
     CipherEngine testCipher2(key);
     CipherEngine::CipherString encoded_access_obj;
     encoded_access_obj.encrypted_msg_len = obj.getNumber("access_len");
-    encoded_access_obj.encrypted_msg = std::make_unique<char[]>(SDMS::CipherEngine::MAX_MSG_LENGTH + 1); // add 1 for null terminator
+    encoded_access_obj.encrypted_msg = std::make_unique<char[]>(SDMS::CipherEngine::ENCODED_MSG_LENGTH + 1); // add 1 for null terminator
 
     std::string access = obj.getString("access");
-    memcpy(encoded_access_obj.encrypted_msg.get(), access.c_str(), SDMS::CipherEngine::MAX_MSG_LENGTH);
-    encoded_access_obj.encrypted_msg[SDMS::CipherEngine::MAX_MSG_LENGTH] = '\0'; // null terminate
+    memcpy(encoded_access_obj.encrypted_msg.get(), access.c_str(), SDMS::CipherEngine::ENCODED_MSG_LENGTH);
+    encoded_access_obj.encrypted_msg[SDMS::CipherEngine::ENCODED_MSG_LENGTH] = '\0'; // null terminate
 
     // Do the same for IV
     std::string access_iv = obj.getString("access_iv");

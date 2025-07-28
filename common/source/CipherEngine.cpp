@@ -106,6 +106,9 @@ bool CipherEngine::tokenNeedsUpdate(const Value::Object &obj)
     }
     CipherEngine::CipherBytes CipherEngine::encryptAlgorithm(unsigned char *iv, const string& msg, LogContext log_context)
     {
+        if (msg.length() > MAX_MSG_LENGTH) {
+            throw TraceException(__FILE__, __LINE__, 0, std::string("Message too long for encryption"));
+        }
         EVP_CIPHER_CTX *ctx = nullptr;
         CipherBytes bytes_result = {};
 

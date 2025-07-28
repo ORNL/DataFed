@@ -54,7 +54,7 @@ class CipherEngine
         static const int KEY_LENGTH = 32;
 
         /** Maximum message length in bytes */
-        static const int MAX_MSG_LENGTH = 128;
+        static const int MAX_MSG_LENGTH = 96;
 
         /** Base64 encoded IV length */
         static const int ENCODED_IV_LENGTH = 24;
@@ -86,7 +86,7 @@ class CipherEngine
          */
         struct CipherBytes
         {
-            unsigned char encrypted_msg[MAX_MSG_LENGTH]; /**< Encrypted message bytes */
+            unsigned char encrypted_msg[ENCODED_MSG_LENGTH]; /**< Encrypted message bytes */
             unsigned char iv[IV_LENGTH];                  /**< Initialization vector bytes */
             int encrypted_msg_len;                         /**< Length of encrypted message */
         };
