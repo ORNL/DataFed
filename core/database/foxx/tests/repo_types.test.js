@@ -239,7 +239,9 @@ describe("Repository Type System Tests", function () {
                 const repo = { type: RepositoryType.GLOBUS, data: {} };
                 const result = executeRepositoryOperation(repo, "nonExistentOp");
                 expect(result.ok).to.be.false;
-                expect(result.error.message).to.include("Operation 'nonExistentOp' not implemented");
+                expect(result.error.message).to.include(
+                    "Operation 'nonExistentOp' not implemented",
+                );
             });
 
             it("should execute validate operation on GLOBUS repository", function () {
