@@ -376,11 +376,16 @@ describe("Repository Validation Tests", function () {
         it("should reject invalid capacity update", function () {
             const result = validatePartialGlobusConfig({ capacity: 0 }, "test-repo");
             expect(result.ok).to.be.false;
-            expect(result.error.message).to.include("Repository capacity must be a positive number");
+            expect(result.error.message).to.include(
+                "Repository capacity must be a positive number",
+            );
         });
 
         it("should accept path update with correct repo ID", function () {
-            const result = validatePartialGlobusConfig({ path: "/new/path/test-repo" }, "test-repo");
+            const result = validatePartialGlobusConfig(
+                { path: "/new/path/test-repo" },
+                "test-repo",
+            );
             expect(result.ok).to.be.true;
         });
 
@@ -410,7 +415,9 @@ describe("Repository Validation Tests", function () {
             const result = validatePartialGlobusConfig(config, "test-repo");
             expect(result.ok).to.be.false;
             expect(result.error.message).to.include("Repository title is required");
-            expect(result.error.message).to.include("Repository capacity must be a positive number");
+            expect(result.error.message).to.include(
+                "Repository capacity must be a positive number",
+            );
             expect(result.error.message).to.include("Public key is required");
         });
 
