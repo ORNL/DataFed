@@ -3,6 +3,8 @@
 // local imports
 const g_lib = require("./support");
 const { UserToken } = require("./lib/user_token");
+const { RepositoryOps } = require("./repository/operations");
+const { RepositoryType } = require("./repository/types");
 
 const g_db = require("@arangodb").db;
 const g_graph = require("@arangodb/general-graph")._graph("sdmsg");
@@ -308,6 +310,34 @@ var tasks_func = (function () {
 
         var result = g_proc.preprocessItems(a_client, null, a_res_ids, g_lib.TT_DATA_GET);
 
+        // Check repository types for all Globus data items
+        if (result.glob_data.length > 0) {
+            for (var i = 0; i < result.glob_data.length; i++) {
+                var data = result.glob_data[i];
+                // Get repository from data location
+                var loc = g_db.loc.firstExample({ _from: data.id });
+                if (loc) {
+                    var findResult = RepositoryOps.find(loc._to);
+                    if (findResult.ok) {
+                        var repository = findResult.value;
+                        var dataOpsResult = RepositoryOps.supportsDataOperations(repository);
+                        
+                        if (dataOpsResult.ok && !dataOpsResult.value) {
+                            throw [
+                                g_lib.ERR_INVALID_OPERATION,
+                                "Data transfers not supported for metadata-only repository",
+                                {
+                                    repo_type: repository.type,
+                                    repo_id: repository.data._id,
+                                    data_id: data.id
+                                }
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+
         if (result.glob_data.length + result.ext_data.length > 0 && !a_check) {
             var idx = a_path.indexOf("/");
             if (idx == -1)
@@ -491,6 +521,34 @@ var tasks_func = (function () {
         console.log("taskInitDataPut");
 
         var result = g_proc.preprocessItems(a_client, null, a_res_ids, g_lib.TT_DATA_PUT);
+
+        // Check repository types for all Globus data items
+        if (result.glob_data.length > 0) {
+            for (var i = 0; i < result.glob_data.length; i++) {
+                var data = result.glob_data[i];
+                // Get repository from data location
+                var loc = g_db.loc.firstExample({ _from: data.id });
+                if (loc) {
+                    var findResult = RepositoryOps.find(loc._to);
+                    if (findResult.ok) {
+                        var repository = findResult.value;
+                        var dataOpsResult = RepositoryOps.supportsDataOperations(repository);
+                        
+                        if (dataOpsResult.ok && !dataOpsResult.value) {
+                            throw [
+                                g_lib.ERR_INVALID_OPERATION,
+                                "Data transfers not supported for metadata-only repository",
+                                {
+                                    repo_type: repository.type,
+                                    repo_id: repository.data._id,
+                                    data_id: data.id
+                                }
+                            ];
+                        }
+                    }
+                }
+            }
+        }
 
         if (result.glob_data.length > 0 && !a_check) {
             var idx = a_path.indexOf("/");

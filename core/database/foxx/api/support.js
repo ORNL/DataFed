@@ -7,6 +7,10 @@ module.exports = (function () {
 
     obj.db = require("@arangodb").db;
     obj.graph = require("@arangodb/general-graph")._graph("sdmsg");
+    
+    // Import repository type system
+    const { RepositoryOps } = require("./repository/operations");
+    const { RepositoryType } = require("./repository/types");
 
     obj.PERM_RD_REC = 0x0001; // Read record info (description, keywords, details)
     obj.PERM_RD_META = 0x0002; // Read structured metadata
@@ -164,6 +168,8 @@ module.exports = (function () {
     obj.ERR_INFO.push([400, "No allocation available"]);
     obj.ERR_ALLOCATION_EXCEEDED = obj.ERR_COUNT++;
     obj.ERR_INFO.push([400, "Storage allocation exceeded"]);
+    obj.ERR_INVALID_OPERATION = obj.ERR_COUNT++;
+    obj.ERR_INFO.push([400, "Invalid operation"]);
 
     obj.CHARSET_ID = 0;
     obj.CHARSET_ALIAS = 1;
@@ -910,6 +916,18 @@ module.exports = (function () {
             alloc = allocs[i];
 
             if (alloc.data_size < alloc.data_limit && alloc.rec_count < alloc.rec_limit) {
+                // Check if repository supports data operations
+                var findResult = RepositoryOps.find(alloc._to);
+                if (findResult.ok) {
+                    var repository = findResult.value;
+                    var dataOpsResult = RepositoryOps.supportsDataOperations(repository);
+                    
+                    // Skip metadata-only repositories
+                    if (dataOpsResult.ok && !dataOpsResult.value) {
+                        continue;
+                    }
+                }
+                
                 return alloc;
             }
         }
@@ -935,6 +953,24 @@ module.exports = (function () {
                 obj.ERR_ALLOCATION_EXCEEDED,
                 "Allocation record count exceeded (max: " + alloc.rec_limit + ")",
             ];
+
+        // Check if repository supports data operations
+        var findResult = RepositoryOps.find(a_repo_id);
+        if (findResult.ok) {
+            var repository = findResult.value;
+            var dataOpsResult = RepositoryOps.supportsDataOperations(repository);
+            
+            if (dataOpsResult.ok && !dataOpsResult.value) {
+                throw [
+                    obj.ERR_INVALID_OPERATION,
+                    "Data operations not supported for metadata-only repository",
+                    {
+                        repo_type: repository.type,
+                        repo_id: repository.data._id
+                    }
+                ];
+            }
+        }
 
         return alloc;
     };
