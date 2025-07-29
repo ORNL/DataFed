@@ -6,10 +6,30 @@ const ValidationTestCases = {
     paths: [
         { input: "/data/repo", expected: true, description: "valid absolute path" },
         { input: "/data/repo/", expected: true, description: "valid path with trailing slash" },
-        { input: "data/repo", expected: false, description: "relative path", error: "absolute path" },
-        { input: "/data/../repo", expected: false, description: "path traversal", error: "invalid path sequences" },
-        { input: "/data//repo", expected: false, description: "double slash", error: "invalid path sequences" },
-        { input: "/data/repo/../other", expected: false, description: "complex traversal", error: "invalid path sequences" },
+        {
+            input: "data/repo",
+            expected: false,
+            description: "relative path",
+            error: "absolute path",
+        },
+        {
+            input: "/data/../repo",
+            expected: false,
+            description: "path traversal",
+            error: "invalid path sequences",
+        },
+        {
+            input: "/data//repo",
+            expected: false,
+            description: "double slash",
+            error: "invalid path sequences",
+        },
+        {
+            input: "/data/repo/../other",
+            expected: false,
+            description: "complex traversal",
+            error: "invalid path sequences",
+        },
     ],
 
     capacities: [
@@ -17,8 +37,18 @@ const ValidationTestCases = {
         { input: 1, expected: true, description: "minimum valid capacity" },
         { input: Number.MAX_SAFE_INTEGER, expected: true, description: "maximum safe integer" },
         { input: 0, expected: false, description: "zero capacity", error: "positive number" },
-        { input: -100, expected: false, description: "negative capacity", error: "positive number" },
-        { input: "not a number", expected: false, description: "string capacity", error: "positive number" },
+        {
+            input: -100,
+            expected: false,
+            description: "negative capacity",
+            error: "positive number",
+        },
+        {
+            input: "not a number",
+            expected: false,
+            description: "string capacity",
+            error: "positive number",
+        },
         { input: null, expected: false, description: "null capacity", error: "positive number" },
     ],
 
@@ -34,8 +64,18 @@ const ValidationTestCases = {
     repositoryTypes: [
         { input: RepositoryType.GLOBUS, expected: true, description: "valid Globus type" },
         { input: RepositoryType.METADATA_ONLY, expected: true, description: "valid metadata type" },
-        { input: "unknown_type", expected: false, description: "unknown type", error: "Unknown repository type" },
-        { input: null, expected: false, description: "null type", error: "Unknown repository type" },
+        {
+            input: "unknown_type",
+            expected: false,
+            description: "unknown type",
+            error: "Unknown repository type",
+        },
+        {
+            input: null,
+            expected: false,
+            description: "null type",
+            error: "Unknown repository type",
+        },
         { input: "", expected: false, description: "empty type", error: "Unknown repository type" },
     ],
 };

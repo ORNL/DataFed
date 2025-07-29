@@ -16,7 +16,7 @@ class LegacyAPIAdapter {
         const params = [`client=${clientKey}`];
         if (options.all) params.push("all=true");
         if (options.type) params.push(`type=${options.type}`);
-        
+
         return request.get(`${this.baseUrl}/list?${params.join("&")}`);
     }
 
@@ -58,39 +58,35 @@ class LegacyAPIAdapter {
     }
 
     listAllocationsByRepo(repoId, clientKey) {
-        return request.get(
-            `${this.baseUrl}/alloc/list/by_repo?client=${clientKey}&repo=${repoId}`
-        );
+        return request.get(`${this.baseUrl}/alloc/list/by_repo?client=${clientKey}&repo=${repoId}`);
     }
 
     listAllocationsByOwner(ownerId, includeStats = false) {
         return request.get(
-            `${this.baseUrl}/alloc/list/by_owner?owner=${ownerId}&stats=${includeStats}`
+            `${this.baseUrl}/alloc/list/by_owner?owner=${ownerId}&stats=${includeStats}`,
         );
     }
 
     viewAllocation(repoId, subject, clientKey) {
         return request.get(
-            `${this.baseUrl}/alloc/view?client=${clientKey}&repo=${repoId}&subject=${subject}`
+            `${this.baseUrl}/alloc/view?client=${clientKey}&repo=${repoId}&subject=${subject}`,
         );
     }
 
     getAllocationStats(repoId, subject, clientKey) {
         return request.get(
-            `${this.baseUrl}/alloc/stats?client=${clientKey}&repo=${repoId}&subject=${subject}`
+            `${this.baseUrl}/alloc/stats?client=${clientKey}&repo=${repoId}&subject=${subject}`,
         );
     }
 
     setAllocationLimits(repoId, subject, dataLimit, recLimit, clientKey) {
         return request.get(
-            `${this.baseUrl}/alloc/set?client=${clientKey}&subject=${subject}&repo=${repoId}&data_limit=${dataLimit}&rec_limit=${recLimit}`
+            `${this.baseUrl}/alloc/set?client=${clientKey}&subject=${subject}&repo=${repoId}&data_limit=${dataLimit}&rec_limit=${recLimit}`,
         );
     }
 
     setDefaultAllocation(repoId, clientKey) {
-        return request.get(
-            `${this.baseUrl}/alloc/set/default?client=${clientKey}&repo=${repoId}`
-        );
+        return request.get(`${this.baseUrl}/alloc/set/default?client=${clientKey}&repo=${repoId}`);
     }
 
     deleteRepository(repoId, clientKey) {
@@ -99,7 +95,7 @@ class LegacyAPIAdapter {
 
     calculateSize(items, recurse, clientKey) {
         return request.get(
-            `${this.baseUrl}/calc_size?client=${clientKey}&items=${items}&recurse=${recurse}`
+            `${this.baseUrl}/calc_size?client=${clientKey}&items=${items}&recurse=${recurse}`,
         );
     }
 }
@@ -120,7 +116,7 @@ class NewAPIAdapter {
         const params = [`client=${clientKey}`];
         if (options.all) params.push("all=true");
         if (options.type) params.push(`type=${options.type}`);
-        
+
         return request.get(`${this.baseUrl}/list?${params.join("&")}`);
     }
 
