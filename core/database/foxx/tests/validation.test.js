@@ -103,7 +103,9 @@ describe("Repository Validation Tests", function () {
             };
             const result = validateCommonFields(config);
             expect(result.ok).to.be.false;
-            expect(result.error.message).to.include("Repository capacity must be a positive number");
+            expect(result.error.message).to.include(
+                "Repository capacity must be a positive number",
+            );
         });
 
         it("should reject empty admins array", function () {
