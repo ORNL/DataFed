@@ -97,15 +97,15 @@ function recordCreate(client, record, result) {
         if (findResult.ok) {
             var repository = findResult.value;
             var dataOpsResult = RepositoryOps.supportsDataOperations(repository);
-            
+
             if (dataOpsResult.ok && !dataOpsResult.value) {
                 throw [
                     g_lib.ERR_INVALID_OPERATION,
                     "Data uploads not supported for metadata-only repository",
                     {
                         repo_type: repository.type,
-                        repo_id: repository.data._id
-                    }
+                        repo_id: repository.data._id,
+                    },
                 ];
             }
         }
