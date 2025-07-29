@@ -240,7 +240,9 @@ router
                     };
 
                     // Remove undefined fields
-                    Object.keys(updateConfig).forEach(k => updateConfig[k] === undefined && delete updateConfig[k]);
+                    Object.keys(updateConfig).forEach(
+                        (k) => updateConfig[k] === undefined && delete updateConfig[k],
+                    );
 
                     const validationResult = validatePartialGlobusConfig(updateConfig, key);
                     if (!validationResult.ok) {
