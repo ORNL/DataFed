@@ -8,6 +8,8 @@ const g_lib = require("./support");
 const g_proc = require("./process");
 const g_tasks = require("./tasks");
 const { UserToken } = require("./lib/user_token");
+const { RepositoryOps } = require("./repository/operations");
+const { RepositoryType } = require("./repository/types");
 
 module.exports = router;
 
@@ -89,6 +91,24 @@ function recordCreate(client, record, result) {
         }
 
         if (!repo_alloc) throw [g_lib.ERR_NO_ALLOCATION, "No allocation available"];
+
+        // Check if repository supports data operations
+        var findResult = RepositoryOps.find(repo_alloc._to);
+        if (findResult.ok) {
+            var repository = findResult.value;
+            var dataOpsResult = RepositoryOps.supportsDataOperations(repository);
+            
+            if (dataOpsResult.ok && !dataOpsResult.value) {
+                throw [
+                    g_lib.ERR_INVALID_OPERATION,
+                    "Data uploads not supported for metadata-only repository",
+                    {
+                        repo_type: repository.type,
+                        repo_id: repository.data._id
+                    }
+                ];
+            }
+        }
 
         // Extension setting only apply to managed data
         if (record.ext) {
