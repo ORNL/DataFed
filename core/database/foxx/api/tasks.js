@@ -321,7 +321,7 @@ var tasks_func = (function () {
                     if (findResult.ok) {
                         var repository = findResult.value;
                         var dataOpsResult = RepositoryOps.supportsDataOperations(repository);
-                        
+
                         if (dataOpsResult.ok && !dataOpsResult.value) {
                             throw [
                                 g_lib.ERR_INVALID_OPERATION,
@@ -329,8 +329,8 @@ var tasks_func = (function () {
                                 {
                                     repo_type: repository.type,
                                     repo_id: repository.data._id,
-                                    data_id: data.id
-                                }
+                                    data_id: data.id,
+                                },
                             ];
                         }
                     }
@@ -533,7 +533,7 @@ var tasks_func = (function () {
                     if (findResult.ok) {
                         var repository = findResult.value;
                         var dataOpsResult = RepositoryOps.supportsDataOperations(repository);
-                        
+
                         if (dataOpsResult.ok && !dataOpsResult.value) {
                             throw [
                                 g_lib.ERR_INVALID_OPERATION,
@@ -541,8 +541,8 @@ var tasks_func = (function () {
                                 {
                                     repo_type: repository.type,
                                     repo_id: repository.data._id,
-                                    data_id: data.id
-                                }
+                                    data_id: data.id,
+                                },
                             ];
                         }
                     }

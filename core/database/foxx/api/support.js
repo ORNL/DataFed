@@ -1,16 +1,14 @@
 "use strict";
 
 const joi = require("joi");
+const { RepositoryOps } = require("./repository/operations");
+const { RepositoryType } = require("./repository/types");
 
 module.exports = (function () {
     var obj = {};
 
     obj.db = require("@arangodb").db;
     obj.graph = require("@arangodb/general-graph")._graph("sdmsg");
-    
-    // Import repository type system
-    const { RepositoryOps } = require("./repository/operations");
-    const { RepositoryType } = require("./repository/types");
 
     obj.PERM_RD_REC = 0x0001; // Read record info (description, keywords, details)
     obj.PERM_RD_META = 0x0002; // Read structured metadata
@@ -921,13 +919,13 @@ module.exports = (function () {
                 if (findResult.ok) {
                     var repository = findResult.value;
                     var dataOpsResult = RepositoryOps.supportsDataOperations(repository);
-                    
+
                     // Skip metadata-only repositories
                     if (dataOpsResult.ok && !dataOpsResult.value) {
                         continue;
                     }
                 }
-                
+
                 return alloc;
             }
         }
@@ -959,15 +957,15 @@ module.exports = (function () {
         if (findResult.ok) {
             var repository = findResult.value;
             var dataOpsResult = RepositoryOps.supportsDataOperations(repository);
-            
+
             if (dataOpsResult.ok && !dataOpsResult.value) {
                 throw [
                     obj.ERR_INVALID_OPERATION,
                     "Data operations not supported for metadata-only repository",
                     {
                         repo_type: repository.type,
-                        repo_id: repository.data._id
-                    }
+                        repo_id: repository.data._id,
+                    },
                 ];
             }
         }
