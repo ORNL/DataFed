@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(testing_AuthenticationManagerPurgeTrans) {
   std::string db_url = "https://db/sdms/blah";
   std::string db_user = "greatestone";
   std::string db_pass = "1234";
-  std::string cred_dir = "/opt/datafed/keys";
+  std::string cred_dir = "./";
 
   AuthenticationManager auth_manager(
       purge_intervals, std::move(purge_conditions), db_url, db_user, db_pass, cred_dir);
@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE(testing_AuthenticationManagerPromotePurgeSession) {
   std::string db_url = "https://db/sdms/blah";
   std::string db_user = "greatestone";
   std::string db_pass = "1234";
-  std::string cred_dir = "/opt/datafed/keys";
+  std::string cred_dir = "./";
 
   AuthenticationManager auth_manager(
       purge_intervals, std::move(purge_conditions), db_url, db_user, db_pass, cred_dir);
@@ -151,7 +151,7 @@ BOOST_AUTO_TEST_CASE(testing_AuthenticationManagerSessionReset) {
   std::string db_url = "https://db/sdms/blah";
   std::string db_user = "greatestone";
   std::string db_pass = "1234";
-  std::string cred_dir = "/opt/datafed/keys";
+  std::string cred_dir = "./";
 
   AuthenticationManager auth_manager(
       purge_intervals, std::move(purge_conditions), db_url, db_user, db_pass, cred_dir);

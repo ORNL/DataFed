@@ -81,6 +81,12 @@ class CipherEngine
         explicit CipherEngine(const unsigned char* inputKey);
 
         /**
+         * @brief Constructs the empty CipherEngine.
+         */
+        CipherEngine(){};
+
+
+        /**
          * @struct CipherBytes
          * @brief Holds encrypted message bytes, IV, and message length.
          */

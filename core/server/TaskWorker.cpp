@@ -198,10 +198,11 @@ void TaskWorker::workerThread(LogContext log_context) {
 std::string
 TaskWorker::prepToken(const Value::Object &obj,std::string token, const std::string& cipher_key_path,bool needs_update, LogContext log_context)
 {
-
+    std::cout << "WHAT THE HELL AM I DOINNNNN HEREEEE" << std::endl;
     //if the token's encryption already exists
     if(!needs_update)
     {
+        std::cout << "THIS IS A ROBBERY:" + needs_update << std::endl;
         //TOKEN IS ENCRYPTED
         unsigned char token_key[SDMS::CipherEngine::KEY_LENGTH];
         readFile(cipher_key_path + "datafed-token-key.txt", SDMS::CipherEngine::KEY_LENGTH, token_key);
@@ -211,6 +212,7 @@ TaskWorker::prepToken(const Value::Object &obj,std::string token, const std::str
         //Checks which token we are prepping
         if(token.compare("access"))
         {
+          std::cout << "WE HITTTIN HERE" << std::endl;
           encoded_obj.encrypted_msg_len = obj.getNumber("access_len");
           string iv_str = obj.getString("access_iv");
 
@@ -240,6 +242,7 @@ TaskWorker::prepToken(const Value::Object &obj,std::string token, const std::str
     }
     else
     {
+        std::cout << "THIS IS NOT A ROBBERY" << std::endl;
         return obj.getString(token);
     }
 return obj.getString(token);
@@ -266,9 +269,11 @@ TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
   bool needs_update = false;
   const Value::Object &obj = a_task_params.asObject();
 
+  std::cout << "WE ENTEREING THE THUNDER DOME" << std::endl;
   //TokenPrepFuncs
   needs_update = CipherEngine::tokenNeedsUpdate(obj);
 
+  std::cout << "Needs Update in Task Mana: " + needs_update << std::endl;
   //Update the tokens to be unencrypted
   string acc_tok = prepToken(obj, enumToString(access_token_name), me.m_db.cipher_key_file_path, needs_update, log_context);
   string ref_tok = prepToken(obj, enumToString(refresh_token_name), me.m_db.cipher_key_file_path, needs_update, log_context);

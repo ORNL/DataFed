@@ -48,10 +48,7 @@ void readFile(const std::string &fileName,const int arraySize, unsigned char* ar
     std::ifstream keyFile(fileName, std::ios::binary);
     if(!keyFile.is_open())
     {
-        unsigned long err = ERR_get_error();
-        char err_buf[256];
-        ERR_error_string_n(err, err_buf, sizeof(err_buf));
-        throw TraceException(__FILE__, __LINE__, 0, std::string("OpenSSL Error: ") + err_buf);
+        throw TraceException(__FILE__, __LINE__, 0, std::string("Cannot find token key file"));
         return;
     }
 

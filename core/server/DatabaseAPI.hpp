@@ -8,6 +8,7 @@
 #include "common/SDMS_Anon.pb.h"
 #include "common/SDMS_Auth.pb.h"
 #include "common/libjson.hpp"
+#include "common/CipherEngine.hpp"
 
 // Third party includes
 #include <curl/curl.h>
@@ -436,6 +437,8 @@ private:
   char *m_client;
   std::string m_client_uid;
   std::string m_db_url;
+  unsigned char token_key[CipherEngine::KEY_LENGTH];
+  CipherEngine cipher;
 };
 
 } // namespace Core

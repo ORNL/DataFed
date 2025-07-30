@@ -82,13 +82,14 @@ namespace SDMS{
 
 bool CipherEngine::tokenNeedsUpdate(const Value::Object &obj)
     {
-
+    std::cout << !obj.has("access_len") << std::endl;
     //checking for existance
     if(!obj.has("access_iv") ||
        !obj.has("access_len") ||
        !obj.has("refresh_iv") ||
        !obj.has("refresh_len"))
     {
+      std::cout << "WE ARE UPDATING" << std::endl;
       return true;
     }
 
