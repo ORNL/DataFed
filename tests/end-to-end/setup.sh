@@ -211,29 +211,3 @@ then
 fi
 
 exit 0
-#source ${DATAFED_REPO_FORM_PATH}
-
-# Using the datafed89 client because it has admin rights to add the repo
-#curl -X POST --header 'accept: application/json' --data-binary @- --dump - "http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/repo/create?client=u%2Fdatafed89" <<\
-#EOF
-#{
-#  "id" : "$DATAFED_REPO_ID",
-#  "title" : "$DATAFED_REPO_TITLE",
-#  "desc" : "$DATAFED_REPO_DESCRIPTION", 
-#  "domain" : "$DATAFED_REPO_DOMAIN", 
-#  "capacity" : "$DATAFED_REPO_CAPACITY", 
-#  "pub_key" : "$DATAFED_REPO_PUBLIC_KEY", 
-#  "address" : "$DATAFED_REPO_SERVER_ADDRESS", 
-#  "endpoint" : "$DATAFED_REPO_ENDPOINT_UUID", 
-#  "path" : "$DATAFED_REPO_RELATIVE_PATH", 
-#  "exp_path" : "$DATAFED_REPO_EXPORT_PATH", 
-#  "admins" : ["u/datafed89"]
-#}
-#EOF
-#
-## Using the datafed89 client because it has the repo rights to create an allocation
-## Creating an allocation for datafed89
-#curl -X GET  "http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/repo/alloc/create?client=u%2Fdatafed89&subject=u%2Fdatafed89&repo=repo%2F${DATAFED_REPO_ID}&data_limit=1000000000&rec_limit=100" 
-#
-## Creating an allocation for datafed99
-#curl -X GET  "http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/repo/alloc/create?client=u%2Fdatafed89&subject=u%2Fdatafed99&repo=repo%2F${DATAFED_REPO_ID}&data_limit=1000000000&rec_limit=100" 
