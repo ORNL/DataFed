@@ -117,12 +117,12 @@ PATH_TO_CONFIG_DIR=$(realpath "$SOURCE/../config")
 CONFIG_FILE_NAME="datafed-authz.cfg"
 
 cat << EOF > "$PATH_TO_CONFIG_DIR/$CONFIG_FILE_NAME"
+log_path=${local_DATAFED_LOG_PATH}/datafed-gsi-authz.log
 server_address=tcp://${local_DATAFED_DOMAIN}:${local_DATAFED_SERVER_PORT}
 server_key=${DATAFED_INSTALL_PATH}/keys/datafed-core-key.pub
 repo_id=repo/$DATAFED_REPO_ID_AND_DIR
 pub_key=${DATAFED_INSTALL_PATH}/keys/datafed-repo-key.pub
 priv_key=${DATAFED_INSTALL_PATH}/keys/datafed-repo-key.priv
-log_path=${local_DATAFED_LOG_PATH}/datafed-gsi-authz.log
 user=$local_DATAFED_AUTHZ_USER
 globus-collection-path=$local_DATAFED_GCS_COLLECTION_BASE_PATH
 EOF

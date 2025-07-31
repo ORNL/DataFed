@@ -5,8 +5,8 @@ const router = createRouter();
 const joi = require("joi");
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
-const authzModule = require("./authz");
-const { Repo, PathType } = require("./repo");
+const authzModule = require("./models/authz");
+const { Repo, PathType } = require("./models/repo");
 
 module.exports = router;
 
@@ -74,22 +74,40 @@ router
             // Determine permissions associated with path provided
             // Actions: read, write, create, delete, chdir, lookup
             if (Object.keys(authzModule.authz_strategy).includes(req.queryParams.act)) {
-                authzModule.authz_strategy[req.queryParams.act][path_type](
-                    client,
-                    req.queryParams.file,
-                );
+                if (
+                    authzModule.authz_strategy[req.queryParams.act][path_type](
+                        client,
+                        req.queryParams.file,
+                        repo,
+                    )
+                ) {
+                    console.log(
+                        "AUTHZ act: " +
+                            req.queryParams.act +
+                            " client: " +
+                            client._id +
+                            " path " +
+                            req.queryParams.file +
+                            " SUCCESS",
+                    );
+                } else {
+                    console.log(
+                        "AUTHZ act: " +
+                            req.queryParams.act +
+                            " client: " +
+                            client._id +
+                            " path " +
+                            req.queryParams.file +
+                            " DENIED",
+                    );
+                    throw [
+                        g_lib.ERR_PERM_DENIED,
+                        "Client (" + client._id + ") denied access to: " + req.queryParams.file,
+                    ];
+                }
             } else {
                 throw [g_lib.ERR_INVALID_PARAM, "Invalid gridFTP action: ", req.queryParams.act];
             }
-            console.log(
-                "AUTHZ act: " +
-                    req.queryParams.act +
-                    " client: " +
-                    client._id +
-                    " path " +
-                    req.queryParams.file +
-                    " SUCCESS",
-            );
         } catch (e) {
             g_lib.handleException(e, res);
         }

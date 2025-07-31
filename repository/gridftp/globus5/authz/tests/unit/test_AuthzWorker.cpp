@@ -35,19 +35,40 @@ public:
     std::string server_key = "a.r)OeoL=?/rHaK1-ow<xOd7YxM/6)A&Kdu]*<)3";
     std::string user = "vader";
     std::string test_path = "";
-    std::string log_path = "./";
+    std::string log_path = "./file.log";
     std::string globus_collection_path = "/globus/root";
-    //
-    std::strcpy(config.repo_id, repo_id.c_str());
-    std::strcpy(config.server_addr, server_addr.c_str());
-    std::strcpy(config.pub_key, pub_key.c_str());
-    std::strcpy(config.priv_key, priv_key.c_str());
-    std::strcpy(config.server_key, server_key.c_str());
-    std::strcpy(config.user, user.c_str());
-    std::strcpy(config.test_path, test_path.c_str());
-    std::strcpy(config.log_path, log_path.c_str());
-    std::strcpy(config.globus_collection_path, globus_collection_path.c_str());
+
+    // Safely copy strings
+    std::strncpy(config.repo_id, repo_id.c_str(), MAX_ID_LEN - 1);
+    config.repo_id[MAX_ID_LEN - 1] = '\0';
+
+    std::strncpy(config.server_addr, server_addr.c_str(), MAX_ADDR_LEN - 1);
+    config.server_addr[MAX_ADDR_LEN - 1] = '\0';
+
+    std::strncpy(config.pub_key, pub_key.c_str(), MAX_KEY_LEN - 1);
+    config.pub_key[MAX_KEY_LEN - 1] = '\0';
+
+    std::strncpy(config.priv_key, priv_key.c_str(), MAX_KEY_LEN - 1);
+    config.priv_key[MAX_KEY_LEN - 1] = '\0';
+
+    std::strncpy(config.server_key, server_key.c_str(), MAX_KEY_LEN - 1);
+    config.server_key[MAX_KEY_LEN - 1] = '\0';
+
+    std::strncpy(config.user, user.c_str(), MAX_ID_LEN - 1);
+    config.user[MAX_ID_LEN - 1] = '\0';
+
+    std::strncpy(config.test_path, test_path.c_str(), MAX_PATH_LEN - 1);
+    config.test_path[MAX_PATH_LEN - 1] = '\0';
+
+    std::strncpy(config.log_path, log_path.c_str(), MAX_PATH_LEN - 1);
+    config.log_path[MAX_PATH_LEN - 1] = '\0';
+
+    std::strncpy(config.globus_collection_path, globus_collection_path.c_str(), MAX_PATH_LEN - 1);
+    config.globus_collection_path[MAX_PATH_LEN - 1] = '\0';
+
   }
+
+
 
   // Teardown: clean up after each test case
   ~ConfigFixture() {}

@@ -219,7 +219,6 @@ struct Config getConfig() {
 bool setConfigVal(const char *a_label, char *a_dest, char *a_src,
                   size_t a_max_len) {
   size_t len = strlen(a_src);
-
   if (len == 0) {
     AUTHZ_LOG_ERROR("DataFed - '%s' value not set.\n", a_label);
     return true;
@@ -233,6 +232,8 @@ bool setConfigVal(const char *a_label, char *a_dest, char *a_src,
   }
 
   strcpy(a_dest, a_src);
+  AUTHZ_LOG_INFO("Datafed setting src [%s]=%s\n", a_label, a_src);
+  AUTHZ_LOG_INFO("Datafed setting dest [%s]=%s\n", a_label, a_dest);
 
   return false;
 }
@@ -280,7 +281,11 @@ bool loadConfig() {
     AUTHZ_LOG_INFO("DataFed - Loading authz config file: %s\n", cfg_file);
     inf = fopen(cfg_file, "r");
   }
+  fseek(inf, 0, SEEK_SET); // Moves the file pointer to the beginning.
+  AUTHZ_LOG_INFO("Config file found.");
   if (inf) {
+
+    AUTHZ_LOG_INFO("Reading config file.");
     size_t MAX_BUF = 1024;
     char buf[MAX_BUF];
     int lc = -1;
@@ -301,14 +306,19 @@ bool loadConfig() {
       lc++;
 
       // Stop at EOF
-      if (!fgets(buf, MAX_BUF, inf))
+      if (!fgets(buf, MAX_BUF, inf)) {
+        AUTHZ_LOG_INFO("Reading complete.");
         break;
+      }
 
       buf[strcspn(buf, "\r\n")] = 0;
 
+      AUTHZ_LOG_INFO("Buffer is %s\n",buf);
       // Skip comments and blank lines
-      if (strlen(buf) == 0 || buf[0] == '#')
+      if (strlen(buf) == 0 || buf[0] == '#') {
+        AUTHZ_LOG_INFO("skipping line: %s", buf);
         continue;
+      }
 
       // Content is formatted as "key=value" (no spaces)
       val = strchr(buf, '=');
@@ -322,30 +332,31 @@ bool loadConfig() {
       }
 
       bool err;
-      if (strcmp(buf, "repo_id") == 0)
+      if (strcmp(buf, "repo_id") == 0) {
         err = setConfigVal("repo_id", g_config.repo_id, val, MAX_ID_LEN);
-      else if (strcmp(buf, "server_address") == 0)
+      } else if (strcmp(buf, "server_address") == 0) {
         err = setConfigVal("server_address", g_config.server_addr, val,
                            MAX_ADDR_LEN);
-      else if (strcmp(buf, "user") == 0)
+      } else if (strcmp(buf, "user") == 0) {
         err = setConfigVal("user", g_config.user, val, MAX_ID_LEN);
-      else if (strcmp(buf, "log_path") == 0) {
+      } else if (strcmp(buf, "log_path") == 0) {
         err = setConfigVal("log_path", g_config.log_path, val, MAX_PATH_LEN);
         AUTHZ_LOG_INIT(g_config.log_path);
-      } else if (strcmp(buf, "test_path") == 0)
+        AUTHZ_LOG_INFO("g_config.log_path is %s\n", g_config.log_path);
+      } else if (strcmp(buf, "test_path") == 0) {
         err = setConfigVal("test_path", g_config.test_path, val, MAX_PATH_LEN);
-      else if (strcmp(buf, "globus-collection-path") == 0)
+      } else if (strcmp(buf, "globus-collection-path") == 0) {
         err = setConfigVal("globus-collection-path",
                            g_config.globus_collection_path, val, MAX_PATH_LEN);
-      else if (strcmp(buf, "pub_key") == 0)
+      } else if (strcmp(buf, "pub_key") == 0) {
         err = loadKeyFile(g_config.pub_key, val);
-      else if (strcmp(buf, "priv_key") == 0)
+      } else if (strcmp(buf, "priv_key") == 0) {
         err = loadKeyFile(g_config.priv_key, val);
-      else if (strcmp(buf, "server_key") == 0)
+      } else if (strcmp(buf, "server_key") == 0) {
         err = loadKeyFile(g_config.server_key, val);
-      else if (strcmp(buf, "timeout") == 0)
+      } else if (strcmp(buf, "timeout") == 0) {
         g_config.timeout = atoi(val);
-      else {
+      } else {
         err = true;
         AUTHZ_LOG_ERROR(
             "DataFed - Invalid key, '%s', in authz config file at line %i.\n",
@@ -353,6 +364,7 @@ bool loadConfig() {
       }
 
       if (err) {
+        AUTHZ_LOG_ERROR("Error encountered while reading authz config file: %s\n", buf);
         fclose(inf);
         return error;
       }
@@ -508,13 +520,6 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
                   callout_id_mapped1);
   AUTHZ_LOG_INFO("Allowed collection path: %s, action: %s, object is %s\n",
                  g_config.globus_collection_path, action, object);
-  if (strcmp(action, "lookup") == 0 || strcmp(action, "chdir") == 0) {
-    AUTHZ_LOG_INFO("Allowed collection path: %s, action: %s, object is %s\n",
-                   g_config.globus_collection_path, action, object);
-    result = GLOBUS_SUCCESS;
-    callback(callback_arg, handle, result);
-    return result;
-  }
 
   AUTHZ_LOG_ERROR("gsi_authz_authorize_async, handle: %p, act: %s, obj: %s\n",
                   handle, action, object);
@@ -614,6 +619,8 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
             }
 
             if (client_id) {
+                AUTHZ_LOG_INFO(
+                    "libauthz.c checkAuth g_config log_path: %s\n", g_config.log_path);
               if (checkAuthorization(client_id, object, action, &g_config) ==
                   0) {
                 result = GLOBUS_SUCCESS;

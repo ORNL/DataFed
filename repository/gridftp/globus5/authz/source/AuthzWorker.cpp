@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <fstream>
+#include <memory>
 #include <random>
 #include <string>
 #include <syslog.h>
@@ -33,6 +34,39 @@ using namespace SDMS::Anon;
 using namespace SDMS::Auth;
 
 namespace {
+
+// Helper function to copy Config struct safely
+void copyConfig(Config& dest, const Config& src) {
+    std::strncpy(dest.repo_id, src.repo_id, MAX_ID_LEN - 1);
+    dest.repo_id[MAX_ID_LEN - 1] = '\0';
+
+    std::strncpy(dest.server_addr, src.server_addr, MAX_ADDR_LEN - 1);
+    dest.server_addr[MAX_ADDR_LEN - 1] = '\0';
+
+    std::strncpy(dest.pub_key, src.pub_key, MAX_KEY_LEN - 1);
+    dest.pub_key[MAX_KEY_LEN - 1] = '\0';
+
+    std::strncpy(dest.priv_key, src.priv_key, MAX_KEY_LEN - 1);
+    dest.priv_key[MAX_KEY_LEN - 1] = '\0';
+
+    std::strncpy(dest.server_key, src.server_key, MAX_KEY_LEN - 1);
+    dest.server_key[MAX_KEY_LEN - 1] = '\0';
+
+    std::strncpy(dest.user, src.user, MAX_ID_LEN - 1);
+    dest.user[MAX_ID_LEN - 1] = '\0';
+
+    std::strncpy(dest.test_path, src.test_path, MAX_PATH_LEN - 1);
+    dest.test_path[MAX_PATH_LEN - 1] = '\0';
+
+    std::strncpy(dest.log_path, src.log_path, MAX_PATH_LEN - 1);
+    dest.log_path[MAX_PATH_LEN - 1] = '\0';
+
+    std::strncpy(dest.globus_collection_path, src.globus_collection_path, MAX_PATH_LEN - 1);
+    dest.globus_collection_path[MAX_PATH_LEN - 1] = '\0';
+
+    dest.timeout = src.timeout; // Direct copy for scalar types
+}
+
 
 /**
  * \brief Designed to generated a random string of characters
@@ -54,17 +88,49 @@ std::string randomAlphaNumericCode() {
 
 namespace SDMS {
 
+AuthzWorker::~AuthzWorker() {
+    if (std::string(m_config->log_path).length() > 0) {
+        SDMS::global_logger.removeStream(stream_it);
+        if (m_log_file_worker.is_open()) {
+            m_log_file_worker.close();
+        }
+    }
+}
+
 AuthzWorker::AuthzWorker(struct Config *a_config, LogContext log_context)
-    : m_config(a_config) {
+ {
+  m_config = std::make_unique<Config>();
+  copyConfig(*m_config, *a_config);
+  std::string log_path_authz = "/datafed/logs/authzcpp.log";//std::string(m_config->log_path);
+  if (log_path_authz.length() > 0) {
+    // Append to the existing path because we don't want the C++ and C code
+    // trying to write to the same file
+    log_path_authz.append("_authz");
+    m_log_file_worker.open(log_path_authz, std::ios::out | std::ios::app);
+    if (!m_log_file_worker.is_open()) {
+        throw std::ios_base::failure("Failed to open the file: " + log_path_authz);
+    }
+    stream_it = SDMS::global_logger.addStream(m_log_file_worker);
+  }
+
+#if defined(DONT_USE_SYSLOG)
+  SDMS::global_logger.setSysLog(false);
+#else
+  SDMS::global_logger.setSysLog(true);
+#endif
+  SDMS::global_logger.setLevel(SDMS::LogLevel::INFO);
+  SDMS::global_logger.addStream(std::cerr);
 
   m_log_context = log_context;
   m_log_context.thread_name += "-authz_worker";
   m_log_context.thread_id = 0;
-
+  DL_INFO(m_log_context, "a_config log_path: " << std::string(a_config->log_path) << " length " << std::string(a_config->log_path).length() );
+  DL_INFO(m_log_context, "m_config log_path: " << std::string(m_config->log_path) << " length " << std::string(m_config->log_path).length() );
+  DL_INFO(m_log_context, "Testing AuthzWorker capability");
   // Convert config item to string for easier manipulation
-  m_local_globus_path_root = std::string(m_config->globus_collection_path);
+  m_local_globus_path_root = std::string(a_config->globus_collection_path);
 
-  m_test_path = std::string(m_config->test_path);
+  m_test_path = std::string(a_config->test_path);
   // NOTE the test_path MUST end with '/' this is to prevent authorization
   // by accident to a subfolder i.e.
   //
@@ -476,31 +542,30 @@ int AuthzWorker::processResponse(ICommunicator::Response &response) {
         response.message->get(MessageAttribute::CORRELATION_ID));
   }
   if (response.time_out) {
-    std::string error_msg =
-        "AuthWorker.cpp Core service did not respond within timeout.";
 
     AddressSplitter splitter(m_comm->address());
 
     if (splitter.port().value() != 7512) {
 
-      error_msg += "Port number is defined for: " + m_comm->address() +
+      std::string error_msg = "Port number is defined for: " + m_comm->address() +
                    " however, it is a non standard port, the standard port "
                    "for connecting to the core server is port number 7512, "
                    "whereas here you are using port: " +
                    std::to_string(splitter.port().value());
+       DL_DEBUG(m_log_context, error_msg);
     }
 
-    DL_WARNING(m_log_context, error_msg);
+    DL_WARNING(m_log_context, "FAILED AuthWorker.cpp Core service did not respond within timeout.");
     EXCEPT(1, "Core service did not respond");
   } else if (response.error) {
     // This will just log the output without throwing.
-    DL_ERROR(m_log_context, "AuthWorker.cpp there was an error when "
+    DL_ERROR(m_log_context, "FAILED AuthWorker.cpp there was an error when "
                             "communicating with the core service: "
                                 << response.error_msg);
   } else {
 
     if (not response.message) {
-      DL_ERROR(m_log_context, "No error was reported and no time out occured "
+      DL_ERROR(m_log_context, "FAILED No error was reported and no time out occured "
                               "but message is not defined.");
       EXCEPT(1, "This exception indicates that something is very wrong.");
     }
@@ -509,9 +574,10 @@ int AuthzWorker::processResponse(ICommunicator::Response &response) {
         std::get<google::protobuf::Message *>(response.message->getPayload());
     Anon::NackReply *nack = dynamic_cast<Anon::NackReply *>(payload);
     if (!nack) {
+      DL_DEBUG(m_log_context, "SUCCESS");
       return 0;
     } else {
-      DL_DEBUG(m_log_context, "Received NACK reply");
+      DL_DEBUG(m_log_context, "FAILED Received NACK reply");
     }
   }
   return 1;
@@ -598,6 +664,7 @@ int AuthzWorker::checkAuth(char *client_id, char *path, char *action) {
   LogContext log_context = m_log_context;
   log_context.correlation_id =
       std::get<std::string>(message->get(MessageAttribute::CORRELATION_ID));
+  DL_INFO(log_context, "Sending RepoAuthzRequest to repo: " << m_config->repo_id << " from client: " << client_id << " path: " << sanitized_path << " with action: " << action);
 
   auto response = m_comm->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
 
@@ -639,21 +706,6 @@ const char *getReleaseVersion() {
 // The same
 int checkAuthorization(char *client_id, char *object, char *action,
                        struct Config *config) {
-#if defined(DONT_USE_SYSLOG)
-  SDMS::global_logger.setSysLog(false);
-#else
-  SDMS::global_logger.setSysLog(true);
-#endif
-  SDMS::global_logger.setLevel(SDMS::LogLevel::INFO);
-  SDMS::global_logger.addStream(std::cerr);
-  auto log_path_authz = std::string(config->log_path);
-  if (log_path_authz.length() > 0) {
-    // Append to the existing path because we don't want the C++ and C code
-    // trying to write to the same file
-    log_path_authz.append("_authz");
-    std::ofstream log_file_worker(log_path_authz);
-    SDMS::global_logger.addStream(log_file_worker);
-  }
 
   SDMS::LogContext log_context;
   log_context.thread_name = "authz_check";
