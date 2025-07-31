@@ -36,6 +36,7 @@ AuthenticationManager::operator=(AuthenticationManager &&other) {
     m_next_purge = other.m_next_purge;
     m_purge_interval = other.m_purge_interval;
     m_purge_conditions = std::move(other.m_purge_conditions);
+    m_auth_mapper = std::move(other.m_auth_mapper);
   }
   return *this;
 }

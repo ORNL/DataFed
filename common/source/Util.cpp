@@ -48,7 +48,7 @@ void readFile(const std::string &fileName,const int arraySize, unsigned char* ar
     std::ifstream keyFile(fileName, std::ios::binary);
     if(!keyFile.is_open())
     {
-        throw TraceException(__FILE__, __LINE__, 0, std::string("Cannot find token key file"));
+        throw TraceException(__FILE__, __LINE__, 0, std::string("Cannot find token key file: ") + fileName); 
         return;
     }
 

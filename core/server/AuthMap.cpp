@@ -197,6 +197,7 @@ bool AuthMap::hasKey(const PublicKeyType pub_key_type,
       return true;
 
     // Check to see if it is a user key
+    std::cout << "AuthMap haskey, cred_dir is: " << m_cred_dir << std::endl;
     DatabaseAPI db(m_db_url, m_db_user, m_db_pass, m_cred_dir);
     std::string uid;
     if (db.uidByPubKey(public_key, uid)) {
@@ -234,6 +235,7 @@ std::string AuthMap::getUID(const PublicKeyType pub_key_type,
     }
 
     // It must be a persistent user key
+    std::cout << "AuthMap getUID, cred_dir is: " << m_cred_dir << std::endl;
     DatabaseAPI db(m_db_url, m_db_user, m_db_pass, m_cred_dir);
     std::string uid;
     if (db.uidByPubKey(public_key, uid)) {

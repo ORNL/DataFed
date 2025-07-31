@@ -46,6 +46,7 @@ Server::Server(LogContext log_context)
   curl_global_init(CURL_GLOBAL_DEFAULT);
 
   // Load ZMQ keys
+  DL_INFO(m_log_context, "loadKeys from cred dir " << m_config.cred_dir);
   loadKeys(m_config.cred_dir);
 
   // Configure ZMQ security context
@@ -80,13 +81,13 @@ Server::Server(LogContext log_context)
   purge_conditions[PublicKeyType::SESSION].emplace_back(
       std::make_unique<Reset>(accesses_to_reset, key_type_to_apply_reset));
 
-  // Load repository config from DB
-  m_config.loadRepositoryConfig(m_auth_manager, log_context);
-
   // Must occur after loading config settings
   m_auth_manager = std::move(AuthenticationManager(
       purge_intervals, std::move(purge_conditions), m_config.db_url,
       m_config.db_user, m_config.db_pass, m_config.cred_dir));
+
+  // Load repository config from DB
+  m_config.loadRepositoryConfig(m_auth_manager, log_context);
 
   // Start ZAP handler must be started before any other socket binds are called
   // m_zap_thread = thread( &Server::zapHandler, this );
@@ -138,6 +139,7 @@ void Server::waitForDB() {
 
   for (int i = 0; i < 10; i++) {
     try {
+      std::cout << "waitForDB thread, cred_dir " << m_config.cred_dir << std::endl;
       DatabaseAPI db_client(m_config.db_url, m_config.db_user, m_config.db_pass, m_config.cred_dir);
       db_client.serverPing(m_log_context);
       DL_INFO(m_log_context, "DB Ping Success");
@@ -452,6 +454,7 @@ void Server::dbMaintenance(LogContext log_context, int thread_count) {
   log_context.thread_id = thread_count;
   chrono::system_clock::duration purge_per =
       chrono::seconds(m_config.note_purge_period);
+  std::cout << "dbMaintenance thread, cred_dir " << m_config.cred_dir << std::endl;
   DatabaseAPI db(m_config.db_url, m_config.db_user, m_config.db_pass, m_config.cred_dir);
 
   while (1) {
@@ -498,6 +501,7 @@ void Server::metricsThread(LogContext log_context, int thread_count) {
   log_context.thread_id = thread_count;
   chrono::system_clock::duration metrics_per =
       chrono::seconds(m_config.metrics_period);
+  std::cout << "metrics thread, cred_dir " << m_config.cred_dir << std::endl;
   DatabaseAPI db(m_config.db_url, m_config.db_user, m_config.db_pass, m_config.cred_dir);
   map<string, MsgMetrics_t>::iterator u;
   MsgMetrics_t::iterator m;

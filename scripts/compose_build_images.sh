@@ -83,7 +83,7 @@ then
       -t datafed-runtime:latest
   fi
   docker build -f \
-    "${PROJECT_ROOT}/core/docker/Dockerfile" \
+    "${PROJECT_ROOT}/core/docker/Dockerfile" --no-cache \
     --build-arg DEPENDENCIES="datafed-dependencies:latest" \
     --build-arg RUNTIME="datafed-runtime:latest" \
     "${PROJECT_ROOT}" \

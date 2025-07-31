@@ -205,6 +205,7 @@ TaskWorker::prepToken(const Value::Object &obj,std::string token, const std::str
         std::cout << "THIS IS A ROBBERY:" + needs_update << std::endl;
         //TOKEN IS ENCRYPTED
         unsigned char token_key[SDMS::CipherEngine::KEY_LENGTH];
+	std::cout << "In prepToken reading token key from: " << cipher_key_path << "datafed-token-key.txt" << std::endl;
         readFile(cipher_key_path + "datafed-token-key.txt", SDMS::CipherEngine::KEY_LENGTH, token_key);
         CipherEngine cipher(token_key);
         CipherEngine::CipherString encoded_obj;
@@ -275,6 +276,7 @@ TaskWorker::cmdRawDataTransfer(TaskWorker &me, const Value &a_task_params,
 
   std::cout << "Needs Update in Task Mana: " + needs_update << std::endl;
   //Update the tokens to be unencrypted
+  std::cout << "Calling prepToken from cmdRawDataTransfer cipher key file path is " << me.m_db.cipher_key_file_path << std::endl;
   string acc_tok = prepToken(obj, enumToString(access_token_name), me.m_db.cipher_key_file_path, needs_update, log_context);
   string ref_tok = prepToken(obj, enumToString(refresh_token_name), me.m_db.cipher_key_file_path, needs_update, log_context);
 

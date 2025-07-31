@@ -81,8 +81,8 @@ COPY --from=core-build --chown=datafed:root ${DATAFED_INSTALL_PATH}/core/datafed
 USER root
 
 RUN apt install valgrind -y
-RUN chown -R datafed:root /datafed
-RUN chown -R datafed:root /opt
+RUN chown -R datafed:0 /datafed
+RUN chown -R datafed:0 /opt
 
 # NOTE docker does not recognize curly braces around variables in entrypoint
 # and CMD
