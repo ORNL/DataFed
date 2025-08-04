@@ -139,8 +139,6 @@ long GlobusAPI::post(
   url.append(a_base_url);
 
   esc_txt = curl_easy_escape(a_curl, a_url_path.c_str(), 0);
-  std::cout << "A_URL_PATH: " << a_url_path.c_str() << std::endl;
-  std::cout << "URL STUFF: " << url << std::endl;
 
   if(esc_txt == nullptr)
   {
@@ -149,7 +147,6 @@ long GlobusAPI::post(
   }
   url.append(esc_txt);
   curl_free(esc_txt);
-  std::cout << "I did something i shouldnt have" << std::endl;
   for (vector<pair<string, string>>::const_iterator iparam = a_params.begin();
        iparam != a_params.end(); ++iparam) {
     if (iparam == a_params.begin()) {
@@ -160,7 +157,6 @@ long GlobusAPI::post(
 
     url.append(iparam->first.c_str());
     url.append("=");
-    std::cout << "URL STUFF: " << url << std::endl;
     esc_txt = curl_easy_escape(a_curl, iparam->second.c_str(), 0);
     url.append(esc_txt);
     curl_free(esc_txt);
@@ -175,50 +171,38 @@ long GlobusAPI::post(
   string tmp;
 
   if (a_body) {
-  std::cout << "I did something i shouldnt have4" << std::endl;
     tmp = a_body->toString();
     curl_easy_setopt(a_curl, CURLOPT_POSTFIELDS, tmp.c_str());
   } else
     curl_easy_setopt(a_curl, CURLOPT_POSTFIELDS, "");
-  std::cout << "I did something i shouldnt have6" << std::endl;
 
   struct curl_slist *list = 0;
   if (a_token.size()) {
-  std::cout << "I did something i shouldnt have7" << std::endl;
     string auth_hdr = "Authorization: Bearer ";
     auth_hdr += a_token;
     list = curl_slist_append(list, auth_hdr.c_str());
   } else {
-  std::cout << "I did something i shouldnt have8" << std::endl;
     curl_easy_setopt(a_curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
     curl_easy_setopt(a_curl, CURLOPT_USERNAME, m_config.client_id.c_str());
     curl_easy_setopt(a_curl, CURLOPT_PASSWORD, m_config.client_secret.c_str());
   }
 
-  std::cout << "I did something i shouldnt have9" << std::endl;
   if (a_body) {
-  std::cout << "I did something i shouldnt have10" << std::endl;
     list = curl_slist_append(list, "Content-Type: application/json");
   }
 
   if (list) {
-  std::cout << "I did something i shouldnt have11" << std::endl;
     curl_easy_setopt(a_curl, CURLOPT_HTTPHEADER, list);
   }
 
-  std::cout << "I did something i shouldnt have12" << std::endl;
   CURLcode res = curl_easy_perform(a_curl);
 
-  std::cout << "I did something i shouldnt have13" << std::endl;
   if (list)
     curl_slist_free_all(list);
 
-  std::cout << "I did something i shouldnt have14" << std::endl;
   long http_code = 0;
-  std::cout << "I did something i shouldnt have15" << std::endl;
   curl_easy_getinfo(a_curl, CURLINFO_RESPONSE_CODE, &http_code);
 
-  std::cout << "I did something i shouldnt have16" << std::endl;
   if (res != CURLE_OK) {
     DL_ERROR(m_log_context,
              "CURL error [" << error << "], " << curl_easy_strerror(res));
@@ -626,16 +610,14 @@ void GlobusAPI::getEndpointInfo(const std::string &a_ep_id,
 void GlobusAPI::refreshAccessToken(const std::string &a_ref_tok,
                                    std::string &a_new_acc_tok,
                                    uint32_t &a_expires_in) {
-
+  std::cout << "Woah... that was fast" << std::endl;
+  std::cout << "Ref Tok:" << a_ref_tok << std::endl;
   string raw_result;
-    std::cout << "THIS SHOULD BE UNENCRYPT: " << a_ref_tok << std::endl;
-    std::cout << "We are baby" << std::endl;
   long code =
       post(m_curl_auth, m_config.glob_oauth_url + "token", "", "",
            {{"refresh_token", a_ref_tok}, {"grant_type", "refresh_token"}}, 0,
            raw_result);
-    std::cout << "HTTP CODE:" << code << std::endl;
-    std::cout << "We are baby2" << std::endl;
+  std::cout << "GOT PAST" << std::endl;
   if (!raw_result.size()) {
     EXCEPT_PARAM(
         ID_SERVICE_ERROR,
@@ -643,21 +625,15 @@ void GlobusAPI::refreshAccessToken(const std::string &a_ref_tok,
   }
 
   try {
-    std::cout << "We are in baby" << std::endl;
     Value result;
-    std::cout << "We are in baby1" << std::endl;
 
     result.fromString(raw_result);
-    std::cout << "We are in baby2" << std::endl;
 
     Value::Object &resp_obj = result.asObject();
-    std::cout << "We are in baby3" << std::endl;
 
     checkResponsCode(code, resp_obj);
 
-    std::cout << "Globus going to grab da token" << std::endl;
     a_new_acc_tok = resp_obj.getString("access_token");
-    std::cout << "New Acc Token" << a_new_acc_tok << std::endl;
 
     a_expires_in = (uint32_t)resp_obj.getNumber("expires_in");
   } catch (libjson::ParseError &e) {

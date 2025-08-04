@@ -362,8 +362,6 @@ void DatabaseAPI::userGetAccessToken(
   std::string access = init_obj.getString("access");
   std::string refresh = init_obj.getString("refresh");
   
-  std::cout << "THIS IS WHAT ACCESS IS: " << access << std::endl;
-
   a_expires_in = (uint32_t)init_obj.getNumber("expires_in");
   needs_consent = init_obj.getBool("needs_consent");
   token_type = (int)init_obj.getNumber("token_type");
@@ -376,59 +374,45 @@ void DatabaseAPI::userGetAccessToken(
   const Value::Object& obj = [&]() -> const Value::Object& {
 	  if(needs_encrypted)
 	  {
-		  std::cout << "This is it" << std::endl;
 		  userSetAccessToken(access, a_expires_in, refresh, log_context); 
       needs_encrypted = false;
 		  dbGet("usr/token/get", params, result, log_context);
       //setting access and refresh to their new encrypted values
       access = result.asObject().getString("access");
       refresh = result.asObject().getString("refresh");
-      std::cout << "This is within the needs encrypted if statement: " << result.asObject().getString("access") << std::endl;
       return result.asObject();
 	  } 
 	  return init_obj;
   }();
   if(!needs_encrypted)
   {
-    std::cout << "THIS IS WHEN WE ERROR:" << needs_encrypted << std::endl;
     encoded_access_obj.encrypted_msg_len = obj.getNumber("access_len");
     encoded_refresh_obj.encrypted_msg_len = obj.getNumber("refresh_len");
 
-    std::cout << "MOMENT OF TRUTH IS THIS ENCRYPTED.. IT SHOULD BE: " << access.c_str() << std::endl;
     // Allocate and copy to char*
-    std::cout << "Part 1 encrypted_msg" << std::endl;
     encoded_access_obj.encrypted_msg = std::make_unique<char[]>(CipherEngine::ENCODED_MSG_LENGTH + 1); // add 1 for null terminator
     memcpy(encoded_access_obj.encrypted_msg.get(), access.c_str(), CipherEngine::ENCODED_MSG_LENGTH);
     encoded_access_obj.encrypted_msg[CipherEngine::ENCODED_MSG_LENGTH] = '\0'; // null terminate
-    std::cout << "THIS IS THE CURRENT MSG IT SHOULD BE ENCRYPTED: " << encoded_access_obj.encrypted_msg.get() << std::endl;
     // Do the same for IV
-    std::cout << "Part 2 access_iv" << std::endl;
     std::string access_iv = obj.getString("access_iv");
     encoded_access_obj.iv = std::make_unique<char[]>(CipherEngine::ENCODED_IV_LENGTH+1); // add 1 for null terminator
     memcpy(encoded_access_obj.iv.get(), access_iv.c_str(), CipherEngine::ENCODED_IV_LENGTH);
     encoded_access_obj.iv[CipherEngine::ENCODED_IV_LENGTH] = '\0'; //null terminate
 
     // Allocate and copy to char*
-    std::cout << "Part 3 encrypted_msg" << std::endl;
     encoded_refresh_obj.encrypted_msg = std::make_unique<char[]>(CipherEngine::ENCODED_MSG_LENGTH+1); // add 1 for null terminator
     memcpy(encoded_refresh_obj.encrypted_msg.get(), refresh.c_str(), CipherEngine::ENCODED_MSG_LENGTH);
     encoded_refresh_obj.encrypted_msg[CipherEngine::ENCODED_MSG_LENGTH] = '\0'; // null terminate
 
     // Do the same for IV
-    std::cout << "Part 4 refresh_iv" << std::endl;
     std::string refresh_iv = obj.getString("refresh_iv");
     encoded_refresh_obj.iv = std::make_unique<char[]>(CipherEngine::ENCODED_IV_LENGTH + 1); //add 1 for null terminator
     memcpy(encoded_refresh_obj.iv.get(), refresh_iv.c_str(), CipherEngine::ENCODED_IV_LENGTH);
     encoded_refresh_obj.iv[CipherEngine::ENCODED_IV_LENGTH] = '\0'; // null terminate
 
     //Decryption for acc token and ref token
-    std::cout << "Part 5 calling decrypt" << std::endl;
-    std::cout << "Here is the len of the acc encoded:" << encoded_access_obj.encrypted_msg_len << std::endl;
-    std::cout << "Here is the len of the ref encoded:" << encoded_refresh_obj.encrypted_msg_len << std::endl;
     a_acc_tok = cipher.decrypt(encoded_access_obj, log_context);
     a_ref_tok = cipher.decrypt(encoded_refresh_obj, log_context);
-    std::cout << "Decrypted Acc: " << a_acc_tok << std::endl;
-    std::cout << "Decrypted Ref: " << a_ref_tok << std::endl;
   }
   TRANSLATE_END(result, log_context)
 }
@@ -444,7 +428,6 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
   CipherEngine::CipherString access_obj = cipher.encrypt(a_acc_tok, log_context);
 
   CipherEngine::CipherString refresh_obj = cipher.encrypt(a_ref_tok, log_context);
-  std::cout << "HERES US DOING USER SET ACCESS TOKEN POST ENCRYPTION:" << std::string(access_obj.encrypted_msg.get()) << std::endl;
   std::vector<pair<string, string>> params = {
       {"access", std::string(access_obj.encrypted_msg.get())}, //a_acc_tok shift to encrypted_access_string
       {"refresh", std::string(refresh_obj.encrypted_msg.get())}, //a_ref_tok shift to encrypted_refresh_string

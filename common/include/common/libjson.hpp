@@ -91,7 +91,7 @@ public:
       ObjectIter iter = m_map.find(a_key);
 
       if (iter == m_map.end())
-        EXCEPT_PARAM(1, "Key not foundA: " << a_key);
+        EXCEPT_PARAM(1, "Key not found: " << a_key);
 
       return (Value &)iter->second;
     }
@@ -100,7 +100,7 @@ public:
       ObjectConstIter iter = m_map.find(a_key);
 
       if (iter == m_map.end())
-        EXCEPT_PARAM(1, "Key not foundB: " << a_key);
+        EXCEPT_PARAM(1, "Key not found: " << a_key);
 
       return iter->second;
     }
@@ -109,7 +109,7 @@ public:
       ObjectIter iter = m_map.find(a_key);
 
       if (iter == m_map.end())
-        EXCEPT_PARAM(1, "Key not foundC: " << a_key);
+        EXCEPT_PARAM(1, "Key not found: " << a_key);
 
       if (iter->second.m_type == VT_OBJECT)
         return (Object &)*iter->second.m_value.o;
@@ -123,7 +123,7 @@ public:
       ObjectConstIter iter = m_map.find(a_key);
 
       if (iter == m_map.end())
-        EXCEPT_PARAM(1, "Key not foundD: " << a_key);
+        EXCEPT_PARAM(1, "Key not found: " << a_key);
 
       if (iter->second.m_type == VT_OBJECT)
         return (const Object &)*iter->second.m_value.o;
@@ -137,7 +137,7 @@ public:
       ObjectIter iter = m_map.find(a_key);
 
       if (iter == m_map.end())
-        EXCEPT_PARAM(1, "Key not foundE: " << a_key);
+        EXCEPT_PARAM(1, "Key not found: " << a_key);
 
       if (iter->second.m_type == VT_ARRAY)
         return *iter->second.m_value.a;
@@ -151,7 +151,7 @@ public:
       ObjectConstIter iter = m_map.find(a_key);
 
       if (iter == m_map.end())
-        EXCEPT_PARAM(1, "Key not foundF: " << a_key);
+        EXCEPT_PARAM(1, "Key not found: " << a_key);
 
       if (iter->second.m_type == VT_ARRAY)
         return *iter->second.m_value.a;
@@ -165,7 +165,7 @@ public:
       ObjectConstIter iter = m_map.find(a_key);
 
       if (iter == m_map.end())
-        EXCEPT_PARAM(1, "Key not foundG: " << a_key);
+        EXCEPT_PARAM(1, "Key not found: " << a_key);
 
       if (iter->second.m_type == VT_BOOL)
         return iter->second.m_value.b;
@@ -181,7 +181,7 @@ public:
       ObjectConstIter iter = m_map.find(a_key);
 
       if (iter == m_map.end())
-        EXCEPT_PARAM(1, "Key not foundH: " << a_key);
+        EXCEPT_PARAM(1, "Key not found: " << a_key);
 
       if (iter->second.m_type == VT_NUMBER)
         return iter->second.m_value.n;
@@ -197,7 +197,7 @@ public:
       ObjectConstIter iter = m_map.find(a_key);
 
       if (iter == m_map.end())
-        EXCEPT_PARAM(1, "Key not foundI: " << a_key);
+        EXCEPT_PARAM(1, "Key not found: " << a_key);
 
       if (iter->second.m_type == VT_STRING)
         return *iter->second.m_value.s;
@@ -211,7 +211,7 @@ public:
       ObjectIter iter = m_map.find(a_key);
 
       if (iter == m_map.end())
-        EXCEPT_PARAM(1, "Key not foundJ: " << a_key);
+        EXCEPT_PARAM(1, "Key not found: " << a_key);
 
       if (iter->second.m_type == VT_STRING)
         return *iter->second.m_value.s;

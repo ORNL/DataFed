@@ -82,14 +82,12 @@ namespace SDMS{
 
 bool CipherEngine::tokenNeedsUpdate(const Value::Object &obj)
     {
-    std::cout << !obj.has("access_len") << std::endl;
     //checking for existance
     if(!obj.has("access_iv") ||
        !obj.has("access_len") ||
        !obj.has("refresh_iv") ||
        !obj.has("refresh_len"))
     {
-      std::cout << "WE ARE UPDATING" << std::endl;
       return true;
     }
 
@@ -197,9 +195,6 @@ bool CipherEngine::tokenNeedsUpdate(const Value::Object &obj)
     {
     EVP_CIPHER_CTX *ctx = nullptr;
     
-    std::cout << "Encoded Msg" << encoded_encrypted_string.encrypted_msg.get() << std::endl;
-    std::cout << "Encoded Msg Len" << encoded_encrypted_string.encrypted_msg_len << std::endl;
-    std::cout << "Encoded Msg IV" << encoded_encrypted_string.iv.get() << std::endl;
     //converts the cipherstring back to a unsigned char
     std::unique_ptr<unsigned char[]> ciphertext = decode64(encoded_encrypted_string.encrypted_msg.get(), static_cast<int>(strlen(encoded_encrypted_string.encrypted_msg.get())), log_context);
     std::unique_ptr<unsigned char[]> iv = decode64(encoded_encrypted_string.iv.get(), static_cast<int>(strlen(encoded_encrypted_string.iv.get())),log_context);
