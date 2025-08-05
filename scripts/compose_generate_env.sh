@@ -7,19 +7,23 @@ Help()
 {
   echo "$(basename $0) Build .env file for compose."
   echo
-  echo "Syntax: $(basename $0) [-h|d|r|m]"
+  echo "Syntax: $(basename $0) [-h|d|r|m|c|f]"
   echo "options:"
   echo "-h, --help                        Print this help message"
   echo "-d, --directory                   Directory where .env will be created."
   echo "-r, --repo-images                 Create .env for just repo services."
   echo "-m, --metadata-images             Create .env for just metadata services"
+  echo "-c, --no-overwrite-certs          Do not overwrite existing certificates"
+  echo "-f, --force                       Force overwrite existing .env file"
 }
 
-VALID_ARGS=$(getopt -o hd:mr --long 'help',directory:,repo-images,metadata-images -- "$@")
+VALID_ARGS=$(getopt -o hd:mrfc --long 'help',directory:,repo-images,metadata-images,force,no-overwrite-certs -- "$@")
 
 BUILD_REPO="TRUE"
 BUILD_METADATA="TRUE"
 COMPOSE_ENV_DIR=""
+OVERWRITE_CERTS="TRUE"
+FORCE_OVERWRITE="FALSE"
 eval set -- "$VALID_ARGS"
 while [ : ]; do
   case "$1" in
@@ -39,8 +43,16 @@ while [ : ]; do
         BUILD_REPO="FALSE"
         shift 1
         ;;
-    --) shift; 
-        break 
+    -c | --no-overwrite-certs)
+        OVERWRITE_CERTS="FALSE"
+        shift 1
+        ;;
+    -f | --force)
+        FORCE_OVERWRITE="TRUE"
+        shift 1
+        ;;
+    --) shift;
+        break
         ;;
     \?) # incorrect option
         echo "Error: Invalid option"
@@ -54,10 +66,50 @@ then
   exit 1
 fi
 
-if [ -f "${COMPOSE_ENV_DIR}/.env" ]
-then
-  echo "${COMPOSE_ENV_DIR}/.env already exist! Will not overwrite!"
-  exit 1
+# Function to read existing .env file values
+read_existing_env() {
+  local env_file="$1"
+  if [ -f "$env_file" ]; then
+    echo "Reading existing values from $env_file"
+    # Source the .env file to load existing values
+    set -a  # automatically export all variables
+    source "$env_file"
+    set +a  # turn off automatic export
+  fi
+}
+
+# Function to get value with fallback priority: existing .env -> environment -> default
+get_env_value() {
+  local var_name="$1"
+  local default_value="$2"
+  local existing_value=""
+  
+  # Get existing value from sourced .env file
+  existing_value=$(eval echo "\$${var_name}")
+  
+  # Priority: existing .env value -> environment variable -> default
+  if [ -n "$existing_value" ]; then
+    echo "$existing_value"
+  elif [ -n "$(printenv "$var_name")" ]; then
+    printenv "$var_name"
+  else
+    echo "$default_value"
+  fi
+}
+
+ENV_FILE_PATH="${COMPOSE_ENV_DIR}/.env"
+
+# Check if .env file exists and handle accordingly
+if [ -f "$ENV_FILE_PATH" ]; then
+  if [ "$FORCE_OVERWRITE" = "FALSE" ]; then
+    echo "Found existing .env file at $ENV_FILE_PATH"
+    echo "Reading existing values and updating with any new environment variables..."
+    read_existing_env "$ENV_FILE_PATH"
+  else
+    echo "Force overwrite enabled. Existing .env file will be replaced."
+  fi
+else
+  echo "Creating new .env file at $ENV_FILE_PATH"
 fi
 
 local_DATAFED_WEB_KEY_DIR="${COMPOSE_ENV_DIR}/keys"
@@ -66,13 +118,8 @@ then
   mkdir -p "$local_DATAFED_WEB_KEY_DIR"
 fi
 
-if [ -z "${DATAFED_COMPOSE_DOMAIN}" ]
-then
-  local_DATAFED_COMPOSE_DOMAIN="localhost"
-else
-  local_DATAFED_COMPOSE_DOMAIN=$(printenv DATAFED_COMPOSE_DOMAIN)
-fi
-
+# Use the new function to get values with proper fallback
+local_DATAFED_COMPOSE_DOMAIN=$(get_env_value "DATAFED_COMPOSE_DOMAIN" "localhost")
 local_DATAFED_WEB_CERT_NAME="cert.crt"
 local_DATAFED_WEB_KEY_NAME="cert.key"
 
@@ -80,8 +127,20 @@ local_DATAFED_WEB_CERT_PATH="${local_DATAFED_WEB_KEY_DIR}/${local_DATAFED_WEB_CE
 local_DATAFED_WEB_CSR_PATH="${local_DATAFED_WEB_KEY_DIR}/cert.csr"
 local_DATAFED_WEB_KEY_PATH="${local_DATAFED_WEB_KEY_DIR}/${local_DATAFED_WEB_KEY_NAME}"
 
-if [ ! -e "$local_DATAFED_WEB_CERT_PATH" ] || [ ! -e "$local_DATAFED_WEB_KEY_PATH" ]
-then
+need_certs="FALSE"
+
+# Check if we need to generate certificates
+if [ "$OVERWRITE_CERTS" = "TRUE" ]; then
+  echo "Overwrite certs flag enabled. Regenerating SSL certificates..."
+  need_certs="TRUE"
+elif [ ! -e "$local_DATAFED_WEB_CERT_PATH" ] || [ ! -e "$local_DATAFED_WEB_KEY_PATH" ]; then
+  echo "SSL certificates not found. Generating new certificates..."
+  need_certs="TRUE"
+else
+  echo "Using existing SSL certificates"
+fi
+
+if [ "$need_certs" = "TRUE" ]; then
   if [ -e "$local_DATAFED_WEB_CERT_PATH" ]
   then
     rm "${local_DATAFED_WEB_CERT_PATH}"
@@ -104,188 +163,57 @@ then
      -out "$local_DATAFED_WEB_CERT_PATH"
 fi
 
-if [ -z "${DATAFED_COMPOSE_USER89_PASSWORD}" ]
-then
-  local_DATAFED_COMPOSE_USER89_PASSWORD="" # For End to end testing
-else
-  local_DATAFED_COMPOSE_USER89_PASSWORD=$(printenv DATAFED_COMPOSE_USER89_PASSWORD)
-fi
+# Get all values using the new function
+local_DATAFED_COMPOSE_USER89_PASSWORD=$(get_env_value "DATAFED_COMPOSE_USER89_PASSWORD" "")
 
-if [ -z "${DATAFED_COMPOSE_REPO_DOMAIN}" ]
-then
-
-  # Make the repo domain equivalent to the COMPOSE DOMAIN unless REPO_DOMAIN is
-  # specified explicitly, and it is not localhost, communication between the
-  # core container and the repo container will not resolve using localhost.
-  if [ "${local_DATAFED_COMPOSE_DOMAIN}" = "localhost" ]
-  then
+# Handle repo domain logic
+if [ -z "$(get_env_value "DATAFED_COMPOSE_REPO_DOMAIN" "")" ]; then
+  if [ "${local_DATAFED_COMPOSE_DOMAIN}" = "localhost" ]; then
     local_DATAFED_COMPOSE_REPO_DOMAIN=""
   else
     local_DATAFED_COMPOSE_REPO_DOMAIN="${local_DATAFED_COMPOSE_DOMAIN}"
   fi
 else
-  local_DATAFED_COMPOSE_REPO_DOMAIN=$(printenv DATAFED_COMPOSE_REPO_DOMAIN)
+  local_DATAFED_COMPOSE_REPO_DOMAIN=$(get_env_value "DATAFED_COMPOSE_REPO_DOMAIN" "")
 fi
 
-if [ -z "${DATAFED_COMPOSE_REPO_FORM_PATH}" ]
-then
-  local_DATAFED_COMPOSE_REPO_FORM_PATH="" # Where the repo form is located also needed for testing
-else
-  local_DATAFED_COMPOSE_REPO_FORM_PATH=$(printenv DATAFED_COMPOSE_REPO_FORM_PATH)
-fi
-
-if [ -z "${DATAFED_COMPOSE_GLOBUS_APP_SECRET}" ]
-then
-  local_DATAFED_COMPOSE_GLOBUS_APP_SECRET=""
-else
-  local_DATAFED_COMPOSE_GLOBUS_APP_SECRET=$(printenv DATAFED_COMPOSE_GLOBUS_APP_SECRET)
-fi
-if [ -z "${DATAFED_COMPOSE_GLOBUS_APP_ID}" ]
-then
-  local_DATAFED_COMPOSE_GLOBUS_APP_ID=""
-else
-  local_DATAFED_COMPOSE_GLOBUS_APP_ID=$(printenv DATAFED_COMPOSE_GLOBUS_APP_ID)
-fi
-if [ -z "${DATAFED_GLOBUS_KEY_DIR}" ]
-then
-  local_DATAFED_GLOBUS_KEY_DIR="${COMPOSE_ENV_DIR}/globus"
-else
-  local_DATAFED_GLOBUS_KEY_DIR=$(printenv DATAFED_GLOBUS_KEY_DIR)
-fi
-if [ -z "${DATAFED_COMPOSE_ZEROMQ_SESSION_SECRET}" ]
-then
-  local_DATAFED_COMPOSE_ZEROMQ_SESSION_SECRET=""
-else
-  local_DATAFED_COMPOSE_ZEROMQ_SESSION_SECRET=$(printenv DATAFED_COMPOSE_ZEROMQ_SESSION_SECRET)
-fi
-if [ -z "${DATAFED_COMPOSE_ZEROMQ_SYSTEM_SECRET}" ]
-then
-  local_DATAFED_COMPOSE_ZEROMQ_SYSTEM_SECRET=""
-else
-  local_DATAFED_COMPOSE_ZEROMQ_SYSTEM_SECRET=$(printenv DATAFED_COMPOSE_ZEROMQ_SYSTEM_SECRET)
-fi
-if [ -z "${DATAFED_COMPOSE_HTTPS_SERVER_PORT}" ]
-then
-  local_DATAFED_COMPOSE_HTTPS_SERVER_PORT="443"
-else
-  local_DATAFED_COMPOSE_HTTPS_SERVER_PORT=$(printenv DATAFED_COMPOSE_HTTPS_SERVER_PORT)
-fi
-if [ -z "${DATAFED_COMPOSE_CONTAINER_LOG_PATH}" ]
-then
-  local_DATAFED_COMPOSE_CONTAINER_LOG_PATH="/opt/datafed/logs"
-else
-  local_DATAFED_COMPOSE_CONTAINER_LOG_PATH=$(printenv DATAFED_COMPOSE_CONTAINER_LOG_PATH)
-fi
-if [ -z "${DATAFED_COMPOSE_DATABASE_PASSWORD}" ]
-then
-  local_DATAFED_COMPOSE_DATABASE_PASSWORD="butterscotch"
-else
-  local_DATAFED_COMPOSE_DATABASE_PASSWORD=$(printenv DATAFED_COMPOSE_DATABASE_PASSWORD)
-fi
-
-if [ -z "${DATAFED_COMPOSE_DATABASE_IP_ADDRESS}" ]
-then
-  local_DATAFED_COMPOSE_DATABASE_IP_ADDRESS="http://arango"
-else
-  local_DATAFED_COMPOSE_DATABASE_IP_ADDRESS=$(printenv DATAFED_COMPOSE_DATABASE_IP_ADDRESS)
-fi
-
-if [ -z "${DATAFED_ENABLE_FOXX_TESTS}" ]
-then
-  local_DATAFED_ENABLE_FOXX_TESTS="FALSE"
-else
-  local_DATAFED_ENABLE_FOXX_TESTS=$(printenv DATAFED_ENABLE_FOXX_TESTS)
-fi
-
-if [ -z "${DATAFED_COMPOSE_DATABASE_PORT}" ]
-then
-  local_DATAFED_COMPOSE_DATABASE_PORT="8529"
-else
-  local_DATAFED_COMPOSE_DATABASE_PORT=$(printenv DATAFED_COMPOSE_DATABASE_PORT)
-fi
-
-if [ -z "${DATAFED_COMPOSE_GCS_IP}" ]
-then
-  local_DATAFED_COMPOSE_GCS_IP=""
-else
-  local_DATAFED_COMPOSE_GCS_IP=$(printenv DATAFED_COMPOSE_GCS_IP)
-fi
-
-if [ -z "${DATAFED_COMPOSE_HOST_COLLECTION_MOUNT}" ]
-then
-  local_DATAFED_HOST_COLLECTION_MOUNT="$HOME/compose_collection"
-else
-  local_DATAFED_HOST_COLLECTION_MOUNT=$(printenv DATAFED_COMPOSE_HOST_COLLECTION_MOUNT)
-fi
-
-if [ -z "${DATAFED_COMPOSE_HOST_DEPLOYMENT_KEY_PATH}" ]
-then
-  local_DATAFED_COMPOSE_HOST_DEPLOYMENT_KEY_PATH="${local_DATAFED_GLOBUS_KEY_DIR}/deployment-key.json"
-else
-  local_DATAFED_COMPOSE_HOST_DEPLOYMENT_KEY_PATH=$(printenv DATAFED_COMPOSE_HOST_DEPLOYMENT_KEY_PATH)
-fi
-
-if [ -z "${DATAFED_COMPOSE_HOST_CRED_FILE_PATH}" ]
-then
-  local_DATAFED_HOST_CRED_FILE_PATH="${local_DATAFED_GLOBUS_KEY_DIR}/client_cred.json"
-else
-  local_DATAFED_HOST_CRED_FILE_PATH=$(printenv DATAFED_COMPOSE_HOST_CRED_FILE_PATH)
-fi
-
-if [ -z "${DATAFED_GCS_COLLECTION_BASE_PATH}" ]
-then
-  local_DATAFED_GCS_COLLECTION_BASE_PATH="/"
-else
-  local_DATAFED_GCS_COLLECTION_BASE_PATH=$(printenv DATAFED_GCS_COLLECTION_BASE_PATH)
-fi
-
-if [ -z "${DATAFED_GCS_COLLECTION_ROOT_PATH}" ]
-then
-  local_DATAFED_GCS_COLLECTION_ROOT_PATH="/mnt/datafed"
-else
-  local_DATAFED_GCS_COLLECTION_ROOT_PATH=$(printenv DATAFED_GCS_COLLECTION_ROOT_PATH)
-fi
-
-if [ -z "${DATAFED_GLOBUS_CONTROL_PORT}" ]
-then
-  # For compose will set by default to run on a port other than 443 because 
-  # the core metadata services use 443 for the web server 7510
-  local_DATAFED_GLOBUS_CONTROL_PORT="443"
-else
-  local_DATAFED_GLOBUS_CONTROL_PORT=$(printenv DATAFED_GLOBUS_CONTROL_PORT)
-fi
-
-if [ -z "${DATAFED_GLOBUS_SUBSCRIPTION}" ]
-then
-  # For compose will set by default to run on a port other than 443 because 
-  # the core metadata services use 443 for the web server
-  local_DATAFED_GLOBUS_SUBSCRIPTION=""
-else
-  local_DATAFED_GLOBUS_SUBSCRIPTION=$(printenv DATAFED_GLOBUS_SUBSCRIPTION)
-fi
-
-if [ -z "${DATAFED_CORE_LOG_LEVEL}" ]
-then
-  local_DATAFED_CORE_LOG_LEVEL=3
-else
-  local_DATAFED_CORE_LOG_LEVEL=$(printenv DATAFED_CORE_LOG_LEVEL)
-fi
+local_DATAFED_COMPOSE_REPO_FORM_PATH=$(get_env_value "DATAFED_COMPOSE_REPO_FORM_PATH" "")
+local_DATAFED_COMPOSE_GLOBUS_APP_SECRET=$(get_env_value "DATAFED_COMPOSE_GLOBUS_APP_SECRET" "")
+local_DATAFED_COMPOSE_GLOBUS_APP_ID=$(get_env_value "DATAFED_COMPOSE_GLOBUS_APP_ID" "")
+local_DATAFED_GLOBUS_KEY_DIR=$(get_env_value "DATAFED_GLOBUS_KEY_DIR" "${COMPOSE_ENV_DIR}/globus")
+local_DATAFED_COMPOSE_ZEROMQ_SESSION_SECRET=$(get_env_value "DATAFED_COMPOSE_ZEROMQ_SESSION_SECRET" "")
+local_DATAFED_COMPOSE_ZEROMQ_SYSTEM_SECRET=$(get_env_value "DATAFED_COMPOSE_ZEROMQ_SYSTEM_SECRET" "")
+local_DATAFED_COMPOSE_HTTPS_SERVER_PORT=$(get_env_value "DATAFED_COMPOSE_HTTPS_SERVER_PORT" "443")
+local_DATAFED_COMPOSE_CONTAINER_LOG_PATH=$(get_env_value "DATAFED_COMPOSE_CONTAINER_LOG_PATH" "/opt/datafed/logs")
+local_DATAFED_COMPOSE_DATABASE_PASSWORD=$(get_env_value "DATAFED_COMPOSE_DATABASE_PASSWORD" "butterscotch")
+local_DATAFED_COMPOSE_DATABASE_IP_ADDRESS=$(get_env_value "DATAFED_COMPOSE_DATABASE_IP_ADDRESS" "http://arango")
+local_DATAFED_ENABLE_FOXX_TESTS=$(get_env_value "DATAFED_ENABLE_FOXX_TESTS" "FALSE")
+local_DATAFED_COMPOSE_DATABASE_PORT=$(get_env_value "DATAFED_COMPOSE_DATABASE_PORT" "8529")
+local_DATAFED_COMPOSE_GCS_IP=$(get_env_value "DATAFED_COMPOSE_GCS_IP" "")
+local_DATAFED_HOST_COLLECTION_MOUNT=$(get_env_value "DATAFED_COMPOSE_HOST_COLLECTION_MOUNT" "$HOME/compose_collection")
+local_DATAFED_COMPOSE_HOST_DEPLOYMENT_KEY_PATH=$(get_env_value "DATAFED_COMPOSE_HOST_DEPLOYMENT_KEY_PATH" "${local_DATAFED_GLOBUS_KEY_DIR}/deployment-key.json")
+local_DATAFED_HOST_CRED_FILE_PATH=$(get_env_value "DATAFED_COMPOSE_HOST_CRED_FILE_PATH" "${local_DATAFED_GLOBUS_KEY_DIR}/client_cred.json")
+local_DATAFED_GCS_COLLECTION_BASE_PATH=$(get_env_value "DATAFED_GCS_COLLECTION_BASE_PATH" "/")
+local_DATAFED_GCS_COLLECTION_ROOT_PATH=$(get_env_value "DATAFED_GCS_COLLECTION_ROOT_PATH" "/mnt/datafed")
+local_DATAFED_GLOBUS_CONTROL_PORT=$(get_env_value "DATAFED_GLOBUS_CONTROL_PORT" "443")
+local_DATAFED_GLOBUS_SUBSCRIPTION=$(get_env_value "DATAFED_GLOBUS_SUBSCRIPTION" "")
+local_DATAFED_CORE_LOG_LEVEL=$(get_env_value "DATAFED_CORE_LOG_LEVEL" "3")
 
 # Make the logs folder if it doesn't exist
 mkdir -p "${COMPOSE_ENV_DIR}/logs"
 
-if [ -f "${COMPOSE_ENV_DIR}/.env" ]
-then
-  rm "${COMPOSE_ENV_DIR}/.env"
+# Remove existing .env file
+if [ -f "$ENV_FILE_PATH" ]; then
+  rm "$ENV_FILE_PATH"
 fi
 
-touch "${COMPOSE_ENV_DIR}/.env"
+touch "$ENV_FILE_PATH"
 # Do not put " around anything and do not add comments in the .env file
 
 if [ "${BUILD_METADATA}" == "TRUE" ] || [ "${BUILD_REPO}" == "TRUE" ]
 then
 
-cat << EOF >> "${COMPOSE_ENV_DIR}/.env"
+cat << EOF >> "$ENV_FILE_PATH"
 DATAFED_HTTPS_SERVER_PORT=${local_DATAFED_COMPOSE_HTTPS_SERVER_PORT}
 DATAFED_DOMAIN=${local_DATAFED_COMPOSE_DOMAIN}
 DATAFED_UID=$(id -u)
@@ -296,7 +224,7 @@ fi
 
 if [ "${BUILD_METADATA}" == "TRUE" ]
 then
-cat << EOF >> "${COMPOSE_ENV_DIR}/.env"
+cat << EOF >> "$ENV_FILE_PATH"
 DATAFED_GLOBUS_APP_SECRET=${local_DATAFED_COMPOSE_GLOBUS_APP_SECRET}
 DATAFED_GLOBUS_APP_ID=${local_DATAFED_COMPOSE_GLOBUS_APP_ID}
 DATAFED_ZEROMQ_SESSION_SECRET=${local_DATAFED_COMPOSE_ZEROMQ_SESSION_SECRET}
@@ -312,7 +240,7 @@ fi
 
 if [ "${BUILD_REPO}" == "TRUE" ]
 then
-cat << EOF >> "${COMPOSE_ENV_DIR}/.env"
+cat << EOF >> "$ENV_FILE_PATH"
 DATAFED_REPO_USER=datafed
 DATAFED_GCS_ROOT_NAME=DataFed_Compose
 DATAFED_GCS_IP=${local_DATAFED_COMPOSE_GCS_IP}
@@ -337,6 +265,8 @@ while IFS='=' read -r key value; do
         # Print the content before the '=' sign
         echo "unset $key" >> "${unset_env_file_name}"
     fi
-done < "${COMPOSE_ENV_DIR}/.env"
+done < "$ENV_FILE_PATH"
 
 chmod +x "$unset_env_file_name"
+
+echo "Successfully created/updated .env file at: $ENV_FILE_PATH"
