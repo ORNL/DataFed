@@ -196,7 +196,7 @@ describe("Repository Validation Tests", function () {
                 title: "Test Repository",
                 capacity: 1000000,
                 admins: ["user1"],
-                pub_key: "ssh-rsa AAAAB3...",
+                pub_key: "pubkey:AAAAB3...",
                 address: "server.example.com",
                 endpoint: "endpoint-id",
                 domain: "example.com",
@@ -284,7 +284,7 @@ describe("Repository Validation Tests", function () {
 
         it("should reject configuration with Globus fields", function () {
             const config = getValidMetadataConfig();
-            config.pub_key = "ssh-rsa AAAAB3...";
+            config.pub_key = "pubkey:AAAAB3...";
             config.endpoint = "endpoint-id";
             const result = validateMetadataConfig(config);
             expect(result.ok).to.be.false;
@@ -399,7 +399,7 @@ describe("Repository Validation Tests", function () {
             const config = {
                 title: "Updated Title",
                 capacity: 3000000,
-                pub_key: "ssh-rsa UPDATED...",
+                pub_key: "pubkey:UPDATED...",
                 address: "new.server.com",
             };
             const result = validatePartialGlobusConfig(config, "test-repo");
