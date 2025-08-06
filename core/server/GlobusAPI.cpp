@@ -620,14 +620,11 @@ void GlobusAPI::getEndpointInfo(const std::string &a_ep_id,
 void GlobusAPI::refreshAccessToken(const std::string &a_ref_tok,
                                    std::string &a_new_acc_tok,
                                    uint32_t &a_expires_in) {
-  std::cout << "Woah... that was fast" << std::endl;
-  std::cout << "Ref Tok:" << a_ref_tok << std::endl;
   string raw_result;
   long code =
       post(m_curl_auth, m_config.glob_oauth_url + "token", "", "",
            {{"refresh_token", a_ref_tok}, {"grant_type", "refresh_token"}}, 0,
            raw_result);
-  std::cout << "GOT PAST" << std::endl;
   if (!raw_result.size()) {
     EXCEPT_PARAM(
         ID_SERVICE_ERROR,

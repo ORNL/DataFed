@@ -1387,11 +1387,8 @@ std::unique_ptr<IMessage> ClientWorker::procUserGetAccessTokenRequest(
   } else if (expires_in < 300 || needs_encrypted) {
     DL_INFO(log_context, "Refreshing access token for " << a_uid);
     if (token_type == AccessTokenType::GLOBUS_DEFAULT) {
-      std::cout << "Before refreshAccessToken" << std::endl;
       m_globus_api.refreshAccessToken(ref_tok, acc_tok, expires_in);
-      std::cout << "After refreshAccessToken, Before userSetAccessToken" << std::endl;
       m_db_client.userSetAccessToken(acc_tok, expires_in, ref_tok, log_context);
-      std::cout << "After userSetAccessToken" << std::endl;
     } else {
       try {
         m_globus_api.refreshAccessToken(ref_tok, acc_tok, expires_in);
