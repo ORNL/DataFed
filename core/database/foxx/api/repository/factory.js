@@ -30,7 +30,7 @@ const g_lib = require("../support");
  * @param {string[]} config.admins - Array of admin user IDs
  * @param {string} [config.endpoint] - Globus endpoint (required for GLOBUS type)
  * @param {string} [config.path] - File path (required for GLOBUS type)
- * @param {string} [config.pub_key] - Public SSH key (required for GLOBUS type)
+ * @param {string} [config.pub_key] - Public key (required for GLOBUS type)
  * @param {string} [config.address] - Network address (required for GLOBUS type)
  * @param {string} [config.exp_path] - Export path (optional for GLOBUS type)
  * @param {string} [config.domain] - Domain name (required for GLOBUS type)

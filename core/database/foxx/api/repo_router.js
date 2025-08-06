@@ -9,6 +9,18 @@ const g_lib = require("./support");
 const g_tasks = require("./tasks");
 const { validateGlobusConfig, validatePartialGlobusConfig } = require("./repository/validation");
 
+// Helper function to prepare repository data for saving
+const prepareRepoData = (obj) => {
+    // Ensure paths end with / for saving
+    if (obj.path && !obj.path.endsWith("/")) {
+        obj.path += "/";
+    }
+    if (obj.exp_path && !obj.exp_path.endsWith("/")) {
+        obj.exp_path += "/";
+    }
+    return obj;
+};
+
 module.exports = router;
 
 router
@@ -144,9 +156,8 @@ router
                         throw [validationResult.error.code, validationResult.error.message];
                     }
 
-                    // Ensure path ends with / for saving
-                    if (!obj.path.endsWith("/")) obj.path += "/";
-                    if (obj.exp_path && !obj.exp_path.endsWith("/")) obj.exp_path += "/";
+                    // Prepare repository data for saving
+                    prepareRepoData(obj);
 
                     var repo = g_db.repo.save(obj, {
                         returnNew: true,
@@ -224,7 +235,7 @@ router
                     if (req.body.endpoint) obj.endpoint = req.body.endpoint;
 
                     // Extract repo key from ID for validation
-                    var key = req.body.id.substr(5);
+                    const key = req.body.id.substr(5);
 
                     // Validate the partial configuration
                     const updateConfig = {
@@ -249,9 +260,8 @@ router
                         throw [validationResult.error.code, validationResult.error.message];
                     }
 
-                    // Ensure paths end with / for saving
-                    if (obj.path && !obj.path.endsWith("/")) obj.path += "/";
-                    if (obj.exp_path && !obj.exp_path.endsWith("/")) obj.exp_path += "/";
+                    // Prepare repository data for saving
+                    prepareRepoData(obj);
 
                     var repo = g_db._update(req.body.id, obj, {
                         returnNew: true,
