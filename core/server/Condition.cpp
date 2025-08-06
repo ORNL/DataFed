@@ -15,9 +15,14 @@ void Promote::enforce(AuthMap &auth_map, const std::string &public_key) {
       // Convert transient key to session key if has been accessed more than the
       // threshold
       std::string uid = auth_map.getUID(m_promote_from, public_key);
+      std::cout << "PROMOTE: access_count: " << access_count
+                << " Promoting uid to SESSION KEY " << uid << " public key is "
+                << public_key << std::endl;
       auth_map.addKey(m_promote_to, public_key, uid);
     }
     // Remove expired short lived transient key
+    std::cout << "PROMOTE: access_count: " << access_count
+              << " removing TRANSIENT KEY " << public_key << std::endl;
     auth_map.removeKey(m_promote_from, public_key);
   }
 }
@@ -29,9 +34,13 @@ void Reset::enforce(AuthMap &auth_map, const std::string &public_key) {
     if (access_count >= m_access_attempts) {
       // If the session key has been accessed within the threshold then reset
       // the active period
+      std::cout << "RESET: access_count " << access_count << " reseting key "
+                << public_key << std::endl;
       auth_map.resetKey(m_act_on_key_type, public_key);
     } else {
       // If the key has not been used then remove it.
+      std::cout << "RESET: access_count " << access_count << " removing key "
+                << public_key << std::endl;
       auth_map.removeKey(m_act_on_key_type, public_key);
     }
   }

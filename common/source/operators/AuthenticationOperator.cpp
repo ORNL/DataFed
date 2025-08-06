@@ -35,6 +35,8 @@ void AuthenticationOperator::execute(IMessage &message) {
     m_authentication_manager->incrementKeyAccessCounter(key);
     uid = m_authentication_manager->getUID(key);
   }
+  std::cout << "AuthenticationOperator: uid is anon if not found " << uid
+            << " key is " << key << std::endl;
   message.set(MessageAttribute::ID, uid);
 }
 
