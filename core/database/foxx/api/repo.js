@@ -74,20 +74,14 @@ class Repo {
         //
         // Will return true if it does and false if it does not.
         if (a_key && a_key !== "repo/") {
-            if (a_key.startsWith("repo/")) {
-                this.#repo_id = a_key;
-                this.#repo_key = a_key.slice("repo/".length);
-            } else {
-                this.#repo_id = "repo/" + a_key;
-                this.#repo_key = a_key;
-            }
-
             // Use new repository operations to find the repo
-            const findResult = RepositoryOps.find(this.#repo_id);
+            const findResult = RepositoryOps.find(a_key);
 
             if (findResult.ok) {
                 this.#exists = true;
                 this.#repository = findResult.value;
+                this.#repo_id = findResult.value.data._id;
+                this.#repo_key = findResult.value.data._key;
             } else {
                 this.#exists = false;
                 this.#error =
