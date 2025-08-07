@@ -97,6 +97,13 @@ public:
                         const std::string &public_key) const;
 
   /**
+   * Set the access count on a key.
+   **/
+  void setAccessCount(const PublicKeyType pub_key_type,
+                      const std::string &public_key,
+                      const size_t);
+
+  /**
    * Will return the users Unique ID if it exists, will throw an error if it
    *does not exist. Best to call hasKey first.
    **/
