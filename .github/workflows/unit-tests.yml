@@ -1,22 +1,22 @@
 name: Unit-Testing
 on: push
 jobs:
-  unit-test:
-    runs-on: ubuntu-latest
-    container: debian:bookworm
-    if: ${{ always() }}
-    steps:
-      - uses: actions/checkout@v2
-      - name: Update debian
-        run: apt update
-      - name: Install dependencies
-        run: |
-          ./scripts/generate_datafed.sh
-          ./scripts/install_core_dependencies.sh
-      - name: Build
-        run: |
-          /opt/datafed/dependencies/bin/cmake -S. -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_WEB_SERVER=OFF
-          /opt/datafed/dependencies/bin/cmake --build build -j4
-      - name: Run tests
-        run: |
-          /opt/datafed/dependencies/bin/cmake --build build --target test
+    unit-test:
+        runs-on: ubuntu-latest
+        container: debian:bookworm
+        if: ${{ always() }}
+        steps:
+            - uses: actions/checkout@v2
+            - name: Update debian
+              run: apt update
+            - name: Install dependencies
+              run: |
+                  ./scripts/generate_datafed.sh
+                  ./scripts/install_core_dependencies.sh
+            - name: Build
+              run: |
+                  /opt/datafed/dependencies/bin/cmake -S. -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_WEB_SERVER=OFF
+                  /opt/datafed/dependencies/bin/cmake --build build -j4
+            - name: Run tests
+              run: |
+                  /opt/datafed/dependencies/bin/cmake --build build --target test

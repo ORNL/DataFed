@@ -1,65 +1,63 @@
-
 # WARNING
 #
 # Any env variable that must be provided and overwrite what is in the container
 # Must be explicitly listed in the environment section of the specific service
 # --env file variables will not be default exist in the container.
 services:
+    datafed-repo:
+        environment:
+            DATAFED_DOMAIN: "${DATAFED_DOMAIN}"
+            DATAFED_HTTPS_SERVER_PORT: "${DATAFED_HTTPS_SERVER_PORT}"
+            DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
+            DATAFED_CORE_ADDRESS_PORT_INTERNAL: "${DATAFED_DOMAIN}:7513"
+            DATAFED_GCS_COLLECTION_ROOT_PATH: "${DATAFED_GCS_COLLECTION_ROOT_PATH}"
+            DATAFED_GCS_COLLECTION_BASE_PATH: "${DATAFED_GCS_COLLECTION_BASE_PATH}"
+            DATAFED_REPO_ID_AND_DIR: "${DATAFED_REPO_ID_AND_DIR}"
+            UID: "${DATAFED_UID}"
+            HOST_HOSTNAME: "localhost"
+        image: datafed-repo:latest
+        volumes:
+            - ./keys:/opt/datafed/keys
+            - ./logs:${DATAFED_CONTAINER_LOG_PATH}
+            - ${DATAFED_HOST_COLLECTION_MOUNT}:${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}
+        ports:
+            - 9000:9000 # Communication core server
 
-  datafed-repo:
-    environment:
-      DATAFED_DOMAIN: "${DATAFED_DOMAIN}"
-      DATAFED_HTTPS_SERVER_PORT: "${DATAFED_HTTPS_SERVER_PORT}"
-      DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
-      DATAFED_CORE_ADDRESS_PORT_INTERNAL: "${DATAFED_DOMAIN}:7513"
-      DATAFED_GCS_COLLECTION_ROOT_PATH: "${DATAFED_GCS_COLLECTION_ROOT_PATH}"
-      DATAFED_GCS_COLLECTION_BASE_PATH: "${DATAFED_GCS_COLLECTION_BASE_PATH}"
-      DATAFED_REPO_ID_AND_DIR: "${DATAFED_REPO_ID_AND_DIR}"
-      UID: "${DATAFED_UID}"
-      HOST_HOSTNAME: "localhost"
-    image: datafed-repo:latest
-    volumes:
-      - ./keys:/opt/datafed/keys
-      - ./logs:${DATAFED_CONTAINER_LOG_PATH}
-      - ${DATAFED_HOST_COLLECTION_MOUNT}:${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}
-    ports:
-      - 9000:9000 # Communication core server
-
-# Needs host port 80 for apache
-# Needs ports 50000 - 51000 for GridFTP
-# Needs port 443 for control port
-# BUILD_WITH_META_SERVICES is needs to be set to true if GCS is running on the
-# same machine as the metadata services. This requires special configuration 
-# changes to apache to allow both GCS and the Metadata web server to use port
-# 443
-# DATAFED_REPO_DOMAIN - this is the domain name of the machine or IP address
-# where the repo service is running. It is used to generate the repo form, 
-# which can be used to register the repository with the Metadata services. It
-# is needed so that the metadata services know how to communicate with the 
-# repo service.
-  datafed-gcs:
-    environment:
-      DATAFED_DOMAIN: "${DATAFED_DOMAIN}"
-      DATAFED_HTTPS_SERVER_PORT: "${DATAFED_HTTPS_SERVER_PORT}"
-      DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
-      DATAFED_CORE_ADDRESS_PORT_INTERNAL: "datafed-core:7513"
-      DATAFED_GCS_ROOT_NAME: "${DATAFED_GCS_ROOT_NAME}"
-      DATAFED_REPO_ID_AND_DIR: "${DATAFED_REPO_ID_AND_DIR}"
-      DATAFED_GLOBUS_SUBSCRIPTION: "${DATAFED_GLOBUS_SUBSCRIPTION}"
-      DATAFED_GLOBUS_CONTROL_PORT: "${DATAFED_GLOBUS_CONTROL_PORT}"
-      DATAFED_GCS_COLLECTION_BASE_PATH: "${DATAFED_GCS_COLLECTION_BASE_PATH}"
-      DATAFED_GCS_COLLECTION_ROOT_PATH: "${DATAFED_GCS_COLLECTION_ROOT_PATH}"
-      DATAFED_REPO_USER: "${DATAFED_REPO_USER}"
-      UID: "${DATAFED_UID}"
-      HOST_HOSTNAME: "localhost"
-      DATAFED_AUTHZ_USER: "datafed"
-      DATAFED_REPO_DOMAIN: "${DATAFED_REPO_DOMAIN}"
-      DATAFED_GCS_IP: "${DATAFED_GCS_IP}"
-      BUILD_WITH_METADATA_SERVICES: "FALSE"
-    network_mode: host
-    image: datafed-gcs:latest
-    volumes:
-      - ./keys:/opt/datafed/keys
-      - ./globus:/opt/datafed/globus
-      - ./logs:${DATAFED_CONTAINER_LOG_PATH}
-      - ${DATAFED_HOST_COLLECTION_MOUNT}:${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}
+    # Needs host port 80 for apache
+    # Needs ports 50000 - 51000 for GridFTP
+    # Needs port 443 for control port
+    # BUILD_WITH_META_SERVICES is needs to be set to true if GCS is running on the
+    # same machine as the metadata services. This requires special configuration
+    # changes to apache to allow both GCS and the Metadata web server to use port
+    # 443
+    # DATAFED_REPO_DOMAIN - this is the domain name of the machine or IP address
+    # where the repo service is running. It is used to generate the repo form,
+    # which can be used to register the repository with the Metadata services. It
+    # is needed so that the metadata services know how to communicate with the
+    # repo service.
+    datafed-gcs:
+        environment:
+            DATAFED_DOMAIN: "${DATAFED_DOMAIN}"
+            DATAFED_HTTPS_SERVER_PORT: "${DATAFED_HTTPS_SERVER_PORT}"
+            DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
+            DATAFED_CORE_ADDRESS_PORT_INTERNAL: "datafed-core:7513"
+            DATAFED_GCS_ROOT_NAME: "${DATAFED_GCS_ROOT_NAME}"
+            DATAFED_REPO_ID_AND_DIR: "${DATAFED_REPO_ID_AND_DIR}"
+            DATAFED_GLOBUS_SUBSCRIPTION: "${DATAFED_GLOBUS_SUBSCRIPTION}"
+            DATAFED_GLOBUS_CONTROL_PORT: "${DATAFED_GLOBUS_CONTROL_PORT}"
+            DATAFED_GCS_COLLECTION_BASE_PATH: "${DATAFED_GCS_COLLECTION_BASE_PATH}"
+            DATAFED_GCS_COLLECTION_ROOT_PATH: "${DATAFED_GCS_COLLECTION_ROOT_PATH}"
+            DATAFED_REPO_USER: "${DATAFED_REPO_USER}"
+            UID: "${DATAFED_UID}"
+            HOST_HOSTNAME: "localhost"
+            DATAFED_AUTHZ_USER: "datafed"
+            DATAFED_REPO_DOMAIN: "${DATAFED_REPO_DOMAIN}"
+            DATAFED_GCS_IP: "${DATAFED_GCS_IP}"
+            BUILD_WITH_METADATA_SERVICES: "FALSE"
+        network_mode: host
+        image: datafed-gcs:latest
+        volumes:
+            - ./keys:/opt/datafed/keys
+            - ./globus:/opt/datafed/globus
+            - ./logs:${DATAFED_CONTAINER_LOG_PATH}
+            - ${DATAFED_HOST_COLLECTION_MOUNT}:${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}
