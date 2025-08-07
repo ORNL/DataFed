@@ -129,7 +129,7 @@ void AuthMap::resetKey(const PublicKeyType pub_key_type,
       EXCEPT(1, "Missing public key cannot reset session expiration.");
     }
   } else {
-    EXCEPT(1, "Unsupported PublicKey Type during execution of addKey.");
+    EXCEPT(1, "Unsupported PublicKey Type during execution of resetKey.");
   }
 }
 
@@ -273,7 +273,7 @@ void AuthMap::setAccessCount(const PublicKeyType pub_key_type,
       m_session_auth_clients.at(public_key).access_count = count;
     }
   } else {
-    EXCEPT(1, "Unsupported PublicKey Type during execution of hasKeyType.");
+    EXCEPT(1, "Unsupported PublicKey Type during execution of setAccessCount.");
   }
 }
 
@@ -290,7 +290,7 @@ size_t AuthMap::getAccessCount(const PublicKeyType pub_key_type,
       return m_session_auth_clients.at(public_key).access_count;
     }
   } else {
-    EXCEPT(1, "Unsupported PublicKey Type during execution of hasKeyType.");
+    EXCEPT(1, "Unsupported PublicKey Type during execution of getAccessCount.");
   }
   return 0;
 }
