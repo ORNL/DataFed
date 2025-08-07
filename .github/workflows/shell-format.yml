@@ -1,30 +1,29 @@
 name: Shell Format Check
 
 on:
-  push:
-    paths:
-      - '**.sh'
-  pull_request:
-    paths:
-      - '**.sh'
+    push:
+        paths:
+            - "**.sh"
+    pull_request:
+        paths:
+            - "**.sh"
 
 jobs:
-  shfmt:
-    runs-on: ubuntu-latest
+    shfmt:
+        runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
 
-      - name: Install shfmt
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y shfmt
+            - name: Install shfmt
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y shfmt
 
-      - name: Check shell script formatting
-        run: |
-          # Run in check mode: if reformatting would be needed, it will fail
-          # Use indentation space of 2 spaces
-          shfmt -i 2 -d .
-          echo "To fix run: shfmt -i 2 -w -d ."
-
+            - name: Check shell script formatting
+              run: |
+                  # Run in check mode: if reformatting would be needed, it will fail
+                  # Use indentation space of 2 spaces
+                  shfmt -i 2 -d .
+                  echo "To fix run: shfmt -i 2 -w -d ."

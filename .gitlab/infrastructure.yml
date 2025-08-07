@@ -1,5 +1,4 @@
 ---
-
 ################################################################################
 # STAGE: ci-infrastructure-check
 ################################################################################
@@ -7,45 +6,45 @@
 # up and running before attempting to launch the CI pipelines
 
 check-ci-infrastructure:
-  stage: ci-infrastructure-check
-  tags:
-    - datafed-infrastructure
-  script:
-    - |
-      BUILD_INFRASTRUCTURE="FALSE"
-      COMPUTE_INSTANCE_NAMES=("ci-datafed-arangodb" "ci-datafed-core" "ci-datafed-globus2" "ci-datafed-client")
-      for INSTANCE_NAME in "${COMPUTE_INSTANCE_NAMES[@]}"; do
-        set +e
-        ./scripts/ci_pipeline_setup.sh --compute-instance-name "$INSTANCE_NAME"
-        EXIT_CODE="$?"
-        set -e
-        if [ "${EXIT_CODE}" -eq 1 ]; then
-          BUILD_INFRASTRUCTURE="TRUE"
-        elif [ "${EXIT_CODE}" -eq 2 ]; then
-          exit 1
-        elif [ "${EXIT_CODE}" -eq 3 ]; then
-          exit 1
-        fi
-      done
-      if [ "$BUILD_INFRASTRUCTURE" == "TRUE" ]
-      then
-        cp .gitlab/build_ci_infrastructure.yml ci_infrastructure.yml
-      else
-        cp .gitlab/skip_ci_infrastructure.yml ci_infrastructure.yml
-      fi
-  resource_group: infrastructure_build
-  artifacts:
-    paths:
-      - ci_infrastructure.yml 
+    stage: ci-infrastructure-check
+    tags:
+        - datafed-infrastructure
+    script:
+        - |
+            BUILD_INFRASTRUCTURE="FALSE"
+            COMPUTE_INSTANCE_NAMES=("ci-datafed-arangodb" "ci-datafed-core" "ci-datafed-globus2" "ci-datafed-client")
+            for INSTANCE_NAME in "${COMPUTE_INSTANCE_NAMES[@]}"; do
+              set +e
+              ./scripts/ci_pipeline_setup.sh --compute-instance-name "$INSTANCE_NAME"
+              EXIT_CODE="$?"
+              set -e
+              if [ "${EXIT_CODE}" -eq 1 ]; then
+                BUILD_INFRASTRUCTURE="TRUE"
+              elif [ "${EXIT_CODE}" -eq 2 ]; then
+                exit 1
+              elif [ "${EXIT_CODE}" -eq 3 ]; then
+                exit 1
+              fi
+            done
+            if [ "$BUILD_INFRASTRUCTURE" == "TRUE" ]
+            then
+              cp .gitlab/build_ci_infrastructure.yml ci_infrastructure.yml
+            else
+              cp .gitlab/skip_ci_infrastructure.yml ci_infrastructure.yml
+            fi
+    resource_group: infrastructure_build
+    artifacts:
+        paths:
+            - ci_infrastructure.yml
 
 run-trigger-job:
-  stage: trigger-infrastructure
-  trigger:
-    include:
-      - artifact: ci_infrastructure.yml
-        job: check-ci-infrastructure
-    strategy: depend
-  resource_group: infrastructure_build
+    stage: trigger-infrastructure
+    trigger:
+        include:
+            - artifact: ci_infrastructure.yml
+              job: check-ci-infrastructure
+        strategy: depend
+    resource_group: infrastructure_build
 
 ################################################################################
 # STAGE: signal
@@ -53,14 +52,14 @@ run-trigger-job:
 # Stage is used to separte the trigger job from the remaining jobs and to act
 # as an anchor for setting up dependencies
 signal:
-  stage: signal
-  tags:
-    - runner
-  script:
-    - echo "Starting Build"
-  rules:
-    - exists:
-      - check-ci-infrastrucure
-    - exists:
-      - run-trigger-job
-    - when: on_success
+    stage: signal
+    tags:
+        - runner
+    script:
+        - echo "Starting Build"
+    rules:
+        - exists:
+              - check-ci-infrastrucure
+        - exists:
+              - run-trigger-job
+        - when: on_success
