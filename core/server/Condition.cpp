@@ -19,6 +19,8 @@ void Promote::enforce(AuthMap &auth_map, const std::string &public_key) {
     }
     // Remove expired short lived transient key
     auth_map.removeKey(m_promote_from, public_key);
+    // Set the access counter so that it doesn't get prematurely removed
+    auth_map.setAccessCount(m_promote_to, public_key, access_count);
   }
 }
 
