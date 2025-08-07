@@ -5,6 +5,9 @@ source "${SOURCE}/dependency_versions.sh"
 PROJECT_ROOT=$(realpath "${SOURCE}/..")
 source "${SOURCE}/utils.sh"
 
+# Ensures the shell returns the exit code of the first failed command in a pipeline
+set -o pipefail
+
 sudo_command
 # these are the dependencies to be installed by apt
 export apt_file_path="${PROJECT_ROOT}/tmp/apt_deps"
