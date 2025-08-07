@@ -461,7 +461,8 @@ install_nvm() {
     # will use it to set the install path
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
     mkdir -p "${NVM_DIR}"
-    curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${DATAFED_NVM_VERSION}/install.sh" | bash
+    # --fail makes curl return a non-zero exit code for HTTP errors like 404 or 500.
+    curl --fail -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${DATAFED_NVM_VERSION}/install.sh" | bash
     # Mark nvm as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${NVM_FLAG_PREFIX}${DATAFED_NVM_VERSION}"
   else
