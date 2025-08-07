@@ -259,6 +259,24 @@ bool AuthMap::hasKeyType(const PublicKeyType pub_key_type,
   }
 }
 
+void AuthMap::setAccessCount(const PublicKeyType pub_key_type,
+                             const std::string &public_key,
+                             const size_t count) {
+  if (pub_key_type == PublicKeyType::TRANSIENT) {
+    std::lock_guard<std::mutex> lock(m_trans_clients_mtx);
+    if (m_trans_auth_clients.count(public_key)) {
+      m_trans_auth_clients.at(public_key).access_count = count;
+    }
+  } else if (pub_key_type == PublicKeyType::SESSION) {
+    std::lock_guard<std::mutex> lock(m_session_clients_mtx);
+    if (m_session_auth_clients.count(public_key)) {
+      m_session_auth_clients.at(public_key).access_count = count;
+    }
+  } else {
+    EXCEPT(1, "Unsupported PublicKey Type during execution of hasKeyType.");
+  }
+}
+
 size_t AuthMap::getAccessCount(const PublicKeyType pub_key_type,
                                const std::string &public_key) const {
   if (pub_key_type == PublicKeyType::TRANSIENT) {
