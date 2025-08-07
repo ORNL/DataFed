@@ -1,8 +1,8 @@
 # NOTE
 #
-# For the includes to be executed in the correct order when they 
+# For the includes to be executed in the correct order when they
 # have dependencies there must be one include statement. The 'needs'
-# keyword does not otherwise resolve a jobs in a different include 
+# keyword does not otherwise resolve a jobs in a different include
 # file if it is in a different include block.
 # I.e. I cannot do this:
 #
@@ -12,38 +12,38 @@
 # include:
 #   - local: .gitlab/stage_clear_cache.yml
 #
-# Particularly if stage_clear_cache.yml contains jobs with the needs 
+# Particularly if stage_clear_cache.yml contains jobs with the needs
 # keyword that names a job in infrastructure.yml
 include:
-  - local: .gitlab/stage_pipeline_serialize.yml
-  - local: .gitlab/infrastructure.yml
-  - local: .gitlab/stage_clear_cache.yml
-  - local: .gitlab/stage_build_base.yml
-  - local: .gitlab/stage_provision_client.yml
-  - local: .gitlab/stage_image_check.yml
-  - local: .gitlab/stage_build.yml
-  - local: .gitlab/stage_test.yml
-  - local: .gitlab/stage_unit.yml
-  - local: .gitlab/end_to_end.yml
+    - local: .gitlab/stage_pipeline_serialize.yml
+    - local: .gitlab/infrastructure.yml
+    - local: .gitlab/stage_clear_cache.yml
+    - local: .gitlab/stage_build_base.yml
+    - local: .gitlab/stage_provision_client.yml
+    - local: .gitlab/stage_image_check.yml
+    - local: .gitlab/stage_build.yml
+    - local: .gitlab/stage_test.yml
+    - local: .gitlab/stage_unit.yml
+    - local: .gitlab/end_to_end.yml
 
 stages:
-  - pipeline-serialize
-  - ci-infrastructure-check
-  - trigger-infrastructure
-  - signal
-  - clear-docker-cache
-  - build-base
-  - provision-client
-  - image-check
-  - build
-  - test # Required for gitlab sast templates
-  - unit
-  - end-to-end-setup-arango
-  - end-to-end-setup
-  - end-to-end-test
-  - end-to-end-test-finish-signal
-  - log
-  - deploy-pypi-package
+    - pipeline-serialize
+    - ci-infrastructure-check
+    - trigger-infrastructure
+    - signal
+    - clear-docker-cache
+    - build-base
+    - provision-client
+    - image-check
+    - build
+    - test # Required for gitlab sast templates
+    - unit
+    - end-to-end-setup-arango
+    - end-to-end-setup
+    - end-to-end-test
+    - end-to-end-test-finish-signal
+    - log
+    - deploy-pypi-package
 
 # WARNING
 #
@@ -52,7 +52,7 @@ stages:
 #
 # [ -f file_path ] && ok do this....
 variables:
-  HARBOR_USER: 'robot$$datafed+harbor_datafed_gitlab_ci_registry_2'
-  REGISTRY: 'camden.ornl.gov'
-  DATAFED_DEPENDENCIES_INSTALL_PATH: "/shared/install"
-  DOCKER_TLS_CERTDIR: "" # Required for running docker in docker
+    HARBOR_USER: "robot$$datafed+harbor_datafed_gitlab_ci_registry_2"
+    REGISTRY: "camden.ornl.gov"
+    DATAFED_DEPENDENCIES_INSTALL_PATH: "/shared/install"
+    DOCKER_TLS_CERTDIR: "" # Required for running docker in docker

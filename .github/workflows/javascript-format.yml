@@ -1,34 +1,33 @@
 name: JavaScript Formatter
 on: push
 jobs:
-  format-javascript:
-    runs-on: ubuntu-latest
+    format-javascript:
+        runs-on: ubuntu-latest
 
-    steps:
-      # Step 1: Checkout the repository
-      - name: Checkout Code
-        uses: actions/checkout@v4
+        steps:
+            # Step 1: Checkout the repository
+            - name: Checkout Code
+              uses: actions/checkout@v4
 
-      # Step 2: Set up Node.js environment
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18' # Specify your Node.js version
+            # Step 2: Set up Node.js environment
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "18" # Specify your Node.js version
 
-      # Step 3: Install Prettier and ESLint globally
-      - name: Install Prettier
-        run: |
-          npm install -g prettier
+            # Step 3: Install Prettier and ESLint globally
+            - name: Install Prettier
+              run: |
+                  npm install -g prettier
 
-      # Step 4: Run Prettier to format code
-      - name: Run prettier
-        run: |
-          prettier "**/*.js" --write
-          git diff
-          git reset --hard
-          prettier --check "**/*.js" 
-          
-      # Step 5: Report status
-      - name: Complete
-        run: echo "Formatting completed successfully!"
+            # Step 4: Run Prettier to format code
+            - name: Run prettier
+              run: |
+                  prettier "**/*.js" --write
+                  git diff
+                  git reset --hard
+                  prettier --check "**/*.js"
 
+            # Step 5: Report status
+            - name: Complete
+              run: echo "Formatting completed successfully!"
