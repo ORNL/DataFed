@@ -8,95 +8,109 @@ class LegacyAPIAdapter {
         this.baseUrl = `${baseUrl}/repo`;
     }
 
+    _get(endpoint, params = {}) {
+        const queryString = this._buildQueryString(params);
+        const url = queryString
+            ? `${this.baseUrl}${endpoint}?${queryString}`
+            : `${this.baseUrl}${endpoint}`;
+        return request.get(url);
+    }
+
+    _post(endpoint, params = {}, body = {}) {
+        const queryString = this._buildQueryString(params);
+        const url = queryString
+            ? `${this.baseUrl}${endpoint}?${queryString}`
+            : `${this.baseUrl}${endpoint}`;
+        return request.post(url, { json: true, body });
+    }
+
+    _buildQueryString(params) {
+        if (Array.isArray(params)) {
+            return params.join("&");
+        }
+        const pairs = Object.entries(params)
+            .filter(([_, value]) => value !== undefined && value !== null)
+            .map(([key, value]) => `${key}=${value}`);
+        return pairs.length > 0 ? pairs.join("&") : "";
+    }
+
     createRepository(clientKey, repoData) {
         throw new Error("Legacy API does not support repository creation via API");
     }
 
     listRepositories(clientKey, options = {}) {
-        const params = [`client=${clientKey}`];
-        if (options.all) params.push("all=true");
-        if (options.type) params.push(`type=${options.type}`);
-
-        return request.get(`${this.baseUrl}/list?${params.join("&")}`);
+        const params = { client: clientKey };
+        if (options.all) params.all = true;
+        if (options.type) params.type = options.type;
+        return this._get("/list", params);
     }
 
     viewRepository(repoId) {
-        return request.get(`${this.baseUrl}/view?id=${repoId}`);
+        return this._get("/view", { id: repoId });
     }
 
     updateRepository(repoId, updates, clientKey) {
-        return request.post(`${this.baseUrl}/update?client=${clientKey}`, {
-            json: true,
-            body: { id: repoId, ...updates },
-        });
+        return this._post("/update", { client: clientKey }, { id: repoId, ...updates });
     }
 
     createAllocation(allocData, clientKey = null) {
         const client = clientKey || allocData.client;
-        const params = [
-            `client=${client}`,
-            `subject=${allocData.subject}`,
-            `repo=${allocData.repo}`,
-            `data_limit=${allocData.size || allocData.data_limit}`,
-            `rec_limit=${allocData.rec_limit || 1000}`,
-        ];
-
-        if (allocData.path) params.push(`path=${allocData.path}`);
-
-        return request.get(`${this.baseUrl}/alloc/create?${params.join("&")}`);
+        const params = {
+            client: client,
+            subject: allocData.subject,
+            repo: allocData.repo,
+            data_limit: allocData.size || allocData.data_limit,
+            rec_limit: allocData.rec_limit || 1000,
+        };
+        if (allocData.path) params.path = allocData.path;
+        return this._get("/alloc/create", params);
     }
 
     deleteAllocation(allocData, clientKey = null) {
         const client = clientKey || allocData.client;
-        const params = [
-            `client=${client}`,
-            `subject=${allocData.subject}`,
-            `repo=${allocData.repo}`,
-        ];
-
-        return request.get(`${this.baseUrl}/alloc/delete?${params.join("&")}`);
+        return this._get("/alloc/delete", {
+            client: client,
+            subject: allocData.subject,
+            repo: allocData.repo,
+        });
     }
 
     listAllocationsByRepo(repoId, clientKey) {
-        return request.get(`${this.baseUrl}/alloc/list/by_repo?client=${clientKey}&repo=${repoId}`);
+        return this._get("/alloc/list/by_repo", { client: clientKey, repo: repoId });
     }
 
     listAllocationsByOwner(ownerId, includeStats = false) {
-        return request.get(
-            `${this.baseUrl}/alloc/list/by_owner?owner=${ownerId}&stats=${includeStats}`,
-        );
+        return this._get("/alloc/list/by_owner", { owner: ownerId, stats: includeStats });
     }
 
     viewAllocation(repoId, subject, clientKey) {
-        return request.get(
-            `${this.baseUrl}/alloc/view?client=${clientKey}&repo=${repoId}&subject=${subject}`,
-        );
+        return this._get("/alloc/view", { client: clientKey, repo: repoId, subject: subject });
     }
 
     getAllocationStats(repoId, subject, clientKey) {
-        return request.get(
-            `${this.baseUrl}/alloc/stats?client=${clientKey}&repo=${repoId}&subject=${subject}`,
-        );
+        return this._get("/alloc/stats", { client: clientKey, repo: repoId, subject: subject });
     }
 
     setAllocationLimits(repoId, subject, dataLimit, recLimit, clientKey) {
-        return request.get(
-            `${this.baseUrl}/alloc/set?client=${clientKey}&subject=${subject}&repo=${repoId}&data_limit=${dataLimit}&rec_limit=${recLimit}`,
-        );
+        return this._get("/alloc/set", {
+            client: clientKey,
+            subject: subject,
+            repo: repoId,
+            data_limit: dataLimit,
+            rec_limit: recLimit,
+        });
     }
 
     setDefaultAllocation(repoId, clientKey) {
-        return request.get(`${this.baseUrl}/alloc/set/default?client=${clientKey}&repo=${repoId}`);
+        return this._get("/alloc/set/default", { client: clientKey, repo: repoId });
     }
 
     deleteRepository(repoId, clientKey) {
-        return request.get(`${this.baseUrl}/delete?client=${clientKey}&id=${repoId}`);
+        return this._get("/delete", { client: clientKey, id: repoId });
     }
 
     calculateSize(items, recurse, clientKey) {
-        return request.get(
-            `${this.baseUrl}/calc_size?client=${clientKey}&items=${items}&recurse=${recurse}`,
-        );
+        return this._get("/calc_size", { client: clientKey, items: items, recurse: recurse });
     }
 }
 
@@ -105,30 +119,49 @@ class NewAPIAdapter {
         this.baseUrl = `${baseUrl}/repo`;
     }
 
+    _get(endpoint, params = {}) {
+        const queryString = this._buildQueryString(params);
+        const url = queryString
+            ? `${this.baseUrl}${endpoint}?${queryString}`
+            : `${this.baseUrl}${endpoint}`;
+        return request.get(url);
+    }
+
+    _post(endpoint, params = {}, body = {}) {
+        const queryString = this._buildQueryString(params);
+        const url = queryString
+            ? `${this.baseUrl}${endpoint}?${queryString}`
+            : `${this.baseUrl}${endpoint}`;
+        return request.post(url, { json: true, body });
+    }
+
+    _buildQueryString(params) {
+        if (Array.isArray(params)) {
+            return params.join("&");
+        }
+        const pairs = Object.entries(params)
+            .filter(([_, value]) => value !== undefined && value !== null)
+            .map(([key, value]) => `${key}=${value}`);
+        return pairs.length > 0 ? pairs.join("&") : "";
+    }
+
     createRepository(clientKey, repoData) {
-        return request.post(`${this.baseUrl}/create?client=${clientKey}`, {
-            json: true,
-            body: repoData,
-        });
+        return this._post("/create", { client: clientKey }, repoData);
     }
 
     listRepositories(clientKey, options = {}) {
-        const params = [`client=${clientKey}`];
-        if (options.all) params.push("all=true");
-        if (options.type) params.push(`type=${options.type}`);
-
-        return request.get(`${this.baseUrl}/list?${params.join("&")}`);
+        const params = { client: clientKey };
+        if (options.all) params.all = true;
+        if (options.type) params.type = options.type;
+        return this._get("/list", params);
     }
 
     viewRepository(repoId) {
-        return request.get(`${this.baseUrl}/view?id=${repoId}`);
+        return this._get("/view", { id: repoId });
     }
 
     updateRepository(repoId, updates, clientKey) {
-        return request.post(`${this.baseUrl}/update?client=${clientKey}`, {
-            json: true,
-            body: { id: repoId, ...updates },
-        });
+        return this._post("/update", { client: clientKey }, { id: repoId, ...updates });
     }
 
     createAllocation(allocData, clientKey = null) {
@@ -142,21 +175,19 @@ class NewAPIAdapter {
         if (allocData.path) body.path = allocData.path;
         if (allocData.metadata) body.metadata = allocData.metadata;
 
-        return request.post(`${this.baseUrl}/alloc/create?client=${client}`, {
-            json: true,
-            body: body,
-        });
+        return this._post("/alloc/create", { client: client }, body);
     }
 
     deleteAllocation(allocData, clientKey = null) {
         const client = clientKey || allocData.client;
-        return request.post(`${this.baseUrl}/alloc/delete?client=${client}`, {
-            json: true,
-            body: {
+        return this._post(
+            "/alloc/delete",
+            { client: client },
+            {
                 repo: allocData.repo,
                 subject: allocData.subject,
             },
-        });
+        );
     }
 
     listAllocationsByRepo(repoId, clientKey) {
