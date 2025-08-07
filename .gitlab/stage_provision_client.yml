@@ -1,20 +1,19 @@
 ---
-
 #################################################################################
 # STAGE: provision client
 #################################################################################
 provision-client:
-  needs: ["signal"]
-  variables:
-    GIT_STRATEGY: clone
-    DATAFED_PYTHON_DEPENDENCIES_DIR: "${CI_PROJECT_DIR}/dependencies/python"
-  stage: provision-client
-  tags:
-    - ci-datafed-client
-  before_script:
-    - export PATH=/opt/datafed/dependencies/bin:$PATH
-    - rm -rf $DATAFED_PYTHON_DEPENDENCIES_DIR
-  script:
-    - ./scripts/generate_datafed.sh
-    - ./scripts/install_client_dependencies.sh
-    - ./scripts/install_end_to_end_test_dependencies.sh
+    needs: ["signal"]
+    variables:
+        GIT_STRATEGY: clone
+        DATAFED_PYTHON_DEPENDENCIES_DIR: "${CI_PROJECT_DIR}/dependencies/python"
+    stage: provision-client
+    tags:
+        - ci-datafed-client
+    before_script:
+        - export PATH=/opt/datafed/dependencies/bin:$PATH
+        - rm -rf $DATAFED_PYTHON_DEPENDENCIES_DIR
+    script:
+        - ./scripts/generate_datafed.sh
+        - ./scripts/install_client_dependencies.sh
+        - ./scripts/install_end_to_end_test_dependencies.sh
