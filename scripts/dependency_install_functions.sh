@@ -5,6 +5,9 @@ source "${SOURCE}/dependency_versions.sh"
 PROJECT_ROOT=$(realpath "${SOURCE}/..")
 source "${SOURCE}/utils.sh"
 
+# Ensures the shell returns the exit code of the first failed command in a pipeline
+set -o pipefail
+
 sudo_command
 # these are the dependencies to be installed by apt
 export apt_file_path="${PROJECT_ROOT}/tmp/apt_deps"
@@ -458,7 +461,8 @@ install_nvm() {
     # will use it to set the install path
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
     mkdir -p "${NVM_DIR}"
-    curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${DATAFED_NVM_VERSION}/install.sh" | bash
+    # --fail makes curl return a non-zero exit code for HTTP errors like 404 or 500.
+    curl --fail -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${DATAFED_NVM_VERSION}/install.sh" | bash
     # Mark nvm as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${NVM_FLAG_PREFIX}${DATAFED_NVM_VERSION}"
   else
