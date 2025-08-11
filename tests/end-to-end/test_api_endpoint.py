@@ -46,6 +46,7 @@ class TestDataFedPythonAPIEndpoint(unittest.TestCase):
 
         username = "datafed89"
         password = os.environ.get("DATAFED_USER89_PASSWORD")
+        timeout = int(os.environ.get('DATAFED_TEST_TIMEOUT_OVERRIDE', '1'));
 
         count = 0
         while True:
