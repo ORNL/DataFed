@@ -453,7 +453,6 @@ void Server::dbMaintenance(LogContext log_context, int thread_count) {
   log_context.thread_id = thread_count;
   chrono::system_clock::duration purge_per =
       chrono::seconds(m_config.note_purge_period);
-  std::cout << "dbMaintenance thread, cred_dir " << m_config.cred_dir << std::endl;
   DatabaseAPI db(m_config.db_url, m_config.db_user, m_config.db_pass, m_config.cred_dir);
 
   while (1) {
@@ -500,7 +499,6 @@ void Server::metricsThread(LogContext log_context, int thread_count) {
   log_context.thread_id = thread_count;
   chrono::system_clock::duration metrics_per =
       chrono::seconds(m_config.metrics_period);
-  std::cout << "metrics thread, cred_dir " << m_config.cred_dir << std::endl;
   DatabaseAPI db(m_config.db_url, m_config.db_user, m_config.db_pass, m_config.cred_dir);
   map<string, MsgMetrics_t>::iterator u;
   MsgMetrics_t::iterator m;

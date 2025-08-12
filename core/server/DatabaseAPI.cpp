@@ -60,7 +60,6 @@ DatabaseAPI::DatabaseAPI(const std::string &a_db_url,
   curl_easy_setopt(m_curl, CURLOPT_TCP_NODELAY, 1);
   
   //grab the token_key
-  std::cout << "DatabaseAPI constructor reading from: " << cipher_key_file_path << std::endl;
   readFile(cipher_key_file_path, CipherEngine::KEY_LENGTH, token_key);
   cipher = CipherEngine(token_key);
 }
