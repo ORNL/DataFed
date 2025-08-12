@@ -203,7 +203,7 @@ TaskWorker::prepToken(const Value::Object &obj,std::string token, const std::str
     {
         //TOKEN IS ENCRYPTED
         unsigned char token_key[SDMS::CipherEngine::KEY_LENGTH];
-        readFile(cipher_key_path + "datafed-token-key.txt", SDMS::CipherEngine::KEY_LENGTH, token_key);
+        readFile(cipher_key_path, SDMS::CipherEngine::KEY_LENGTH, token_key);
         CipherEngine cipher(token_key);
         CipherEngine::CipherString encoded_obj;
 
