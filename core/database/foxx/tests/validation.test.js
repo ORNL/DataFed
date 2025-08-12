@@ -10,6 +10,7 @@ const {
     validateGlobusConfig,
     validateMetadataConfig,
     validateAllocationParams,
+    validatePartialGlobusConfig,
 } = require("../api/repository/validation");
 
 describe("Repository Validation Tests", function () {
@@ -195,7 +196,7 @@ describe("Repository Validation Tests", function () {
                 title: "Test Repository",
                 capacity: 1000000,
                 admins: ["user1"],
-                pub_key: "ssh-rsa AAAAB3...",
+                pub_key: "pubkey:AAAAB3...",
                 address: "server.example.com",
                 endpoint: "endpoint-id",
                 domain: "example.com",
@@ -283,7 +284,7 @@ describe("Repository Validation Tests", function () {
 
         it("should reject configuration with Globus fields", function () {
             const config = getValidMetadataConfig();
-            config.pub_key = "ssh-rsa AAAAB3...";
+            config.pub_key = "pubkey:AAAAB3...";
             config.endpoint = "endpoint-id";
             const result = validateMetadataConfig(config);
             expect(result.ok).to.be.false;
@@ -347,6 +348,88 @@ describe("Repository Validation Tests", function () {
             const result = validateAllocationParams(params);
             expect(result.ok).to.be.false;
             expect(result.error.message).to.include("Allocation path must be a string");
+        });
+    });
+
+    describe("validatePartialGlobusConfig", function () {
+        it("should accept empty configuration", function () {
+            const result = validatePartialGlobusConfig({}, "test-repo");
+            expect(result.ok).to.be.true;
+        });
+
+        it("should accept partial title update", function () {
+            const result = validatePartialGlobusConfig({ title: "New Title" }, "test-repo");
+            expect(result.ok).to.be.true;
+        });
+
+        it("should reject invalid title update", function () {
+            const result = validatePartialGlobusConfig({ title: "" }, "test-repo");
+            expect(result.ok).to.be.false;
+            expect(result.error.message).to.include("Repository title is required");
+        });
+
+        it("should accept partial capacity update", function () {
+            const result = validatePartialGlobusConfig({ capacity: 2000000 }, "test-repo");
+            expect(result.ok).to.be.true;
+        });
+
+        it("should reject invalid capacity update", function () {
+            const result = validatePartialGlobusConfig({ capacity: 0 }, "test-repo");
+            expect(result.ok).to.be.false;
+            expect(result.error.message).to.include(
+                "Repository capacity must be a positive number",
+            );
+        });
+
+        it("should accept path update with correct repo ID", function () {
+            const result = validatePartialGlobusConfig(
+                { path: "/new/path/test-repo" },
+                "test-repo",
+            );
+            expect(result.ok).to.be.true;
+        });
+
+        it("should reject path update with wrong repo ID", function () {
+            const result = validatePartialGlobusConfig({ path: "/new/path/wrong-id" }, "test-repo");
+            expect(result.ok).to.be.false;
+            expect(result.error.message).to.include("must end with repository ID");
+        });
+
+        it("should validate multiple fields", function () {
+            const config = {
+                title: "Updated Title",
+                capacity: 3000000,
+                pub_key: "pubkey:UPDATED...",
+                address: "new.server.com",
+            };
+            const result = validatePartialGlobusConfig(config, "test-repo");
+            expect(result.ok).to.be.true;
+        });
+
+        it("should reject multiple invalid fields", function () {
+            const config = {
+                title: "",
+                capacity: -100,
+                pub_key: "",
+            };
+            const result = validatePartialGlobusConfig(config, "test-repo");
+            expect(result.ok).to.be.false;
+            expect(result.error.message).to.include("Repository title is required");
+            expect(result.error.message).to.include(
+                "Repository capacity must be a positive number",
+            );
+            expect(result.error.message).to.include("Public key is required");
+        });
+
+        it("should validate admin updates", function () {
+            const result = validatePartialGlobusConfig({ admins: ["user1", "user2"] }, "test-repo");
+            expect(result.ok).to.be.true;
+        });
+
+        it("should reject empty admin array", function () {
+            const result = validatePartialGlobusConfig({ admins: [] }, "test-repo");
+            expect(result.ok).to.be.false;
+            expect(result.error.message).to.include("Repository must have at least one admin");
         });
     });
 });

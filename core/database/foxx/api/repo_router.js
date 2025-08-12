@@ -7,6 +7,19 @@ const joi = require("joi");
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
 const g_tasks = require("./tasks");
+const { validateGlobusConfig, validatePartialGlobusConfig } = require("./repository/validation");
+
+// Helper function to prepare repository data for saving
+const prepareRepoData = (obj) => {
+    // Ensure paths end with / for saving
+    if (obj.path && !obj.path.endsWith("/")) {
+        obj.path += "/";
+    }
+    if (obj.exp_path && !obj.exp_path.endsWith("/")) {
+        obj.exp_path += "/";
+    }
+    return obj;
+};
 
 module.exports = router;
 
@@ -121,27 +134,30 @@ router
                     g_lib.procInputParam(req.body, "summary", false, obj);
                     g_lib.procInputParam(req.body, "domain", false, obj);
 
-                    if (!obj.path.startsWith("/"))
-                        throw [
-                            g_lib.ERR_INVALID_PARAM,
-                            "Repository path must be an absolute path file system path.",
-                        ];
-
-                    if (!obj.path.endsWith("/")) obj.path += "/";
-
-                    var idx = obj.path.lastIndexOf("/", obj.path.length - 2);
-                    if (obj.path.substr(idx + 1, obj.path.length - idx - 2) != obj._key)
-                        throw [
-                            g_lib.ERR_INVALID_PARAM,
-                            "Last part of repository path must be repository ID suffix (" +
-                                obj._key +
-                                ")",
-                        ];
-
                     if (req.body.exp_path) {
                         obj.exp_path = req.body.exp_path;
-                        if (!obj.exp_path.endsWith("/")) obj.path += "/";
                     }
+
+                    // Validate the configuration
+                    const validationResult = validateGlobusConfig({
+                        id: obj._key,
+                        title: obj.title,
+                        capacity: obj.capacity,
+                        admins: req.body.admins,
+                        pub_key: obj.pub_key,
+                        address: obj.address,
+                        endpoint: obj.endpoint,
+                        domain: obj.domain,
+                        path: obj.path,
+                        exp_path: obj.exp_path,
+                    });
+
+                    if (!validationResult.ok) {
+                        throw [validationResult.error.code, validationResult.error.message];
+                    }
+
+                    // Prepare repository data for saving
+                    prepareRepoData(obj);
 
                     var repo = g_db.repo.save(obj, {
                         returnNew: true,
@@ -211,40 +227,41 @@ router
                     g_lib.procInputParam(req.body, "summary", true, obj);
                     g_lib.procInputParam(req.body, "domain", true, obj);
 
-                    if (req.body.path) {
-                        if (!req.body.path.startsWith("/"))
-                            throw [
-                                g_lib.ERR_INVALID_PARAM,
-                                "Repository path must be an absolute path file system path.",
-                            ];
-
-                        obj.path = req.body.path;
-                        if (!obj.path.endsWith("/")) obj.path += "/";
-
-                        // Last part of storage path MUST end with the repo ID
-                        var idx = obj.path.lastIndexOf("/", obj.path.length - 2);
-                        var key = req.body.id.substr(5);
-                        if (obj.path.substr(idx + 1, obj.path.length - idx - 2) != key)
-                            throw [
-                                g_lib.ERR_INVALID_PARAM,
-                                "Last part of repository path must be repository ID suffix (" +
-                                    key +
-                                    ")",
-                            ];
-                    }
-
-                    if (req.body.exp_path) {
-                        obj.exp_path = req.body.exp_path;
-                        if (!obj.exp_path.endsWith("/")) obj.exp_path += "/";
-                    }
-
+                    if (req.body.path) obj.path = req.body.path;
+                    if (req.body.exp_path) obj.exp_path = req.body.exp_path;
                     if (req.body.capacity) obj.capacity = req.body.capacity;
-
                     if (req.body.pub_key) obj.pub_key = req.body.pub_key;
-
                     if (req.body.address) obj.address = req.body.address;
-
                     if (req.body.endpoint) obj.endpoint = req.body.endpoint;
+
+                    // Extract repo key from ID for validation
+                    const key = req.body.id.substr(5);
+
+                    // Validate the partial configuration
+                    const updateConfig = {
+                        title: req.body.title,
+                        domain: req.body.domain,
+                        path: req.body.path,
+                        exp_path: req.body.exp_path,
+                        capacity: req.body.capacity,
+                        pub_key: req.body.pub_key,
+                        address: req.body.address,
+                        endpoint: req.body.endpoint,
+                        admins: req.body.admins,
+                    };
+
+                    // Remove undefined fields
+                    Object.keys(updateConfig).forEach(
+                        (k) => updateConfig[k] === undefined && delete updateConfig[k],
+                    );
+
+                    const validationResult = validatePartialGlobusConfig(updateConfig, key);
+                    if (!validationResult.ok) {
+                        throw [validationResult.error.code, validationResult.error.message];
+                    }
+
+                    // Prepare repository data for saving
+                    prepareRepoData(obj);
 
                     var repo = g_db._update(req.body.id, obj, {
                         returnNew: true,
