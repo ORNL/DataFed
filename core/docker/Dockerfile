@@ -80,8 +80,8 @@ COPY --from=core-build --chown=datafed:root ${BUILD_DIR}/core/docker/entrypoint.
 COPY --from=core-build --chown=datafed:root ${DATAFED_INSTALL_PATH}/core/datafed-core ${DATAFED_INSTALL_PATH}/core/datafed-core
 
 USER root
-RUN chown -R datafed:0 /datafed
-RUN chown -R datafed:0 /opt
+RUN chown -R datafed:root /datafed
+RUN chown -R datafed:root /opt
 
 # NOTE docker does not recognize curly braces around variables in entrypoint
 # and CMD
