@@ -139,7 +139,6 @@ void Server::waitForDB() {
 
   for (int i = 0; i < 10; i++) {
     try {
-      std::cout << "waitForDB thread, cred_dir " << m_config.cred_dir << std::endl;
       DatabaseAPI db_client(m_config.db_url, m_config.db_user, m_config.db_pass, m_config.cred_dir);
       db_client.serverPing(m_log_context);
       DL_INFO(m_log_context, "DB Ping Success");
