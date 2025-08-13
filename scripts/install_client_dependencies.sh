@@ -30,4 +30,3 @@ source "${DATAFED_PYTHON_ENV}/bin/activate"
 "python${DATAFED_PYTHON_VERSION}" -m pip install -r "${PROJECT_ROOT}/python/datafed_pkg/requirements.txt"
 
 cd ~
-

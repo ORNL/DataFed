@@ -14,8 +14,7 @@ source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 packages=("curl" "g++" "make" "wget")
 externals=("cmake" "libopenssl" "python" "nvm" "node" "ws_node_packages")
 
-Help()
-{
+Help() {
   echo "$(basename $0) install web dependencies."
   echo
   echo "Syntax: $(basename $0) [-h|n]"
@@ -34,32 +33,34 @@ local_UNIFY=false
 
 VALID_ARGS=$(getopt -o hn: --long 'help',node_install_dir: -- "$@")
 if [[ $? -ne 0 ]]; then
-      exit 1;
+  exit 1
 fi
 eval set -- "$VALID_ARGS"
 while [ : ]; do
   case "$1" in
-    -h | --help)
-        Help
-        exit 0
-        ;;
-    -n | --node_install_dir)
-        local_NODE_INSTALL=$2
-        shift 2
-        ;;
-    unify)
-        # The extra space is necessary to not conflict with the other install scripts
-        echo -n "${packages[@]} " >> "$apt_file_path"
-        echo -n "${externals[@]} " >> "$ext_file_path"
-        local_UNIFY=true
-        shift
-        ;;
-    --) shift; 
-        break 
-        ;;
-    \?) # incorrect option
-        echo "Error: Invalid option"
-        exit;;
+  -h | --help)
+    Help
+    exit 0
+    ;;
+  -n | --node_install_dir)
+    local_NODE_INSTALL=$2
+    shift 2
+    ;;
+  unify)
+    # The extra space is necessary to not conflict with the other install scripts
+    echo -n "${packages[@]} " >>"$apt_file_path"
+    echo -n "${externals[@]} " >>"$ext_file_path"
+    local_UNIFY=true
+    shift
+    ;;
+  --)
+    shift
+    break
+    ;;
+  \?) # incorrect option
+    echo "Error: Invalid option"
+    exit
+    ;;
   esac
 done
 
