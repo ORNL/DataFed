@@ -18,8 +18,8 @@ services:
             DATAFED_WEB_USER: "datafed"
             DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
             DATAFED_CORE_ADDRESS_PORT_INTERNAL: "datafed-core:7513"
-            UID: "${DATAFED_UID}"
         image: datafed-web:latest
+        user: "${DATAFED_UID}:${DATAFED_UID}"
         ports:
             - "8080:443" # This must be the same port that is mapped to the host for redirects to work
         volumes:

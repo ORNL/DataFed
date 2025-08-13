@@ -83,6 +83,7 @@ USER root
 RUN chown -R datafed:root /datafed
 RUN chown -R datafed:root /opt
 
+USER datafed
 # NOTE docker does not recognize curly braces around variables in entrypoint
 # and CMD
 ENTRYPOINT [ "/datafed/source/core/docker/entrypoint.sh", "/opt/datafed/core/datafed-core","--cfg", "/opt/datafed/core/datafed-core.cfg"]
