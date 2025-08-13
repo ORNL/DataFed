@@ -773,6 +773,11 @@ router
                         throw g_lib.ERR_PERM_DENIED;
                     }
 
+                    // Check if subject exists
+                    if (!g_db._exists(subject_id)) {
+                        throw [g_lib.ERR_NOT_FOUND, "Subject not found: " + subject_id];
+                    }
+
                     // Delete allocation using the new system
                     var deleteResult = RepositoryOps.deleteAllocation(repository, subject_id);
 
