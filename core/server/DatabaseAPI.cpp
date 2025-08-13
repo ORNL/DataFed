@@ -442,7 +442,6 @@ void DatabaseAPI::userCreate(const Auth::UserCreateRequest &a_request,
                                          << ", name: " << a_request.name());
 
   vector<pair<string, string>> params;
-  params.push_back({"secret", a_request.secret()});
   params.push_back({"uid", a_request.uid()});
   params.push_back({"name", a_request.name()});
   params.push_back({"email", a_request.email()});
