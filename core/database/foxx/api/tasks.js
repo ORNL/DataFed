@@ -1,6 +1,5 @@
 "use strict";
 
-// local imports
 const g_lib = require("./support");
 const { UserToken } = require("./lib/user_token");
 const { RepositoryOps } = require("./repository/operations");
@@ -11,8 +10,31 @@ const g_graph = require("@arangodb/general-graph")._graph("sdmsg");
 const g_proc = require("./process");
 var g_internal = require("internal");
 
-var tasks_func = (function () {
-    var obj = {};
+const tasks_func = (function () {
+    const obj = {};
+
+    // Helper function to validate repository supports data operations
+    function validateRepositorySupportsDataOperations(loc, dataId) {
+        if (loc) {
+            const findResult = RepositoryOps.find(loc._to);
+            if (findResult.ok) {
+                const repository = findResult.value;
+                const dataOpsResult = RepositoryOps.supportsDataOperations(repository);
+
+                if (dataOpsResult.ok && !dataOpsResult.value) {
+                    throw [
+                        g_lib.ERR_INVALID_OPERATION,
+                        `Data transfers not supported for ${repository.type} repository`,
+                        {
+                            repo_type: repository.type,
+                            repo_id: repository.data._id,
+                            data_id: dataId,
+                        },
+                    ];
+                }
+            }
+        }
+    }
 
     // ----------------------- ALLOC CREATE ----------------------------
 
@@ -316,25 +338,7 @@ var tasks_func = (function () {
                 var data = result.glob_data[i];
                 // Get repository from data location
                 var loc = g_db.loc.firstExample({ _from: data.id });
-                if (loc) {
-                    var findResult = RepositoryOps.find(loc._to);
-                    if (findResult.ok) {
-                        var repository = findResult.value;
-                        var dataOpsResult = RepositoryOps.supportsDataOperations(repository);
-
-                        if (dataOpsResult.ok && !dataOpsResult.value) {
-                            throw [
-                                g_lib.ERR_INVALID_OPERATION,
-                                "Data transfers not supported for metadata-only repository",
-                                {
-                                    repo_type: repository.type,
-                                    repo_id: repository.data._id,
-                                    data_id: data.id,
-                                },
-                            ];
-                        }
-                    }
-                }
+                validateRepositorySupportsDataOperations(loc, data.id);
             }
         }
 
@@ -528,25 +532,7 @@ var tasks_func = (function () {
                 var data = result.glob_data[i];
                 // Get repository from data location
                 var loc = g_db.loc.firstExample({ _from: data.id });
-                if (loc) {
-                    var findResult = RepositoryOps.find(loc._to);
-                    if (findResult.ok) {
-                        var repository = findResult.value;
-                        var dataOpsResult = RepositoryOps.supportsDataOperations(repository);
-
-                        if (dataOpsResult.ok && !dataOpsResult.value) {
-                            throw [
-                                g_lib.ERR_INVALID_OPERATION,
-                                "Data transfers not supported for metadata-only repository",
-                                {
-                                    repo_type: repository.type,
-                                    repo_id: repository.data._id,
-                                    data_id: data.id,
-                                },
-                            ];
-                        }
-                    }
-                }
+                validateRepositorySupportsDataOperations(loc, data.id);
             }
         }
 
@@ -2872,6 +2858,46 @@ var tasks_func = (function () {
                 throw [g_lib.ERR_PERM_DENIED, "Operation not permitted - '" + id + "' in use."];
         }
         //console.log("_ensureExclusiveAccess done", Date.now());
+    };
+
+    // ----------------------- REPO ALLOCATION WRAPPERS ----------------------------
+
+    // Wrapper for allocation creation (used by repository factory pattern)
+    obj.repoAllocationCreateTask = function (params) {
+        // Extract parameters from the params object
+        const { repo_id, subject, size, path, metadata } = params;
+
+        // Get the repository to determine limits
+        const repo = g_db.repo.document(repo_id);
+
+        // Use a reasonable default for rec_limit if not specified
+        const rec_limit = params.rec_limit || 1000000; // 1 million records as default
+
+        // Create a dummy client object that has admin permissions
+        // This is because the repository operations have already validated permissions
+        const systemClient = { _id: "system", is_admin: true };
+
+        // Call the existing taskInitAllocCreate function
+        return obj.taskInitAllocCreate(
+            systemClient,
+            repo_id,
+            subject,
+            size || repo.capacity, // Use repo capacity if size not specified
+            rec_limit,
+        );
+    };
+
+    // Wrapper for allocation deletion (used by repository factory pattern)
+    obj.repoAllocationDeleteTask = function (params) {
+        // Extract parameters from the params object
+        const { repo_id, subject } = params;
+
+        // Create a dummy client object that has admin permissions
+        // This is because the repository operations have already validated permissions
+        const systemClient = { _id: "system", is_admin: true };
+
+        // Call the existing taskInitAllocDelete function
+        return obj.taskInitAllocDelete(systemClient, repo_id, subject);
     };
 
     return obj;
