@@ -80,8 +80,16 @@ COPY --from=core-build --chown=datafed:root ${DATAFED_INSTALL_PATH}/core/datafed
 
 USER root
 
-RUN chown -R datafed:root /datafed
-RUN chown -R datafed:root /opt
+
+RUN chown -R datafed:root ${DATAFED_DIR} /opt /home/datafed && \
+    chmod 774 ${DATAFED_DIR} ${BUILD_DIR} ${BUILD_DIR}/core/docker/entrypoint.sh \
+                 ${DATAFED_INSTALL_PATH}/core/datafed-core \
+                 ${BUILD_DIR}/scripts/generate_datafed.sh \
+                 ${BUILD_DIR}/scripts/generate_core_config.sh \
+                 ${BUILD_DIR}/scripts/install_core.sh \
+                 ${DATAFED_INSTALL_PATH}/core && \
+    chmod 664 ${BUILD_DIR}/cmake/Version.cmake && \
+    chmod +t ${DATAFED_DIR} ${DATAFED_INSTALL_PATH}
 
 USER datafed
 # NOTE docker does not recognize curly braces around variables in entrypoint
