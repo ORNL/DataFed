@@ -139,6 +139,7 @@ Here is an example for the core service:
     docker run -d \
         --restart=always \
         --name datafed-core \
+        --user $(id -u):0 \
         -e DATAFED_GLOBUS_APP_SECRET="" \
         -e DATAFED_GLOBUS_APP_ID="" \
         -e DATAFED_ZEROMQ_SESSION_SECRET="" \
@@ -148,7 +149,7 @@ Here is an example for the core service:
         -e DATAFED_DATABASE_IP_ADDRESS_PORT="" \
         -e DATAFED_DEFAULT_LOG_PATH="" \
         -e DATAFED_CORE_ADDRESS_PORT_INTERNAL="" \
-        -e UID="" \
+        --security-opt no-new-privileges \
         --network datafed-network \
         -p 7513:7513 \
         -p 7512:7512 \

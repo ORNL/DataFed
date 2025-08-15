@@ -42,11 +42,13 @@ services:
             DATAFED_WEB_CERT_PATH: "${DATAFED_WEB_CERT_PATH}"
             DATAFED_WEB_KEY_PATH: "${DATAFED_WEB_KEY_PATH}"
             DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
-            UID: "${DATAFED_UID}"
             DATAFED_DATABASE_PASSWORD: "${DATAFED_DATABASE_PASSWORD}"
             DATAFED_DATABASE_IP_ADDRESS: "${DATAFED_DATABASE_IP_ADDRESS}"
             DATAFED_DATABASE_IP_ADDRESS_PORT: "${DATAFED_DATABASE_IP_ADDRESS}:${DATAFED_DATABASE_PORT}"
             DATAFED_CORE_LOG_LEVEL: "${DATAFED_CORE_LOG_LEVEL}"
+        user: "${DATAFED_UID}:0"
+        security_opt:
+            - no-new-privileges:true
         ports:
             - 7513 # Communication web server
             - 7512:7512 # Secure core server communication must be exposed outside of the container
