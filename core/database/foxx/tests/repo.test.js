@@ -234,4 +234,19 @@ describe("Testing Repo class", () => {
             PathType.USER_RECORD_PATH,
         );
     });
+
+    it("unit_repo: should handle metadata-only repos without path field", () => {
+        g_db.repo.save({
+            _id: "repo/metadata-only",
+            _key: "metadata-only",
+            type: "metadata_only",
+            title: "Metadata Only Repository",
+            capacity: 0,
+        });
+
+        const repo = new Repo("metadata-only");
+        expect(repo.exists()).to.be.true;
+        expect(repo.key()).to.equal("metadata-only");
+        expect(repo.pathType("/any/path")).to.equal(PathType.UNKNOWN);
+    });
 });

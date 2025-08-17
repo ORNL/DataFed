@@ -1,6 +1,6 @@
 "use strict";
 
-const { Result } = require("./types");
+const { Result, RepositoryType } = require("./types");
 const { executeRepositoryOperation } = require("./factory");
 const g_db = require("@arangodb").db;
 
@@ -70,6 +70,12 @@ const RepositoryOps = {
     // Update repository in database
     update: (repository, updates) => {
         try {
+            // Lazy migration: ensure type field exists when updating
+            // If the repository doesn't have a type, add it based on current state
+            if (!repository.data.type && !updates.type) {
+                updates.type = repository.data.type || RepositoryType.GLOBUS;
+            }
+
             const updated = g_db.repo.update(repository.data._key, updates, { returnNew: true });
             return Result.ok(updated.new);
         } catch (e) {
@@ -91,6 +97,12 @@ const RepositoryOps = {
         try {
             const key = repoId.startsWith("repo/") ? repoId.slice(5) : repoId;
             const repo = g_db.repo.document(key);
+
+            // Default to GLOBUS type if missing (backward compatibility)
+            // This handles legacy repositories that don't have a type field
+            if (!repo.type) {
+                repo.type = RepositoryType.GLOBUS;
+            }
 
             // Return as tagged union based on type
             return Result.ok({
