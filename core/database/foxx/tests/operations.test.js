@@ -11,7 +11,7 @@ describe("RepositoryOps lazy migration", function () {
     });
 
     it("should default type to 'globus' when finding repo without type field", function () {
-        const legacyRepo = g_db.repo.save({
+        g_db.repo.save({
             _key: "test-legacy",
             title: "Legacy Repository",
             capacity: 1000000,
@@ -30,7 +30,7 @@ describe("RepositoryOps lazy migration", function () {
     });
 
     it("should preserve existing type when updating repository", function () {
-        const repo = g_db.repo.save({
+        g_db.repo.save({
             _key: "test-typed",
             type: RepositoryType.GLOBUS,
             title: "Typed Repository",
@@ -50,7 +50,7 @@ describe("RepositoryOps lazy migration", function () {
     });
 
     it("should add type field during update if missing", function () {
-        const legacyRepo = g_db.repo.save({
+        g_db.repo.save({
             _key: "test-migration",
             title: "Repository for Migration",
             capacity: 500000,
@@ -85,5 +85,45 @@ describe("RepositoryOps lazy migration", function () {
         const result2 = RepositoryOps.find("repo/test-prefix");
         expect(result2.ok).to.be.true;
         expect(result2.value.data._key).to.equal("test-prefix");
+    });
+
+    it("should return error for non-existent repository", function () {
+        const result = RepositoryOps.find("non-existent-repo");
+
+        expect(result.ok).to.be.false;
+        expect(result.error).to.exist;
+        expect(result.error.code).to.equal(404);
+        expect(result.error.message).to.include("Repository not found");
+    });
+
+    it("should handle database errors gracefully", function () {
+        const result = RepositoryOps.find("");
+
+        expect(result.ok).to.be.false;
+        expect(result.error).to.exist;
+        expect(result.error.code).to.be.a("number");
+    });
+
+    it("should preserve explicitly provided type during update", function () {
+        // Create repo without type
+        g_db.repo.save({
+            _key: "test-explicit",
+            title: "Test Explicit Type",
+            capacity: 100000,
+        });
+
+        const findResult = RepositoryOps.find("test-explicit");
+        expect(findResult.ok).to.be.true;
+
+        const updateResult = RepositoryOps.update(findResult.value, {
+            type: "metadata_only",
+            capacity: 200000,
+        });
+
+        expect(updateResult.ok).to.be.true;
+
+        const updated = g_db.repo.document("test-explicit");
+        expect(updated.type).to.equal("metadata_only");
+        expect(updated.capacity).to.equal(200000);
     });
 });

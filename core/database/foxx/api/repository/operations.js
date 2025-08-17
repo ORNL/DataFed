@@ -73,7 +73,7 @@ const RepositoryOps = {
             // Lazy migration: ensure type field exists when updating
             // If the repository doesn't have a type, add it based on current state
             if (!repository.data.type && !updates.type) {
-                updates.type = repository.data.type || RepositoryType.GLOBUS;
+                updates.type = repository.type || RepositoryType.GLOBUS;
             }
 
             const updated = g_db.repo.update(repository.data._key, updates, { returnNew: true });
