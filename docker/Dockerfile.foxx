@@ -63,6 +63,15 @@ RUN arangosh --version
 
 USER root
 
+RUN chown -R datafed:root ${DATAFED_DIR} /opt /home/datafed && \
+    chmod 774 ${DATAFED_DIR} ${BUILD_DIR} \
+                 ${BUILD_DIR}/docker/entrypoint_foxx.sh \
+                 ${BUILD_DIR}/scripts/generate_datafed.sh \
+                 ${BUILD_DIR}/scripts/install_foxx.sh && \
+    chmod +t ${DATAFED_DIR} ${DATAFED_INSTALL_PATH}
+
+USER datafed
+
 WORKDIR ${BUILD_DIR}
 
 ENTRYPOINT /datafed/source/docker/entrypoint_foxx.sh

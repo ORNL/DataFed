@@ -25,7 +25,7 @@ then
   log_path="$DATAFED_DEFAULT_LOG_PATH"
   if [ ! -d "${log_path}" ]
   then
-    su -c "mkdir -p ${log_path}" datafed
+    mkdir -p "${log_path}" datafed
   fi
   
   # It should be fine to run this as root because it is an ephemeral container anyway
@@ -34,7 +34,6 @@ then
   "${PROJECT_ROOT}/scripts/generate_datafed.sh"
 
   export LD_LIBRARY_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/lib"
-  ldconfig "$LD_LIBRARY_PATH"
 
   # Define common CMake options
   cmake_options=(
@@ -77,7 +76,6 @@ then
 
   # Create flag to indicate container has done its job  
   touch "$install_flag"
-  chown -R "$UID":"$UID" "/tmp"
 else
   echo "$install_flag has been found skipping reinstall"
 fi
