@@ -1758,7 +1758,6 @@ var tasks_func = (function () {
             });
         var time = Math.floor(Date.now() / 1000);
 
-
         while (blocks.hasNext()) {
             dep = blocks.next()._from;
             dep_blocks = g_db.block
