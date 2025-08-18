@@ -53,7 +53,7 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
         self._username = "datafed89"
         password = os.environ.get("DATAFED_USER89_PASSWORD")
 
-        timeout = int(os.environ.get('DATAFED_TEST_TIMEOUT_OVERRIDE', '1'));
+        self._timeout = int(os.environ.get('DATAFED_TEST_TIMEOUT_OVERRIDE', '1'));
         count = 0
         while True:
             try:
@@ -107,7 +107,7 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
         result = self._df_api.repoList(list_all=True)
         count = 0
         while len(result[0].repo) == 0:
-            time.sleep(timeout)
+            time.sleep(self._timeout)
             result = self._df_api.repoList(list_all=True)
             count = count + 1
             if count > 3:
@@ -142,7 +142,7 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
                     "all services are running."
                 )
                 break
-            time.sleep(timeout)
+            time.sleep(self._timeout)
             task_result = self._df_api.taskView(task_id)
             status = task_result[0].task[0].status
             count = count + 1
@@ -189,7 +189,7 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
         while status < 3:
             if count > 30:
                 break
-            time.sleep(timeout)
+            time.sleep(self._timeout)
             task_result = self._df_api.taskView(task_id)
             print("task Result **************")
             print(task_result)
@@ -211,7 +211,7 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
         while status < 3:
             if count > 20:
                 break
-            time.sleep(timeout)
+            time.sleep(self._timeout)
             task_result = self._df_api.taskView(task_id)
             status = task_result[0].task[0].status
             count = count + 1
@@ -243,7 +243,7 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
                     " all services are running."
                 )
                 break
-            time.sleep(timeout)
+            time.sleep(self._timeout)
             task_result = self._df_api.taskView(task_id)
             status = task_result[0].task[0].status
             count = count + 1
