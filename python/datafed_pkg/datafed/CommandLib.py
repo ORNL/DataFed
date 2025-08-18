@@ -189,6 +189,7 @@ class API:
         path=None,
         exp_path=None,
         admins=[],
+        type="globus",
     ):
         """
         Create a repository
@@ -227,6 +228,9 @@ class API:
         admins : list[str]
             A list of DataFed users that will have repository admin rights on
             the repository. i.e. ["u/tony_stark", "u/pepper"]
+        type : str, optional
+            Repository type: "globus" for Globus-based repositories or 
+            "metadata_only" for metadata-only repositories. Default is "globus".
 
         Returns
         -------
@@ -236,6 +240,11 @@ class API:
         ------
         Exception : On communication or server error
         """
+        # Validate repository type
+        valid_types = ["globus", "metadata_only"]
+        if type not in valid_types:
+            raise ValueError(f"Invalid repository type '{type}'. Must be one of: {valid_types}")
+        
         msg = auth.RepoCreateRequest()
         msg.id = repo_id
         msg.title = title
@@ -247,6 +256,7 @@ class API:
         msg.pub_key = pub_key
         msg.path = path
         msg.capacity = capacity
+        msg.type = type
 
         if isinstance(admins, list):
             for admin in admins:
