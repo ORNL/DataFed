@@ -923,6 +923,7 @@ message RepoCreateRequest
     required string             pub_key     = 10; // Public encryption key
     required uint64             capacity    = 11; // Total data capacity
     repeated string             admin       = 12; // Repo admin(s)
+    optional string             type        = 13; // Repository type (defaults to "globus")
 }
 
 // Request to update an existing repository. Only system or repos admins may
@@ -942,6 +943,7 @@ message RepoUpdateRequest
     optional string             pub_key     = 10; // Public encryption key
     optional uint64             capacity    = 11; // Total data capacity
     repeated string             admin       = 12; // Repo admin(s)
+    optional string             type        = 13; // Repository type
 }
 
 // Request to delete a repository. Only system or repos admins may send this

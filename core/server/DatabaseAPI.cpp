@@ -2176,6 +2176,9 @@ void DatabaseAPI::repoCreate(const Auth::RepoCreateRequest &a_request,
   if (a_request.has_exp_path()) {
     payload["exp_path"] = a_request.exp_path();
   }
+  if (a_request.has_type()) {
+    payload["type"] = a_request.type();
+  }
   if (a_request.admin_size() > 0) {
     nlohmann::json admins = nlohmann::json::array();
     for (int i = 0; i < a_request.admin_size(); ++i) {
@@ -2224,6 +2227,9 @@ void DatabaseAPI::repoUpdate(const Auth::RepoUpdateRequest &a_request,
   }
   if (a_request.has_capacity()) {
     payload["capacity"] = to_string(a_request.capacity());
+  }
+  if (a_request.has_type()) {
+    payload["type"] = a_request.type();
   }
   if (a_request.admin_size() > 0) {
     nlohmann::json admins = nlohmann::json::array();
@@ -2338,6 +2344,10 @@ void DatabaseAPI::setRepoData(Auth::RepoDataReply *a_reply,
       for (k = arr2.begin(); k != arr2.end(); k++) {
         a_repos.back().add_admin(k->asString());
       }
+    }
+
+    if (obj.has("type")) {
+      a_repos.back().set_type(obj.asString());
     }
 
     if (a_reply) {
