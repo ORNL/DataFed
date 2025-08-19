@@ -22,7 +22,6 @@ from . import Config
 # Repository type constants
 VALID_REPO_TYPES = ["globus", "metadata_only"]
 
-
 class API:
     """
     A high-level messaging interface to the DataFed core server
@@ -192,7 +191,7 @@ class API:
         path=None,
         exp_path=None,
         admins=[],
-        repo_type="globus",
+        type="globus",
     ):
         """
         Create a repository
@@ -231,7 +230,7 @@ class API:
         admins : list[str]
             A list of DataFed users that will have repository admin rights on
             the repository. i.e. ["u/tony_stark", "u/pepper"]
-        repo_type : str, optional
+        type : str, optional
             Repository type: "globus" for Globus-based repositories or 
             "metadata_only" for metadata-only repositories. Default is "globus".
 
@@ -244,10 +243,10 @@ class API:
         Exception : On communication or server error
         """
         # Validate repository type
-        if repo_type is None:
-            repo_type = "globus"
-        if repo_type not in VALID_REPO_TYPES:
-            raise ValueError(f"Invalid repository type '{repo_type}'. Must be one of: {', '.join(VALID_REPO_TYPES)}")
+        if type is None:
+            type = "globus"
+        if type not in VALID_REPO_TYPES:
+            raise ValueError(f"Invalid repository type '{type}'. Must be one of: {', '.join(VALID_REPO_TYPES)}")
         
         msg = auth.RepoCreateRequest()
         msg.id = repo_id
@@ -260,7 +259,7 @@ class API:
         msg.pub_key = pub_key
         msg.path = path
         msg.capacity = capacity
-        msg.type = repo_type
+        msg.type = type
 
         if isinstance(admins, list):
             for admin in admins:
