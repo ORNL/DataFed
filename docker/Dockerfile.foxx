@@ -68,6 +68,8 @@ RUN chown -R datafed:root ${DATAFED_DIR} /opt /home/datafed && \
                  ${BUILD_DIR}/docker/entrypoint_foxx.sh \
                  ${BUILD_DIR}/scripts/generate_datafed.sh \
                  ${BUILD_DIR}/scripts/install_foxx.sh && \
+    find ${DATAFED_DIR} -type d -exec chmod g+w {} + && \
+    find ${DATAFED_INSTALL_PATH} -type d -exec chmod g+w {} + && \
     chmod +t ${DATAFED_DIR} ${DATAFED_INSTALL_PATH}
 
 USER datafed
