@@ -109,7 +109,6 @@ eval set -- "$VALID_ARGS"
 while [ : ]; do
   echo "$1"
   case "$1" in
-<<<<<<< HEAD
   -h | --help)
     Help
     exit 0
@@ -122,11 +121,6 @@ while [ : ]; do
   -i | --globus-id)
     echo "Processing 'DataFed Globus App client id' option. Input argument is '$2'"
     local_DATAFED_GLOBUS_APP_ID=$2
-    shift 2
-    ;;
-  -z | --zeromq-session-secret)
-    echo "Processing 'DataFed ZeroMQ session secret' option. Input argument is '$2'"
-    local_DATAFED_ZEROMQ_SESSION_SECRET=$2
     shift 2
     ;;
   -y | --zeromq-system-secret)
@@ -162,53 +156,6 @@ while [ : ]; do
     echo "Error: Invalid option"
     exit
     ;;
-=======
-    -h | --help)
-        Help
-        exit 0
-        ;;
-    -s | --globus-secret)
-        echo "Processing 'DataFed Globus App secret' option. Input argument is '$2'"
-        local_DATAFED_GLOBUS_APP_SECRET=$2
-        shift 2
-        ;;
-    -i | --globus-id)
-        echo "Processing 'DataFed Globus App client id' option. Input argument is '$2'"
-        local_DATAFED_GLOBUS_APP_ID=$2
-        shift 2
-        ;;
-    -z | --zeromq-session-secret)
-        echo "Processing 'DataFed ZeroMQ session secret' option. Input argument is '$2'"
-        local_DATAFED_ZEROMQ_SESSION_SECRET=$2
-        shift 2
-        ;;
-    -w | --web-cert-path)
-        echo "Processing 'DataFed web certificate path' option. Input argument is '$2'"
-        local_DATAFED_WEB_CERT_PATH=$2
-        shift 2
-        ;;
-    -k | --web-key-path)
-        echo "Processing 'DataFed web key path' option. Input argument is '$2'"
-        local_DATAFED_WEB_KEY_PATH=$2
-        shift 2
-        ;;
-    -c | --core-address-port)
-        echo "Processing 'DataFed internal core address and port' option. Input argument is '$2'"
-        local_DATAFED_CORE_ADDRESS_PORT_INTERNAL=$2
-        shift 2
-        ;;
-    -t | --google-analytics-tag)
-        echo "Processing 'DataFed Google Analytics tag' option. Input argument is '$2'"
-        local_DATAFED_GOOGLE_ANALYTICS_TAG=$2
-        shift 2
-        ;;
-    --) shift; 
-        break 
-        ;;
-    \?) # incorrect option
-        echo "Error: Invalid option"
-        exit;;
->>>>>>> ac70de16 (refactor: remove system secret from web, from client, from scrips and from tests.)
   esac
 done
 
@@ -234,19 +181,7 @@ if [ -z "$local_DATAFED_ZEROMQ_SESSION_SECRET" ]; then
   ERROR_DETECTED=1
 fi
 
-<<<<<<< HEAD
-if [ -z "$local_DATAFED_ZEROMQ_SYSTEM_SECRET" ]; then
-  echo "Error DATAFED_ZEROMQ_SYSTEM_SECRET is not defined, this is a required argument"
-  echo "      This variable can be set using the command line option -y, --zeromq-session-secret"
-  echo "      or with the environment variable DATAFED_ZEROMQ_SYSTEM_SECRET."
-  ERROR_DETECTED=1
-fi
-
 if [ "$ERROR_DETECTED" == "1" ]; then
-=======
-if [ "$ERROR_DETECTED" == "1" ]
-then
->>>>>>> ac70de16 (refactor: remove system secret from web, from client, from scrips and from tests.)
   exit 1
 fi
 
