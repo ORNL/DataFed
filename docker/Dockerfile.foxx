@@ -63,14 +63,20 @@ RUN arangosh --version
 
 USER root
 
-RUN chown -R datafed:root ${DATAFED_DIR} /opt /home/datafed && \
-    chmod 774 ${DATAFED_DIR} ${BUILD_DIR} \
+# Here we are selective with permissions because of the performance implications
+# of changing permissions of everything when building.
+RUN chown -R datafed:root /home/datafed \
+                 ${BUILD_DIR}/docker \
+                 ${BUILD_DIR}/config \
+                 ${BUILD_DIR}/scripts \
+                 ${BUILD_DIR}/core/ \
+                 ${BUILD_DIR}/common/ && \
+    chown datafed:root ${BUILD_DIR} && \
+    chmod 774    ${BUILD_DIR} \
                  ${BUILD_DIR}/docker/entrypoint_foxx.sh \
                  ${BUILD_DIR}/scripts/generate_datafed.sh \
                  ${BUILD_DIR}/scripts/install_foxx.sh && \
     find ${BUILD_DIR}/config -maxdepth 1 -type f -exec chmod 0664 {} + && \
-    find ${DATAFED_DIR} -type d -exec chmod g+w {} + && \
-    find ${DATAFED_INSTALL_PATH} -type d -exec chmod g+w {} + && \
     chmod +t ${BUILD_DIR} ${DATAFED_DIR} ${DATAFED_INSTALL_PATH}
 
 USER datafed
