@@ -7,10 +7,9 @@ SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/..")
 source "${PROJECT_ROOT}/config/datafed.sh"
 
-systemctl_exists=$( which systemctl )
+systemctl_exists=$(which systemctl)
 
-if [[ ! -z $systemctl_exists ]]
-then
+if [[ ! -z $systemctl_exists ]]; then
   sudo systemctl daemon-reload
 
   echo "The ArangoDB service should be up and running before you use this command"
