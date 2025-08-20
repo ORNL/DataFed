@@ -3,8 +3,7 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/..")
 
-Help()
-{
+Help() {
   echo "$(basename $0) Build .env file for compose."
   echo
   echo "Syntax: $(basename $0) [-h|d|r|m|c|f]"
@@ -27,41 +26,42 @@ FORCE_OVERWRITE="FALSE"
 eval set -- "$VALID_ARGS"
 while [ : ]; do
   case "$1" in
-    -h | --help)
-        Help
-        exit 0
-        ;;
-    -d | --directory)
-        COMPOSE_ENV_DIR="$2"
-        shift 2
-        ;;
-    -r | --repo-images)
-        BUILD_METADATA="FALSE"
-        shift 1
-        ;;
-    -m | --metadata-images)
-        BUILD_REPO="FALSE"
-        shift 1
-        ;;
-    -c | --no-overwrite-certs)
-        OVERWRITE_CERTS="FALSE"
-        shift 1
-        ;;
-    -f | --force)
-        FORCE_OVERWRITE="TRUE"
-        shift 1
-        ;;
-    --) shift;
-        break
-        ;;
-    \?) # incorrect option
-        echo "Error: Invalid option"
-        exit;;
+  -h | --help)
+    Help
+    exit 0
+    ;;
+  -d | --directory)
+    COMPOSE_ENV_DIR="$2"
+    shift 2
+    ;;
+  -r | --repo-images)
+    BUILD_METADATA="FALSE"
+    shift 1
+    ;;
+  -m | --metadata-images)
+    BUILD_REPO="FALSE"
+    shift 1
+    ;;
+  -c | --no-overwrite-certs)
+    OVERWRITE_CERTS="FALSE"
+    shift 1
+    ;;
+  -f | --force)
+    FORCE_OVERWRITE="TRUE"
+    shift 1
+    ;;
+  --)
+    shift
+    break
+    ;;
+  \?) # incorrect option
+    echo "Error: Invalid option"
+    exit
+    ;;
   esac
 done
 
-if [ ! -d "${COMPOSE_ENV_DIR}" ]
-then
+if [ ! -d "${COMPOSE_ENV_DIR}" ]; then
   echo "Invalid folder for .env file specified ${COMPOSE_ENV_DIR}"
   exit 1
 fi
@@ -72,9 +72,9 @@ read_existing_env() {
   if [ -f "$env_file" ]; then
     echo "Reading existing values from $env_file"
     # Source the .env file to load existing values
-    set -a  # automatically export all variables
+    set -a # automatically export all variables
     source "$env_file"
-    set +a  # turn off automatic export
+    set +a # turn off automatic export
   fi
 }
 
@@ -83,10 +83,10 @@ get_env_value() {
   local var_name="$1"
   local default_value="$2"
   local existing_value=""
-  
+
   # Get existing value from sourced .env file
   existing_value=$(eval echo "\$${var_name}")
-  
+
   # Priority: existing .env value -> environment variable -> default
   if [ -n "$existing_value" ]; then
     echo "$existing_value"
@@ -113,8 +113,7 @@ else
 fi
 
 local_DATAFED_WEB_KEY_DIR="${COMPOSE_ENV_DIR}/keys"
-if [ ! -d "$local_DATAFED_WEB_KEY_DIR" ]
-then
+if [ ! -d "$local_DATAFED_WEB_KEY_DIR" ]; then
   mkdir -p "$local_DATAFED_WEB_KEY_DIR"
 fi
 
@@ -141,16 +140,13 @@ else
 fi
 
 if [ "$need_certs" = "TRUE" ]; then
-  if [ -e "$local_DATAFED_WEB_CERT_PATH" ]
-  then
+  if [ -e "$local_DATAFED_WEB_CERT_PATH" ]; then
     rm "${local_DATAFED_WEB_CERT_PATH}"
   fi
-  if [ -e "$local_DATAFED_WEB_KEY_PATH" ]
-  then
+  if [ -e "$local_DATAFED_WEB_KEY_PATH" ]; then
     rm "${local_DATAFED_WEB_KEY_PATH}"
   fi
-  if [ -e "$local_DATAFED_WEB_CSR_PATH" ]
-  then
+  if [ -e "$local_DATAFED_WEB_CSR_PATH" ]; then
     rm "${local_DATAFED_WEB_CSR_PATH}"
   fi
   openssl genrsa -out "$local_DATAFED_WEB_KEY_PATH" 2048
@@ -158,9 +154,9 @@ if [ "$need_certs" = "TRUE" ]; then
     -out "${local_DATAFED_WEB_CSR_PATH}" \
     -subj "/C=US/ST=TN/L=Oak Ridge/O=ORNL/OU=DLT/CN=${local_DATAFED_COMPOSE_DOMAIN}"
   openssl x509 -req -days 3650 \
-     -in "${local_DATAFED_WEB_CSR_PATH}" \
-     -signkey "$local_DATAFED_WEB_KEY_PATH" \
-     -out "$local_DATAFED_WEB_CERT_PATH"
+    -in "${local_DATAFED_WEB_CSR_PATH}" \
+    -signkey "$local_DATAFED_WEB_KEY_PATH" \
+    -out "$local_DATAFED_WEB_CERT_PATH"
 fi
 
 # Get all values using the new function
@@ -210,10 +206,9 @@ fi
 touch "$ENV_FILE_PATH"
 # Do not put " around anything and do not add comments in the .env file
 
-if [ "${BUILD_METADATA}" == "TRUE" ] || [ "${BUILD_REPO}" == "TRUE" ]
-then
+if [ "${BUILD_METADATA}" == "TRUE" ] || [ "${BUILD_REPO}" == "TRUE" ]; then
 
-cat << EOF >> "$ENV_FILE_PATH"
+  cat <<EOF >>"$ENV_FILE_PATH"
 DATAFED_HTTPS_SERVER_PORT=${local_DATAFED_COMPOSE_HTTPS_SERVER_PORT}
 DATAFED_DOMAIN=${local_DATAFED_COMPOSE_DOMAIN}
 DATAFED_UID=$(id -u)
@@ -222,9 +217,8 @@ DATAFED_CORE_LOG_LEVEL=${local_DATAFED_CORE_LOG_LEVEL}
 EOF
 fi
 
-if [ "${BUILD_METADATA}" == "TRUE" ]
-then
-cat << EOF >> "$ENV_FILE_PATH"
+if [ "${BUILD_METADATA}" == "TRUE" ]; then
+  cat <<EOF >>"$ENV_FILE_PATH"
 DATAFED_GLOBUS_APP_SECRET=${local_DATAFED_COMPOSE_GLOBUS_APP_SECRET}
 DATAFED_GLOBUS_APP_ID=${local_DATAFED_COMPOSE_GLOBUS_APP_ID}
 DATAFED_ZEROMQ_SESSION_SECRET=${local_DATAFED_COMPOSE_ZEROMQ_SESSION_SECRET}
@@ -238,9 +232,8 @@ DATAFED_ENABLE_FOXX_TESTS=${local_DATAFED_ENABLE_FOXX_TESTS}
 EOF
 fi
 
-if [ "${BUILD_REPO}" == "TRUE" ]
-then
-cat << EOF >> "$ENV_FILE_PATH"
+if [ "${BUILD_REPO}" == "TRUE" ]; then
+  cat <<EOF >>"$ENV_FILE_PATH"
 DATAFED_REPO_USER=datafed
 DATAFED_GCS_ROOT_NAME=DataFed_Compose
 DATAFED_GCS_IP=${local_DATAFED_COMPOSE_GCS_IP}
@@ -257,15 +250,15 @@ EOF
 fi
 
 unset_env_file_name="${COMPOSE_ENV_DIR}/unset_env.sh"
-echo "#!/bin/bash" > "${unset_env_file_name}"
-echo "# Was auto generated by $SCRIPT" >> "${unset_env_file_name}"
+echo "#!/bin/bash" >"${unset_env_file_name}"
+echo "# Was auto generated by $SCRIPT" >>"${unset_env_file_name}"
 while IFS='=' read -r key value; do
-    # Check if the line contains the '=' sign
-    if [ -n "$value" ]; then
-        # Print the content before the '=' sign
-        echo "unset $key" >> "${unset_env_file_name}"
-    fi
-done < "$ENV_FILE_PATH"
+  # Check if the line contains the '=' sign
+  if [ -n "$value" ]; then
+    # Print the content before the '=' sign
+    echo "unset $key" >>"${unset_env_file_name}"
+  fi
+done <"$ENV_FILE_PATH"
 
 chmod +x "$unset_env_file_name"
 

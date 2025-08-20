@@ -151,39 +151,53 @@ utils.createGCSEndpoint(
 
 if DATAFED_GLOBUS_SUBSCRIPTION is not None:
     # Create subscription subgroup
-    results = gr_rt.get_group_by_subscription_id(DATAFED_GLOBUS_SUBSCRIPTION)
-
-    parent_group_id = results["group_id"]
-    print("Groups by sub")
-    print(results)
-    group_name = f"{DATAFED_GCS_ROOT_NAME} Group"
-
-    if utils.groupExists(gr_rt, group_name):
-        print("Group exists already")
-        group_id = utils.getGroupId(gr_rt, group_name)
+    # Note: get_group_by_subscription_id doesn't exist in current globus-sdk
+    # We'll use get_my_groups and filter by subscription_id
+    my_groups = gr_rt.get_my_groups()
+    
+    # Try to find a group with matching subscription_id
+    parent_group_id = None
+    for group in my_groups:
+        if group.get("subscription_id") == DATAFED_GLOBUS_SUBSCRIPTION:
+            parent_group_id = group["id"]
+            print(f"Found group with subscription {DATAFED_GLOBUS_SUBSCRIPTION}")
+            break
+    
+    # If no group found with subscription, try to create one or use first available
+    if parent_group_id is None:
+        print(f"Warning: No group found with subscription_id {DATAFED_GLOBUS_SUBSCRIPTION}")
+        # For now, we'll skip the group creation if we can't find the parent
+        print("Skipping group creation due to missing parent group")
     else:
-        print(f"Group does not exist {group_name}")
-        package = {
-            "name": group_name,
-            "description": "DataFed Repository Subscription Group, used for"
-            "granting access to the application client to setup the repository in "
-            "Globus",
-            "parent_id": str(parent_group_id),
-        }
+        print(f"Using parent group: {parent_group_id}")
+        group_name = f"{DATAFED_GCS_ROOT_NAME} Group"
 
-        result = gr_rt.create_group(package)
-        group_id = result["id"]
+        if utils.groupExists(gr_rt, group_name):
+            print("Group exists already")
+            group_id = utils.getGroupId(gr_rt, group_name)
+        else:
+            print(f"Group does not exist {group_name}")
+            package = {
+                "name": group_name,
+                "description": "DataFed Repository Subscription Group, used for"
+                "granting access to the application client to setup the repository in "
+                "Globus",
+                "parent_id": str(parent_group_id),
+            }
 
-    print("group id")
-    print(group_id)
+            result = gr_rt.create_group(package)
+            group_id = result["id"]
 
-    batch = globus_sdk.BatchMembershipActions()
-    batch.add_members(client_id, role="admin")
-    result = gr_rt.batch_membership_action(group_id, batch)
+        print("group id")
+        print(group_id)
 
-    print("membership_action")
-    print(result)
-    package = {"subscription_id": DATAFED_GLOBUS_SUBSCRIPTION}
-    result = gr_rt.update_group(group_id, package)
-    print("update group")
-    print(result)
+        batch = globus_sdk.BatchMembershipActions()
+        batch.add_members(client_id, role="admin")
+        result = gr_rt.batch_membership_action(group_id, batch)
+
+        print("membership_action")
+        print(result)
+        package = {"subscription_id": DATAFED_GLOBUS_SUBSCRIPTION}
+        result = gr_rt.update_group(group_id, package)
+        print("update group")
+        print(result)
