@@ -7,8 +7,7 @@ source "${SOURCE}/dependency_versions.sh"
 
 # This script should be run after generating the .env file as it will pull
 # values from the .env file
-Help()
-{
+Help() {
   echo "$(basename $0) generate globus files. Note the .env file must exist."
   echo " in the specified directory."
   echo
@@ -25,50 +24,46 @@ DIRECTORY=""
 eval set -- "$VALID_ARGS"
 while [ : ]; do
   case "$1" in
-    -h | --help)
-        Help
-        exit 0
-        ;;
-    -d | --directory)
-        DIRECTORY="$2"
-        shift 2
-        ;;
-    --) shift; 
-        break 
-        ;;
-    \?) # incorrect option
-        echo "Error: Invalid option"
-        exit;;
+  -h | --help)
+    Help
+    exit 0
+    ;;
+  -d | --directory)
+    DIRECTORY="$2"
+    shift 2
+    ;;
+  --)
+    shift
+    break
+    ;;
+  \?) # incorrect option
+    echo "Error: Invalid option"
+    exit
+    ;;
   esac
 done
 
-if [ ! -d "${DIRECTORY}" ]
-then
+if [ ! -d "${DIRECTORY}" ]; then
   echo "The provided directory does not seem to exist: ${DIRECTORY}"
 fi
 
-if [ ! -f "${DIRECTORY}/.env" ]
-then
+if [ ! -f "${DIRECTORY}/.env" ]; then
   echo "Missing . ${DIRECTORY}/.env file. This file needs to be"
   echo "created first"
   exit 1
 fi
 
-
-
 # This script should be run after generating the .env file as it will pull
 # values from the .env file
 
-if [ ! -f "${DIRECTORY}/.env" ]
-then
+if [ ! -f "${DIRECTORY}/.env" ]; then
   echo "Missing . ${DIRECTORY}/.env file. This file needs to be"
   echo "created first"
   exit 1
 fi
 
 local_DATAFED_GLOBUS_KEY_DIR="${DIRECTORY}/globus"
-if [ ! -d "$local_DATAFED_GLOBUS_KEY_DIR" ]
-then
+if [ ! -d "$local_DATAFED_GLOBUS_KEY_DIR" ]; then
   mkdir -p "$local_DATAFED_GLOBUS_KEY_DIR"
 fi
 
@@ -87,8 +82,8 @@ sed -i 's/=\([^"]*\)/="\1"/' "${DIRECTORY}/.env_shell"
 rm "${DIRECTORY}/.env_shell"
 
 DATAFED_GLOBUS_DEPLOYMENT_KEY_PATH="$DATAFED_HOST_DEPLOYMENT_KEY_PATH" \
-DATAFED_GLOBUS_CRED_FILE_PATH="$DATAFED_HOST_CRED_FILE_PATH" \
-DATAFED_GLOBUS_CONTROL_PORT="$DATAFED_GLOBUS_CONTROL_PORT" \
-DATAFED_GLOBUS_SUBSCRIPTION="$DATAFED_GLOBUS_SUBSCRIPTION" \
-DATAFED_GCS_ROOT_NAME="$DATAFED_GCS_ROOT_NAME" \
-   "python${DATAFED_PYTHON_VERSION}" "${PROJECT_ROOT}/scripts/globus/initialize_globus_endpoint.py"
+  DATAFED_GLOBUS_CRED_FILE_PATH="$DATAFED_HOST_CRED_FILE_PATH" \
+  DATAFED_GLOBUS_CONTROL_PORT="$DATAFED_GLOBUS_CONTROL_PORT" \
+  DATAFED_GLOBUS_SUBSCRIPTION="$DATAFED_GLOBUS_SUBSCRIPTION" \
+  DATAFED_GCS_ROOT_NAME="$DATAFED_GCS_ROOT_NAME" \
+  "python${DATAFED_PYTHON_VERSION}" "${PROJECT_ROOT}/scripts/globus/initialize_globus_endpoint.py"
