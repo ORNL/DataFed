@@ -15,6 +15,21 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/../")
 
+# Cleanup pre-existing files if they exist, you would think that the Cmake configure
+# step would overwrite these files without problem. However, when running containers
+# with openshift user settings, cmake complains if these files exist before hand 
+# under a different user.
+if [ -f "${PROJECT_ROOT}/core/database/foxx/api/version_router.js" ]; then
+  rm "${PROJECT_ROOT}/core/database/foxx/api/version_router.js"
+fi
+
+if [ -f "${PROJECT_ROOT}/core/database/foxx/manifest.json" ]; then
+  rm "${PROJECT_ROOT}/core/database/foxx/manifest.json"
+fi
+
+if [ -f "${PROJECT_ROOT}/common/proto/common/Version.proto" ]; then
+  rm "${PROJECT_ROOT}/common/proto/common/Version.proto"
+fi
 # Why is this flag used, it is used because the same container is used for 
 # compose as is for operations and ci. If you have a compose dev environment
 # we may want to keep the existing state and not overwrite the database.
