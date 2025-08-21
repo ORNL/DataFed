@@ -43,6 +43,7 @@ Help()
   echo "NOTE: Do not run this script with sudo!"
 }
 
+local_DATABASE_API_SCHEME="${DATABASE_API_SCHEME:-http}"
 local_DATABASE_NAME="sdms"
 local_DATABASE_USER="root"
 local_DATABASE_PORT="8529"
@@ -145,7 +146,21 @@ then
 fi
 
 basic_auth="$local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD"
-url="http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_api/database/user"
+
+if [ "${local_DATABASE_API_SCHEME}" == "https" ]; then
+  set +e
+  output=$(curl --user "$basic_auth" ${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT} 2>&1 )
+  error_code="$?"
+  set -e
+
+  if [ "$error_code" == "60" ]; then
+      echo "Error detected, untrusted certificate."
+      echo "$output"
+      exit 1
+  fi
+fi
+
+url="${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_api/database/user"
 # Do not output to /dev/null we need the output
 code=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl -s -o /dev/null -w "%{http_code}" --user "$basic_auth" "$url")
 
@@ -155,7 +170,7 @@ if [[ "$code" != "200" ]]; then
   exit 1
 fi
 
-url2="http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_api/database"
+url2="${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_api/database"
 # We are now going to initialize the DataFed database in Arango, but only if sdms database does
 # not exist
 output=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl -s -i --user "$basic_auth" "$url2")
@@ -219,7 +234,7 @@ echo "$local_DATAFED_DATABASE_PASSWORD" > "${PATH_TO_PASSWD_FILE}"
 { # try
   # Check if database foxx services have already been installed
   existing_services=$("${FOXX_PREFIX}foxx" list \
-    --server "http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
+    --server "${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
     -a -u "$local_DATABASE_USER" \
     -p "${PATH_TO_PASSWD_FILE}" \
     --database "$local_DATABASE_NAME")
@@ -232,7 +247,7 @@ echo "$local_DATAFED_DATABASE_PASSWORD" > "${PATH_TO_PASSWD_FILE}"
 
   echo "$FOUND_API"
 
-  RESULT=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl -s http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/version)
+  RESULT=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl -s ${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/version)
   CODE=$(echo "${RESULT}" | jq '.code' )
   echo "Code is $CODE"
   if [ -z "${FOUND_API}" ]
@@ -245,7 +260,7 @@ echo "$local_DATAFED_DATABASE_PASSWORD" > "${PATH_TO_PASSWD_FILE}"
     # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint 
     "${FOXX_PREFIX}foxx" remove \
       "/api/${local_FOXX_MAJOR_API_VERSION}" \
-      --server "http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
+      --server "${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
       -u "${local_DATABASE_USER}" \
       -p "${PATH_TO_PASSWD_FILE}" \
       --database "${local_DATABASE_NAME}"
@@ -256,7 +271,7 @@ echo "$local_DATAFED_DATABASE_PASSWORD" > "${PATH_TO_PASSWD_FILE}"
   then
     # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint 
     "${FOXX_PREFIX}foxx" install \
-      --server "http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
+      --server "${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
       -u "${local_DATABASE_USER}" \
       -p "${PATH_TO_PASSWD_FILE}" \
       --database "${local_DATABASE_NAME}" \
@@ -266,7 +281,7 @@ echo "$local_DATAFED_DATABASE_PASSWORD" > "${PATH_TO_PASSWD_FILE}"
     echo "DataFed Foxx Services have already been uploaded, replacing to ensure consisency"
     # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint 
     "${FOXX_PREFIX}foxx" replace \
-      --server "http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
+      --server "${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
       -u "${local_DATABASE_USER}" \
       -p "${PATH_TO_PASSWD_FILE}" \
       --database "${local_DATABASE_NAME}" \
