@@ -15,6 +15,10 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/../")
 
+# Force installation of foxx api, even if the .foxx_is_installed touch
+# file exists.
+local_DATAFED_FORCE_INSTALL_FOXX="${DATAFED_FORCE_INSTALL_FOXX:-FALSE}"
+
 # Cleanup pre-existing files if they exist, you would think that the Cmake configure
 # step would overwrite these files without problem. However, when running containers
 # with openshift user settings, cmake complains if these files exist before hand 
@@ -30,10 +34,17 @@ fi
 if [ -f "${PROJECT_ROOT}/common/proto/common/Version.proto" ]; then
   rm "${PROJECT_ROOT}/common/proto/common/Version.proto"
 fi
+
+
+install_flag="/tmp/.foxx_is_installed"
+if [ "${local_DATAFED_FORCE_INSTALL_FOXX}" == "TRUE" ]; then
+  if [ -f "$install_flag" ]; then
+    rm "$install_flag"
+  fi
+fi
 # Why is this flag used, it is used because the same container is used for 
 # compose as is for operations and ci. If you have a compose dev environment
 # we may want to keep the existing state and not overwrite the database.
-install_flag="/tmp/.foxx_is_installed"
 if [ ! -f "$install_flag" ]
 then
   echo "Installing foxx."

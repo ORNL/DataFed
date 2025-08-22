@@ -41,12 +41,24 @@ Help()
   echo "-y, --system-secret               ZeroMQ system secret"
   echo
   echo "NOTE: Do not run this script with sudo!"
+  echo
+  echo "NOTE: This script respects the SSL_CERT_FILE env variable, which can "
+  echo "be used to communicate over https:// ssl:// for certificates that may"
+  echo "not be registered in the certificate store."
 }
 
 local_DATABASE_API_SCHEME="${DATABASE_API_SCHEME:-http}"
+local_SSL_CERT_FILE="${SSL_CERT_FILE:-}"
+local_ARANGOSH_SERVER_ENDPOINT_SCHEME="tcp"
+
 local_DATABASE_NAME="sdms"
 local_DATABASE_USER="root"
 local_DATABASE_PORT="8529"
+
+if [ -f "${local_SSL_CERT_FILE}" ]; then
+  ssl_args="--ssl.cafile ${local_SSL_CERT_FILE}"
+  export NODE_EXTRA_CA_CERTS="${local_SSL_CERT_FILE}"
+fi
 
 if [ -z "${DATAFED_DATABASE_PASSWORD}" ]
 then
@@ -158,6 +170,8 @@ if [ "${local_DATABASE_API_SCHEME}" == "https" ]; then
       echo "$output"
       exit 1
   fi
+
+  local_ARANGOSH_SERVER_ENDPOINT_SCHEME="ssl"
 fi
 
 url="${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_api/database/user"
@@ -184,23 +198,26 @@ fi
 
 
 if [[ "$output" =~ .*"sdms".* ]]; then
-	echo "SDMS already exists do nothing"
+  echo "SDMS already exists do nothing"
 else
-	echo "Creating SDMS"
+  echo "Creating SDMS"
   arangosh  --server.endpoint \
-  "tcp://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
+  "${local_ARANGOSH_SERVER_ENDPOINT_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
     --server.password "${local_DATAFED_DATABASE_PASSWORD}" \
     --server.username "${local_DATABASE_USER}" \
+    "${ssl_args}" \
     --javascript.execute "${PROJECT_ROOT}/core/database/foxx/db_create.js"
   # Give time for the database to be created
   sleep 2
-  arangosh --server.endpoint "tcp://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
+  arangosh --server.endpoint "${local_ARANGOSH_SERVER_ENDPOINT_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
     --server.password "${local_DATAFED_DATABASE_PASSWORD}" \
     --server.username "${local_DATABASE_USER}" \
+    "${ssl_args}" \
     --javascript.execute-string 'db._useDatabase("sdms"); db.config.insert({"_key": "msg_daily", "msg" : "DataFed servers will be off-line for regular maintenance every Sunday night from 11:45 pm until 12:15 am EST Monday morning."}, {overwrite: true});'
-  arangosh --server.endpoint "tcp://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
+  arangosh --server.endpoint "${local_ARANGOSH_SERVER_ENDPOINT_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
     --server.password "${local_DATAFED_DATABASE_PASSWORD}" \
     --server.username "${local_DATABASE_USER}" \
+    "${ssl_args}" \
     --javascript.execute-string "db._useDatabase(\"sdms\"); db.config.insert({ \"_key\": \"system\", \"_id\": \"config/system\", \"secret\": \"${local_DATAFED_ZEROMQ_SYSTEM_SECRET}\"}, {overwrite: true } );"
 fi
 
