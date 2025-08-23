@@ -71,8 +71,14 @@ RUN chown -R datafed:root /home/datafed \
                  ${BUILD_DIR}/config \
                  ${BUILD_DIR}/scripts \
                  ${BUILD_DIR}/core/ \
-                 ${BUILD_DIR}/common/ && \
+                 ${BUILD_DIR}/common/ \
+                 ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm && \
     chown datafed:root ${BUILD_DIR} ${DATAFED_DEPENDENCIES_INSTALL_PATH} && \
+    find ${BUILD_DIR}/config -maxdepth 1 -type f -exec chmod 0664 {} + && \
+    find ${BUILD_DIR}/core/database -type f -exec chmod 0664 {} + && \
+    find ${BUILD_DIR}/core -type d -exec chmod 0774 {} + && \
+    find ${BUILD_DIR}/common -type f -exec chmod 0664 {} + && \
+    find ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm -type d -exec chmod 0774 {} + && \
     chmod 774    ${BUILD_DIR} \
                  ${BUILD_DIR}/scripts \
                  ${DATAFED_DEPENDENCIES_INSTALL_PATH} \
@@ -82,12 +88,7 @@ RUN chown -R datafed:root /home/datafed \
                  ${BUILD_DIR}/core/database/tests/test_setup.sh \
                  ${BUILD_DIR}/docker/entrypoint_foxx.sh \
                  ${BUILD_DIR}/scripts/generate_datafed.sh \
-                 ${BUILD_DIR}/scripts/install_foxx.sh && \
-    find ${BUILD_DIR}/config -maxdepth 1 -type f -exec chmod 0664 {} + && \
-    find ${BUILD_DIR}/core/database -type f -exec chmod 0664 {} + && \
-    find ${BUILD_DIR}/core -type d -exec chmod 0774 {} + && \
-    find ${BUILD_DIR}/common -type f -exec chmod 0664 {} +
-
+                 ${BUILD_DIR}/scripts/install_foxx.sh
 USER datafed
 
 WORKDIR ${BUILD_DIR}
