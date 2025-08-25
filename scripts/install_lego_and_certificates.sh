@@ -8,8 +8,7 @@ PROJECT_ROOT=$(realpath "${SOURCE}/..")
 source "${PROJECT_ROOT}/config/datafed.sh"
 source "${PROJECT_ROOT}/scripts/utils.sh"
 
-Help()
-{
+Help() {
   echo "$(basename $0) Will install lego and use Let's Encrypt to create certificates."
   echo
   echo "Syntax: $(basename $0) [-h|d|e]"
@@ -21,15 +20,13 @@ Help()
   echo "-e, --email                       The email address associated with the certificates."
 }
 
-if [ -z "$DATAFED_LEGO_EMAIL" ]
-then
+if [ -z "$DATAFED_LEGO_EMAIL" ]; then
   local_DATAFED_LEGO_EMAIL=""
 else
   local_DATAFED_LEGO_EMAIL=$(printenv DATAFED_LEGO_EMAIL)
 fi
 
-if [ -z "$DATAFED_DOMAIN" ]
-then
+if [ -z "$DATAFED_DOMAIN" ]; then
   local_DATAFED_DOMAIN="datafed.ornl.gov"
 else
   local_DATAFED_DOMAIN=$(printenv DATAFED_DOMAIN)
@@ -37,45 +34,45 @@ fi
 
 VALID_ARGS=$(getopt -o hd:e: --long 'help',domain:,email: -- "$@")
 if [[ $? -ne 0 ]]; then
-      exit 1;
+  exit 1
 fi
 eval set -- "$VALID_ARGS"
 while [ : ]; do
   case "$1" in
-    -h | --help)
-        Help
-        exit 0
-        ;;
-    -e | --email)
-        echo "Processing 'email' option. Input argument is '$2'"
-        local_DATAFED_LEGO_EMAIL=$2
-        shift 2
-        ;;
-    -d | --domain)
-        echo "Processing 'domain' option. Input argument is '$2'"
-        local_DATAFED_DOMAIN=$2
-        shift 2
-        ;;
-    --) shift; 
-        break 
-        ;;
-    \?) # incorrect option
-        echo "Error: Invalid option"
-        exit;;
+  -h | --help)
+    Help
+    exit 0
+    ;;
+  -e | --email)
+    echo "Processing 'email' option. Input argument is '$2'"
+    local_DATAFED_LEGO_EMAIL=$2
+    shift 2
+    ;;
+  -d | --domain)
+    echo "Processing 'domain' option. Input argument is '$2'"
+    local_DATAFED_DOMAIN=$2
+    shift 2
+    ;;
+  --)
+    shift
+    break
+    ;;
+  \?) # incorrect option
+    echo "Error: Invalid option"
+    exit
+    ;;
   esac
 done
 
 ERROR_DETECTED=0
-if [ -z "$local_DATAFED_LEGO_EMAIL" ]
-then
+if [ -z "$local_DATAFED_LEGO_EMAIL" ]; then
   echo "Error DATAFED_LEGO_EMAIL is not defined, this is a required argument"
   echo "      This variable can be set using the command line option -e, --email"
   echo "      or with the environment variable DATAFED_LEGO_EMAIL."
   ERROR_DETECTED=1
 fi
 
-if [ "$ERROR_DETECTED" == "1" ]
-then
+if [ "$ERROR_DETECTED" == "1" ]; then
   exit 1
 fi
 
@@ -90,9 +87,8 @@ export GO111MODULE=on
 GOBIN=/usr/local/bin/ go install github.com/go-acme/lego/v4/cmd/lego@latest
 
 # Create the folder
-if [ ! -d "${DATAFED_INSTALL_PATH}/keys" ]
-then
-	"$SUDO_CMD" mkdir -p "${DATAFED_INSTALL_PATH}/keys"
+if [ ! -d "${DATAFED_INSTALL_PATH}/keys" ]; then
+  "$SUDO_CMD" mkdir -p "${DATAFED_INSTALL_PATH}/keys"
 fi
 
 # Check if the datafed-ws server is already running, will need to stop it if we want
@@ -110,11 +106,10 @@ datafed_ws_service=$(systemctl list-unit-files --type service | grep datafed-ws 
 # NOTE: Will only run if one of the necessary certificate files is missing
 cert_file="datafed-server-test.ornl.gov.crt"
 key_file="datafed-server-test.ornl.gov.key"
-if [ ! -f "${DATAFED_INSTALL_PATH}/keys/$cert_file" ] || [ ! -f "${DATAFED_INSTALL_PATH}/keys/$key_file" ]
-then
-  "$SUDO_CMD" lego --accept-tos --email="$DATAFED_LEGO_EMAIL" --domains="$local_DATAFED_DOMAIN" --path "${DATAFED_INSTALL_PATH}/keys/" --tls run 
+if [ ! -f "${DATAFED_INSTALL_PATH}/keys/$cert_file" ] || [ ! -f "${DATAFED_INSTALL_PATH}/keys/$key_file" ]; then
+  "$SUDO_CMD" lego --accept-tos --email="$DATAFED_LEGO_EMAIL" --domains="$local_DATAFED_DOMAIN" --path "${DATAFED_INSTALL_PATH}/keys/" --tls run
   mv ${DATAFED_INSTALL_PATH}/keys/certificates/$cert_file ${DATAFED_INSTALL_PATH}/keys/
-  mv ${DATAFED_INSTALL_PATH}/keys/certificates/$key_file  ${DATAFED_INSTALL_PATH}/keys/
+  mv ${DATAFED_INSTALL_PATH}/keys/certificates/$key_file ${DATAFED_INSTALL_PATH}/keys/
   rm -rf ${DATAFED_INSTALL_PATH}/keys/certificates
   rm -rf ${DATAFED_INSTALL_PATH}/keys/accounts
 else
