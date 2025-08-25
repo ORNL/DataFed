@@ -68,7 +68,7 @@ const createRepositoryData = ({
  * @param {object} config - Globus configuration object
  * @param {string} config.endpoint - Globus endpoint identifier
  * @param {string} config.path - Repository path on filesystem
- * @param {string} config.pub_key - Public SSH key for authentication
+ * @param {string} config.pub_key - Public key for ZeroMQ CURVE authentication
  * @param {string} config.address - Network address
  * @param {string} [config.exp_path] - Export path
  * @param {string} config.domain - Domain name
