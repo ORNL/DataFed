@@ -76,3 +76,6 @@ tests/end-to-end/web-UI/tests-examples
 tests/end-to-end/web-UI/.auth
 tests/end-to-end/web-UI/.env
 tests/end-to-end/web-UI/auth.setup.js
+
+# For Cargo
+target/

@@ -1,0 +1,34 @@
+[package]
+name = "datafed"
+authors = [
+    "Blake Nedved <nedvedba@ornl.gov>",
+    "Joshua Brown <brownjs@ornl.gov>",
+    "Aaron Perez <perezam@ornl.gov>",
+]
+version = "0.1.0"
+edition = "2024"
+default-run = "datafed-core"
+
+[workspace]
+members = ["crates/*"]
+
+[dependencies]
+datafed-core-api = { path = "crates/core-api" }
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+tokio = { version = "1.45.1", features = ["full"] }
+toml = "0.8.22"
+tracing-loki = { version = "0.2.6", optional = true, default-features = false, features = [
+    "rustls",
+    "compat-0-2-1",
+] }
+anyhow = "1.0.98"
+
+[features]
+metrics = ["datafed-core-api/metrics"]
+loki = ["tracing-loki"]
+
+[[bin]]
+name = "datafed-core"
+path = "src/core.rs"
+required-features = []
