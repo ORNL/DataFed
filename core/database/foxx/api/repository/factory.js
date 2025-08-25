@@ -30,7 +30,7 @@ const g_lib = require("../support");
  * @param {string[]} config.admins - Array of admin user IDs
  * @param {string} [config.endpoint] - Globus endpoint (required for GLOBUS type)
  * @param {string} [config.path] - File path (required for GLOBUS type)
- * @param {string} [config.pub_key] - Public SSH key (required for GLOBUS type)
+ * @param {string} [config.pub_key] - Public key for ZeroMQ CURVE authentication (required for GLOBUS type)
  * @param {string} [config.address] - Network address (required for GLOBUS type)
  * @param {string} [config.exp_path] - Export path (optional for GLOBUS type)
  * @param {string} [config.domain] - Domain name (required for GLOBUS type)
@@ -38,14 +38,19 @@ const g_lib = require("../support");
  * @see https://doc.rust-lang.org/book/ch06-02-match.html
  */
 const createRepositoryByType = (config) => {
-    // Validate common fields
-    if (!config.id || !config.type || !config.title || !config.capacity || !config.admins) {
+    const missingFields = [];
+    if (!config.id) missingFields.push("id");
+    if (!config.type) missingFields.push("type");
+    if (!config.title) missingFields.push("title");
+    if (!config.capacity) missingFields.push("capacity");
+    if (!config.admins) missingFields.push("admins");
+
+    if (missingFields.length > 0) {
         return Result.err({
             code: g_lib.ERR_INVALID_PARAM,
-            message: "Missing required repository fields",
+            message: `Missing required repository fields: ${missingFields.join(", ")}`,
         });
     }
-
     /**
      * Type-based creation using switch (Rust match pattern)
      * Each case is like a match arm in Rust, handling a specific variant
