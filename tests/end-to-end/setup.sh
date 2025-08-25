@@ -161,12 +161,12 @@ echo "IP is ${local_DATAFED_DATABASE_HOST}"
 echo "USER89 GLobud ID $DATAFED_USER89_GLOBUS_UUID"
 echo "Refresh is ${DATAFED_USER89_GLOBUS_REFRESH_TOKEN}"
 # Chreate user datafed89 who is admin
-HTTP_CODE=$( curl --user "${basic_auth}" -w "%{http_code}" -o /dev/null -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed89&uuids=%5B\"${DATAFED_USER89_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER89_PASSWORD}&email=datafed89%40gmail.com&is_admin=true&secret=${DATAFED_ZEROMQ_SYSTEM_SECRET}" )
+HTTP_CODE=$( curl --user "${basic_auth}" -w "%{http_code}" -o /dev/null -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed89&uuids=%5B\"${DATAFED_USER89_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER89_PASSWORD}&email=datafed89%40gmail.com&is_admin=true" )
 echo "HTTP_CODE: ${HTTP_CODE}"
 FIRST_INT=${HTTP_CODE:0:1}
 if [ "${FIRST_INT}" -ne "2" ]
 then
-  response=$( curl --user "${basic_auth}" -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed89&uuids=%5B\"${DATAFED_USER89_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER89_PASSWORD}&email=datafed89%40gmail.com&is_admin=true&secret=${DATAFED_ZEROMQ_SYSTEM_SECRET}" )
+  response=$( curl --user "${basic_auth}" -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed89&uuids=%5B\"${DATAFED_USER89_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER89_PASSWORD}&email=datafed89%40gmail.com&is_admin=true" )
   CODE=$(echo $response | jq .code )
   ERROR_MSG=$(echo $response | jq .errorMessage )
   echo "$ERROR_MSG"
@@ -186,12 +186,12 @@ then
 fi
 
 # Create user datafed99 who is not admin
-HTTP_CODE=$(curl  --user "${basic_auth}"  -w "%{http_code}" -o /dev/null  -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed99&uuids=%5B\"${DATAFED_USER99_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER99_PASSWORD}&email=datafed99%40gmail.com&is_admin=false&secret=${DATAFED_ZEROMQ_SYSTEM_SECRET}")
+HTTP_CODE=$(curl  --user "${basic_auth}"  -w "%{http_code}" -o /dev/null  -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed99&uuids=%5B\"${DATAFED_USER99_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER99_PASSWORD}&email=datafed99%40gmail.com&is_admin=false")
 echo "HTTP_CODE: ${HTTP_CODE}"
 FIRST_INT=${HTTP_CODE:0:1}
 if [ "${FIRST_INT}" -ne "2" ]
 then
-  response=$(curl  --user "${basic_auth}" --fail-early -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed99&uuids=%5B\"${DATAFED_USER99_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER99_PASSWORD}&email=datafed99%40gmail.com&is_admin=false&secret=${DATAFED_ZEROMQ_SYSTEM_SECRET}")
+  response=$(curl  --user "${basic_auth}" --fail-early -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed99&uuids=%5B\"${DATAFED_USER99_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER99_PASSWORD}&email=datafed99%40gmail.com&is_admin=false")
   CODE=$(echo $response | jq .code )
   ERROR_MSG=$(echo $response | jq .errorMessage )
   echo "$ERROR_MSG"
