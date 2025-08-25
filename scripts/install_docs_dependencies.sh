@@ -18,24 +18,23 @@ local_UNIFY=false
 
 if [ $# -eq 1 ]; then
   case "$1" in
-    -h|--help)
-      # If -h or --help is provided, print help
-      echo "Usage: $0 [-h|--help] [unify]"
-      ;;
-    unify)
-      # If 'unify' is provided, print the packages
-      # The extra space is necessary to not conflict with the other install scripts
-      echo -n "${packages[@]} " >> "$apt_file_path"
-      echo -n "${pip_packages[@]} " >> "$pip_file_path"
-      echo -n "${externals[@]} " >> "$ext_file_path"
-      local_UNIFY=true
-      ;;
-    *)
-      echo "Invalid Argument"
-      ;;
+  -h | --help)
+    # If -h or --help is provided, print help
+    echo "Usage: $0 [-h|--help] [unify]"
+    ;;
+  unify)
+    # If 'unify' is provided, print the packages
+    # The extra space is necessary to not conflict with the other install scripts
+    echo -n "${packages[@]} " >>"$apt_file_path"
+    echo -n "${pip_packages[@]} " >>"$pip_file_path"
+    echo -n "${externals[@]} " >>"$ext_file_path"
+    local_UNIFY=true
+    ;;
+  *)
+    echo "Invalid Argument"
+    ;;
   esac
 fi
-
 
 if [[ $local_UNIFY = false ]]; then
   sudo_command
@@ -52,4 +51,3 @@ if [[ $local_UNIFY = false ]]; then
   "python${DATAFED_PYTHON_VERSION}" -m pip install --upgrade pip
   "python${DATAFED_PYTHON_VERSION}" -m pip install "${pip_packages[@]}"
 fi
-

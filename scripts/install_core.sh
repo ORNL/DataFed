@@ -15,10 +15,8 @@ mkdir -p "${DATAFED_DEFAULT_LOG_PATH}"
 # Copy configuration files
 cp "$PROJECT_ROOT/config/datafed-core.cfg" "${DATAFED_INSTALL_PATH}/core"
 
-
 # Move keys to Default:/opt/datafed/keys if they do not already exist
-if [ ! -f "${DATAFED_INSTALL_PATH}/keys/datafed-core-key.priv" ]
-then
+if [ ! -f "${DATAFED_INSTALL_PATH}/keys/datafed-core-key.priv" ]; then
   # Generate keys
   echo "No keys for core server were detected in ${DATAFED_INSTALL_PATH}/keys/ creating them"
   "${DATAFED_INSTALL_PATH}/core/datafed-core" --gen-keys

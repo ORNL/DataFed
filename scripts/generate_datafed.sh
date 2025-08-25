@@ -59,13 +59,6 @@ else
   local_DATAFED_ZEROMQ_SESSION_SECRET=$(printenv DATAFED_ZEROMQ_SESSION_SECRET)
 fi
 
-local_DATAFED_ZEROMQ_SYSTEM_SECRET=""
-if [ -z "${DATAFED_ZEROMQ_SYSTEM_SECRET}" ]; then
-  local_DATAFED_ZEROMQ_SYSTEM_SECRET=""
-else
-  local_DATAFED_ZEROMQ_SYSTEM_SECRET=$(printenv DATAFED_ZEROMQ_SYSTEM_SECRET)
-fi
-
 local_DATAFED_LEGO_EMAIL=""
 if [ -z "${DATAFED_LEGO_EMAIL}" ]; then
   local_DATAFED_LEGO_EMAIL=""
@@ -252,7 +245,6 @@ export DATAFED_CORE_USER="$local_DATAFED_CORE_USER"
 # Env Variables for Web Server
 # ************************************************
 export DATAFED_ZEROMQ_SESSION_SECRET="$local_DATAFED_ZEROMQ_SESSION_SECRET"
-export DATAFED_ZEROMQ_SYSTEM_SECRET="$local_DATAFED_ZEROMQ_SYSTEM_SECRET"
 # An email address is required by LEGO when 
 # requesting certificates for the domain
 export DATAFED_LEGO_EMAIL="$local_DATAFED_LEGO_EMAIL"

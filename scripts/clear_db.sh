@@ -15,12 +15,6 @@ else
   local_DATAFED_DATABASE_PASSWORD=$(printenv DATAFED_DATABASE_PASSWORD)
 fi
 
-if [ -z "${DATAFED_ZEROMQ_SYSTEM_SECRET:-}" ]; then
-  local_DATAFED_ZEROMQ_SYSTEM_SECRET=""
-else
-  local_DATAFED_ZEROMQ_SYSTEM_SECRET=$(printenv DATAFED_ZEROMQ_SYSTEM_SECRET)
-fi
-
 if [ -z "${DATAFED_DATABASE_HOST:-}" ]; then
   local_DATAFED_DATABASE_HOST="localhost"
 else
