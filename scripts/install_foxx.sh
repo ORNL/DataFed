@@ -2,9 +2,9 @@
 
 # History
 #
-# -e has been added back, password file deletion should be handled by another 
-# means such as the CI after script section. If the API fails to install, it 
-# could lead to improper testing the CI env. 
+# -e has been added back, password file deletion should be handled by another
+# means such as the CI after script section. If the API fails to install, it
+# could lead to improper testing the CI env.
 #
 # -e has been removed so that if an error occurs the PASSWORD File is deleted
 # and not left lying around
@@ -20,8 +20,7 @@ source "${PROJECT_ROOT}/config/datafed.sh"
 source "${SOURCE}/dependency_versions.sh"
 source "${SOURCE}/dependency_install_functions.sh"
 
-Help()
-{
+Help() {
   echo "$(basename $0) Will set up a configuration file for the core server"
   echo
   echo "Syntax: $(basename $0) [-h|u|f|p|i|y]"
@@ -60,80 +59,75 @@ if [ -f "${local_SSL_CERT_FILE}" ]; then
   export NODE_EXTRA_CA_CERTS="${local_SSL_CERT_FILE}"
 fi
 
-if [ -z "${DATAFED_DATABASE_PASSWORD}" ]
-then
+if [ -z "${DATAFED_DATABASE_PASSWORD}" ]; then
   local_DATAFED_DATABASE_PASSWORD=""
 else
   local_DATAFED_DATABASE_PASSWORD=$(printenv DATAFED_DATABASE_PASSWORD)
 fi
 
-if [ -z "${FOXX_MAJOR_API_VERSION}" ]
-then
-  local_FOXX_MAJOR_API_VERSION=$(cat ${PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs )
+if [ -z "${FOXX_MAJOR_API_VERSION}" ]; then
+  local_FOXX_MAJOR_API_VERSION=$(cat ${PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs)
 else
   local_FOXX_MAJOR_API_VERSION=$(printenv FOXX_MAJOR_API_VERSION)
 fi
 
-
-if [ -z "${DATAFED_DATABASE_HOST}" ]
-then
+if [ -z "${DATAFED_DATABASE_HOST}" ]; then
   local_DATAFED_DATABASE_HOST="localhost"
 else
   local_DATAFED_DATABASE_HOST=$(printenv DATAFED_DATABASE_HOST)
 fi
 
-
 VALID_ARGS=$(getopt -o hu:p:f:i:y: --long 'help',database-user:,database-password:,foxx-api-major-version:,database-host:,zeromq-system-secret: -- "$@")
 if [[ $? -ne 0 ]]; then
-      exit 1;
+  exit 1
 fi
 eval set -- "$VALID_ARGS"
 while [ : ]; do
   case "$1" in
-    -h | --help)
-        Help
-        exit 0
-        ;;
-    -u | --database-user)
-        echo "Processing 'Database user' option. Input argument is '$2'"
-        local_DATABASE_USER=$2
-        shift 2
-        ;;
-    -p | --database-password)
-        echo "Processing 'Database password' option. Input argument is '$2'"
-        local_DATAFED_DATABASE_PASSWORD=$2
-        shift 2
-        ;;
-    -f | --foxx-api-major-version)
-        echo "Processing 'Foxx major api version' option. Input argument is '$2'"
-        local_FOXX_MAJOR_API_VERSION=$2
-        shift 2
-        ;;
-    -i | --database-host)
-        echo "Processing 'database host' option. Input argument is '$2'"
-        local_DATAFED_DATABASE_HOST=$2
-        shift 2
-        ;;
-    --) shift; 
-        break 
-        ;;
-    \?) # incorrect option
-        echo "Error: Invalid option"
-        exit;;
+  -h | --help)
+    Help
+    exit 0
+    ;;
+  -u | --database-user)
+    echo "Processing 'Database user' option. Input argument is '$2'"
+    local_DATABASE_USER=$2
+    shift 2
+    ;;
+  -p | --database-password)
+    echo "Processing 'Database password' option. Input argument is '$2'"
+    local_DATAFED_DATABASE_PASSWORD=$2
+    shift 2
+    ;;
+  -f | --foxx-api-major-version)
+    echo "Processing 'Foxx major api version' option. Input argument is '$2'"
+    local_FOXX_MAJOR_API_VERSION=$2
+    shift 2
+    ;;
+  -i | --database-host)
+    echo "Processing 'database host' option. Input argument is '$2'"
+    local_DATAFED_DATABASE_HOST=$2
+    shift 2
+    ;;
+  --)
+    shift
+    break
+    ;;
+  \?) # incorrect option
+    echo "Error: Invalid option"
+    exit
+    ;;
   esac
 done
 
 ERROR_DETECTED=0
-if [ -z "$local_DATAFED_DATABASE_PASSWORD" ]
-then
+if [ -z "$local_DATAFED_DATABASE_PASSWORD" ]; then
   echo "Error DATAFED_DATABASE_PASSWORD is not defined, this is a required argument"
   echo "      This variable can be set using the command line option -p, --database-password"
   echo "      or with the environment variable DATAFED_DATABASE_PASSWORD."
   ERROR_DETECTED=1
 fi
 
-if [ "$ERROR_DETECTED" == "1" ]
-then
+if [ "$ERROR_DETECTED" == "1" ]; then
   exit 1
 fi
 
@@ -176,13 +170,12 @@ if [[ "$output" == "" ]]; then
   exit 1
 fi
 
-
 if [[ "$output" =~ .*"sdms".* ]]; then
   echo "SDMS already exists do nothing"
 else
   echo "Creating SDMS"
   arangosh  --server.endpoint \
-  "${local_ARANGOSH_SERVER_ENDPOINT_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
+    "${local_ARANGOSH_SERVER_ENDPOINT_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
     --server.password "${local_DATAFED_DATABASE_PASSWORD}" \
     --server.username "${local_DATABASE_USER}" \
     "${ssl_args}" \
@@ -203,10 +196,10 @@ fi
 
 # There are apparently 3 different ways to deploy Foxx microservices,
 # Using curl with http requests
-# Using the Arango web ui 
+# Using the Arango web ui
 # Using node module
 #
-# The web deployment requires manual interaction, and I could not figure out the 
+# The web deployment requires manual interaction, and I could not figure out the
 # syntax for the REST http endpoints with curl so we are going to try the node module
 
 # 1. Install nvm which will allow us to update node
@@ -218,15 +211,15 @@ echo "Installing foxx_cli"
 install_foxx_cli
 
 FOXX_PREFIX=""
-if ! command -v foxx > /dev/null 2>&1; then
-    FOXX_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/bin/"
+if ! command -v foxx >/dev/null 2>&1; then
+  FOXX_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/bin/"
 fi
 
-echo "${local_DATAFED_DATABASE_PASSWORD}" > "${SOURCE}/database_temp.password"
+echo "${local_DATAFED_DATABASE_PASSWORD}" >"${SOURCE}/database_temp.password"
 PATH_TO_PASSWD_FILE="${SOURCE}/database_temp.password"
 
 echo "Path to PASSWRD file ${PATH_TO_PASSWD_FILE} passwd is $local_DATAFED_DATABASE_PASSWORD"
-echo "$local_DATAFED_DATABASE_PASSWORD" > "${PATH_TO_PASSWD_FILE}"
+echo "$local_DATAFED_DATABASE_PASSWORD" >"${PATH_TO_PASSWD_FILE}"
 
 { # try
   # Check if database foxx services have already been installed
@@ -238,23 +231,20 @@ echo "$local_DATAFED_DATABASE_PASSWORD" > "${PATH_TO_PASSWD_FILE}"
 
   FOUND_API=$(echo "$existing_services" | grep "/api/${local_FOXX_MAJOR_API_VERSION}")
 
-
   INSTALL_API="FALSE"
   FOUND_API=$(echo "$existing_services" | grep "/api/${local_FOXX_MAJOR_API_VERSION}")
 
   echo "$FOUND_API"
 
   RESULT=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl -s ${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/version)
-  CODE=$(echo "${RESULT}" | jq '.code' )
+  CODE=$(echo "${RESULT}" | jq '.code')
   echo "Code is $CODE"
-  if [ -z "${FOUND_API}" ]
-  then
-      INSTALL_API="TRUE"
-  elif [ "$CODE" == "503" ]
-  then
-      INSTALL_API="TRUE"
+  if [ -z "${FOUND_API}" ]; then
+    INSTALL_API="TRUE"
+  elif [ "$CODE" == "503" ]; then
+    INSTALL_API="TRUE"
     # Remove the api at this point
-    # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint 
+    # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint
     "${FOXX_PREFIX}foxx" remove \
       "/api/${local_FOXX_MAJOR_API_VERSION}" \
       --server "${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
@@ -264,9 +254,8 @@ echo "$local_DATAFED_DATABASE_PASSWORD" > "${PATH_TO_PASSWD_FILE}"
   fi
 
   echo "$RESULT"
-  if [ "${INSTALL_API}" == "TRUE"  ]
-  then
-    # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint 
+  if [ "${INSTALL_API}" == "TRUE" ]; then
+    # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint
     "${FOXX_PREFIX}foxx" install \
       --server "${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
       -u "${local_DATABASE_USER}" \
@@ -276,7 +265,7 @@ echo "$local_DATAFED_DATABASE_PASSWORD" > "${PATH_TO_PASSWD_FILE}"
       "${PROJECT_ROOT}/core/database/foxx/"
   else
     echo "DataFed Foxx Services have already been uploaded, replacing to ensure consisency"
-    # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint 
+    # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint
     "${FOXX_PREFIX}foxx" replace \
       --server "${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
       -u "${local_DATABASE_USER}" \
@@ -289,4 +278,3 @@ echo "$local_DATAFED_DATABASE_PASSWORD" > "${PATH_TO_PASSWD_FILE}"
 } || { # catch
   rm "${PATH_TO_PASSWD_FILE}"
 }
-
