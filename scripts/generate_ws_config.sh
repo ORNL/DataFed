@@ -82,14 +82,7 @@ else
   local_DATAFED_ZEROMQ_SESSION_SECRET=$(printenv DATAFED_ZEROMQ_SESSION_SECRET)
 fi
 
-if [ -z "${DATAFED_ZEROMQ_SYSTEM_SECRET}" ]; then
-  local_DATAFED_ZEROMQ_SYSTEM_SECRET=""
-else
-  local_DATAFED_ZEROMQ_SYSTEM_SECRET=$(printenv DATAFED_ZEROMQ_SYSTEM_SECRET)
-fi
-
 local_DATAFED_LOG_PATH=""
-
 if [ -z "${DATAFED_DEFAULT_LOG_PATH}" ]; then
   local_DATAFED_LOG_PATH="/var/log/datafed"
 else
@@ -128,11 +121,6 @@ while [ : ]; do
   -i | --globus-id)
     echo "Processing 'DataFed Globus App client id' option. Input argument is '$2'"
     local_DATAFED_GLOBUS_APP_ID=$2
-    shift 2
-    ;;
-  -z | --zeromq-session-secret)
-    echo "Processing 'DataFed ZeroMQ session secret' option. Input argument is '$2'"
-    local_DATAFED_ZEROMQ_SESSION_SECRET=$2
     shift 2
     ;;
   -y | --zeromq-system-secret)
@@ -193,13 +181,6 @@ if [ -z "$local_DATAFED_ZEROMQ_SESSION_SECRET" ]; then
   ERROR_DETECTED=1
 fi
 
-if [ -z "$local_DATAFED_ZEROMQ_SYSTEM_SECRET" ]; then
-  echo "Error DATAFED_ZEROMQ_SYSTEM_SECRET is not defined, this is a required argument"
-  echo "      This variable can be set using the command line option -y, --zeromq-session-secret"
-  echo "      or with the environment variable DATAFED_ZEROMQ_SYSTEM_SECRET."
-  ERROR_DETECTED=1
-fi
-
 if [ "$ERROR_DETECTED" == "1" ]; then
   exit 1
 fi
@@ -224,7 +205,6 @@ log-path=${local_DATAFED_LOG_PATH}
 key_file=${local_DATAFED_WEB_KEY_PATH}
 cert_file=${local_DATAFED_WEB_CERT_PATH}
 # This is the secret used by Zero0MQ and must be consistent 
-system_secret=${local_DATAFED_ZEROMQ_SYSTEM_SECRET}
 session_secret=${local_DATAFED_ZEROMQ_SESSION_SECRET}
 extern_url=https://${local_DATAFED_SERVER_DOMAIN_NAME}
 

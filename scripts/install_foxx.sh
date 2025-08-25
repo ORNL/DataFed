@@ -52,12 +52,6 @@ else
   local_DATAFED_DATABASE_PASSWORD=$(printenv DATAFED_DATABASE_PASSWORD)
 fi
 
-if [ -z "${DATAFED_ZEROMQ_SYSTEM_SECRET}" ]; then
-  local_DATAFED_ZEROMQ_SYSTEM_SECRET=""
-else
-  local_DATAFED_ZEROMQ_SYSTEM_SECRET=$(printenv DATAFED_ZEROMQ_SYSTEM_SECRET)
-fi
-
 if [ -z "${FOXX_MAJOR_API_VERSION}" ]; then
   local_FOXX_MAJOR_API_VERSION=$(cat ${PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs)
 else
@@ -101,11 +95,6 @@ while [ : ]; do
     local_DATAFED_DATABASE_HOST=$2
     shift 2
     ;;
-  -y | --zeromq-system-secret)
-    echo "Processing 'DataFed ZeroMQ system secret' option. Input argument is '$2'"
-    local_DATAFED_ZEROMQ_SYSTEM_SECRET=$2
-    shift 2
-    ;;
   --)
     shift
     break
@@ -122,13 +111,6 @@ if [ -z "$local_DATAFED_DATABASE_PASSWORD" ]; then
   echo "Error DATAFED_DATABASE_PASSWORD is not defined, this is a required argument"
   echo "      This variable can be set using the command line option -p, --database-password"
   echo "      or with the environment variable DATAFED_DATABASE_PASSWORD."
-  ERROR_DETECTED=1
-fi
-
-if [ -z "$local_DATAFED_ZEROMQ_SYSTEM_SECRET" ]; then
-  echo "Error DATAFED_ZEROMQ_SYSTEM_SECRET is not defined, this is a required argument"
-  echo "      This variable can be set using the command line option -y, --zeromq-session-secret"
-  echo "      or with the environment variable DATAFED_ZEROMQ_SYSTEM_SECRET."
   ERROR_DETECTED=1
 fi
 
@@ -177,7 +159,7 @@ else
   arangosh --server.endpoint "tcp://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
     --server.password "${local_DATAFED_DATABASE_PASSWORD}" \
     --server.username "${local_DATABASE_USER}" \
-    --javascript.execute-string "db._useDatabase(\"sdms\"); db.config.insert({ \"_key\": \"system\", \"_id\": \"config/system\", \"secret\": \"${local_DATAFED_ZEROMQ_SYSTEM_SECRET}\"}, {overwrite: true } );"
+    --javascript.execute-string "db._useDatabase(\"sdms\"); db.config.insert({ \"_key\": \"system\", \"_id\": \"config/system\"}, {overwrite: true } );"
 fi
 
 # There are apparently 3 different ways to deploy Foxx microservices,
