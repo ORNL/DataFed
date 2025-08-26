@@ -3,6 +3,7 @@
 const g_lib = require("./support");
 const { UserToken } = require("./lib/user_token");
 const { RepositoryOps } = require("./repository/operations");
+const { validateRepositorySupportsDataOperations } = require("./repository/validation");
 const { RepositoryType } = require("./repository/types");
 
 const g_db = require("@arangodb").db;
@@ -12,29 +13,6 @@ var g_internal = require("internal");
 
 const tasks_func = (function () {
     const obj = {};
-
-    // Helper function to validate repository supports data operations
-    function validateRepositorySupportsDataOperations(loc, dataId) {
-        if (loc) {
-            const findResult = RepositoryOps.find(loc._to);
-            if (findResult.ok) {
-                const repository = findResult.value;
-                const dataOpsResult = RepositoryOps.supportsDataOperations(repository);
-
-                if (dataOpsResult.ok && !dataOpsResult.value) {
-                    throw [
-                        g_lib.ERR_INVALID_OPERATION,
-                        `Data transfers not supported for ${repository.type} repository`,
-                        {
-                            repo_type: repository.type,
-                            repo_id: repository.data._id,
-                            data_id: dataId,
-                        },
-                    ];
-                }
-            }
-        }
-    }
 
     // ----------------------- ALLOC CREATE ----------------------------
 
@@ -338,7 +316,13 @@ const tasks_func = (function () {
                 var data = result.glob_data[i];
                 // Get repository from data location
                 var loc = g_db.loc.firstExample({ _from: data.id });
-                validateRepositorySupportsDataOperations(loc, data.id);
+                if (loc) {
+                    validateRepositorySupportsDataOperations(
+                        loc._to,
+                        data.id,
+                        `Data transfers not supported for this repository type`,
+                    );
+                }
             }
         }
 
@@ -532,7 +516,13 @@ const tasks_func = (function () {
                 var data = result.glob_data[i];
                 // Get repository from data location
                 var loc = g_db.loc.firstExample({ _from: data.id });
-                validateRepositorySupportsDataOperations(loc, data.id);
+                if (loc) {
+                    validateRepositorySupportsDataOperations(
+                        loc._to,
+                        data.id,
+                        `Data transfers not supported for this repository type`,
+                    );
+                }
             }
         }
 
