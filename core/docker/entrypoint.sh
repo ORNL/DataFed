@@ -14,8 +14,7 @@ env
 
 log_path="$DATAFED_DEFAULT_LOG_PATH"
 
-if [ ! -d "${log_path}" ]
-then
+if [ ! -d "${log_path}" ]; then
   mkdir -p ${log_path}
 fi
 
@@ -29,8 +28,7 @@ if [ "$#" -eq 0 ]; then
 fi
 
 datafed_core_exec=$(basename "$1")
-if [ "${datafed_core_exec}" = "datafed-core" ]
-then
+if [ "${datafed_core_exec}" = "datafed-core" ]; then
   # Send output to log file
   # For this to work all commands must be passed in as a single string
   "$@" -- argv0 "$@" 2>&1 | tee $log_path/datafed-core.log
