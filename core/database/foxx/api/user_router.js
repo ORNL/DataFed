@@ -1,5 +1,6 @@
 "use strict";
 
+const getCallerLocation = require('./lib/util');
 const createRouter = require("@arangodb/foxx/router");
 const router = createRouter();
 const joi = require("joi");
@@ -17,13 +18,22 @@ module.exports = router;
 
 router
     .get("/authn/password", function (req, res) {
+        let client = undefined;
         console.log("Running /authn/password");
         try {
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
+            client = g_lib.getUserFromClientID(req.queryParams.client);
             const is_verified = auth.verify(client.password, req.queryParams.pw);
             if (is_verified === false) {
                 throw g_lib.ERR_AUTHN_FAILED;
             }
+            console.info( 
+            "Client:",client?._id || "unknown",
+            "Correlation_ID:", "unknown", 
+            "HTTP:","GET",
+			      "Route:", "/authn/password",
+            "Status:", "Started",
+		        "Desc:", "Authenticating user via password");
+
 
             //if ( client.password != req.queryParams.pw )
             //    throw g_lib.ERR_AUTHN_FAILED;
@@ -32,7 +42,25 @@ router
                 uid: client._id,
                 authorized: true,
             });
+            console.info( 
+            "Client:",client?._id || "unknown",
+            "Correlation_ID:", "unknown", 
+            "HTTP:","GET",
+			      "Route:", "/authn/password",
+            "Status:", "Success",
+		        "Desc:", "Authenticating user via password");
+
+
         } catch (e) {
+            console.info(
+            "Client:", client?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/authn/password", "|",
+            "Status:", "Failure", "|",
+		        "Desc:", "Authenticating user via password", "|",
+            "Err:", e.message || e, "|",
+            "Stack:", e.stack || "No Stack Trace");
             g_lib.handleException(e, res);
         }
     })
@@ -43,17 +71,42 @@ router
 
 router
     .get("/authn/token", function (req, res) {
+        let user = undefined;
         try {
-            var user = g_db._query("for i in u filter i.access == @tok return i", {
+            user = g_db._query("for i in u filter i.access == @tok return i", {
                 tok: req.queryParams.token,
             });
+            console.info( 
+            "Client:",user?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/authn/token", "|",
+            "Status:", "Started", "|",
+		        "Desc:", "Authenticating user via access token");
+
             if (!user.hasNext()) throw g_lib.ERR_AUTHN_FAILED;
 
             res.send({
                 uid: user.next()._id,
                 authorized: true,
             });
+            console.info( 
+            "Client:",user?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/authn/token", "|",
+            "Status:", "Success", "|",
+		        "Desc:", "Authenticating user via access token");
         } catch (e) {
+            console.info(
+            "Client:", user?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/authn/token", "|",
+            "Status:", "Failure", "|",
+		        "Desc:", "Authenticating user via access token", "|",
+            "Err:", e.message || e, "|",
+            "Stack:", e.stack || "No Stack Trace");
             g_lib.handleException(e, res);
         }
     })
@@ -63,6 +116,7 @@ router
 
 router
     .get("/create", function (req, res) {
+        let user = undefined;
         try {
             var result;
 
@@ -120,9 +174,17 @@ router
                         user_data.options = req.queryParams.options;
                     }
 
-                    var user = g_db.u.save(user_data, {
+                    user = g_db.u.save(user_data, {
                         returnNew: true,
                     });
+                    console.info(
+                    "Client:", user?._id || "unknown", "|",
+                    "Correlation_ID:", "unknown", "|",
+                    "HTTP:","GET", "|",
+			              "Route:", "/create", "|",
+                    "Status:", "Started", "|",
+		                "Desc:", "Creating new user entry", "|");
+                    
                     var root = g_db.c.save(
                         {
                             _key: "u_" + req.queryParams.uid + "_root",
@@ -203,9 +265,25 @@ router
                     result = [user.new];
                 },
             });
-
             res.send(result);
-        } catch (e) {
+            console.info(
+            "Client:", user?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/create", "|",
+            "Status:", "Success", "|",
+		        "Desc:", "Create new user entry", "|");
+
+            } catch (e) {
+            console.error(
+            "Client:", user?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/create", "|",
+            "Status:", "Failure", "|",
+		        "Desc:", "Create new user entry", "|",
+            "Err:", e.message || e, "|",
+            "Stack:", e.stack || "No Stack Trace"); 
             g_lib.handleException(e, res);
         }
     })
@@ -226,6 +304,7 @@ router
 
 router
     .get("/update", function (req, res) {
+        let client = undefined;
         try {
             var result;
 
@@ -235,9 +314,15 @@ router
                     write: ["u", "admin"],
                 },
                 action: function () {
-                    const client = g_lib.getUserFromClientID(req.queryParams.client);
+                    client = g_lib.getUserFromClientID(req.queryParams.client);
                     var user_id;
-
+                    console.info(
+                    "Client:", client?._id || "unknown", "|",
+                    "Correlation_ID:", "unknown", "|",
+                    "HTTP:","GET", "|",
+			              "Route:", "/update", "|",
+                    "Status:", "Started", "|",
+		                "Desc:", "Updating user information", "|");
                     if (req.queryParams.subject) {
                         user_id = req.queryParams.subject;
                         if (!g_db.u.exists(user_id))
@@ -299,7 +384,24 @@ router
             });
 
             res.send(result);
+            console.info(
+            "Client:", client?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+		        "Route:", "/update", "|",
+            "Status:", "Success", "|",
+		        "Desc:", "Updating user information", "|");
+
         } catch (e) {
+            console.error(
+            "Client:", client?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/update", "|",
+            "Status:", "Failure", "|",
+		        "Desc:", "Updating user information", "|",
+            "Err:", e.message || e, "|",
+            "Stack:", e.stack || "No Stack Trace");
             g_lib.handleException(e, res);
         }
     })
@@ -315,14 +417,22 @@ router
 
 router
     .get("/find/by_uuids", function (req, res) {
+        let user = undefined;
         try {
             // Convert UUIDs to DB _ids
             var uuids = [];
             for (var i in req.queryParams.uuids) {
                 uuids.push("uuid/" + req.queryParams.uuids[i]);
             }
-
-            var user = g_lib.findUserFromUUIDs(uuids);
+            
+            user = g_lib.findUserFromUUIDs(uuids);
+            console.info(
+            "Client:", user?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/find/by_uuids", "|",
+            "Status:", "Started", "|",
+		        "Desc:", "Find a user from list of UUIDs", "|");
 
             var idents = g_db
                 ._query("for v in 1..1 outbound @user ident return v._key", {
@@ -341,7 +451,24 @@ router
             delete user.name;
 
             res.send([user]);
+            console.info(
+            "Client:", user?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/find/by_uuids", "|",
+            "Status:", "Success", "|",
+		        "Desc:", "Find a user from list of UUIDs", "|");
+            
         } catch (e) {
+            console.error(
+            "Client:", user?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/find/by_uuids", "|",
+            "Status:", "Failure", "|",
+		        "Desc:", "Find a user from list of UUIDs", "|",
+            "Err:", e.message || e, "|",
+            "Stack:", e.stack || "No Stack Trace");
             g_lib.handleException(e, res);
         }
     })
@@ -351,8 +478,17 @@ router
 
 router
     .get("/find/by_name_uid", function (req, res) {
+        let name = undefined;
         try {
-            var name = req.queryParams.name_uid.trim();
+            name = req.queryParams.name_uid.trim(); 
+            console.info(
+            "Client:", name || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/find/by_name_uid", "|",
+            "Status:", "Started", "|",
+		        "Desc:", "Find a user from list of UUIDs", "|");
+
             if (name.length < 2)
                 throw [g_lib.ERR_INVALID_PARAM, "Input is too short for name/uid search."];
             else if (name.length < 3) name = " " + name + " "; // Pad to allow matches for very short first/last names (i.e. Bo, Li, Xi)
@@ -384,7 +520,25 @@ router
             });
 
             res.send(result);
+            console.info(
+            "Client:", name || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/find/by_name_uid", "|",
+            "Status:", "Success", "|",
+		        "Desc:", "Find users matching partial name and/or uid", "|");
+
+
         } catch (e) {
+            console.error(
+            "Client:", name || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/find/by_name_uid", "|",
+            "Status:", "Failure", "|",
+		        "Desc:", "Find users matching partial name and/or uid", "|",
+            "Err:", e.message || e, "|",
+            "Stack:", e.stack || "No Stack Trace");
             g_lib.handleException(e, res);
         }
     })
@@ -396,6 +550,7 @@ router
 
 router
     .get("/keys/set", function (req, res) {
+        let client = undefined;
         try {
             g_db._executeTransaction({
                 collections: {
@@ -403,7 +558,15 @@ router
                     write: ["u"],
                 },
                 action: function () {
-                    const client = g_lib.getUserFromClientID(req.queryParams.client);
+                    client = g_lib.getUserFromClientID(req.queryParams.client);
+                    console.info(
+                    "Client:", client?._id || "unknown", "|",
+                    "Correlation_ID:", "unknown", "|",
+                    "HTTP:","GET", "|",
+			              "Route:", "/keys/set", "|",
+                    "Status:", "Started", "|",
+		                "Desc:", "Set user public and private keys", "|");
+
                     var user_id;
 
                     if (req.queryParams.subject) {
@@ -424,7 +587,25 @@ router
                     });
                 },
             });
+            console.info(
+            "Client:", client?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/keys/set", "|",
+            "Status:", "Success", "|",
+            "Desc:", "Set user public and private keys", "|");
+
+
         } catch (e) {
+            console.error(
+            "Client:", client?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/keys/set", "|",
+            "Status:", "Failure", "|",
+		        "Desc:", "Set user public and private keys", "|",
+            "Err:", e.message || e, "|",
+            "Stack:", e.stack || "No Stack Trace");
             g_lib.handleException(e, res);
         }
     })
@@ -437,6 +618,7 @@ router
 
 router
     .get("/keys/clear", function (req, res) {
+        let client = undefined;
         try {
             g_db._executeTransaction({
                 collections: {
@@ -444,7 +626,14 @@ router
                     write: ["u"],
                 },
                 action: function () {
-                    const client = g_lib.getUserFromClientID(req.queryParams.client);
+                    client = g_lib.getUserFromClientID(req.queryParams.client);
+                    console.info(
+                    "Client:", client?._id || "unknown", "|",
+                    "Correlation_ID:", "unknown", "|",
+                    "HTTP:","GET", "|",
+			              "Route:", "/keys/set", "|",
+                    "Status:", "Started", "|",
+		                "Desc:", "Clear user public and private keys", "|");
                     var user_id;
 
                     if (req.queryParams.subject) {
@@ -465,7 +654,23 @@ router
                     });
                 },
             });
+            console.info(
+            "Client:", client?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/keys/set", "|",
+            "Status:", "Success", "|",
+		        "Desc:", "Clear user public and private keys", "|");
         } catch (e) {
+            console.error(
+            "Client:", client?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/keys/set", "|",
+            "Status:", "Failure", "|",
+		        "Desc:", "Clear user public and private keys", "|",
+            "Err:", e.message || e, "|",
+            "Stack:", e.stack || "No Stack Trace");
             g_lib.handleException(e, res);
         }
     })
@@ -476,9 +681,8 @@ router
 
 router
     .get("/keys/get", function (req, res) {
+        let user = undefined;
         try {
-            var user;
-
             if (req.queryParams.subject) {
                 if (!g_db.u.exists(req.queryParams.subject))
                     throw [
@@ -489,16 +693,33 @@ router
                 user = g_db.u.document({
                     _id: req.queryParams.subject,
                 });
+            console.info(
+            "Client:", user?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+            "Route:", "/keys/get", "|",
+            "Status:", "Started", "|",
+            "Desc:", "Get user public and private keys", "|");
+
             } else {
                 user = g_lib.getUserFromClientID(req.queryParams.client);
             }
 
             if (!user.pub_key || !user.priv_key)
+            {
                 res.send([
                     {
                         uid: user._id,
                     },
                 ]);
+            console.info(
+            "Client:", user?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+            "Route:", "/keys/get", "|",
+            "Status:", "Success", "|",
+            "Desc:", "Get user public and private keys", "|");
+            }
             else
                 res.send([
                     {
@@ -507,7 +728,24 @@ router
                         priv_key: user.priv_key,
                     },
                 ]);
+            console.info(
+            "Client:", user?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+            "Route:", "/keys/get", "|",
+            "Status:", "Success", "|",
+            "Desc:", "Get user public and private keys", "|");
+
         } catch (e) {
+            console.error(
+            "Client:", user?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/keys/get", "|",
+            "Status:", "Failure", "|",
+		        "Desc:", "Get user public and private keys", "|",
+            "Err:", e.message || e, "|",
+            "Stack:", e.stack || "No Stack Trace");
             g_lib.handleException(e, res);
         }
     })
@@ -518,10 +756,35 @@ router
 
 router
     .get("/find/by_pub_key", function (req, res) {
+        let uid = undefined;
         try {
-            var uid = g_lib.uidFromPubKey(req.queryParams.pub_key);
+            uid = g_lib.uidFromPubKey(req.queryParams.pub_key);
+            console.info(
+            "Client:", uid || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+            "Route:", "/find/by_pub_key", "|",
+            "Status:", "Started", "|",
+            "Desc:", "Find a user by public key", "|");
+
             res.send(uid);
+            console.info(
+            "Client:", uid || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+            "Route:", "/find/by_pub_key", "|",
+            "Status:", "Success", "|",
+            "Desc:", "Find a user by public key", "|");
         } catch (e) {
+            console.error(
+            "Client:", uid || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/find/by_pub_key", "|",
+            "Status:", "Failure", "|",
+		        "Desc:", "Find a user by public key", "|",
+            "Err:", e.message || e, "|",
+            "Stack:", e.stack || "No Stack Trace");
             g_lib.handleException(e, res);
         }
     })
@@ -531,6 +794,7 @@ router
 
 router
     .get("/token/set", function (req, res) {
+        let client = undefined;
         try {
             g_db._executeTransaction({
                 collections: {
@@ -538,7 +802,15 @@ router
                     write: ["u", "globus_coll", "globus_token"],
                 },
                 action: function () {
-                    const client = g_lib.getUserFromClientID(req.queryParams.client);
+                    client = g_lib.getUserFromClientID(req.queryParams.client);
+                    console.info(
+                    "Client:", client?._id || "unknown", "|",
+                    "Correlation_ID:", "unknown", "|",
+                    "HTTP:","GET", "|",
+                    "Route:", "/token/set", "|",
+                    "Status:", "Started", "|",
+                    "Desc:", "Setting user token", "|");
+
                     var user_id;
                     let user_doc;
 
@@ -652,10 +924,26 @@ router
                             });
                             break;
                         }
+                    console.info(
+                    "Client:", client?._id || "unknown", "|",
+                    "Correlation_ID:", "unknown", "|",
+                    "HTTP:","GET", "|",
+                    "Route:", "/token/set", "|",
+                    "Status:", "Success", "|",
+                    "Desc:", "Setting user token", "|");
                     }
                 },
             });
         } catch (e) {
+            console.error(
+            "Client:", client?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+            "Route:", "/token/set", "|",
+            "Status:", "Failure", "|",
+            "Desc:", "Setting user token", "|",
+            "Err:", e.message || e, "|",
+            "Stack:", e.stack || "No Stack Trace");
             g_lib.handleException(e, res);
         }
     })
@@ -687,12 +975,12 @@ router
 
 router
     .get("/token/get", function (req, res) {
+        let user = undefined;
         try {
             const collection_token = UserToken.validateRequestParams(req.queryParams);
             // TODO: collection type determines logic when mapped vs HA
             const { collection_id, collection_type } = req.queryParams;
 
-            var user;
 
             if (req.queryParams.subject) {
                 if (!g_db.u.exists(req.queryParams.subject))
@@ -707,6 +995,15 @@ router
             } else {
                 user = g_lib.getUserFromClientID(req.queryParams.client);
             }
+            
+            console.info( 
+            "Client:",user?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "usr/token/get/", "|",
+            "Status:", "Started", "|",
+		        "Desc:", "Getting User Token");
+
 
             const user_token = new UserToken({
                 user_id: user._id,
@@ -725,7 +1022,23 @@ router
             );
 
             res.send(result);
+            console.info( 
+            "Client:", user?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "usr/token/get/", "|",
+            "Status:", "Success", "|",
+		        "Desc:", "Getting User Token");
         } catch (e) {
+            console.error(
+            "Client:", user?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "usr/token/get/", "|",
+            "Status:", "Failure", "|",
+		        "Desc:", "Getting User Token", "|",
+            "Err:", e.message || e, "|",
+            "Stack:", e.stack || "No Stack Trace");
             g_lib.handleException(e, res);
         }
     })
@@ -746,9 +1059,8 @@ router
 
 router
     .get("/token/get/access", function (req, res) {
+        let user = undefined;
         try {
-            var user;
-
             if (req.queryParams.subject) {
                 if (!g_db.u.exists(req.queryParams.subject))
                     throw [
@@ -761,11 +1073,34 @@ router
             } else {
                 user = g_lib.getUserFromClientID(req.queryParams.client);
             }
+            console.info( 
+            "Client:", user?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/token/get/access", "|",
+            "Status:", "Started", "|",
+		        "Desc:", "Getting User Access Token");
 
             if (!user.access) throw [g_lib.ERR_NOT_FOUND, "No access token found"];
 
             res.send(user.access);
+            console.info( 
+            "Client:", user?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/token/get/access", "|",
+            "Status:", "Success", "|",
+		        "Desc:", "Getting User Access Token");
         } catch (e) {
+            console.error(
+            "Client:", user?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/token/get/access", "|",
+            "Status:", "Failure", "|",
+		        "Desc:", "Getting User Access Token", "|",
+            "Err:", e.message || e, "|",
+            "Stack:", e.stack || "No Stack Trace");
             g_lib.handleException(e, res);
         }
     })
@@ -776,8 +1111,16 @@ router
 
 router
     .get("/token/get/expiring", function (req, res) {
+        let user = undefined;
         try {
             //console.log("exp:",(Date.now()/1000) + req.queryParams.expires_in);
+            console.info(
+            "Client:", user?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/token/get/expiring", "|",
+            "Status:", "Started", "|",
+		        "Desc:", "Getting expiring user access token");
 
             var results = g_db._query(
                 "for i in u filter i.expiration != Null && i.expiration < @exp return {id:i._id,access:i.access,refresh:i.refresh,expiration:i.expiration}",
@@ -786,7 +1129,23 @@ router
                 },
             );
             res.send(results);
+            console.info(
+            "Client:", user?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/token/get/expiring", "|",
+            "Status:", "Success", "|",
+		        "Desc:", "Getting expiring user access token");
         } catch (e) {
+            console.error(
+            "Client:", user?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/token/get/expiring", "|",
+            "Status:", "Failure", "|",
+		        "Desc:", "Getting expiring user access token", "|",
+            "Err:", e.message || e, "|",
+            "Stack:", e.stack || "No Stack Trace");
             g_lib.handleException(e, res);
         }
     })
@@ -797,8 +1156,16 @@ router
 
 router
     .get("/view", function (req, res) {
+        let client = undefined;
         try {
-            var client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
+            client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
+            console.info(
+            "Client:", client?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/view", "|",
+            "Status:", "Started", "|",
+		        "Desc:", "View User Information");
 
             var user,
                 det_ok = false;
@@ -879,8 +1246,25 @@ router
             delete user.refresh;
 
             res.send([user]);
+            console.info(
+            "Client:", client?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/view", "|",
+            "Status:", "Success", "|",
+		        "Desc:", "View User Information");
+
         } catch (e) {
             g_lib.handleException(e, res);
+            console.error(
+            "Client:", client?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/view", "|",
+            "Status:", "Failure", "|",
+		        "Desc:", "View User Information", "|",
+            "Err:", e.message || e, "|",
+            "Stack:", e.stack || "No Stack Trace");
         }
     })
     .queryParam("client", joi.string().required(), "Client ID")
@@ -891,8 +1275,17 @@ router
 
 router
     .get("/list/all", function (req, res) {
+        var client = undefined;
         var qry = "for i in u sort i.name_last, i.name_first";
         var result;
+        console.info(
+        "Client:", client?._id || "unknown", "|",
+        "Correlation_ID:", "unknown", "|",
+        "HTTP:","GET", "|",
+		    "Route:", "/list/all", "|",
+        "Status:", "Started", "|",
+		    "Desc:", "List all users");
+
 
         if (req.queryParams.offset != undefined && req.queryParams.count != undefined) {
             qry +=
@@ -924,6 +1317,13 @@ router
         }
 
         res.send(result);
+        console.info(
+        "Client:", client?._id || "unknown", "|",
+        "Correlation_ID:", "unknown", "|",
+        "HTTP:","GET", "|",
+		    "Route:", "/list/all", "|",
+        "Status:", "Success", "|",
+		    "Desc:", "List all users");
     })
     .queryParam("offset", joi.number().optional(), "Offset")
     .queryParam("count", joi.number().optional(), "Count")
@@ -934,6 +1334,14 @@ router
     .get("/list/collab", function (req, res) {
         var result,
             client = g_lib.getUserFromClientID(req.queryParams.client);
+        console.info(
+        "Client:", client?._id || "unknown", "|",
+        "Correlation_ID:", "unknown", "|",
+        "HTTP:","GET", "|",
+		    "Route:", "/list/collab", "|",
+        "Status:", "Started", "|",
+		    "Desc:", "List collaborators of client");
+
         var qry =
             "for x in union_distinct((for v in 2..2 any @user owner, member, acl filter is_same_collection('u',v) return" +
             " distinct { uid: v._id, name_last: v.name_last, name_first: v.name_first }),(for v in 3..3 inbound @user member, outbound owner, outbound admin" +
@@ -974,6 +1382,14 @@ router
         }
 
         res.send(result);
+        console.info(
+        "Client:", client?._id || "unknown", "|",
+        "Correlation_ID:", "unknown", "|",
+        "HTTP:","GET", "|",
+		    "Route:", "/list/collab", "|",
+        "Status:", "Success", "|",
+		    "Desc:", "List collaborators of client");
+
         //res.send( g_db._query( "for x in union_distinct((for v in 2..2 any @user owner, member, acl filter is_same_collection('u',v) return distinct { uid: v._id, name: v.name }),(for v in 3..3 inbound @user member, outbound owner, outbound admin filter is_same_collection('u',v) return distinct { uid: v._id, name: v.name }),(for v in 2..2 inbound @user owner, outbound admin filter is_same_collection('u',v) return distinct { uid: v._id, name: v.name })) return x", { user: client._id }));
     })
     .queryParam("client", joi.string().required(), "Client ID")
@@ -1015,6 +1431,13 @@ router
                 action: function () {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
                     var user_id;
+                    console.info(
+                    "Client:", client?._id || "unknown", "|",
+                    "Correlation_ID:", "unknown", "|",
+                    "HTTP:","GET", "|",
+		                "Route:", "/delete", "|",
+                    "Status:", "Started", "|",
+		                "Desc:", "Remove existing user entry");
 
                     if (req.queryParams.subject) {
                         user_id = req.queryParams.subject;
@@ -1081,7 +1504,23 @@ router
                     g_graph.u.remove(user_id);
                 },
             });
+            console.info(
+            "Client:", client?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+		        "Route:", "/delete", "|",
+            "Status:", "Success", "|",
+		        "Desc:", "Remove existing user entry");
         } catch (e) {
+            console.error(
+            "Client:", client?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/delete", "|",
+            "Status:", "Failure", "|",
+		        "Desc:", "Remove existing user entry", "|",
+            "Err:", e.message || e, "|",
+            "Stack:", e.stack || "No Stack Trace");
             g_lib.handleException(e, res);
         }
     })
@@ -1092,8 +1531,18 @@ router
 
 router
     .get("/ident/list", function (req, res) {
+        let client = undefined;
         try {
-            var client = g_lib.getUserFromClientID(req.queryParams.client);
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+                console.info(
+                "Client:", client?._id || "unknown", "|",
+                "Correlation_ID:", "unknown", "|",
+                "HTTP:","GET", "|",
+			          "Route:", "/ident/list", "|",
+                "Status:", "Started", "|",
+		            "Desc:", "List user linked IDs");
+
+
             if (req.queryParams.subject) {
                 if (!g_db.u.exists(req.queryParams.subject))
                     throw [
@@ -1108,14 +1557,39 @@ router
                         client: subject._id,
                     }),
                 );
+                console.info(
+                "Client:", client?._id || "unknown", "|",
+                "Correlation_ID:", "unknown", "|",
+                "HTTP:","GET", "|",
+			          "Route:", "/ident/list", "|",
+                "Status:", "Success", "|",
+		            "Desc:", "List user linked IDs");
+
+
             } else {
-                res.send(
-                    g_db._query("for v in 1..1 outbound @client ident return v._key", {
+                res.send(g_db._query("for v in 1..1 outbound @client ident return v._key", {
                         client: client._id,
                     }),
                 );
+                console.info(
+                "Client:", client?._id || "unknown", "|",
+                "Correlation_ID:", "unknown", "|",
+                "HTTP:","GET", "|",
+			          "Route:", "/ident/list", "|",
+                "Status:", "Success", "|",
+		            "Desc:", "List user linked IDs");
+
             }
         } catch (e) {
+            console.error(
+            "Client:", client?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/ident/list", "|",
+            "Status:", "Failure", "|",
+		        "Desc:", "List user linked IDs", "|",
+            "Err:", e.message || e, "|",
+            "Stack:", e.stack || "No Stack Trace");
             g_lib.handleException(e, res);
         }
     })
@@ -1125,6 +1599,7 @@ router
 
 router
     .get("/ident/add", function (req, res) {
+        let client = undefined;
         try {
             g_db._executeTransaction({
                 collections: {
@@ -1132,7 +1607,14 @@ router
                     write: ["uuid", "accn", "ident"],
                 },
                 action: function () {
-                    const client = g_lib.getUserFromClientID(req.queryParams.client);
+                    client = g_lib.getUserFromClientID(req.queryParams.client);
+                    console.info(
+                    "Client:", client?._id || "unknown", "|",
+                    "Correlation_ID:", "unknown", "|",
+                    "HTTP:","GET", "|",
+			              "Route:", "/ident/add", "|",
+                    "Status:", "Started", "|",
+		                "Desc:", "Add new linked identity");
                     var id;
 
                     if (g_lib.isUUID(req.queryParams.ident)) {
@@ -1141,6 +1623,13 @@ router
                                 _id: "uuid/" + req.queryParams.ident,
                             })
                         )
+                            console.info(
+                            "Client:", client?._id || "unknown", "|",
+                            "Correlation_ID:", "unknown", "|",
+                            "HTTP:","GET", "|",
+			                      "Route:", "/ident/add", "|",
+                            "Status:", "Success", "|",
+		                        "Desc:", "Add new linked identity");
                             return;
                         id = g_db.uuid.save(
                             {
@@ -1168,6 +1657,13 @@ router
                                     },
                                 );
                             }
+                            console.info(
+                            "Client:", client?._id || "unknown", "|",
+                            "Correlation_ID:", "unknown", "|",
+                            "HTTP:","GET", "|",
+			                      "Route:", "/ident/add", "|",
+                            "Status:", "Success", "|",
+		                        "Desc:", "Add new linked identity");
                             return;
                         } else {
                             var accn = {
@@ -1209,7 +1705,23 @@ router
                     }
                 },
             });
+        console.info(
+        "Client:", client?._id || "unknown", "|",
+        "Correlation_ID:", "unknown", "|",
+        "HTTP:","GET", "|",
+			  "Route:", "/ident/add", "|",
+        "Status:", "Success", "|",
+		    "Desc:", "Add new linked identity");
         } catch (e) {
+            console.error(
+            "Client:", client?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/ident/add", "|",
+            "Status:", "Failure", "|",
+		        "Desc:", "Add new linked identity", "|",
+            "Err:", e.message || e, "|",
+            "Stack:", e.stack || "No Stack Trace");
             g_lib.handleException(e, res);
         }
     })
@@ -1225,6 +1737,7 @@ router
 
 router
     .get("/ident/remove", function (req, res) {
+        let client = undefined;
         try {
             g_db._executeTransaction({
                 collections: {
@@ -1232,9 +1745,15 @@ router
                     write: ["uuid", "accn", "ident"],
                 },
                 action: function () {
-                    const client = g_lib.getUserFromClientID(req.queryParams.client);
+                    client = g_lib.getUserFromClientID(req.queryParams.client);
                     const owner = g_lib.getUserFromClientID(req.queryParams.ident);
-
+                    console.info(
+                    "Client:", client?._id || "unknown", "|",
+                    "Correlation_ID:", "unknown", "|",
+                    "HTTP:","GET", "|",
+			              "Route:", "/ident/remove", "|",
+                    "Status:", "Started", "|",
+		                "Desc:", "Remove linked identity from user account");
                     g_lib.ensureAdminPermUser(client, owner._id);
 
                     if (g_lib.isUUID(req.queryParams.ident)) {
@@ -1248,7 +1767,24 @@ router
                         ];
                 },
             });
+            console.info(
+            "Client:", client?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/ident/remove", "|",
+            "Status:", "Success", "|",
+		        "Desc:", "Remove linked identity from user account");
+
         } catch (e) {
+            console.error(
+            "Client:", client?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/ident/remove", "|",
+            "Status:", "Failure", "|",
+		        "Desc:", "Remove linked identity from user account", "|",
+            "Err:", e.message || e, "|",
+            "Stack:", e.stack || "No Stack Trace");
             g_lib.handleException(e, res);
         }
     })
@@ -1259,10 +1795,35 @@ router
 
 router
     .get("/ep/get", function (req, res) {
+        let client = undefined;
         try {
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            console.info(
+            "Client:", client?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/ep/get", "|",
+            "Status:", "Started", "|",
+		        "Desc:", "Get recent end-points");
+
             res.send(client.eps ? client.eps : []);
+            console.info(
+            "Client:", client?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/ep/get", "|",
+            "Status:", "Success", "|",
+		        "Desc:", "Get recent end-points");
         } catch (e) {
+            console.error(
+            "Client:", client?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/ep/get", "|",
+            "Status:", "Failure", "|",
+		        "Desc:", "Get recent end-points", "|",
+            "Err:", e.message || e, "|",
+            "Stack:", e.stack || "No Stack Trace");
             g_lib.handleException(e, res);
         }
     })
@@ -1272,8 +1833,17 @@ router
 
 router
     .get("/ep/set", function (req, res) {
+        let client = undefined;
         try {
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            console.info(
+            "Client:", client?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/ep/set", "|",
+            "Status:", "Started", "|",
+		        "Desc:", "Set recent end-points");
+
             g_db._update(
                 client._id,
                 {
@@ -1283,7 +1853,24 @@ router
                     keepNull: false,
                 },
             );
+        console.info(
+        "Client:", client?._id || "unknown", "|",
+        "Correlation_ID:", "unknown", "|",
+        "HTTP:","GET", "|",
+		    "Route:", "/ep/set", "|",
+        "Status:", "Success", "|",
+		    "Desc:", "Set recent end-points");
+
         } catch (e) {
+            console.error(
+            "Client:", client?._id || "unknown", "|",
+            "Correlation_ID:", "unknown", "|",
+            "HTTP:","GET", "|",
+			      "Route:", "/ep/set", "|",
+            "Status:", "Failure", "|",
+		        "Desc:", "Set recent end-points", "|",
+            "Err:", e.message || e, "|",
+            "Stack:", e.stack || "No Stack Trace");
             g_lib.handleException(e, res);
         }
     })
