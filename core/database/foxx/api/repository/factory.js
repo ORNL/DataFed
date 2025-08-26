@@ -33,7 +33,6 @@ const g_lib = require("../support");
  * @param {string} [config.pub_key] - Public key for ZeroMQ CURVE authentication (required for GLOBUS type)
  * @param {string} [config.address] - Network address (required for GLOBUS type)
  * @param {string} [config.exp_path] - Export path (optional for GLOBUS type)
- * @param {string} [config.domain] - Domain name (required for GLOBUS type)
  * @returns {{ok: boolean, error: *}|{ok: boolean, value: *}} Result object containing repository or error
  * @see https://doc.rust-lang.org/book/ch06-02-match.html
  */
@@ -69,7 +68,6 @@ const createRepositoryByType = (config) => {
                 pub_key: config.pub_key,
                 address: config.address,
                 exp_path: config.exp_path,
-                domain: config.domain,
             });
 
             const repoData = createRepositoryData({

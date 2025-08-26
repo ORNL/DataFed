@@ -915,10 +915,10 @@ module.exports = (function () {
 
             if (alloc.data_size < alloc.data_limit && alloc.rec_count < alloc.rec_limit) {
                 // Check if repository supports data operations
-                var findResult = RepositoryOps.find(alloc._to);
+                const findResult = RepositoryOps.find(alloc._to);
                 if (findResult.ok) {
-                    var repository = findResult.value;
-                    var dataOpsResult = RepositoryOps.supportsDataOperations(repository);
+                    const repository = findResult.value;
+                    const dataOpsResult = RepositoryOps.supportsDataOperations(repository);
 
                     // Skip metadata-only repositories
                     if (dataOpsResult.ok && !dataOpsResult.value) {

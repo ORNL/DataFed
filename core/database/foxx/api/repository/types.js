@@ -71,16 +71,14 @@ const createRepositoryData = ({
  * @param {string} config.pub_key - Public key for ZeroMQ CURVE authentication
  * @param {string} config.address - Network address
  * @param {string} [config.exp_path] - Export path
- * @param {string} config.domain - Domain name
- * @returns {{endpoint: string, path: string, pub_key: string, address: string, exp_path: string, domain: string}} Globus configuration object
+ * @returns {{endpoint: string, path: string, pub_key: string, address: string, exp_path: string }} Globus configuration object
  */
-const createGlobusConfig = ({ endpoint, path, pub_key, address, exp_path, domain }) => ({
+const createGlobusConfig = ({ endpoint, path, pub_key, address, exp_path }) => ({
     endpoint,
     path,
     pub_key,
     address,
     exp_path,
-    domain,
 });
 
 /**

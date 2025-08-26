@@ -9,7 +9,6 @@ const g_lib = require("./support");
 const g_tasks = require("./tasks");
 const { validateGlobusConfig, validatePartialGlobusConfig } = require("./repository/validation");
 const { RepositoryOps } = require("./repository/operations");
-const { RepositoryType } = require("./repository/types");
 
 // Helper function to prepare repository data for saving
 const prepareRepoData = (obj) => {
@@ -692,21 +691,25 @@ router
                     else subject_id = g_lib.getUserFromClientID(req.queryParams.subject)._id;
 
                     // Find the repository using the new type system
-                    var findResult = RepositoryOps.find(req.queryParams.repo);
+                    const findResult = RepositoryOps.find(req.queryParams.repo);
                     if (!findResult.ok) {
                         throw [findResult.error.code, findResult.error.message];
                     }
 
-                    var repository = findResult.value;
+                    const repository = findResult.value;
 
                     // Check permissions
-                    var permResult = RepositoryOps.checkPermission(repository, client._id, "admin");
+                    const permResult = RepositoryOps.checkPermission(
+                        repository,
+                        client._id,
+                        "admin",
+                    );
                     if (!permResult.ok || !permResult.value) {
                         throw g_lib.ERR_PERM_DENIED;
                     }
 
                     // Create allocation using the new system
-                    var allocResult = RepositoryOps.createAllocation(repository, {
+                    const allocResult = RepositoryOps.createAllocation(repository, {
                         subject: subject_id,
                         size: req.queryParams.data_limit,
                         rec_limit: req.queryParams.rec_limit,
