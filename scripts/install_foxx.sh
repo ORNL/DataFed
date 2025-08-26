@@ -135,14 +135,14 @@ basic_auth="$local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD"
 
 if [ "${local_DATABASE_API_SCHEME}" == "https" ]; then
   set +e
-  output=$(curl --user "$basic_auth" ${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT} 2>&1 )
+  output=$(curl --user "$basic_auth" ${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT} 2>&1)
   error_code="$?"
   set -e
 
   if [ "$error_code" == "60" ]; then
-      echo "Error detected, untrusted certificate."
-      echo "$output"
-      exit 1
+    echo "Error detected, untrusted certificate."
+    echo "$output"
+    exit 1
   fi
 
   local_ARANGOSH_SERVER_ENDPOINT_SCHEME="ssl"
@@ -174,7 +174,7 @@ if [[ "$output" =~ .*"sdms".* ]]; then
   echo "SDMS already exists do nothing"
 else
   echo "Creating SDMS"
-  arangosh  --server.endpoint \
+  arangosh --server.endpoint \
     "${local_ARANGOSH_SERVER_ENDPOINT_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
     --server.password "${local_DATAFED_DATABASE_PASSWORD}" \
     --server.username "${local_DATABASE_USER}" \

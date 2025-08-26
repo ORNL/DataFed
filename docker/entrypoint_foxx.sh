@@ -21,7 +21,7 @@ local_DATAFED_FORCE_INSTALL_FOXX="${DATAFED_FORCE_INSTALL_FOXX:-FALSE}"
 
 # Cleanup pre-existing files if they exist, you would think that the Cmake configure
 # step would overwrite these files without problem. However, when running containers
-# with openshift user settings, cmake complains if these files exist before hand 
+# with openshift user settings, cmake complains if these files exist before hand
 # under a different user.
 if [ -f "${PROJECT_ROOT}/core/database/foxx/api/version_router.js" ]; then
   rm "${PROJECT_ROOT}/core/database/foxx/api/version_router.js"
@@ -34,7 +34,6 @@ fi
 if [ -f "${PROJECT_ROOT}/common/proto/common/Version.proto" ]; then
   rm "${PROJECT_ROOT}/common/proto/common/Version.proto"
 fi
-
 
 install_flag="/tmp/.foxx_is_installed"
 if [ "${local_DATAFED_FORCE_INSTALL_FOXX}" == "TRUE" ]; then
