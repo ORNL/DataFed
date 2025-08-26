@@ -4,9 +4,9 @@
 set -ef -o pipefail
 
 # # Description
-# 
+#
 # This script is designed to set up two DataFed users in the ArangoDB database, this
-# cannot be done via the public facing DataFed API because it requires a OAuth flow 
+# cannot be done via the public facing DataFed API because it requires a OAuth flow
 # that requires user interaction.
 #
 # The public API also does not allow creation of repos and adding allocations this is
@@ -37,16 +37,14 @@ set -ef -o pipefail
 local_DATABASE_NAME="sdms"
 local_DATABASE_USER="root"
 
-if [ -z "${DATAFED_DATABASE_PASSWORD}" ]
-then
+if [ -z "${DATAFED_DATABASE_PASSWORD}" ]; then
   local_DATAFED_DATABASE_PASSWORD=""
 else
   local_DATAFED_DATABASE_PASSWORD=$(printenv DATAFED_DATABASE_PASSWORD)
 fi
 
 local_DATAFED_USER89_PASSWORD=""
-if [ -z "${DATAFED_USER89_PASSWORD}" ]
-then
+if [ -z "${DATAFED_USER89_PASSWORD}" ]; then
   echo "REQUIRED env variable DATAFED_USER89_PASSWORD has not been set"
   exit 1
 else
@@ -55,26 +53,22 @@ else
   local_DATAFED_USER89_PASSWORD=$(echo "${DATAFED_USER89_PASSWORD}" | sed 's/!/%21/')
 fi
 
-if [ -z "${DATAFED_USER89_GLOBUS_REFRESH_TOKEN}" ]
-then
+if [ -z "${DATAFED_USER89_GLOBUS_REFRESH_TOKEN}" ]; then
   echo "REQUIRED env variable DATAFED_USER89_GLOBUS_REFRESH_TOKEN has not been set"
   exit 1
 fi
 
-if [ -z "${DATAFED_USER89_GLOBUS_ACCESS_TOKEN}" ]
-then
+if [ -z "${DATAFED_USER89_GLOBUS_ACCESS_TOKEN}" ]; then
   echo "REQUIRED env variable DATAFED_USER89_GLOBUS_ACCESS_TOKEN has not been set"
   exit 1
 fi
 
-if [ -z "${DATAFED_USER89_GLOBUS_UUID}" ]
-then
+if [ -z "${DATAFED_USER89_GLOBUS_UUID}" ]; then
   echo "REQUIRED env variable DATAFED_USER89_GLOBUS_UUID has not been set"
   exit 1
 fi
 
-if [ -z "${DATAFED_USER99_PASSWORD}" ]
-then
+if [ -z "${DATAFED_USER99_PASSWORD}" ]; then
   echo "REQUIRED env variable DATAFED_USER99_PASSWORD has not been set"
   exit 1
 else
@@ -83,20 +77,17 @@ else
   local_DATAFED_USER99_PASSWORD=$(echo "${DATAFED_USER99_PASSWORD}" | sed 's/!/%21/')
 fi
 
-if [ -z "${DATAFED_USER99_GLOBUS_REFRESH_TOKEN}" ]
-then
+if [ -z "${DATAFED_USER99_GLOBUS_REFRESH_TOKEN}" ]; then
   echo "REQUIRED env variable DATAFED_USER99_GLOBUS_REFRESH_TOKEN has not been set"
   exit 1
 fi
 
-if [ -z "${DATAFED_USER99_GLOBUS_ACCESS_TOKEN}" ]
-then
+if [ -z "${DATAFED_USER99_GLOBUS_ACCESS_TOKEN}" ]; then
   echo "REQUIRED env variable DATAFED_USER99_GLOBUS_ACCESS_TOKEN has not been set"
   exit 1
 fi
 
-if [ -z "${DATAFED_USER99_GLOBUS_UUID}" ]
-then
+if [ -z "${DATAFED_USER99_GLOBUS_UUID}" ]; then
   echo "REQUIRED env variable DATAFED_USER99_GLOBUS_UUID has not been set"
   exit 1
 fi
@@ -106,28 +97,24 @@ SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/../../)
 source ${PROJECT_ROOT}/config/datafed.sh
 
-if [ -z "${FOXX_MAJOR_API_VERSION}" ]
-then
-  local_FOXX_MAJOR_API_VERSION=$(cat ${PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs )
+if [ -z "${FOXX_MAJOR_API_VERSION}" ]; then
+  local_FOXX_MAJOR_API_VERSION=$(cat ${PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs)
 else
   local_FOXX_MAJOR_API_VERSION=$(printenv FOXX_MAJOR_API_VERSION)
 fi
 
-
 # Detect whether arangodb is running locally
 {
-	ARANGODB_RUNNING=$(systemctl is-active --quiet arangodb3.service && echo "RUNNING")
+  ARANGODB_RUNNING=$(systemctl is-active --quiet arangodb3.service && echo "RUNNING")
 } || {
-	echo "Arangodb service is not locally detected."
+  echo "Arangodb service is not locally detected."
 }
 
-if [ "${DATAFED_DATABASE_HOST}" == "localhost" ] || [ "${DATAFED_DATABASE_HOST}" == "127.0.0.1" ]
-then
-	if [ "$ARANGODB_RUNNING" != "RUNNING" ]
-	then
-	  echo "REQUIRED the arangodb service has not been detected to be running by systemctl"
-	  exit 1
-	fi
+if [ "${DATAFED_DATABASE_HOST}" == "localhost" ] || [ "${DATAFED_DATABASE_HOST}" == "127.0.0.1" ]; then
+  if [ "$ARANGODB_RUNNING" != "RUNNING" ]; then
+    echo "REQUIRED the arangodb service has not been detected to be running by systemctl"
+    exit 1
+  fi
 fi
 
 # First step is to clear the database
@@ -139,20 +126,17 @@ echo "Installing foxx services and API"
 ${PROJECT_ROOT}/scripts/install_foxx.sh
 echo "Completed"
 
-if [ -z "${DATAFED_DATABASE_HOST}" ]
-then
+if [ -z "${DATAFED_DATABASE_HOST}" ]; then
   local_DATAFED_DATABASE_HOST=$(hostname -I | awk '{print $1}')
 else
   local_DATAFED_DATABASE_HOST=$(printenv DATAFED_DATABASE_HOST)
 fi
 
-if [ -z "${DATAFED_DATABASE_PORT}" ]
-then
+if [ -z "${DATAFED_DATABASE_PORT}" ]; then
   local_DATAFED_DATABASE_PORT="8529"
 else
   local_DATAFED_DATABASE_PORT=$(printenv DATAFED_DATABASE_PORT)
 fi
-
 
 # If the database was set up correctly auth will be turned on
 basic_auth="$local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD"
@@ -161,51 +145,47 @@ echo "IP is ${local_DATAFED_DATABASE_HOST}"
 echo "USER89 GLobud ID $DATAFED_USER89_GLOBUS_UUID"
 echo "Refresh is ${DATAFED_USER89_GLOBUS_REFRESH_TOKEN}"
 # Chreate user datafed89 who is admin
-HTTP_CODE=$( curl --user "${basic_auth}" -w "%{http_code}" -o /dev/null -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed89&uuids=%5B\"${DATAFED_USER89_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER89_PASSWORD}&email=datafed89%40gmail.com&is_admin=true" )
+HTTP_CODE=$(curl --user "${basic_auth}" -w "%{http_code}" -o /dev/null -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed89&uuids=%5B\"${DATAFED_USER89_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER89_PASSWORD}&email=datafed89%40gmail.com&is_admin=true")
 echo "HTTP_CODE: ${HTTP_CODE}"
 FIRST_INT=${HTTP_CODE:0:1}
-if [ "${FIRST_INT}" -ne "2" ]
-then
-  response=$( curl --user "${basic_auth}" -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed89&uuids=%5B\"${DATAFED_USER89_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER89_PASSWORD}&email=datafed89%40gmail.com&is_admin=true" )
-  CODE=$(echo $response | jq .code )
-  ERROR_MSG=$(echo $response | jq .errorMessage )
+if [ "${FIRST_INT}" -ne "2" ]; then
+  response=$(curl --user "${basic_auth}" -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed89&uuids=%5B\"${DATAFED_USER89_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER89_PASSWORD}&email=datafed89%40gmail.com&is_admin=true")
+  CODE=$(echo $response | jq .code)
+  ERROR_MSG=$(echo $response | jq .errorMessage)
   echo "$ERROR_MSG"
   exit 1
 fi
 # Set globus tokens
-HTTP_CODE=$(curl --user "${basic_auth}" -w "%{http_code}" -o /dev/null  -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed89&access=${DATAFED_USER89_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER89_GLOBUS_REFRESH_TOKEN}&expires_in=1")
+HTTP_CODE=$(curl --user "${basic_auth}" -w "%{http_code}" -o /dev/null -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed89&access=${DATAFED_USER89_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER89_GLOBUS_REFRESH_TOKEN}&expires_in=1")
 echo "HTTP_CODE: ${HTTP_CODE}"
 FIRST_INT=${HTTP_CODE:0:1}
-if [ "${FIRST_INT}" -ne "2" ]
-then
+if [ "${FIRST_INT}" -ne "2" ]; then
   response=$(curl --user "${basic_auth}" --fail-early -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed89&access=${DATAFED_USER89_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER89_GLOBUS_REFRESH_TOKEN}&expires_in=1")
-  CODE=$(echo $response | jq .code )
-  ERROR_MSG=$(echo $response | jq .errorMessage )
+  CODE=$(echo $response | jq .code)
+  ERROR_MSG=$(echo $response | jq .errorMessage)
   echo "$ERROR_MSG"
   exit 1
 fi
 
 # Create user datafed99 who is not admin
-HTTP_CODE=$(curl  --user "${basic_auth}"  -w "%{http_code}" -o /dev/null  -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed99&uuids=%5B\"${DATAFED_USER99_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER99_PASSWORD}&email=datafed99%40gmail.com&is_admin=false")
+HTTP_CODE=$(curl --user "${basic_auth}" -w "%{http_code}" -o /dev/null -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed99&uuids=%5B\"${DATAFED_USER99_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER99_PASSWORD}&email=datafed99%40gmail.com&is_admin=false")
 echo "HTTP_CODE: ${HTTP_CODE}"
 FIRST_INT=${HTTP_CODE:0:1}
-if [ "${FIRST_INT}" -ne "2" ]
-then
-  response=$(curl  --user "${basic_auth}" --fail-early -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed99&uuids=%5B\"${DATAFED_USER99_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER99_PASSWORD}&email=datafed99%40gmail.com&is_admin=false")
-  CODE=$(echo $response | jq .code )
-  ERROR_MSG=$(echo $response | jq .errorMessage )
+if [ "${FIRST_INT}" -ne "2" ]; then
+  response=$(curl --user "${basic_auth}" --fail-early -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/create?name=Data%20Fed&uid=datafed99&uuids=%5B\"${DATAFED_USER99_GLOBUS_UUID}\"%5D&password=${local_DATAFED_USER99_PASSWORD}&email=datafed99%40gmail.com&is_admin=false")
+  CODE=$(echo $response | jq .code)
+  ERROR_MSG=$(echo $response | jq .errorMessage)
   echo "$ERROR_MSG"
   exit 1
 fi
 # Set globus tokens
-HTTP_CODE=$(curl --user "${basic_auth}"   -w "%{http_code}" -o /dev/null  -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed99&access=${DATAFED_USER99_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER99_GLOBUS_REFRESH_TOKEN}&expires_in=1")
+HTTP_CODE=$(curl --user "${basic_auth}" -w "%{http_code}" -o /dev/null -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed99&access=${DATAFED_USER99_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER99_GLOBUS_REFRESH_TOKEN}&expires_in=1")
 echo "HTTP_CODE: ${HTTP_CODE}"
 FIRST_INT=${HTTP_CODE:0:1}
-if [ "${FIRST_INT}" -ne "2" ]
-then
-  response=$(curl --user "${basic_auth}"  --fail-early -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed99&access=${DATAFED_USER99_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER99_GLOBUS_REFRESH_TOKEN}&expires_in=1")
-  CODE=$(echo $response | jq .code )
-  ERROR_MSG=$(echo $response | jq .errorMessage )
+if [ "${FIRST_INT}" -ne "2" ]; then
+  response=$(curl --user "${basic_auth}" --fail-early -X GET "http://${local_DATAFED_DATABASE_HOST}:${local_DATAFED_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/usr/token/set?client=u%2Fdatafed99&access=${DATAFED_USER99_GLOBUS_ACCESS_TOKEN}&refresh=${DATAFED_USER99_GLOBUS_REFRESH_TOKEN}&expires_in=1")
+  CODE=$(echo $response | jq .code)
+  ERROR_MSG=$(echo $response | jq .errorMessage)
   echo "$ERROR_MSG"
   exit 1
 fi
