@@ -18,8 +18,7 @@ source "${PROJECT_ROOT}/config/datafed.sh"
 source "${PROJECT_ROOT}/scripts/dependency_versions.sh"
 source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
 
-Help()
-{
+Help() {
   echo "$(basename $0) Will set up a configuration file for the core server"
   echo
   echo "Syntax: $(basename $0) [-h|u|p|y]"
@@ -40,74 +39,71 @@ Help()
 local_DATABASE_NAME="sdms"
 local_DATABASE_USER="root"
 
-if [ -z "${DATAFED_DATABASE_HOST:-}" ]
-then
+if [ -z "${DATAFED_DATABASE_HOST:-}" ]; then
   local_DATAFED_DATABASE_HOST="localhost"
 else
   local_DATAFED_DATABASE_HOST=$(printenv DATAFED_DATABASE_HOST)
 fi
 
-if [ -z "${DATAFED_DATABASE_PASSWORD:-}" ]
-then
+if [ -z "${DATAFED_DATABASE_PASSWORD:-}" ]; then
   local_DATAFED_DATABASE_PASSWORD=""
 else
   local_DATAFED_DATABASE_PASSWORD=$(printenv DATAFED_DATABASE_PASSWORD)
 fi
 
-if [ -z "${FOXX_MAJOR_API_VERSION:-}" ]
-then
-  local_FOXX_MAJOR_API_VERSION=$(cat ${PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs )
+if [ -z "${FOXX_MAJOR_API_VERSION:-}" ]; then
+  local_FOXX_MAJOR_API_VERSION=$(cat ${PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs)
 else
   local_FOXX_MAJOR_API_VERSION=$(printenv FOXX_MAJOR_API_VERSION)
 fi
 
 VALID_ARGS=$(getopt -o hu:p:f: --long 'help',database-user:,database-password:,foxx-api-major-version: -- "$@")
 if [[ $? -ne 0 ]]; then
-      exit 1;
+  exit 1
 fi
 eval set -- "$VALID_ARGS"
 while [ : ]; do
   echo "$1"
   case "$1" in
-    -h | --help)
-        Help
-        exit 0
-        ;;
-    -u | --database-user)
-        echo "Processing 'Database user' option. Input argument is '$2'"
-        local_DATABASE_USER=$2
-        shift 2
-        ;;
-    -p | --database-password)
-        echo "Processing 'Database password' option. Input argument is '$2'"
-        local_DATAFED_DATABASE_PASSWORD=$2
-        shift 2
-        ;;
-    -f | --foxx-api-major-version)
-        echo "Processing 'Foxx major api version' option. Input argument is '$2'"
-        local_FOXX_MAJOR_API_VERSION=$2
-        shift 2
-        ;;
-    --) shift; 
-        break 
-        ;;
-    \?) # incorrect option
-        echo "Error: Invalid option"
-        exit;;
+  -h | --help)
+    Help
+    exit 0
+    ;;
+  -u | --database-user)
+    echo "Processing 'Database user' option. Input argument is '$2'"
+    local_DATABASE_USER=$2
+    shift 2
+    ;;
+  -p | --database-password)
+    echo "Processing 'Database password' option. Input argument is '$2'"
+    local_DATAFED_DATABASE_PASSWORD=$2
+    shift 2
+    ;;
+  -f | --foxx-api-major-version)
+    echo "Processing 'Foxx major api version' option. Input argument is '$2'"
+    local_FOXX_MAJOR_API_VERSION=$2
+    shift 2
+    ;;
+  --)
+    shift
+    break
+    ;;
+  \?) # incorrect option
+    echo "Error: Invalid option"
+    exit
+    ;;
   esac
 done
 
 ERROR_DETECTED=0
-if [ -z "$local_DATAFED_DATABASE_PASSWORD" ]
-then
+if [ -z "$local_DATAFED_DATABASE_PASSWORD" ]; then
   echo "Error DATAFED_DATABASE_PASSWORD is not defined, this is a required argument"
   echo "      This variable can be set using the command line option -p, --database-password"
   echo "      or with the environment variable DATAFED_DATABASE_PASSWORD."
   ERROR_DETECTED=1
 fi
 
-if [ "$ERROR_DETECTED" == "1" ]
-then
+if [ "$ERROR_DETECTED" == "1" ]; then
   exit 1
 fi
 
@@ -116,19 +112,19 @@ fi
 output=$(curl --user $local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD http://${local_DATAFED_DATABASE_HOST}:8529/_api/database/user)
 
 if [[ "$output" =~ .*"sdms".* ]]; then
-	echo "SDMS already exists do nothing"
+  echo "SDMS already exists do nothing"
 else
-	echo "Creating SDMS"
-  arangosh  --server.endpoint "tcp://${local_DATAFED_DATABASE_HOST}:8529"   --server.password "${local_DATAFED_DATABASE_PASSWORD}" --server.username "${local_DATABASE_USER}" --javascript.execute "${PROJECT_ROOT}/core/database/foxx/db_create.js"
+  echo "Creating SDMS"
+  arangosh --server.endpoint "tcp://${local_DATAFED_DATABASE_HOST}:8529" --server.password "${local_DATAFED_DATABASE_PASSWORD}" --server.username "${local_DATABASE_USER}" --javascript.execute "${PROJECT_ROOT}/core/database/foxx/db_create.js"
   # Give time for the database to be created
   sleep 2
-  arangosh  --server.endpoint "tcp://${local_DATAFED_DATABASE_HOST}:8529" --server.password "${local_DATAFED_DATABASE_PASSWORD}" --server.username "${local_DATABASE_USER}" --javascript.execute-string 'db._useDatabase("sdms"); db.config.insert({"_key": "msg_daily", "msg" : "DataFed servers will be off-line for regular maintenance every Sunday night from 11:45 pm until 12:15 am EST Monday morning."}, {overwrite: true});'
-  arangosh  --server.endpoint "tcp://${local_DATAFED_DATABASE_HOST}:8529" --server.password "${local_DATAFED_DATABASE_PASSWORD}" --server.username "${local_DATABASE_USER}" --javascript.execute-string "db._useDatabase(\"sdms\"); db.config.insert({ \"_key\": \"system\", \"_id\": \"config/system\"}, {overwrite: true } );"
+  arangosh --server.endpoint "tcp://${local_DATAFED_DATABASE_HOST}:8529" --server.password "${local_DATAFED_DATABASE_PASSWORD}" --server.username "${local_DATABASE_USER}" --javascript.execute-string 'db._useDatabase("sdms"); db.config.insert({"_key": "msg_daily", "msg" : "DataFed servers will be off-line for regular maintenance every Sunday night from 11:45 pm until 12:15 am EST Monday morning."}, {overwrite: true});'
+  arangosh --server.endpoint "tcp://${local_DATAFED_DATABASE_HOST}:8529" --server.password "${local_DATAFED_DATABASE_PASSWORD}" --server.username "${local_DATABASE_USER}" --javascript.execute-string "db._useDatabase(\"sdms\"); db.config.insert({ \"_key\": \"system\", \"_id\": \"config/system\"}, {overwrite: true } );"
 fi
 
 # There are apparently 3 different ways to deploy Foxx microservices,
 # Using curl with http requests
-# Using the Arango web ui 
+# Using the Arango web ui
 # Using node module
 #
 # The web deployment requires manual interaction, and I could not figure out
@@ -143,22 +139,20 @@ install_node
 $NVM_DIR/nvm-exec npm install --global foxx-cli
 
 FOXX_PREFIX=""
-if ! command -v foxx > /dev/null 2>&1; then
-    FOXX_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/bin/"
+if ! command -v foxx >/dev/null 2>&1; then
+  FOXX_PREFIX="${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/bin/"
 fi
 
 PATH_TO_PASSWD_FILE=${SOURCE}/database_temp.password
-echo "$local_DATAFED_DATABASE_PASSWORD" > "${PATH_TO_PASSWD_FILE}"
+echo "$local_DATAFED_DATABASE_PASSWORD" >"${PATH_TO_PASSWD_FILE}"
 # Check if database foxx services have already been installed
 # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint
-existing_services=$("${FOXX_PREFIX}foxx" list -a -u "$local_DATABASE_USER" -p "${PATH_TO_PASSWD_FILE}"  --server "tcp://${local_DATAFED_DATABASE_HOST}:8529"  --database "$local_DATABASE_NAME")
+existing_services=$("${FOXX_PREFIX}foxx" list -a -u "$local_DATABASE_USER" -p "${PATH_TO_PASSWD_FILE}" --server "tcp://${local_DATAFED_DATABASE_HOST}:8529" --database "$local_DATABASE_NAME")
 echo "existing services ${existing_services}"
 
-if [[ "$existing_services" =~ .*"DataFed".* ]]
-then
+if [[ "$existing_services" =~ .*"DataFed".* ]]; then
   echo "Running tests"
 else
   echo "Foxx services have not been installed cannot run tests!"
   exit 1
 fi
-

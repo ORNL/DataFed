@@ -7,4 +7,3 @@ PROJECT_ROOT=$(realpath "${SOURCE}/../../")
 export DATAFED_COMPOSE_REPO_DOMAIN="datafed-repo"
 
 "${PROJECT_ROOT}/scripts/compose_generate_env.sh" -d "$(pwd)" "$@"
-

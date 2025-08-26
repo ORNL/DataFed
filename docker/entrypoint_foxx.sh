@@ -5,7 +5,7 @@ set -euf -o pipefail
 # NOTE We do not need to change the user in this container because we should not have
 # any log output, and running chmod to update all the folders during runtime is
 # expensive!
-# 
+#
 # The following lines are not needed
 # if [ -n "$UID" ]; then
 #     usermod -u $UID datafed
@@ -42,18 +42,17 @@ if [ "${local_DATAFED_FORCE_INSTALL_FOXX}" == "TRUE" ]; then
     rm "$install_flag"
   fi
 fi
-# Why is this flag used, it is used because the same container is used for 
+# Why is this flag used, it is used because the same container is used for
 # compose as is for operations and ci. If you have a compose dev environment
 # we may want to keep the existing state and not overwrite the database.
-if [ ! -f "$install_flag" ]
-then
+install_flag="/tmp/.foxx_is_installed"
+if [ ! -f "$install_flag" ]; then
   echo "Installing foxx."
   log_path="$DATAFED_DEFAULT_LOG_PATH"
-  if [ ! -d "${log_path}" ]
-  then
+  if [ ! -d "${log_path}" ]; then
     mkdir -p "${log_path}" datafed
   fi
-  
+
   # It should be fine to run this as root because it is an ephemeral container anyway
   cd "${PROJECT_ROOT}"
   # Check to see if foxx has previously been installed
@@ -63,22 +62,22 @@ then
 
   # Define common CMake options
   cmake_options=(
-	  -S. -B build
-	  -DBUILD_REPO_SERVER=False
-	  -DBUILD_COMMON=False
-	  -DBUILD_AUTHZ=False
-	  -DBUILD_CORE_SERVER=False
-	  -DBUILD_WEB_SERVER=False
-	  -DBUILD_DOCS=False
-	  -DBUILD_PYTHON_CLIENT=False
-	  -DBUILD_FOXX=True
-	  -DINSTALL_FOXX=True
+    -S. -B build
+    -DBUILD_REPO_SERVER=False
+    -DBUILD_COMMON=False
+    -DBUILD_AUTHZ=False
+    -DBUILD_CORE_SERVER=False
+    -DBUILD_WEB_SERVER=False
+    -DBUILD_DOCS=False
+    -DBUILD_PYTHON_CLIENT=False
+    -DBUILD_FOXX=True
+    -DINSTALL_FOXX=True
   )
 
   # Add the ENABLE_FOXX_TESTS option if it's set to TRUE
   # Should only run this if you are ok with making changes to the database
   if [ "$ENABLE_FOXX_TESTS" == "TRUE" ]; then
-	  cmake_options+=(-DENABLE_FOXX_TESTS=True)
+    cmake_options+=(-DENABLE_FOXX_TESTS=True)
   fi
 
   # Run the CMake command with the constructed options
@@ -91,8 +90,7 @@ then
   sleep 5
   "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" --build build --target install
 
-  if [ "$ENABLE_FOXX_TESTS" == "TRUE" ]
-  then
+  if [ "$ENABLE_FOXX_TESTS" == "TRUE" ]; then
     "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" \
       --build build \
       --target test
@@ -100,7 +98,7 @@ then
     if [ "$EXIT_CODE" != "0" ]; then exit "$EXIT_CODE"; fi
   fi
 
-  # Create flag to indicate container has done its job  
+  # Create flag to indicate container has done its job
   touch "$install_flag"
 else
   echo "$install_flag has been found skipping reinstall"
