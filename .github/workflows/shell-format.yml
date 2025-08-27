@@ -15,15 +15,43 @@ jobs:
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
+              with:
+                  token: ${{ secrets.GITHUB_TOKEN }}
+                  ref: ${{ github.head_ref || github.ref }}
 
             - name: Install shfmt
               run: |
                   sudo apt-get update
                   sudo apt-get install -y shfmt
 
-            - name: Check shell script formatting
+            - name: Format shell scripts
               run: |
+                  echo "Auto-formatting shell scripts..."
                   # Run in check mode: if reformatting would be needed, it will fail
                   # Use indentation space of 2 spaces
-                  shfmt -i 2 -d .
-                  echo "To fix run: shfmt -i 2 -w -d ."
+                  shfmt -i 2 -w .
+                  echo "Formatting complete"
+
+            - name: Commit changes
+              run: |
+                  # Get the original commit author info
+                  AUTHOR_NAME=$(git log -1 --pretty=format:'%an')
+                  AUTHOR_EMAIL=$(git log -1 --pretty=format:'%ae')
+
+                  # Use original author for the formatting commit
+                  git config --local user.email "$AUTHOR_EMAIL"
+                  git config --local user.name "$AUTHOR_NAME"
+
+                  # Check if there are any changes
+                  if [[ -n $(git status -s) ]]; then
+                      echo "Formatting changes detected, creating commit..."
+                      echo "Committing as: $AUTHOR_NAME <$AUTHOR_EMAIL>"
+                      git add -A
+                      git commit -m "[TASK] Auto-format shell scripts with shfmt"
+                      
+                      # Push changes
+                      git push
+                      echo "Changes committed and pushed"
+                  else
+                      echo "No formatting changes needed"
+                  fi
