@@ -45,7 +45,7 @@ jobs:
                       echo "Formatting changes detected, creating commit..."
                       echo "Committing as: $AUTHOR_NAME <$AUTHOR_EMAIL>"
                       git add -A
-                      git commit -m "[TASK] Auto-format JavaScript files with Prettier"
+                      git commit -m "chore: Auto-format JavaScript files with Prettier"
                       
                       # Push changes
                       git push
