@@ -461,7 +461,12 @@ module.exports = (function () {
         if (obj.isInteger(e) && e >= 0 && e < obj.ERR_COUNT) {
             res.throw(obj.ERR_INFO[e][0], obj.ERR_INFO[e][1]);
         } else if (Array.isArray(e)) {
-            res.throw(obj.ERR_INFO[e[0]][0], e[1]);
+            // Handle undefined error codes
+            if (e[0] === undefined || e[0] === null || !obj.ERR_INFO[e[0]]) {
+                res.throw(400, e[1] || "Invalid request");
+            } else {
+                res.throw(obj.ERR_INFO[e[0]][0], e[1]);
+            }
             //} else if ( e.hasOwnProperty( "errorNum" )) {
         } else if (Object.prototype.hasOwnProperty.call(e, "errorNum")) {
             switch (e.errorNum) {

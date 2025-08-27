@@ -4,6 +4,10 @@ const { Result } = require("./types");
 const { RepositoryOps } = require("./operations");
 const g_lib = require("../support");
 
+// Define error code constant if not available from g_lib
+const ERR_INVALID_PARAM = g_lib.ERR_INVALID_PARAM !== undefined ? g_lib.ERR_INVALID_PARAM : 2;
+const ERR_INVALID_OPERATION = g_lib.ERR_INVALID_OPERATION !== undefined ? g_lib.ERR_INVALID_OPERATION : 400;
+
 /**
  * Standalone validation functions following Rust patterns
  * Pure functions that return Result types for error handling
@@ -20,7 +24,7 @@ const g_lib = require("../support");
 const validateNonEmptyString = (value, fieldName) => {
     if (!value || typeof value !== "string" || value.trim() === "") {
         return Result.err({
-            code: g_lib.ERR_INVALID_PARAM,
+            code: ERR_INVALID_PARAM,
             message: `${fieldName} is required and must be a non-empty string`,
         });
     }
@@ -46,7 +50,9 @@ const validateCommonFields = (config) => {
         errors.push("Repository capacity must be a positive number");
     }
 
-    if (!Array.isArray(config.admins) || config.admins.length === 0) {
+    // Check for both 'admin' and 'admins' fields for backward compatibility
+    const adminField = config.admins || config.admin;
+    if (!Array.isArray(adminField) || adminField.length === 0) {
         errors.push("Repository must have at least one admin");
     }
 
@@ -54,7 +60,7 @@ const validateCommonFields = (config) => {
         // See: https://doc.rust-lang.org/book/ch09-02-recoverable-errors-with-result.html#propagating-errors
         // Early return with error - similar to Rust's ? operator
         return Result.err({
-            code: g_lib.ERR_INVALID_PARAM,
+            code: ERR_INVALID_PARAM,
             message: errors.join("; "),
         });
     }
@@ -66,14 +72,14 @@ const validateCommonFields = (config) => {
 const validatePOSIXPath = (path, fieldName) => {
     if (!path || typeof path !== "string") {
         return Result.err({
-            code: g_lib.ERR_INVALID_PARAM,
+            code: ERR_INVALID_PARAM,
             message: `${fieldName} must be a non-empty string`,
         });
     }
 
     if (!path.startsWith("/")) {
         return Result.err({
-            code: g_lib.ERR_INVALID_PARAM,
+            code: ERR_INVALID_PARAM,
             message: `${fieldName} must be an absolute path (start with '/')`,
         });
     }
@@ -81,7 +87,7 @@ const validatePOSIXPath = (path, fieldName) => {
     // Check for invalid characters in path
     if (path.includes("..") || path.includes("//")) {
         return Result.err({
-            code: g_lib.ERR_INVALID_PARAM,
+            code: ERR_INVALID_PARAM,
             message: `${fieldName} contains invalid path sequences`,
         });
     }
@@ -105,7 +111,7 @@ const validateRepositoryPath = (path, repoId) => {
 
     if (lastComponent !== repoId) {
         return Result.err({
-            code: g_lib.ERR_INVALID_PARAM,
+            code: ERR_INVALID_PARAM,
             message: `Repository path must end with repository ID (${repoId})`,
         });
     }
@@ -115,7 +121,13 @@ const validateRepositoryPath = (path, repoId) => {
 
 // Validate Globus-specific configuration
 const validateGlobusConfig = (config) => {
-    const commonResult = validateCommonFields(config);
+    // Normalize admin/admins field for backward compatibility
+    const normalizedConfig = { ...config };
+    if (config.admin && !config.admins) {
+        normalizedConfig.admins = config.admin;
+    }
+    
+    const commonResult = validateCommonFields(normalizedConfig);
     if (!commonResult.ok) {
         return commonResult;
     }
@@ -140,7 +152,7 @@ const validateGlobusConfig = (config) => {
 
     if (errors.length > 0) {
         return Result.err({
-            code: g_lib.ERR_INVALID_PARAM,
+            code: ERR_INVALID_PARAM,
             message: errors.join("; "),
         });
     }
@@ -164,7 +176,13 @@ const validateGlobusConfig = (config) => {
 
 // Validate metadata-only repository configuration
 const validateMetadataConfig = (config) => {
-    const commonResult = validateCommonFields(config);
+    // Normalize admin/admins field for backward compatibility
+    const normalizedConfig = { ...config };
+    if (config.admin && !config.admins) {
+        normalizedConfig.admins = config.admin;
+    }
+    
+    const commonResult = validateCommonFields(normalizedConfig);
     if (!commonResult.ok) {
         return commonResult;
     }
@@ -176,7 +194,7 @@ const validateMetadataConfig = (config) => {
 
     if (presentInvalidFields.length > 0) {
         return Result.err({
-            code: g_lib.ERR_INVALID_PARAM,
+            code: ERR_INVALID_PARAM,
             message: `Metadata-only repositories should not have: ${presentInvalidFields.join(", ")}`,
         });
     }
@@ -203,7 +221,7 @@ const validateAllocationParams = (params) => {
 
     if (errors.length > 0) {
         return Result.err({
-            code: g_lib.ERR_INVALID_PARAM,
+            code: ERR_INVALID_PARAM,
             message: errors.join("; "),
         });
     }
@@ -222,7 +240,7 @@ const validateRepositorySupportsDataOperations = (repoId, dataId, errorMessage) 
             const defaultMessage =
                 errorMessage || `Data operations not supported for ${repository.type} repository`;
             throw [
-                g_lib.ERR_INVALID_OPERATION,
+                ERR_INVALID_OPERATION,
                 defaultMessage,
                 {
                     repo_type: repository.type,
@@ -234,12 +252,90 @@ const validateRepositorySupportsDataOperations = (repoId, dataId, errorMessage) 
     }
 };
 
+// Validate partial Globus configuration (for updates)
+const validatePartialGlobusConfig = (config, repoId) => {
+    // For partial updates, we don't require all fields
+    // Only validate the fields that are provided
+    const errors = [];
+    
+    // Normalize admin/admins field for backward compatibility
+    const normalizedConfig = { ...config };
+    if (config.admin && !config.admins) {
+        normalizedConfig.admins = config.admin;
+    }
+    
+    // Validate provided fields
+    if (normalizedConfig.title !== undefined) {
+        const titleValidation = validateNonEmptyString(normalizedConfig.title, "Repository title");
+        if (!titleValidation.ok) {
+            errors.push(titleValidation.error.message);
+        }
+    }
+    
+    if (normalizedConfig.capacity !== undefined) {
+        if (typeof normalizedConfig.capacity !== "number" || normalizedConfig.capacity <= 0) {
+            errors.push("Repository capacity must be a positive number");
+        }
+    }
+    
+    if (normalizedConfig.admins !== undefined) {
+        if (!Array.isArray(normalizedConfig.admins) || normalizedConfig.admins.length === 0) {
+            errors.push("Repository must have at least one admin");
+        }
+    }
+    
+    if (normalizedConfig.pub_key !== undefined) {
+        const pubKeyValidation = validateNonEmptyString(normalizedConfig.pub_key, "Public key");
+        if (!pubKeyValidation.ok) {
+            errors.push(pubKeyValidation.error.message);
+        }
+    }
+    
+    if (normalizedConfig.address !== undefined) {
+        const addressValidation = validateNonEmptyString(normalizedConfig.address, "Address");
+        if (!addressValidation.ok) {
+            errors.push(addressValidation.error.message);
+        }
+    }
+    
+    if (normalizedConfig.endpoint !== undefined) {
+        const endpointValidation = validateNonEmptyString(normalizedConfig.endpoint, "Endpoint");
+        if (!endpointValidation.ok) {
+            errors.push(endpointValidation.error.message);
+        }
+    }
+    
+    if (normalizedConfig.path !== undefined && repoId) {
+        const pathResult = validateRepositoryPath(normalizedConfig.path, repoId);
+        if (!pathResult.ok) {
+            return pathResult;
+        }
+    }
+    
+    if (normalizedConfig.exp_path !== undefined) {
+        const expPathResult = validatePOSIXPath(normalizedConfig.exp_path, "Export path");
+        if (!expPathResult.ok) {
+            return expPathResult;
+        }
+    }
+    
+    if (errors.length > 0) {
+        return Result.err({
+            code: ERR_INVALID_PARAM,
+            message: errors.join("; "),
+        });
+    }
+    
+    return Result.ok(true);
+};
+
 module.exports = {
     validateNonEmptyString,
     validateCommonFields,
     validatePOSIXPath,
     validateRepositoryPath,
     validateGlobusConfig,
+    validatePartialGlobusConfig,
     validateMetadataConfig,
     validateAllocationParams,
     validateRepositorySupportsDataOperations,
