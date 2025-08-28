@@ -3,8 +3,47 @@ stages:
   - build
 
 build-dependencies:
-    stage: build
-    trigger:
-        project: dlsw/datafed/datafed_dependencies
-        branch: main
-        strategy: depend
+  stage: build
+  tags:
+    - ci-datafed-core
+    - docker
+  script:
+    - |
+      # Variables you need set in CI/CD Settings or here
+      DOWNSTREAM_PROJECT_ID="19248"      # Numeric GitLab project ID
+      cd "$CI_PROJECT_DIR/external/DataFedDependencies"
+      DOWNSTREAM_REF=$(git branch --show-current)   # Branch to run pipeline on
+      cd "$CI_PROJECT_DIR"
+      DOWNSTREAM_SHA=$(git submodule status ./external/DataFedDependencies/ | awk '{print $1}')   # Commit SHA to trigger on
+      # Trigger the downstream pipeline
+      echo "Triggering downstream pipeline..."
+      PIPELINE=$(curl --silent --fail --show-error -X POST \
+        --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
+        --form "ref=$DOWNSTREAM_REF" \
+        --form "variables[TRIGGERED_BY]=$CI_PROJECT_PATH" \
+        --form "variables[COMMIT_SHA]=$DOWNSTREAM_SHA" \
+        "$CI_API_V4_URL/projects/$DATAFED_DEPENDENCIES_GITLAB_PROJECT_ID/pipeline")
+      PIPELINE_ID=$(echo "$PIPELINE" | jq -r '.id')
+      if [ "$PIPELINE_ID" = "null" ] || [ -z "$PIPELINE_ID" ]; then
+        echo "❌ Failed to create pipeline"
+        echo "$PIPELINE"
+        exit 1
+      fi
+      echo "✅ Triggered pipeline $PIPELINE_ID for commit $DOWNSTREAM_SHA"
+      # Poll until finished
+      STATUS="running"
+      while [ "$STATUS" = "running" ] || [ "$STATUS" = "pending" ]; do
+        sleep 20
+        STATUS=$(curl --silent --fail \
+          --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
+          "$CI_API_V4_URL/projects/$DOWNSTREAM_PROJECT_ID/pipelines/$PIPELINE_ID" \
+          | jq -r '.status')
+        echo "Pipeline $PIPELINE_ID status: $STATUS"
+      done
+      if [ "$STATUS" = "success" ]; then
+        echo "🎉 Downstream pipeline succeeded"
+        exit 0
+      else
+        echo "❌ Downstream pipeline failed with status: $STATUS"
+        exit 1
+      fi
