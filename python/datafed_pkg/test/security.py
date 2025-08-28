@@ -20,7 +20,6 @@ msg.uid = "newuser"
 msg.password = "temptemp"
 msg.name = "New User"
 msg.email = "NewUser@foo.bar"
-msg.secret = "dfgdfg"
 
 print("sending")
 

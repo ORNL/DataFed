@@ -1,167 +1,165 @@
-
 # WARNING
 #
 # Any env variable that must be provided and overwrite what is in the container
 # Must be explicitly listed in the environment section of the specific service
 # --env file variables will not be default exist in the container.
 services:
+    datafed-web:
+        depends_on: ["datafed-core"]
+        environment:
+            DATAFED_GLOBUS_APP_SECRET: "${DATAFED_GLOBUS_APP_SECRET}"
+            DATAFED_GLOBUS_APP_ID: "${DATAFED_GLOBUS_APP_ID}"
+            DATAFED_ZEROMQ_SESSION_SECRET: "${DATAFED_ZEROMQ_SESSION_SECRET}"
+            DATAFED_ZEROMQ_SYSTEM_SECRET: "${DATAFED_ZEROMQ_SYSTEM_SECRET}"
+            DATAFED_DOMAIN: "${DATAFED_DOMAIN}"
+            DATAFED_HTTPS_SERVER_PORT: "${DATAFED_HTTPS_SERVER_PORT}"
+            DATAFED_WEB_CERT_PATH: "${DATAFED_WEB_CERT_PATH}"
+            DATAFED_WEB_KEY_PATH: "${DATAFED_WEB_KEY_PATH}"
+            DATAFED_WEB_USER: "datafed"
+            DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
+            DATAFED_CORE_ADDRESS_PORT_INTERNAL: "datafed-core:7513"
+            UID: "${DATAFED_UID}"
+        image: datafed-web:latest
+        ports:
+            - "8080:443" # This must be the same port that is mapped to the host for redirects to work
+        volumes:
+            - ./keys:/opt/datafed/keys
+            - ./logs:${DATAFED_CONTAINER_LOG_PATH}
+        networks:
+            - datafed-internal
 
-  datafed-web:
-    depends_on: ["datafed-core"]
-    environment:
-      DATAFED_GLOBUS_APP_SECRET: "${DATAFED_GLOBUS_APP_SECRET}"
-      DATAFED_GLOBUS_APP_ID: "${DATAFED_GLOBUS_APP_ID}"
-      DATAFED_ZEROMQ_SESSION_SECRET: "${DATAFED_ZEROMQ_SESSION_SECRET}"
-      DATAFED_ZEROMQ_SYSTEM_SECRET: "${DATAFED_ZEROMQ_SYSTEM_SECRET}"
-      DATAFED_DOMAIN: "${DATAFED_DOMAIN}"
-      DATAFED_HTTPS_SERVER_PORT: "${DATAFED_HTTPS_SERVER_PORT}"
-      DATAFED_WEB_CERT_PATH: "${DATAFED_WEB_CERT_PATH}"
-      DATAFED_WEB_KEY_PATH: "${DATAFED_WEB_KEY_PATH}"
-      DATAFED_WEB_USER: "datafed"
-      DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
-      DATAFED_CORE_ADDRESS_PORT_INTERNAL: "datafed-core:7513"
-      UID: "${DATAFED_UID}"
-    image: datafed-web:latest
-    ports:
-      - "8080:443" # This must be the same port that is mapped to the host for redirects to work
-    volumes:
-      - ./keys:/opt/datafed/keys
-      - ./logs:${DATAFED_CONTAINER_LOG_PATH}
-    networks:
-      - datafed-internal
+    datafed-core:
+        image: datafed-core:latest
+        depends_on:
+            datafed-foxx:
+                condition: service_healthy
+        environment:
+            DATAFED_GLOBUS_APP_SECRET: "${DATAFED_GLOBUS_APP_SECRET}"
+            DATAFED_GLOBUS_APP_ID: "${DATAFED_GLOBUS_APP_ID}"
+            DATAFED_ZEROMQ_SESSION_SECRET: "${DATAFED_ZEROMQ_SESSION_SECRET}"
+            DATAFED_ZEROMQ_SYSTEM_SECRET: "${DATAFED_ZEROMQ_SYSTEM_SECRET}"
+            DATAFED_DOMAIN: "${DATAFED_DOMAIN}"
+            DATAFED_WEB_CERT_PATH: "${DATAFED_WEB_CERT_PATH}"
+            DATAFED_WEB_KEY_PATH: "${DATAFED_WEB_KEY_PATH}"
+            DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
+            DATAFED_DATABASE_PASSWORD: "${DATAFED_DATABASE_PASSWORD}"
+            DATAFED_DATABASE_IP_ADDRESS: "${DATAFED_DATABASE_IP_ADDRESS}"
+            DATAFED_DATABASE_IP_ADDRESS_PORT: "${DATAFED_DATABASE_IP_ADDRESS}:${DATAFED_DATABASE_PORT}"
+            DATAFED_CORE_LOG_LEVEL: "${DATAFED_CORE_LOG_LEVEL}"
+        user: "${DATAFED_UID}:0"
+        security_opt:
+            - no-new-privileges:true
+        ports:
+            - 7513 # Communication web server
+            - 7512:7512 # Secure core server communication must be exposed outside of the container
+        volumes:
+            - ./keys:/opt/datafed/keys
+            - ./logs:${DATAFED_CONTAINER_LOG_PATH}
+        networks:
+            - datafed-internal
 
-  datafed-core:
-    image: datafed-core:latest
-    depends_on:
-      datafed-foxx:
-        condition: service_healthy
-    environment:
-      DATAFED_GLOBUS_APP_SECRET: "${DATAFED_GLOBUS_APP_SECRET}"
-      DATAFED_GLOBUS_APP_ID: "${DATAFED_GLOBUS_APP_ID}"
-      DATAFED_ZEROMQ_SESSION_SECRET: "${DATAFED_ZEROMQ_SESSION_SECRET}"
-      DATAFED_ZEROMQ_SYSTEM_SECRET: "${DATAFED_ZEROMQ_SYSTEM_SECRET}"
-      DATAFED_DOMAIN: "${DATAFED_DOMAIN}"
-      DATAFED_WEB_CERT_PATH: "${DATAFED_WEB_CERT_PATH}"
-      DATAFED_WEB_KEY_PATH: "${DATAFED_WEB_KEY_PATH}"
-      DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
-      UID: "${DATAFED_UID}"
-      DATAFED_DATABASE_PASSWORD: "${DATAFED_DATABASE_PASSWORD}"
-      DATAFED_DATABASE_IP_ADDRESS: "${DATAFED_DATABASE_IP_ADDRESS}"
-      DATAFED_DATABASE_IP_ADDRESS_PORT: "${DATAFED_DATABASE_IP_ADDRESS}:${DATAFED_DATABASE_PORT}"
-      DATAFED_CORE_LOG_LEVEL: "${DATAFED_CORE_LOG_LEVEL}"
-    ports:
-      - 7513 # Communication web server
-      - 7512:7512 # Secure core server communication must be exposed outside of the container
-    volumes:
-      - ./keys:/opt/datafed/keys
-      - ./logs:${DATAFED_CONTAINER_LOG_PATH}
-    networks:
-      - datafed-internal
+    datafed-foxx:
+        image: datafed-foxx:latest
+        depends_on: ["arango"]
+        environment:
+            DATAFED_ZEROMQ_SYSTEM_SECRET: "${DATAFED_ZEROMQ_SYSTEM_SECRET}"
+            DATAFED_DOMAIN: "${DATAFED_DOMAIN}"
+            DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
+            DATAFED_DATABASE_PASSWORD: "${DATAFED_DATABASE_PASSWORD}"
+            DATAFED_DATABASE_IP_ADDRESS: "${DATAFED_DATABASE_IP_ADDRESS}"
+            DATAFED_DATABASE_HOST: "arango"
+            # NOTE enabling foxx tests will cause state changes in the database
+            # do not run this unless you are ok with the database being wiped.
+            ENABLE_FOXX_TESTS: "${DATAFED_ENABLE_FOXX_TESTS}"
+        user: "${DATAFED_UID}:0"
+        security_opt:
+            - no-new-privileges:true
+        healthcheck:
+            test: ["CMD", "/bin/bash", "-c", "[ -f /tmp/.foxx_is_installed ]"]
+            interval: 10s
+            timeout: 5s
+            retries: 20
+        volumes:
+            - foxx_tmp:/tmp
+        networks:
+            - datafed-internal
 
-  datafed-foxx:
-    image: datafed-foxx:latest
-    depends_on: ["arango"]
-    environment:
-      DATAFED_ZEROMQ_SYSTEM_SECRET: "${DATAFED_ZEROMQ_SYSTEM_SECRET}"
-      DATAFED_DOMAIN: "${DATAFED_DOMAIN}"
-      DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
-      UID: "${DATAFED_UID}"
-      DATAFED_DATABASE_PASSWORD: "${DATAFED_DATABASE_PASSWORD}"
-      DATAFED_DATABASE_IP_ADDRESS: "${DATAFED_DATABASE_IP_ADDRESS}"
-      DATAFED_DATABASE_HOST: "arango"
-      # NOTE enabling foxx tests will cause state changes in the database
-      # do not run this unless you are ok with the database being wiped.
-      ENABLE_FOXX_TESTS: "${DATAFED_ENABLE_FOXX_TESTS}"
-    healthcheck:
-      test: ["CMD", "/bin/bash", "-c", "[ -f /tmp/.foxx_is_installed ]"]
-      interval: 10s
-      timeout: 5s
-      retries: 20
-    volumes:
-      - foxx_tmp:/tmp 
-    networks:
-      - datafed-internal
+    arango:
+        image: arangodb/arangodb:3.12.4
+        environment:
+            ARANGO_ROOT_PASSWORD: "${DATAFED_DATABASE_PASSWORD}"
+        volumes:
+            - arango_db:/var/lib/arangodb3
+        ports:
+            - 8529:8529 # Arangodb web UI
+        networks:
+            - datafed-internal
 
-  arango:
-    image: arangodb/arangodb:3.12.4
-    environment:
-      ARANGO_ROOT_PASSWORD: "${DATAFED_DATABASE_PASSWORD}"
-    volumes:
-      - arango_db:/var/lib/arangodb3
-    ports:
-      - 8529:8529 # Arangodb web UI
-    networks:
-      - datafed-internal
+    # Needs the datafed-core to be up so it doesn't fail when trying to connect
+    datafed-repo:
+        depends_on: ["datafed-core"]
+        environment:
+            DATAFED_ZEROMQ_SESSION_SECRET: "${DATAFED_ZEROMQ_SESSION_SECRET}"
+            DATAFED_ZEROMQ_SYSTEM_SECRET: "${DATAFED_ZEROMQ_SYSTEM_SECRET}"
+            DATAFED_DOMAIN: "${DATAFED_DOMAIN}"
+            DATAFED_HTTPS_SERVER_PORT: "${DATAFED_HTTPS_SERVER_PORT}"
+            DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
+            DATAFED_CORE_ADDRESS_PORT_INTERNAL: "${DATAFED_DOMAIN}:7513"
+            DATAFED_GCS_COLLECTION_ROOT_PATH: "${DATAFED_GCS_COLLECTION_ROOT_PATH}"
+            DATAFED_GCS_COLLECTION_BASE_PATH: "${DATAFED_GCS_COLLECTION_BASE_PATH}"
+            UID: "${DATAFED_UID}"
+            HOST_HOSTNAME: "localhost"
+        image: datafed-repo:latest
+        volumes:
+            - ./keys:/opt/datafed/keys
+            - ./logs:${DATAFED_CONTAINER_LOG_PATH}
+            - ${DATAFED_HOST_COLLECTION_MOUNT}:${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}
+        ports:
+            - 9000:9000 # Communication core server
+        networks:
+            - datafed-internal
 
+    # Needs host port 80 for apache
+    # Needs ports 50000 - 51000 for GridFTP
+    # Needs port 443 for control port
+    # Needs the datafed-web server to be up so that it can download the public key
+    datafed-gcs:
+        depends_on: ["datafed-web"]
+        environment:
+            DATAFED_ZEROMQ_SESSION_SECRET: "${DATAFED_ZEROMQ_SESSION_SECRET}"
+            DATAFED_ZEROMQ_SYSTEM_SECRET: "${DATAFED_ZEROMQ_SYSTEM_SECRET}"
+            DATAFED_DOMAIN: "${DATAFED_DOMAIN}"
+            DATAFED_HTTPS_SERVER_PORT: "${DATAFED_HTTPS_SERVER_PORT}"
+            DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
+            DATAFED_CORE_ADDRESS_PORT_INTERNAL: "datafed-core:7513"
+            DATAFED_GCS_ROOT_NAME: "${DATAFED_GCS_ROOT_NAME}"
+            DATAFED_REPO_ID_AND_DIR: "${DATAFED_REPO_ID_AND_DIR}"
+            DATAFED_GLOBUS_SUBSCRIPTION: "${DATAFED_GLOBUS_SUBSCRIPTION}"
+            DATAFED_GLOBUS_CONTROL_PORT: "${DATAFED_GLOBUS_CONTROL_PORT}"
+            DATAFED_GCS_COLLECTION_BASE_PATH: "${DATAFED_GCS_COLLECTION_BASE_PATH}"
+            DATAFED_GCS_COLLECTION_ROOT_PATH: "${DATAFED_GCS_COLLECTION_ROOT_PATH}"
+            DATAFED_REPO_USER: "${DATAFED_REPO_USER}"
+            UID: "${DATAFED_UID}"
+            HOST_HOSTNAME: "localhost"
+            DATAFED_AUTHZ_USER: "datafed"
+            DATAFED_GCS_IP: "${DATAFED_GCS_IP}"
+            DATAFED_REPO_DOMAIN: "${DATAFED_REPO_DOMAIN}"
+        network_mode: host
+        image: datafed-gcs:latest
+        volumes:
+            - ./keys:/opt/datafed/keys
+            - ./globus:/opt/datafed/globus
+            - ./logs:${DATAFED_CONTAINER_LOG_PATH}
+            - ${DATAFED_HOST_COLLECTION_MOUNT}:${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}
 
-
-
-  # Needs the datafed-core to be up so it doesn't fail when trying to connect
-  datafed-repo:
-    depends_on: ["datafed-core"]
-    environment:
-      DATAFED_ZEROMQ_SESSION_SECRET: "${DATAFED_ZEROMQ_SESSION_SECRET}"
-      DATAFED_ZEROMQ_SYSTEM_SECRET: "${DATAFED_ZEROMQ_SYSTEM_SECRET}"
-      DATAFED_DOMAIN: "${DATAFED_DOMAIN}"
-      DATAFED_HTTPS_SERVER_PORT: "${DATAFED_HTTPS_SERVER_PORT}"
-      DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
-      DATAFED_CORE_ADDRESS_PORT_INTERNAL: "${DATAFED_DOMAIN}:7513"
-      DATAFED_GCS_COLLECTION_ROOT_PATH: "${DATAFED_GCS_COLLECTION_ROOT_PATH}"
-      DATAFED_GCS_COLLECTION_BASE_PATH: "${DATAFED_GCS_COLLECTION_BASE_PATH}"
-      UID: "${DATAFED_UID}"
-      HOST_HOSTNAME: "localhost"
-    image: datafed-repo:latest
-    volumes:
-      - ./keys:/opt/datafed/keys
-      - ./logs:${DATAFED_CONTAINER_LOG_PATH}
-      - ${DATAFED_HOST_COLLECTION_MOUNT}:${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}
-    ports:
-      - 9000:9000 # Communication core server
-    networks:
-      - datafed-internal
-
-# Needs host port 80 for apache
-# Needs ports 50000 - 51000 for GridFTP
-# Needs port 443 for control port
-# Needs the datafed-web server to be up so that it can download the public key
-  datafed-gcs:
-    depends_on: ["datafed-web"]
-    environment:
-      DATAFED_ZEROMQ_SESSION_SECRET: "${DATAFED_ZEROMQ_SESSION_SECRET}"
-      DATAFED_ZEROMQ_SYSTEM_SECRET: "${DATAFED_ZEROMQ_SYSTEM_SECRET}"
-      DATAFED_DOMAIN: "${DATAFED_DOMAIN}"
-      DATAFED_HTTPS_SERVER_PORT: "${DATAFED_HTTPS_SERVER_PORT}"
-      DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
-      DATAFED_CORE_ADDRESS_PORT_INTERNAL: "datafed-core:7513"
-      DATAFED_GCS_ROOT_NAME: "${DATAFED_GCS_ROOT_NAME}"
-      DATAFED_REPO_ID_AND_DIR: "${DATAFED_REPO_ID_AND_DIR}"
-      DATAFED_GLOBUS_SUBSCRIPTION: "${DATAFED_GLOBUS_SUBSCRIPTION}"
-      DATAFED_GLOBUS_CONTROL_PORT: "${DATAFED_GLOBUS_CONTROL_PORT}"
-      DATAFED_GCS_COLLECTION_BASE_PATH: "${DATAFED_GCS_COLLECTION_BASE_PATH}"
-      DATAFED_GCS_COLLECTION_ROOT_PATH: "${DATAFED_GCS_COLLECTION_ROOT_PATH}"
-      DATAFED_REPO_USER: "${DATAFED_REPO_USER}"
-      UID: "${DATAFED_UID}"
-      HOST_HOSTNAME: "localhost"
-      DATAFED_AUTHZ_USER: "datafed"
-      DATAFED_GCS_IP: "${DATAFED_GCS_IP}"
-      DATAFED_REPO_DOMAIN: "${DATAFED_REPO_DOMAIN}"
-    network_mode: host
-    image: datafed-gcs:latest
-    volumes:
-      - ./keys:/opt/datafed/keys
-      - ./globus:/opt/datafed/globus
-      - ./logs:${DATAFED_CONTAINER_LOG_PATH}
-      - ${DATAFED_HOST_COLLECTION_MOUNT}:${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}
-
-        #    ports:
-        #      - "8081:443" # This must be the same port that is mapped to the host for redirects to work
-        #      - "50000-50100:50000-50100"
+              #    ports:
+              #      - "8081:443" # This must be the same port that is mapped to the host for redirects to work
+              #      - "50000-50100:50000-50100"
 
 volumes:
-  foxx_tmp:
-  arango_db:
+    foxx_tmp:
+    arango_db:
 
 networks:
-  datafed-internal:
-    driver: bridge
- 
+    datafed-internal:
+        driver: bridge

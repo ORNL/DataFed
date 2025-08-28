@@ -136,7 +136,7 @@ void Server::loadKeys(const std::string &a_cred_dir) {
 void Server::waitForDB() {
   DL_INFO(m_log_context, "Waiting for DB...");
 
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < 20; i++) {
     try {
       DatabaseAPI db_client(m_config.db_url, m_config.db_user,
                             m_config.db_pass);
@@ -144,9 +144,9 @@ void Server::waitForDB() {
       DL_INFO(m_log_context, "DB Ping Success");
       return;
     } catch (...) {
-      DL_INFO(m_log_context, "DB connection error");
+      DL_WARNING(m_log_context, "DB connection error.");
     }
-    sleep(5);
+    sleep(10);
   }
 
   EXCEPT(1, "Unable to connect to DB");

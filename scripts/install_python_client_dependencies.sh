@@ -16,10 +16,11 @@ sudo_command
 "$SUDO_CMD" apt-get update
 "$SUDO_CMD" dpkg --configure -a
 "$SUDO_CMD" apt-get install -y libtool build-essential g++ gcc make libboost-all-dev \
-pkg-config autoconf automake unzip libcurl4-openssl-dev wget \
-rapidjson-dev libkrb5-dev git python3-pkg-resources python3-pip python3-venv libssl-dev
+  pkg-config autoconf automake unzip libcurl4-openssl-dev wget \
+  rapidjson-dev libkrb5-dev git libssl-dev
 
 cd ~
+install_python
 install_cmake
 cd ~
 
@@ -27,10 +28,8 @@ cd ~
 
 init_python
 source "${DATAFED_PYTHON_ENV}/bin/activate"
-python3 -m pip install --upgrade pip
-python3 -m pip install setuptools
+"python${DATAFED_PYTHON_VERSION}" -m pip install --upgrade pip
+"python${DATAFED_PYTHON_VERSION}" -m pip install setuptools
 
 install_protobuf
 cd ~
-
-

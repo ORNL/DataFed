@@ -1,8 +1,7 @@
 ---
-
 # Description
 #
-# This file contains several anchors and templates that are reusued across the 
+# This file contains several anchors and templates that are reusued across the
 # project. A definition of the variables that are used in this file are shown
 # below
 #
@@ -56,42 +55,41 @@
 #
 # INTERMEDIATE_LAYER_NAME
 # This is used when tagging the image to help differentiate different layers
- 
 
 .image_check:
-  tags:
-    - docker
-  script:
-    - |
-      BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-      docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
-      FORCE_BUILD="FALSE"
-      set +e
-      docker pull --quiet "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest"
-      if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD="TRUE"; fi;
-      set -e
-      if [ "${BUILD_INTERMEDIATE}" == "TRUE" ]
-      then
-        set +e
-        docker pull --quiet "${REGISTRY}/${PROJECT}/${COMPONENT}-${INTERMEDIATE_LAYER_NAME}-${BRANCH_LOWER}:latest"
-        if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD="TRUE"; fi;
-        set -e
-      fi
-      if [ "$FORCE_BUILD" == "TRUE" ]
-      then
-        cp .gitlab/build/force_build_${COMPONENT}_image.yml ${COMPONENT}_image.yml
-      else
-        cp .gitlab/build/build_${COMPONENT}_image.yml ${COMPONENT}_image.yml
-      fi
-      echo "REGISTRY=${REGISTRY}" >> build.env
-      echo "HARBOR_USER=${HARBOR_USER}" >> build.env
-      echo "HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN=${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}" >> build.env
-      sed -i 's/\(HARBOR_USER=.*\)\$/\1$$/g' build.env
-  artifacts:
-    paths:
-      - ${COMPONENT}_image.yml 
-    reports:
-      dotenv: build.env
+    tags:
+        - docker
+    script:
+        - |
+            BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+            docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
+            FORCE_BUILD="FALSE"
+            set +e
+            docker pull --quiet "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest"
+            if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD="TRUE"; fi;
+            set -e
+            if [ "${BUILD_INTERMEDIATE}" == "TRUE" ]
+            then
+              set +e
+              docker pull --quiet "${REGISTRY}/${PROJECT}/${COMPONENT}-${INTERMEDIATE_LAYER_NAME}-${BRANCH_LOWER}:latest"
+              if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD="TRUE"; fi;
+              set -e
+            fi
+            if [ "$FORCE_BUILD" == "TRUE" ]
+            then
+              cp .gitlab/build/force_build_${COMPONENT}_image.yml ${COMPONENT}_image.yml
+            else
+              cp .gitlab/build/build_${COMPONENT}_image.yml ${COMPONENT}_image.yml
+            fi
+            echo "REGISTRY=${REGISTRY}" >> build.env
+            echo "HARBOR_USER=${HARBOR_USER}" >> build.env
+            echo "HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN=${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}" >> build.env
+            sed -i 's/\(HARBOR_USER=.*\)\$/\1$$/g' build.env
+    artifacts:
+        paths:
+            - ${COMPONENT}_image.yml
+        reports:
+            dotenv: build.env
 
 # The purpose of this anchor is to check that an image has been uploaded correctly
 # to the registry and if it has not attempt to upload it again.
@@ -104,56 +102,56 @@
 # DATAFED_HARBOR_USERNAME   - needed to run ci_harbor_artifact_count
 # DATAFED_HARBOR_PASSWORD   - needed to run ci_harbor_artifact_count
 .verify_image_upload: &verify_image_upload |
-  first_iteration="TRUE"
-  artifact_count="0"
-  while [ "$artifact_count" == "0" ]; do
-    artifact_count=$( "${CI_PROJECT_DIR}/scripts/ci_harbor_artifact_count.sh" -r "${DATAFED_HARBOR_REPOSITORY}")
-    error_code="$?"
-    if [ "$error_code" -ne 0 ]
-    then
-      echo "Error encountered in ci_harbor_artifact_count $error_code"
-      cat "${CI_PROJECT_DIR}/harbor_check.log"
-      exit 1
-    fi;
-    echo "Artifact missing from harbor..."
-    docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
-    docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
-    if [ "$first_iteration" == "FALSE" ]
-    then
-      sleep 5  # Optional: Add a sleep to avoid busy waiting 
-    else
-      first_iteration="FALSE"
-    fi
-  done
+    first_iteration="TRUE"
+    artifact_count="0"
+    while [ "$artifact_count" == "0" ]; do
+      artifact_count=$( "${CI_PROJECT_DIR}/scripts/ci_harbor_artifact_count.sh" -r "${DATAFED_HARBOR_REPOSITORY}")
+      error_code="$?"
+      if [ "$error_code" -ne 0 ]
+      then
+        echo "Error encountered in ci_harbor_artifact_count $error_code"
+        cat "${CI_PROJECT_DIR}/harbor_check.log"
+        exit 1
+      fi;
+      echo "Artifact missing from harbor..."
+      docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
+      docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+      if [ "$first_iteration" == "FALSE" ]
+      then
+        sleep 5  # Optional: Add a sleep to avoid busy waiting 
+      else
+        first_iteration="FALSE"
+      fi
+    done
 
 # NOTE
 #
-# Cases have been observed where an image has been pushed to the image registry but 
+# Cases have been observed where an image has been pushed to the image registry but
 # but the image for some reason is not registered with the Harbor instance. The
 # retry loop is used to retry pushing to the registry to add some resliency to the
 # ci pipeline in the case of poor networking issues while attempting to upload
 #
 # Outputs
 #
-# DATAFED_HARBOR_USERNAME   - needed to run verify_image_upload 
-# DATAFED_HARBOR_PASSWORD   - needed to run verify_image_upload 
+# DATAFED_HARBOR_USERNAME   - needed to run verify_image_upload
+# DATAFED_HARBOR_PASSWORD   - needed to run verify_image_upload
 .docker_base_build_script:
-  script:
-    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - docker system prune -f
-    - docker build --no-cache -f "${DOCKER_FILE_PATH}" -t "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" .
-    - echo "Tagging ${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest as ${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
-    - docker tag "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
-    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
-    - export DATAFED_HARBOR_REPOSITORY="${COMPONENT}-${BRANCH_LOWER}"
-    - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
-    - export DATAFED_HARBOR_PASSWORD="${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
-    - docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
-    - docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
-    - *verify_image_upload
-  after_script:
-    # Needed if the harbor check script errors out.
-    - if [ -f "${CI_PROJECT_DIR}/harbor_check.log" ]; then cat "${CI_PROJECT_DIR}/harbor_check.log"; fi;
+    script:
+        - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+        - docker system prune -f
+        - docker build --no-cache -f "${DOCKER_FILE_PATH}" -t "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" .
+        - echo "Tagging ${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest as ${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
+        - docker tag "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
+        - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
+        - export DATAFED_HARBOR_REPOSITORY="${COMPONENT}-${BRANCH_LOWER}"
+        - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
+        - export DATAFED_HARBOR_PASSWORD="${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
+        - docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
+        - docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+        - *verify_image_upload
+    after_script:
+        # Needed if the harbor check script errors out.
+        - if [ -f "${CI_PROJECT_DIR}/harbor_check.log" ]; then cat "${CI_PROJECT_DIR}/harbor_check.log"; fi;
 
 # Variables that need to be defined to use the anchor.
 #
@@ -168,12 +166,12 @@
 #
 # DATAFED_HARBOR_REPOSITORY
 .build_image: &build_image |
-  BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-  export DATAFED_HARBOR_REPOSITORY="${COMPONENT}-${BRANCH_LOWER}"
-  docker build --no-cache --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" -f "${DOCKER_FILE_PATH}" -t "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" .
-  docker tag "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
-  docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
-  docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+    BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    export DATAFED_HARBOR_REPOSITORY="${COMPONENT}-${BRANCH_LOWER}"
+    docker build --no-cache --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" -f "${DOCKER_FILE_PATH}" -t "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" .
+    docker tag "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
+    docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
+    docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
 
 # Variables that need to be defined to use the anchor.
 #
@@ -192,16 +190,16 @@
 # DATAFED_HARBOR_REPOSITORY
 # BRANCH_LOWER              - lowercase name of the branch used for image tagging
 .build_intermediate: &build_intermediate |
-  if [ "${BUILD_INTERMEDIATE}" == "TRUE" ]
-  then
-    BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    export DATAFED_HARBOR_REPOSITORY="${COMPONENT}-${INTERMEDIATE_LAYER_NAME}-${BRANCH_LOWER}"
-    docker build --no-cache --build-arg DEPENDENCIES="${REGISTRY}/${PROJECT}/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/${PROJECT}/runtime-${BRANCH_LOWER}:latest" --target "${INTERMEDIATE_TARGET}" -f "${DOCKER_FILE_PATH}" -t "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest" .
-    echo "Tagging ${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest ${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
-    docker tag "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest" "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
-    docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
-    docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
-  fi
+    if [ "${BUILD_INTERMEDIATE}" == "TRUE" ]
+    then
+      BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+      export DATAFED_HARBOR_REPOSITORY="${COMPONENT}-${INTERMEDIATE_LAYER_NAME}-${BRANCH_LOWER}"
+      docker build --no-cache --build-arg DEPENDENCIES="${REGISTRY}/${PROJECT}/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/${PROJECT}/runtime-${BRANCH_LOWER}:latest" --target "${INTERMEDIATE_TARGET}" -f "${DOCKER_FILE_PATH}" -t "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest" .
+      echo "Tagging ${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest ${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+      docker tag "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest" "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+      docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
+      docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+    fi
 
 # Variables that need to be defined to use the anchor.
 #
@@ -218,19 +216,19 @@
 # DATAFED_HARBOR_REPOSITORY - the tag of the image excluding the registry and the project
 # BRANCH_LOWER              - lowercase name of the branch used for image tagging
 .retag_intermediate: &retag_intermediate |
-  if [ "${BUILD_INTERMEDIATE}" == "TRUE" ]
-  then
-    echo "Branch lower"
-    export BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    echo "Harbor repo"
-    export DATAFED_HARBOR_REPOSITORY="${COMPONENT}-${INTERMEDIATE_LAYER_NAME}-${BRANCH_LOWER}"
-    echo "pull"
-    docker pull "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
-    echo "Tagging ${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest as ${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
-    docker tag "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest" "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
-    echo "push"
-    docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
-  fi
+    if [ "${BUILD_INTERMEDIATE}" == "TRUE" ]
+    then
+      echo "Branch lower"
+      export BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+      echo "Harbor repo"
+      export DATAFED_HARBOR_REPOSITORY="${COMPONENT}-${INTERMEDIATE_LAYER_NAME}-${BRANCH_LOWER}"
+      echo "pull"
+      docker pull "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
+      echo "Tagging ${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest as ${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+      docker tag "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest" "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+      echo "push"
+      docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+    fi
 
 # Variables that need to be defined to use the anchor.
 #
@@ -245,14 +243,14 @@
 # DATAFED_HARBOR_REPOSITORY - the tag of the image excluding the registry and the project
 # BRANCH_LOWER              - lowercase name of the branch used for image tagging
 .retag_image: &retag_image |
-  export BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-  export DATAFED_HARBOR_REPOSITORY="${COMPONENT}-${BRANCH_LOWER}"
-  docker pull "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
-  echo "Tagging ${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest as ${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
-  docker tag "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest" "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
-  docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+    export BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+    export DATAFED_HARBOR_REPOSITORY="${COMPONENT}-${BRANCH_LOWER}"
+    docker pull "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
+    echo "Tagging ${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest as ${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+    docker tag "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest" "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
+    docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
 
-# The following are a list of variables that are needed to use the below template 
+# The following are a list of variables that are needed to use the below template
 #
 # Inputs
 #
@@ -270,39 +268,47 @@
 # DATAFED_HARBOR_USERNAME
 # DATAFED_HARBOR_PASSWORD
 .docker_build_script:
-  script:
-    - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
-    - export DATAFED_HARBOR_PASSWORD="${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
-    - ./scripts/generate_datafed.sh
-    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
-    - *build_image
-    - *verify_image_upload
-    - *build_intermediate
-    - *verify_image_upload
-  after_script:
-    # Needed if the harbor check script errors out.
-    - if [ -f "${CI_PROJECT_DIR}/harbor_check.log" ]; then cat "${CI_PROJECT_DIR}/harbor_check.log"; fi;
+    script:
+        - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
+        - export DATAFED_HARBOR_PASSWORD="${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
+        - ./scripts/generate_datafed.sh
+        - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
+        - *build_image
+        - *verify_image_upload
+        - *build_intermediate
+        - *verify_image_upload
+    after_script:
+        # Needed if the harbor check script errors out.
+        - if [ -f "${CI_PROJECT_DIR}/harbor_check.log" ]; then cat "${CI_PROJECT_DIR}/harbor_check.log"; fi;
 
 .error_logs_client_end_to_end:
-  stage: log
-  script:
-    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - FULL_IMAGE_NAME="${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}"
-    - echo "Full image name is $FULL_IMAGE_NAME"
-    - ANCESTOR_CONTAINERS=$(docker ps -a --filter "ancestor=${FULL_IMAGE_NAME}" --format "{{.Names}}") 
-    - echo "${ANCESTOR_CONTAINERS}"
-      # It is possible to return more than one container with the same ancestor
-      # for instance if two different branches have the exact same build but
-      # different names. Or one image was built on top of another and share the
-      # same base.
-    - MATCHING_CONTAINERS=$( echo "$ANCESTOR_CONTAINERS" | grep "${COMPONENT}-${BRANCH_LOWER}" || echo "")
-    - if [ -z "$MATCHING_CONTAINERS" ]; then
-        echo "No matching containers found for image ${FULL_IMAGE_NAME} and component ${COMPONENT}-${BRANCH_LOWER}";
-      else
-        echo "Getting log output for the following."
-        echo "$MATCHING_CONTAINERS"
-        docker logs $MATCHING_CONTAINERS;
-      fi
+    stage: log
+    script:
+        - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+        - FULL_IMAGE_NAME="${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}"
+        - echo "Full image name is $FULL_IMAGE_NAME"
+        - ANCESTOR_CONTAINERS=$(docker ps -a --filter "ancestor=${FULL_IMAGE_NAME}" --format "{{.Names}}")
+        - echo "${ANCESTOR_CONTAINERS}"
+          # It is possible to return more than one container with the same ancestor
+          # for instance if two different branches have the exact same build but
+          # different names. Or one image was built on top of another and share the
+          # same base.
+        - MATCHING_CONTAINERS=$( echo "$ANCESTOR_CONTAINERS" | grep "${COMPONENT}-${BRANCH_LOWER}" || echo "")
+        - >
+            if [ -z "$MATCHING_CONTAINERS" ]; then
+              echo "No matching containers found for image ${FULL_IMAGE_NAME} and component ${COMPONENT}-${BRANCH_LOWER}";
+            else
+              echo "Getting log output for the following.";
+              echo "$MATCHING_CONTAINERS";
+              while IFS= read -r container_id; do
+                if [ -n "$container_id" ]; then # Ensure the line is not empty
+                  echo "--- Logs for container: $container_id ---";
+                  docker logs "$container_id";
+                  echo "--- End of logs for container: $container_id ---";
+                  echo; # Add a blank line for separation
+                fi
+              done <<< "$MATCHING_CONTAINERS" # Feed the variable's content as stdin to the while loop
+            fi
 
 # In the case that we are not needing to actually rebuild the image we want to
 # retag the image that already exists in harbor with the current commit, this
@@ -323,15 +329,15 @@
 # DATAFED_HARBOR_USERNAME
 # DATAFED_HARBOR_PASSWORD
 .docker_retag_image:
-  script:
-    - export DATAFED_HARBOR_IMAGE_TAG=${CI_COMMIT_SHA}
-    - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
-    - export DATAFED_HARBOR_PASSWORD="${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
-    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
-    - *retag_image
-    - *verify_image_upload 
-    - *retag_intermediate
-    - *verify_image_upload 
-  after_script:
-    # Needed if the harbor check script errors out.
-    - if [ -f "${CI_PROJECT_DIR}/harbor_check.log" ]; then cat "${CI_PROJECT_DIR}/harbor_check.log"; fi;
+    script:
+        - export DATAFED_HARBOR_IMAGE_TAG=${CI_COMMIT_SHA}
+        - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"
+        - export DATAFED_HARBOR_PASSWORD="${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
+        - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
+        - *retag_image
+        - *verify_image_upload
+        - *retag_intermediate
+        - *verify_image_upload
+    after_script:
+        # Needed if the harbor check script errors out.
+        - if [ -f "${CI_PROJECT_DIR}/harbor_check.log" ]; then cat "${CI_PROJECT_DIR}/harbor_check.log"; fi;

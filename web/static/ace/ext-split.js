@@ -1,4 +1,4 @@
-define(
+(define(
     "ace/split",
     [
         "require",
@@ -20,7 +20,7 @@ define(
             u = e("./virtual_renderer").VirtualRenderer,
             a = e("./edit_session").EditSession,
             f = function (e, t, n) {
-                (this.BELOW = 1),
+                ((this.BELOW = 1),
                     (this.BESIDE = 0),
                     (this.$container = e),
                     (this.$theme = t),
@@ -35,15 +35,15 @@ define(
                         function (e) {
                             this.$cEditor = e;
                         }.bind(this),
-                    );
+                    ));
             };
-        (function () {
-            r.implement(this, s),
+        ((function () {
+            (r.implement(this, s),
                 (this.$createEditor = function () {
                     var e = document.createElement("div");
-                    (e.className = this.$editorCSS),
+                    ((e.className = this.$editorCSS),
                         (e.style.cssText = "position: absolute; top:0px; bottom:0px"),
-                        this.$container.appendChild(e);
+                        this.$container.appendChild(e));
                     var t = new o(new u(e, this.$theme));
                     return (
                         t.on(
@@ -63,16 +63,16 @@ define(
                     if (e == this.$splits) return;
                     if (e > this.$splits) {
                         while (this.$splits < this.$editors.length && this.$splits < e)
-                            (t = this.$editors[this.$splits]),
+                            ((t = this.$editors[this.$splits]),
                                 this.$container.appendChild(t.container),
                                 t.setFontSize(this.$fontSize),
-                                this.$splits++;
-                        while (this.$splits < e) this.$createEditor(), this.$splits++;
+                                this.$splits++);
+                        while (this.$splits < e) (this.$createEditor(), this.$splits++);
                     } else
                         while (this.$splits > e)
-                            (t = this.$editors[this.$splits - 1]),
+                            ((t = this.$editors[this.$splits - 1]),
                                 this.$container.removeChild(t.container),
-                                this.$splits--;
+                                this.$splits--);
                     this.resize();
                 }),
                 (this.getSplits = function () {
@@ -105,10 +105,10 @@ define(
                 }),
                 (this.$fontSize = ""),
                 (this.setFontSize = function (e) {
-                    (this.$fontSize = e),
+                    ((this.$fontSize = e),
                         this.forEach(function (t) {
                             t.setFontSize(e);
-                        });
+                        }));
                 }),
                 (this.$cloneSession = function (e) {
                     var t = new a(e.getDocument(), e.getMode()),
@@ -132,14 +132,14 @@ define(
                     var r = this.$editors.some(function (t) {
                         return t.session === e;
                     });
-                    return r && (e = this.$cloneSession(e)), n.setSession(e), e;
+                    return (r && (e = this.$cloneSession(e)), n.setSession(e), e);
                 }),
                 (this.getOrientation = function () {
                     return this.$orientation;
                 }),
                 (this.setOrientation = function (e) {
                     if (this.$orientation == e) return;
-                    (this.$orientation = e), this.resize();
+                    ((this.$orientation = e), this.resize());
                 }),
                 (this.resize = function () {
                     var e = this.$container.clientWidth,
@@ -148,31 +148,31 @@ define(
                     if (this.$orientation == this.BESIDE) {
                         var r = e / this.$splits;
                         for (var i = 0; i < this.$splits; i++)
-                            (n = this.$editors[i]),
+                            ((n = this.$editors[i]),
                                 (n.container.style.width = r + "px"),
                                 (n.container.style.top = "0px"),
                                 (n.container.style.left = i * r + "px"),
                                 (n.container.style.height = t + "px"),
-                                n.resize();
+                                n.resize());
                     } else {
                         var s = t / this.$splits;
                         for (var i = 0; i < this.$splits; i++)
-                            (n = this.$editors[i]),
+                            ((n = this.$editors[i]),
                                 (n.container.style.width = e + "px"),
                                 (n.container.style.top = i * s + "px"),
                                 (n.container.style.left = "0px"),
                                 (n.container.style.height = s + "px"),
-                                n.resize();
+                                n.resize());
                     }
-                });
+                }));
         }).call(f.prototype),
-            (t.Split = f);
+            (t.Split = f));
     },
 ),
     define("ace/ext/split", ["require", "exports", "module", "ace/split"], function (e, t, n) {
         "use strict";
         n.exports = e("../split");
-    });
+    }));
 (function () {
     window.require(["ace/ext/split"], function (m) {
         if (typeof module == "object" && typeof exports == "object" && module) {

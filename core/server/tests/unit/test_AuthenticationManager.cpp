@@ -10,12 +10,23 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>
+#include <google/protobuf/stubs/common.h>
 
 // Standard includes
 #include <map>
 #include <memory>
 
 using namespace SDMS::Core;
+
+struct GlobalProtobufTeardown {
+    ~GlobalProtobufTeardown() {
+        // This is the teardown function that runs once at the end
+        google::protobuf::ShutdownProtobufLibrary();
+    }
+};
+
+// Declare a global fixture instance
+BOOST_GLOBAL_FIXTURE(GlobalProtobufTeardown);
 
 BOOST_AUTO_TEST_SUITE(AuthenticationManagerTest)
 

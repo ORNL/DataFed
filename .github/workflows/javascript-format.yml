@@ -1,34 +1,55 @@
 name: JavaScript Formatter
 on: push
 jobs:
-  format-javascript:
-    runs-on: ubuntu-latest
+    format-javascript:
+        runs-on: ubuntu-latest
 
-    steps:
-      # Step 1: Checkout the repository
-      - name: Checkout Code
-        uses: actions/checkout@v4
+        steps:
+            # Step 1: Checkout the repository
+            - name: Checkout Code
+              uses: actions/checkout@v4
+              with:
+                  token: ${{ secrets.GITHUB_TOKEN }}
+                  ref: ${{ github.head_ref || github.ref }}
 
-      # Step 2: Set up Node.js environment
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18' # Specify your Node.js version
+            # Step 2: Set up Node.js environment
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "18"
 
-      # Step 3: Install Prettier and ESLint globally
-      - name: Install Prettier
-        run: |
-          npm install -g prettier
+            # Step 3: Install Prettier
+            - name: Install Prettier
+              run: npm install -g prettier
 
-      # Step 4: Run Prettier to format code
-      - name: Run prettier
-        run: |
-          prettier "**/*.js" --write
-          git diff
-          git reset --hard
-          prettier --check "**/*.js" 
-          
-      # Step 5: Report status
-      - name: Complete
-        run: echo "Formatting completed successfully!"
+            # Step 4: Run Prettier to format code
+            - name: Format JavaScript files
+              run: |
+                  echo "Auto-formatting JavaScript files..."
+                  prettier "**/*.js" --write
+                  echo "Formatting complete"
 
+            # Step 5: Check for changes and commit if needed
+            - name: Commit changes
+              run: |
+                  # Get the original commit author info
+                  AUTHOR_NAME=$(git log -1 --pretty=format:'%an')
+                  AUTHOR_EMAIL=$(git log -1 --pretty=format:'%ae')
+
+                  # Use original author for the formatting commit
+                  git config --local user.email "$AUTHOR_EMAIL"
+                  git config --local user.name "$AUTHOR_NAME"
+
+                  # Check if there are any changes
+                  if [[ -n $(git status -s) ]]; then
+                      echo "Formatting changes detected, creating commit..."
+                      echo "Committing as: $AUTHOR_NAME <$AUTHOR_EMAIL>"
+                      git add -A
+                      git commit -m "chore: Auto-format JavaScript files with Prettier"
+                      
+                      # Push changes
+                      git push
+                      echo "Changes committed and pushed"
+                  else
+                      echo "No formatting changes needed"
+                  fi

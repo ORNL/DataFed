@@ -1,7 +1,7 @@
 # NOTE this image must be built with respect to the base of the project i.e.
 # cd ${PROJECT_ROOT} or cd DataFed
 # docker build -f web/docker/Dockerfile .
-ARG           BUILD_BASE="ubuntu:focal"
+ARG           BUILD_BASE="debian:bookworm-slim"
 ARG         DEPENDENCIES="dependencies"
 ARG              RUNTIME="runtime"
 ARG          DATAFED_DIR="/datafed"
@@ -65,7 +65,7 @@ ENV          DATAFED_DIR="$DATAFED_DIR"
 ENV            BUILD_DIR="$BUILD_DIR"
 ENV          DATAFED_DEFAULT_LOG_PATH="$DATAFED_INSTALL_PATH/logs"
 
-RUN apt install -y python3 make g++
+RUN apt install -y make g++
 
 WORKDIR ${DATAFED_DIR}
 

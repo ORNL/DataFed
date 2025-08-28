@@ -1,130 +1,130 @@
 ---
-
 include:
-  - local: .gitlab/stage_build.yml
+    - local: .gitlab/stage_build.yml
 
 run-ws-unit-job:
-  # Either the web container needs to be rebuilt or the container needs to be
-  # retagged with the current git commit hash.
-  needs: ["run-ws-build-job"]
-  stage: unit
-  variables:
-    PROJECT: "datafed"
-    COMPONENT: "ws"
-    GIT_STRATEGY: clone
-    HOST_LOG_FILE_PATH: "/shared/logs"
-    CONTAINER_LOG_FILE_PATH: "/datafed/logs"
-    DATAFED_WEB_KEY_DIR: "/shared/keys"
-    DATAFED_WEB_CERT_NAME: "cert.crt"
-    DATAFED_WEB_KEY_NAME: "cert.key"
-    DATAFED_WEB_CERT_PATH: "${DATAFED_WEB_KEY_DIR}/${DATAFED_WEB_CERT_NAME}"
-    DATAFED_WEB_CSR_PATH: "${DATAFED_WEB_KEY_DIR}/cert.csr"
-    DATAFED_WEB_KEY_PATH: "${DATAFED_WEB_KEY_DIR}/${DATAFED_WEB_KEY_NAME}"
-    INTERMEDIATE_LAYER_NAME: "build"
-  tags:
-    - docker
-  script:
-    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - echo "$BRANCH_LOWER"
-    - mkdir -p "$HOST_LOG_FILE_PATH"
-    - mkdir -p "${DATAFED_WEB_KEY_DIR}"
-    - ./scripts/ci_setup_web_certs.sh
-    - chmod o+w "${HOST_LOG_FILE_PATH}"
-    - chown gitlab-runner "$HOST_LOG_FILE_PATH"
-    - ./scripts/generate_datafed.sh
-    - docker login  "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
-    - USER_ID=$(id -u)
-    - GROUP_ID=$(id -g)
-    - CORE_ADDRESS=$(hostname -I | awk '{print $1}')
-    - cat $CI_DATAFED_CORE_PUB_KEY > /shared/keys/datafed-core-key.pub
-    - env
-    - ./scripts/container_stop.sh -n "ws-" -p 
-    - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
-      # Don't run in daemon mode this is just a unit test
-    - echo "#!/bin/bash" > run_web.sh
-    - echo "docker run \\" >> run_web.sh
-    - echo "--name \"ws-${BRANCH_LOWER}-${INTERMEDIATE_LAYER_NAME}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_web.sh
-    - echo "-e NVM_INC=/opt/datafed/dependencies/nvm/versions/node/v14.21.3/include/node \\" >> run_web.sh
-    - echo "-e PATH=/opt/datafed/dependencies/nvm/versions/node/v14.21.3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \\" >> run_web.sh
-    - echo "-e NVM_INC=/opt/datafed/dependencies/nvm/versions/node/v14.21.3/include/node \\" >> run_web.sh
-    - echo "-e DATAFED_GLOBUS_APP_SECRET=\"$CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_web.sh
-    - echo "-e DATAFED_GLOBUS_APP_ID=\"$CI_DATAFED_GLOBUS_APP_ID\" \\" >> run_web.sh
-    - echo "-e DATAFED_ZEROMQ_SESSION_SECRET=\"$CI_DATAFED_ZEROMQ_SESSION_SECRET\" \\" >> run_web.sh
-    - echo "-e DATAFED_ZEROMQ_SYSTEM_SECRET=\"$CI_DATAFED_ZEROMQ_SYSTEM_SECRET\" \\" >> run_web.sh
-    - echo "-e DATAFED_DOMAIN=\"$CI_DATAFED_DOMAIN\" \\" >> run_web.sh
-    - echo "-e DATAFED_WEB_CERT_PATH=\"/opt/datafed/keys/${DATAFED_WEB_CERT_NAME}\" \\" >> run_web.sh
-    - echo "-e DATAFED_WEB_KEY_PATH=\"/opt/datafed/keys/${DATAFED_WEB_KEY_NAME}\" \\" >> run_web.sh
-    - echo "-e DATAFED_DEFAULT_LOG_PATH=\"${CONTAINER_LOG_FILE_PATH}\" \\" >> run_web.sh
-    - echo "-e DATAFED_CORE_ADDRESS_PORT_INTERNAL=\"$CORE_ADDRESS:7513\" \\" >> run_web.sh
-    - echo "-e UID=\"$USER_ID\" \\" >> run_web.sh
-    - echo "-p 443:443 \\" >> run_web.sh
-    - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_web.sh
-    - echo "-v \"/shared/keys/datafed-core-key.pub:/opt/datafed/keys/datafed-core-key.pub\" \\" >> run_web.sh
-    - echo "-v \"${DATAFED_WEB_CERT_PATH}:/opt/datafed/keys/${DATAFED_WEB_CERT_NAME}\" \\" >> run_web.sh
-    - echo "-v \"${DATAFED_WEB_KEY_PATH}:/opt/datafed/keys/${DATAFED_WEB_KEY_NAME}\" \\" >> run_web.sh
-    - echo "-t \"${REGISTRY}/${PROJECT}/${COMPONENT}-${INTERMEDIATE_LAYER_NAME}-${BRANCH_LOWER}:${CI_COMMIT_SHA}\" " >> run_web.sh
-    - chmod +x run_web.sh
-    - ./run_web.sh
+    # Either the web container needs to be rebuilt or the container needs to be
+    # retagged with the current git commit hash.
+    needs: ["run-ws-build-job"]
+    stage: unit
+    variables:
+        PROJECT: "datafed"
+        COMPONENT: "ws"
+        GIT_STRATEGY: clone
+        HOST_LOG_FILE_PATH: "/shared/logs"
+        CONTAINER_LOG_FILE_PATH: "/datafed/logs"
+        DATAFED_WEB_KEY_DIR: "/shared/keys"
+        DATAFED_WEB_CERT_NAME: "cert.crt"
+        DATAFED_WEB_KEY_NAME: "cert.key"
+        DATAFED_WEB_CERT_PATH: "${DATAFED_WEB_KEY_DIR}/${DATAFED_WEB_CERT_NAME}"
+        DATAFED_WEB_CSR_PATH: "${DATAFED_WEB_KEY_DIR}/cert.csr"
+        DATAFED_WEB_KEY_PATH: "${DATAFED_WEB_KEY_DIR}/${DATAFED_WEB_KEY_NAME}"
+        INTERMEDIATE_LAYER_NAME: "build"
+    tags:
+        - docker
+    script:
+        - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+        - echo "$BRANCH_LOWER"
+        - mkdir -p "$HOST_LOG_FILE_PATH"
+        - mkdir -p "${DATAFED_WEB_KEY_DIR}"
+        - ./scripts/ci_setup_web_certs.sh
+        - chmod o+w "${HOST_LOG_FILE_PATH}"
+        - chown gitlab-runner "$HOST_LOG_FILE_PATH"
+        - ./scripts/generate_datafed.sh
+        - docker login  "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
+        - USER_ID=$(id -u)
+        - GROUP_ID=$(id -g)
+        - CORE_ADDRESS=$(hostname -I | awk '{print $1}')
+        - cat $CI_DATAFED_CORE_PUB_KEY > /shared/keys/datafed-core-key.pub
+        - env
+        - ./scripts/container_stop.sh -n "ws-" -p
+        - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
+        - source scripts/dependency_versions.sh
+          # Don't run in daemon mode this is just a unit test
+        - echo "#!/bin/bash" > run_web.sh
+        - echo "docker run \\" >> run_web.sh
+        - echo "--name \"ws-${BRANCH_LOWER}-${INTERMEDIATE_LAYER_NAME}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_web.sh
+        - echo "-e NVM_INC=/opt/datafed/dependencies/nvm/versions/node/${DATAFED_NODE_VERSION}/include/node \\" >> run_web.sh
+        - echo "-e PATH=/opt/datafed/dependencies/nvm/versions/node/${DATAFED_NODE_VERSION}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \\" >> run_web.sh
+        - echo "-e NVM_INC=/opt/datafed/dependencies/nvm/versions/node/${DATAFED_NODE_VERSION}/include/node \\" >> run_web.sh
+        - echo "-e DATAFED_GLOBUS_APP_SECRET=\"$CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_web.sh
+        - echo "-e DATAFED_GLOBUS_APP_ID=\"$CI_DATAFED_GLOBUS_APP_ID\" \\" >> run_web.sh
+        - echo "-e DATAFED_ZEROMQ_SESSION_SECRET=\"$CI_DATAFED_ZEROMQ_SESSION_SECRET\" \\" >> run_web.sh
+        - echo "-e DATAFED_ZEROMQ_SYSTEM_SECRET=\"$CI_DATAFED_ZEROMQ_SYSTEM_SECRET\" \\" >> run_web.sh
+        - echo "-e DATAFED_DOMAIN=\"$CI_DATAFED_DOMAIN\" \\" >> run_web.sh
+        - echo "-e DATAFED_WEB_CERT_PATH=\"/opt/datafed/keys/${DATAFED_WEB_CERT_NAME}\" \\" >> run_web.sh
+        - echo "-e DATAFED_WEB_KEY_PATH=\"/opt/datafed/keys/${DATAFED_WEB_KEY_NAME}\" \\" >> run_web.sh
+        - echo "-e DATAFED_DEFAULT_LOG_PATH=\"${CONTAINER_LOG_FILE_PATH}\" \\" >> run_web.sh
+        - echo "-e DATAFED_CORE_ADDRESS_PORT_INTERNAL=\"$CORE_ADDRESS:7513\" \\" >> run_web.sh
+        - echo "-e UID=\"$USER_ID\" \\" >> run_web.sh
+        - echo "-p 443:443 \\" >> run_web.sh
+        - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_web.sh
+        - echo "-v \"/shared/keys/datafed-core-key.pub:/opt/datafed/keys/datafed-core-key.pub\" \\" >> run_web.sh
+        - echo "-v \"${DATAFED_WEB_CERT_PATH}:/opt/datafed/keys/${DATAFED_WEB_CERT_NAME}\" \\" >> run_web.sh
+        - echo "-v \"${DATAFED_WEB_KEY_PATH}:/opt/datafed/keys/${DATAFED_WEB_KEY_NAME}\" \\" >> run_web.sh
+        - echo "-t \"${REGISTRY}/${PROJECT}/${COMPONENT}-${INTERMEDIATE_LAYER_NAME}-${BRANCH_LOWER}:${CI_COMMIT_SHA}\" " >> run_web.sh
+        - chmod +x run_web.sh
+        - ./run_web.sh
 
 # This unit test uses the same container as the gcs prod container. Instead
 # of running the entrypoint file, this container when launched overrides
 # the entrypoint file and instead runs the unit tests.
 run-authz-unit-job:
-  variables:
-    PROJECT: "datafed"
-    COMPONENT: "gcs"
-    HOST_LOG_FILE_PATH: "/shared/logs"
-    CONTAINER_LOG_FILE_PATH: "/datafed/logs"
-    GIT_STRATEGY: clone
-    DATAFED_HOST_COLLECTION_MOUNT: "/shared/collections"
-    DATAFED_GLOBUS_DIR: "/shared/globus"
-  needs: ["run-gcs-build-job"]
-  stage: unit
-  tags:
-    - docker
-  script:
-    - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
-    - echo "$BRANCH_LOWER"
-    - mkdir -p "$HOST_LOG_FILE_PATH"
-    - mkdir -p "${DATAFED_GLOBUS_DIR}"
-    - cp "${CI_DATAFED_GCS_DEPLOYMENT_KEY}" "${DATAFED_GLOBUS_DIR}/deployment-key.json"
-    - cp "${CI_DATAFED_GCS_CLIENT_CRED}" "${DATAFED_GLOBUS_DIR}/client_cred.json"
-    - USER_ID=$(id -u)
-    - chmod o+w "${HOST_LOG_FILE_PATH}"
-    - chown gitlab-runner "$HOST_LOG_FILE_PATH"
-    - ./scripts/generate_datafed.sh
-    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
-    - ./scripts/container_stop.sh -n "${COMPONENT}" -p
-    - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
-    - echo "#!/bin/bash" > run_globus.sh
-    - echo "docker run \\" >> run_globus.sh
-    - echo "--name \"${COMPONENT}-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_globus.sh
-    - echo "--network host \\" >> run_globus.sh
-    - echo "-e DATAFED_GLOBUS_APP_SECRET=\"$CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_globus.sh
-    - echo "-e DATAFED_GLOBUS_APP_ID=\"$CI_DATAFED_GLOBUS_APP_ID\" \\" >> run_globus.sh
-    - echo "-e DATAFED_ZEROMQ_SESSION_SECRET=\"$CI_DATAFED_ZEROMQ_SESSION_SECRET\" \\" >> run_globus.sh
-    - echo "-e DATAFED_ZEROMQ_SYSTEM_SECRET=\"$CI_DATAFED_ZEROMQ_SYSTEM_SECRET\" \\" >> run_globus.sh
-    - echo "-e DATAFED_DOMAIN=\"$CI_DATAFED_DOMAIN\" \\" >> run_globus.sh
-    - echo "-e DATAFED_HTTPS_SERVER_PORT=\"443\" \\" >> run_globus.sh
-    - echo "-e DATAFED_DEFAULT_LOG_PATH=\"$CONTAINER_LOG_FILE_PATH\" \\" >> run_globus.sh
-    - echo "-e DATAFED_CORE_ADDRESS_PORT_INTERNAL=\"${CI_DATAFED_DOMAIN}:7513\" \\" >> run_globus.sh
-    - echo "-e DATAFED_GCS_ROOT_NAME=\"${CI_DATAFED_GCS_ROOT_NAME}\" \\" >> run_globus.sh
-    - echo "-e DATAFED_GCS_COLLECTION_BASE_PATH=\"/mnt\" \\" >> run_globus.sh
-    - echo "-e DATAFED_GCS_COLLECTION_ROOT_PATH=\"/mnt/datafed\" \\" >> run_globus.sh
-    - echo "-e DATAFED_GLOBUS_SUBSCRIPTION=\"${CI_DATAFED_GLOBUS_SUBSCRIPTION}\" \\" >> run_globus.sh
-    - echo "-e DATAFED_GLOBUS_CONTROL_PORT=\"443\" \\" >> run_globus.sh
-    - echo "-e DATAFED_REPO_USER=\"datafed\" \\" >> run_globus.sh
-    - echo "-e DATAFED_AUTHZ_USER=\"datafed\" \\" >> run_globus.sh
-    - echo "-e UID=\"$USER_ID\" \\" >> run_globus.sh
-    - echo "-e BUILD_WITH_METADATA_SERVICES=\"FALSE\" \\" >> run_globus.sh
-    - echo "-e DATAFED_REPO_ID_AND_DIR=\"${CI_DATAFED_REPO_ID_AND_DIR}\" \\" >> run_globus.sh
-    - echo "-e DATAFED_GCS_IP=\"${CI_DATAFED_GCS_IP}\" \\" >> run_globus.sh
-    - echo "-e DATAFED_REPO_DOMAIN=\"${CI_DATAFED_REPO_DOMAIN}\" \\" >> run_globus.sh
-    - echo "-v \"${DATAFED_GLOBUS_DIR}:/opt/datafed/globus\" \\" >> run_globus.sh
-    - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_globus.sh
-    - echo "-v \"${DATAFED_HOST_COLLECTION_MOUNT}:/mnt/datafed\" \\" >> run_globus.sh
-    - echo "--entrypoint bash \\" >> run_globus.sh
-    - echo "-t \"${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:${CI_COMMIT_SHA}\" \\" >> run_globus.sh
-    - echo "-c 'cd /datafed/source; /opt/datafed/dependencies/bin/cmake --build build --target test'" >> run_globus.sh
-    - chmod +x run_globus.sh
-    - ./run_globus.sh
+    variables:
+        PROJECT: "datafed"
+        COMPONENT: "gcs"
+        HOST_LOG_FILE_PATH: "/shared/logs"
+        CONTAINER_LOG_FILE_PATH: "/datafed/logs"
+        GIT_STRATEGY: clone
+        DATAFED_HOST_COLLECTION_MOUNT: "/shared/collections"
+        DATAFED_GLOBUS_DIR: "/shared/globus"
+    needs: ["run-gcs-build-job"]
+    stage: unit
+    tags:
+        - docker
+    script:
+        - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+        - echo "$BRANCH_LOWER"
+        - mkdir -p "$HOST_LOG_FILE_PATH"
+        - mkdir -p "${DATAFED_GLOBUS_DIR}"
+        - cp "${CI_DATAFED_GCS_DEPLOYMENT_KEY}" "${DATAFED_GLOBUS_DIR}/deployment-key.json"
+        - cp "${CI_DATAFED_GCS_CLIENT_CRED}" "${DATAFED_GLOBUS_DIR}/client_cred.json"
+        - USER_ID=$(id -u)
+        - chmod o+w "${HOST_LOG_FILE_PATH}"
+        - chown gitlab-runner "$HOST_LOG_FILE_PATH"
+        - ./scripts/generate_datafed.sh
+        - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
+        - ./scripts/container_stop.sh -n "${COMPONENT}" -p
+        - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w "10" | head -n 1")
+        - echo "#!/bin/bash" > run_globus.sh
+        - echo "docker run \\" >> run_globus.sh
+        - echo "--name \"${COMPONENT}-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}\" \\" >> run_globus.sh
+        - echo "--network host \\" >> run_globus.sh
+        - echo "-e DATAFED_GLOBUS_APP_SECRET=\"$CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_globus.sh
+        - echo "-e DATAFED_GLOBUS_APP_ID=\"$CI_DATAFED_GLOBUS_APP_ID\" \\" >> run_globus.sh
+        - echo "-e DATAFED_ZEROMQ_SESSION_SECRET=\"$CI_DATAFED_ZEROMQ_SESSION_SECRET\" \\" >> run_globus.sh
+        - echo "-e DATAFED_ZEROMQ_SYSTEM_SECRET=\"$CI_DATAFED_ZEROMQ_SYSTEM_SECRET\" \\" >> run_globus.sh
+        - echo "-e DATAFED_DOMAIN=\"$CI_DATAFED_DOMAIN\" \\" >> run_globus.sh
+        - echo "-e DATAFED_HTTPS_SERVER_PORT=\"443\" \\" >> run_globus.sh
+        - echo "-e DATAFED_DEFAULT_LOG_PATH=\"$CONTAINER_LOG_FILE_PATH\" \\" >> run_globus.sh
+        - echo "-e DATAFED_CORE_ADDRESS_PORT_INTERNAL=\"${CI_DATAFED_DOMAIN}:7513\" \\" >> run_globus.sh
+        - echo "-e DATAFED_GCS_ROOT_NAME=\"${CI_DATAFED_GCS_ROOT_NAME}\" \\" >> run_globus.sh
+        - echo "-e DATAFED_GCS_COLLECTION_BASE_PATH=\"/mnt\" \\" >> run_globus.sh
+        - echo "-e DATAFED_GCS_COLLECTION_ROOT_PATH=\"/mnt/datafed\" \\" >> run_globus.sh
+        - echo "-e DATAFED_GLOBUS_SUBSCRIPTION=\"${CI_DATAFED_GLOBUS_SUBSCRIPTION}\" \\" >> run_globus.sh
+        - echo "-e DATAFED_GLOBUS_CONTROL_PORT=\"443\" \\" >> run_globus.sh
+        - echo "-e DATAFED_REPO_USER=\"datafed\" \\" >> run_globus.sh
+        - echo "-e DATAFED_AUTHZ_USER=\"datafed\" \\" >> run_globus.sh
+        - echo "-e UID=\"$USER_ID\" \\" >> run_globus.sh
+        - echo "-e BUILD_WITH_METADATA_SERVICES=\"FALSE\" \\" >> run_globus.sh
+        - echo "-e DATAFED_REPO_ID_AND_DIR=\"${CI_DATAFED_REPO_ID_AND_DIR}\" \\" >> run_globus.sh
+        - echo "-e DATAFED_GCS_IP=\"${CI_DATAFED_GCS_IP}\" \\" >> run_globus.sh
+        - echo "-e DATAFED_REPO_DOMAIN=\"${CI_DATAFED_REPO_DOMAIN}\" \\" >> run_globus.sh
+        - echo "-v \"${DATAFED_GLOBUS_DIR}:/opt/datafed/globus\" \\" >> run_globus.sh
+        - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> run_globus.sh
+        - echo "-v \"${DATAFED_HOST_COLLECTION_MOUNT}:/mnt/datafed\" \\" >> run_globus.sh
+        - echo "--entrypoint bash \\" >> run_globus.sh
+        - echo "-t \"${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:${CI_COMMIT_SHA}\" \\" >> run_globus.sh
+        - echo "-c 'cd /datafed/source; /opt/datafed/dependencies/bin/cmake --build build --target test'" >> run_globus.sh
+        - chmod +x run_globus.sh
+        - ./run_globus.sh

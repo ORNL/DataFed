@@ -4,6 +4,45 @@ import os
 import sys
 
 
+def get_cached_base_path(collection_id, cache_dir):
+    """Get the cached base path for a guest collection."""
+    cache_file = os.path.join(cache_dir, f"guest_collection_{collection_id}_base_path.txt")
+    try:
+        if os.path.exists(cache_file):
+            with open(cache_file, 'r') as f:
+                return f.read().strip()
+    except Exception as e:
+        print(f"Warning: Could not read base path cache: {e}")
+    return None
+
+
+def cache_base_path(collection_id, base_path, cache_dir):
+    """Cache the base path for a guest collection."""
+    cache_file = os.path.join(cache_dir, f"guest_collection_{collection_id}_base_path.txt")
+    try:
+        os.makedirs(cache_dir, exist_ok=True)
+        with open(cache_file, 'w') as f:
+            f.write(base_path)
+        print(f"Cached base path '{base_path}' for collection {collection_id}")
+        return True
+    except Exception as e:
+        print(f"Warning: Could not cache base path: {e}")
+        return False
+
+
+def remove_cached_base_path(collection_id, cache_dir):
+    """Remove the cached base path for a guest collection."""
+    cache_file = os.path.join(cache_dir, f"guest_collection_{collection_id}_base_path.txt")
+    try:
+        if os.path.exists(cache_file):
+            os.remove(cache_file)
+            print(f"Removed old cache file for collection {collection_id}")
+            return True
+    except Exception as e:
+        print(f"Warning: Could not remove old cache file: {e}")
+    return False
+
+
 def getProjectId(auth_client, project_name):
     projects = auth_client.get_projects()
     for project in projects:

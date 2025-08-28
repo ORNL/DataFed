@@ -36,6 +36,8 @@ private:
 public:
   AuthenticationManager(){};
 
+  virtual ~AuthenticationManager(){};
+
   AuthenticationManager &operator=(AuthenticationManager &&other);
 
   AuthenticationManager(

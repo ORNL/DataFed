@@ -2,10 +2,6 @@
 
 set -euf -o pipefail
 
-if [ -n "$UID" ]; then
-    usermod -u $UID datafed
-fi
-
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/../..")
@@ -18,9 +14,8 @@ env
 
 log_path="$DATAFED_DEFAULT_LOG_PATH"
 
-if [ ! -d "${log_path}" ]
-then
-  su -c "mkdir -p ${log_path}" datafed
+if [ ! -d "${log_path}" ]; then
+  mkdir -p ${log_path}
 fi
 
 echo "Number of arguments is $#"
@@ -33,15 +28,14 @@ if [ "$#" -eq 0 ]; then
 fi
 
 datafed_core_exec=$(basename "$1")
-if [ "${datafed_core_exec}" = "datafed-core" ]
-then
+if [ "${datafed_core_exec}" = "datafed-core" ]; then
   # Send output to log file
   # For this to work all commands must be passed in as a single string
-  su datafed -c '"$@"' -- argv0 "$@" 2>&1 | su datafed -c "tee $log_path/datafed-core.log"
+  "$@" -- argv0 "$@" 2>&1 | tee $log_path/datafed-core.log
 else
   echo "Not sending output to datafed-core.log"
   # If not do not by default send to log file
-  su datafed -c '"$@"' -- argv0 "$@"
+  "$@" -- argv0 "$@"
 fi
 
 echo "Give a few minutes to debug the problem"

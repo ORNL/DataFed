@@ -51,7 +51,6 @@ var g_host,
     g_server_key_file,
     g_server_cert_file,
     g_server_chain_file,
-    g_system_secret,
     g_session_secret,
     g_test,
     g_msg_by_id = {},
@@ -707,7 +706,6 @@ app.get("/api/usr/register", (a_req, a_resp) => {
                 name: a_req.session.name,
                 email: a_req.session.email,
                 uuid: a_req.session.uuids,
-                secret: g_system_secret,
             },
             function (reply) {
                 if (!reply) {
@@ -2390,7 +2388,6 @@ function loadSettings() {
                 g_server_cert_file = config.server.cert_file || g_server_cert_file;
                 g_server_chain_file = config.server.chain_file;
             }
-            g_system_secret = config.server.system_secret;
             g_session_secret = config.server.session_secret;
             g_test = config.server.test || g_test;
         }
@@ -2422,9 +2419,6 @@ function loadSettings() {
         throw e;
     }
 
-    if (!g_system_secret) {
-        throw "Server system secret not set.";
-    }
     if (!g_session_secret) {
         throw "Server session secret not set.";
     }

@@ -1,15 +1,15 @@
 name: Command Mode Formatting
 on:
-  issue_comment:
-    types: [created]
+    issue_comment:
+        types: [created]
 jobs:
-  apply-formatting:
-    name: Format Py and C++ Code
-    runs-on: ubuntu-latest
-    if: startsWith(github.event.comment.body, '@par-hermes format')
-    steps:
-    - uses: JoshuaSBrown/cpp-py-formatter/command@v0.2.3
-      with:
-        botName: par-hermes
-        clangFormatVersion: 10
-        token: ${{ secrets.GITHUB_TOKEN }}
+    apply-formatting:
+        name: Format Py and C++ Code
+        runs-on: ubuntu-latest
+        if: startsWith(github.event.comment.body, '@par-hermes format')
+        steps:
+            - uses: JoshuaSBrown/cpp-py-formatter/command@v0.3.8
+              with:
+                  botName: par-hermes
+                  clangFormatVersion: 10
+                  token: ${{ secrets.GITHUB_TOKEN }}
