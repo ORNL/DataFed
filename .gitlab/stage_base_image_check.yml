@@ -14,6 +14,7 @@ check-dependencies-image:
             BRANCH=$(git branch --show-current)
             cd "$CI_PROJECT_DIR"
             DOWNSTREAM_SHA=$(git submodule status ./external/DataFedDependencies/ | awk '{print $1}')
+            DOWNSTREAM_SHA="${DOWNSTREAM_SHA#-}"
             docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
             FORCE_BUILD="FALSE"
             echo "Pulling: ${REGISTRY}/${PROJECT}/${COMPONENT}:${DOWNSTREAM_SHA}"
