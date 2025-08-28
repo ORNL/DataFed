@@ -53,8 +53,7 @@ else
 fi
 
 local_DATAFED_DATABASE_PORT=""
-if [[ -z "$DATAFED_DATABASE_PORT" ]]
-then
+if [[ -z "$DATAFED_DATABASE_PORT" ]]; then
   # Empty
   local_DATAFED_DATABASE_PORT="8529"
 else

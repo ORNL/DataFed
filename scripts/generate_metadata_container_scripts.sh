@@ -13,8 +13,7 @@ source "${PROJECT_ROOT}/config/datafed.sh"
 VERSION="1.0.0"
 echo "$FILE_NAME $VERSION"
 
-Help()
-{
+Help() {
   echo "$(basename $0) Will set up the docker container scripts for the metadata server"
   echo
   echo "Syntax: $(basename $0) [-h|t|b]"
@@ -28,8 +27,7 @@ Help()
 local_DOCKER_TAG=""
 local_BACKUP_DIRECTORY=""
 
-if [ -z "${DATAFED_DOCKER_TAG}" ]
-then
+if [ -z "${DATAFED_DOCKER_TAG}" ]; then
   local_DOCKER_TAG=""
 else
   local_DOCKER_TAG=$(printenv DATAFED_DOCKER_TAG)
@@ -37,51 +35,50 @@ fi
 
 VALID_ARGS=$(getopt -o ht:b: --long 'help',docker-tag:,backup-directory: -- "$@")
 if [[ $? -ne 0 ]]; then
-      exit 1;
+  exit 1
 fi
 eval set -- "$VALID_ARGS"
 while [ : ]; do
   case "$1" in
-    -h | --help)
-        Help
-        exit 0
-        ;;
-    -t | --docker-tag)
-        local_DOCKER_TAG=$2
-        shift 2
-        ;;
-    -b | --backup-directory)
-        local_BACKUP_DIRECTORY=$2
-        shift 2
-        ;;
-    --) shift; 
-        break 
-        ;;
-    \?) # incorrect option
-        echo "Error: Invalid option"
-        exit;;
+  -h | --help)
+    Help
+    exit 0
+    ;;
+  -t | --docker-tag)
+    local_DOCKER_TAG=$2
+    shift 2
+    ;;
+  -b | --backup-directory)
+    local_BACKUP_DIRECTORY=$2
+    shift 2
+    ;;
+  --)
+    shift
+    break
+    ;;
+  \?) # incorrect option
+    echo "Error: Invalid option"
+    exit
+    ;;
   esac
 done
 
 ERROR_DETECTED=0
 
-if [ -z "$local_DOCKER_TAG" ]
-then
+if [ -z "$local_DOCKER_TAG" ]; then
   echo "Error DOCKER_TAG is not defined, this is a required argument"
   echo "      This variable can be set using the command line option -t, --docker-tag"
   echo "      or with the environment variable DATAFED_DOCKER_TAG."
   ERROR_DETECTED=1
 fi
 
-if [ -z "$local_BACKUP_DIRECTORY" ]
-then
+if [ -z "$local_BACKUP_DIRECTORY" ]; then
   echo "Error BACKUP_DIRECTORY is not defined, this is a required argument"
   echo "      This variable can be set using the command line option -b, --backup-directory"
   ERROR_DETECTED=1
 fi
 
-if [ "$ERROR_DETECTED" == "1" ]
-then
+if [ "$ERROR_DETECTED" == "1" ]; then
   exit 1
 fi
 
@@ -101,13 +98,13 @@ REMOVE_NGINX_SCRIPT="$DATAFED_INSTALL_PATH/scripts/remove_nginx_container.sh"
 
 local_DOCKER_TAG_WEB_SAFE=$(echo $local_DOCKER_TAG | sed 's/\./_/g')
 
-cat << EOF > "$CREATE_DATAFED_NETWORK_SCRIPT"
+cat <<EOF >"$CREATE_DATAFED_NETWORK_SCRIPT"
 #!/bin/bash
 
 docker network create datafed-network
 EOF
 
-cat << EOF > "$RUN_ARANGO_SCRIPT"
+cat <<EOF >"$RUN_ARANGO_SCRIPT"
 #!/bin/bash
 
 CONFIG_FILE_PATH="\$DATAFED_INSTALL_PATH/config/datafed.sh"
@@ -128,20 +125,20 @@ docker run -d \\
 	-t "arangodb/enterprise:3.12" 
 EOF
 
-cat << EOF > "$STOP_ARANGO_SCRIPT"
+cat <<EOF >"$STOP_ARANGO_SCRIPT"
 #!/bin/bash
 
 docker container stop arangodb
 EOF
 
-cat << EOF > "$REMOVE_ARANGO_SCRIPT"
+cat <<EOF >"$REMOVE_ARANGO_SCRIPT"
 #!/bin/bash
 
 docker container stop arangodb
 docker container rm arangodb
 EOF
 
-cat << EOF > "$RUN_CORE_SCRIPT"
+cat <<EOF >"$RUN_CORE_SCRIPT"
 #!/bin/bash
 
 CONFIG_FILE_PATH="\$DATAFED_INSTALL_PATH/config/datafed.sh"
@@ -176,20 +173,20 @@ docker run -d \\
 	-t "datafed/core:$local_DOCKER_TAG" 
 EOF
 
-cat << EOF > "$STOP_CORE_SCRIPT"
+cat <<EOF >"$STOP_CORE_SCRIPT"
 #!/bin/bash
 
 docker container stop datafed-core-$local_DOCKER_TAG
 EOF
 
-cat << EOF > "$REMOVE_CORE_SCRIPT"
+cat <<EOF >"$REMOVE_CORE_SCRIPT"
 #!/bin/bash
 
 docker container stop datafed-core-$local_DOCKER_TAG
 docker container rm datafed-core-$local_DOCKER_TAG
 EOF
 
-cat << EOF > "$RUN_WEB_SCRIPT"
+cat <<EOF >"$RUN_WEB_SCRIPT"
 #!/bin/bash
 
 CONFIG_FILE_PATH="\$DATAFED_INSTALL_PATH/config/datafed.sh"
@@ -222,20 +219,20 @@ docker run -d \\
 	-t "datafed/web:$local_DOCKER_TAG"
 EOF
 
-cat << EOF > "$STOP_WEB_SCRIPT"
+cat <<EOF >"$STOP_WEB_SCRIPT"
 #!/bin/bash
 
 docker container stop datafed-web-$local_DOCKER_TAG_WEB_SAFE
 EOF
 
-cat << EOF > "$REMOVE_WEB_SCRIPT"
+cat <<EOF >"$REMOVE_WEB_SCRIPT"
 #!/bin/bash
 
 docker container stop datafed-web-$local_DOCKER_TAG_WEB_SAFE
 docker container rm datafed-web-$local_DOCKER_TAG_WEB_SAFE
 EOF
 
-cat << EOF > "$RUN_NGINX_SCRIPT"
+cat <<EOF >"$RUN_NGINX_SCRIPT"
 #!/bin/bash
 
 CONFIG_FILE_PATH="\$DATAFED_INSTALL_PATH/config/datafed.sh"
@@ -258,13 +255,13 @@ docker run -d \\
 	nginx:latest
 EOF
 
-cat << EOF > "$STOP_NGINX_SCRIPT"
+cat <<EOF >"$STOP_NGINX_SCRIPT"
 #!/bin/bash
 
 docker container stop datafed-nginx
 EOF
 
-cat << EOF > "$REMOVE_NGINX_SCRIPT"
+cat <<EOF >"$REMOVE_NGINX_SCRIPT"
 #!/bin/bash
 
 docker container stop datafed-nginx

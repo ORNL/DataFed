@@ -13,8 +13,7 @@ source "${PROJECT_ROOT}/config/datafed.sh"
 VERSION="1.0.0"
 echo "$FILE_NAME $VERSION"
 
-Help()
-{
+Help() {
   echo "$(basename $0) Will set up the docker container scripts for the repository server"
   echo
   echo "Syntax: $(basename $0) [-h|t|v|i|d]"
@@ -32,8 +31,7 @@ local_IP_ADDRESS=""
 local_REPO_DOMAIN=""
 local_REPO_VOLUME_MOUNTS=""
 
-if [ -z "${DATAFED_DOCKER_TAG}" ]
-then
+if [ -z "${DATAFED_DOCKER_TAG}" ]; then
   local_DOCKER_TAG=""
 else
   local_DOCKER_TAG=$(printenv DATAFED_DOCKER_TAG)
@@ -41,65 +39,63 @@ fi
 
 VALID_ARGS=$(getopt -o ht:v:i:d: --long 'help',docker-tag:,repo-volume-mounts:,ip-address:,repo-domain: -- "$@")
 if [[ $? -ne 0 ]]; then
-      exit 1;
+  exit 1
 fi
 eval set -- "$VALID_ARGS"
 while [ : ]; do
   case "$1" in
-    -h | --help)
-        Help
-        exit 0
-        ;;
-    -t | --docker-tag)
-        local_DOCKER_TAG=$2
-        shift 2
-        ;;
-    -v | --repo-volume-mounts)
-        local_REPO_VOLUME_MOUNTS=$2
-        shift 2
-        ;;
-    -i | --ip-address)
-        local_IP_ADDRESS=$2
-        shift 2
-        ;;
-    -d | --repo-domain)
-        local_REPO_DOMAIN=$2
-        shift 2
-        ;;
-    --) shift; 
-        break 
-        ;;
-    \?) # incorrect option
-        echo "Error: Invalid option"
-        exit;;
+  -h | --help)
+    Help
+    exit 0
+    ;;
+  -t | --docker-tag)
+    local_DOCKER_TAG=$2
+    shift 2
+    ;;
+  -v | --repo-volume-mounts)
+    local_REPO_VOLUME_MOUNTS=$2
+    shift 2
+    ;;
+  -i | --ip-address)
+    local_IP_ADDRESS=$2
+    shift 2
+    ;;
+  -d | --repo-domain)
+    local_REPO_DOMAIN=$2
+    shift 2
+    ;;
+  --)
+    shift
+    break
+    ;;
+  \?) # incorrect option
+    echo "Error: Invalid option"
+    exit
+    ;;
   esac
 done
 
 ERROR_DETECTED=0
-if [ -z "$local_DOCKER_TAG" ]
-then
+if [ -z "$local_DOCKER_TAG" ]; then
   echo "Error DOCKER_TAG is not defined, this is a required argument"
   echo "      This variable can be set using the command line option -t, --docker-tag"
   echo "      or with the environment variable DATAFED_DOCKER_TAG."
   ERROR_DETECTED=1
 fi
 
-if [ -z "$local_IP_ADDRESS" ]
-then
+if [ -z "$local_IP_ADDRESS" ]; then
   echo "Error IP_ADDRESS is not defined, this is a required argument"
   echo "      This variable can be set using the command line option -i, --ip-address"
   ERROR_DETECTED=1
 fi
 
-if [ -z "$local_REPO_DOMAIN" ]
-then
+if [ -z "$local_REPO_DOMAIN" ]; then
   echo "Error REPO_DOMAIN is not defined, this is a required argument"
   echo "      This variable can be set using the command line option -d, --repo-domain"
   ERROR_DETECTED=1
 fi
 
-if [ "$ERROR_DETECTED" == "1" ]
-then
+if [ "$ERROR_DETECTED" == "1" ]; then
   exit 1
 fi
 
@@ -110,13 +106,13 @@ RUN_GCS_SCRIPT="$DATAFED_INSTALL_PATH/scripts/run_gcs_container.sh"
 STOP_GCS_SCRIPT="$DATAFED_INSTALL_PATH/scripts/stop_gcs_container.sh"
 REMOVE_GCS_SCRIPT="$DATAFED_INSTALL_PATH/scripts/remove_gcs_container.sh"
 
-IFS=',' read -ra local_REPO_VOLUME_MOUNTS <<< "$local_REPO_VOLUME_MOUNTS"
+IFS=',' read -ra local_REPO_VOLUME_MOUNTS <<<"$local_REPO_VOLUME_MOUNTS"
 local_REPO_VOLUME_MOUNTS_EXPANDED=""
 for volume_mount in "${local_REPO_VOLUME_MOUNTS[@]}"; do
   local_REPO_VOLUME_MOUNTS_EXPANDED+="-v \"$volume_mount\" "
 done
 
-cat << EOF > "$RUN_REPO_SCRIPT"
+cat <<EOF >"$RUN_REPO_SCRIPT"
 #!/bin/bash
 
 CONFIG_FILE_PATH="\$DATAFED_INSTALL_PATH/config/datafed.sh"
@@ -150,20 +146,20 @@ docker run -d \\
 	-t "datafed/repo:$local_DOCKER_TAG"
 EOF
 
-cat << EOF > "$STOP_REPO_SCRIPT"
+cat <<EOF >"$STOP_REPO_SCRIPT"
 #!/bin/bash
 
 docker container stop datafed-repo-$local_DOCKER_TAG
 EOF
 
-cat << EOF > "$REMOVE_REPO_SCRIPT"
+cat <<EOF >"$REMOVE_REPO_SCRIPT"
 #!/bin/bash
 
 docker container stop datafed-repo-$local_DOCKER_TAG
 docker container rm datafed-repo-$local_DOCKER_TAG
 EOF
 
-cat << EOF > "$RUN_GCS_SCRIPT"
+cat <<EOF >"$RUN_GCS_SCRIPT"
 #!/bin/bash
 
 CONFIG_FILE_PATH="\$DATAFED_INSTALL_PATH/config/datafed.sh"
@@ -203,13 +199,13 @@ docker run -d \\
 	-t "datafed/gcs:$local_DOCKER_TAG"
 EOF
 
-cat << EOF > "$STOP_GCS_SCRIPT"
+cat <<EOF >"$STOP_GCS_SCRIPT"
 #!/bin/bash
 
 docker container stop datafed-gcs-$local_DOCKER_TAG
 EOF
 
-cat << EOF > "$REMOVE_GCS_SCRIPT"
+cat <<EOF >"$REMOVE_GCS_SCRIPT"
 #!/bin/bash
 
 docker container stop datafed-gcs-$local_DOCKER_TAG
