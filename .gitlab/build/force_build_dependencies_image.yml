@@ -1,0 +1,10 @@
+---
+stages:
+  - build
+
+build-dependencies:
+    stage: build
+    trigger:
+        project: dlsw/datafed/datafed_dependencies
+        branch: main
+        strategy: depend
