@@ -1,0 +1,11 @@
+---
+include:
+    - local: .gitlab/common.yml
+
+check-dependencies-image:
+    extends: .image_check
+    stage: base-image-check
+    variables:
+        PROJECT: "datafed"
+        COMPONENT: "dependencies"
+        BUILD_INTERMEDIATE: "FALSE"
