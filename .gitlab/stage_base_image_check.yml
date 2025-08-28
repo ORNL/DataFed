@@ -16,6 +16,7 @@ check-dependencies-image:
             DOWNSTREAM_SHA=$(git submodule status ./external/DataFedDependencies/ | awk '{print $1}')
             docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
             FORCE_BUILD="FALSE"
+            echo "Pulling: ${REGISTRY}/${PROJECT}/${COMPONENT}:${DOWNSTREAM_SHA}"
             set +e
             docker pull --quiet "${REGISTRY}/${PROJECT}/${COMPONENT}:${DOWNSTREAM_SHA}"
             if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD="TRUE"; fi;
