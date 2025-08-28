@@ -8,6 +8,7 @@ const g_lib = require("./support");
 const g_proc = require("./process");
 const g_tasks = require("./tasks");
 const { UserToken } = require("./lib/user_token");
+const { validateRepositorySupportsDataOperations } = require("./repository/validation");
 
 module.exports = router;
 
@@ -89,6 +90,13 @@ function recordCreate(client, record, result) {
         }
 
         if (!repo_alloc) throw [g_lib.ERR_NO_ALLOCATION, "No allocation available"];
+
+        // Check if repository supports data operations
+        validateRepositorySupportsDataOperations(
+            repo_alloc._to,
+            null,
+            "Data uploads not supported for metadata-only repository",
+        );
 
         // Extension setting only apply to managed data
         if (record.ext) {

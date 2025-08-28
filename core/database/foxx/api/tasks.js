@@ -1,16 +1,18 @@
 "use strict";
 
-// local imports
 const g_lib = require("./support");
 const { UserToken } = require("./lib/user_token");
+const { RepositoryOps } = require("./repository/operations");
+const { validateRepositorySupportsDataOperations } = require("./repository/validation");
+const { RepositoryType } = require("./repository/types");
 
 const g_db = require("@arangodb").db;
 const g_graph = require("@arangodb/general-graph")._graph("sdmsg");
 const g_proc = require("./process");
 var g_internal = require("internal");
 
-var tasks_func = (function () {
-    var obj = {};
+const tasks_func = (function () {
+    const obj = {};
 
     // ----------------------- ALLOC CREATE ----------------------------
 
@@ -308,6 +310,22 @@ var tasks_func = (function () {
 
         var result = g_proc.preprocessItems(a_client, null, a_res_ids, g_lib.TT_DATA_GET);
 
+        // Check repository types for all Globus data items
+        if (result.glob_data.length > 0) {
+            for (var i = 0; i < result.glob_data.length; i++) {
+                var data = result.glob_data[i];
+                // Get repository from data location
+                var loc = g_db.loc.firstExample({ _from: data.id });
+                if (loc) {
+                    validateRepositorySupportsDataOperations(
+                        loc._to,
+                        data.id,
+                        `Data transfers not supported for this repository type`,
+                    );
+                }
+            }
+        }
+
         if (result.glob_data.length + result.ext_data.length > 0 && !a_check) {
             var idx = a_path.indexOf("/");
             if (idx == -1)
@@ -491,6 +509,22 @@ var tasks_func = (function () {
         console.log("taskInitDataPut");
 
         var result = g_proc.preprocessItems(a_client, null, a_res_ids, g_lib.TT_DATA_PUT);
+
+        // Check repository types for all Globus data items
+        if (result.glob_data.length > 0) {
+            for (var i = 0; i < result.glob_data.length; i++) {
+                var data = result.glob_data[i];
+                // Get repository from data location
+                var loc = g_db.loc.firstExample({ _from: data.id });
+                if (loc) {
+                    validateRepositorySupportsDataOperations(
+                        loc._to,
+                        data.id,
+                        `Data transfers not supported for this repository type`,
+                    );
+                }
+            }
+        }
 
         if (result.glob_data.length > 0 && !a_check) {
             var idx = a_path.indexOf("/");
@@ -2807,6 +2841,46 @@ var tasks_func = (function () {
                 throw [g_lib.ERR_PERM_DENIED, "Operation not permitted - '" + id + "' in use."];
         }
         //console.log("_ensureExclusiveAccess done", Date.now());
+    };
+
+    // ----------------------- REPO ALLOCATION WRAPPERS ----------------------------
+
+    // Wrapper for allocation creation (used by repository factory pattern)
+    obj.repoAllocationCreateTask = function (params) {
+        // Extract parameters from the params object
+        const { repo_id, subject, size, path, metadata } = params;
+
+        // Get the repository to determine limits
+        const repo = g_db.repo.document(repo_id);
+
+        // Use a reasonable default for rec_limit if not specified
+        const rec_limit = params.rec_limit || 1000000; // 1 million records as default
+
+        // Create a dummy client object that has admin permissions
+        // This is because the repository operations have already validated permissions
+        const systemClient = { _id: "system", is_admin: true };
+
+        // Call the existing taskInitAllocCreate function
+        return obj.taskInitAllocCreate(
+            systemClient,
+            repo_id,
+            subject,
+            size || repo.capacity, // Use repo capacity if size not specified
+            rec_limit,
+        );
+    };
+
+    // Wrapper for allocation deletion (used by repository factory pattern)
+    obj.repoAllocationDeleteTask = function (params) {
+        // Extract parameters from the params object
+        const { repo_id, subject } = params;
+
+        // Create a dummy client object that has admin permissions
+        // This is because the repository operations have already validated permissions
+        const systemClient = { _id: "system", is_admin: true };
+
+        // Call the existing taskInitAllocDelete function
+        return obj.taskInitAllocDelete(systemClient, repo_id, subject);
     };
 
     return obj;

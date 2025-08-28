@@ -1,6 +1,7 @@
 "use strict";
 
 const { Result } = require("./types");
+const { RepositoryOps } = require("./operations");
 const g_lib = require("../support");
 
 /**
@@ -137,11 +138,6 @@ const validateGlobusConfig = (config) => {
         errors.push(endpointValidation.error.message);
     }
 
-    const domainValidation = validateNonEmptyString(config.domain, "Domain");
-    if (!domainValidation.ok) {
-        errors.push(domainValidation.error.message);
-    }
-
     if (errors.length > 0) {
         return Result.err({
             code: g_lib.ERR_INVALID_PARAM,
@@ -175,7 +171,7 @@ const validateMetadataConfig = (config) => {
 
     // Metadata repositories don't need Globus-specific fields
     // But should not have them either
-    const invalidFields = ["pub_key", "address", "endpoint", "path", "exp_path", "domain"];
+    const invalidFields = ["pub_key", "address", "endpoint", "path", "exp_path"];
     const presentInvalidFields = invalidFields.filter((field) => config[field] !== undefined);
 
     if (presentInvalidFields.length > 0) {
@@ -215,6 +211,29 @@ const validateAllocationParams = (params) => {
     return Result.ok(true);
 };
 
+// Validates that a repository supports data operations
+const validateRepositorySupportsDataOperations = (repoId, dataId, errorMessage) => {
+    const findResult = RepositoryOps.find(repoId);
+    if (findResult.ok) {
+        const repository = findResult.value;
+        const dataOpsResult = RepositoryOps.supportsDataOperations(repository);
+
+        if (dataOpsResult.ok && !dataOpsResult.value) {
+            const defaultMessage =
+                errorMessage || `Data operations not supported for ${repository.type} repository`;
+            throw [
+                g_lib.ERR_INVALID_OPERATION,
+                defaultMessage,
+                {
+                    repo_type: repository.type,
+                    repo_id: repository.data._id,
+                    data_id: dataId,
+                },
+            ];
+        }
+    }
+};
+
 module.exports = {
     validateNonEmptyString,
     validateCommonFields,
@@ -223,4 +242,5 @@ module.exports = {
     validateGlobusConfig,
     validateMetadataConfig,
     validateAllocationParams,
+    validateRepositorySupportsDataOperations,
 };

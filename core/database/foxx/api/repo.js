@@ -4,6 +4,8 @@ const g_db = require("@arangodb").db;
 const g_lib = require("./support");
 const { errors } = require("@arangodb");
 const pathModule = require("./posix_path");
+const { RepositoryOps } = require("./repository/operations");
+const { Result } = require("./repository/types");
 
 /**
  * All DataFed repositories have the following path structure on a POSIX file system
@@ -37,6 +39,10 @@ const PathType = {
     UNKNOWN: "UNKNOWN",
 };
 
+/**
+ * Legacy Repo class for backward compatibility
+ * Internally uses new repository patterns but maintains old API
+ */
 class Repo {
     // ERROR code
     #error = null;
@@ -47,6 +53,8 @@ class Repo {
     // The repo id simply the key prepended with 'repo/'
     #repo_id = null;
     #repo_key = null;
+    // Store the repository object using new patterns
+    #repository = null;
 
     /**
      * Constructs a Repo object and checks if the key exists in the database.
@@ -66,28 +74,19 @@ class Repo {
         //
         // Will return true if it does and false if it does not.
         if (a_key && a_key !== "repo/") {
-            if (a_key.startsWith("repo/")) {
-                this.#repo_id = a_key;
-                this.#repo_key = a_key.slice("repo/".length);
-            } else {
-                this.#repo_id = "repo/" + a_key;
-                this.#repo_key = a_key;
-            }
+            // Use new repository operations to find the repo
+            const findResult = RepositoryOps.find(a_key);
 
-            // Check if the repo document exists
-            try {
-                if (collection.exists(this.#repo_key)) {
-                    this.#exists = true;
-                } else {
-                    this.#exists = false;
-                    this.#error = g_lib.ERR_NOT_FOUND;
-                    this.#err_msg = "Invalid repo: (" + a_key + "). No record found.";
-                }
-            } catch (e) {
+            if (findResult.ok) {
+                this.#exists = true;
+                this.#repository = findResult.value;
+                this.#repo_id = findResult.value.data._id;
+                this.#repo_key = findResult.value.data._key;
+            } else {
                 this.#exists = false;
-                this.#error = g_lib.ERR_INTERNAL_FAULT;
-                this.#err_msg = "Unknown error encountered.";
-                console.log(e);
+                this.#error =
+                    findResult.error.code === 404 ? g_lib.ERR_NOT_FOUND : g_lib.ERR_INTERNAL_FAULT;
+                this.#err_msg = findResult.error.message;
             }
         }
     }
@@ -127,6 +126,14 @@ class Repo {
     }
 
     /**
+     * Get the underlying repository object (new pattern)
+     * @returns {object|null} Repository object or null if not exists
+     */
+    getRepository() {
+        return this.#repository;
+    }
+
+    /**
      * Detect what kind of POSIX path has been provided
      *
      * @param {string} a_path - the POSIX path that is supposed to exist on the repo
@@ -138,13 +145,17 @@ class Repo {
             throw [g_lib.ERR_PERM_DENIED, "Repo does not exist " + this.#repo_id];
         }
 
-        let repo = g_db._document(this.#repo_id);
-        if (!repo.path) {
+        const repoData = this.#repository.data;
+        if (!repoData.path) {
+            // Metadata-only repos don't have paths
+            if (repoData.type === "metadata_only") {
+                return PathType.UNKNOWN;
+            }
             throw [g_lib.ERR_INTERNAL_FAULT, "Repo document is missing path: " + this.#repo_id];
         }
 
         // Get and sanitize the repo root path by removing the trailing slash if one exists
-        let repo_root_path = repo.path.replace(/\/$/, "");
+        let repo_root_path = repoData.path.replace(/\/$/, "");
         let sanitized_path = a_path.replace(/\/$/, "");
 
         // Check if the sanitized path is exactly the repo root path
