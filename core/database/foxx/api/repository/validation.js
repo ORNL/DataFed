@@ -6,7 +6,8 @@ const g_lib = require("../support");
 
 // Define error code constant if not available from g_lib
 const ERR_INVALID_PARAM = g_lib.ERR_INVALID_PARAM !== undefined ? g_lib.ERR_INVALID_PARAM : 2;
-const ERR_INVALID_OPERATION = g_lib.ERR_INVALID_OPERATION !== undefined ? g_lib.ERR_INVALID_OPERATION : 400;
+const ERR_INVALID_OPERATION =
+    g_lib.ERR_INVALID_OPERATION !== undefined ? g_lib.ERR_INVALID_OPERATION : 400;
 
 /**
  * Standalone validation functions following Rust patterns
@@ -126,7 +127,7 @@ const validateGlobusConfig = (config) => {
     if (config.admin && !config.admins) {
         normalizedConfig.admins = config.admin;
     }
-    
+
     const commonResult = validateCommonFields(normalizedConfig);
     if (!commonResult.ok) {
         return commonResult;
@@ -181,7 +182,7 @@ const validateMetadataConfig = (config) => {
     if (config.admin && !config.admins) {
         normalizedConfig.admins = config.admin;
     }
-    
+
     const commonResult = validateCommonFields(normalizedConfig);
     if (!commonResult.ok) {
         return commonResult;
@@ -257,13 +258,13 @@ const validatePartialGlobusConfig = (config, repoId) => {
     // For partial updates, we don't require all fields
     // Only validate the fields that are provided
     const errors = [];
-    
+
     // Normalize admin/admins field for backward compatibility
     const normalizedConfig = { ...config };
     if (config.admin && !config.admins) {
         normalizedConfig.admins = config.admin;
     }
-    
+
     // Validate provided fields
     if (normalizedConfig.title !== undefined) {
         const titleValidation = validateNonEmptyString(normalizedConfig.title, "Repository title");
@@ -271,61 +272,61 @@ const validatePartialGlobusConfig = (config, repoId) => {
             errors.push(titleValidation.error.message);
         }
     }
-    
+
     if (normalizedConfig.capacity !== undefined) {
         if (typeof normalizedConfig.capacity !== "number" || normalizedConfig.capacity <= 0) {
             errors.push("Repository capacity must be a positive number");
         }
     }
-    
+
     if (normalizedConfig.admins !== undefined) {
         if (!Array.isArray(normalizedConfig.admins) || normalizedConfig.admins.length === 0) {
             errors.push("Repository must have at least one admin");
         }
     }
-    
+
     if (normalizedConfig.pub_key !== undefined) {
         const pubKeyValidation = validateNonEmptyString(normalizedConfig.pub_key, "Public key");
         if (!pubKeyValidation.ok) {
             errors.push(pubKeyValidation.error.message);
         }
     }
-    
+
     if (normalizedConfig.address !== undefined) {
         const addressValidation = validateNonEmptyString(normalizedConfig.address, "Address");
         if (!addressValidation.ok) {
             errors.push(addressValidation.error.message);
         }
     }
-    
+
     if (normalizedConfig.endpoint !== undefined) {
         const endpointValidation = validateNonEmptyString(normalizedConfig.endpoint, "Endpoint");
         if (!endpointValidation.ok) {
             errors.push(endpointValidation.error.message);
         }
     }
-    
+
     if (normalizedConfig.path !== undefined && repoId) {
         const pathResult = validateRepositoryPath(normalizedConfig.path, repoId);
         if (!pathResult.ok) {
             return pathResult;
         }
     }
-    
+
     if (normalizedConfig.exp_path !== undefined) {
         const expPathResult = validatePOSIXPath(normalizedConfig.exp_path, "Export path");
         if (!expPathResult.ok) {
             return expPathResult;
         }
     }
-    
+
     if (errors.length > 0) {
         return Result.err({
             code: ERR_INVALID_PARAM,
             message: errors.join("; "),
         });
     }
-    
+
     return Result.ok(true);
 };
 

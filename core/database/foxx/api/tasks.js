@@ -47,7 +47,7 @@ const tasks_func = (function () {
             "Repo=" + a_repo_id,
             "RepoAdmins=" + (repo.admins ? JSON.stringify(repo.admins) : "none"),
             "AdminEdge=" + (adminEdge ? "exists" : "missing"),
-            "Subject=" + a_subject_id
+            "Subject=" + a_subject_id,
         ].join(" | ");
 
         // Temporarily throw the debug info as an error so it appears in logs
