@@ -24,11 +24,10 @@ build-dependencies:
       DOWNSTREAM_REF=$(git branch --show-current)   # Branch to run pipeline on
       cd "$CI_PROJECT_DIR"
       DOWNSTREAM_SHA=$(git submodule status ./external/DataFedDependencies/ | awk '{print $1}')   # Commit SHA to trigger on
-      
       # Trigger the downstream pipeline
       echo "Triggering downstream pipeline..."
       PIPELINE=$(curl --silent --fail --show-error -X POST \
-        --header "PRIVATE-TOKEN: $GITLAB_TOKEN" \
+        --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
         --form "ref=$DOWNSTREAM_REF" \
         --form "variables[TRIGGERED_BY]=$CI_PROJECT_PATH" \
         --form "variables[COMMIT_SHA]=$DOWNSTREAM_SHA" \
@@ -45,7 +44,7 @@ build-dependencies:
       while [ "$STATUS" = "running" ] || [ "$STATUS" = "pending" ]; do
         sleep 20
         STATUS=$(curl --silent --fail \
-          --header "PRIVATE-TOKEN: $GITLAB_TOKEN" \
+          --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
           "$CI_API_V4_URL/projects/$DOWNSTREAM_PROJECT_ID/pipelines/$PIPELINE_ID" \
           | jq -r '.status')
         echo "Pipeline $PIPELINE_ID status: $STATUS"
