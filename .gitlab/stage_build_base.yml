@@ -2,17 +2,20 @@
 include:
     - local: .gitlab/common.yml
 
-build-dependencies:
-    extends: .docker_base_build_script
+run-build-dependencies:
+    needs:
+        - job: check-dependencies-image
+          artifacts: true
     stage: build-base
+    trigger:
+        include:
+            - artifact: dependencies_image.yml
+              job: check-dependencies-image
+        strategy: depend
     variables:
-        DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
-        PROJECT: "datafed"
-        COMPONENT: "dependencies"
-        GIT_STRATEGY: clone
-        DOCKER_FILE_PATH: "docker/Dockerfile.dependencies"
-    tags:
-        - docker
+        REGISTRY: "${REGISTRY}"
+        HARBOR_USER: "${HARBOR_USER}"
+        HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
 
 build-runtime:
     extends: .docker_base_build_script
