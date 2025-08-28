@@ -173,7 +173,6 @@ if [[ "$output" =~ .*"sdms".* ]]; then
   echo "SDMS already exists do nothing"
 else
   echo "Creating SDMS"
-  # Do not quote ssl_args otherwise the arguments will not separate correctly
   arangosh --server.endpoint \
     "${local_ARANGOSH_SERVER_ENDPOINT_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
     --server.password "${local_DATAFED_DATABASE_PASSWORD}" \
@@ -181,12 +180,10 @@ else
     --javascript.execute "${PROJECT_ROOT}/core/database/foxx/db_create.js"
   # Give time for the database to be created
   sleep 2
-  # Do not quote ssl_args otherwise the arguments will not separate correctly
   arangosh --server.endpoint "${local_ARANGOSH_SERVER_ENDPOINT_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
     --server.password "${local_DATAFED_DATABASE_PASSWORD}" \
     --server.username "${local_DATABASE_USER}" \
     --javascript.execute-string 'db._useDatabase("sdms"); db.config.insert({"_key": "msg_daily", "msg" : "DataFed servers will be off-line for regular maintenance every Sunday night from 11:45 pm until 12:15 am EST Monday morning."}, {overwrite: true});'
-  # Do not quote ssl_args otherwise the arguments will not separate correctly
   arangosh --server.endpoint "${local_ARANGOSH_SERVER_ENDPOINT_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
     --server.password "${local_DATAFED_DATABASE_PASSWORD}" \
     --server.username "${local_DATABASE_USER}" \
