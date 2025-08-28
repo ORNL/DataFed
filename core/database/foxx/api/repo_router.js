@@ -160,6 +160,11 @@ router
                     // Prepare repository data for saving
                     prepareRepoData(obj);
 
+                    // Default type to GLOBUS for new repositories if not specified
+                    if (!req.body.type) {
+                        obj.type = RepositoryType.GLOBUS;
+                    }
+
                     var repo = g_db.repo.save(obj, {
                         returnNew: true,
                     });
