@@ -32,8 +32,29 @@ const tasks_func = (function () {
         if (!g_db._exists(a_subject_id))
             throw [g_lib.ERR_NOT_FOUND, "Subject, '" + a_subject_id + "', does not exist"];
 
-        // Check for proper permissions
-        g_lib.ensureAdminPermRepo(a_client, a_repo_id);
+        // Add detailed debugging via temporary error
+        var repo = g_db.repo.document(a_repo_id);
+        var adminEdge = g_db.admin.firstExample({
+            _from: a_repo_id,
+            _to: a_client._id,
+        });
+
+        // Create debug info string
+        var debugInfo = [
+            "ALLOC_DEBUG:",
+            "Client=" + (a_client ? a_client._id : "undefined"),
+            "IsAdmin=" + (a_client ? a_client.is_admin : "undefined"),
+            "Repo=" + a_repo_id,
+            "RepoAdmins=" + (repo.admins ? JSON.stringify(repo.admins) : "none"),
+            "AdminEdge=" + (adminEdge ? "exists" : "missing"),
+            "Subject=" + a_subject_id
+        ].join(" | ");
+
+        // Temporarily throw the debug info as an error so it appears in logs
+        throw [g_lib.ERR_INTERNAL_FAULT, debugInfo];
+
+        // Original permission check (commented out temporarily)
+        // g_lib.ensureAdminPermRepo(a_client, a_repo_id);
 
         // Check if there is already a matching allocation
         var alloc = g_db.alloc.firstExample({

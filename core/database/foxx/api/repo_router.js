@@ -9,6 +9,7 @@ const g_lib = require("./support");
 const g_tasks = require("./tasks");
 const { validateGlobusConfig, validatePartialGlobusConfig } = require("./repository/validation");
 const { RepositoryOps } = require("./repository/operations");
+const { RepositoryType } = require("./repository/types");
 
 // Helper function to prepare repository data for saving
 const prepareRepoData = (obj) => {
