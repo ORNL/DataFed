@@ -75,6 +75,7 @@ pub enum Object {
     User,
 }
 
+#[allow(unused)]
 pub static REQUEST_COUNT: LazyLock<IntCounterVec> = LazyLock::new(|| {
     register_int_counter_vec!(
         "request_count",                           // label name
