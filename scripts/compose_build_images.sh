@@ -60,21 +60,13 @@ echo "BUILD_METADATA: $BUILD_METADATA"
 echo "BUILD_REPO:     $BUILD_REPO"
 
 if [[ "$BUILD_METADATA" == "TRUE" ]]; then
+  "${PROJECT_ROOT}"/external/DataFedDependencies/scripts/build_image.sh --base-image "$BASE_IMAGE"
   if [ "$BASE_IMAGE" == "" ]; then
-    docker build \
-      -f "${PROJECT_ROOT}/docker/Dockerfile.dependencies" \
-      "${PROJECT_ROOT}" \
-      -t datafed-dependencies:latest
     docker build \
       -f "${PROJECT_ROOT}/docker/Dockerfile.runtime" \
       "${PROJECT_ROOT}" \
       -t datafed-runtime:latest
   else
-    docker build \
-      -f "${PROJECT_ROOT}/docker/Dockerfile.dependencies" \
-      "${PROJECT_ROOT}" \
-      --build-arg BASE_IMAGE=$BASE_IMAGE \
-      -t datafed-dependencies:latest
     docker build \
       -f "${PROJECT_ROOT}/docker/Dockerfile.runtime" \
       "${PROJECT_ROOT}" \
@@ -114,6 +106,7 @@ if [[ "$BUILD_REPO" == "TRUE" ]]; then
   git checkout "$DATAFED_GCS_SUBMODULE_VERSION"
   docker build --progress plain --tag "gcs-ubuntu-base:latest" - <"./docker-files/Dockerfile.debian-12"
   cd "${PROJECT_ROOT}"
+  "${PROJECT_ROOT}"/external/DataFedDependencies/scripts/build_image.sh --base-image "$BASE_IMAGE"
   if [ "$BASE_IMAGE" == "" ]; then
     docker build \
       -f "${PROJECT_ROOT}/docker/Dockerfile.dependencies" \
@@ -124,11 +117,6 @@ if [[ "$BUILD_REPO" == "TRUE" ]]; then
       "${PROJECT_ROOT}" \
       -t datafed-runtime:latest
   else
-    docker build \
-      -f "${PROJECT_ROOT}/docker/Dockerfile.dependencies" \
-      "${PROJECT_ROOT}" \
-      --build-arg BASE_IMAGE=$BASE_IMAGE \
-      -t datafed-dependencies:latest
     docker build \
       -f "${PROJECT_ROOT}/docker/Dockerfile.runtime" \
       "${PROJECT_ROOT}" \
