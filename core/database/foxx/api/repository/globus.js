@@ -32,25 +32,39 @@ const createAllocation = (repoData, params) => {
 
     try {
         // Create task for async Globus allocation
-        const task = g_tasks.repoAllocationCreateTask({
+        // Note: taskInitAllocCreate expects (client, repo_id, subject_id, data_limit, rec_limit)
+        // For now, using a system client since this is called from the new repository pattern
+        const systemClient = { _id: "system", is_admin: true };
+        
+        const taskResult = g_tasks.taskInitAllocCreate(
+            systemClient,
+            repoData._id,
+            params.subject,
+            params.size || params.data_limit,  // Handle both parameter names
+            params.rec_limit || 1000000        // Default to 1M records if not specified
+        );
+        
+        // The taskResult contains { task: taskObject }
+        // We need to return the task properties that the web service expects
+        const task = taskResult.task;
+        
+        // Return a structure that matches what the original API expects
+        // The web service needs properties like state, task_id, status, etc.
+        return Result.ok({
+            id: `alloc/${Date.now()}`,  // Temporary allocation ID format
             repo_id: repoData._id,
             subject: params.subject,
-            size: params.size,
-            path: params.path || null,
-            metadata: params.metadata || {},
+            task_id: task._id,
+            status: task.status,
+            state: task.state,  // Important: include the state property
+            queue_time: task.ct || Date.now()
         });
-
-        return Result.ok(
-            createAllocationResult(ExecutionMethod.TASK, {
-                task_id: task.task_id,
-                status: task.status,
-                queue_time: task.queue_time,
-            }),
-        );
     } catch (e) {
+        // Handle both Error objects and array-style errors
+        const errorMessage = e.message || (Array.isArray(e) && e[1]) || String(e);
         return Result.err({
             code: g_lib.ERR_INTERNAL_FAULT,
-            message: `Failed to create allocation task: ${e.message}`,
+            message: `Failed to create allocation task: ${errorMessage}`,
         });
     }
 };

@@ -106,6 +106,7 @@ const RepositoryOps = {
 
             // Return as tagged union based on type
             return Result.ok({
+                id: repo._id,  // Add id at top level for easy access
                 type: repo.type,
                 data: repo,
             });
@@ -159,10 +160,42 @@ const RepositoryOps = {
 
     // Check repository permissions
     checkPermission: (repository, userId, permission) => {
-        // Simple admin check for now - can be extended
+        console.log("\n===== RepositoryOps.checkPermission =====");
+        console.log("Repository ID:", repository.id);
+        console.log("User ID:", userId);
+        console.log("Permission type:", permission);
+        console.log("Repository data.admins:", repository.data.admins);
+        
+        // Check if user is in admins array (if it exists)
         if (repository.data.admins && repository.data.admins.includes(userId)) {
+            console.log("User found in repository.data.admins array");
+            console.log("===== checkPermission: GRANTED (admins array) =====");
             return Result.ok(true);
         }
+        
+        // Check for admin edge in the database
+        const g_db = require("@arangodb").db;
+        const adminEdge = g_db.admin.firstExample({
+            _from: repository.id,
+            _to: userId
+        });
+        
+        if (adminEdge) {
+            console.log("Admin edge found from", repository.id, "to", userId);
+            console.log("===== checkPermission: GRANTED (admin edge) =====");
+            return Result.ok(true);
+        }
+        
+        // Check if user is system admin
+        const userDoc = g_db._document(userId);
+        if (userDoc && userDoc.is_admin) {
+            console.log("User is system admin (is_admin: true)");
+            console.log("===== checkPermission: GRANTED (system admin) =====");
+            return Result.ok(true);
+        }
+        
+        console.log("No permission found - not in admins array, no admin edge, not system admin");
+        console.log("===== checkPermission: DENIED =====");
         return Result.ok(false);
     },
 };
