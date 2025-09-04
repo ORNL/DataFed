@@ -260,8 +260,18 @@ router
                         "Started",
                         "|",
                         "Desc:",
-                        "Creating new user entry",
+                        "Creating new user entry:",
                         "|",
+                        "Name:",
+                        req.queryParams.name,
+                        "Email:",
+                        req.queryParams.email,
+                        "Options:",
+                        req.queryParams.options,
+                        "uuid:",
+                        req.queryParams.uuids,
+                        "is_admin:",
+                        req.queryParams.is_admin 
                     );
 
                     var root = g_db.c.save(
@@ -364,6 +374,16 @@ router
                 "Desc:",
                 "Create new user entry",
                 "|",
+                "Name:",
+                req.queryParams.name,
+                "Email:",
+                req.queryParams.email,
+                "Options:",
+                req.queryParams.options,
+                "uuid:",
+                req.queryParams.uuids,
+                "is_admin:",
+                req.queryParams.is_admin
             );
         } catch (e) {
             console.error(
@@ -385,6 +405,16 @@ router
                 "Desc:",
                 "Create new user entry",
                 "|",
+                "Name:",
+                req.queryParams.name,
+                "Email:",
+                req.queryParams.email,
+                "Options:",
+                req.queryParams.options,
+                "uuid:",
+                req.queryParams.uuids,
+                "is_admin:",
+                req.queryParams.is_admin,
                 "Err:",
                 e.message || e,
                 "|",
@@ -421,7 +451,7 @@ router
                     write: ["u", "admin"],
                 },
                 action: function () {
-                    client = g_lib.getUserFromClientID(req.queryParams.client);
+                client = g_lib.getUserFromClientID(req.queryParams.client);
                     var user_id;
                     console.info(
                         "Client:",
@@ -442,6 +472,16 @@ router
                         "Desc:",
                         "Updating user information",
                         "|",
+                        "Name:",
+                        req.queryParams.name,
+                        "Email:",
+                        req.queryParams.email,
+                        "Options:",
+                        req.queryParams.options,
+                        "uuid:",
+                        req.queryParams.uuids,
+                        "is_admin:",
+                        req.queryParams.is_admin,
                     );
                     if (req.queryParams.subject) {
                         user_id = req.queryParams.subject;
@@ -523,6 +563,16 @@ router
                 "Desc:",
                 "Updating user information",
                 "|",
+                "Name:",
+                req.queryParams.name,
+                "Email:",
+                req.queryParams.email,
+                "Options:",
+                req.queryParams.options,
+                "uuid:",
+                req.queryParams.uuids,
+                "is_admin:",
+                req.queryParams.is_admin,
             );
         } catch (e) {
             console.error(
@@ -544,6 +594,16 @@ router
                 "Desc:",
                 "Updating user information",
                 "|",
+                "Name:",
+                req.queryParams.name,
+                "Email:",
+                req.queryParams.email,
+                "Options:",
+                req.queryParams.options,
+                "uuid:",
+                req.queryParams.uuids,
+                "is_admin:",
+                req.queryParams.is_admin,
                 "Err:",
                 e.message || e,
                 "|",
@@ -592,6 +652,9 @@ router
                 "|",
                 "Desc:",
                 "Find a user from list of UUIDs",
+                "|",
+                "UUIDs:",
+                req.queryParams.uuids
             );
 
             var idents = g_db
@@ -630,6 +693,8 @@ router
                 "Desc:",
                 "Find a user from list of UUIDs",
                 "|",
+                "UUIDs:",
+                req.queryParams.uuids
             );
         } catch (e) {
             console.error(
@@ -651,6 +716,8 @@ router
                 "Desc:",
                 "Find a user from list of UUIDs",
                 "|",
+                "User_UID:",
+                req.queryParams.uuids,
                 "Err:",
                 e.message || e,
                 "|",
@@ -1741,8 +1808,10 @@ router
                 "|",
                 "Desc:",
                 "View User Information",
+                "|",
+                "Details:",
+                req.queryParams.details
             );
-
             var user,
                 det_ok = false;
 
@@ -1840,6 +1909,9 @@ router
                 "|",
                 "Desc:",
                 "View User Information",
+                "|",
+                "Detail:",
+                req.queryParams.details
             );
         } catch (e) {
             g_lib.handleException(e, res);
@@ -1861,6 +1933,9 @@ router
                 "|",
                 "Desc:",
                 "View User Information",
+                "|",
+                "Detail",
+                req.queryParams.details,
                 "|",
                 "Err:",
                 e.message || e,
@@ -2100,6 +2175,9 @@ router
                         "|",
                         "Desc:",
                         "Remove existing user entry",
+                        "|",
+                        "Removed user:",
+                        user_id
                     );
 
                     if (req.queryParams.subject) {
@@ -2185,6 +2263,9 @@ router
                 "|",
                 "Desc:",
                 "Remove existing user entry",
+                "|",
+                "Removed user:",
+                user_id
             );
         } catch (e) {
             console.error(
@@ -2205,6 +2286,9 @@ router
                 "|",
                 "Desc:",
                 "Remove existing user entry",
+                "|",
+                "Removed user:",
+                user_id,
                 "|",
                 "Err:",
                 e.message || e,
@@ -2366,6 +2450,10 @@ router
                         "|",
                         "Desc:",
                         "Add new linked identity",
+                        "|",
+                        "Identity:",
+                        req.queryParams.ident,
+
                     );
                     var id;
 
@@ -2393,6 +2481,10 @@ router
                                 "|",
                                 "Desc:",
                                 "Add new linked identity",
+                                "|",
+                                "Identity:",
+                                req.queryParams.ident,
+
                             );
                         return;
                         id = g_db.uuid.save(
@@ -2439,6 +2531,9 @@ router
                                 "|",
                                 "Desc:",
                                 "Add new linked identity",
+                                "|",
+                                "Identity:",
+                                req.queryParams.ident,
                             );
                             return;
                         } else {
@@ -2498,7 +2593,10 @@ router
                 "Success",
                 "|",
                 "Desc:",
-                "Add new linked identity",
+                "Add new linked identity:",
+                "|",
+                "Identity:",
+                req.queryParams.ident,
             );
         } catch (e) {
             console.error(
@@ -2519,6 +2617,9 @@ router
                 "|",
                 "Desc:",
                 "Add new linked identity",
+                "|",
+                "Identity:",
+                req.queryParams.ident,
                 "|",
                 "Err:",
                 e.message || e,
@@ -2569,6 +2670,9 @@ router
                         "|",
                         "Desc:",
                         "Remove linked identity from user account",
+                        "|",
+                        "Identity:",
+                        req.queryParams.ident
                     );
                     g_lib.ensureAdminPermUser(client, owner._id);
 
@@ -2601,6 +2705,9 @@ router
                 "|",
                 "Desc:",
                 "Remove linked identity from user account",
+                "|",
+                "Identity:",
+                req.queryParams.ident
             );
         } catch (e) {
             console.error(
@@ -2621,6 +2728,9 @@ router
                 "|",
                 "Desc:",
                 "Remove linked identity from user account",
+                "|",
+                "Identity:",
+                req.queryParams.ident,
                 "|",
                 "Err:",
                 e.message || e,
@@ -2659,6 +2769,9 @@ router
                 "|",
                 "Desc:",
                 "Get recent end-points",
+                "|",
+                "End-points:",
+                client.eps
             );
 
             res.send(client.eps ? client.eps : []);
@@ -2680,6 +2793,10 @@ router
                 "|",
                 "Desc:",
                 "Get recent end-points",
+                "|",
+                "End-points:",
+                client.eps
+
             );
         } catch (e) {
             console.error(
@@ -2700,6 +2817,9 @@ router
                 "|",
                 "Desc:",
                 "Get recent end-points",
+                "|",
+                "End-points:",
+                client.eps,
                 "|",
                 "Err:",
                 e.message || e,
@@ -2737,6 +2857,10 @@ router
                 "|",
                 "Desc:",
                 "Set recent end-points",
+                "|",
+                "End-points:",
+                client.eps
+
             );
 
             g_db._update(
@@ -2766,6 +2890,10 @@ router
                 "|",
                 "Desc:",
                 "Set recent end-points",
+                "|",
+                "End-points:",
+                client.eps
+
             );
         } catch (e) {
             console.error(
@@ -2786,6 +2914,9 @@ router
                 "|",
                 "Desc:",
                 "Set recent end-points",
+                "|",
+                "End-points:",
+                client.eps,
                 "|",
                 "Err:",
                 e.message || e,
