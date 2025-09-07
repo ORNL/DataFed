@@ -54,7 +54,9 @@ std::string randomAlphaNumericCode() {
 
 namespace SDMS {
 
-AuthzWorker::AuthzWorker(struct Config *a_config, LogContext log_context)
+static bool log_stream_added = false;
+
+AuthzWorker::AuthzWorker(struct Config a_config, LogContext log_context)
     : m_config(a_config) {
 
   m_log_context = log_context;
@@ -62,9 +64,9 @@ AuthzWorker::AuthzWorker(struct Config *a_config, LogContext log_context)
   m_log_context.thread_id = 0;
 
   // Convert config item to string for easier manipulation
-  m_local_globus_path_root = std::string(m_config->globus_collection_path);
+  m_local_globus_path_root = std::string(m_config.globus_collection_path);
 
-  m_test_path = std::string(m_config->test_path);
+  m_test_path = std::string(m_config.test_path);
   // NOTE the test_path MUST end with '/' this is to prevent authorization
   // by accident to a subfolder i.e.
   //
@@ -79,6 +81,16 @@ AuthzWorker::AuthzWorker(struct Config *a_config, LogContext log_context)
   if (!m_test_path.empty() && m_test_path.back() != '/') {
     m_test_path += '/';
   }
+
+  DL_DEBUG(m_log_context, "Authz init config repo_id: " << m_config.repo_id); 
+  DL_DEBUG(m_log_context, "Authz init config server_addr: " << m_config.server_addr); 
+  DL_DEBUG(m_log_context, "Authz init config pub_key: " << m_config.pub_key); 
+  DL_DEBUG(m_log_context, "Authz init config priv_key: " << m_config.priv_key); 
+  DL_DEBUG(m_log_context, "Authz init config server_key: " << m_config.server_key); 
+  DL_DEBUG(m_log_context, "Authz init config user: " << m_config.user); 
+  DL_DEBUG(m_log_context, "Authz init config test_path: " << m_config.test_path); 
+  DL_DEBUG(m_log_context, "Authz init config log_path: " << m_config.log_path); 
+  DL_DEBUG(m_log_context, "Authz init config globus_collection_path: " << m_config.globus_collection_path); 
 
   // Add a backslash if not present
   initCommunicator();
@@ -97,9 +109,9 @@ AuthzWorker::AuthzWorker(struct Config *a_config, LogContext log_context)
  **/
 void AuthzWorker::initCommunicator() {
 
-  m_cred_options[CredentialType::PUBLIC_KEY] = m_config->pub_key;
-  m_cred_options[CredentialType::PRIVATE_KEY] = m_config->priv_key;
-  m_cred_options[CredentialType::SERVER_KEY] = m_config->server_key;
+  m_cred_options[CredentialType::PUBLIC_KEY] = m_config.pub_key;
+  m_cred_options[CredentialType::PRIVATE_KEY] = m_config.priv_key;
+  m_cred_options[CredentialType::SERVER_KEY] = m_config.server_key;
   CredentialFactory cred_factory;
   m_sec_ctx = cred_factory.create(ProtocolType::ZQTP, m_cred_options);
 
@@ -124,6 +136,9 @@ void AuthzWorker::initCommunicator() {
     socket_options.host = splitter.host();
     socket_options.port = splitter.port();
 
+    DL_DEBUG(m_log_context, "Authz init socket_options host: " << socket_options.host); 
+    DL_DEBUG(m_log_context, "Authz init socket_options port: " << socket_options.port.value()); 
+
     if (socket_options.port.has_value()) {
       if (socket_options.port.value() != 7512) {
         DL_WARNING(m_log_context,
@@ -144,7 +159,7 @@ void AuthzWorker::initCommunicator() {
 
     return comm_factory.create(socket_options, credentials, timeout_on_receive,
                                timeout_on_poll);
-  }(authz_thread_id, m_config->server_addr, *m_sec_ctx);
+  }(authz_thread_id, m_config.server_addr, *m_sec_ctx);
 }
 
 /**
@@ -182,7 +197,7 @@ bool AuthzWorker::isTestPath(const std::string &posix_path) const {
   if (m_test_path.size() > 0 &&
       posix_path.compare(0, m_test_path.size(), m_test_path) == 0) {
     DL_INFO(m_log_context,
-            "Allowing request within TEST PATH: " << m_config->test_path);
+            "Allowing request within TEST PATH: " << m_config.test_path);
     return true;
   }
   return false;
@@ -472,12 +487,16 @@ std::string AuthzWorker::getAuthzPath(char *full_ftp_path) {
 int AuthzWorker::processResponse(ICommunicator::Response &response) {
   if (response.message) { // Make sure the message exists before we try to
                           // access it
+
+    // Prefer the correlation id of the received message than the one that
+    // was originally sent
     m_log_context.correlation_id = std::get<std::string>(
         response.message->get(MessageAttribute::CORRELATION_ID));
   }
   if (response.time_out) {
-    std::string error_msg =
-        "AuthWorker.cpp Core service did not respond within timeout.";
+    std::string error_msg = "AuthWorker.cpp Core service at address: ";
+    error_msg += m_comm->address();
+    error_msg += " did not respond within timeout. ";
 
     AddressSplitter splitter(m_comm->address());
 
@@ -491,7 +510,7 @@ int AuthzWorker::processResponse(ICommunicator::Response &response) {
     }
 
     DL_WARNING(m_log_context, error_msg);
-    EXCEPT(1, "Core service did not respond");
+    EXCEPT(1, error_msg);
   } else if (response.error) {
     // This will just log the output without throwing.
     DL_ERROR(m_log_context, "AuthWorker.cpp there was an error when "
@@ -583,23 +602,46 @@ int AuthzWorker::checkAuth(char *client_id, char *path, char *action) {
 
   auto auth_req = std::make_unique<Auth::RepoAuthzRequest>();
 
-  auth_req->set_repo(m_config->repo_id);
-  auth_req->set_client(client_id);
+  auto cpp_repo_id = std::string(m_config.repo_id);
+  auto cpp_client_id = std::string(client_id);
+  auto cpp_action = std::string(action);
+
+  auth_req->set_repo(cpp_repo_id);
+  auth_req->set_client(cpp_client_id);
   auth_req->set_file(sanitized_path);
-  auth_req->set_action(action);
+  auth_req->set_action(cpp_action);
+
+  
+  DL_INFO(m_log_context, "Sending RepoAuthzRequest std::string client_id: "
+                             << cpp_client_id << " path: " << sanitized_path << " action: "
+                             << cpp_action << " repo id: " << cpp_repo_id);
 
   MessageFactory msg_factory;
   auto message = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
+
+  // This needs to point to the public key of the repo not the core server. The
+  // core server will use this key to figure out if the repo is authorized.
   message->set(MessageAttribute::KEY,
                m_cred_options[CredentialType::PUBLIC_KEY]);
   message->setPayload(std::move(auth_req));
 
-  m_comm->send(*message);
-  LogContext log_context = m_log_context;
-  log_context.correlation_id =
+  m_log_context.correlation_id =
       std::get<std::string>(message->get(MessageAttribute::CORRELATION_ID));
 
-  auto response = m_comm->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
+  ICommunicator::Response response;
+
+  int attempt = 0;
+  // TODO - this needs to be configurable
+  int retries = 3;
+  do {
+    DL_INFO(m_log_context, "Sending RepoAuthzRequest client_id: "
+                               << client_id << " path: " << path << " action: "
+                               << action << " attempt: " << attempt
+                               << " address: " << m_comm->address());
+    m_comm->send(*message);
+    response = m_comm->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
+    ++attempt;
+  } while (response.time_out && attempt < retries);
 
   return processResponse(response);
 }
@@ -638,26 +680,40 @@ const char *getReleaseVersion() {
 
 // The same
 int checkAuthorization(char *client_id, char *object, char *action,
-                       struct Config *config) {
+                       struct Config config, int thread_id) {
 #if defined(DONT_USE_SYSLOG)
   SDMS::global_logger.setSysLog(false);
 #else
   SDMS::global_logger.setSysLog(true);
 #endif
-  SDMS::global_logger.setLevel(SDMS::LogLevel::INFO);
+  SDMS::LogContext log_context;
+  log_context.thread_name = "authz_check";
+  log_context.thread_id = thread_id;
+
+  SDMS::global_logger.setLevel(SDMS::LogLevel::TRACE);
   SDMS::global_logger.addStream(std::cerr);
-  auto log_path_authz = std::string(config->log_path);
+  // The ofstream must exist for the duration of the lifetime
+  std::list<SDMS::Logger::StreamEntry>::iterator it;
+  std::ofstream log_file_worker;
+  auto log_path_authz = std::string(config.log_path);
+  bool added = false;
   if (log_path_authz.length() > 0) {
     // Append to the existing path because we don't want the C++ and C code
     // trying to write to the same file
     log_path_authz.append("_authz");
-    std::ofstream log_file_worker(log_path_authz);
-    SDMS::global_logger.addStream(log_file_worker);
+    if (SDMS::log_stream_added == false) {
+      log_file_worker.open(log_path_authz, std::ios::app);
+      if (!log_file_worker.is_open()) {
+        DL_ERROR(log_context, "AuthzWorker open log file path failed, path: "
+                                  << log_path_authz);
+      } else {
+        it = SDMS::global_logger.addStream(log_file_worker);
+        SDMS::log_stream_added = true;
+        added = true;
+      }
+    }
   }
 
-  SDMS::LogContext log_context;
-  log_context.thread_name = "authz_check";
-  log_context.thread_id = 0;
   DL_DEBUG(log_context, "AuthzWorker checkAuthorization "
                             << client_id << ", " << object << ", " << action);
 
@@ -672,6 +728,15 @@ int checkAuthorization(char *client_id, char *object, char *action,
     DL_ERROR(log_context, "AuthzWorker exception: " << e.what());
   }
 
+  // We don't want to close it unless we can also remove it, and we want to
+  // leave it open until we are completely done. But because it is only defined
+  // in this scope we have to close and remove it.
+  //
+  if (log_file_worker.is_open() && added) {
+    log_file_worker.close();
+    SDMS::global_logger.removeStream(it);
+    SDMS::log_stream_added = false;
+  }
   return result;
 }
 }

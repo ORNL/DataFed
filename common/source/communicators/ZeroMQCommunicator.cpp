@@ -690,7 +690,12 @@ ZeroMQCommunicator::ZeroMQCommunicator(const SocketOptions &socket_options,
   const int keep_alive_intvl = 5;
   const int reconnect_ivl = 500;
   const int reconnect_ivl_max = 4000;
-  const int linger_milliseconds = 100;
+
+  const int linger_milliseconds = 1000;
+  const int num_messages = 10000000;
+
+  zmq_setsockopt(m_zmq_socket, ZMQ_RCVHWM, &num_messages, sizeof(const int));
+  zmq_setsockopt(m_zmq_socket, ZMQ_SNDHWM, &num_messages, sizeof(const int));
 
   zmq_setsockopt(m_zmq_socket, ZMQ_TCP_KEEPALIVE, &keep_alive,
                  sizeof(const int));
@@ -831,12 +836,24 @@ ZeroMQCommunicator::poll(const MessageType message_type) {
 
 void ZeroMQCommunicator::send(IMessage &message) {
 
+
   uint16_t msg_type =
       std::get<uint16_t>(message.get(constants::message::google::MSG_TYPE));
   ProtoBufMap proto_map;
   LogContext log_context = m_log_context;
   log_context.correlation_id =
       std::get<std::string>(message.get(MessageAttribute::CORRELATION_ID));
+
+  int events;
+  size_t events_size = sizeof(events);
+  zmq_getsockopt(m_zmq_socket, ZMQ_EVENTS, &events, &events_size);
+
+  if (events & ZMQ_POLLOUT) {
+        DL_INFO(log_context, "Socket is ready to send data.");
+  } else {
+        DL_WARNING(log_context,"Socket send buffer is full! Messages may be dropped.");
+  }
+
   std::string err_message = "Sending message on communicator id: " + id();
   err_message += ", to address: " + address() +
                  ", msg type: " + proto_map.toString(msg_type);

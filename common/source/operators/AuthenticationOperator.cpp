@@ -3,6 +3,7 @@
 #include "AuthenticationOperator.hpp"
 
 // Local public includes
+#include "common/DynaLog.hpp"
 #include "common/TraceException.hpp"
 
 // Standard includes
@@ -31,10 +32,18 @@ void AuthenticationOperator::execute(IMessage &message) {
   std::string key = std::get<std::string>(message.get(MessageAttribute::KEY));
 
   std::string uid = "anon";
+
+  LogContext log_context;
+  log_context.thread_name = "authentication_manager";
+  log_context.thread_id = 0;
+  log_context.correlation_id = std::get<std::string>(
+            message.get(MessageAttribute::CORRELATION_ID));
+
   if (m_authentication_manager->hasKey(key)) {
     m_authentication_manager->incrementKeyAccessCounter(key);
     uid = m_authentication_manager->getUID(key);
   }
+  DL_INFO(log_context, "Attempt to map key to " << key << " uid set to: " << uid );
   message.set(MessageAttribute::ID, uid);
 }
 

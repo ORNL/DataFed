@@ -39,6 +39,9 @@
 24. [1269] - Update Arangodb to 3.12.4
 25. [1288] - Bug Jupyter Notebook in documentation were fixed.
 26. [1321] - Refactor, allow core config threads via env vars
+22. [1241] - Adds a bug fix resulting from a race condition in the global
+    configuration struct in the globus callout library, makes
+    globus_collection_path consistent in conf file
 
 # v2024.6.17.10.40
 

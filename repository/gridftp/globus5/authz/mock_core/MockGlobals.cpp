@@ -13,5 +13,6 @@ const char *repo_desc = "There really is no comparison";
 const char *repo_globus_uuid = "550e8400-e29b-41d4-a716-446655440000";
 const char *repo_path = "/mnt/data/samoas";
 const uint32_t repo_port = 9998;
+const char *client_uuid = "23c9067f-60e8-4741-9af1-482280faced4";
 
 } // namespace MockGlobals

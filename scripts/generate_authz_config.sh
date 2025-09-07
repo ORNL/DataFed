@@ -119,7 +119,7 @@ pub_key=${DATAFED_INSTALL_PATH}/keys/datafed-repo-key.pub
 priv_key=${DATAFED_INSTALL_PATH}/keys/datafed-repo-key.priv
 log_path=${local_DATAFED_LOG_PATH}/datafed-gsi-authz.log
 user=$local_DATAFED_AUTHZ_USER
-globus-collection-path=$local_DATAFED_GCS_COLLECTION_BASE_PATH
+globus_collection_path=$local_DATAFED_GCS_COLLECTION_BASE_PATH
 EOF
 
 echo

@@ -40,7 +40,7 @@ namespace SDMS {
  */
 class AuthzWorker {
 public:
-  AuthzWorker(struct Config *a_config, LogContext log_context);
+  AuthzWorker(struct Config a_config, LogContext log_context);
 
   ~AuthzWorker() {}
 
@@ -58,7 +58,7 @@ public:
 
 private:
   void initCommunicator();
-  struct Config *m_config;
+  struct Config m_config;
   std::string m_test_path;
   std::string m_local_globus_path_root;
   LogContext m_log_context;
