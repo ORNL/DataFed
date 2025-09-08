@@ -24,7 +24,7 @@ const tasks_func = (function () {
         a_rec_limit,
     ) {
         console.log("taskInitAllocCreate");
-        
+
         // Use fallback value for TT_ALLOC_CREATE if undefined
         // TT_ALLOC_CREATE = 6 is defined in support.js but may not be exported properly
         var allocCreateType = g_lib.TT_ALLOC_CREATE !== undefined ? g_lib.TT_ALLOC_CREATE : 6;
@@ -38,8 +38,9 @@ const tasks_func = (function () {
             throw [g_lib.ERR_NOT_FOUND, "Subject, '" + a_subject_id + "', does not exist"];
 
         // Check permissions - skip for system client with admin privileges
-        var skipPermissionCheck = (a_client && a_client._id === "system" && a_client.is_admin === true);
-        
+        var skipPermissionCheck =
+            a_client && a_client._id === "system" && a_client.is_admin === true;
+
         if (skipPermissionCheck) {
             console.log("System client detected, skipping permission check");
         } else {

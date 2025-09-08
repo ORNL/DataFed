@@ -35,29 +35,29 @@ const createAllocation = (repoData, params) => {
         // Note: taskInitAllocCreate expects (client, repo_id, subject_id, data_limit, rec_limit)
         // For now, using a system client since this is called from the new repository pattern
         const systemClient = { _id: "system", is_admin: true };
-        
+
         const taskResult = g_tasks.taskInitAllocCreate(
             systemClient,
             repoData._id,
             params.subject,
-            params.size || params.data_limit,  // Handle both parameter names
-            params.rec_limit || 1000000        // Default to 1M records if not specified
+            params.size || params.data_limit, // Handle both parameter names
+            params.rec_limit || 1000000, // Default to 1M records if not specified
         );
-        
+
         // The taskResult contains { task: taskObject }
         // We need to return the task properties that the web service expects
         const task = taskResult.task;
-        
+
         // Return a structure that matches what the original API expects
         // The web service needs properties like state, task_id, status, etc.
         return Result.ok({
-            id: `alloc/${Date.now()}`,  // Temporary allocation ID format
+            id: `alloc/${Date.now()}`, // Temporary allocation ID format
             repo_id: repoData._id,
             subject: params.subject,
             task_id: task._id,
             status: task.status,
-            state: task.state,  // Important: include the state property
-            queue_time: task.ct || Date.now()
+            state: task.state, // Important: include the state property
+            queue_time: task.ct || Date.now(),
         });
     } catch (e) {
         // Handle both Error objects and array-style errors
