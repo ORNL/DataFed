@@ -23,7 +23,7 @@ build-dependencies:
       PIPELINE=$(curl --silent --fail --show-error -X POST \
               -F "token=$GITLAB_DATAFED_DEPENDENCIES_REPO_API_TOKEN" \
               -F "ref=$DOWNSTREAM_SHA" \
-              "$CI_API_V4_URL/projects/$DATAFED_DEPENDENCIES_GITLAB_PROJECT_ID/pipeline" )
+              "$CI_API_V4_URL/projects/$DATAFED_DEPENDENCIES_GITLAB_PROJECT_ID/trigger/pipeline" )
       PIPELINE_ID=$(echo "$PIPELINE" | jq -r '.id')
       if [ "$PIPELINE_ID" = "null" ] || [ -z "$PIPELINE_ID" ]; then
         echo "❌ Failed to create pipeline"
