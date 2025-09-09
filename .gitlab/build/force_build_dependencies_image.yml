@@ -22,29 +22,29 @@ build-dependencies:
       echo "Triggering downstream pipeline... $CI_API_V4_URL/projects/$DATAFED_DEPENDENCIES_GITLAB_PROJECT_ID/pipeline"
       PIPELINE=$(curl --silent --fail --show-error -X POST \
               -F token=$GITLAB_DATAFED_DEPENDENCIES_REPO_API_TOKEN \
-              -F ref=$DOWNSTREAM_SHA" \
+              -F ref=$DOWNSTREAM_SHA \
               "$CI_API_V4_URL/projects/$DATAFED_DEPENDENCIES_GITLAB_PROJECT_ID/pipeline")
-      #      PIPELINE_ID=$(echo "$PIPELINE" | jq -r '.id')
-      #      if [ "$PIPELINE_ID" = "null" ] || [ -z "$PIPELINE_ID" ]; then
-      #        echo "❌ Failed to create pipeline"
-      #        echo "$PIPELINE"
-      #        exit 1
-      #      fi
-      #      echo "✅ Triggered pipeline $PIPELINE_ID for commit $DOWNSTREAM_SHA"
-      #      # Poll until finished
-      #      STATUS="running"
-      #      while [ "$STATUS" = "running" ] || [ "$STATUS" = "pending" ]; do
-      #        sleep 20
-      #        STATUS=$(curl --silent --fail \
-      #          --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
-      #          "$CI_API_V4_URL/projects/$DOWNSTREAM_PROJECT_ID/pipelines/$PIPELINE_ID" \
-      #          | jq -r '.status')
-      #        echo "Pipeline $PIPELINE_ID status: $STATUS"
-      #      done
-      #      if [ "$STATUS" = "success" ]; then
-      #        echo "🎉 Downstream pipeline succeeded"
-      #        exit 0
-      #      else
-      #        echo "❌ Downstream pipeline failed with status: $STATUS"
-      #        exit 1
-      #      fi
+      PIPELINE_ID=$(echo "$PIPELINE" | jq -r '.id')
+      if [ "$PIPELINE_ID" = "null" ] || [ -z "$PIPELINE_ID" ]; then
+        echo "❌ Failed to create pipeline"
+        echo "$PIPELINE"
+        exit 1
+      fi
+      echo "✅ Triggered pipeline $PIPELINE_ID for commit $DOWNSTREAM_SHA"
+      # Poll until finished
+      STATUS="running"
+      while [ "$STATUS" = "running" ] || [ "$STATUS" = "pending" ]; do
+        sleep 20
+        STATUS=$(curl --silent --fail \
+          --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
+          "$CI_API_V4_URL/projects/$DOWNSTREAM_PROJECT_ID/pipelines/$PIPELINE_ID" \
+          | jq -r '.status')
+        echo "Pipeline $PIPELINE_ID status: $STATUS"
+      done
+      if [ "$STATUS" = "success" ]; then
+        echo "🎉 Downstream pipeline succeeded"
+        exit 0
+      else
+        echo "❌ Downstream pipeline failed with status: $STATUS"
+        exit 1
+      fi
