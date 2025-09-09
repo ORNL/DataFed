@@ -12,15 +12,14 @@ build-dependencies:
       # Variables you need set in CI/CD Settings or here
       DOWNSTREAM_PROJECT_ID="19248"      # Numeric GitLab project ID
       cd "$CI_PROJECT_DIR/external/DataFedDependencies"
-      DOWNSTREAM_REF=$(git branch --show-current)   # Branch to run pipeline on
-      echo "DataFedDependencies current commit: $DOWNSTREAM_REF"
+      #DOWNSTREAM_REF=$(git branch --show-current)   # Branch to run pipeline on
       cd "$CI_PROJECT_DIR"
       DOWNSTREAM_SHA=$(git submodule status ./external/DataFedDependencies/ | awk '{print $1}')   # Commit SHA to trigger on
+      echo "DataFedDependencies current commit: $DOWNSTREAM_SHA"
       # Trigger the downstream pipeline
       echo "Triggering downstream pipeline... $CI_API_V4_URL/projects/$DATAFED_DEPENDENCIES_GITLAB_PROJECT_ID/pipeline"
       #      PIPELINE=$(curl --silent --fail --show-error -X POST \
       #        --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
-      #        --form "ref=$DOWNSTREAM_REF" \
       #        --form "variables[TRIGGERED_BY]=$CI_PROJECT_PATH" \
       #        --form "variables[COMMIT_SHA]=$DOWNSTREAM_SHA" \
       #        "$CI_API_V4_URL/projects/$DATAFED_DEPENDENCIES_GITLAB_PROJECT_ID/pipeline")
