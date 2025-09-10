@@ -20,8 +20,9 @@ build-dependencies:
       echo "DataFedDependencies current commit: $DOWNSTREAM_SHA"
       # Trigger the downstream pipeline
       echo "Triggering downstream pipeline... $CI_API_V4_URL/projects/$DATAFED_DEPENDENCIES_GITLAB_PROJECT_ID/trigger/pipeline"
+      #-F "token=$GITLAB_DATAFED_DEPENDENCIES_REPO_API_TOKEN" \
       PIPELINE=$(curl --silent --fail --show-error -X POST \
-              -F "token=$GITLAB_DATAFED_DEPENDENCIES_REPO_API_TOKEN" \
+              -F "token=$CI_JOB_TOKEN" \
               -F "ref=main" \
               --form "variables[COMMIT_SHA]=$DOWNSTREAM_SHA" \
               "$CI_API_V4_URL/projects/$DATAFED_DEPENDENCIES_GITLAB_PROJECT_ID/trigger/pipeline" )
