@@ -7,7 +7,6 @@
 
 // Standard includes
 #include <any>
-#include <iostream>
 
 namespace SDMS {
 
@@ -33,8 +32,14 @@ void AuthenticationOperator::execute(IMessage &message) {
   std::string uid = "anon";
   if (m_authentication_manager->hasKey(key)) {
     m_authentication_manager->incrementKeyAccessCounter(key);
-    uid = m_authentication_manager->getUID(key);
+    
+    try {
+      uid = m_authentication_manager->getUID(key);
+    } catch (const std::exception& e) {
+      // Keep uid as "anon" if we fail to get the actual UID
+    }
   }
+  
   message.set(MessageAttribute::ID, uid);
 }
 
