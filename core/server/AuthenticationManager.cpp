@@ -18,11 +18,10 @@ AuthenticationManager::AuthenticationManager(
     const std::string &db_url, const std::string &db_user,
     const std::string &db_pass)
     : m_purge_interval(purge_intervals),
-      m_purge_conditions(std::move(purge_conditions)) {
-  m_auth_mapper = std::move(AuthMap(m_purge_interval[PublicKeyType::TRANSIENT],
-                                    m_purge_interval[PublicKeyType::SESSION],
-                                    db_url, db_user, db_pass));
-
+      m_purge_conditions(std::move(purge_conditions)),
+      m_auth_mapper(m_purge_interval[PublicKeyType::TRANSIENT],
+                    m_purge_interval[PublicKeyType::SESSION],
+                    db_url, db_user, db_pass) {
   for (const auto &purge_int : m_purge_interval) {
     m_next_purge[purge_int.first] = time(0) + purge_int.second;
   }
@@ -83,25 +82,35 @@ void AuthenticationManager::incrementKeyAccessCounter(
 
 bool AuthenticationManager::hasKey(const std::string &public_key) const {
   std::lock_guard<std::mutex> lock(m_lock);
+  
   if (m_auth_mapper.hasKey(PublicKeyType::TRANSIENT, public_key)) {
     return true;
-  } else if (m_auth_mapper.hasKey(PublicKeyType::SESSION, public_key)) {
-    return true;
-  } else if (m_auth_mapper.hasKey(PublicKeyType::PERSISTENT, public_key)) {
+  }
+  
+  if (m_auth_mapper.hasKey(PublicKeyType::SESSION, public_key)) {
     return true;
   }
+  
+  if (m_auth_mapper.hasKey(PublicKeyType::PERSISTENT, public_key)) {
+    return true;
+  }
+  
   return false;
 }
 
 std::string AuthenticationManager::getUID(const std::string &public_key) const {
   std::lock_guard<std::mutex> lock(m_lock);
 
-  if (m_auth_mapper.hasKey(PublicKeyType::TRANSIENT, public_key))
+  if (m_auth_mapper.hasKey(PublicKeyType::TRANSIENT, public_key)) {
     return m_auth_mapper.getUID(PublicKeyType::TRANSIENT, public_key);
-  if (m_auth_mapper.hasKey(PublicKeyType::SESSION, public_key))
+  }
+  if (m_auth_mapper.hasKey(PublicKeyType::SESSION, public_key)) {
     return m_auth_mapper.getUID(PublicKeyType::SESSION, public_key);
-  if (m_auth_mapper.hasKey(PublicKeyType::PERSISTENT, public_key))
+  }
+  if (m_auth_mapper.hasKey(PublicKeyType::PERSISTENT, public_key)) {
     return m_auth_mapper.getUID(PublicKeyType::PERSISTENT, public_key);
+  }
+  
   EXCEPT(1, "Unrecognized public_key during execution of getUID.");
 }
 
@@ -110,6 +119,57 @@ void AuthenticationManager::addKey(const PublicKeyType &pub_key_type,
                                    const std::string &uid) {
   std::lock_guard<std::mutex> lock(m_lock);
   m_auth_mapper.addKey(pub_key_type, public_key, uid);
+}
+
+bool AuthenticationManager::hasKey(const PublicKeyType &pub_key_type,
+                                   const std::string &public_key) const {
+  std::lock_guard<std::mutex> lock(m_lock);
+  return m_auth_mapper.hasKey(pub_key_type, public_key);
+}
+
+void AuthenticationManager::migrateKey(const PublicKeyType &from_type,
+                                       const PublicKeyType &to_type,
+                                       const std::string &public_key,
+                                       const std::string &uid) {
+  std::lock_guard<std::mutex> lock(m_lock);
+  m_auth_mapper.migrateKey(from_type, to_type, public_key, uid);
+}
+
+void AuthenticationManager::clearTransientKeys() {
+  std::lock_guard<std::mutex> lock(m_lock);
+  m_auth_mapper.clearTransientKeys();
+}
+
+void AuthenticationManager::clearSessionKeys() {
+  std::lock_guard<std::mutex> lock(m_lock);
+  m_auth_mapper.clearSessionKeys();
+}
+
+void AuthenticationManager::clearAllNonPersistentKeys() {
+  std::lock_guard<std::mutex> lock(m_lock);
+  m_auth_mapper.clearAllNonPersistentKeys();
+}
+
+std::string AuthenticationManager::getUIDSafe(const std::string &public_key) const {
+  std::lock_guard<std::mutex> lock(m_lock);
+  
+  // Try each key type in order
+  std::string uid = m_auth_mapper.getUIDSafe(PublicKeyType::TRANSIENT, public_key);
+  if (!uid.empty()) {
+    return uid;
+  }
+  
+  uid = m_auth_mapper.getUIDSafe(PublicKeyType::SESSION, public_key);
+  if (!uid.empty()) {
+    return uid;
+  }
+  
+  uid = m_auth_mapper.getUIDSafe(PublicKeyType::PERSISTENT, public_key);
+  if (!uid.empty()) {
+    return uid;
+  }
+  
+  return "";  // Return empty string if not found anywhere
 }
 
 } // namespace Core

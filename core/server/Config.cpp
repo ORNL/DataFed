@@ -28,6 +28,11 @@ void Config::loadRepositoryConfig(AuthenticationManager &auth_manager,
     m_repos_mtx.unlock();
   }
 
+  // Clear all non-persistent keys before reloading repository configurations
+  // This ensures stale cached keys don't interfere with authentication
+  DL_INFO(log_context, "Clearing non-persistent keys before loading repository configuration");
+  auth_manager.clearAllNonPersistentKeys();
+
   DatabaseAPI db_client(db_url, db_user, db_pass);
 
   std::vector<RepoData> temp_repos;
@@ -70,16 +75,41 @@ void Config::loadRepositoryConfig(AuthenticationManager &auth_manager,
       }
 
       // Cache pub key for ZAP handler
-      auth_manager.addKey(PublicKeyType::PERSISTENT, r.pub_key(), r.id());
+      // First check if this repo key was incorrectly cached as transient/session
+      DL_TRACE(log_context, "Registering repo " << r.id());
+      
+      if (auth_manager.hasKey(PublicKeyType::TRANSIENT, r.pub_key())) {
+        DL_INFO(log_context, "Repo " << r.id() << " key found in TRANSIENT map, migrating to PERSISTENT");
+        auth_manager.migrateKey(PublicKeyType::TRANSIENT, PublicKeyType::PERSISTENT, r.pub_key(), r.id());
+      } else if (auth_manager.hasKey(PublicKeyType::SESSION, r.pub_key())) {
+        DL_INFO(log_context, "Repo " << r.id() << " key found in SESSION map, migrating to PERSISTENT");
+        auth_manager.migrateKey(PublicKeyType::SESSION, PublicKeyType::PERSISTENT, r.pub_key(), r.id());
+      } else {
+        // Normal case - add as new PERSISTENT key
+        DL_TRACE(log_context, "Adding repo " << r.id() << " key as new PERSISTENT key");
+        auth_manager.addKey(PublicKeyType::PERSISTENT, r.pub_key(), r.id());
+      }
 
       // Cache repo data for data handling
       m_repos_mtx.lock();
-      DL_TRACE(log_context, std::string("Repo ")
+      DL_INFO(log_context, std::string("Repo ")
                                 << r.id() << " OK - UUID: " << r.endpoint()
                                 << " address: " << r.address());
       m_repos[r.id()] = r;
       m_trigger_repo_refresh = false;
       m_repos_mtx.unlock();
+    }
+  }
+  
+  // Validate that repository keys are still present after loading
+  DL_TRACE(log_context, "Validating repository keys after loading");
+  for (const auto& repo_pair : m_repos) {
+    const RepoData& repo = repo_pair.second;
+    if (auth_manager.hasKey(PublicKeyType::PERSISTENT, repo.pub_key())) {
+      DL_TRACE(log_context, "Key for " << repo.id() << " verified in PERSISTENT map");
+    } else {
+      DL_ERROR(log_context, "KEY MISSING! Repository " << repo.id() 
+               << " key not found after loading!");
     }
   }
 }

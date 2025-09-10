@@ -9,7 +9,6 @@ namespace SDMS {
 
 namespace Core {
 AuthMap::AuthMap(const AuthMap &auth_map) {
-
   m_trans_active_increment = auth_map.m_trans_active_increment;
   m_session_active_increment = auth_map.m_session_active_increment;
 
@@ -31,7 +30,6 @@ AuthMap::AuthMap(const AuthMap &auth_map) {
 }
 
 AuthMap &AuthMap::operator=(const AuthMap &&auth_map) {
-
   m_trans_active_increment = auth_map.m_trans_active_increment;
   m_session_active_increment = auth_map.m_session_active_increment;
 
@@ -102,6 +100,11 @@ void AuthMap::removeKey(const PublicKeyType pub_key_type,
     lock_guard<mutex> lock(m_session_clients_mtx);
     if (m_session_auth_clients.count(pub_key)) {
       m_session_auth_clients.erase(pub_key);
+    }
+  } else if (PublicKeyType::PERSISTENT == pub_key_type) {
+    lock_guard<mutex> lock(m_persistent_clients_mtx);
+    if (m_persistent_auth_clients.count(pub_key)) {
+      m_persistent_auth_clients.erase(pub_key);
     }
   } else {
     EXCEPT(1, "Unsupported PublicKey Type during execution of removeKey.");
@@ -181,26 +184,31 @@ void AuthMap::incrementKeyAccessCounter(const PublicKeyType pub_key_type,
 
 bool AuthMap::hasKey(const PublicKeyType pub_key_type,
                      const std::string &public_key) const {
-
   if (pub_key_type == PublicKeyType::TRANSIENT) {
     lock_guard<mutex> lock(m_trans_clients_mtx);
-    if (m_trans_auth_clients.count(public_key)) {
-      return true;
-    }
+    return m_trans_auth_clients.count(public_key) > 0;
   } else if (pub_key_type == PublicKeyType::SESSION) {
     lock_guard<mutex> lock(m_session_clients_mtx);
-    if (m_session_auth_clients.count(public_key))
-      return true;
+    return m_session_auth_clients.count(public_key) > 0;
   } else if (pub_key_type == PublicKeyType::PERSISTENT) {
-    // Check to see if it is a repository key
-    if (m_persistent_auth_clients.count(public_key))
-      return true;
-
-    // Check to see if it is a user key
-    DatabaseAPI db(m_db_url, m_db_user, m_db_pass);
-    std::string uid;
-    if (db.uidByPubKey(public_key, uid)) {
-      return true;
+    // Check to see if it is a repository key FIRST
+    {
+      lock_guard<mutex> lock(m_persistent_clients_mtx);
+      if (m_persistent_auth_clients.count(public_key) > 0) {
+        return true;
+      }
+    }
+    
+    // Only check database for user keys if not found in memory
+    try {
+      DatabaseAPI db(m_db_url, m_db_user, m_db_pass);
+      std::string uid;
+      if (db.uidByPubKey(public_key, uid)) {
+        return true;
+      }
+    } catch (const std::exception& e) {
+      // Database is down, but we already checked memory map
+      // TODO: Caller should log this failure for monitoring/alerting
     }
   } else {
     EXCEPT(1, "Unrecognized PublicKey Type during execution of hasKey.");
@@ -227,10 +235,12 @@ std::string AuthMap::getUID(const PublicKeyType pub_key_type,
     }
 
   } else if (pub_key_type == PublicKeyType::PERSISTENT) {
-    // If it is a repository key get it
-    // auto auth_clients = m_config.getAuthClients();
-    if (m_persistent_auth_clients.count(public_key)) {
-      return m_persistent_auth_clients.at(public_key);
+    // Check repository keys first (with proper locking)
+    {
+      lock_guard<mutex> lock(m_persistent_clients_mtx);
+      if (m_persistent_auth_clients.count(public_key)) {
+        return m_persistent_auth_clients.at(public_key);
+      }
     }
 
     // It must be a persistent user key
@@ -244,6 +254,38 @@ std::string AuthMap::getUID(const PublicKeyType pub_key_type,
     }
   }
   EXCEPT(1, "Unrecognized PublicKey Type during execution of getId.");
+}
+
+std::string AuthMap::getUIDSafe(const PublicKeyType pub_key_type,
+                                const std::string &public_key) const {
+  if (pub_key_type == PublicKeyType::TRANSIENT) {
+    lock_guard<mutex> lock(m_trans_clients_mtx);
+    if (m_trans_auth_clients.count(public_key)) {
+      return m_trans_auth_clients.at(public_key).uid;
+    }
+  } else if (pub_key_type == PublicKeyType::SESSION) {
+    lock_guard<mutex> lock(m_session_clients_mtx);
+    if (m_session_auth_clients.count(public_key)) {
+      return m_session_auth_clients.at(public_key).uid;
+    }
+  } else if (pub_key_type == PublicKeyType::PERSISTENT) {
+    // Check repository keys first (with proper locking)
+    {
+      lock_guard<mutex> lock(m_persistent_clients_mtx);
+      if (m_persistent_auth_clients.count(public_key)) {
+        return m_persistent_auth_clients.at(public_key);
+      }
+    }
+    
+    // Check database for user keys
+    DatabaseAPI db(m_db_url, m_db_user, m_db_pass);
+    std::string uid;
+    if (db.uidByPubKey(public_key, uid)) {
+      return uid;
+    }
+  }
+  
+  return "";  // Return empty string instead of throwing
 }
 
 bool AuthMap::hasKeyType(const PublicKeyType pub_key_type,
@@ -293,6 +335,34 @@ size_t AuthMap::getAccessCount(const PublicKeyType pub_key_type,
     EXCEPT(1, "Unsupported PublicKey Type during execution of getAccessCount.");
   }
   return 0;
+}
+
+void AuthMap::migrateKey(const PublicKeyType from_type,
+                        const PublicKeyType to_type,
+                        const std::string &public_key,
+                        const std::string &id) {
+  // Remove from source map if it exists
+  if (hasKeyType(from_type, public_key)) {
+    removeKey(from_type, public_key);
+  }
+
+  // Add to destination map
+  addKey(to_type, public_key, id);
+}
+
+void AuthMap::clearTransientKeys() {
+  std::lock_guard<std::mutex> lock(m_trans_clients_mtx);
+  m_trans_auth_clients.clear();
+}
+
+void AuthMap::clearSessionKeys() {
+  std::lock_guard<std::mutex> lock(m_session_clients_mtx);
+  m_session_auth_clients.clear();
+}
+
+void AuthMap::clearAllNonPersistentKeys() {
+  clearTransientKeys();
+  clearSessionKeys();
 }
 
 } // namespace Core

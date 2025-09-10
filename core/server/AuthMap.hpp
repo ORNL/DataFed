@@ -109,6 +109,12 @@ public:
    **/
   std::string getUID(const PublicKeyType pub_key_type,
                      const std::string &public_key) const;
+  
+  /**
+   * Safe version that returns empty string if key not found
+   **/
+  std::string getUIDSafe(const PublicKeyType pub_key_type,
+                         const std::string &public_key) const;
 
   /**
    * Will return the number of keys of the provided type. Does not currently
@@ -147,6 +153,21 @@ public:
                  const std::string &public_key);
 
   /**
+   * Migrates a key from one map type to another with the specified ID.
+   * This is useful for correcting misclassified keys (e.g., when a repository
+   * key was incorrectly cached as transient/session during DB outage).
+   *
+   * @param from_type The source key type to remove from
+   * @param to_type The destination key type to add to
+   * @param public_key The public key to migrate
+   * @param id The ID to associate with the key in the destination map
+   **/
+  void migrateKey(const PublicKeyType from_type,
+                  const PublicKeyType to_type,
+                  const std::string &public_key,
+                  const std::string &id);
+
+  /**
    * Will reset the access counter of the key to 0 and the allowed expiration
    *time of the key..
    *
@@ -154,6 +175,24 @@ public:
    **/
   void resetKey(const PublicKeyType pub_key_type,
                 const std::string &public_key);
+
+  /**
+   * Clear all transient keys from the authentication map.
+   * This is useful for cleaning up stale keys after service restarts.
+   **/
+  void clearTransientKeys();
+
+  /**
+   * Clear all session keys from the authentication map.
+   * This is useful for cleaning up stale keys after service restarts.
+   **/
+  void clearSessionKeys();
+
+  /**
+   * Clear all non-persistent (transient and session) keys.
+   * Persistent keys are preserved as they represent service accounts.
+   **/
+  void clearAllNonPersistentKeys();
 };
 
 } // namespace Core
