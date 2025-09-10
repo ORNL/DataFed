@@ -168,8 +168,7 @@
 .build_image: &build_image |
     BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
     export DATAFED_HARBOR_REPOSITORY="${COMPONENT}-${BRANCH_LOWER}"
-    DOWNSTREAM_SHA=$(git submodule status ./external/DataFedDependencies/ | awk '{print $1}')   # Commit SHA to trigger on
-    # Remove leading '-' if one exists
+    DOWNSTREAM_SHA=$( git submodule status ./external/DataFedDependencies/ | awk '{print $1}' )
     DOWNSTREAM_SHA=${DOWNSTREAM_SHA#-}
     docker build --no-cache --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies:$DOWNSTREAM_SHA" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" -f "${DOCKER_FILE_PATH}" -t "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" .
     docker tag "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
