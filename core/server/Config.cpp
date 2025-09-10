@@ -30,6 +30,8 @@ void Config::loadRepositoryConfig(AuthenticationManager &auth_manager,
 
   // Clear all non-persistent keys before reloading repository configurations
   // This ensures stale cached keys don't interfere with authentication
+  // WARNING: This will disconnect active user sessions during config reload.
+  // Consider implementing graceful session preservation in production if needed.
   DL_INFO(log_context, "Clearing non-persistent keys before loading repository configuration");
   auth_manager.clearAllNonPersistentKeys();
 
@@ -75,7 +77,11 @@ void Config::loadRepositoryConfig(AuthenticationManager &auth_manager,
       }
 
       // Cache pub key for ZAP handler
-      // First check if this repo key was incorrectly cached as transient/session
+      // Historical bug (DAPS-1625): Repository keys could be incorrectly cached as 
+      // transient/session keys if loadRepositoryConfig() was called before the 
+      // AuthenticationManager was properly initialized. This is now fixed by proper
+      // initialization order in CoreServer.cpp, but we keep the migration logic
+      // during config reloads.
       DL_TRACE(log_context, "Registering repo " << r.id());
       
       if (auth_manager.hasKey(PublicKeyType::TRANSIENT, r.pub_key())) {
