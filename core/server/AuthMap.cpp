@@ -218,42 +218,23 @@ bool AuthMap::hasKey(const PublicKeyType pub_key_type,
 
 std::string AuthMap::getUID(const PublicKeyType pub_key_type,
                             const std::string &public_key) const {
-  if (pub_key_type == PublicKeyType::TRANSIENT) {
-    lock_guard<mutex> lock(m_trans_clients_mtx);
-    if (m_trans_auth_clients.count(public_key)) {
-      return m_trans_auth_clients.at(public_key).uid;
-    } else {
+
+  std::string uid = getUIDSafe(pub_key_type, public_key);
+  
+  if (uid.empty()) {
+    if (pub_key_type == PublicKeyType::TRANSIENT) {
       EXCEPT(1, "Missing transient public key unable to map to uid.");
-    }
-
-  } else if (pub_key_type == PublicKeyType::SESSION) {
-    lock_guard<mutex> lock(m_session_clients_mtx);
-    if (m_session_auth_clients.count(public_key)) {
-      return m_session_auth_clients.at(public_key).uid;
-    } else {
+    } else if (pub_key_type == PublicKeyType::SESSION) {
       EXCEPT(1, "Missing session public key unable to map to uid.");
-    }
-
-  } else if (pub_key_type == PublicKeyType::PERSISTENT) {
-    // Check repository keys first (with proper locking)
-    {
-      lock_guard<mutex> lock(m_persistent_clients_mtx);
-      if (m_persistent_auth_clients.count(public_key)) {
-        return m_persistent_auth_clients.at(public_key);
-      }
-    }
-
-    // It must be a persistent user key
-    DatabaseAPI db(m_db_url, m_db_user, m_db_pass);
-    std::string uid;
-    if (db.uidByPubKey(public_key, uid)) {
-      return uid;
-    } else {
+    } else if (pub_key_type == PublicKeyType::PERSISTENT) {
       EXCEPT(1, "Missing persistent public key unable to map to user id or "
                 "repo id. Possibly, cannot connect to database.");
+    } else {
+      EXCEPT(1, "Unrecognized PublicKey Type during execution of getId.");
     }
   }
-  EXCEPT(1, "Unrecognized PublicKey Type during execution of getId.");
+  
+  return uid;
 }
 
 std::string AuthMap::getUIDSafe(const PublicKeyType pub_key_type,
