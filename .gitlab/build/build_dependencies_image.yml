@@ -8,5 +8,4 @@ build-dependencies:
     - ci-datafed-core
     - docker
   script:
-    - COMMIT_SHA_FOR_DEPENDENCIES=$( git submodule status ./external/DataFedDependencies/ | awk '{print $1}' )
-    - echo "Skipping dependency build image was found for commit: ${COMMIT_SHA_FOR_DEPENDENCIES}"
+    - echo "Skipping dependency build image was found for commit."
