@@ -32,7 +32,7 @@ router
                         req.headers["x-correlation-id"],
                         "|",
                         "HTTP:",
-                        "GET",
+                        "POST",
                         "|",
                         "Route:",
                         "/create",
@@ -42,9 +42,6 @@ router
                         "|",
                         "Desc:",
                         "Create query",
-                        "|",
-                        "Query:",
-                        result,
                     );
 
                     // Check max number of saved queries
@@ -195,7 +192,7 @@ router
                         req.headers["x-correlation-id"],
                         "|",
                         "HTTP:",
-                        "GET",
+                        "POST",
                         "|",
                         "Route:",
                         "/update",
@@ -205,9 +202,6 @@ router
                         "|",
                         "Desc:",
                         "Update a saved query",
-                        "|",
-                        "Query:",
-                        result,
                     );
 
                     var qry = g_db.q.document(req.body.id);
@@ -352,9 +346,6 @@ router
                 "|",
                 "Desc:",
                 "View specified query",
-                "|",
-                "Query:",
-                qry,
             );
             qry = g_db.q.document(req.queryParams.id);
 
@@ -561,9 +552,6 @@ router
                 "|",
                 "Desc:",
                 "List client saved queries",
-                "|",
-                "Query:",
-                result,
             );
 
             var qry =
@@ -883,9 +871,6 @@ router
                 "|",
                 "Desc:",
                 "Execute specified queries",
-                "|",
-                "Query Result:",
-                results,
             );
 
             var qry = g_db.q.document(req.queryParams.id);
@@ -985,9 +970,6 @@ router
                 "|",
                 "Desc:",
                 "Execute published data search query",
-                "|",
-                "Query Result:",
-                results,
             );
 
             const query = {
