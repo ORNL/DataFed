@@ -327,8 +327,11 @@ void AuthMap::migrateKey(const PublicKeyType from_type,
     removeKey(from_type, public_key);
   }
 
-  // Add to destination map
-  addKey(to_type, public_key, id);
+  // Add to destination map only if it does not already exist
+  // This prevents overwriting existing entries
+  if (!hasKey(to_type, public_key)) {
+    addKey(to_type, public_key, id);
+  }
 }
 
 void AuthMap::clearTransientKeys() {

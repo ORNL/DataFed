@@ -29,9 +29,9 @@ void Config::loadRepositoryConfig(AuthenticationManager &auth_manager,
   }
 
   // Clear all non-persistent keys before reloading repository configurations
-  // This ensures stale cached keys don't interfere with authentication
-  // WARNING: This will disconnect active user sessions during config reload.
-  // Consider implementing graceful session preservation in production if needed.
+  // This ensures stale cached keys don't interfere with authentication.
+  // NOTE: Non-persistent keys are cleared during configuration reload (typically at startup or explicit refresh).
+  // This may impact any sessions active during a reload, but such cases are rare in normal operation.
   DL_INFO(log_context, "Clearing non-persistent keys before loading repository configuration");
   auth_manager.clearAllNonPersistentKeys();
 
@@ -84,10 +84,20 @@ void Config::loadRepositoryConfig(AuthenticationManager &auth_manager,
       // during config reloads.
       DL_TRACE(log_context, "Registering repo " << r.id());
       
-      if (auth_manager.hasKey(PublicKeyType::TRANSIENT, r.pub_key())) {
+      // Check for duplicate keys across different maps
+      bool in_transient = auth_manager.hasKey(PublicKeyType::TRANSIENT, r.pub_key());
+      bool in_session = auth_manager.hasKey(PublicKeyType::SESSION, r.pub_key());
+      
+      if (in_transient && in_session) {
+        // Key exists in both maps - this is an inconsistent state
+        DL_WARNING(log_context, "Repo " << r.id() << " key found in BOTH TRANSIENT and SESSION maps. "
+                   << "Removing from both and adding to PERSISTENT.");
+        auth_manager.migrateKey(PublicKeyType::TRANSIENT, PublicKeyType::PERSISTENT, r.pub_key(), r.id());
+        auth_manager.migrateKey(PublicKeyType::SESSION, PublicKeyType::PERSISTENT, r.pub_key(), r.id());
+      } else if (in_transient) {
         DL_INFO(log_context, "Repo " << r.id() << " key found in TRANSIENT map, migrating to PERSISTENT");
         auth_manager.migrateKey(PublicKeyType::TRANSIENT, PublicKeyType::PERSISTENT, r.pub_key(), r.id());
-      } else if (auth_manager.hasKey(PublicKeyType::SESSION, r.pub_key())) {
+      } else if (in_session) {
         DL_INFO(log_context, "Repo " << r.id() << " key found in SESSION map, migrating to PERSISTENT");
         auth_manager.migrateKey(PublicKeyType::SESSION, PublicKeyType::PERSISTENT, r.pub_key(), r.id());
       } else {
