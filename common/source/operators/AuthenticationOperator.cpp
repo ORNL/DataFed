@@ -7,6 +7,7 @@
 
 // Standard includes
 #include <any>
+#include <iostream>
 
 namespace SDMS {
 
@@ -36,10 +37,13 @@ void AuthenticationOperator::execute(IMessage &message) {
     try {
       uid = m_authentication_manager->getUID(key);
     } catch (const std::exception& e) {
+      // Log the exception to help diagnose authentication issues
+      std::cerr << "[AuthenticationOperator] Failed to get UID for key: " 
+                << key.substr(0, 8) << "... Exception: " << e.what() << std::endl;
       // Keep uid as "anon" if we fail to get the actual UID
     }
   }
-  
+
   message.set(MessageAttribute::ID, uid);
 }
 
