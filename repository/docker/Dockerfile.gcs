@@ -48,6 +48,7 @@ COPY --chown=datafed:root ./scripts/generate_gsi-authz_config.sh      ${BUILD_DI
 COPY --chown=datafed:root ./scripts/globus/create_guest_collection.py ${BUILD_DIR}/scripts/globus/create_guest_collection.py
 COPY --chown=datafed:root ./scripts/globus/utils.py                   ${BUILD_DIR}/scripts/globus/utils.py
 COPY --chown=datafed:root ./scripts/globus/__init__.py                ${BUILD_DIR}/scripts/globus/__init__.py
+COPY --chown=datafed:root ./scripts/generate_datafed.sh               ${BUILD_DIR}/scripts/
 
 RUN ${BUILD_DIR}/scripts/generate_datafed.sh
 RUN ${BUILD_DIR}/scripts/generate_gsi-authz_config.sh
@@ -120,7 +121,6 @@ RUN adduser --disabled-password --gecos "" datafed
 
 RUN echo "#!/bin/bash\n\$@" > /usr/bin/sudo && chmod +x /usr/bin/sudo
 
-COPY ./scripts/generate_datafed.sh             ${BUILD_DIR}/scripts/
 COPY ./scripts/dependency_versions.sh          ${BUILD_DIR}/scripts/
 COPY ./scripts/utils.sh                        ${BUILD_DIR}/scripts/utils.sh
 
@@ -148,6 +148,8 @@ COPY --chown=datafed:root ./scripts/globus/__init__.py                ${BUILD_DI
 RUN apt update
 RUN apt-get install wget jq bind9-host build-essential -y
 RUN apt-get reinstall globus-connect-server54 libsqlite3-dev -y
+
+COPY --chown=datafed:root ./scripts/generate_datafed.sh               ${BUILD_DIR}/scripts/
 
 RUN ${BUILD_DIR}/scripts/generate_datafed.sh
 RUN ${BUILD_DIR}/scripts/generate_gsi-authz_config.sh
