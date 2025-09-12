@@ -35,6 +35,7 @@ ENV          DATAFED_DEFAULT_LOG_PATH="$DATAFED_INSTALL_PATH/logs"
 # Set to false by default to avoid wiping the database
 ENV                 ENABLE_FOXX_TESTS="FALSE"
 
+COPY ./common                          ${BUILD_DIR}/common
 COPY ./core/CMakeLists.txt             ${BUILD_DIR}/core/CMakeLists.txt
 COPY ./CMakeLists.txt                  ${BUILD_DIR}
 COPY ./scripts/dependency_versions.sh  ${BUILD_DIR}/scripts/
