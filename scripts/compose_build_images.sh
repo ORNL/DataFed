@@ -109,10 +109,6 @@ if [[ "$BUILD_REPO" == "TRUE" ]]; then
   "${PROJECT_ROOT}"/external/DataFedDependencies/scripts/build_image.sh --base-image "$BASE_IMAGE"
   if [ "$BASE_IMAGE" == "" ]; then
     docker build \
-      -f "${PROJECT_ROOT}/docker/Dockerfile.dependencies" \
-      "${PROJECT_ROOT}" \
-      -t datafed-dependencies:latest
-    docker build \
       -f "${PROJECT_ROOT}/docker/Dockerfile.runtime" \
       "${PROJECT_ROOT}" \
       -t datafed-runtime:latest
