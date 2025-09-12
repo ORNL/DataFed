@@ -150,6 +150,7 @@ RUN apt update
 RUN apt-get install wget jq bind9-host build-essential -y
 RUN apt-get reinstall globus-connect-server54 libsqlite3-dev -y
 
+RUN ${BUILD_DIR}/scripts/generate_datafed.sh
 RUN ${BUILD_DIR}/scripts/generate_gsi-authz_config.sh
 # Don't build with syslog the container does not seem to support syslog
 
