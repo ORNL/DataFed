@@ -196,7 +196,9 @@
     then
       BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
       export DATAFED_HARBOR_REPOSITORY="${COMPONENT}-${INTERMEDIATE_LAYER_NAME}-${BRANCH_LOWER}"
-      docker build --no-cache --build-arg DEPENDENCIES="${REGISTRY}/${PROJECT}/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/${PROJECT}/runtime-${BRANCH_LOWER}:latest" --target "${INTERMEDIATE_TARGET}" -f "${DOCKER_FILE_PATH}" -t "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest" .
+      DOWNSTREAM_SHA=$( git submodule status ./external/DataFedDependencies/ | awk '{print $1}' )
+      DOWNSTREAM_SHA=${DOWNSTREAM_SHA#-}
+      docker build --no-cache --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies:$DOWNSTREAM_SHA" --build-arg RUNTIME="${REGISTRY}/${PROJECT}/runtime-${BRANCH_LOWER}:latest" --target "${INTERMEDIATE_TARGET}" -f "${DOCKER_FILE_PATH}" -t "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest" .
       echo "Tagging ${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest ${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
       docker tag "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest" "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
       docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:latest"
