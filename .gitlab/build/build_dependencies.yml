@@ -1,41 +1,29 @@
 ---
 stages:
-    - build
+    - build-base
 
 include:
     - local: .gitlab/common.yml
 
-build-repo:
-    extends: .docker_build_script
-    stage: build
+build-dependencies:
+    extends: .docker_base_build_script
+    stage: build-base
     variables:
         PROJECT: "datafed"
-        COMPONENT: "repo"
+        COMPONENT: "dependencies"
         GIT_STRATEGY: clone
-        DOCKER_FILE_PATH: "repository/docker/Dockerfile"
+        DOCKER_FILE_PATH: "docker/Dockerfile.dependencies"
         DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
         BUILD_INTERMEDIATE: "FALSE"
     tags:
-        - ci-datafed-repo
         - docker
-    rules:
-        - changes:
-              - docker/**/*
-              - scripts/**/*
-              - common/proto/**/*
-              - .gitlab-ci.yml
-              - CMakeLists.txt
-              - cmake/**/*
-              - repository/CMakeLists.txt
-              - repository/server/**/*
-          when: on_success
 
 retag-image:
     extends: .docker_retag_image
-    stage: build
+    stage: build-base
     variables:
         PROJECT: "datafed"
-        COMPONENT: "repo"
+        COMPONENT: "dependencies"
         GIT_STRATEGY: clone
         DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
         BUILD_INTERMEDIATE: "FALSE"
@@ -45,11 +33,10 @@ retag-image:
         - changes:
               - docker/**/*
               - scripts/**/*
-              - common/proto/**/*
-              - .gitlab-ci.yml
+              - core/**/*
+              - common/**/*
               - CMakeLists.txt
               - cmake/**/*
-              - repository/CMakeLists.txt
-              - repository/server/**/*
+              - .gitlab-ci.yml
           when: never
         - when: on_success

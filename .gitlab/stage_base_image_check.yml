@@ -1,5 +1,4 @@
 ---
-
 check-dependencies-image:
     stage: base-image-check
     variables:
@@ -37,5 +36,3 @@ check-dependencies-image:
             - ${COMPONENT}_image.yml
         reports:
             dotenv: build.env
-
-

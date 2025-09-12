@@ -1,0 +1,18 @@
+---
+stages:
+    - build-base
+
+include:
+    - local: .gitlab/common.yml
+
+build-dependencies:
+    extends: .docker_base_build_script
+    stage: build-base
+    variables:
+        DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
+        PROJECT: "datafed"
+        COMPONENT: "dependencies"
+        GIT_STRATEGY: clone
+        DOCKER_FILE_PATH: "docker/Dockerfile.dependencies"
+    tags:
+        - docker

@@ -1,11 +1,11 @@
 ---
 stages:
-  - build
+    - build
 
 build-dependencies:
-  stage: build
-  tags:
-    - ci-datafed-core
-    - docker
-  script:
-    - echo "Skipping dependency build image was found for commit."
+    stage: build
+    tags:
+        - ci-datafed-core
+        - docker
+    script:
+        - echo "Skipping dependency build image was found for commit."
