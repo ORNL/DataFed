@@ -8,4 +8,4 @@ build-dependencies:
     - ci-datafed-core
     - docker
   script:
-    - echo "Skipping dependency build image was found for commit."
+    - echo "Skipping dependency build, up todate dependencies image was found for commit."
