@@ -208,7 +208,8 @@ bool AuthMap::hasKey(const PublicKeyType pub_key_type,
       }
     } catch (const std::exception& e) {
       // Database is down, but we already checked memory map
-      // TODO: Caller should log this failure for monitoring/alerting
+      std::cerr << "[AuthMap::hasKey] Database failure for public key '"
+                << public_key.substr(0, 8) << "...': " << e.what() << std::endl;
     }
   } else {
     EXCEPT(1, "Unrecognized PublicKey Type during execution of hasKey.");
