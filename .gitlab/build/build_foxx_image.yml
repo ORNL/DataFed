@@ -26,6 +26,7 @@ build-foxx:
         - core/CMakeLists.txt
         - common/proto/**/*
         - .gitlab-ci.yml
+        - .gitlab/**/*
         - CMakeLists.txt
       when: on_success
 
@@ -49,6 +50,7 @@ retag-image:
         - core/CMakeLists.txt
         - common/proto/**/*
         - .gitlab-ci.yml
+        - .gitlab/**/*
         - CMakeLists.txt
       when: never
     - when: on_success

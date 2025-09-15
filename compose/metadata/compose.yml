@@ -62,13 +62,15 @@ services:
             DATAFED_ZEROMQ_SYSTEM_SECRET: "${DATAFED_ZEROMQ_SYSTEM_SECRET}"
             DATAFED_DOMAIN: "${DATAFED_DOMAIN}"
             DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
-            UID: "${DATAFED_UID}"
             DATAFED_DATABASE_PASSWORD: "${DATAFED_DATABASE_PASSWORD}"
             DATAFED_DATABASE_IP_ADDRESS: "${DATAFED_DATABASE_IP_ADDRESS}"
             DATAFED_DATABASE_HOST: "arango"
             # NOTE enabling foxx tests will cause state changes in the database
             # do not run this unless you are ok with the database being wiped.
             ENABLE_FOXX_TESTS: "${DATAFED_ENABLE_FOXX_TESTS}"
+        user: "${DATAFED_UID}:0"
+        security_opt:
+            - no-new-privileges:true
         healthcheck:
             test: ["CMD", "/bin/bash", "-c", "[ -f /tmp/.foxx_is_installed ]"]
             interval: 10s

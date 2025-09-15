@@ -69,7 +69,9 @@ DATAFED_DATABASE_PASSWORD, and DATAFED_ZEROMQ_SYSTEM_SECRET can be anything but 
      -e DATAFED_ZEROMQ_SYSTEM_SECRET="<secret>" \
      -e INSTALL_FOXX=ON \
      -e ENABLE_FOXX_TESTS=TRUE \
+     --user $(id -u):0 \
      --network=host \
+     --security-opt no-new-privileges \
      datafed-foxx:latest
 
 This will deploy the Foxx microservices and automatically execute the unit tests against the ArangoDB instance.

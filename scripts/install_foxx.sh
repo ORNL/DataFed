@@ -40,11 +40,24 @@ Help() {
   echo "-y, --system-secret               ZeroMQ system secret"
   echo
   echo "NOTE: Do not run this script with sudo!"
+  echo
+  echo "NOTE: This script respects the SSL_CERT_FILE env variable, which can "
+  echo "be used to communicate over https:// ssl:// for certificates that may"
+  echo "not be registered in the certificate store."
 }
+
+local_DATABASE_API_SCHEME="${DATABASE_API_SCHEME:-http}"
+local_SSL_CERT_FILE="${SSL_CERT_FILE:-}"
+local_ARANGOSH_SERVER_ENDPOINT_SCHEME="tcp"
 
 local_DATABASE_NAME="sdms"
 local_DATABASE_USER="root"
 local_DATABASE_PORT="8529"
+
+if [ -f "${local_SSL_CERT_FILE}" ]; then
+  ssl_args="--ssl.cafile ${local_SSL_CERT_FILE}"
+  export NODE_EXTRA_CA_CERTS="${local_SSL_CERT_FILE}"
+fi
 
 if [ -z "${DATAFED_DATABASE_PASSWORD}" ]; then
   local_DATAFED_DATABASE_PASSWORD=""
@@ -119,7 +132,23 @@ if [ "$ERROR_DETECTED" == "1" ]; then
 fi
 
 basic_auth="$local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD"
-url="http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_api/database/user"
+
+if [ "${local_DATABASE_API_SCHEME}" == "https" ]; then
+  set +e
+  output=$(curl --user "$basic_auth" ${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT} 2>&1)
+  error_code="$?"
+  set -e
+
+  if [ "$error_code" == "60" ]; then
+    echo "Error detected, untrusted certificate."
+    echo "$output"
+    exit 1
+  fi
+
+  local_ARANGOSH_SERVER_ENDPOINT_SCHEME="ssl"
+fi
+
+url="${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_api/database/user"
 # Do not output to /dev/null we need the output
 code=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl -s -o /dev/null -w "%{http_code}" --user "$basic_auth" "$url")
 
@@ -129,7 +158,7 @@ if [[ "$code" != "200" ]]; then
   exit 1
 fi
 
-url2="http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_api/database"
+url2="${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_api/database"
 # We are now going to initialize the DataFed database in Arango, but only if sdms database does
 # not exist
 output=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl -s -i --user "$basic_auth" "$url2")
@@ -146,19 +175,22 @@ if [[ "$output" =~ .*"sdms".* ]]; then
 else
   echo "Creating SDMS"
   arangosh --server.endpoint \
-    "tcp://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
+    "${local_ARANGOSH_SERVER_ENDPOINT_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
     --server.password "${local_DATAFED_DATABASE_PASSWORD}" \
     --server.username "${local_DATABASE_USER}" \
+    "${ssl_args}" \
     --javascript.execute "${PROJECT_ROOT}/core/database/foxx/db_create.js"
   # Give time for the database to be created
   sleep 2
-  arangosh --server.endpoint "tcp://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
+  arangosh --server.endpoint "${local_ARANGOSH_SERVER_ENDPOINT_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
     --server.password "${local_DATAFED_DATABASE_PASSWORD}" \
     --server.username "${local_DATABASE_USER}" \
+    "${ssl_args}" \
     --javascript.execute-string 'db._useDatabase("sdms"); db.config.insert({"_key": "msg_daily", "msg" : "DataFed servers will be off-line for regular maintenance every Sunday night from 11:45 pm until 12:15 am EST Monday morning."}, {overwrite: true});'
-  arangosh --server.endpoint "tcp://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
+  arangosh --server.endpoint "${local_ARANGOSH_SERVER_ENDPOINT_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
     --server.password "${local_DATAFED_DATABASE_PASSWORD}" \
     --server.username "${local_DATABASE_USER}" \
+    "${ssl_args}" \
     --javascript.execute-string "db._useDatabase(\"sdms\"); db.config.insert({ \"_key\": \"system\", \"_id\": \"config/system\"}, {overwrite: true } );"
 fi
 
@@ -192,7 +224,7 @@ echo "$local_DATAFED_DATABASE_PASSWORD" >"${PATH_TO_PASSWD_FILE}"
 { # try
   # Check if database foxx services have already been installed
   existing_services=$("${FOXX_PREFIX}foxx" list \
-    --server "http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
+    --server "${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
     -a -u "$local_DATABASE_USER" \
     -p "${PATH_TO_PASSWD_FILE}" \
     --database "$local_DATABASE_NAME")
@@ -204,7 +236,7 @@ echo "$local_DATAFED_DATABASE_PASSWORD" >"${PATH_TO_PASSWD_FILE}"
 
   echo "$FOUND_API"
 
-  RESULT=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl -s http://${local_DATAFED_DATABASE_HOST}:8529/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/version)
+  RESULT=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl -s ${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/version)
   CODE=$(echo "${RESULT}" | jq '.code')
   echo "Code is $CODE"
   if [ -z "${FOUND_API}" ]; then
@@ -215,7 +247,7 @@ echo "$local_DATAFED_DATABASE_PASSWORD" >"${PATH_TO_PASSWD_FILE}"
     # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint
     "${FOXX_PREFIX}foxx" remove \
       "/api/${local_FOXX_MAJOR_API_VERSION}" \
-      --server "http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
+      --server "${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
       -u "${local_DATABASE_USER}" \
       -p "${PATH_TO_PASSWD_FILE}" \
       --database "${local_DATABASE_NAME}"
@@ -225,7 +257,7 @@ echo "$local_DATAFED_DATABASE_PASSWORD" >"${PATH_TO_PASSWD_FILE}"
   if [ "${INSTALL_API}" == "TRUE" ]; then
     # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint
     "${FOXX_PREFIX}foxx" install \
-      --server "http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
+      --server "${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
       -u "${local_DATABASE_USER}" \
       -p "${PATH_TO_PASSWD_FILE}" \
       --database "${local_DATABASE_NAME}" \
@@ -235,7 +267,7 @@ echo "$local_DATAFED_DATABASE_PASSWORD" >"${PATH_TO_PASSWD_FILE}"
     echo "DataFed Foxx Services have already been uploaded, replacing to ensure consisency"
     # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint
     "${FOXX_PREFIX}foxx" replace \
-      --server "http://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
+      --server "${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
       -u "${local_DATABASE_USER}" \
       -p "${PATH_TO_PASSWD_FILE}" \
       --database "${local_DATABASE_NAME}" \

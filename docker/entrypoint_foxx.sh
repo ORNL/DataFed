@@ -15,6 +15,32 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/../")
 
+# Force installation of foxx api, even if the .foxx_is_installed touch
+# file exists.
+local_DATAFED_FORCE_INSTALL_FOXX="${DATAFED_FORCE_INSTALL_FOXX:-FALSE}"
+
+# Cleanup pre-existing files if they exist, you would think that the Cmake configure
+# step would overwrite these files without problem. However, when running containers
+# with openshift user settings, cmake complains if these files exist before hand
+# under a different user.
+if [ -f "${PROJECT_ROOT}/core/database/foxx/api/version_router.js" ]; then
+  rm "${PROJECT_ROOT}/core/database/foxx/api/version_router.js"
+fi
+
+if [ -f "${PROJECT_ROOT}/core/database/foxx/manifest.json" ]; then
+  rm "${PROJECT_ROOT}/core/database/foxx/manifest.json"
+fi
+
+if [ -f "${PROJECT_ROOT}/common/proto/common/Version.proto" ]; then
+  rm "${PROJECT_ROOT}/common/proto/common/Version.proto"
+fi
+
+install_flag="/tmp/.foxx_is_installed"
+if [ "${local_DATAFED_FORCE_INSTALL_FOXX}" == "TRUE" ]; then
+  if [ -f "$install_flag" ]; then
+    rm "$install_flag"
+  fi
+fi
 # Why is this flag used, it is used because the same container is used for
 # compose as is for operations and ci. If you have a compose dev environment
 # we may want to keep the existing state and not overwrite the database.
@@ -23,7 +49,7 @@ if [ ! -f "$install_flag" ]; then
   echo "Installing foxx."
   log_path="$DATAFED_DEFAULT_LOG_PATH"
   if [ ! -d "${log_path}" ]; then
-    su -c "mkdir -p ${log_path}" datafed
+    mkdir -p "${log_path}" datafed
   fi
 
   # It should be fine to run this as root because it is an ephemeral container anyway
@@ -32,7 +58,6 @@ if [ ! -f "$install_flag" ]; then
   "${PROJECT_ROOT}/scripts/generate_datafed.sh"
 
   export LD_LIBRARY_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/lib"
-  ldconfig "$LD_LIBRARY_PATH"
 
   # Define common CMake options
   cmake_options=(
@@ -74,7 +99,6 @@ if [ ! -f "$install_flag" ]; then
 
   # Create flag to indicate container has done its job
   touch "$install_flag"
-  chown -R "$UID":"$UID" "/tmp"
 else
   echo "$install_flag has been found skipping reinstall"
 fi
