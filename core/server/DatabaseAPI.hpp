@@ -333,7 +333,7 @@ public:
       LogContext);
   void metricsPurge(uint32_t a_timestamp, LogContext);
 
-private:
+protected:
   long dbGet(const char *a_url_path,
              const std::vector<std::pair<std::string, std::string>> &a_params,
              libjson::Value &a_result, LogContext, bool a_log = true);
