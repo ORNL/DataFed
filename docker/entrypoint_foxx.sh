@@ -31,10 +31,6 @@ if [ -f "${PROJECT_ROOT}/core/database/foxx/manifest.json" ]; then
   rm "${PROJECT_ROOT}/core/database/foxx/manifest.json"
 fi
 
-if [ -f "${PROJECT_ROOT}/common/proto/common/Version.proto" ]; then
-  rm "${PROJECT_ROOT}/common/proto/common/Version.proto"
-fi
-
 install_flag="/tmp/.foxx_is_installed"
 if [ "${local_DATAFED_FORCE_INSTALL_FOXX}" == "TRUE" ]; then
   if [ -f "$install_flag" ]; then
