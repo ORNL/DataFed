@@ -71,7 +71,7 @@ function logRequestStarted({ client, correlationId, httpVerb, routePath, status,
         `${label}: ${value || "unknown"}`.padEnd(length, " ");
 
     console.info(
-        pad("Client", client) +
+            pad("Client", client) +
             " | " +
             pad("Correlation_ID", correlationId) +
             " | " +
