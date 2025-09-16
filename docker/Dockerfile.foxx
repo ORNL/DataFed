@@ -78,8 +78,6 @@ RUN chown -R datafed:root /home/datafed \
     find ${BUILD_DIR}/core/database -type f -exec chmod 0664 {} + && \
     find ${BUILD_DIR}/core -type d -exec chmod 0774 {} + && \
     find ${BUILD_DIR}/config -type d -exec chmod 0774 {} + && \
-    find ${BUILD_DIR}/common/proto/common -type d -exec chmod 0774 {} + && \
-    find ${BUILD_DIR}/common -type f -exec chmod 0664 {} + && \
     find ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm -type d -exec chmod 0774 {} + && \
     chmod 774    ${BUILD_DIR} \
                  ${BUILD_DIR}/scripts \
