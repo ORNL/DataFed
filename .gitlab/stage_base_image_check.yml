@@ -25,7 +25,7 @@ check-dependencies-image:
             then
               cp .gitlab/build/force_build_${COMPONENT}_image.yml ${COMPONENT}_image.yml
             else
-              cp .gitlab/build/build_${COMPONENT}_image.yml ${COMPONENT}_image.yml
+              cp .gitlab/build/skip_build_${COMPONENT}_image.yml ${COMPONENT}_image.yml
             fi
             echo "REGISTRY=${REGISTRY}" >> build.env
             echo "HARBOR_USER=${HARBOR_USER}" >> build.env
