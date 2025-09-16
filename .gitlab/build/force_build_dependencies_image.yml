@@ -10,8 +10,6 @@ build-dependencies:
   script:
     - |
       # Variables you need set in CI/CD Settings or here
-      cd "$CI_PROJECT_DIR/external/DataFedDependencies"
-      cd "$CI_PROJECT_DIR"
       DOWNSTREAM_SHA=$(git submodule status ./external/DataFedDependencies/ | awk '{print $1}')   # Commit SHA to trigger on
       # Remove leading '-' if one exists
       DOWNSTREAM_SHA=${DOWNSTREAM_SHA#-}
