@@ -27,20 +27,14 @@ router
             if (is_verified === false) {
                 throw g_lib.ERR_AUTHN_FAILED;
             }
-            console.info(
-                "Client:",
-                client?._id || "unknown",
-                "Correlation_ID:",
-                req.headers["x-correlation-id"],
-                "HTTP:",
-                "GET",
-                "Route:",
-                "/authn/password",
-                "Status:",
-                "Started",
-                "Desc:",
-                "Authenticating user via password",
-            );
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/authn/password",
+                status: "Started",
+                description: "Authenticating user via password",
+            });
 
             //if ( client.password != req.queryParams.pw )
             //    throw g_lib.ERR_AUTHN_FAILED;
@@ -49,46 +43,28 @@ router
                 uid: client._id,
                 authorized: true,
             });
-            console.info(
-                "Client:",
-                client?._id || "unknown",
-                "Correlation_ID:",
-                req.headers["x-correlation-id"],
-                "HTTP:",
-                "GET",
-                "Route:",
-                "/authn/password",
-                "Status:",
-                "Success",
-                "Desc:",
-                "Authenticating user via password",
-            );
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/authn/password",
+                status: "Success",
+                description: "Authenticating user via password",
+                extra: "undefined"
+            });
+
         } catch (e) {
-            console.info(
-                "Client:",
-                client?._id || "unknown",
-                "|",
-                "Correlation_ID:",
-                req.headers["x-correlation-id"],
-                "|",
-                "HTTP:",
-                "GET",
-                "|",
-                "Route:",
-                "/authn/password",
-                "|",
-                "Status:",
-                "Failure",
-                "|",
-                "Desc:",
-                "Authenticating user via password",
-                "|",
-                "Err:",
-                e.message || e,
-                "|",
-                "Stack:",
-                e.stack || "No Stack Trace",
-            );
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/authn/password",
+                status: "Success",
+                description: "Authenticating user via password",
+                extra: "undefined",
+                message: e.message,
+                stack: e.stack
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -104,25 +80,14 @@ router
             user = g_db._query("for i in u filter i.access == @tok return i", {
                 tok: req.queryParams.token,
             });
-            console.info(
-                "Client:",
-                user?._id || "unknown",
-                "|",
-                "Correlation_ID:",
-                req.headers["x-correlation-id"],
-                "|",
-                "HTTP:",
-                "GET",
-                "|",
-                "Route:",
-                "/authn/token",
-                "|",
-                "Status:",
-                "Started",
-                "|",
-                "Desc:",
-                "Authenticating user via access token",
-            );
+            logger.logRequestStarted({
+                client: user?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/authn/token",
+                status: "Started",
+                description: "Authenticating user via access token",
+            });
 
             if (!user.hasNext()) throw g_lib.ERR_AUTHN_FAILED;
 
@@ -130,51 +95,30 @@ router
                 uid: user.next()._id,
                 authorized: true,
             });
-            console.info(
-                "Client:",
-                user?._id || "unknown",
-                "|",
-                "Correlation_ID:",
-                req.headers["x-correlation-id"],
-                "|",
-                "HTTP:",
-                "GET",
-                "|",
-                "Route:",
-                "/authn/token",
-                "|",
-                "Status:",
-                "Success",
-                "|",
-                "Desc:",
-                "Authenticating user via access token",
-            );
+
+            logger.logRequestSuccess({
+                client: user?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/authn/token",
+                status: "Success",
+                description: "Authenticating user via access token",
+                extra: "undefined"
+            });
+
         } catch (e) {
-            console.info(
-                "Client:",
-                user?._id || "unknown",
-                "|",
-                "Correlation_ID:",
-                req.headers["x-correlation-id"],
-                "|",
-                "HTTP:",
-                "GET",
-                "|",
-                "Route:",
-                "/authn/token",
-                "|",
-                "Status:",
-                "Failure",
-                "|",
-                "Desc:",
-                "Authenticating user via access token",
-                "|",
-                "Err:",
-                e.message || e,
-                "|",
-                "Stack:",
-                e.stack || "No Stack Trace",
-            );
+            logger.logRequestFailure({
+                client: user?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/authn/token",
+                status: "Failure",
+                description: "Authenticating user via access token",
+                extra: "undefined",
+                message: e.message,
+                stack: e.stack
+            });
+
             g_lib.handleException(e, res);
         }
     })

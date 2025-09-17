@@ -45,23 +45,23 @@ function logRequestFailure({
     const pad = (label, value, length = 20) =>
         `${label}: ${value || "unknown"}`.padEnd(length, " ");
     console.error(
-        pad("Client:", client) +
+        pad("Client", client) +
             " | " +
-            pad("Correlation_ID:", correlationId) +
+            pad("Correlation_ID", correlationId) +
             " | " +
-            pad("HTTP:", httpVerb) +
+            pad("HTTP", httpVerb) +
             " | " +
-            pad("Route:", routePath) +
+            pad("Route", routePath) +
             " | " +
-            pad("Status:", status) +
+            pad("Status", status) +
             " | " +
-            pad("Desc:", description) +
+            pad("Desc", description) +
             "|" +
             pad("Extra", typeof extra === "object" ? JSON.stringify(extra) : extra) +
             "|" +
-            pad("Err:", message) +
+            pad("Err", message) +
             "|" +
-            pad("Stack:", stack),
+            pad("Stack", stack),
     );
 }
 
@@ -71,17 +71,17 @@ function logRequestStarted({ client, correlationId, httpVerb, routePath, status,
         `${label}: ${value || "unknown"}`.padEnd(length, " ");
 
     console.info(
-        pad("Client:", client) +
+        pad("Client", client) +
             " | " +
-            pad("Correlation_ID:", correlationId) +
+            pad("Correlation_ID", correlationId) +
             " | " +
-            pad("HTTP:", httpVerb) +
+            pad("HTTP", httpVerb) +
             " | " +
-            pad("Route:", routePath) +
+            pad("Route", routePath) +
             " | " +
-            pad("Status:", status) +
+            pad("Status", status) +
             " | " +
-            pad("Desc:", description),
+            pad("Desc", description),
     );
 }
 
