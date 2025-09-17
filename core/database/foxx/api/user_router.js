@@ -50,9 +50,8 @@ router
                 routePath: basePath + "/authn/password",
                 status: "Success",
                 description: "Authenticating user via password",
-                extra: "undefined"
+                extra: "undefined",
             });
-
         } catch (e) {
             logger.logRequestFailure({
                 client: client?._id,
@@ -63,7 +62,7 @@ router
                 description: "Authenticating user via password",
                 extra: "undefined",
                 message: e.message,
-                stack: e.stack
+                stack: e.stack,
             });
             g_lib.handleException(e, res);
         }
@@ -103,9 +102,8 @@ router
                 routePath: basePath + "/authn/token",
                 status: "Success",
                 description: "Authenticating user via access token",
-                extra: "undefined"
+                extra: "undefined",
             });
-
         } catch (e) {
             logger.logRequestFailure({
                 client: user?._id,
@@ -116,7 +114,7 @@ router
                 description: "Authenticating user via access token",
                 extra: "undefined",
                 message: e.message,
-                stack: e.stack
+                stack: e.stack,
             });
 
             g_lib.handleException(e, res);
