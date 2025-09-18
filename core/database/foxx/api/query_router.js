@@ -7,6 +7,8 @@ const joi = require("joi");
 const g_db = require("@arangodb").db;
 const g_graph = require("@arangodb/general-graph")._graph("sdmsg");
 const g_lib = require("./support");
+const logger = require("./lib/logger");
+const basePath = "qry";
 
 module.exports = router;
 
@@ -24,26 +26,15 @@ router
                 },
                 action: function () {
                     client = g_lib.getUserFromClientID(req.queryParams.client);
-                    console.info(
-                        "Client:",
-                        client?._id || "unknown",
-                        "|",
-                        "Correlation_ID:",
-                        req.headers["x-correlation-id"],
-                        "|",
-                        "HTTP:",
-                        "POST",
-                        "|",
-                        "Route:",
-                        "/create",
-                        "|",
-                        "Status:",
-                        "Started",
-                        "|",
-                        "Desc:",
-                        "Create query",
-                    );
-
+                    logger.logRequestStarted({
+                        client: client?._id,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "POST",
+                        routePath: basePath + "/create",
+                        status: "Started",
+                        description: "Create Query",
+                    });
+ 
                     // Check max number of saved queries
                     if (client.max_sav_qry >= 0) {
                         var count = g_db
@@ -100,57 +91,28 @@ router
             });
 
             res.send(result);
-            console.info(
-                "Client:",
-                client?._id || "unknown",
-                "|",
-                "Correlation_ID:",
-                req.headers["x-correlation-id"],
-                "|",
-                "HTTP:",
-                "POST",
-                "|",
-                "Route:",
-                "/create",
-                "|",
-                "Status:",
-                "Success",
-                "|",
-                "Desc:",
-                "Create query",
-                "|",
-                "Query:",
-                result,
-            );
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/create",
+                status: "Success",
+                description: "Create Query",
+                extra: result
+            });
         } catch (e) {
-            console.error(
-                "Client:",
-                client?._id || "unknown",
-                "|",
-                "Correlation_ID:",
-                req.headers["x-correlation-id"],
-                "|",
-                "HTTP:",
-                "POST",
-                "|",
-                "Route:",
-                "/create",
-                "|",
-                "Status:",
-                "Failure",
-                "|",
-                "Desc:",
-                "Create query",
-                "|",
-                "Query:",
-                result,
-                "|",
-                "Err:",
-                e.message || e,
-                "|",
-                "Stack:",
-                e.stack || "No Stack Trace",
-            );
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/create",
+                status: "Failure",
+                description: "Create Query",
+                extra: result,
+                message: e.message,
+                stack: e.stack
+            });
+ 
             g_lib.handleException(e, res);
         }
     })
@@ -184,25 +146,14 @@ router
                 },
                 action: function () {
                     client = g_lib.getUserFromClientID(req.queryParams.client);
-                    console.info(
-                        "Client:",
-                        client?._id || "unknown",
-                        "|",
-                        "Correlation_ID:",
-                        req.headers["x-correlation-id"],
-                        "|",
-                        "HTTP:",
-                        "POST",
-                        "|",
-                        "Route:",
-                        "/update",
-                        "|",
-                        "Status:",
-                        "Started",
-                        "|",
-                        "Desc:",
-                        "Update a saved query",
-                    );
+                    logger.logRequestStarted({
+                        client: client?._id,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "POST",
+                        routePath: basePath + "/update",
+                        status: "Started",
+                        description: "Update a saved query",
+                    });
 
                     var qry = g_db.q.document(req.body.id);
 
@@ -247,59 +198,28 @@ router
                     result = qry;
                 },
             });
-
             res.send(result);
-            console.info(
-                "Client:",
-                client?._id || "unknown",
-                "|",
-                "Correlation_ID:",
-                req.headers["x-correlation-id"],
-                "|",
-                "HTTP:",
-                "POST",
-                "|",
-                "Route:",
-                "/update",
-                "|",
-                "Status:",
-                "Success",
-                "|",
-                "Desc:",
-                "Update a saved query",
-                "|",
-                "Query:",
-                result,
-            );
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/update",
+                status: "Success",
+                description: "Update a saved query",
+                extra: result
+            });
         } catch (e) {
-            console.error(
-                "Client:",
-                client?._id || "unknown",
-                "|",
-                "Correlation_ID:",
-                req.headers["x-correlation-id"],
-                "|",
-                "HTTP:",
-                "POST",
-                "|",
-                "Route:",
-                "/update",
-                "|",
-                "Status:",
-                "Failure",
-                "|",
-                "Desc:",
-                "Update a saved query",
-                "|",
-                "Query:",
-                result,
-                "|",
-                "Err:",
-                e.message || e,
-                "|",
-                "Stack:",
-                e.stack || "No Stack Trace",
-            );
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/update",
+                status: "Failure",
+                description: "Update a saved query",
+                extra: result,
+                message: e.message,
+                stack: e.stack
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -328,25 +248,14 @@ router
         let qry = undefined;
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
-            console.info(
-                "Client:",
-                client?._id || "unknown",
-                "|",
-                "Correlation_ID:",
-                req.headers["x-correlation-id"],
-                "|",
-                "HTTP:",
-                "GET",
-                "|",
-                "Route:",
-                "/view",
-                "|",
-                "Status:",
-                "Started",
-                "|",
-                "Desc:",
-                "View specified query",
-            );
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Started",
+                description: "View specified query",
+            });
             qry = g_db.q.document(req.queryParams.id);
 
             if (client._id != qry.owner && !client.is_admin) {
@@ -364,57 +273,28 @@ router
             delete qry.lmit;
 
             res.send(qry);
-            console.info(
-                "Client:",
-                client?._id || "unknown",
-                "|",
-                "Correlation_ID:",
-                req.headers["x-correlation-id"],
-                "|",
-                "HTTP:",
-                "GET",
-                "|",
-                "Route:",
-                "/view",
-                "|",
-                "Status:",
-                "Success",
-                "|",
-                "Desc:",
-                "View specified query",
-                "|",
-                "Query:",
-                qry,
-            );
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Success",
+                description: "View specified query",
+                extra: qry
+            });
         } catch (e) {
-            console.error(
-                "Client:",
-                client?._id || "unknown",
-                "|",
-                "Correlation_ID:",
-                req.headers["x-correlation-id"],
-                "|",
-                "HTTP:",
-                "GET",
-                "|",
-                "Route:",
-                "/view",
-                "|",
-                "Status:",
-                "Failure",
-                "|",
-                "Desc:",
-                "View specified query",
-                "|",
-                "Query:",
-                qry,
-                "|",
-                "Err:",
-                e.message || e,
-                "|",
-                "Stack:",
-                e.stack || "No Stack Trace",
-            );
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Failure",
+                description: "View specified query",
+                extra: qry,
+                message: e.message,
+                stack: e.stack
+            });
+
             g_lib.handleException(e, res);
         }
     })
@@ -429,25 +309,14 @@ router
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
             var owner;
-            console.info(
-                "Client:",
-                client?._id || "unknown",
-                "|",
-                "Correlation_ID:",
-                req.headers["x-correlation-id"],
-                "|",
-                "HTTP:",
-                "GET",
-                "|",
-                "Route:",
-                "/delete",
-                "|",
-                "Status:",
-                "Started",
-                "|",
-                "Desc:",
-                "Delete specified query",
-            );
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/delete",
+                status: "Started",
+                description: "Delete specified query",
+            });
 
             for (var i in req.queryParams.ids) {
                 if (!req.queryParams.ids[i].startsWith("q/")) {
@@ -472,54 +341,29 @@ router
                 }
 
                 g_graph.q.remove(owner._from);
-                console.info(
-                    "Client:",
-                    client?._id || "unknown",
-                    "|",
-                    "Correlation_ID:",
-                    req.headers["x-correlation-id"],
-                    "|",
-                    "HTTP:",
-                    "GET",
-                    "|",
-                    "Route:",
-                    "/delete",
-                    "|",
-                    "Status:",
-                    "Success",
-                    "|",
-                    "Desc:",
-                    "Delete specified query",
-                    "|",
-                    "Query:",
-                    req.queryParams.ids[i],
-                );
+                logger.logRequestSuccess({
+                    client: client?._id,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "GET",
+                    routePath: basePath + "/delete",
+                    status: "Success",
+                    description: "Delete specified query",
+                    extra: req.queryParams.ids[i]
+                });
             }
         } catch (e) {
-            console.info(
-                "Client:",
-                client?._id || "unknown",
-                "|",
-                "Correlation_ID:",
-                req.headers["x-correlation-id"],
-                "|",
-                "HTTP:",
-                "GET",
-                "|",
-                "Route:",
-                "/delete",
-                "|",
-                "Status:",
-                "Failure",
-                "|",
-                "Desc:",
-                "Delete specified query",
-                "Err:",
-                e.message || e,
-                "|",
-                "Stack:",
-                e.stack || "No Stack Trace",
-            );
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/delete",
+                status: "Failure",
+                description: "Delete specified query",
+                extra: req.queryParams.ids[i],
+                message: e.message,
+                stack: e.stack
+            });
+
             g_lib.handleException(e, res);
         }
     })
@@ -534,25 +378,14 @@ router
         let result = undefined;
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
-            console.info(
-                "Client:",
-                client?._id || "unknown",
-                "|",
-                "Correlation_ID:",
-                req.headers["x-correlation-id"],
-                "|",
-                "HTTP:",
-                "GET",
-                "|",
-                "Route:",
-                "/list",
-                "|",
-                "Status:",
-                "Started",
-                "|",
-                "Desc:",
-                "List client saved queries",
-            );
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/list",
+                status: "Started",
+                description: "List client saved queries",
+            });
 
             var qry =
                 "for v in 1..1 inbound @user owner filter is_same_collection('q',v) sort v.title";
@@ -587,58 +420,28 @@ router
             }
 
             res.send(result);
-            console.info(
-                "Client:",
-                client?._id || "unknown",
-                "|",
-                "Correlation_ID:",
-                req.headers["x-correlation-id"],
-                "|",
-                "HTTP:",
-                "GET",
-                "|",
-                "Route:",
-                "/list",
-                "|",
-                "Status:",
-                "Success",
-                "|",
-                "Desc:",
-                "List client saved queries",
-                "|",
-                "Query:",
-                result,
-            );
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/list",
+                status: "Success",
+                description: "List client saved queries",
+                extra: result
+            });
         } catch (e) {
-            console.error(
-                "Client:",
-                client?._id || "unknown",
-                "|",
-                "Correlation_ID:",
-                req.headers["x-correlation-id"],
-                "|",
-                "HTTP:",
-                "GET",
-                "|",
-                "Route:",
-                "/list",
-                "|",
-                "Status:",
-                "Failure",
-                "|",
-                "Desc:",
-                "List client saved queries",
-                "|",
-                "Query:",
-                result,
-                "|",
-                "Err:",
-                e.message || e,
-                "|",
-                "Stack:",
-                e.stack || "No Stack Trace",
-            );
-            g_lib.handleException(e, res);
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/list",
+                status: "Failure",
+                description: "List client saved queries",
+                extra: result,
+                message: e.message,
+                stack: e.stack
+            });
+           g_lib.handleException(e, res);
         }
     })
     .queryParam("client", joi.string().required(), "Client ID")
@@ -853,25 +656,14 @@ router
         let results = undefined;
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
-            console.info(
-                "Client:",
-                client?._id || "unknown",
-                "|",
-                "Correlation_ID:",
-                req.headers["x-correlation-id"],
-                "|",
-                "HTTP:",
-                "GET",
-                "|",
-                "Route:",
-                "/exec",
-                "|",
-                "Status:",
-                "Started",
-                "|",
-                "Desc:",
-                "Execute specified queries",
-            );
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/exec",
+                status: "Started",
+                description: "Execute specified queries",
+            });
 
             var qry = g_db.q.document(req.queryParams.id);
 
@@ -887,56 +679,28 @@ router
             results = execQuery(client, qry.query.mode, qry.query.published, qry);
 
             res.send(results);
-            console.info(
-                "Client:",
-                client?._id || "unknown",
-                "|",
-                "Correlation_ID:",
-                req.headers["x-correlation-id"],
-                "|",
-                "HTTP:",
-                "GET",
-                "|",
-                "Route:",
-                "/exec",
-                "|",
-                "Status:",
-                "Success",
-                "|",
-                "Desc:",
-                "Execute specified queries",
-                "|",
-                "Query Result:",
-                results,
-            );
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/exec",
+                status: "Success",
+                description: "Execute specified queries",
+                extra: results
+            });
+
         } catch (e) {
-            console.info(
-                "Client:",
-                client?._id || "unknown",
-                "|",
-                "Correlation_ID:",
-                req.headers["x-correlation-id"],
-                "|",
-                "HTTP:",
-                "GET",
-                "|",
-                "Route:",
-                "/exec",
-                "|",
-                "Status:",
-                "Failure",
-                "|",
-                "Desc:",
-                "Execute specified queries",
-                "|",
-                "Query Result:",
-                results,
-                "Err:",
-                e.message || e,
-                "|",
-                "Stack:",
-                e.stack || "No Stack Trace",
-            );
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/exec",
+                status: "Failure",
+                description: "Execute specified queries",
+                extra: results,
+                message: e.message,
+                stack: e.stack
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -950,27 +714,17 @@ router
 router
     .post("/exec/direct", function (req, res) {
         let results = undefined;
+        let client = undefined;
         try {
-            const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
-            console.info(
-                "Client:",
-                client?._id || "unknown",
-                "|",
-                "Correlation_ID:",
-                req.headers["x-correlation-id"],
-                "|",
-                "HTTP:",
-                "POST",
-                "|",
-                "Route:",
-                "/exec/direct",
-                "|",
-                "Status:",
-                "Started",
-                "|",
-                "Desc:",
-                "Execute published data search query",
-            );
+            client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/exec/direct",
+                status: "Started",
+                description: "Execute published data search query",
+            });
 
             const query = {
                 ...req.body,
@@ -979,56 +733,28 @@ router
             results = execQuery(client, req.body.mode, req.body.published, query);
 
             res.send(results);
-            console.info(
-                "Client:",
-                client?._id || "unknown",
-                "|",
-                "Correlation_ID:",
-                req.headers["x-correlation-id"],
-                "|",
-                "HTTP:",
-                "POST",
-                "|",
-                "Route:",
-                "/exec",
-                "|",
-                "Status:",
-                "Started",
-                "|",
-                "Desc:",
-                "Execute data search query",
-                "|",
-                "Query Result:",
-                results,
-            );
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/exec/direct",
+                status: "Success",
+                description: "Execute published data search query",
+                extra: results
+            });
+
         } catch (e) {
-            console.error(
-                "Client:",
-                client?._id || "unknown",
-                "|",
-                "Correlation_ID:",
-                req.headers["x-correlation-id"],
-                "|",
-                "HTTP:",
-                "POST",
-                "|",
-                "Route:",
-                "/exec/direct",
-                "|",
-                "Status:",
-                "Failure",
-                "|",
-                "Desc:",
-                "Execute data search query",
-                "|",
-                "Query Result:",
-                results,
-                "Err:",
-                e.message || e,
-                "|",
-                "Stack:",
-                e.stack || "No Stack Trace",
-            );
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/exec/direct",
+                status: "Success",
+                description: "Execute published data search query",
+                extra: results,
+                message: e.message,
+                stack: e.stack
+            });
             g_lib.handleException(e, res);
         }
     })
