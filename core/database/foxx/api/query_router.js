@@ -34,7 +34,7 @@ router
                         status: "Started",
                         description: "Create Query",
                     });
- 
+
                     // Check max number of saved queries
                     if (client.max_sav_qry >= 0) {
                         var count = g_db
@@ -98,7 +98,7 @@ router
                 routePath: basePath + "/create",
                 status: "Success",
                 description: "Create Query",
-                extra: result
+                extra: result,
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -110,9 +110,9 @@ router
                 description: "Create Query",
                 extra: result,
                 message: e.message,
-                stack: e.stack
+                stack: e.stack,
             });
- 
+
             g_lib.handleException(e, res);
         }
     })
@@ -206,7 +206,7 @@ router
                 routePath: basePath + "/update",
                 status: "Success",
                 description: "Update a saved query",
-                extra: result
+                extra: result,
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -218,7 +218,7 @@ router
                 description: "Update a saved query",
                 extra: result,
                 message: e.message,
-                stack: e.stack
+                stack: e.stack,
             });
             g_lib.handleException(e, res);
         }
@@ -280,7 +280,7 @@ router
                 routePath: basePath + "/view",
                 status: "Success",
                 description: "View specified query",
-                extra: qry
+                extra: qry,
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -292,7 +292,7 @@ router
                 description: "View specified query",
                 extra: qry,
                 message: e.message,
-                stack: e.stack
+                stack: e.stack,
             });
 
             g_lib.handleException(e, res);
@@ -348,7 +348,7 @@ router
                     routePath: basePath + "/delete",
                     status: "Success",
                     description: "Delete specified query",
-                    extra: req.queryParams.ids[i]
+                    extra: req.queryParams.ids[i],
                 });
             }
         } catch (e) {
@@ -361,7 +361,7 @@ router
                 description: "Delete specified query",
                 extra: req.queryParams.ids[i],
                 message: e.message,
-                stack: e.stack
+                stack: e.stack,
             });
 
             g_lib.handleException(e, res);
@@ -427,7 +427,7 @@ router
                 routePath: basePath + "/list",
                 status: "Success",
                 description: "List client saved queries",
-                extra: result
+                extra: result,
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -439,9 +439,9 @@ router
                 description: "List client saved queries",
                 extra: result,
                 message: e.message,
-                stack: e.stack
+                stack: e.stack,
             });
-           g_lib.handleException(e, res);
+            g_lib.handleException(e, res);
         }
     })
     .queryParam("client", joi.string().required(), "Client ID")
@@ -686,9 +686,8 @@ router
                 routePath: basePath + "/exec",
                 status: "Success",
                 description: "Execute specified queries",
-                extra: results
+                extra: results,
             });
-
         } catch (e) {
             logger.logRequestFailure({
                 client: client?._id,
@@ -699,7 +698,7 @@ router
                 description: "Execute specified queries",
                 extra: results,
                 message: e.message,
-                stack: e.stack
+                stack: e.stack,
             });
             g_lib.handleException(e, res);
         }
@@ -740,9 +739,8 @@ router
                 routePath: basePath + "/exec/direct",
                 status: "Success",
                 description: "Execute published data search query",
-                extra: results
+                extra: results,
             });
-
         } catch (e) {
             logger.logRequestFailure({
                 client: client?._id,
@@ -753,7 +751,7 @@ router
                 description: "Execute published data search query",
                 extra: results,
                 message: e.message,
-                stack: e.stack
+                stack: e.stack,
             });
             g_lib.handleException(e, res);
         }
