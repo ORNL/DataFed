@@ -153,14 +153,29 @@ public:
                  const std::string &public_key);
 
   /**
-   * Migrates a key from one map type to another with the specified ID.
+   * @brief Migrates an authentication key from one storage type to another.
+   *
+   * This method supports migrating keys between specific `PublicKeyType`s:
+   * - TRANSIENT -> SESSION
+   * - SESSION   -> PERSISTENT
+   *
    * This is useful for correcting misclassified keys (e.g., when a repository
    * key was incorrectly cached as transient/session during DB outage).
    *
-   * @param from_type The source key type to remove from
-   * @param to_type The destination key type to add to
-   * @param public_key The public key to migrate
-   * @param id The ID to associate with the key in the destination map
+   * The migration process ensures:
+   *  - The source key exists before attempting removal.
+   *  - The destination key does not exist before insertion.
+   *  - Appropriate locks are taken to ensure thread safety.
+   *
+   * @param from_type   The original type of the key (TRANSIENT or SESSION).
+   * @param to_type     The target type of the key (SESSION or PERSISTENT).
+   * @param public_key  The public key to be migrated.
+   * @param id          The identifier associated with the key.
+   *
+   * @throws Exception if:
+   *   - Migration is not supported.
+   *   - The source key is missing.
+   *   - Any internal invariant fails during migration.
    **/
   void migrateKey(const PublicKeyType from_type,
                   const PublicKeyType to_type,
