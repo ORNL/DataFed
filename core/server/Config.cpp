@@ -28,13 +28,6 @@ void Config::loadRepositoryConfig(AuthenticationManager &auth_manager,
     m_repos_mtx.unlock();
   }
 
-  // Clear all non-persistent keys before reloading repository configurations
-  // This ensures stale cached keys don't interfere with authentication.
-  // NOTE: Non-persistent keys are cleared during configuration reload (typically at startup or explicit refresh).
-  // This may impact any sessions active during a reload, but such cases are rare in normal operation.
-  DL_INFO(log_context, "Clearing non-persistent keys before loading repository configuration");
-  auth_manager.clearAllNonPersistentKeys();
-
   DatabaseAPI db_client(db_url, db_user, db_pass);
 
   std::vector<RepoData> temp_repos;
