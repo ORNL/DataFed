@@ -33,6 +33,11 @@ private:
   time_t m_trans_active_increment = 0;
   time_t m_session_active_increment = 0;
 
+  /**
+   * WARNING if more than one lock guard need to be applied in a given
+   * method they must be locked in a consistent order to avoid deadlock
+   * TRANSIENT -> SESSION -> PERSISTENT
+   **/
   mutable std::mutex
       m_trans_clients_mtx; ///< Mutex for transient client data access
   mutable std::mutex
