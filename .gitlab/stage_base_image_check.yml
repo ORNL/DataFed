@@ -19,7 +19,9 @@ check-dependencies-image:
             echo "Pulling: ${REGISTRY}/${PROJECT}/${COMPONENT}:${DOWNSTREAM_SHA}"
             set +e
             docker pull --quiet "${REGISTRY}/${PROJECT}/${COMPONENT}:${DOWNSTREAM_SHA}"
-            if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD="TRUE"; fi;
+            container_exists=$?
+            echo "Container Detected: $container_exists"
+            if [ $container_exists -eq 0 ]; then echo "Image exists"; else FORCE_BUILD="TRUE"; fi;
             set -e
             if [ "$FORCE_BUILD" == "TRUE" ]
             then
