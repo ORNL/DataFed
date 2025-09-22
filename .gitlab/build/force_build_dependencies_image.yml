@@ -28,3 +28,44 @@ build-dependencies:
         exit 1
       fi
       echo "✅ Triggered pipeline $PIPELINE_ID for commit $DOWNSTREAM_SHA"
+      # Wait for the downstream pipeline to complete
+      echo "⏳ Waiting for downstream pipeline to complete..."
+      TIMEOUT=3600  # 1 hour timeout
+      ELAPSED=0
+      POLL_INTERVAL=30  # Check every 30 seconds
+      
+      while [ $ELAPSED -lt $TIMEOUT ]; do
+        # Get pipeline status
+        PIPELINE_STATUS=$(curl --silent --fail --show-error \
+          --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+          "$CI_API_V4_URL/projects/$DATAFED_DEPENDENCIES_GITLAB_PROJECT_ID/pipelines/$PIPELINE_ID" | jq -r '.status')
+        
+        echo "Pipeline $PIPELINE_ID status: $PIPELINE_STATUS (elapsed: ${ELAPSED}s)"
+        
+        case "$PIPELINE_STATUS" in
+          "success")
+            echo "✅ Downstream pipeline completed successfully!"
+            exit 0
+            ;;
+          "failed"|"canceled"|"skipped")
+            echo "❌ Downstream pipeline failed with status: $PIPELINE_STATUS"
+            echo "Pipeline URL: $CI_SERVER_URL/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/-/pipelines/$PIPELINE_ID"
+            exit 1
+            ;;
+          "created"|"waiting_for_resource"|"preparing"|"pending"|"running")
+            # Pipeline is still in progress, continue waiting
+            sleep $POLL_INTERVAL
+            ELAPSED=$((ELAPSED + POLL_INTERVAL))
+            ;;
+          *)
+            echo "⚠️  Unknown pipeline status: $PIPELINE_STATUS"
+            sleep $POLL_INTERVAL
+            ELAPSED=$((ELAPSED + POLL_INTERVAL))
+            ;;
+        esac
+      done
+      
+      # If we reach here, the timeout was exceeded
+      echo "❌ Timeout waiting for downstream pipeline to complete after ${TIMEOUT}s"
+      echo "Pipeline URL: $CI_SERVER_URL/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/-/pipelines/$PIPELINE_ID"
+      exit 1 
