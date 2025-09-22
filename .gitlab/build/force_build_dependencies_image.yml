@@ -37,7 +37,7 @@ build-dependencies:
       while [ $ELAPSED -lt $TIMEOUT ]; do
         # Get pipeline status
         PIPELINE_STATUS=$(curl --silent --fail --show-error \
-          --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+          --header "PRIVATE-TOKEN: $GITLAB_DATAFED_DEPENDENCIES_REPO_API_TOKEN" \
           "$CI_API_V4_URL/projects/$DATAFED_DEPENDENCIES_GITLAB_PROJECT_ID/pipelines/$PIPELINE_ID" | jq -r '.status')
         
         echo "Pipeline $PIPELINE_ID status: $PIPELINE_STATUS (elapsed: ${ELAPSED}s)"
