@@ -13,6 +13,7 @@ foreach(PROG
     test_ProxyBasicZMQ
     test_SocketFactory
     test_SocketOptions
+    test_CipherEngine
 )
 
   include_directories(${PROJECT_SOURCE_DIR}/common/source)
@@ -20,11 +21,11 @@ foreach(PROG
   add_executable(unit_${PROG} ${${PROG}_SOURCES})
   if(BUILD_SHARED_LIBS)
     target_link_libraries(unit_${PROG} PRIVATE ${DATAFED_BOOST_LIBRARIES}
-      common libzmq protobuf::libprotobuf Threads::Threads) 
+      common libzmq protobuf::libprotobuf Threads::Threads)
     target_compile_definitions(unit_${PROG} PRIVATE BOOST_TEST_DYN_LINK)
   else()
     target_link_libraries(unit_${PROG} PRIVATE ${DATAFED_BOOST_LIBRARIES}
-      common libzmq-static protobuf::libprotobuf Threads::Threads) 
+      common libzmq-static protobuf::libprotobuf Threads::Threads)
   endif()
   # Only want this if using shared boost libraries
   if ( ENABLE_UNIT_TESTS )
