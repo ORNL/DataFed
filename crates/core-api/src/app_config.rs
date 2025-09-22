@@ -14,6 +14,7 @@ pub struct AppConfig {
     pub loki: Option<LokiConfig>,
     #[cfg(feature = "metrics")]
     pub metrics: MetricsConfig,
+    pub oidc: OIDCConfig,
 }
 
 #[derive(Deserialize)]
@@ -26,4 +27,10 @@ pub struct ApiConfig {
 pub struct LokiConfig {
     pub url: String,
     pub service_name: String,
+}
+
+#[derive(Deserialize)]
+pub struct OIDCConfig {
+    pub discovery_url: String,
+    pub client_id: String,
 }

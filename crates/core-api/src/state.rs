@@ -1,12 +1,43 @@
-// use std::sync::Arc;
+use reqwest::get;
+use serde_json::Value;
 
-// Re-define complex state types here so they do not clog up
-// the function signatures for routes
-// pub type Database = Arc<datafed_database::Database>;
+use crate::OIDCConfig;
+
+#[derive(Clone)]
+pub struct OIDC {
+    pub device_authorization_endpoint: String,
+    pub token_endpoint: String,
+    pub client_id: String,
+}
+
+impl OIDC {
+    pub async fn new(oidc_config: OIDCConfig) -> Result<Self, reqwest::Error> {
+        let res = get(oidc_config.discovery_url).await?;
+        let config: Value = res.json().await?;
+
+        let device_authorization_endpoint = config
+            .get("device_authorization_endpoint")
+            .and_then(Value::as_str)
+            .unwrap_or_default()
+            .to_string();
+
+        let token_endpoint = config
+            .get("token_endpoint")
+            .and_then(Value::as_str)
+            .unwrap_or_default()
+            .to_string();
+
+        Ok(Self {
+            device_authorization_endpoint,
+            token_endpoint,
+            client_id: oidc_config.client_id,
+        })
+    }
+}
 
 #[derive(Clone)]
 pub struct ApiState {
-    // pub db: Database,
+    pub oidc: OIDC,
 }
 
 #[allow(unused)]
@@ -20,4 +51,4 @@ macro_rules! from_state {
     };
 }
 
-// from_state!(Database, db);
+from_state!(OIDC, oidc);

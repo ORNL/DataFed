@@ -52,7 +52,9 @@ pub async fn start(app_config: AppConfig) -> anyhow::Result<()> {
     let router = router::create_router();
 
     // Form the state object that will be available in any route
-    let state = ApiState {};
+    let state = ApiState {
+        oidc: OIDC::new(app_config.oidc).await?,
+    };
 
     // Add relevant request information to logs
     let trace_layer =

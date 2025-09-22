@@ -157,9 +157,27 @@ services:
         #      - "8081:443" # This must be the same port that is mapped to the host for redirects to work
         #      - "50000-50100:50000-50100"
 
+  pingfederate:
+    image: pingidentity/pingfederate:latest
+    container_name: pingfederate
+    restart: unless-stopped
+    environment:
+      PING_IDENTITY_ACCEPT_EULA: "YES"
+      # Optional: auto-reapply the profile on restart
+      SERVER_PROFILE_UPDATE: "true"
+    ports:
+      - "9999:9999"  # Admin Console (HTTPS)
+      - "9031:9031"  # Runtime (HTTPS)
+    volumes:
+      - pingfederate:/opt/out                 # persistent runtime (for logs/data)
+      # - ./server-profile:/opt/in       # your server profile lives here
+      # - ./logs:/opt/logs               # optional
+      # - ./backup:/opt/backup           # optional
+
 volumes:
   foxx_tmp:
   arango_db:
+  pingfederate:
 
 networks:
   datafed-internal:

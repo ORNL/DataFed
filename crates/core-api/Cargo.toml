@@ -27,6 +27,7 @@ tower = "0.5.2"
 anyhow = "1.0.98"
 zeroize = "1.8.1"
 prometheus = { version = "0.13.4", optional = true }
+reqwest = { version = "0.12.23", features = ["json"] }
 
 [features]
 metrics = ["prometheus"]

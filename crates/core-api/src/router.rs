@@ -3,7 +3,7 @@ use utoipa::OpenApi;
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_swagger_ui::SwaggerUi;
 
-use crate::{services, ApiState};
+use crate::{ApiState, services};
 
 #[derive(OpenApi)]
 #[openapi(info(title = "DataFed", description = "DataFed Core API"))]

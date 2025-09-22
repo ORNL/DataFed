@@ -9,6 +9,10 @@ pub enum ApiError {
     InternalServerError,
     #[error("bad request")]
     BadRequest,
+    #[error("unauthorized")]
+    Unauthorized,
+    #[error("too many requests")]
+    TooManyRequests,
     #[error("setup error")]
     SetupError,
 }
@@ -20,6 +24,8 @@ impl IntoResponse for ApiError {
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
             Self::BadRequest => StatusCode::BAD_REQUEST,
+            Self::Unauthorized => StatusCode::UNAUTHORIZED,
+            Self::TooManyRequests => StatusCode::TOO_MANY_REQUESTS,
             Self::SetupError => StatusCode::INTERNAL_SERVER_ERROR,
         }
         .into_response()

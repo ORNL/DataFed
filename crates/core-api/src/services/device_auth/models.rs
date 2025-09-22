@@ -8,6 +8,7 @@ pub struct StartAuthInput {
 
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct StartAuthOutput {
+    pub verification_uri: String,
     pub code: String,
 }
 

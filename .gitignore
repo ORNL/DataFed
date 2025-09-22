@@ -78,3 +78,4 @@ tests/end-to-end/web-UI/auth.setup.js
 
 # For Cargo
 target/
+out
