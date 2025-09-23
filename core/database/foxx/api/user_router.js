@@ -19,7 +19,7 @@ module.exports = router;
 
 router
     .get("/authn/password", function (req, res) {
-        let client = undefined;
+        let client = null;
         console.log("Running /authn/password");
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
@@ -74,7 +74,7 @@ router
 
 router
     .get("/authn/token", function (req, res) {
-        let user = undefined;
+        let user = null;
         try {
             user = g_db._query("for i in u filter i.access == @tok return i", {
                 tok: req.queryParams.token,
@@ -126,8 +126,8 @@ router
 
 router
     .get("/create", function (req, res) {
-        let user = undefined;
-        let result = undefined;
+        let user = null;
+        let result = null;
         try {
             g_db._executeTransaction({
                 collections: {
@@ -273,6 +273,7 @@ router
                     delete user.new.name;
 
                     result = [user.new];
+                    delete user.new.password;
                 },
             });
             res.send(result);
@@ -317,18 +318,9 @@ router
 
 router
     .get("/update", function (req, res) {
-        let client = undefined;
-        let result = undefined;
+        let client = null;
+        let result = null;
         try {
-            logger.logRequestStarted({
-                client: user?._id,
-                correlationId: req.headers["x-correlation-id"],
-                httpVerb: "GET",
-                routePath: basePath + "/create",
-                status: "Started",
-                description: "Create new user entry",
-            });
-
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn"],
@@ -441,7 +433,7 @@ router
 
 router
     .get("/find/by_uuids", function (req, res) {
-        let user = undefined;
+        let user = null;
         try {
             // Convert UUIDs to DB _ids
             var uuids = [];
@@ -505,7 +497,7 @@ router
 
 router
     .get("/find/by_name_uid", function (req, res) {
-        let name = undefined;
+        let name = null;
         try {
             name = req.queryParams.name_uid.trim();
             logger.logRequestStarted({
@@ -580,7 +572,7 @@ router
 
 router
     .get("/keys/set", function (req, res) {
-        let client = undefined;
+        let client = null;
         try {
             g_db._executeTransaction({
                 collections: {
@@ -653,7 +645,7 @@ router
 
 router
     .get("/keys/clear", function (req, res) {
-        let client = undefined;
+        let client = null;
         try {
             g_db._executeTransaction({
                 collections: {
@@ -722,7 +714,7 @@ router
 
 router
     .get("/keys/get", function (req, res) {
-        let user = undefined;
+        let user = null;
         try {
             if (req.queryParams.subject) {
                 if (!g_db.u.exists(req.queryParams.subject))
@@ -800,7 +792,7 @@ router
 
 router
     .get("/find/by_pub_key", function (req, res) {
-        let uid = undefined;
+        let uid = null;
         try {
             uid = g_lib.uidFromPubKey(req.queryParams.pub_key);
             logger.logRequestStarted({
@@ -842,7 +834,7 @@ router
 
 router
     .get("/token/set", function (req, res) {
-        let client = undefined;
+        let client = null;
         try {
             g_db._executeTransaction({
                 collections: {
@@ -1030,7 +1022,7 @@ router
 
 router
     .get("/token/get", function (req, res) {
-        let user = undefined;
+        let user = null;
         try {
             const collection_token = UserToken.validateRequestParams(req.queryParams);
             // TODO: collection type determines logic when mapped vs HA
@@ -1116,7 +1108,7 @@ router
 
 router
     .get("/token/get/access", function (req, res) {
-        let user = undefined;
+        let user = null;
         try {
             if (req.queryParams.subject) {
                 if (!g_db.u.exists(req.queryParams.subject))
@@ -1149,7 +1141,7 @@ router
                 routePath: basePath + "/token/get/access",
                 status: "Success",
                 description: "Getting User Access Token",
-                extra: user.access,
+                extra: "undefined",
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -1159,7 +1151,7 @@ router
                 routePath: basePath + "/token/get/access",
                 status: "Failure",
                 description: "Getting User Access Token",
-                extra: user.access,
+                extra: "undefined",
                 message: e.message,
                 stack: e.stack,
             });
@@ -1174,8 +1166,8 @@ router
 
 router
     .get("/token/get/expiring", function (req, res) {
-        let user = undefined;
-        let result = undefined;
+        let user = null;
+        let result = null;
         try {
             //console.log("exp:",(Date.now()/1000) + req.queryParams.expires_in);
             logger.logRequestStarted({
@@ -1225,7 +1217,7 @@ router
 
 router
     .get("/view", function (req, res) {
-        let client = undefined;
+        let client = null;
         try {
             client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
             logger.logRequestStarted({
@@ -1323,8 +1315,8 @@ router
                 routePath: basePath + "/view",
                 status: "Success",
                 description: "View User Information",
-                extra: req.queryParams.details ? client : "undefined",
-            });
+                extra: user,
+            }); //req.queryParams.details ? 
         } catch (e) {
             g_lib.handleException(e, res);
             logger.logRequestFailure({
@@ -1334,7 +1326,7 @@ router
                 routePath: basePath + "/view",
                 status: "Failure",
                 description: "View User Information",
-                extra: req.queryParams.details,
+                extra: user,
                 message: e.message,
                 stack: e.stack,
             });
@@ -1348,7 +1340,7 @@ router
 
 router
     .get("/list/all", function (req, res) {
-        let client = undefined;
+        let client = null;
         var qry = "for i in u sort i.name_last, i.name_first";
         var result;
         logger.logRequestStarted({
@@ -1482,8 +1474,8 @@ Note: must delete ALL data records and projects owned by the user being deleted 
 */
 router
     .get("/delete", function (req, res) {
-        let client = undefined;
-        let user_id = undefined;
+        let client = null;
+        let user_id = null;
         try {
             g_db._executeTransaction({
                 collections: {
@@ -1615,7 +1607,7 @@ router
 
 router
     .get("/ident/list", function (req, res) {
-        let client = undefined;
+        let client = null;
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
@@ -1683,7 +1675,7 @@ router
 
 router
     .get("/ident/add", function (req, res) {
-        let client = undefined;
+        let client = null;
         try {
             g_db._executeTransaction({
                 collections: {
@@ -1831,7 +1823,7 @@ router
 
 router
     .get("/ident/remove", function (req, res) {
-        let client = undefined;
+        let client = null;
         try {
             g_db._executeTransaction({
                 collections: {
@@ -1893,7 +1885,7 @@ router
 
 router
     .get("/ep/get", function (req, res) {
-        let client = undefined;
+        let client = null;
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
@@ -1936,7 +1928,7 @@ router
 
 router
     .get("/ep/set", function (req, res) {
-        let client = undefined;
+        let client = null;
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
