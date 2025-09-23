@@ -33,6 +33,11 @@ private:
   time_t m_trans_active_increment = 0;
   time_t m_session_active_increment = 0;
 
+  /**
+   * WARNING if more than one lock guard need to be applied in a given
+   * method they must be locked in a consistent order to avoid deadlock
+   * TRANSIENT -> SESSION -> PERSISTENT
+   **/
   mutable std::mutex
       m_trans_clients_mtx; ///< Mutex for transient client data access
   mutable std::mutex
@@ -109,6 +114,12 @@ public:
    **/
   std::string getUID(const PublicKeyType pub_key_type,
                      const std::string &public_key) const;
+  
+  /**
+   * Safe version that returns empty string if key not found
+   **/
+  std::string getUIDSafe(const PublicKeyType pub_key_type,
+                         const std::string &public_key) const;
 
   /**
    * Will return the number of keys of the provided type. Does not currently
@@ -147,6 +158,36 @@ public:
                  const std::string &public_key);
 
   /**
+   * @brief Migrates an authentication key from one storage type to another.
+   *
+   * This method supports migrating keys between specific `PublicKeyType`s:
+   * - TRANSIENT -> SESSION
+   * - SESSION   -> PERSISTENT
+   *
+   * This is useful for correcting misclassified keys (e.g., when a repository
+   * key was incorrectly cached as transient/session during DB outage).
+   *
+   * The migration process ensures:
+   *  - The source key exists before attempting removal.
+   *  - The destination key does not exist before insertion.
+   *  - Appropriate locks are taken to ensure thread safety.
+   *
+   * @param from_type   The original type of the key (TRANSIENT or SESSION).
+   * @param to_type     The target type of the key (SESSION or PERSISTENT).
+   * @param public_key  The public key to be migrated.
+   * @param id          The identifier associated with the key.
+   *
+   * @throws Exception if:
+   *   - Migration is not supported.
+   *   - The source key is missing.
+   *   - Any internal invariant fails during migration.
+   **/
+  void migrateKey(const PublicKeyType from_type,
+                  const PublicKeyType to_type,
+                  const std::string &public_key,
+                  const std::string &id);
+
+  /**
    * Will reset the access counter of the key to 0 and the allowed expiration
    *time of the key..
    *
@@ -154,6 +195,24 @@ public:
    **/
   void resetKey(const PublicKeyType pub_key_type,
                 const std::string &public_key);
+
+  /**
+   * Clear all transient keys from the authentication map.
+   * This is useful for cleaning up stale keys after service restarts.
+   **/
+  void clearTransientKeys();
+
+  /**
+   * Clear all session keys from the authentication map.
+   * This is useful for cleaning up stale keys after service restarts.
+   **/
+  void clearSessionKeys();
+
+  /**
+   * Clear all non-persistent (transient and session) keys.
+   * Persistent keys are preserved as they represent service accounts.
+   **/
+  void clearAllNonPersistentKeys();
 };
 
 } // namespace Core
