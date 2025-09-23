@@ -20,7 +20,6 @@ module.exports = router;
 router
     .get("/authn/password", function (req, res) {
         let client = null;
-        console.log("Running /authn/password");
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
             const is_verified = auth.verify(client.password, req.queryParams.pw);
@@ -35,9 +34,6 @@ router
                 status: "Started",
                 description: "Authenticating user via password",
             });
-
-            //if ( client.password != req.queryParams.pw )
-            //    throw g_lib.ERR_AUTHN_FAILED;
 
             res.send({
                 uid: client._id,
@@ -886,14 +882,6 @@ router
                         user_id = client._id;
                         user_doc = client;
                     }
-                    console.log(
-                        "updating tokens for",
-                        user_id,
-                        "acc:",
-                        req.queryParams.access,
-                        "exp:",
-                        req.queryParams.expires_in,
-                    );
                     var obj = {
                         access: req.queryParams.access,
                         refresh: req.queryParams.refresh,
@@ -953,7 +941,6 @@ router
                                 ...obj,
                             };
 
-                            console.log("writing to edge ", token_doc);
                             const token_doc_upsert = g_db.globus_token.insert(token_doc, {
                                 overwriteMode: "replace", // TODO: perhaps use 'update' and specify values for true upsert.
                             });
@@ -975,7 +962,7 @@ router
                                 status: "Success",
                                 description: "Setting user token",
                                 extra: "undefined",
-                            });
+                        });
                     }
                 },
             });
@@ -1169,7 +1156,6 @@ router
         let user = null;
         let result = null;
         try {
-            //console.log("exp:",(Date.now()/1000) + req.queryParams.expires_in);
             logger.logRequestStarted({
                 client: user?._id,
                 correlationId: req.headers["x-correlation-id"],
@@ -1519,7 +1505,6 @@ router
                     } else {
                         user_id = client._id;
                     }
-                    //console.log( "delete user", user_id );
 
                     var objects, subobjects, obj, subobj, i, j;
 
@@ -1531,7 +1516,6 @@ router
                         .toArray();
                     for (i in objects) {
                         obj = objects[i];
-                        //console.log( "del ident", obj );
                         g_graph[obj.substr(0, obj.indexOf("/"))].remove(obj);
                     }
 
@@ -1546,7 +1530,6 @@ router
                         .toArray();
                     for (i in objects) {
                         obj = objects[i];
-                        //console.log( "del proj", obj );
                         subobjects = g_db
                             ._query("for v in 1..1 inbound @proj owner return v._id", {
                                 proj: obj,
@@ -1554,7 +1537,6 @@ router
                             .toArray();
                         for (j in subobjects) {
                             subobj = subobjects[j];
-                            //console.log("del subobj",subobj);
                             g_graph[subobj.substr(0, subobj.indexOf("/"))].remove(subobj);
                         }
 
@@ -1569,7 +1551,6 @@ router
                         .toArray();
                     for (i in objects) {
                         obj = objects[i];
-                        //console.log( "del owned", obj );
                         g_graph[obj.substr(0, obj.indexOf("/"))].remove(obj);
                     }
 

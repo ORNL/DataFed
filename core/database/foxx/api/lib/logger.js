@@ -25,7 +25,7 @@ function logRequestSuccess({
             pad("Status", status) +
             " | " +
             pad("Desc", description) +
-            "|" +
+            " | " +
             pad("Extra", typeof extra === "object" ? JSON.stringify(extra) : extra),
     );
 }
@@ -56,11 +56,11 @@ function logRequestFailure({
             pad("Status", status) +
             " | " +
             pad("Desc", description) +
-            "|" +
+            " | " +
             pad("Extra", typeof extra === "object" ? JSON.stringify(extra) : extra) +
-            "|" +
+            " | " +
             pad("Err", message) +
-            "|" +
+            " | " +
             pad("Stack", stack),
     );
 }
