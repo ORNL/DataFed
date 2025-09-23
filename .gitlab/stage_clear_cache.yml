@@ -4,34 +4,32 @@
 ################################################################################
 # Used to clear out the cache on VMs where the images are being built
 .clear_cache:
-  script:
-    - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
-    - if [[ $(docker ps -q | wc -l) != "0" ]]; then docker stop $(docker ps -q); fi;
-    - docker system prune -f --all
-    - ./scripts/ci_purge_images.sh
-    - df -h
+    script:
+        - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
+        - if [[ $(docker ps -q | wc -l) != "0" ]]; then docker stop $(docker ps -q); fi;
+        - docker system prune -f --all
+        - ./scripts/ci_purge_images.sh
+        - df -h
 
 clear-core-cache:
-  extends: .clear_cache
-  stage: clear-docker-cache
-  needs: ["signal"]
-  tags:
-    - ci_1
+    extends: .clear_cache
+    stage: clear-docker-cache
+    needs: ["signal"]
+    tags:
+        - ci_1
 
 clear-repo-cache:
-  extends: .clear_cache
-  stage: clear-docker-cache
-  needs: ["signal"]
-  tags:
-    - ci_3
+    extends: .clear_cache
+    stage: clear-docker-cache
+    needs: ["signal"]
+    tags:
+        - ci_3
 
 clear-python-client-cache:
-  extends: .clear_cache
-  stage: clear-docker-cache
-  variables:
-    DATAFED_CI_PURGE_THRESHOLD: "9"
-  needs: ["signal"]
-  tags:
-    - ci_5
-
-
+    extends: .clear_cache
+    stage: clear-docker-cache
+    variables:
+        DATAFED_CI_PURGE_THRESHOLD: "9"
+    needs: ["signal"]
+    tags:
+        - ci_5
