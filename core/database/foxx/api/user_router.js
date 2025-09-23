@@ -1302,7 +1302,7 @@ router
                 status: "Success",
                 description: "View User Information",
                 extra: user,
-            }); //req.queryParams.details ? 
+            }); //req.queryParams.details ?
         } catch (e) {
             g_lib.handleException(e, res);
             logger.logRequestFailure({
