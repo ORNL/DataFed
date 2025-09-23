@@ -4,3 +4,6 @@
 [submodule "external/protobuf"]
 	path = external/protobuf
 	url = https://github.com/protocolbuffers/protobuf.git
+[submodule "external/DataFedDependencies"]
+	path = external/DataFedDependencies
+	url = https://github.com/ORNL/DataFedDependencies.git
