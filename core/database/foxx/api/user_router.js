@@ -962,7 +962,7 @@ router
                                 status: "Success",
                                 description: "Setting user token",
                                 extra: "undefined",
-                        });
+                            });
                     }
                 },
             });
