@@ -322,8 +322,8 @@ bool isSupportedMigration(const PublicKeyType from, const PublicKeyType to) {
   // Only support the following migrations
   // TRANSIENT -> SESSION
   // SESSION -> PERSISTENT
-  if (from_type == PublicKeyType::TRANSIENT && to_type == PublicKeyType::SESSION ||
-      from_type == PublicKeyType::SESSION   && to_type == PublicKeyType::PERSISTENT) {
+  if ((from == PublicKeyType::TRANSIENT && to == PublicKeyType::SESSION ) ||
+      (from == PublicKeyType::SESSION   && to == PublicKeyType::PERSISTENT )) {
     return true;
   }
   return false;
@@ -338,18 +338,18 @@ void AuthMap::migrateKey(const PublicKeyType from_type,
     return;
   }
 
-  if ( ! isSupportedMigration(from_type, to_type) {
+  if ( ! isSupportedMigration(from_type, to_type) ) {
     EXCEPT(1, "Unsupported key migration attempted, only allowed to migrate to TRANSIENT -> SESSION or SESSION -> PERSISTENT");
   }
 
   if (from_type == PublicKeyType::TRANSIENT) {
     // TRANSIENT -> SESSION
-    lock_guard<mutex> lock(m_trans_clients_mtx);
+    std::lock_guard<std::mutex> lock_trans(m_trans_clients_mtx);
     // Make sure TRANSIENT key exists before trying to remove it.
     if (! m_trans_auth_clients.count(public_key)) {
       EXCEPT(1, "Missing TRANSIENT key, unable to migrate key (TRANSIENT->SESSION)!");
     }
-    lock_guard<mutex> lock(m_session_clients_mtx);
+    std::lock_guard<std::mutex> lock_sess(m_session_clients_mtx);
     m_trans_auth_clients.erase(public_key);
     // Make sure SESSION key does not exist before trying to add it.
     if ( m_session_auth_clients.count(public_key) == 0 ) {
@@ -359,17 +359,16 @@ void AuthMap::migrateKey(const PublicKeyType from_type,
 
   } else if (from_type == PublicKeyType::SESSION) {
     // SESSION -> PERSISTENT
-    lock_guard<mutex> lock(m_session_clients_mtx);
+    std::lock_guard<std::mutex> lock_sess(m_session_clients_mtx);
     // Make sure SESSION key exists before trying to remove it.
     if (! m_session_auth_clients.count(public_key)) {
       EXCEPT(1, "Missing SESSION key, unable to migrate key (SESSION->PERSISTENT)!");
     }
-    lock_guard<mutex> lock(m_persistent_clients_mtx);
+    std::lock_guard<std::mutex> lock_pers(m_persistent_clients_mtx);
     m_session_auth_clients.erase(public_key);
     // Make sure PERSISTENT key does not exist before trying to add it.
     if ( m_persistent_auth_clients.count(public_key) == 0 ) {
-      AuthElement element = {id, time(0) + m_session_active_increment, 0};
-      m_persistent_auth_clients[public_key] = element;
+      m_persistent_auth_clients[public_key] = id;
     }
   }
 }
