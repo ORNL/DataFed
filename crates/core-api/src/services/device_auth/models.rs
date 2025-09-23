@@ -23,6 +23,11 @@ pub struct TokenSet {
     pub refresh_token: Option<String>,
 }
 
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct LegacyValidateInput {
+    pub token: String,
+}
+
 impl axum::response::IntoResponse for StartAuthOutput {
     fn into_response(self) -> axum::response::Response {
         axum::response::Json(self).into_response()

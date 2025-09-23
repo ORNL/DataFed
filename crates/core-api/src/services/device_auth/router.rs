@@ -1,4 +1,9 @@
 use axum::{Json, extract::State};
+use jsonwebtoken::{
+    Algorithm, DecodingKey, Validation, decode, decode_header,
+    errors::ErrorKind,
+    jwk::{AlgorithmParameters, JwkSet, KeyAlgorithm},
+};
 use reqwest::StatusCode;
 use serde::Deserialize;
 use utoipa::path as route;
@@ -6,7 +11,9 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     ApiError, ApiState, OIDC,
-    services::device_auth::{PollDeviceAuthInput, StartAuthInput, StartAuthOutput, TokenSet},
+    services::device_auth::{
+        LegacyValidateInput, PollDeviceAuthInput, StartAuthInput, StartAuthOutput, TokenSet,
+    },
 };
 
 pub fn router() -> OpenApiRouter<ApiState> {
@@ -15,6 +22,7 @@ pub fn router() -> OpenApiRouter<ApiState> {
     OpenApiRouter::new()
         .routes(routes!(start_device_auth))
         .routes(routes!(poll_device_auth))
+        .routes(routes!(legacy_validate))
 }
 
 #[route(post, path = "/auth/device", responses((status = OK, body = StartAuthOutput), (status = BAD_REQUEST), (status = UNAUTHORIZED)))]
@@ -122,4 +130,183 @@ async fn poll_device_auth(
         StatusCode::TOO_MANY_REQUESTS => Err(ApiError::TooManyRequests),
         _ => Err(ApiError::InternalServerError),
     }
+}
+
+#[route(post, path = "/auth/legacy/validate", responses((status = OK, body = ()), (status = BAD_REQUEST), (status = UNAUTHORIZED)))]
+async fn legacy_validate(
+    State(oidc): State<OIDC>,
+    Json(legacy_validate_input): Json<LegacyValidateInput>,
+) -> Result<TokenSet, ApiError> {
+    if oidc.jwks_uri.is_empty() {
+        return Err(ApiError::SetupError);
+    }
+
+    let token = legacy_validate_input.token.trim();
+    if token.is_empty() {
+        return Err(ApiError::BadRequest);
+    }
+
+    let token = token.to_owned();
+    let header = decode_header(&token).map_err(|_| ApiError::Unauthorized)?;
+    let client = reqwest::Client::new();
+    let mut jwks = load_jwks(&oidc, &client, false).await?;
+
+    for attempt in 0..=1 {
+        match validate_with_jwks(&token, &header, &jwks, oidc.issuer.as_str()) {
+            Ok(_) => {
+                return Ok(TokenSet {
+                    access_token: token.clone(),
+                    refresh_token: None,
+                });
+            }
+            Err(TokenValidationFailure::NoMatchingKey) => {
+                if attempt == 0 {
+                    jwks = load_jwks(&oidc, &client, true).await?;
+                    continue;
+                }
+
+                return Err(ApiError::Unauthorized);
+            }
+            Err(TokenValidationFailure::Jwt(kind)) => {
+                let retry = attempt == 0 && should_refresh(&kind);
+                let error = map_error_kind(&kind);
+
+                if retry {
+                    jwks = load_jwks(&oidc, &client, true).await?;
+                    continue;
+                }
+
+                return Err(error);
+            }
+        }
+    }
+
+    Err(ApiError::Unauthorized)
+}
+
+#[derive(Debug)]
+enum TokenValidationFailure {
+    NoMatchingKey,
+    Jwt(ErrorKind),
+}
+
+async fn load_jwks(
+    oidc: &OIDC,
+    client: &reqwest::Client,
+    force_refresh: bool,
+) -> Result<JwkSet, ApiError> {
+    if !force_refresh {
+        if let Some(cached) = oidc.cached_jwks().await {
+            return Ok(cached);
+        }
+    } else {
+        oidc.clear_jwks().await;
+    }
+
+    let response = client
+        .get(&oidc.jwks_uri)
+        .send()
+        .await
+        .map_err(|_| ApiError::InternalServerError)?;
+
+    if !response.status().is_success() {
+        return Err(ApiError::InternalServerError);
+    }
+
+    let jwks = response
+        .json::<JwkSet>()
+        .await
+        .map_err(|_| ApiError::InternalServerError)?;
+
+    oidc.store_jwks(jwks.clone()).await;
+
+    Ok(jwks)
+}
+
+fn validate_with_jwks(
+    token: &str,
+    header: &jsonwebtoken::Header,
+    jwks: &JwkSet,
+    issuer: &str,
+) -> Result<(), TokenValidationFailure> {
+    let kid = header.kid.as_deref();
+    let mut last_error: Option<ErrorKind> = None;
+
+    for jwk in jwks.keys.iter() {
+        if kid.is_some_and(|expected| jwk.common.key_id.as_deref() != Some(expected)) {
+            continue;
+        }
+
+        if let Some(jwk_alg) = jwk.common.key_algorithm {
+            if !algorithms_match(jwk_alg, header.alg) {
+                continue;
+            }
+        }
+
+        let decoding_key = match &jwk.algorithm {
+            AlgorithmParameters::RSA(rsa) => DecodingKey::from_rsa_components(&rsa.n, &rsa.e),
+            AlgorithmParameters::EllipticCurve(ec) => DecodingKey::from_ec_components(&ec.x, &ec.y),
+            AlgorithmParameters::OctetKey(oct) => {
+                Ok(DecodingKey::from_secret(oct.value.as_bytes()))
+            }
+            AlgorithmParameters::OctetKeyPair(_) => continue,
+        };
+
+        let decoding_key = match decoding_key {
+            Ok(key) => key,
+            Err(_) => continue,
+        };
+
+        let mut validation = Validation::new(header.alg);
+        validation.validate_aud = false;
+        validation.set_required_spec_claims(&["exp"]);
+
+        if !issuer.is_empty() {
+            validation.set_issuer(&[issuer]);
+        }
+
+        match decode::<serde_json::Value>(token, &decoding_key, &validation) {
+            Ok(_) => return Ok(()),
+            Err(err) => last_error = Some(err.into_kind()),
+        }
+    }
+
+    if let Some(kind) = last_error {
+        return Err(TokenValidationFailure::Jwt(kind));
+    }
+
+    Err(TokenValidationFailure::NoMatchingKey)
+}
+
+fn should_refresh(kind: &ErrorKind) -> bool {
+    matches!(kind, ErrorKind::InvalidSignature | ErrorKind::InvalidToken)
+}
+
+fn map_error_kind(kind: &ErrorKind) -> ApiError {
+    match kind {
+        ErrorKind::ExpiredSignature
+        | ErrorKind::InvalidToken
+        | ErrorKind::InvalidSignature
+        | ErrorKind::InvalidIssuer
+        | ErrorKind::InvalidAudience => ApiError::Unauthorized,
+        _ => ApiError::InternalServerError,
+    }
+}
+
+fn algorithms_match(jwk_alg: KeyAlgorithm, header_alg: Algorithm) -> bool {
+    matches!(
+        (jwk_alg, header_alg),
+        (KeyAlgorithm::HS256, Algorithm::HS256)
+            | (KeyAlgorithm::HS384, Algorithm::HS384)
+            | (KeyAlgorithm::HS512, Algorithm::HS512)
+            | (KeyAlgorithm::RS256, Algorithm::RS256)
+            | (KeyAlgorithm::RS384, Algorithm::RS384)
+            | (KeyAlgorithm::RS512, Algorithm::RS512)
+            | (KeyAlgorithm::ES256, Algorithm::ES256)
+            | (KeyAlgorithm::ES384, Algorithm::ES384)
+            | (KeyAlgorithm::PS256, Algorithm::PS256)
+            | (KeyAlgorithm::PS384, Algorithm::PS384)
+            | (KeyAlgorithm::PS512, Algorithm::PS512)
+            | (KeyAlgorithm::EdDSA, Algorithm::EdDSA)
+    )
 }
