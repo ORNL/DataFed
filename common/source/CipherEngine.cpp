@@ -42,7 +42,15 @@ namespace SDMS{
         std::fill_n(output.get(), paddedLength + SDMS::CipherEngine::NULL_TERMINATOR_SIZE, 0);  // manually zero-initialize
         const int outputLength = EVP_EncodeBlock(reinterpret_cast<unsigned char*>(output.get()), input, length);
         if (paddedLength != outputLength)
-        {  DL_ERROR(log_context, "Output Length (" << outputLength <<") and Predicted Padded Length ("<< paddedLength <<" ) of encoded bytes not equal!"); }
+        {
+          std::ostringstream oss;
+          oss << "Output Length (" << outputLength
+              << ") and Predicted Padded Length (" << paddedLength
+              << ") of encoded bytes not equal!";
+
+          DL_ERROR(log_context, oss.str());
+          EXCEPT_PARAM(1, oss.str());
+        }
         return output;
     }
 
@@ -54,8 +62,15 @@ namespace SDMS{
         auto output = std::make_unique<unsigned char[]>(paddedLength+SDMS::CipherEngine::NULL_TERMINATOR_SIZE);
         std::fill_n(output.get(), paddedLength+SDMS::CipherEngine::NULL_TERMINATOR_SIZE, 0);
         const int outputLength = EVP_DecodeBlock(output.get(), reinterpret_cast<const unsigned char*>(input), length);
-        if (paddedLength != outputLength)
-        { DL_ERROR(log_context, "Output Length (" << outputLength <<") and Predicted Padded Length ("<< paddedLength <<" ) of decoded bytes not equal!"); }
+        if (paddedLength != outputLength) {
+          std::ostringstream oss;
+          oss << "Output Length (" << outputLength
+              << ") and Predicted Padded Length (" << paddedLength
+              << ") of decoded bytes not equal!";
+
+          DL_ERROR(log_context, oss.str());
+          EXCEPT_PARAM(1, oss.str());
+        }
         return output;
     }
     void CipherEngine::generateIV(unsigned char *iv)
@@ -107,7 +122,7 @@ bool CipherEngine::tokenNeedsUpdate(const Value::Object &obj)
     CipherEngine::CipherBytes CipherEngine::encryptAlgorithm(unsigned char *iv, const std::string& msg, LogContext log_context)
     {
         if (msg.length() > MAX_MSG_LENGTH) {
-            throw TraceException(__FILE__, __LINE__, 0, std::string("Message too long for encryption"));
+            EXCEPT_PARAM(0, std::string("Message too long for encryption"));
         }
         EVP_CIPHER_CTX *ctx = nullptr;
         CipherBytes bytes_result = {};

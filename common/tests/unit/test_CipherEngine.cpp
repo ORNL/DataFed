@@ -41,7 +41,30 @@ BOOST_AUTO_TEST_CASE(testing_KeyGeneration)
             finalArray[lv] = keyArray[lv];
     }
     BOOST_CHECK(sizeof(finalArray)==SDMS::CipherEngine::KEY_LENGTH);
+
+    // Assert that the generated key is not all zeros
+    bool all_zeros = true;
+    for (int i = 0; i < SDMS::CipherEngine::KEY_LENGTH; ++i) {
+        if (token_key[i] != 0) {
+            all_zeros = false;
+            break;
+        }
+    }
+    BOOST_CHECK(!all_zeros);
+    // Generate a second key and check that it is different from the first
+    unsigned char second_key[SDMS::CipherEngine::KEY_LENGTH];
+    CipherEngine::generateEncryptionKey(second_key);
+    bool keys_are_different = false;
+    for (int i = 0; i < SDMS::CipherEngine::KEY_LENGTH; ++i) {
+        if (token_key[i] != second_key[i]) {
+            keys_are_different = true;
+            break;
+        }
+    }
+    BOOST_CHECK(keys_are_different);
 }
+
+
 
 BOOST_AUTO_TEST_CASE(test_EncryptionDecryption)
 {

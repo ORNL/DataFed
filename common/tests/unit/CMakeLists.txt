@@ -21,11 +21,13 @@ foreach(PROG
   add_executable(unit_${PROG} ${${PROG}_SOURCES})
   if(BUILD_SHARED_LIBS)
     target_link_libraries(unit_${PROG} PRIVATE ${DATAFED_BOOST_LIBRARIES}
-      common libzmq protobuf::libprotobuf Threads::Threads)
+      common libzmq protobuf::libprotobuf Threads::Threads
+      "${OPENSSL_SSL_LIBRARY}" "${OPENSSL_CRYPTO_LIBRARY}" )
     target_compile_definitions(unit_${PROG} PRIVATE BOOST_TEST_DYN_LINK)
   else()
     target_link_libraries(unit_${PROG} PRIVATE ${DATAFED_BOOST_LIBRARIES}
-      common libzmq-static protobuf::libprotobuf Threads::Threads)
+      common libzmq-static protobuf::libprotobuf Threads::Threads
+      "${OPENSSL_SSL_LIBRARY}" "${OPENSSL_CRYPTO_LIBRARY}" )
   endif()
   # Only want this if using shared boost libraries
   if ( ENABLE_UNIT_TESTS )
