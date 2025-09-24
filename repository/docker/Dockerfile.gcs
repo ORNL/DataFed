@@ -169,7 +169,7 @@ COPY --chown=datafed:root ./repository/docker/entrypoint_authz.sh ${BUILD_DIR}/r
 
 USER root
 
-ENV LD_LIBRARY_PATH=/opt/datafed/dependencies/lib/
+ENV LD_LIBRARY_PATH=/opt/datafed/dependencies/lib/:/opt/datafed/dependencies/lib64/
 
 # Remove --client-id from command because it was deprecated
 RUN sed -i '/--client-id/d' /entrypoint.sh
