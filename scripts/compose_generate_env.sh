@@ -195,7 +195,6 @@ else
   local_DATAFED_REPO_DOMAIN=$(get_env_value "DATAFED_REPO_DOMAIN" "")
 fi
 
-
 # Make the logs folder if it doesn't exist
 mkdir -p "${COMPOSE_ENV_DIR}/logs"
 
