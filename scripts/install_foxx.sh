@@ -135,7 +135,7 @@ basic_auth="$local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD"
 
 if [ "${local_DATABASE_API_SCHEME}" == "https" ]; then
   set +e
-  output=$(curl --user "$basic_auth" ${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT} 2>&1)
+  output=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl --user "$basic_auth" ${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT} 2>&1)
   error_code="$?"
   set -e
 

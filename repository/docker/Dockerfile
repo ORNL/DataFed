@@ -27,6 +27,7 @@ EXPOSE 7512
 # and ingress?
 EXPOSE 9000
 
+COPY ./common                                  ${BUILD_DIR}/common
 COPY ./repository/CMakeLists.txt               ${BUILD_DIR}/repository/CMakeLists.txt
 COPY ./CMakeLists.txt                          ${BUILD_DIR}
 COPY ./scripts/dependency_versions.sh          ${BUILD_DIR}/scripts/

@@ -38,7 +38,9 @@ build-gcs:
     - echo "$BRANCH_LOWER"
     - "${CI_PROJECT_DIR}/scripts/generate_datafed.sh"
     - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
-    - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies-${BRANCH_LOWER}:latest" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" --build-arg GCS_IMAGE="${REGISTRY}/datafed/gcs-base-${BRANCH_LOWER}:latest" -f repository/docker/Dockerfile.gcs -t "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" .
+    - DOWNSTREAM_SHA=$( git submodule status ./external/DataFedDependencies/ | awk '{print $1}' )
+    - DOWNSTREAM_SHA=${DOWNSTREAM_SHA#-}
+    - docker build --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies:$DOWNSTREAM_SHA" --build-arg RUNTIME="${REGISTRY}/datafed/runtime-${BRANCH_LOWER}:latest" --build-arg GCS_IMAGE="${REGISTRY}/datafed/gcs-base-${BRANCH_LOWER}:latest" -f repository/docker/Dockerfile.gcs -t "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" .
     - docker tag "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:$CI_COMMIT_SHA"
     - export DATAFED_HARBOR_REPOSITORY="${COMPONENT}-${BRANCH_LOWER}"
     - export DATAFED_HARBOR_USERNAME="${HARBOR_USER}"

@@ -1,0 +1,11 @@
+---
+stages:
+  - build
+
+build-dependencies:
+  stage: build
+  tags:
+    - ci-datafed-core
+    - docker
+  script:
+    - echo "Skipping dependency build, up todate dependencies image was found for commit."

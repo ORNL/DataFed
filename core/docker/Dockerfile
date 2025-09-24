@@ -27,6 +27,7 @@ EXPOSE 7512
 # For listening to web server
 EXPOSE 7513
 
+COPY ./common                          ${BUILD_DIR}/common
 COPY ./core/CMakeLists.txt             ${BUILD_DIR}/core/CMakeLists.txt
 COPY ./CMakeLists.txt                  ${BUILD_DIR}
 COPY ./scripts/dependency_versions.sh  ${BUILD_DIR}/scripts/

@@ -48,7 +48,9 @@ COPY --chown=datafed:root ./scripts/generate_gsi-authz_config.sh      ${BUILD_DI
 COPY --chown=datafed:root ./scripts/globus/create_guest_collection.py ${BUILD_DIR}/scripts/globus/create_guest_collection.py
 COPY --chown=datafed:root ./scripts/globus/utils.py                   ${BUILD_DIR}/scripts/globus/utils.py
 COPY --chown=datafed:root ./scripts/globus/__init__.py                ${BUILD_DIR}/scripts/globus/__init__.py
+COPY --chown=datafed:root ./scripts/generate_datafed.sh               ${BUILD_DIR}/scripts/
 
+RUN ${BUILD_DIR}/scripts/generate_datafed.sh
 RUN ${BUILD_DIR}/scripts/generate_gsi-authz_config.sh
 # Don't build with syslog the container does not seem to support syslog
 RUN ${BUILD_DIR}/scripts/generate_authz_config.sh &&  \
@@ -96,10 +98,10 @@ RUN mkdir -p ${DATAFED_INSTALL_PATH}/authz
 RUN mkdir -p /mnt/datafed
 
 # This is necessary for curl, which is used the entrypoint script
-COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libssl.so   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libssl.so
-COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libssl.so.1.1   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libssl.so.1.1
-COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libcrypto.so   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libcrypto.so
-COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libcrypto.so.1.1   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libcrypto.so.1.1
+COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib64/libssl.so   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib64/libssl.so
+COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib64/libssl.so.4   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib64/libssl.so.4
+COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib64/libcrypto.so   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib64/libcrypto.so
+COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib64/libcrypto.so.4   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib64/libcrypto.so.4
 COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/python   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/python
 COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/python3.9   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/python3.9
 
@@ -119,11 +121,8 @@ RUN adduser --disabled-password --gecos "" datafed
 
 RUN echo "#!/bin/bash\n\$@" > /usr/bin/sudo && chmod +x /usr/bin/sudo
 
-COPY ./scripts/generate_datafed.sh             ${BUILD_DIR}/scripts/
 COPY ./scripts/dependency_versions.sh          ${BUILD_DIR}/scripts/
 COPY ./scripts/utils.sh                        ${BUILD_DIR}/scripts/utils.sh
-
-RUN ${BUILD_DIR}/scripts/generate_datafed.sh
 
 COPY --chown=datafed:root ./scripts/dependency_versions.sh            ${BUILD_DIR}/scripts/
 COPY --chown=datafed:root ./scripts/generate_authz_config.sh          ${BUILD_DIR}/scripts/generate_authz_config.sh
@@ -150,6 +149,9 @@ RUN apt update
 RUN apt-get install wget jq bind9-host build-essential -y
 RUN apt-get reinstall globus-connect-server54 libsqlite3-dev -y
 
+COPY --chown=datafed:root ./scripts/generate_datafed.sh               ${BUILD_DIR}/scripts/
+
+RUN ${BUILD_DIR}/scripts/generate_datafed.sh
 RUN ${BUILD_DIR}/scripts/generate_gsi-authz_config.sh
 # Don't build with syslog the container does not seem to support syslog
 
@@ -167,7 +169,7 @@ COPY --chown=datafed:root ./repository/docker/entrypoint_authz.sh ${BUILD_DIR}/r
 
 USER root
 
-ENV LD_LIBRARY_PATH=/opt/datafed/dependencies/lib/
+ENV LD_LIBRARY_PATH=/opt/datafed/dependencies/lib/:/opt/datafed/dependencies/lib64/
 
 # Remove --client-id from command because it was deprecated
 RUN sed -i '/--client-id/d' /entrypoint.sh

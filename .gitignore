@@ -65,6 +65,8 @@ web/package-lock.json
 web/static/datafed-core-key.pub
 *.swp
 *.swo
+*.tar.gz
+*.tgz
 
 # for web tests
 tests/end-to-end/web-UI/node_modules/
