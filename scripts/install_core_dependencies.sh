@@ -16,6 +16,8 @@ pip_packages=("setuptools")
 externals=("cmake" "libopenssl" "python" "nlohmann_json" "json_schema_validator" "protobuf"
   "libsodium" "libzmq" "zlib" "libcurl")
 
+install_python
+
 local_UNIFY=false
 
 if [ $# -eq 1 ]; then
