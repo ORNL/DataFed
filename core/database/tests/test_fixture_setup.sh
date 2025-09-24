@@ -82,6 +82,7 @@ while [ : ]; do
     echo "Error: Invalid option"
     exit
     ;;
+
   esac
 done
 
