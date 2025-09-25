@@ -15,5 +15,5 @@ provision-client:
         - rm -rf $DATAFED_PYTHON_DEPENDENCIES_DIR
     script:
         - ./scripts/generate_datafed.sh
-        - ./scripts/install_client_dependencies.sh
-        - ./scripts/install_end_to_end_test_dependencies.sh
+        - ./external/DataFedDependencies/scripts/install_client_dependencies.sh
+        - ./external/DataFedDependencies/scripts/install_end_to_end_test_dependencies.sh

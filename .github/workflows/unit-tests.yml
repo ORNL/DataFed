@@ -12,7 +12,7 @@ jobs:
             - name: Install dependencies
               run: |
                   ./scripts/generate_datafed.sh
-                  ./scripts/install_core_dependencies.sh
+                  ./external/DataFedDependencies/scripts/install_core_dependencies.sh
             - name: Build
               run: |
                   /opt/datafed/dependencies/bin/cmake -S. -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_WEB_SERVER=OFF
