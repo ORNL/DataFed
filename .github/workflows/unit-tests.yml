@@ -10,6 +10,9 @@ jobs:
             - name: Update debian
               run: apt update
             - name: Install dependencies
+              with:
+                submodules: recursive
+                fetch-depth: 0
               run: |
                   ./scripts/generate_datafed.sh
                   ./external/DataFedDependencies/scripts/install_core_dependencies.sh
