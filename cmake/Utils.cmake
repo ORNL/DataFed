@@ -45,3 +45,24 @@ function(get_value_from_datafed_sh INPUT_KEY OUTPUT_VALUE)
   set(${OUTPUT_VALUE} "${OUTPUT_VAR}" PARENT_SCOPE)
 endfunction()
 
+# Function will get exported value from a shell script
+#
+# i.e. if dependencies.sh has
+#
+# dependencies.sh
+# export MY_NAME="Barry"
+#
+# set(DATAFED_CONFIG_SH "external/DataFedDependencies/config/dependencies.sh")
+# get_value_from_dependencies_sh "MY_NAME" name)
+# message("$name")
+#
+# Will output "Barry"
+function(get_value_from_dependencies_sh INPUT_KEY OUTPUT_VALUE)
+  execute_process(
+    COMMAND bash "-c" "source ${DATAFED_CONFIG_SH} && echo \$${INPUT_KEY}"
+    OUTPUT_VARIABLE OUTPUT_VAR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+  set(${OUTPUT_VALUE} "${OUTPUT_VAR}" PARENT_SCOPE)
+endfunction()
+

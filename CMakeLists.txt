@@ -52,7 +52,14 @@ if(NOT EXISTS ${DATAFED_CONFIG_SH})
     "${PROJECT_SOURCE_DIR}/scripts/generate_datafed.sh")
 endif()
 
-file(READ "${PROJECT_SOURCE_DIR}/scripts/dependency_versions.sh" DEPENDENCY_VERSIONS)
+set(DATAFED_DEPENDENCIES_SH "${DataFed_SOURCE_DIR}/external/DataFedDependencies/config/dependencies.sh")
+if(NOT EXISTS ${DATAFED_DEPENDENCIES_SH})
+  message(FATAL_ERROR "Error: File '${DATAFED_DEPENDENCIES_SH}' does not exist. "
+    "Please run generate_dependencies.sh first to populate defaults."
+    "${PROJECT_SOURCE_DIR}/external/DataFedDependencies/scripts/generate_datafed.sh")
+endif()
+
+file(READ "${PROJECT_SOURCE_DIR}/external/DataFedDependencies/scripts/dependency_versions.sh" DEPENDENCY_VERSIONS)
 
 get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_DYNAMIC_LIBRARY_PROTOBUF_VERSION" PROTOBUF_LIBRARY_VERSION)
 get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_PROTOBUF_VERSION" PROTOBUF_COMPILER_VERSION)
@@ -76,7 +83,7 @@ if(NOT DEFINED DATAFED_DOMAIN)
 endif()
 
 if(NOT DEFINED DATAFED_DEPENDENCIES_INSTALL_PATH)
-  get_value_from_datafed_sh("DATAFED_DEPENDENCIES_INSTALL_PATH" DEPENDENCY_INSTALL_PATH)
+  get_value_from_dependencies_sh("DATAFED_DEPENDENCIES_INSTALL_PATH" DEPENDENCY_INSTALL_PATH)
 endif()
 
 set(CMAKE_PREFIX_PATH "${DEPENDENCY_INSTALL_PATH}")
