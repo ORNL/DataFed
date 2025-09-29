@@ -8,6 +8,8 @@ const g_lib = require("./support");
 const g_proc = require("./process");
 const g_tasks = require("./tasks");
 const { UserToken } = require("./lib/user_token");
+const logger = require("./lib/logger");
+const basePath = "data";
 
 module.exports = router;
 
@@ -254,10 +256,19 @@ function recordCreate(client, record, result) {
 router
     .post("/create", function (req, res) {
         var retry = 10;
-
+        let result = null;
+        let client = null;
         for (;;) {
             try {
-                var result = {
+                logger.logRequestStarted({
+                    client: client?._id,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/view",
+                    status: "Started",
+                    description: "Create a new data record",
+                });
+                result = {
                     results: [],
                 };
 
@@ -286,8 +297,29 @@ router
                 });
 
                 res.send(result);
+                logger.logRequestSuccess({
+                    client: client?._id,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/view",
+                    status: "Success",
+                    description: "Create a new data record",
+                    extra: result
+                });
+
                 break;
             } catch (e) {
+                logger.logRequestFailure({
+                    client: client?._id,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/view",
+                    status: "Failure",
+                    description: "Create a new data record",
+                    extra: result,
+                    message: e.message,
+                    stack: e.stack
+                });
                 if (--retry == 0 || !e.errorNum || e.errorNum != 1200) {
                     g_lib.handleException(e, res);
                 }
@@ -329,10 +361,19 @@ router
 router
     .post("/create/batch", function (req, res) {
         var retry = 10;
-
+        let result = null;
+        let client = null;
         for (;;) {
             try {
-                var result = {
+                logger.logRequestStarted({
+                    client: g_lib.getUserFromClientID(req.queryParams.client),
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/create/batch",
+                    status: "Started",
+                    description: "Create a batch of new data records",
+                });
+                result = {
                     results: [],
                 };
 
@@ -357,7 +398,7 @@ router
                         ],
                     },
                     action: function () {
-                        const client = g_lib.getUserFromClientID(req.queryParams.client);
+                        client = g_lib.getUserFromClientID(req.queryParams.client);
                         for (var i in req.body) {
                             recordCreate(client, req.body[i], result);
                         }
@@ -365,8 +406,28 @@ router
                 });
 
                 res.send(result);
+                logger.logRequestSuccess({
+                    client: client?._id,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/create/batch",
+                    status: "Success",
+                    description: "Create a batch of new data records",
+                    extra: result
+                });
+
                 break;
             } catch (e) {
+                logger.logRequestFailure({
+                    client: client?._id,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/create/batch",
+                    status: "Failure",
+                    description: "Create a batch of new data records",
+                    extra: result,
+
+                });
                 if (--retry == 0 || !e.errorNum || e.errorNum != 1200) {
                     g_lib.handleException(e, res);
                 }
@@ -760,6 +821,15 @@ function recordUpdate(client, record, result) {
 router
     .post("/update", function (req, res) {
         try {
+            logger.logRequestStarted({
+                    client: g_lib.getUserFromClientID(req.queryParams.client),
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/update",
+                    status: "Started",
+                    description: "Create a new data record",
+            });
+
             var result = {
                 results: [],
                 updates: new Set(),
