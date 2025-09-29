@@ -16,9 +16,9 @@ module.exports = router;
 router
     .get("/view", function (req, res) {
         let task = null;
-        try {
+        try { 
             logger.logRequestStarted({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: "undefined",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/view",
@@ -56,7 +56,7 @@ router
 
             res.send([task]);
             logger.logRequestSuccess({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: "undefined",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/view",
@@ -66,7 +66,7 @@ router
             });
         } catch (e) {
             logger.logRequestFailure({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: "undefined",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/view",
@@ -92,7 +92,7 @@ router
 
         try {
             logger.logRequestStarted({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: "undefined",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/run",
@@ -183,7 +183,7 @@ router
 
                     result = run_func.call(g_tasks, task);
                     logger.logRequestSuccess({
-                        client: g_lib.getUserFromClientID(req.queryParams.client),
+                        client: "undefined",
                         correlationId: req.headers["x-correlation-id"],
                         httpVerb: "GET",
                         routePath: basePath + "/run",
@@ -246,7 +246,7 @@ router
             //console.log("task/run return");
             res.send(result);
             logger.logRequestSuccess({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: "undefined",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/run",
@@ -256,7 +256,7 @@ router
             });
         } catch (e) {
             logger.logRequestFailure({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: "undefined",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/run",
@@ -294,7 +294,7 @@ router
         let result = null;
         try {
             logger.logRequestStarted({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: "undefined",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/abort",
@@ -322,7 +322,7 @@ router
 
             res.send(result);
             logger.logRequestSuccess({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: "undefined",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/abort",
@@ -332,7 +332,7 @@ router
             });
         } catch (e) {
             logger.logRequestFailure({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: "undefined",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/abort",
@@ -354,7 +354,7 @@ router
     .post("/delete", function (req, res) {
         try {
             logger.logRequestStarted({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: "undefined",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/delete",
@@ -374,7 +374,7 @@ router
 
             g_lib.graph.task.remove(req.queryParams.task_id);
             logger.logRequestSuccess({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: "undefined",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/delete",
@@ -385,7 +385,7 @@ router
         } catch (e) {
             g_lib.handleException(e, res);
             logger.logRequestFailure({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: "undefined",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/delete",
@@ -407,7 +407,7 @@ router
         try {
             const client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
-                client: client,
+                client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/list",
@@ -449,7 +449,7 @@ router
 
             res.send(result);
             logger.logRequestSuccess({
-                client: client,
+                client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/list",
@@ -459,7 +459,7 @@ router
             });
         } catch (e) {
             logger.logRequestFailure({
-                client: client,
+                client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/list",
@@ -496,7 +496,7 @@ router
         try {
             result = [];
             logger.logRequestStarted({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: "undefined",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/reload",
@@ -520,7 +520,7 @@ router
 
             res.send(result);
             logger.logRequestSuccess({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: "undefined",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/reload",
@@ -530,7 +530,7 @@ router
             });
         } catch (e) {
             logger.logRequestFailure({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: "undefined",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/reload",
@@ -550,7 +550,7 @@ router
     .get("/purge", function (req, res) {
         try {
             logger.logRequestStarted({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: "undefined",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/purge",
@@ -576,7 +576,7 @@ router
                 },
             });
             logger.logRequestSuccess({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: "undefined",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/purge",
@@ -586,7 +586,7 @@ router
             });
         } catch (e) {
             logger.logRequestFailure({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: "undefined",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/purge",
