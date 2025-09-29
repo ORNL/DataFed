@@ -16,7 +16,7 @@ module.exports = router;
 router
     .get("/view", function (req, res) {
         let task = null;
-        try { 
+        try {
             logger.logRequestStarted({
                 client: "undefined",
                 correlationId: req.headers["x-correlation-id"],
