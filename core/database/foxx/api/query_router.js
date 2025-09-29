@@ -7,6 +7,8 @@ const joi = require("joi");
 const g_db = require("@arangodb").db;
 const g_graph = require("@arangodb/general-graph")._graph("sdmsg");
 const g_lib = require("./support");
+const logger = require("./lib/logger");
+const basePath = "qry";
 
 module.exports = router;
 
@@ -14,16 +16,24 @@ module.exports = router;
 
 router
     .post("/create", function (req, res) {
+        let client = undefined;
+        let result = undefined;
         try {
-            var result;
-
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn", "admin"],
                     write: ["q", "owner"],
                 },
                 action: function () {
-                    const client = g_lib.getUserFromClientID(req.queryParams.client);
+                    client = g_lib.getUserFromClientID(req.queryParams.client);
+                    logger.logRequestStarted({
+                        client: client?._id,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "POST",
+                        routePath: basePath + "/create",
+                        status: "Started",
+                        description: "Create Query",
+                    });
 
                     // Check max number of saved queries
                     if (client.max_sav_qry >= 0) {
@@ -81,7 +91,28 @@ router
             });
 
             res.send(result);
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/create",
+                status: "Success",
+                description: "Create Query",
+                extra: result,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/create",
+                status: "Failure",
+                description: "Create Query",
+                extra: result,
+                message: e.message,
+                stack: e.stack,
+            });
+
             g_lib.handleException(e, res);
         }
     })
@@ -105,16 +136,25 @@ router
 
 router
     .post("/update", function (req, res) {
+        let client = undefined;
+        let result = undefined;
         try {
-            var result;
-
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn", "admin"],
                     write: ["q", "owner"],
                 },
                 action: function () {
-                    const client = g_lib.getUserFromClientID(req.queryParams.client);
+                    client = g_lib.getUserFromClientID(req.queryParams.client);
+                    logger.logRequestStarted({
+                        client: client?._id,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "POST",
+                        routePath: basePath + "/update",
+                        status: "Started",
+                        description: "Update a saved query",
+                    });
+
                     var qry = g_db.q.document(req.body.id);
 
                     if (client._id != qry.owner && !client.is_admin) {
@@ -158,9 +198,28 @@ router
                     result = qry;
                 },
             });
-
             res.send(result);
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/update",
+                status: "Success",
+                description: "Update a saved query",
+                extra: result,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/update",
+                status: "Failure",
+                description: "Update a saved query",
+                extra: result,
+                message: e.message,
+                stack: e.stack,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -185,9 +244,19 @@ router
 
 router
     .get("/view", function (req, res) {
+        let client = undefined;
+        let qry = undefined;
         try {
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
-            var qry = g_db.q.document(req.queryParams.id);
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Started",
+                description: "View specified query",
+            });
+            qry = g_db.q.document(req.queryParams.id);
 
             if (client._id != qry.owner && !client.is_admin) {
                 throw g_lib.ERR_PERM_DENIED;
@@ -204,7 +273,28 @@ router
             delete qry.lmit;
 
             res.send(qry);
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Success",
+                description: "View specified query",
+                extra: qry,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Failure",
+                description: "View specified query",
+                extra: qry,
+                message: e.message,
+                stack: e.stack,
+            });
+
             g_lib.handleException(e, res);
         }
     })
@@ -215,9 +305,18 @@ router
 
 router
     .get("/delete", function (req, res) {
+        let client = undefined;
         try {
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
+            client = g_lib.getUserFromClientID(req.queryParams.client);
             var owner;
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/delete",
+                status: "Started",
+                description: "Delete specified query",
+            });
 
             for (var i in req.queryParams.ids) {
                 if (!req.queryParams.ids[i].startsWith("q/")) {
@@ -242,8 +341,29 @@ router
                 }
 
                 g_graph.q.remove(owner._from);
+                logger.logRequestSuccess({
+                    client: client?._id,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "GET",
+                    routePath: basePath + "/delete",
+                    status: "Success",
+                    description: "Delete specified query",
+                    extra: req.queryParams.ids[i],
+                });
             }
         } catch (e) {
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/delete",
+                status: "Failure",
+                description: "Delete specified query",
+                extra: req.queryParams.ids[i],
+                message: e.message,
+                stack: e.stack,
+            });
+
             g_lib.handleException(e, res);
         }
     })
@@ -254,12 +374,21 @@ router
 
 router
     .get("/list", function (req, res) {
+        let client = undefined;
+        let result = undefined;
         try {
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/list",
+                status: "Started",
+                description: "List client saved queries",
+            });
 
             var qry =
                 "for v in 1..1 inbound @user owner filter is_same_collection('q',v) sort v.title";
-            var result;
 
             if (req.queryParams.offset != undefined && req.queryParams.count != undefined) {
                 qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
@@ -291,7 +420,27 @@ router
             }
 
             res.send(result);
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/list",
+                status: "Success",
+                description: "List client saved queries",
+                extra: result,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/list",
+                status: "Failure",
+                description: "List client saved queries",
+                extra: result,
+                message: e.message,
+                stack: e.stack,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -503,8 +652,19 @@ function execQuery(client, mode, published, orig_query) {
 
 router
     .get("/exec", function (req, res) {
+        let client = undefined;
+        let results = undefined;
         try {
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/exec",
+                status: "Started",
+                description: "Execute specified queries",
+            });
+
             var qry = g_db.q.document(req.queryParams.id);
 
             if (client._id != qry.owner && !client.is_admin) {
@@ -516,10 +676,30 @@ router
                 qry.params.cnt = req.queryParams.count;
             }
 
-            var results = execQuery(client, qry.query.mode, qry.query.published, qry);
+            results = execQuery(client, qry.query.mode, qry.query.published, qry);
 
             res.send(results);
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/exec",
+                status: "Success",
+                description: "Execute specified queries",
+                extra: results,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/exec",
+                status: "Failure",
+                description: "Execute specified queries",
+                extra: results,
+                message: e.message,
+                stack: e.stack,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -532,17 +712,47 @@ router
 
 router
     .post("/exec/direct", function (req, res) {
+        let results = undefined;
+        let client = undefined;
         try {
-            const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
+            client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/exec/direct",
+                status: "Started",
+                description: "Execute published data search query",
+            });
 
             const query = {
                 ...req.body,
                 params: JSON.parse(req.body.params),
             };
-            var results = execQuery(client, req.body.mode, req.body.published, query);
+            results = execQuery(client, req.body.mode, req.body.published, query);
 
             res.send(results);
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/exec/direct",
+                status: "Success",
+                description: "Execute published data search query",
+                extra: results,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/exec/direct",
+                status: "Success",
+                description: "Execute published data search query",
+                extra: results,
+                message: e.message,
+                stack: e.stack,
+            });
             g_lib.handleException(e, res);
         }
     })
