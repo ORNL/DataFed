@@ -6,7 +6,7 @@ provision-client:
     needs: ["signal"]
     variables:
         GIT_STRATEGY: clone
-        DATAFED_PYTHON_DEPENDENCIES_DIR: "/opt/datafed/dependencies/"
+        DATAFED_PYTHON_DEPENDENCIES_DIR: "${CI_PROJECT_DIR}/dependencies/python" 
         DATAFED_DEPENDENCIES_INSTALL_PATH: "/opt/datafed/dependencies/"
     stage: provision-client
     tags:
@@ -14,7 +14,7 @@ provision-client:
     before_script:
         - sudo chown -R gitlab-runner:gitlab-runner  "$DATAFED_DEPENDENCIES_INSTALL_PATH"
         - export PATH=/opt/datafed/dependencies/bin:$PATH
-        - rm -rf $DATAFED_PYTHON_DEPENDENCIES_DIR
+        - rm -rf "$DATAFED_PYTHON_DEPENDENCIES_DIR"
     script:
         - ./external/DataFedDependencies/scripts/generate_dependencies_config.sh
         - ./external/DataFedDependencies/scripts/install_client_dependencies.sh
