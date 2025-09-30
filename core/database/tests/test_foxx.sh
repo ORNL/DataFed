@@ -14,8 +14,8 @@ SCRIPT=$(realpath "$BASH_SOURCE[0]")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/../../../)
 source ${PROJECT_ROOT}/config/datafed.sh
-source "${PROJECT_ROOT}/scripts/dependency_versions.sh"
-source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
+source "${PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_versions.sh"
+source "${PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_install_functions.sh"
 
 Help() {
   echo "$(basename $0) Will run a Foxx unit test"
