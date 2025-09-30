@@ -12,10 +12,10 @@ set -euf -o pipefail
 
 SCRIPT=$(realpath "$BASH_SOURCE[0]")
 SOURCE=$(dirname "$SCRIPT")
-PROJECT_ROOT=$(realpath ${SOURCE}/../../../)
-source ${PROJECT_ROOT}/config/datafed.sh
-source "${PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_versions.sh"
-source "${PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_install_functions.sh"
+DATAFED_PROJECT_ROOT=$(realpath ${SOURCE}/../../../)
+source "${DATAFED_PROJECT_ROOT}/config/datafed.sh"
+source "${DATAFED_PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_versions.sh"
+source "${DATAFED_PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_install_functions.sh"
 
 Help() {
   echo "$(basename $0) Will run a Foxx unit test"
@@ -46,7 +46,7 @@ else
 fi
 
 if [ -z "${FOXX_MAJOR_API_VERSION:-}" ]; then
-  local_FOXX_MAJOR_API_VERSION=$(cat ${PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs)
+  local_FOXX_MAJOR_API_VERSION=$(cat ${DATAFED_PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs)
 else
   local_FOXX_MAJOR_API_VERSION=$(printenv FOXX_MAJOR_API_VERSION)
 fi
