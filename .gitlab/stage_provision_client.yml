@@ -7,6 +7,7 @@ provision-client:
     variables:
         GIT_STRATEGY: clone
         DATAFED_PYTHON_DEPENDENCIES_DIR: "${CI_PROJECT_DIR}/dependencies/python"
+        DATAFED_DEPENDENCIES_INSTALL_PATH: "${CI_PROJECT_DIR}/dependencies/"
     stage: provision-client
     tags:
         - ci-datafed-client
@@ -14,6 +15,6 @@ provision-client:
         - export PATH=/opt/datafed/dependencies/bin:$PATH
         - rm -rf $DATAFED_PYTHON_DEPENDENCIES_DIR
     script:
-        - ./scripts/generate_datafed.sh
+        - ./external/DataFedDependencies/scripts/generate_dependencies_config.sh
         - ./external/DataFedDependencies/scripts/install_client_dependencies.sh
         - ./external/DataFedDependencies/scripts/install_end_to_end_test_dependencies.sh
