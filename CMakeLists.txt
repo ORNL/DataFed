@@ -194,7 +194,7 @@ endif()
 
 if( BUILD_PYTHON_CLIENT )
   # make target = pydatafed
-  file(COPY ${PROJECT_SOURCE_DIR}/external/DataFedDependencies/python/datafed_pkg/requirements.txt ${PROJECT_SOURCE_DIR}/python/datafed_pkg/requirements.txt)
+  file(COPY ${PROJECT_SOURCE_DIR}/external/DataFedDependencies/python/datafed_pkg/requirements.txt DESTINATION ${PROJECT_SOURCE_DIR}/python/datafed_pkg/requirements.txt)
   add_subdirectory( python EXCLUDE_FROM_ALL )
 endif()
 
