@@ -108,6 +108,70 @@ BOOST_AUTO_TEST_CASE(testing_Buffer_non_trivial2) {
   BOOST_CHECK(buffer.size() == array_size);
 }
 
+BOOST_AUTO_TEST_CASE(testing_Buffer_googleprotobuf_repo_create_request) {
+
+  ProtoBufMap proto_map;
+  ProtoBufFactory proto_factory;
+
+  SDMS::Auth::RepoCreateRequest repo_create_req;
+
+  const std::string id = "bonanza";
+  const std::string title = "All you can eat.";
+  const std::string path = "/";
+  const std::string address = "tcp://best_burgers.com";
+  const std::string endpoint = "";
+  const std::string pub_key;
+  uint64_t capacity = 0;
+  const std::string type = "globus";
+
+  repo_create_req.set_id(id);
+  repo_create_req.set_title(title);
+  repo_create_req.set_path(path);
+  repo_create_req.set_address(address);
+  repo_create_req.set_endpoint(endpoint);
+  repo_create_req.set_pub_key(pub_key);
+  repo_create_req.set_capacity(capacity);
+  repo_create_req.set_type(type);
+
+  BOOST_CHECK(repo_create_req.id().compare(id) == 0);
+  BOOST_CHECK(repo_create_req.title().compare(title) == 0);
+  BOOST_CHECK(repo_create_req.path().compare(path) == 0);
+  BOOST_CHECK(repo_create_req.address().compare(address) == 0);
+  BOOST_CHECK(repo_create_req.endpoint().compare(endpoint) == 0);
+  BOOST_CHECK(repo_create_req.pub_key().compare(pub_key) == 0);
+  BOOST_CHECK(repo_create_req.capacity() == capacity);
+  BOOST_CHECK(repo_create_req.type().compare(type));
+
+  Buffer buffer;
+  std::cout << "Calling Copy to buffer" << std::endl;
+  size_t size = repo_create_req.ByteSizeLong();
+  copyToBuffer(buffer, &repo_create_req, size);
+
+  BOOST_CHECK(buffer.size() == buffer.capacity());
+  BOOST_CHECK(buffer.size() == repo_create_req.ByteSizeLong());
+
+  // Create a new message and copy the buffer into it
+  uint16_t msg_type = proto_map.getMessageType(repo_create_req);
+  std::unique_ptr<::google::protobuf::Message> new_msg =
+      proto_factory.create(msg_type);
+
+  copyFromBuffer(new_msg.get(), buffer);
+
+  auto new_repo_create_req =
+      dynamic_cast<SDMS::Auth::RepoCreateRequest *>(new_msg.get());
+
+  BOOST_CHECK(new_repo_create_req->id().compare(id) == 0);
+  BOOST_CHECK(new_repo_create_req->title().compare(title) == 0);
+  BOOST_CHECK(new_repo_create_req->path().compare(path) == 0);
+  BOOST_CHECK(new_repo_create_req->address().compare(address) == 0);
+  BOOST_CHECK(new_repo_create_req->endpoint().compare(endpoint) == 0);
+  BOOST_CHECK(new_repo_create_req->pub_key().compare(pub_key) == 0);
+  BOOST_CHECK(new_repo_create_req->capacity() == capacity);
+  BOOST_CHECK(new_repo_create_req->type().compare(type));
+
+
+}
+
 BOOST_AUTO_TEST_CASE(testing_Buffer_googleprotobuf) {
 
   ProtoBufMap proto_map;
