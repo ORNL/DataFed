@@ -174,20 +174,14 @@ bool DatabaseAPI::dbGetRaw(const std::string url, string &a_result) {
 
   a_result.clear();
   error[0] = 0;
-  struct curl_slist* headers = nullptr;
-
-  // safe: curl_slist_append copies the string internally
-  headers = curl_slist_append(headers, (std::string("x-correlation-id: ") + log_context.correlation_id).c_str());
 
   // attach headers to the CURL handle
-  curl_easy_setopt(m_curl, CURLOPT_HTTPHEADER, headers);
   curl_easy_setopt(m_curl, CURLOPT_URL, url.c_str());
   curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, &a_result);
   curl_easy_setopt(m_curl, CURLOPT_ERRORBUFFER, error);
   curl_easy_setopt(m_curl, CURLOPT_HTTPGET, 1);
 
   CURLcode res = curl_easy_perform(m_curl);
-  curl_slist_free_all(headers);
   long http_code = 0;
   curl_easy_getinfo(m_curl, CURLINFO_RESPONSE_CODE, &http_code);
   if (res == CURLE_OK && (http_code >= 200 && http_code < 300))
