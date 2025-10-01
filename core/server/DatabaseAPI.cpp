@@ -132,7 +132,7 @@ long DatabaseAPI::dbGet(const char *a_url_path,
   headers = curl_slist_append(headers, (std::string("x-correlation-id: ") + log_context.correlation_id).c_str());
 
   // attach headers to the CURL handle
-  curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+  curl_easy_setopt(m_curl, CURLOPT_HTTPHEADER, headers);
   CURLcode res = curl_easy_perform(m_curl);
 
   long http_code = 0;
@@ -180,7 +180,7 @@ bool DatabaseAPI::dbGetRaw(const std::string url, string &a_result) {
   headers = curl_slist_append(headers, (std::string("x-correlation-id: ") + log_context.correlation_id).c_str());
 
   // attach headers to the CURL handle
-  curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+  curl_easy_setopt(m_curl, CURLOPT_HTTPHEADER, headers);
   curl_easy_setopt(m_curl, CURLOPT_URL, url.c_str());
   curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, &a_result);
   curl_easy_setopt(m_curl, CURLOPT_ERRORBUFFER, error);
@@ -217,7 +217,7 @@ long DatabaseAPI::dbPost(const char *a_url_path,
   headers = curl_slist_append(headers, (std::string("x-correlation-id: ") + log_context.correlation_id).c_str());
 
   // attach headers to the CURL handle
-  curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+  curl_easy_setopt(m_curl, CURLOPT_HTTPHEADER, headers);
   curl_easy_setopt(m_curl, CURLOPT_URL, url.c_str());
   curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, &res_json);
   curl_easy_setopt(m_curl, CURLOPT_ERRORBUFFER, error);
