@@ -194,7 +194,7 @@ fi
 su -m -c "${BUILD_DIR}/scripts/globus/setup_globus.sh" datafed
 
 source "${DATAFED_PYTHON_ENV}/bin/activate"
-source "${BUILD_DIR}/scripts/dependency_versions.sh"
+source "${BUILD_DIR}/external/DataFedDependencies/scripts/dependency_versions.sh"
 
 # Must be passed in directly
 GCS_CLI_ENDPOINT_ID="$GCS_CLI_ENDPOINT_ID" \
