@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(testing_Buffer_googleprotobuf_repo_create_request) {
   BOOST_CHECK(repo_create_req.endpoint().compare(endpoint) == 0);
   BOOST_CHECK(repo_create_req.pub_key().compare(pub_key) == 0);
   BOOST_CHECK(repo_create_req.capacity() == capacity);
-  BOOST_CHECK(repo_create_req.type().compare(type));
+  BOOST_CHECK(repo_create_req.type().compare(type) == 0);
 
   Buffer buffer;
   std::cout << "Calling Copy to buffer" << std::endl;
@@ -167,7 +167,7 @@ BOOST_AUTO_TEST_CASE(testing_Buffer_googleprotobuf_repo_create_request) {
   BOOST_CHECK(new_repo_create_req->endpoint().compare(endpoint) == 0);
   BOOST_CHECK(new_repo_create_req->pub_key().compare(pub_key) == 0);
   BOOST_CHECK(new_repo_create_req->capacity() == capacity);
-  BOOST_CHECK(new_repo_create_req->type().compare(type));
+  BOOST_CHECK(new_repo_create_req->type().compare(type) == 0);
 
 
 }
