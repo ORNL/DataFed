@@ -45,7 +45,7 @@ function logRequestFailure({
     const pad = (label, value, length = 20) =>
         `${label}: ${value || "unknown"}`.padEnd(length, " ");
     //PUT IF STATEMENT
-    if(g_lib.isInteger(error) || g_lib.isArray(error)){
+    if(g_lib.isInteger(error) || Array.isArray(error)){
         console.error(
             pad("Client", client) +
             " | " +
