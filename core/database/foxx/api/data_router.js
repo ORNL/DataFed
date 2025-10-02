@@ -261,10 +261,10 @@ router
         for (;;) {
             try {
                 logger.logRequestStarted({
-                    client: client?._id,
+                    client: g_lib.getUserFromClientID(req.queryParams.client),
                     correlationId: req.headers["x-correlation-id"],
                     httpVerb: "POST",
-                    routePath: basePath + "/view",
+                    routePath: basePath + "/create",
                     status: "Started",
                     description: "Create a new data record",
                 });
@@ -298,10 +298,10 @@ router
 
                 res.send(result);
                 logger.logRequestSuccess({
-                    client: client?._id,
+                    client: g_lib.getUserFromClientID(req.queryParams.client),
                     correlationId: req.headers["x-correlation-id"],
                     httpVerb: "POST",
-                    routePath: basePath + "/view",
+                    routePath: basePath + "/create",
                     status: "Success",
                     description: "Create a new data record",
                     extra: result
@@ -310,10 +310,10 @@ router
                 break;
             } catch (e) {
                 logger.logRequestFailure({
-                    client: client?._id,
+                    client: g_lib.getUserFromClientID(req.queryParams.client),
                     correlationId: req.headers["x-correlation-id"],
                     httpVerb: "POST",
-                    routePath: basePath + "/view",
+                    routePath: basePath + "/create",
                     status: "Failure",
                     description: "Create a new data record",
                     extra: result,
@@ -407,7 +407,7 @@ router
 
                 res.send(result);
                 logger.logRequestSuccess({
-                    client: client?._id,
+                    client: g_lib.getUserFromClientID(req.queryParams.client),
                     correlationId: req.headers["x-correlation-id"],
                     httpVerb: "POST",
                     routePath: basePath + "/create/batch",
@@ -419,14 +419,15 @@ router
                 break;
             } catch (e) {
                 logger.logRequestFailure({
-                    client: client?._id,
+                    client: g_lib.getUserFromClientID(req.queryParams.client),
                     correlationId: req.headers["x-correlation-id"],
                     httpVerb: "POST",
                     routePath: basePath + "/create/batch",
                     status: "Failure",
                     description: "Create a batch of new data records",
                     extra: result,
-
+                    message: e.message,
+                    stack: e.stack
                 });
                 if (--retry == 0 || !e.errorNum || e.errorNum != 1200) {
                     g_lib.handleException(e, res);
@@ -820,6 +821,7 @@ function recordUpdate(client, record, result) {
 
 router
     .post("/update", function (req, res) {
+       let result = null; 
         try {
             logger.logRequestStarted({
                     client: g_lib.getUserFromClientID(req.queryParams.client),
@@ -827,10 +829,10 @@ router
                     httpVerb: "POST",
                     routePath: basePath + "/update",
                     status: "Started",
-                    description: "Create a new data record",
+                    description: "Update an existing data record",
             });
 
-            var result = {
+            result = {
                 results: [],
                 updates: new Set(),
             };
@@ -876,7 +878,29 @@ router
             result.updates = updates;
 
             res.send(result);
+            logger.logRequestSuccess({
+                    client: g_lib.getUserFromClientID(req.queryParams.client),
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/update",
+                    status: "Success",
+                    description: "Update an existing data record",
+                    extra: result
+                });
+
         } catch (e) {
+            logger.logRequestFailure({
+                    client: g_lib.getUserFromClientID(req.queryParams.client),
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/update",
+                    status: "Failure",
+                    description: "Update an existing data record",
+                    extra: result,
+                    message: e.message,
+                    stack: e.stack
+                });
+
             g_lib.handleException(e, res);
         }
     })
@@ -925,8 +949,19 @@ router
 
 router
     .post("/update/batch", function (req, res) {
+        let result = null;
         try {
-            var result = {
+            logger.logRequestStarted({
+                client: g_lib.getUserFromClientID(req.queryParams.client),
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/update/batch",
+                status: "Started",
+                description: "Update a batch of existing data record",
+            });
+
+
+            result = {
                 results: [],
                 updates: new Set(),
             };
@@ -979,7 +1014,27 @@ router
             result.updates = updates;
 
             res.send(result);
+            logger.logRequestSuccess({
+                client: g_lib.getUserFromClientID(req.queryParams.client),
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/update/batch",
+                status: "Success",
+                description: "Update a batch of existing data record",
+                extra: result
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: g_lib.getUserFromClientID(req.queryParams.client),
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/update/batch",
+                status: "Success",
+                description: "Update a batch of existing data record",
+                extra: result,
+
+            });
+
             g_lib.handleException(e, res);
         }
     })
@@ -1037,6 +1092,15 @@ router
 router
     .post("/update/md_err_msg", function (req, res) {
         try {
+            logger.logRequestStarted({
+                    client: g_lib.getUserFromClientID(req.queryParams.client),
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/update/md_err_msg",
+                    status: "Started",
+                    description: "Update data record schema validation error message"
+                });
+
             g_db._executeTransaction({
                 collections: {
                     write: ["d"],
@@ -1065,7 +1129,25 @@ router
                     );
                 },
             });
+            logger.logRequestSuccess({
+                    client: g_lib.getUserFromClientID(req.queryParams.client),
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/update/md_err_msg",
+                    status: "Success",
+                    description: "Update data record schema validation error message",
+                    extra:"undefined"
+                });
         } catch (e) {
+            logger.logRequestSuccess({
+                    client: g_lib.getUserFromClientID(req.queryParams.client),
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/update/md_err_msg",
+                    status: "Success",
+                    description: "Update data record schema validation error message",
+                    extra:"undefined"
+            });
             g_lib.handleException(e, res);
         }
     })
