@@ -10,7 +10,6 @@ build-gcs-base:
   variables:
     PROJECT: "datafed"
     COMPONENT: "gcs-base"
-    GIT_SUBMODULE_STRATEGY: recursive
     GIT_STRATEGY: clone
     DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
     BUILD_INTERMEDIATE: "FALSE"
