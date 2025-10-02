@@ -101,7 +101,7 @@ if [[ "$BUILD_METADATA" == "TRUE" ]]; then
 fi
 
 if [[ "$BUILD_REPO" == "TRUE" ]]; then
-  source "${PROJECT_ROOT}/scripts/dependency_versions.sh"
+  source "${PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_versions.sh"
   cd "${PROJECT_ROOT}/external/globus-connect-server-deploy/docker"
   git checkout "$DATAFED_GCS_SUBMODULE_VERSION"
   docker build --progress plain --tag "gcs-ubuntu-base:latest" - <"./docker-files/Dockerfile.debian-12"
