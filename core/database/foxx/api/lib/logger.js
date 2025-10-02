@@ -61,7 +61,7 @@ function logRequestFailure({
             " | " +
             pad("Extra", typeof extra === "object" ? JSON.stringify(extra) : extra) +
             " | " +
-            pad("Error", error) +
+            pad("Error", error)
         );
     }
     else{
