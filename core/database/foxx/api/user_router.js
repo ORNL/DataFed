@@ -57,8 +57,7 @@ router
                 status: "Failure",
                 description: "Authenticating user via password",
                 extra: "undefined",
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -109,8 +108,7 @@ router
                 status: "Failure",
                 description: "Authenticating user via access token",
                 extra: "undefined",
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
 
             g_lib.handleException(e, res);
@@ -291,8 +289,7 @@ router
                 status: "Failure",
                 description: "Create new user entry",
                 extra: result,
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -411,8 +408,7 @@ router
                 status: "Failure",
                 description: "Update user information",
                 extra: result,
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -481,8 +477,7 @@ router
                 status: "Failure",
                 description: "Find a user from list of UUIDs",
                 extra: req.queryParams.uuids,
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -554,8 +549,7 @@ router
                 status: "Failure",
                 description: "Find users matching partial name and/or uid",
                 extra: result,
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -626,8 +620,7 @@ router
                 status: "Failure",
                 description: "Set user public and private keys",
                 extra: "undefined",
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -697,8 +690,7 @@ router
                 status: "Failure",
                 description: "Clear user public and private keys",
                 extra: "undefined",
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -775,8 +767,7 @@ router
                 status: "Failure",
                 description: "Get user public and private keys",
                 extra: "undefined",
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -818,8 +809,7 @@ router
                 status: "Failure",
                 description: "Find a user by public key",
                 extra: uid,
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -975,8 +965,7 @@ router
                 status: "Failure",
                 description: "Setting user tokens",
                 extra: "undefined",
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -1072,8 +1061,7 @@ router
                 status: "Failure",
                 description: "Getting user tokens",
                 extra: "undefined",
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -1139,8 +1127,7 @@ router
                 status: "Failure",
                 description: "Getting User Access Token",
                 extra: "undefined",
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
 
             g_lib.handleException(e, res);
@@ -1190,8 +1177,7 @@ router
                 status: "Failure",
                 description: "Getting expiring user access token",
                 extra: result,
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -1313,8 +1299,7 @@ router
                 status: "Failure",
                 description: "View User Information",
                 extra: user,
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
         }
     })
@@ -1575,8 +1560,7 @@ router
                 status: "Failure",
                 description: "Remove existing user entry",
                 extra: user_id,
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -1644,8 +1628,7 @@ router
                 routePath: basePath + "/ident/list",
                 status: "Failure",
                 description: "List user linked IDs",
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -1786,8 +1769,7 @@ router
                 status: "Failure",
                 description: "Add new linked identity",
                 extra: req.queryParams.ident,
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -1853,8 +1835,7 @@ router
                 status: "Failure",
                 description: "Remove linked identity from user account",
                 extra: req.queryParams.ident,
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -1897,8 +1878,7 @@ router
                 status: "Failure",
                 description: "Get recent end-points",
                 extra: client.eps,
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -1947,8 +1927,7 @@ router
                 status: "Failure",
                 description: "Set recent end-points",
                 extra: client.eps,
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
