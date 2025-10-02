@@ -1,5 +1,5 @@
 "use strict";
-const g_lib=require("../support")
+const g_lib = require("../support");
 
 function logRequestSuccess({
     client,
@@ -39,50 +39,49 @@ function logRequestFailure({
     status,
     description,
     extra,
-    error
+    error,
 }) {
     // helper to pad fields
     const pad = (label, value, length = 20) =>
         `${label}: ${value || "unknown"}`.padEnd(length, " ");
     //PUT IF STATEMENT
-    if(g_lib.isInteger(error) || Array.isArray(error)){
+    if (g_lib.isInteger(error) || Array.isArray(error)) {
         console.error(
             pad("Client", client) +
-            " | " +
-            pad("Correlation_ID", correlationId) +
-            " | " +
-            pad("HTTP", httpVerb) +
-            " | " +
-            pad("Route", routePath) +
-            " | " +
-            pad("Status", status) +
-            " | " +
-            pad("Desc", description) +
-            " | " +
-            pad("Extra", typeof extra === "object" ? JSON.stringify(extra) : extra) +
-            " | " +
-            pad("Error", error)
+                " | " +
+                pad("Correlation_ID", correlationId) +
+                " | " +
+                pad("HTTP", httpVerb) +
+                " | " +
+                pad("Route", routePath) +
+                " | " +
+                pad("Status", status) +
+                " | " +
+                pad("Desc", description) +
+                " | " +
+                pad("Extra", typeof extra === "object" ? JSON.stringify(extra) : extra) +
+                " | " +
+                pad("Error", error),
         );
-    }
-    else{
+    } else {
         console.error(
             pad("Client", client) +
-            " | " +
-            pad("Correlation_ID", correlationId) +
-            " | " +
-            pad("HTTP", httpVerb) +
-            " | " +
-            pad("Route", routePath) +
-            " | " +
-            pad("Status", status) +
-            " | " +
-            pad("Desc", description) +
-            " | " +
-            pad("Extra", typeof extra === "object" ? JSON.stringify(extra) : extra) +
-            " | " +
-            pad("Error", error.message) +
-            " | " +
-            pad("Stack", error.stack)
+                " | " +
+                pad("Correlation_ID", correlationId) +
+                " | " +
+                pad("HTTP", httpVerb) +
+                " | " +
+                pad("Route", routePath) +
+                " | " +
+                pad("Status", status) +
+                " | " +
+                pad("Desc", description) +
+                " | " +
+                pad("Extra", typeof extra === "object" ? JSON.stringify(extra) : extra) +
+                " | " +
+                pad("Error", error.message) +
+                " | " +
+                pad("Stack", error.stack),
         );
     }
 }
