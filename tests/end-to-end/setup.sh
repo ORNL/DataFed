@@ -92,13 +92,13 @@ if [ -z "${DATAFED_USER99_GLOBUS_UUID}" ]; then
   exit 1
 fi
 
-SCRIPT=$(realpath "$0")
+SCRIPT=$(realpath "${BASH_SOURCE[0]}")
 SOURCE=$(dirname "$SCRIPT")
-PROJECT_ROOT=$(realpath ${SOURCE}/../../)
-source ${PROJECT_ROOT}/config/datafed.sh
+DATAFED_PROJECT_ROOT=$(realpath ${SOURCE}/../../)
+source ${DATAFED_PROJECT_ROOT}/config/datafed.sh
 
 if [ -z "${FOXX_MAJOR_API_VERSION}" ]; then
-  local_FOXX_MAJOR_API_VERSION=$(cat ${PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs)
+  local_FOXX_MAJOR_API_VERSION=$(cat ${DATAFED_PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs)
 else
   local_FOXX_MAJOR_API_VERSION=$(printenv FOXX_MAJOR_API_VERSION)
 fi
@@ -119,11 +119,11 @@ fi
 
 # First step is to clear the database
 echo "Clearing old database"
-${PROJECT_ROOT}/scripts/clear_db.sh
+${DATAFED_PROJECT_ROOT}/scripts/clear_db.sh
 
 # Second install foxx
 echo "Installing foxx services and API"
-${PROJECT_ROOT}/scripts/install_foxx.sh
+${DATAFED_PROJECT_ROOT}/scripts/install_foxx.sh
 echo "Completed"
 
 if [ -z "${DATAFED_DATABASE_HOST}" ]; then
