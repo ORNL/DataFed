@@ -1,6 +1,8 @@
 "use strict";
 
 const joi = require("joi");
+const { RepositoryOps } = require("./repository/operations");
+const { RepositoryType } = require("./repository/types");
 
 module.exports = (function () {
     var obj = {};
@@ -164,6 +166,8 @@ module.exports = (function () {
     obj.ERR_INFO.push([400, "No allocation available"]);
     obj.ERR_ALLOCATION_EXCEEDED = obj.ERR_COUNT++;
     obj.ERR_INFO.push([400, "Storage allocation exceeded"]);
+    obj.ERR_INVALID_OPERATION = obj.ERR_COUNT++;
+    obj.ERR_INFO.push([400, "Invalid operation"]);
 
     obj.CHARSET_ID = 0;
     obj.CHARSET_ALIAS = 1;
@@ -457,7 +461,12 @@ module.exports = (function () {
         if (obj.isInteger(e) && e >= 0 && e < obj.ERR_COUNT) {
             res.throw(obj.ERR_INFO[e][0], obj.ERR_INFO[e][1]);
         } else if (Array.isArray(e)) {
-            res.throw(obj.ERR_INFO[e[0]][0], e[1]);
+            // Handle undefined error codes
+            if (e[0] === undefined || e[0] === null || !obj.ERR_INFO[e[0]]) {
+                res.throw(400, e[1] || "Invalid request");
+            } else {
+                res.throw(obj.ERR_INFO[e[0]][0], e[1]);
+            }
             //} else if ( e.hasOwnProperty( "errorNum" )) {
         } else if (Object.prototype.hasOwnProperty.call(e, "errorNum")) {
             switch (e.errorNum) {
@@ -910,6 +919,18 @@ module.exports = (function () {
             alloc = allocs[i];
 
             if (alloc.data_size < alloc.data_limit && alloc.rec_count < alloc.rec_limit) {
+                // Check if repository supports data operations
+                const findResult = RepositoryOps.find(alloc._to);
+                if (findResult.ok) {
+                    const repository = findResult.value;
+                    const dataOpsResult = RepositoryOps.supportsDataOperations(repository);
+
+                    // Skip metadata-only repositories
+                    if (dataOpsResult.ok && !dataOpsResult.value) {
+                        continue;
+                    }
+                }
+
                 return alloc;
             }
         }
@@ -935,6 +956,24 @@ module.exports = (function () {
                 obj.ERR_ALLOCATION_EXCEEDED,
                 "Allocation record count exceeded (max: " + alloc.rec_limit + ")",
             ];
+
+        // Check if repository supports data operations
+        var findResult = RepositoryOps.find(a_repo_id);
+        if (findResult.ok) {
+            var repository = findResult.value;
+            var dataOpsResult = RepositoryOps.supportsDataOperations(repository);
+
+            if (dataOpsResult.ok && !dataOpsResult.value) {
+                throw [
+                    obj.ERR_INVALID_OPERATION,
+                    "Data operations not supported for metadata-only repository",
+                    {
+                        repo_type: repository.type,
+                        repo_id: repository.data._id,
+                    },
+                ];
+            }
+        }
 
         return alloc;
     };

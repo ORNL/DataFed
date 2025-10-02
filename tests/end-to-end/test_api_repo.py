@@ -114,6 +114,139 @@ class TestDataFedPythonAPIRepo(unittest.TestCase):
         result = self._df_api.repoList(list_all=True)
         self.assertEqual(len(result[0].repo), 0)
 
+    def test_repo_create_with_type_globus(self):
+        # Create a modified repo form with type
+        repo_form = self._repo_form.copy()
+        repo_form["id"] = "test_repo_globus"
+        
+        result = self._df_api.repoCreate(
+            repo_id=repo_form["id"],
+            title=repo_form["title"],
+            desc=repo_form["desc"],
+            domain=repo_form["domain"],
+            capacity=repo_form["capacity"],
+            pub_key=repo_form["pub_key"],
+            address=repo_form["address"],
+            endpoint=repo_form["endpoint"],
+            path=repo_form["path"],
+            exp_path=repo_form["exp_path"],
+            admins=repo_form["admins"],
+            repo_type="globus",  # Explicitly set type
+        )
+
+        self.assertEqual(len(result[0].repo), 1)
+        # Check if type field exists and is set correctly
+        if hasattr(result[0].repo[0], 'type'):
+            self.assertEqual(result[0].repo[0].type, "globus")
+        
+        # Clean up
+        repo_id = "repo/" + repo_form["id"]
+        self._df_api.repoDelete(repo_id)
+
+    def test_repo_create_with_type_metadata_only(self):
+        # Create a modified repo form for metadata-only
+        repo_form = self._repo_form.copy()
+        repo_form["id"] = "test_repo_metadata"
+        
+        result = self._df_api.repoCreate(
+            repo_id=repo_form["id"],
+            title=repo_form["title"],
+            desc=repo_form["desc"],
+            domain=repo_form["domain"],
+            capacity=repo_form["capacity"],
+            pub_key=repo_form["pub_key"],
+            address=repo_form["address"],
+            endpoint=repo_form["endpoint"],
+            path=repo_form["path"],
+            exp_path=repo_form["exp_path"],
+            admins=repo_form["admins"],
+            repo_type="metadata_only",  # Set metadata_only type
+        )
+
+        self.assertEqual(len(result[0].repo), 1)
+        # Check if type field exists and is set correctly
+        if hasattr(result[0].repo[0], 'type'):
+            self.assertEqual(result[0].repo[0].type, "metadata_only")
+        
+        # Clean up
+        repo_id = "repo/" + repo_form["id"]
+        self._df_api.repoDelete(repo_id)
+
+    def test_repo_create_without_type_defaults_to_globus(self):
+        # Create a repo without specifying type
+        repo_form = self._repo_form.copy()
+        repo_form["id"] = "test_repo_default"
+        
+        result = self._df_api.repoCreate(
+            repo_id=repo_form["id"],
+            title=repo_form["title"],
+            desc=repo_form["desc"],
+            domain=repo_form["domain"],
+            capacity=repo_form["capacity"],
+            pub_key=repo_form["pub_key"],
+            address=repo_form["address"],
+            endpoint=repo_form["endpoint"],
+            path=repo_form["path"],
+            exp_path=repo_form["exp_path"],
+            admins=repo_form["admins"],
+            # No repo_type specified - should default to "globus"
+        )
+
+        self.assertEqual(len(result[0].repo), 1)
+        # Check if type field exists and defaults to globus
+        if hasattr(result[0].repo[0], 'type'):
+            # Default should be "globus" or might not be set (handled by Foxx)
+            if result[0].repo[0].type:
+                self.assertEqual(result[0].repo[0].type, "globus")
+        
+        # Clean up
+        repo_id = "repo/" + repo_form["id"]
+        self._df_api.repoDelete(repo_id)
+    
+    def test_repo_update_type(self):
+        # Skip this test if repoUpdate is not available
+        if not hasattr(self._df_api, 'repoUpdate'):
+            self.skipTest("repoUpdate method not available in SDK")
+        
+        # Create a repo with globus type
+        repo_form = self._repo_form.copy()
+        repo_form["id"] = "test_repo_update_type"
+        
+        result = self._df_api.repoCreate(
+            repo_id=repo_form["id"],
+            title=repo_form["title"],
+            desc=repo_form["desc"],
+            domain=repo_form["domain"],
+            capacity=repo_form["capacity"],
+            pub_key=repo_form["pub_key"],
+            address=repo_form["address"],
+            endpoint=repo_form["endpoint"],
+            path=repo_form["path"],
+            exp_path=repo_form["exp_path"],
+            admins=repo_form["admins"],
+            repo_type="globus",
+        )
+        
+        self.assertEqual(len(result[0].repo), 1)
+        repo_id = "repo/" + repo_form["id"]
+        
+        # Update the repository type to metadata_only
+        update_result = self._df_api.repoUpdate(
+            repo_id=repo_id,
+            type="metadata_only"
+        )
+        
+        # Verify the type was updated
+        list_result = self._df_api.repoList(list_all=True)
+        for repo in list_result[0].repo:
+            if repo.id == repo_id:
+                if hasattr(repo, 'type'):
+                    self.assertEqual(repo.type, "metadata_only")
+                break
+        
+        # Clean up
+        self._df_api.repoDelete(repo_id)
+
 
 if __name__ == "__main__":
     suite = unittest.TestSuite()

@@ -2129,6 +2129,199 @@ def _epDefaultSet(current, endpoint):
 
 
 # =============================================================================
+# --------------------------------------------------------- Repository Functions
+# =============================================================================
+
+
+@_cli.command(name="repo", cls=_AliasedGroup, help="Repository commands.")
+def _repo():
+    pass
+
+
+@_repo.command(name="create")
+@click.argument("repo_id", required=True, metavar="ID")
+@click.option("-t", "--title", type=str, required=False, help="Repository title.")
+@click.option("-d", "--description", type=str, required=False, help="Repository description.")
+@click.option(
+    "--type",
+    type=click.Choice(["globus", "metadata_only"]),
+    default="globus",
+    help="Repository type (default: globus).",
+)
+@click.option("--capacity", type=str, required=False, help="Repository capacity in bytes.")
+@click.option(
+    "--pub-key",
+    type=str,
+    required=False,
+    help="Public key for repo/core server communication.",
+)
+@click.option(
+    "--address",
+    type=str,
+    required=False,
+    help="TCP address of repository server (e.g., tcp://hostname:9000).",
+)
+@click.option(
+    "--endpoint",
+    type=str,
+    required=False,
+    help="Globus endpoint UUID (format: XXXX-XXXX-XXXX-XXXX).",
+)
+@click.option(
+    "--path",
+    type=str,
+    required=False,
+    help="Relative POSIX path from endpoint to repository folder.",
+)
+@click.option("--exp-path", type=str, required=False, help="Export path.")
+@click.option("--domain", type=str, required=False, help="Domain (used by FUSE).")
+@click.option(
+    "--admins",
+    multiple=True,
+    type=str,
+    help="Repository admin users (e.g., u/user_id). Use multiple times for multiple admins.",
+)
+@_global_output_options
+def _repoCreate(
+    repo_id,
+    title,
+    description,
+    type,
+    capacity,
+    pub_key,
+    address,
+    endpoint,
+    path,
+    exp_path,
+    domain,
+    admins,
+):
+    """
+    Create a new repository. The repository ID must be unique and will be
+    internally represented as 'repo/<ID>'. For Globus-based repositories,
+    endpoint and path parameters are required. For metadata-only repositories,
+    these can be omitted.
+    """
+    # Convert admins tuple to list
+    admins_list = list(admins) if admins else []
+
+    reply = _capi.repoCreate(
+        repo_id=repo_id,
+        title=title,
+        desc=description,
+        type=type,
+        capacity=capacity,
+        pub_key=pub_key,
+        address=address,
+        endpoint=endpoint,
+        path=path,
+        exp_path=exp_path,
+        domain=domain,
+        admins=admins_list,
+    )
+    _generic_reply_handler(reply, _print_msg_results)
+
+
+@_repo.command(name="list")
+@click.option(
+    "-a",
+    "--all",
+    is_flag=True,
+    help="List all repositories (default: list only accessible repositories).",
+)
+@_global_output_options
+def _repoList(all):
+    """
+    List repositories. By default, lists only repositories accessible to the
+    current user. Use --all to list all repositories in the system (requires
+    appropriate permissions).
+    """
+    reply = _capi.repoList(list_all=all)
+    _generic_reply_handler(reply, _print_repo_listing)
+
+
+@_repo.command(name="delete")
+@click.argument("repo_id", required=True, metavar="ID")
+@click.option(
+    "-f", "--force", is_flag=True, help="Delete repository without confirmation."
+)
+@_global_output_options
+def _repoDelete(repo_id, force):
+    """
+    Delete a repository. The repository must be empty (no allocations) before
+    it can be deleted. Repository ID can be specified with or without the
+    'repo/' prefix.
+    """
+    if not force:
+        if not click.confirm(f"Delete repository '{repo_id}'?"):
+            return
+
+    reply = _capi.repoDelete(repo_id)
+    _generic_reply_handler(reply, _print_msg_results)
+
+
+@_repo.command(name="alloc", cls=_AliasedGroup, help="Repository allocation commands.")
+def _repoAlloc():
+    pass
+
+
+@_repoAlloc.command(name="create")
+@click.argument("repo_id", required=True, metavar="REPO_ID")
+@click.argument("subject", required=True, metavar="SUBJECT")
+@click.option(
+    "--data-limit",
+    type=str,
+    required=True,
+    help="Data storage limit in bytes.",
+)
+@click.option(
+    "--rec-limit",
+    type=int,
+    required=True,
+    help="Maximum number of records.",
+)
+@_global_output_options
+def _repoAllocCreate(repo_id, subject, data_limit, rec_limit):
+    """
+    Create a repository allocation for a user or project. SUBJECT should be
+    a user or project ID (e.g., 'u/user_id' or 'p/project_id').
+    """
+    reply = _capi.repoAllocationCreate(repo_id, subject, data_limit, rec_limit)
+    _generic_reply_handler(reply, _print_msg_results)
+
+
+@_repoAlloc.command(name="list")
+@click.argument("repo_id", required=True, metavar="REPO_ID")
+@_global_output_options
+def _repoAllocList(repo_id):
+    """
+    List allocations for a repository.
+    """
+    reply = _capi.repoListAllocations(repo_id)
+    _generic_reply_handler(reply, _print_alloc_listing)
+
+
+@_repoAlloc.command(name="delete")
+@click.argument("repo_id", required=True, metavar="REPO_ID")
+@click.argument("subject", required=True, metavar="SUBJECT")
+@click.option(
+    "-f", "--force", is_flag=True, help="Delete allocation without confirmation."
+)
+@_global_output_options
+def _repoAllocDelete(repo_id, subject, force):
+    """
+    Delete a repository allocation. SUBJECT should be the user or project ID
+    that has the allocation.
+    """
+    if not force:
+        if not click.confirm(f"Delete allocation for '{subject}' on repository '{repo_id}'?"):
+            return
+
+    reply = _capi.repoAllocationDelete(repo_id, subject)
+    _generic_reply_handler(reply, _print_msg_results)
+
+
+# =============================================================================
 # -------------------------------------------------------------- Misc Functions
 # =============================================================================
 
@@ -2863,6 +3056,72 @@ def _resolve_coll_id(coll_id, context=None):
             raise Exception("Already at root")
     else:
         return _resolve_id(coll_id)
+
+
+def _print_repo_listing(message):
+    """Print repository listing"""
+    if not hasattr(message, 'repo') or len(message.repo) == 0:
+        click.echo("(no repositories)")
+        return
+
+    df_idx = 1
+    global _list_items
+    _list_items = []
+    for r in message.repo:
+        _list_items.append(r.id)
+        repo_type = getattr(r, 'type', 'globus')
+        capacity = getattr(r, 'capacity', 'N/A')
+        
+        click.echo(
+            "{:2}. {:20}  {:30}  {:15}  {}".format(
+                df_idx,
+                r.id,
+                r.title if hasattr(r, 'title') else "N/A",
+                repo_type,
+                capacity
+            )
+        )
+        df_idx += 1
+
+
+def _print_alloc_listing(message):
+    """Print repository allocation listing"""
+    if not hasattr(message, 'alloc') or len(message.alloc) == 0:
+        click.echo("(no allocations)")
+        return
+
+    df_idx = 1
+    for a in message.alloc:
+        subject = getattr(a, 'subject', 'N/A')
+        data_limit = getattr(a, 'data_limit', 'N/A')
+        rec_limit = getattr(a, 'rec_limit', 'N/A')
+        
+        click.echo(
+            "{:2}. {:20}  {:15}  {:10}".format(
+                df_idx,
+                subject,
+                data_limit,
+                rec_limit
+            )
+        )
+        df_idx += 1
+
+
+def _print_msg_results(message):
+    """Print generic message results - used for create/delete operations"""
+    # For simple acknowledgement messages, just print success
+    if hasattr(message, 'msg_type'):
+        if message.msg_type == "AckReply":
+            click.echo("Operation completed successfully")
+            return
+    
+    # Print any specific fields if available
+    if hasattr(message, 'id'):
+        click.echo("Created/Modified: {}".format(message.id))
+    elif hasattr(message, 'msg') and message.msg:
+        click.echo(message.msg)
+    else:
+        click.echo("Operation completed")
 
 
 def _generic_reply_handler(reply, printFunc):
