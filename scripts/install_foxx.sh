@@ -15,10 +15,10 @@ set -ef -o pipefail
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
-PROJECT_ROOT=$(realpath ${SOURCE}/..)
-source "${PROJECT_ROOT}/config/datafed.sh"
-source "${SOURCE}/dependency_versions.sh"
-source "${SOURCE}/dependency_install_functions.sh"
+DATAFED_PROJECT_ROOT=$(realpath ${SOURCE}/..)
+source "${DATAFED_PROJECT_ROOT}/config/datafed.sh"
+source "${DATAFED_PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_versions.sh"
+source "${DATAFED_PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_install_functions.sh"
 
 Help() {
   echo "$(basename $0) Will set up a configuration file for the core server"
@@ -65,7 +65,7 @@ else
 fi
 
 if [ -z "${FOXX_MAJOR_API_VERSION}" ]; then
-  local_FOXX_MAJOR_API_VERSION=$(cat ${PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs)
+  local_FOXX_MAJOR_API_VERSION=$(cat ${DATAFED_PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs)
 else
   local_FOXX_MAJOR_API_VERSION=$(printenv FOXX_MAJOR_API_VERSION)
 fi
@@ -177,7 +177,7 @@ else
     "${local_ARANGOSH_SERVER_ENDPOINT_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
     --server.password "${local_DATAFED_DATABASE_PASSWORD}" \
     --server.username "${local_DATABASE_USER}" \
-    --javascript.execute "${PROJECT_ROOT}/core/database/foxx/db_create.js"
+    --javascript.execute "${DATAFED_PROJECT_ROOT}/core/database/foxx/db_create.js"
   # Give time for the database to be created
   sleep 2
   arangosh --server.endpoint "${local_ARANGOSH_SERVER_ENDPOINT_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
@@ -258,7 +258,7 @@ echo "$local_DATAFED_DATABASE_PASSWORD" >"${PATH_TO_PASSWD_FILE}"
       -p "${PATH_TO_PASSWD_FILE}" \
       --database "${local_DATABASE_NAME}" \
       "/api/${local_FOXX_MAJOR_API_VERSION}" \
-      "${PROJECT_ROOT}/core/database/foxx/"
+      "${DATAFED_PROJECT_ROOT}/core/database/foxx/"
   else
     echo "DataFed Foxx Services have already been uploaded, replacing to ensure consisency"
     # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint
@@ -267,8 +267,8 @@ echo "$local_DATAFED_DATABASE_PASSWORD" >"${PATH_TO_PASSWD_FILE}"
       -u "${local_DATABASE_USER}" \
       -p "${PATH_TO_PASSWD_FILE}" \
       --database "${local_DATABASE_NAME}" \
-      "/api/${local_FOXX_MAJOR_API_VERSION}" "${PROJECT_ROOT}/core/database/foxx/"
-    echo "foxx replace -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api/${local_FOXX_MAJOR_API_VERSION} ${PROJECT_ROOT}/core/database/foxx"
+      "/api/${local_FOXX_MAJOR_API_VERSION}" "${DATAFED_PROJECT_ROOT}/core/database/foxx/"
+    echo "foxx replace -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api/${local_FOXX_MAJOR_API_VERSION} ${DATAFED_PROJECT_ROOT}/core/database/foxx"
   fi
   rm "${PATH_TO_PASSWD_FILE}"
 } || { # catch
