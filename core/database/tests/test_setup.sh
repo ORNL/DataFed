@@ -13,10 +13,10 @@ set -uef -o pipefail
 
 SCRIPT=$(realpath "$BASH_SOURCE[0]")
 SOURCE=$(dirname "$SCRIPT")
-PROJECT_ROOT=$(realpath "${SOURCE}/../../../")
-source "${PROJECT_ROOT}/config/datafed.sh"
-source "${PROJECT_ROOT}/scripts/dependency_versions.sh"
-source "${PROJECT_ROOT}/scripts/dependency_install_functions.sh"
+DATAFED_PROJECT_ROOT=$(realpath "${SOURCE}/../../../")
+source "${DATAFED_PROJECT_ROOT}/config/datafed.sh"
+source "${DATAFED_PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_versions.sh"
+source "${DATAFED_PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_install_functions.sh"
 
 Help() {
   echo "$(basename $0) Will set up a configuration file for the core server"
@@ -52,7 +52,7 @@ else
 fi
 
 if [ -z "${FOXX_MAJOR_API_VERSION:-}" ]; then
-  local_FOXX_MAJOR_API_VERSION=$(cat ${PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs)
+  local_FOXX_MAJOR_API_VERSION=$(cat ${DATAFED_PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs)
 else
   local_FOXX_MAJOR_API_VERSION=$(printenv FOXX_MAJOR_API_VERSION)
 fi
@@ -115,7 +115,7 @@ if [[ "$output" =~ .*"sdms".* ]]; then
   echo "SDMS already exists do nothing"
 else
   echo "Creating SDMS"
-  arangosh --server.endpoint "tcp://${local_DATAFED_DATABASE_HOST}:8529" --server.password "${local_DATAFED_DATABASE_PASSWORD}" --server.username "${local_DATABASE_USER}" --javascript.execute "${PROJECT_ROOT}/core/database/foxx/db_create.js"
+  arangosh --server.endpoint "tcp://${local_DATAFED_DATABASE_HOST}:8529" --server.password "${local_DATAFED_DATABASE_PASSWORD}" --server.username "${local_DATABASE_USER}" --javascript.execute "${DATAFED_PROJECT_ROOT}/core/database/foxx/db_create.js"
   # Give time for the database to be created
   sleep 2
   arangosh --server.endpoint "tcp://${local_DATAFED_DATABASE_HOST}:8529" --server.password "${local_DATAFED_DATABASE_PASSWORD}" --server.username "${local_DATABASE_USER}" --javascript.execute-string 'db._useDatabase("sdms"); db.config.insert({"_key": "msg_daily", "msg" : "DataFed servers will be off-line for regular maintenance every Sunday night from 11:45 pm until 12:15 am EST Monday morning."}, {overwrite: true});'

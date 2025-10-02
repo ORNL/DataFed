@@ -74,9 +74,9 @@ The npm packages needed primarily by the web server are:
 
 This can be done with a helper scripts these scripts are for ubuntu::
 
-    ./DataFed/scripts/install_core_dependencies.sh
-    ./DataFed/scripts/install_repo_dependencies.sh
-    ./DataFed/scripts/install_ws_dependencies.sh
+    ./DataFed/external/DataFedDependencies/scripts/install_core_dependencies.sh
+    ./DataFed/external/DataFedDependencies/scripts/install_repo_dependencies.sh
+    ./DataFed/external/DataFedDependencies/scripts/install_ws_dependencies.sh
 
 The next step is to enter configuration options that are listed in ./config/datafed.sh. To
 generate a template for this file you will first need to run::
