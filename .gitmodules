@@ -1,6 +1,3 @@
 [submodule "external/globus-connect-server-deploy"]
 	path = external/globus-connect-server-deploy
 	url = https://github.com/globus/globus-connect-server-deploy.git
-[submodule "external/protobuf"]
-	path = external/protobuf
-	url = https://github.com/protocolbuffers/protobuf.git
