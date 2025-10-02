@@ -8,6 +8,7 @@ ARG                       DATAFED_DIR="/datafed"
 ARG              DATAFED_INSTALL_PATH="/opt/datafed"
 ARG DATAFED_DEPENDENCIES_INSTALL_PATH="/opt/datafed/dependencies"
 ARG                         BUILD_DIR="$DATAFED_DIR/source"
+ARG         DATAFED_DEPENDENCIES_ROOT="$BUILD_DIR/external/DataFedDependencies"
 ARG                           NVM_DIR="$DATAFED_DIR/.nvm"
 ARG                           NVM_INC="$DATAFED_DIR/.nvm/versions/node/v20.18.2/include/node"
 ARG                           NVM_BIN="$DATAFED_DIR/.nvm/versions/node/v20.18.2/bin"
@@ -19,6 +20,7 @@ ARG DATAFED_DIR
 ARG BUILD_DIR
 ARG DATAFED_INSTALL_PATH
 ARG DATAFED_DEPENDENCIES_INSTALL_PATH
+ARG DATAFED_DEPENDENCIES_ROOT
 
 # WARNING
 #
@@ -30,14 +32,20 @@ ENV                         BUILD_DIR="${BUILD_DIR}"
 ENV                              HOME="${BUILD_DIR}"
 ENV                       DATAFED_DIR="${DATAFED_DIR}"
 ENV DATAFED_DEPENDENCIES_INSTALL_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+ENV         DATAFED_DEPENDENCIES_ROOT="${DATAFED_DEPENDENCIES_ROOT}"
 ENV              DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
 ENV          DATAFED_DEFAULT_LOG_PATH="$DATAFED_INSTALL_PATH/logs"
 # Set to false by default to avoid wiping the database
 ENV                 ENABLE_FOXX_TESTS="FALSE"
 
+RUN mkdir -p ${BUILD_DIR}/external/DataFedDependencies/scripts/ && \
+     mv ./scripts/dependency_versions.sh           ${BUILD_DIR}/external/DataFedDependencies/scripts/ && \
+     mv ./scripts/dependency_install_functions.sh  ${BUILD_DIR}/external/DataFedDependencies/scripts/ && \
+     mv ./scripts/generate_dependencies_config.sh  ${BUILD_DIR}/external/DataFedDependencies/scripts/ && \
+     mv ./scripts/utils.sh                         ${BUILD_DIR}/external/DataFedDependencies/scripts/
+
 COPY ./core/CMakeLists.txt             ${BUILD_DIR}/core/CMakeLists.txt
 COPY ./CMakeLists.txt                  ${BUILD_DIR}
-COPY ./scripts/dependency_versions.sh  ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_datafed.sh     ${BUILD_DIR}/scripts/
 COPY ./cmake                           ${BUILD_DIR}/cmake
 COPY ./docker/entrypoint_foxx.sh       ${BUILD_DIR}/docker/entrypoint_foxx.sh
@@ -72,13 +80,15 @@ RUN chown -R datafed:root /home/datafed \
                  ${BUILD_DIR}/scripts \
                  ${BUILD_DIR}/core/ \
                  ${BUILD_DIR}/common/ \
-                 ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm && \
+                 ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm \
+                 ${BUILD_DIR}/external/DataFedDependencies/ && \
     chown datafed:root ${BUILD_DIR} ${DATAFED_DEPENDENCIES_INSTALL_PATH} && \
     find ${BUILD_DIR}/config -maxdepth 1 -type f -exec chmod 0664 {} + && \
     find ${BUILD_DIR}/core/database -type f -exec chmod 0664 {} + && \
     find ${BUILD_DIR}/core -type d -exec chmod 0774 {} + && \
     find ${BUILD_DIR}/config -type d -exec chmod 0774 {} + && \
     find ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm -type d -exec chmod 0774 {} + && \
+    find ${DATAFED_DEPENDENCIES_ROOT} -type d -exec chmod 0774 {} + && \
     chmod 774    ${BUILD_DIR} \
                  ${BUILD_DIR}/scripts \
                  ${DATAFED_DEPENDENCIES_INSTALL_PATH} \
