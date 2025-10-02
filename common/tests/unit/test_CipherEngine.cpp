@@ -64,8 +64,6 @@ BOOST_AUTO_TEST_CASE(testing_KeyGeneration)
     BOOST_CHECK(keys_are_different);
 }
 
-
-
 BOOST_AUTO_TEST_CASE(test_EncryptionDecryption)
 {
     LogContext log_context;
