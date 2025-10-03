@@ -37,7 +37,6 @@ Help() {
   echo "                                  database, the env variable: "
   echo "                                  DATAFED_DATABASE_HOST can also be "
   echo "                                  used."
-  echo "-y, --system-secret               ZeroMQ system secret"
   echo
   echo "NOTE: Do not run this script with sudo!"
   echo
@@ -76,7 +75,7 @@ else
   local_DATAFED_DATABASE_HOST=$(printenv DATAFED_DATABASE_HOST)
 fi
 
-VALID_ARGS=$(getopt -o hu:p:f:i:y: --long 'help',database-user:,database-password:,foxx-api-major-version:,database-host:,zeromq-system-secret: -- "$@")
+VALID_ARGS=$(getopt -o hu:p:f:i: --long 'help',database-user:,database-password:,foxx-api-major-version:,database-host: -- "$@")
 if [[ $? -ne 0 ]]; then
   exit 1
 fi

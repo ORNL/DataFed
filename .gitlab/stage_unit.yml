@@ -50,7 +50,6 @@ run-ws-unit-job:
         - echo "-e DATAFED_GLOBUS_APP_SECRET=\"$CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_web.sh
         - echo "-e DATAFED_GLOBUS_APP_ID=\"$CI_DATAFED_GLOBUS_APP_ID\" \\" >> run_web.sh
         - echo "-e DATAFED_ZEROMQ_SESSION_SECRET=\"$CI_DATAFED_ZEROMQ_SESSION_SECRET\" \\" >> run_web.sh
-        - echo "-e DATAFED_ZEROMQ_SYSTEM_SECRET=\"$CI_DATAFED_ZEROMQ_SYSTEM_SECRET\" \\" >> run_web.sh
         - echo "-e DATAFED_DOMAIN=\"$CI_DATAFED_DOMAIN\" \\" >> run_web.sh
         - echo "-e DATAFED_WEB_CERT_PATH=\"/opt/datafed/keys/${DATAFED_WEB_CERT_NAME}\" \\" >> run_web.sh
         - echo "-e DATAFED_WEB_KEY_PATH=\"/opt/datafed/keys/${DATAFED_WEB_KEY_NAME}\" \\" >> run_web.sh
@@ -103,7 +102,6 @@ run-authz-unit-job:
         - echo "-e DATAFED_GLOBUS_APP_SECRET=\"$CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_globus.sh
         - echo "-e DATAFED_GLOBUS_APP_ID=\"$CI_DATAFED_GLOBUS_APP_ID\" \\" >> run_globus.sh
         - echo "-e DATAFED_ZEROMQ_SESSION_SECRET=\"$CI_DATAFED_ZEROMQ_SESSION_SECRET\" \\" >> run_globus.sh
-        - echo "-e DATAFED_ZEROMQ_SYSTEM_SECRET=\"$CI_DATAFED_ZEROMQ_SYSTEM_SECRET\" \\" >> run_globus.sh
         - echo "-e DATAFED_DOMAIN=\"$CI_DATAFED_DOMAIN\" \\" >> run_globus.sh
         - echo "-e DATAFED_HTTPS_SERVER_PORT=\"443\" \\" >> run_globus.sh
         - echo "-e DATAFED_DEFAULT_LOG_PATH=\"$CONTAINER_LOG_FILE_PATH\" \\" >> run_globus.sh
