@@ -108,13 +108,18 @@ if(CMAKE_MAKE_PROGRAM MATCHES "(make|gmake)")
     add_definitions( -Wall -Wextra )
 endif()
 
-configure_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/common/proto/common/Version.proto.in"
-  "${CMAKE_CURRENT_SOURCE_DIR}/common/proto/common/Version.proto"
-  @ONLY)
 
-# Create file glob here because need to be made visible here as well
-file( GLOB ProtoFiles "${PROJECT_SOURCE_DIR}/common/proto/common/*.proto" )
+if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON OR BUILD_PYTHON_CLIENT OR BUILD_WEB_SERVER) 
+  configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/common/proto/common/Version.proto.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/common/proto/common/Version.proto"
+    @ONLY)
+
+  # Create file glob here because need to be made visible here as well
+  file( GLOB ProtoFiles "${PROJECT_SOURCE_DIR}/common/proto/common/*.proto" )
+  include(./cmake/Protobuf.cmake)
+endif()
+
 
 if( BUILD_WEB_SERVER )
   include(./cmake/Web.cmake)
@@ -131,10 +136,6 @@ if( BUILD_AUTHZ_TESTS )
   include(./cmake/GSSAPI.cmake)
   include(./cmake/GlobusCommon.cmake)
 endif()
-
-if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON OR BUILD_PYTHON_CLIENT) 
-  include(./cmake/Protobuf.cmake)
-endif() 
 
 if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON) 
 

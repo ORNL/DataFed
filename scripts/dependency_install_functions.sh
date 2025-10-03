@@ -5,6 +5,9 @@ source "${SOURCE}/dependency_versions.sh"
 PROJECT_ROOT=$(realpath "${SOURCE}/..")
 source "${SOURCE}/utils.sh"
 
+# Ensures the shell returns the exit code of the first failed command in a pipeline
+set -o pipefail
+
 sudo_command
 # these are the dependencies to be installed by apt
 export apt_file_path="${PROJECT_ROOT}/tmp/apt_deps"
@@ -13,11 +16,10 @@ export pip_file_path="${PROJECT_ROOT}/tmp/pip_deps"
 export ext_file_path="${PROJECT_ROOT}/tmp/ext_deps"
 
 if [ ! -d "${PROJECT_ROOT}/tmp" ]; then
-    mkdir -p "${PROJECT_ROOT}/tmp" 
+  mkdir -p "${PROJECT_ROOT}/tmp"
 fi
 
-if [ ! -e "${PROJECT_ROOT}/config/datafed.sh" ]
-then
+if [ ! -e "${PROJECT_ROOT}/config/datafed.sh" ]; then
   echo "Please run generate_datafed.sh before installing dependencies"
   exit 1
 fi
@@ -25,15 +27,15 @@ fi
 source "${PROJECT_ROOT}/config/datafed.sh"
 
 if [ ! -e "$DATAFED_DEPENDENCIES_INSTALL_PATH" ] || [ ! -d "$DATAFED_DEPENDENCIES_INSTALL_PATH" ]; then
-    parent_dir=$(dirname "${DATAFED_DEPENDENCIES_INSTALL_PATH}")
-    if [ -w "${parent_dir}" ]; then
-      mkdir -p "$DATAFED_DEPENDENCIES_INSTALL_PATH"
-    else
-      echo "Sudo command $SUDO_CMD"
-      "$SUDO_CMD" mkdir -p "$DATAFED_DEPENDENCIES_INSTALL_PATH"
-      user=$(whoami)  
-      "$SUDO_CMD" chown "$user" "$DATAFED_DEPENDENCIES_INSTALL_PATH" 
-    fi
+  parent_dir=$(dirname "${DATAFED_DEPENDENCIES_INSTALL_PATH}")
+  if [ -w "${parent_dir}" ]; then
+    mkdir -p "$DATAFED_DEPENDENCIES_INSTALL_PATH"
+  else
+    echo "Sudo command $SUDO_CMD"
+    "$SUDO_CMD" mkdir -p "$DATAFED_DEPENDENCIES_INSTALL_PATH"
+    user=$(whoami)
+    "$SUDO_CMD" chown "$user" "$DATAFED_DEPENDENCIES_INSTALL_PATH"
+  fi
 fi
 
 # NOTE - LD_LIBRARY_PATH must not be a variable for this to work. You cannot
@@ -46,6 +48,19 @@ else
     LD_LIBRARY_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/lib:$LD_LIBRARY_PATH"
   else
     LD_LIBRARY_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/lib"
+  fi
+fi
+
+# This if statement is to make sure PKG_CONFIG_PATH is defined for cmake, and
+# that it contains the necessary paths from the datafed depedencies install path
+# to compile other dependencies
+if [[ ! -v PKG_CONFIG_PATH ]]; then
+  PKG_CONFIG_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/lib/pkgconfig"
+else
+  if [[ -n "$PKG_CONFIG_PATH" ]]; then
+    PKG_CONFIG_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/lib/pkgconfig:$PKG_CONFIG_PATH"
+  else
+    PKG_CONFIG_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH/lib/pkgconfig"
   fi
 fi
 
@@ -87,21 +102,44 @@ clean_install_flags() {
 }
 
 install_python() {
+  local original_dir=$(pwd)
 
   local PYTHON_FLAG_PREFIX=".python_installed-"
   clean_install_flags "$PYTHON_FLAG_PREFIX"
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${PYTHON_FLAG_PREFIX}${DATAFED_PYTHON_VERSION}" ]; then
-    # Check if the deadsnakes repository has already been added to avoid issues with gpg
-    if ! grep -qr '^deb .\+deadsnakes' /etc/apt/sources.list.d/; then
-	"$SUDO_CMD" apt update
-	"$SUDO_CMD" apt install -y software-properties-common
-	"$SUDO_CMD" add-apt-repository -y ppa:deadsnakes/ppa
-	"$SUDO_CMD" apt update
+    local original_dir=$(pwd)
+
+    # Check if openssl is already installed, otherwise error since openssl is required
+    local OPENSSL_FLAG_PREFIX=".openssl_installed-"
+    if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${OPENSSL_FLAG_PREFIX}${DATAFED_OPENSSL}" ]; then
+      echo "You must first install openssl before installing python"
+      exit 1
     fi
 
-    "$SUDO_CMD" apt install -y "python${DATAFED_PYTHON_VERSION}" "python${DATAFED_PYTHON_VERSION}-dev" "python${DATAFED_PYTHON_VERSION}-venv" "python${DATAFED_PYTHON_VERSION}-distutils"
+    cd "${PROJECT_ROOT}"
+    "$SUDO_CMD" apt update
+    "$SUDO_CMD" apt install -y build-essential libreadline-dev zlib1g-dev libffi-dev wget libsqlite3-dev
+
+    wget "https://www.python.org/ftp/python/${DATAFED_PYTHON_VERSION_FULL}/Python-${DATAFED_PYTHON_VERSION_FULL}.tgz"
+    tar -xf "Python-${DATAFED_PYTHON_VERSION_FULL}.tgz"
+    cd "Python-${DATAFED_PYTHON_VERSION_FULL}"
+
+    export CPPFLAGS="-I${DATAFED_DEPENDENCIES_INSTALL_PATH}/include $CPPFLAGS"
+    export LDFLAGS="-L${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib -Wl,-rpath,${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib $LDFLAGS"
+    ./configure --prefix="${DATAFED_PYTHON_DEPENDENCIES_DIR}" --with-openssl="${DATAFED_DEPENDENCIES_INSTALL_PATH}" --with-openssl-rpath=auto --enable-loadable-sqlite-extensions
+    make -j$(nproc)
+    make altinstall
+
+    mkdir -p "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin"
+    # Delete link if it exists
+    rm -rf "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/python${DATAFED_PYTHON_VERSION}"
+    ln -s "${DATAFED_PYTHON_DEPENDENCIES_DIR}/bin/python${DATAFED_PYTHON_VERSION}" "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/python${DATAFED_PYTHON_VERSION}"
+    export PYTHON="${DATAFED_PYTHON_DEPENDENCIES_DIR}/bin/python${DATAFED_PYTHON_VERSION}"
 
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${PYTHON_FLAG_PREFIX}${DATAFED_PYTHON_VERSION}"
+    cd "$original_dir"
+  else
+    echo "Python already installed, skipping..."
   fi
 }
 
@@ -118,8 +156,9 @@ init_python() {
   fi
 
   if [ ! -e "$DATAFED_DEPENDENCIES_INSTALL_PATH" ] || [ ! -d "$DATAFED_PYTHON_DEPENDENCIES_DIR" ]; then
-      mkdir -p "$DATAFED_PYTHON_DEPENDENCIES_DIR"
+    mkdir -p "$DATAFED_PYTHON_DEPENDENCIES_DIR"
   fi
+
   "python${DATAFED_PYTHON_VERSION}" -m venv "${DATAFED_PYTHON_ENV}"
   # Make sure that pip is installed and upgraded
   "python${DATAFED_PYTHON_VERSION}" -m ensurepip --upgrade
@@ -158,14 +197,13 @@ install_protobuf() {
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${PROTOBUF_FLAG_PREFIX}${DATAFED_PROTOBUF_VERSION}" ]; then
     local original_dir=$(pwd)
     cd "${PROJECT_ROOT}"
-    if [ -d "${PROJECT_ROOT}/external/protobuf" ]
-    then
+    if [ -d "${PROJECT_ROOT}/external/protobuf" ]; then
       # sudo required because of egg file
       "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/protobuf"
     fi
     # Here we are using clone instead of submodule update, because submodule
     # requires the .git folder exist and the current folder be considered a repo
-    # this creates problems in docker because each time a commit is made the 
+    # this creates problems in docker because each time a commit is made the
     # .git folder contents are changed causing a fresh rebuild of all containers
     git clone "https://github.com/protocolbuffers/protobuf.git" \
       "${PROJECT_ROOT}/external/protobuf"
@@ -176,7 +214,7 @@ install_protobuf() {
     # Build static library, cannot build shared library at same time apparently
     # there cannot be a shared libsodium file in the
     # DATAFED_DEPENDENCIES_INSTALL_PREFIX if you want to have everything static
-    # libzmq picks up any shared file regardless of whether you have told it to 
+    # libzmq picks up any shared file regardless of whether you have told it to
     # only use static libraries or not.
     # NOTE - static libraries must be built first
     cmake -S . -B build \
@@ -191,7 +229,7 @@ install_protobuf() {
     else
       "$SUDO_CMD" cmake --build build --target install
     fi
-    # Build Shared library 
+    # Build Shared library
     # Don't build shared, it messes up the static library linking because the
     # cmake file installed are not compatible
     # WARNING - static library will break if build with shared options on
@@ -207,8 +245,7 @@ install_protobuf() {
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH" PATH="$PATH" "python${DATAFED_PYTHON_VERSION}" setup.py install
     cd ../
     # Cleanup build file with root ownership
-    if [ -f build/install_manifest.txt ]
-    then
+    if [ -f build/install_manifest.txt ]; then
       "$SUDO_CMD" rm build/install_manifest.txt
     fi
     cd "${PROJECT_ROOT}"
@@ -224,8 +261,7 @@ install_libsodium() {
   clean_install_flags "$LIBSODIUM_FLAG_PREFIX"
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${LIBSODIUM_FLAG_PREFIX}${DATAFED_LIBSODIUM_VERSION}" ]; then
     local original_dir=$(pwd)
-    if [ -d "${PROJECT_ROOT}/external/libsodium" ]
-    then
+    if [ -d "${PROJECT_ROOT}/external/libsodium" ]; then
       # sudo required because of egg file
       "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/libsodium"
     fi
@@ -258,8 +294,7 @@ install_libzmq() {
   clean_install_flags "$LIBZMQ_FLAG_PREFIX"
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${LIBZMQ_FLAG_PREFIX}${DATAFED_LIBZMQ_VERSION}" ]; then
     local original_dir=$(pwd)
-    if [ -d "${PROJECT_ROOT}/external/libzmq" ]
-    then
+    if [ -d "${PROJECT_ROOT}/external/libzmq" ]; then
       "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/libzmq"
     fi
     if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/.libsodium_installed-${DATAFED_LIBSODIUM_VERSION}" ]; then
@@ -268,7 +303,7 @@ install_libzmq() {
     fi
     # Here we are using clone instead of submodule update, because submodule
     # requires the .git folder exist and the current folder be considered a repo
-    # this creates problems in docker because each time a commit is made the 
+    # this creates problems in docker because each time a commit is made the
     # .git folder contents are changed causing a fresh rebuild of all containers
     git clone https://github.com/zeromq/libzmq.git "${PROJECT_ROOT}/external/libzmq"
     cd "${PROJECT_ROOT}/external/libzmq"
@@ -290,8 +325,7 @@ install_libzmq() {
       "$SUDO_CMD" cmake --build build --target install
     fi
 
-    if [ -d "${PROJECT_ROOT}/external/cppzmq" ]
-    then
+    if [ -d "${PROJECT_ROOT}/external/cppzmq" ]; then
       # sudo required because of egg file
       "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/cppzmq"
     fi
@@ -312,7 +346,7 @@ install_libzmq() {
     else
       "$SUDO_CMD" cmake --build build --target install
     fi
-    
+
     cd "$original_dir"
     # Mark libzmq as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${LIBZMQ_FLAG_PREFIX}${DATAFED_LIBZMQ_VERSION}"
@@ -324,8 +358,7 @@ install_nlohmann_json() {
   clean_install_flags "$NLOHMANN_FLAG_PREFIX"
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${NLOHMANN_FLAG_PREFIX}${DATAFED_NLOHMANN_JSON_VERSION}" ]; then
     local original_dir=$(pwd)
-    if [ -d "${PROJECT_ROOT}/external/json" ]
-    then
+    if [ -d "${PROJECT_ROOT}/external/json" ]; then
       "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/json"
     fi
     git clone https://github.com/nlohmann/json.git "${PROJECT_ROOT}/external/json"
@@ -366,14 +399,13 @@ install_json_schema_validator() {
   clean_install_flags "$NLOHMANN_SCHEMA_FLAG_PREFIX"
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${NLOHMANN_SCHEMA_FLAG_PREFIX}${DATAFED_JSON_SCHEMA_VALIDATOR_VERSION}" ]; then
     local original_dir=$(pwd)
-    if [ -d "${PROJECT_ROOT}/external/json-schema-validator" ]
-    then
+    if [ -d "${PROJECT_ROOT}/external/json-schema-validator" ]; then
       "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/json-schema-validator"
     fi
     git clone https://github.com/pboettch/json-schema-validator "${PROJECT_ROOT}/external/json-schema-validator"
     cd "${PROJECT_ROOT}/external/json-schema-validator"
     git checkout ${DATAFED_JSON_SCHEMA_VALIDATOR_VERSION}
-    # Build static 
+    # Build static
     cmake -S . -B build \
       -DBUILD_SHARED_LIBS=OFF \
       -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
@@ -400,13 +432,13 @@ install_gcs() {
     "$SUDO_CMD" apt update
     "$SUDO_CMD" apt install -y curl git gnupg
     curl -LOs \
-    "https://downloads.globus.org/globus-connect-server/stable/installers/repo/deb/globus-repo_${DATAFED_GLOBUS_VERSION}_all.deb"
+      "https://downloads.globus.org/globus-connect-server/stable/installers/repo/deb/globus-repo_${DATAFED_GLOBUS_VERSION}_all.deb"
     "$SUDO_CMD" dpkg -i "globus-repo_${DATAFED_GLOBUS_VERSION}_all.deb"
     "$SUDO_CMD" apt-key add /usr/share/globus-repo/RPM-GPG-KEY-Globus
     # Need a second update command after adding the globus GPG key
     "$SUDO_CMD" apt update
     "$SUDO_CMD" apt-get install globus-connect-server54 -y
-    
+
     # Mark gcs as installed
     touch "${GCS_FLAG_PREFIX}${DATAFED_GLOBUS_VERSION}"
   fi
@@ -417,11 +449,12 @@ install_nvm() {
   clean_install_flags "$NVM_FLAG_PREFIX"
   # By default this will place NVM in $HOME/.nvm
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${NVM_FLAG_PREFIX}${DATAFED_NVM_VERSION}" ]; then
-    # By setting NVM_DIR beforehand when the scirpt is run it 
+    # By setting NVM_DIR beforehand when the scirpt is run it
     # will use it to set the install path
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
     mkdir -p "${NVM_DIR}"
-    curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${DATAFED_NVM_VERSION}/install.sh" | bash
+    # --fail makes curl return a non-zero exit code for HTTP errors like 404 or 500.
+    curl --fail -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${DATAFED_NVM_VERSION}/install.sh" | bash
     # Mark nvm as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${NVM_FLAG_PREFIX}${DATAFED_NVM_VERSION}"
   else
@@ -445,12 +478,11 @@ install_ws_node_packages() {
   fi
 
   # Configure the package.json.in file -> package.json
-  cmake -P "${PROJECT_ROOT}/cmake/Web.cmake" 
+  cmake -P "${PROJECT_ROOT}/cmake/Web.cmake"
   export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
   export NODE_VERSION="$DATAFED_NODE_VERSION"
   "$NVM_DIR/nvm-exec" npm --prefix "${PROJECT_ROOT}/web" install "${PROJECT_ROOT}/web"
 }
-
 
 install_node() {
   local NODE_FLAG_PREFIX=".node_installed-"
@@ -473,11 +505,12 @@ install_node() {
     cd "$original_dir"
   else
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
-    # Used by nvm 
+    # Used by nvm
     export NODE_VERSION="$DATAFED_NODE_VERSION"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
     nvm use "$DATAFED_NODE_VERSION"
   fi
+  echo "NODE VERSION USED/INSTALLED $DATAFED_NODE_VERSION"
 }
 
 install_foxx_cli() {
@@ -505,28 +538,26 @@ install_foxx_cli() {
     export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # This loads nvm
     export NODE_VERSION="$DATAFED_NODE_VERSION"
-    
+
     # check that foxx can be found
-    if [ ! -d "${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm" ]
-    then
-	echo "Something went wrong Foxx is supposed to be installed i.e. "
-	echo "(${DATAFED_DEPENDENCIES_INSTALL_PATH}/.foxx_cli_installed) "
-	echo "exists. But there is no npm folder in: ${DATAFED_DEPENDENCIES_INSTALL_PATH}"
-	exit 1
+    if [ ! -d "${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm" ]; then
+      echo "Something went wrong Foxx is supposed to be installed i.e. "
+      echo "(${DATAFED_DEPENDENCIES_INSTALL_PATH}/.foxx_cli_installed) "
+      echo "exists. But there is no npm folder in: ${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+      exit 1
     fi
-    if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/bin/foxx" ]
-    then
-	echo "Something went wrong Foxx is supposed to be installed i.e. "
-	echo "(${DATAFED_DEPENDENCIES_INSTALL_PATH}/.foxx_cli_installed) "
-	echo "exists. But there is no foxx binary here: ${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/bin/foxx"
-	exit 1
+    if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/bin/foxx" ]; then
+      echo "Something went wrong Foxx is supposed to be installed i.e. "
+      echo "(${DATAFED_DEPENDENCIES_INSTALL_PATH}/.foxx_cli_installed) "
+      echo "exists. But there is no foxx binary here: ${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/bin/foxx"
+      exit 1
     fi
   fi
 }
 
 install_arangodb() {
   curl -OL https://download.arangodb.com/arangodb312/DEBIAN/Release.key
-  "$SUDO_CMD" apt-key add - < Release.key
+  "$SUDO_CMD" apt-key add - <Release.key
   echo 'deb https://download.arangodb.com/arangodb312/DEBIAN/ /' | "$SUDO_CMD" tee /etc/apt/sources.list.d/arangodb.list
   "$SUDO_CMD" apt-get install apt-transport-https
   "$SUDO_CMD" apt-get update
@@ -538,10 +569,13 @@ install_openssl() {
   clean_install_flags "$OPENSSL_FLAG_PREFIX"
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${OPENSSL_FLAG_PREFIX}${DATAFED_OPENSSL}" ]; then
     local original_dir=$(pwd)
-    if [ -d "${PROJECT_ROOT}/external/openssl" ]
-    then
+    if [ -d "${PROJECT_ROOT}/external/openssl" ]; then
       "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/openssl"
     fi
+
+    "$SUDO_CMD" apt update
+    "$SUDO_CMD" apt install -y build-essential git
+
     git clone https://github.com/openssl/openssl "${PROJECT_ROOT}/external/openssl"
     cd "${PROJECT_ROOT}/external/openssl"
     git checkout "$DATAFED_OPENSSL_COMMIT"
@@ -551,11 +585,14 @@ install_openssl() {
     if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
       make install
     else
-      "$SUDO_CMD" make install 
+      "$SUDO_CMD" make install
     fi
+
     # Mark openssl as installed
     touch "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${OPENSSL_FLAG_PREFIX}${DATAFED_OPENSSL}"
     cd "$original_dir"
+  else
+    echo "OpenSSL already installed, skipping..."
   fi
 }
 
@@ -572,8 +609,7 @@ install_libcurl() {
       echo "You must first install OpenSSL before installing libcurl packages"
       exit 1
     fi
-    if [ -d "${PROJECT_ROOT}/external/libcurl" ]
-    then
+    if [ -d "${PROJECT_ROOT}/external/libcurl" ]; then
       "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/libcurl"
     fi
     wget "${DATAFED_LIBCURL_URL}"
@@ -588,22 +624,22 @@ install_libcurl() {
     # NOTE: NSS - Network Security Services for HTTP support is deprecated
     # NOTE: metalink - is no longer supported and not a valid argument
     PKG_CONFIG_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/pkgconfig" \
-    ./configure --with-ssl="${DATAFED_DEPENDENCIES_INSTALL_PATH}" --with-gnutls --with-zlib \
+      ./configure --with-ssl="${DATAFED_DEPENDENCIES_INSTALL_PATH}" --with-gnutls --with-zlib \
       --enable-file --disable-shared \
       --disable-ldap --disable-ldaps --disable-rtsp --disable-dict \
       --disable-telnet --disable-tftp --disable-pop3 --disable-imap \
-      --disable-smtp  --disable-gopher --disable-smb --disable-ftp \
+      --disable-smtp --disable-gopher --disable-smb --disable-ftp \
       --disable-file --disable-sspi --without-zstd --without-libidn2 --without-librtmp \
       --without-winidn --without-libpsl \
       --without-libssh2 --without-nghttp2 --without-brotli \
       --without-libidn --without-libbrotli \
-      --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}" 
+      --prefix="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
     make -j 8
 
     if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
       make install
     else
-      "$SUDO_CMD" make install 
+      "$SUDO_CMD" make install
     fi
 
     # Mark libcurl as installed
@@ -617,8 +653,7 @@ install_zlib() {
   clean_install_flags "$ZLIB_FLAG_PREFIX"
   if [ ! -e "${DATAFED_DEPENDENCIES_INSTALL_PATH}/${ZLIB_FLAG_PREFIX}${DATAFED_ZLIB_VERSION}" ]; then
     local original_dir=$(pwd)
-    if [ -d "${PROJECT_ROOT}/external/zlib" ]
-    then
+    if [ -d "${PROJECT_ROOT}/external/zlib" ]; then
       "$SUDO_CMD" rm -rf "${PROJECT_ROOT}/external/zlib"
     fi
     wget "${DATAFED_ZLIB_URL}"
@@ -631,7 +666,7 @@ install_zlib() {
     if [ -w "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
       make install
     else
-      "$SUDO_CMD" make install 
+      "$SUDO_CMD" make install
     fi
 
     # Mark libcurl as installed
@@ -642,48 +677,51 @@ install_zlib() {
 
 install_dep_by_name() {
   case "$1" in
-    "cmake")
-      install_cmake
-      ;;
-    "foxx")
-      install_foxx_cli
-      ;;
-    "protobuf")
-      install_protobuf
-      ;;
-    "nlohmann_json")
-      install_nlohmann_json
-      ;;
-    "json_schema_validator")
-      install_json_schema_validator
-      ;;
-    "gcs")
-      install_gcs
-      ;;
-    "libsodium")
-      install_libsodium
-      ;;
-    "libzmq")
-      install_libzmq
-      ;;
-    "libopenssl")
-      install_openssl
-      ;;
-    "libcurl")
-      install_libcurl
-      ;;
-    "zlib")
-      install_zlib
-      ;;
-    "nvm")
-      install_nvm
-      ;;
-    "node")
-      install_node
-      ;;
-    "ws_node_packages")
-      install_ws_node_packages
-      ;;
+  "cmake")
+    install_cmake
+    ;;
+  "foxx")
+    install_foxx_cli
+    ;;
+  "protobuf")
+    install_protobuf
+    ;;
+  "nlohmann_json")
+    install_nlohmann_json
+    ;;
+  "json_schema_validator")
+    install_json_schema_validator
+    ;;
+  "gcs")
+    install_gcs
+    ;;
+  "libsodium")
+    install_libsodium
+    ;;
+  "libzmq")
+    install_libzmq
+    ;;
+  "libopenssl")
+    install_openssl
+    ;;
+  "libcurl")
+    install_libcurl
+    ;;
+  "zlib")
+    install_zlib
+    ;;
+  "nvm")
+    install_nvm
+    ;;
+  "node")
+    install_node
+    ;;
+  "ws_node_packages")
+    install_ws_node_packages
+    ;;
+  "python")
+    install_python
+    ;;
   esac
   cd ~
 }

@@ -14,8 +14,7 @@ SERVICE_FILE_NAME="datafed-core.service"
 
 local_DATAFED_LOG_PATH=""
 
-if [ -z "${DATAFED_DEFAULT_LOG_PATH}" ]
-then
+if [ -z "${DATAFED_DEFAULT_LOG_PATH}" ]; then
   local_DATAFED_LOG_PATH="/var/log/datafed"
 else
   local_DATAFED_LOG_PATH=$(printenv DATAFED_DEFAULT_LOG_PATH)
@@ -24,14 +23,13 @@ fi
 DATAFED_CORE_LOG_FILE_PATH="/$local_DATAFED_LOG_PATH/datafed-core.log"
 
 # Remove double forward slashes
-DATAFED_CORE_LOG_FILE_PATH=$( echo "$DATAFED_CORE_LOG_FILE_PATH" | sed 's/\/\//\//g')
+DATAFED_CORE_LOG_FILE_PATH=$(echo "$DATAFED_CORE_LOG_FILE_PATH" | sed 's/\/\//\//g')
 
-if [ ! -d "$PATH_TO_SERVICE_DIR" ]
-then
+if [ ! -d "$PATH_TO_SERVICE_DIR" ]; then
   mkdir -p $PATH_TO_SERVICE_DIR
 fi
 
-cat << EOF > "$PATH_TO_SERVICE_DIR/$SERVICE_FILE_NAME"
+cat <<EOF >"$PATH_TO_SERVICE_DIR/$SERVICE_FILE_NAME"
 [Unit]
 Description=DataFed Core Server
 Requires=arangodb3.service

@@ -149,7 +149,7 @@ message UserCreateRequest
     required string             email       = 4; // Email address
     repeated string             uuid        = 5; // UUID for primary Globus account
     optional string             options     = 6; // DataFed options (JSON string)
-    required string             secret      = 7; // System secret
+    optional string             secret      = 7; // System secret
 }
 
 // Request to find DataFed user by one or more Globus UUIDs

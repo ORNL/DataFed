@@ -39,6 +39,7 @@ end-to-end-foxx-setup:
         - ./scripts/generate_datafed.sh
         - env > env_file
         - mkdir foxx_tmp
+        - chmod 774 foxx_tmp
         - ls -la foxx_tmp
         - if [ -f foxx_tmp/.foxx_is_installed ]; then rm foxx_tmp/.foxx_is_installed; fi
         - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
@@ -50,6 +51,8 @@ end-to-end-foxx-setup:
         - echo "#!/bin/bash" > "${RUN_FILE}"
         - echo "docker run -d \\" >> "${RUN_FILE}"
         - echo "--name \"${CONTAINER_NAME}\" \\" >> "${RUN_FILE}"
+        - echo "--user \"${USER_ID}:0\" \\" >> "${RUN_FILE}"
+        - echo "--security-opt no-new-privileges \\" >> "${RUN_FILE}"
         - echo "-e DATAFED_ZEROMQ_SYSTEM_SECRET=\"$CI_DATAFED_ZEROMQ_SYSTEM_SECRET\" \\" >> "${RUN_FILE}"
         - echo "-e ENABLE_FOXX_TESTS=\"TRUE\" \\" >> "${RUN_FILE}"
         - echo "-e DATAFED_DOMAIN=\"$CI_DATAFED_DOMAIN\" \\" >> "${RUN_FILE}"
@@ -57,7 +60,6 @@ end-to-end-foxx-setup:
         - echo "-e DATAFED_DATABASE_IP_ADDRESS_PORT=\"$CI_DATAFED_DATABASE_IP_ADDRESS_PORT\" \\" >> "${RUN_FILE}"
         - echo "-e DATAFED_DATABASE_HOST=\"$CI_DATAFED_DATABASE_HOST\" \\" >> "${RUN_FILE}"
         - echo "-e DATAFED_DEFAULT_LOG_PATH=\"$CONTAINER_LOG_FILE_PATH\" \\" >> "${RUN_FILE}"
-        - echo "-e UID=\"$USER_ID\" \\" >> "${RUN_FILE}"
         - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> "${RUN_FILE}"
         - echo "-v \"./foxx_tmp:/tmp\" \\" >> "${RUN_FILE}"
         - echo "-t \"${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:${CI_COMMIT_SHA}\"" >> "${RUN_FILE}"

@@ -12,7 +12,7 @@ rm -rf "${DATAFED_INSTALL_PATH}/web"
 rm -rf "${DATAFED_INSTALL_PATH}/repo"
 rm -rf "${DATAFED_INSTALL_PATH}/authz"
 
-rm -f /etc/systemd/system/datafed* 
+rm -f /etc/systemd/system/datafed*
 rm -f /etc/grid-security/gsi-authz.conf
 # If the path is overwritten and the value that is not found in datafed.sh
 # is used to install a particular component then this will not suffice

@@ -72,17 +72,6 @@ router
                     write: ["u", "c", "a", "g", "acl", "owner", "ident", "uuid", "alias", "admin"],
                 },
                 action: function () {
-                    var cfg = g_db.config.document("config/system");
-                    if (req.queryParams.secret != cfg.secret) {
-                        console.log(
-                            "ERROR: user create called with incorrect system secret. uid:",
-                            req.queryParams.uid,
-                            ", name:",
-                            req.queryParams.name,
-                        );
-                        throw [g_lib.ERR_AUTHN_FAILED, "Invalid system credentials"];
-                    }
-
                     var i,
                         time = Math.floor(Date.now() / 1000),
                         name = req.queryParams.name.trim(),
@@ -222,7 +211,7 @@ router
     })
     .queryParam(
         "secret",
-        joi.string().required(),
+        joi.string().optional(),
         "System secret required to authorize this action",
     )
     .queryParam("uid", joi.string().required(), "SDMS user ID (globus) for new user")
@@ -276,8 +265,8 @@ router
                             ];
                         }
 
-                        (obj.name_first = name.substr(0, idx).trim()),
-                            (obj.name_last = name.substr(idx + 1));
+                        ((obj.name_first = name.substr(0, idx).trim()),
+                            (obj.name_last = name.substr(idx + 1)));
                         obj.name = name.toLowerCase() + " " + user_id.substr(2);
                     }
 

@@ -22,6 +22,8 @@ check-ci-infrastructure:
                 BUILD_INFRASTRUCTURE="TRUE"
               elif [ "${EXIT_CODE}" -eq 2 ]; then
                 exit 1
+              elif [ "${EXIT_CODE}" -eq 3 ]; then
+                exit 1
               fi
             done
             if [ "$BUILD_INFRASTRUCTURE" == "TRUE" ]
