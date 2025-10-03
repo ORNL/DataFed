@@ -67,7 +67,6 @@ of the relevant configuration options to an initial deployment:
 1. DATAFED_GLOBUS_APP_SECRET
 2. DATAFED_GLOBUS_APP_ID
 3. DATAFED_ZEROMQ_SESSION_SECRET
-4. DATAFED_ZEROMQ_SYSTEM_SECRET
 5. DATAFED_DATABASE_PASSWORD
 6. DATAFED_DATABASE_IP_ADDRESS
 7. DATAFED_GCS_ROOT_NAME
@@ -143,7 +142,6 @@ Here is an example for the core service:
         -e DATAFED_GLOBUS_APP_SECRET="" \
         -e DATAFED_GLOBUS_APP_ID="" \
         -e DATAFED_ZEROMQ_SESSION_SECRET="" \
-        -e DATAFED_ZEROMQ_SYSTEM_SECRET="" \
         -e DATAFED_DOMAIN="" \
         -e DATAFED_DATABASE_PASSWORD="" \
         -e DATAFED_DATABASE_IP_ADDRESS_PORT="" \
@@ -171,7 +169,6 @@ Here is an example for the web service:
         -e DATAFED_GLOBUS_APP_SECRET="" \
         -e DATAFED_GLOBUS_APP_ID="" \
         -e DATAFED_ZEROMQ_SESSION_SECRET="" \
-        -e DATAFED_ZEROMQ_SYSTEM_SECRET="" \
         -e DATAFED_DOMAIN="" \
 	    -e DATAFED_WEB_CERT_PATH="" \
 	    -e DATAFED_WEB_KEY_PATH="" \
@@ -201,7 +198,6 @@ Here is an example for the repository service:
         -e DATAFED_GLOBUS_APP_SECRET="" \
         -e DATAFED_GLOBUS_APP_ID="" \
         -e DATAFED_ZEROMQ_SESSION_SECRET="" \
-        -e DATAFED_ZEROMQ_SYSTEM_SECRET="" \
 	    -e DATAFED_HTTPS_SERVER_PORT="" \
         -e DATAFED_DOMAIN="" \
         -e DATAFED_DEFAULT_LOG_PATH="" \
@@ -231,7 +227,6 @@ Here is an example for the Globus Connect Server service:
         -e DATAFED_GLOBUS_APP_SECRET="" \
         -e DATAFED_GLOBUS_APP_ID="" \
         -e DATAFED_ZEROMQ_SESSION_SECRET="" \
-        -e DATAFED_ZEROMQ_SYSTEM_SECRET="" \
         -e DATAFED_HTTPS_SERVER_PORT="" \
         -e DATAFED_DOMAIN="" \
         -e DATAFED_CORE_ADDRESS_PORT_INTERNAL="" \
