@@ -3190,7 +3190,10 @@ module.exports = (function () {
             // GLOBUS_TRANSFER parse currently assumes uuid and scopes exist, but this may change
             const parsed_data = other_token_data.split("|");
             if (parsed_data.length !== 2) {
-                throw [error.ERR_INVALID_PARAM, "Unexpected count of additional token data provided"];
+                throw [
+                    error.ERR_INVALID_PARAM,
+                    "Unexpected count of additional token data provided",
+                ];
             }
 
             const parsed_uuid = parsed_data[0];

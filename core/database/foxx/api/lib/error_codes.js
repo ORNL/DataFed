@@ -1,7 +1,6 @@
 "use strict";
 
 module.exports = (function () {
-
     var obj = {};
     obj.ERR_INFO = [];
     obj.ERR_COUNT = 0;
