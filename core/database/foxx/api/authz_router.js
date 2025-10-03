@@ -5,6 +5,7 @@ const router = createRouter();
 const joi = require("joi");
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
+const error = require("./lib/error_codes");
 const authzModule = require("./authz");
 const { Repo, PathType } = require("./repo");
 
@@ -48,7 +49,7 @@ router
                         req.queryParams.file +
                         " FAILED",
                 );
-                throw [g_lib.ERR_PERM_DENIED, "Unknown client: " + req.queryParams.client];
+                throw [error.ERR_PERM_DENIED, "Unknown client: " + req.queryParams.client];
             }
             let repo = new Repo(req.queryParams.repo);
             let path_type = repo.pathType(req.queryParams.file);
@@ -65,7 +66,7 @@ router
                         " FAILED",
                 );
                 throw [
-                    g_lib.ERR_PERM_DENIED,
+                    error.ERR_PERM_DENIED,
                     "Unknown path, or path is not consistent with supported repository folder hierarchy: " +
                         req.queryParams.file,
                 ];
@@ -79,7 +80,7 @@ router
                     req.queryParams.file,
                 );
             } else {
-                throw [g_lib.ERR_INVALID_PARAM, "Invalid gridFTP action: ", req.queryParams.act];
+                throw [error.ERR_INVALID_PARAM, "Invalid gridFTP action: ", req.queryParams.act];
             }
             console.log(
                 "AUTHZ act: " +
@@ -120,7 +121,7 @@ router
                 ty = id[0];
 
             if (id[1] != "/") {
-                throw [g_lib.ERR_INVALID_PARAM, "Invalid ID, " + req.queryParams.id];
+                throw [error.ERR_INVALID_PARAM, "Invalid ID, " + req.queryParams.id];
             }
 
             if (ty == "p") {
@@ -153,7 +154,7 @@ router
                         })
                     ) {
                         throw [
-                            g_lib.ERR_NO_ALLOCATION,
+                            error.ERR_NO_ALLOCATION,
                             "An allocation is required to create a collection.",
                         ];
                     }
@@ -164,7 +165,7 @@ router
                     result = g_lib.hasPermissions(client, obj, perms);
                 }
             } else {
-                throw [g_lib.ERR_INVALID_PARAM, "Invalid ID, " + req.queryParams.id];
+                throw [error.ERR_INVALID_PARAM, "Invalid ID, " + req.queryParams.id];
             }
 
             res.send({
@@ -189,7 +190,7 @@ router
                 id = g_lib.resolveID(req.queryParams.id, client),
                 ty = id[0];
 
-            if (id[1] != "/") throw [g_lib.ERR_INVALID_PARAM, "Invalid ID, " + req.queryParams.id];
+            if (id[1] != "/") throw [error.ERR_INVALID_PARAM, "Invalid ID, " + req.queryParams.id];
 
             if (ty == "p") {
                 var role = g_lib.getProjectRole(client._id, id);
@@ -213,7 +214,7 @@ router
                     obj = g_db.c.document(id);
                     result = g_lib.getPermissions(client, obj, result);
                 }
-            } else throw [g_lib.ERR_INVALID_PARAM, "Invalid ID, " + req.queryParams.id];
+            } else throw [error.ERR_INVALID_PARAM, "Invalid ID, " + req.queryParams.id];
 
             res.send({
                 granted: result,

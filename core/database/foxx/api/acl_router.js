@@ -5,6 +5,7 @@ const router = createRouter();
 const joi = require("joi");
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
+const error = require("./lib/error_codes");
 
 module.exports = router;
 
@@ -37,14 +38,14 @@ router
                     else is_coll = false;
 
                     if (!is_coll && object._id[0] != "d")
-                        throw [g_lib.ERR_INVALID_PARAM, "Invalid object type, " + object._id];
+                        throw [error.ERR_INVALID_PARAM, "Invalid object type, " + object._id];
 
                     var is_admin = true;
 
                     if (!g_lib.hasAdminPermObject(client, object._id)) {
                         is_admin = false;
                         if (!g_lib.hasPermissions(client, object, g_lib.PERM_SHARE))
-                            throw g_lib.ERR_PERM_DENIED;
+                            throw error.ERR_PERM_DENIED;
                     }
 
                     var client_perm, cur_rules;
@@ -77,7 +78,7 @@ router
 
                             if (!is_coll && rule.inhgrant)
                                 throw [
-                                    g_lib.ERR_INVALID_PARAM,
+                                    error.ERR_INVALID_PARAM,
                                     "Inherited permissions cannot be applied to data records",
                                 ];
 
@@ -89,13 +90,13 @@ router
                                 });
 
                                 if (!group)
-                                    throw [g_lib.ERR_NOT_FOUND, "Group " + rule.id + " not found"];
+                                    throw [error.ERR_NOT_FOUND, "Group " + rule.id + " not found"];
 
                                 rule.id = group._id;
                             } else {
                                 acl_mode |= 1;
                                 if (!g_db._exists(rule.id))
-                                    throw [g_lib.ERR_NOT_FOUND, "User " + rule.id + " not found"];
+                                    throw [error.ERR_NOT_FOUND, "User " + rule.id + " not found"];
                             }
 
                             if (!is_admin) {
@@ -117,7 +118,7 @@ router
                                                 client_perm,
                                             );
                                             throw [
-                                                g_lib.ERR_PERM_DENIED,
+                                                error.ERR_PERM_DENIED,
                                                 "Attempt to alter protected permissions on " +
                                                     rule.id +
                                                     " ACL.",
@@ -137,7 +138,7 @@ router
                                             client_perm,
                                         );
                                         throw [
-                                            g_lib.ERR_PERM_DENIED,
+                                            error.ERR_PERM_DENIED,
                                             "Attempt to exceed controlled permissions on " +
                                                 rule.id +
                                                 " ACL.",
@@ -199,11 +200,11 @@ router
             var object = g_lib.getObject(req.queryParams.id, client);
 
             if (object._id[0] != "c" && object._id[0] != "d")
-                throw [g_lib.ERR_INVALID_PARAM, "Invalid object type, " + object._id];
+                throw [error.ERR_INVALID_PARAM, "Invalid object type, " + object._id];
 
             if (!g_lib.hasAdminPermObject(client, object._id)) {
                 if (!g_lib.hasPermissions(client, object, g_lib.PERM_SHARE))
-                    throw g_lib.ERR_PERM_DENIED;
+                    throw error.ERR_PERM_DENIED;
             }
 
             var rules = g_db
@@ -259,7 +260,7 @@ router
 
                 // Verify project exists
                 if (!g_db._exists(owner_id))
-                    throw [g_lib.ERR_NOT_FOUND, "Project " + owner_id + " not found"];
+                    throw [error.ERR_NOT_FOUND, "Project " + owner_id + " not found"];
             } else {
                 owner_id = g_lib.getUserFromClientID(req.queryParams.owner)._id;
             }
@@ -492,11 +493,11 @@ router.get('/by_proj/list', function (req, res) {
 
         // Verify owner ID is a project
         if ( !owner_id.startsWith( "p/" ))
-            throw [g_lib.ERR_INVALID_PARAM,"Invalid project ID: "+owner_id];
+            throw [error.ERR_INVALID_PARAM,"Invalid project ID: "+owner_id];
 
         // Verify owner exists
         if ( !g_db._exists( owner_id ))
-            throw [g_lib.ERR_NOT_FOUND,"Project "+owner_id+" not found"];
+            throw [error.ERR_NOT_FOUND,"Project "+owner_id+" not found"];
 
         var shares = g_db._query("for v in 1..2 inbound @client member, acl filter v.owner == @owner return {id:v._id,title:v.title,alias:v.alias, doi:v.doi,locked:v.locked}", { client: client._id, owner: owner_id }).toArray();
 

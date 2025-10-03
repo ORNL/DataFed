@@ -5,6 +5,7 @@ const { expect } = chai;
 const { Repo, PathType } = require("../api/repo");
 const g_db = require("@arangodb").db;
 const g_lib = require("../api/support");
+const error = require("../api/lib/error_codes");
 const arangodb = require("@arangodb");
 
 describe("Testing Repo class", () => {
@@ -19,7 +20,7 @@ describe("Testing Repo class", () => {
         const repo = new Repo("invalidKey");
         expect(repo.exists()).to.be.false;
         expect(repo.key()).to.equal("invalidKey");
-        expect(repo.error()).to.equal(g_lib.ERR_NOT_FOUND);
+        expect(repo.error()).to.equal(error.ERR_NOT_FOUND);
     });
 
     it("unit_repo: should return REPO_ROOT_PATH for exact match with repo root", () => {

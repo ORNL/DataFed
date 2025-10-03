@@ -3,6 +3,7 @@
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
 const { errors } = require("@arangodb");
+const error = require("./lib/error_codes");
 
 /**
  * Represents a record in the database and provides methods to manage it.
@@ -50,12 +51,12 @@ class Record {
                     this.#exists = true;
                 } else {
                     this.#exists = false;
-                    this.#error = g_lib.ERR_NOT_FOUND;
+                    this.#error = error.ERR_NOT_FOUND;
                     this.#err_msg = "Invalid key: (" + a_key + "). No record found.";
                 }
             } catch (e) {
                 this.#exists = false;
-                this.#error = g_lib.ERR_INTERNAL_FAULT;
+                this.#error = error.ERR_INTERNAL_FAULT;
                 this.#err_msg = "Unknown error encountered.";
                 console.log(e);
             }
@@ -77,7 +78,7 @@ class Record {
         } else if (loc.uid.charAt(0) == "p") {
             return path + "project/" + loc.uid.substr(2) + "/" + this.#key;
         } else {
-            this.#error = g_lib.ERR_INTERNAL_FAULT;
+            this.#error = error.ERR_INTERNAL_FAULT;
             this.#err_msg = "Provided path does not fit within supported directory ";
             this.#err_msg += "structure for repository, no user or project folder has";
             this.#err_msg += " been determined for the record.";
@@ -98,7 +99,7 @@ class Record {
             return false;
         }
         if (storedPath !== inputPath) {
-            this.#error = g_lib.ERR_PERM_DENIED;
+            this.#error = error.ERR_PERM_DENIED;
             this.#err_msg =
                 "Record path is not consistent with repo expected path is: " +
                 storedPath +
@@ -159,7 +160,7 @@ class Record {
         });
 
         if (!this.#loc) {
-            this.#error = g_lib.ERR_PERM_DENIED;
+            this.#error = error.ERR_PERM_DENIED;
             this.#err_msg =
                 "Permission denied data is not managed by DataFed. This can happen if you try to do a transfer directly from Globus.";
             return false;
@@ -202,7 +203,7 @@ class Record {
             // If no allocation is found for the item throw an error
             // if the paths do not align also throw an error.
             if (!new_alloc) {
-                this.#error = g_lib.ERR_PERM_DENIED;
+                this.#error = error.ERR_PERM_DENIED;
                 this.#err_msg =
                     "Permission denied, '" + this.#key + "' is not part of an allocation '";
                 return false;
@@ -211,7 +212,7 @@ class Record {
             this.#repo = g_db._document(this.#loc.new_repo);
 
             if (!this.#repo) {
-                this.#error = g_lib.ERR_INTERNAL_FAULT;
+                this.#error = error.ERR_INTERNAL_FAULT;
                 this.#err_msg =
                     "Unable to find repo that record is meant to be allocated too, '" +
                     this.#loc.new_repo +

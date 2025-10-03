@@ -3,6 +3,7 @@
 const createRouter = require("@arangodb/foxx/router");
 const router = createRouter();
 const joi = require("joi");
+const error = require("./lib/error_codes");
 
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
@@ -72,7 +73,7 @@ router
     .get("/view", function (req, res) {
         try {
             if (!g_db.t.exists(req.queryParams.id))
-                throw [g_lib.ERR_NOT_FOUND, "Topic, " + req.queryParams.id + ", not found"];
+                throw [error.ERR_NOT_FOUND, "Topic, " + req.queryParams.id + ", not found"];
 
             var topic = g_db.t.document(req.queryParams.id);
 
@@ -102,7 +103,7 @@ router
                 path,
                 op = false;
 
-            if (tokens.length == 0) throw [g_lib.ERR_INVALID_PARAM, "Invalid topic search phrase."];
+            if (tokens.length == 0) throw [error.ERR_INVALID_PARAM, "Invalid topic search phrase."];
 
             it = 0;
             for (i in tokens) {

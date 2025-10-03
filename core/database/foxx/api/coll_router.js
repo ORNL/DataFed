@@ -7,6 +7,7 @@ const joi = require("joi");
 const g_db = require("@arangodb").db;
 const g_graph = require("@arangodb/general-graph")._graph("sdmsg");
 const g_lib = require("./support");
+const error = require("./lib/error_codes");
 
 module.exports = router;
 
@@ -47,7 +48,7 @@ router
                                             g_lib.PERM_CREATE,
                                         )
                                     )
-                                        throw g_lib.ERR_PERM_DENIED;
+                                        throw error.ERR_PERM_DENIED;
                                 }
                                 owner = g_db._document(owner_id);
                             }
@@ -62,7 +63,7 @@ router
                             })
                         ) {
                             throw [
-                                g_lib.ERR_NO_ALLOCATION,
+                                error.ERR_NO_ALLOCATION,
                                 "An allocation is required to create a collection.",
                             ];
                         }
@@ -79,7 +80,7 @@ router
                                 .next();
                             if (count >= owner.max_coll)
                                 throw [
-                                    g_lib.ERR_ALLOCATION_EXCEEDED,
+                                    error.ERR_ALLOCATION_EXCEEDED,
                                     "Collection limit reached (" +
                                         owner.max_coll +
                                         "). Contact system administrator to increase limit.",
@@ -245,7 +246,7 @@ router
                             if (obj.topic !== undefined) perms |= g_lib.PERM_SHARE;
 
                             if (!g_lib.hasPermissions(client, coll, perms))
-                                throw g_lib.ERR_PERM_DENIED;
+                                throw error.ERR_PERM_DENIED;
                         }
 
                         /* Updating topic and tags is complex because topic parts are added as
@@ -427,11 +428,11 @@ router
                 if (!admin) {
                     if (!g_lib.hasPermissions(client, coll, g_lib.PERM_RD_REC)) {
                         //console.log("perm denied");
-                        throw g_lib.ERR_PERM_DENIED;
+                        throw error.ERR_PERM_DENIED;
                     }
                 }
             } else if (!g_lib.hasPublicRead(coll_id)) {
-                throw g_lib.ERR_PERM_DENIED;
+                throw error.ERR_PERM_DENIED;
             }
 
             coll.notes = g_lib.getNoteMask(client, coll, admin);
@@ -467,10 +468,10 @@ router
 
                 if (!admin) {
                     if (!g_lib.hasPermissions(client, coll, g_lib.PERM_LIST))
-                        throw g_lib.ERR_PERM_DENIED;
+                        throw error.ERR_PERM_DENIED;
                 }
             } else if (!g_lib.hasPublicRead(coll_id)) {
-                throw g_lib.ERR_PERM_DENIED;
+                throw error.ERR_PERM_DENIED;
             }
 
             var qry =
@@ -540,7 +541,7 @@ router
 
                     if (req.queryParams.add && req.queryParams.remove) {
                         throw [
-                            g_lib.ERR_INVALID_PARAM,
+                            error.ERR_INVALID_PARAM,
                             "Cannot add and remove collection items at the same time.",
                         ];
                     }
@@ -558,7 +559,7 @@ router
                         //    req_perm |= g_lib.PERM_SHARE;
                         if (!g_lib.hasPermissions(client, coll, req_perm, true))
                             throw [
-                                g_lib.ERR_PERM_DENIED,
+                                error.ERR_PERM_DENIED,
                                 "Permission denied - requires LINK on collection.",
                             ];
 
@@ -595,7 +596,7 @@ router
                                 })
                             )
                                 throw [
-                                    g_lib.ERR_UNLINK,
+                                    error.ERR_UNLINK,
                                     obj._id + " is not in collection " + coll_id,
                                 ];
 
@@ -603,7 +604,7 @@ router
                                 // Check if another instance exists in same scope, if not deny permission
                                 if (!g_lib.hasAnyCommonAccessScope(obj._id, coll_id)) {
                                     throw [
-                                        g_lib.ERR_PERM_DENIED,
+                                        error.ERR_PERM_DENIED,
                                         "Cannot unlink items owned by other users.",
                                     ];
                                 }
@@ -641,7 +642,7 @@ router
                         //console.log("coll item count:",cres.count());
                         if (cres.count() + req.queryParams.add.length > g_lib.MAX_COLL_ITEMS)
                             throw [
-                                g_lib.ERR_INPUT_TOO_LONG,
+                                error.ERR_INPUT_TOO_LONG,
                                 "Collection item limit exceeded (" +
                                     g_lib.MAX_COLL_ITEMS +
                                     " items)",
@@ -659,10 +660,10 @@ router
                                     _to: obj._id,
                                 })
                             )
-                                throw [g_lib.ERR_LINK, obj._id + " already linked to " + coll_id];
+                                throw [error.ERR_LINK, obj._id + " already linked to " + coll_id];
 
                             // Check if item is a root collection
-                            if (obj.is_root) throw [g_lib.ERR_LINK, "Cannot link root collection"];
+                            if (obj.is_root) throw [error.ERR_LINK, "Cannot link root collection"];
 
                             // Check if item has same owner as this collection
                             if (
@@ -671,7 +672,7 @@ router
                                 })._to != owner_id
                             )
                                 throw [
-                                    g_lib.ERR_LINK,
+                                    error.ERR_LINK,
                                     obj._id + " and " + coll_id + " have different owners",
                                 ];
 
@@ -679,7 +680,7 @@ router
                                 // TODO check if another instance exists in same scope, if not deny
                                 if (!g_lib.hasAnyCommonAccessScope(obj._id, coll_id)) {
                                     throw [
-                                        g_lib.ERR_PERM_DENIED,
+                                        error.ERR_PERM_DENIED,
                                         "Cannot link items from other access-control scopes.",
                                     ];
                                 }
@@ -689,7 +690,7 @@ router
                                 // Check for circular dependency
                                 if (obj._id == coll_id || g_lib.isSrcParentOfDest(obj._id, coll_id))
                                     throw [
-                                        g_lib.ERR_LINK,
+                                        error.ERR_LINK,
                                         "Cannot link ancestor, " +
                                             obj._id +
                                             ", to descendant, " +
@@ -742,7 +743,7 @@ router
                             g_lib.MAX_COLL_ITEMS
                         )
                             throw [
-                                g_lib.ERR_INPUT_TOO_LONG,
+                                error.ERR_INPUT_TOO_LONG,
                                 "Root collection item limit exceeded (" +
                                     g_lib.MAX_COLL_ITEMS +
                                     " items)",
@@ -827,7 +828,7 @@ router
 
                     if (src.owner != dst.owner)
                         throw [
-                            g_lib.ERR_LINK,
+                            error.ERR_LINK,
                             req.queryParams.source +
                                 " and " +
                                 req.queryParams.dest +
@@ -842,7 +843,7 @@ router
                         src_perms = g_lib.getPermissions(client, src, g_lib.PERM_LINK, true);
                         if ((src_perms & g_lib.PERM_LINK) == 0)
                             throw [
-                                g_lib.ERR_PERM_DENIED,
+                                error.ERR_PERM_DENIED,
                                 "Permission denied - requires LINK on source collection.",
                             ];
 
@@ -858,7 +859,7 @@ router
                         );
                         if ((dst_perms & g_lib.PERM_LINK) == 0)
                             throw [
-                                g_lib.ERR_PERM_DENIED,
+                                error.ERR_PERM_DENIED,
                                 "Permission denied - requires LINK on destination collection.",
                             ];
 
@@ -871,12 +872,12 @@ router
                         // TODO - should aliases be resolved with client or owner ID?
                         item = g_lib.getObject(req.queryParams.items[i], client);
 
-                        if (item.is_root) throw [g_lib.ERR_LINK, "Cannot link root collection"];
+                        if (item.is_root) throw [error.ERR_LINK, "Cannot link root collection"];
 
                         if (chk_perm && item.creator != client._id /*&& !has_share*/) {
                             if (!g_lib.hasCommonAccessScope(src_id, dst_id)) {
                                 throw [
-                                    g_lib.ERR_PERM_DENIED,
+                                    error.ERR_PERM_DENIED,
                                     "Cannot move items across access-control scopes.",
                                 ];
                             }
@@ -888,7 +889,7 @@ router
                                 _to: item._id,
                             })
                         )
-                            throw [g_lib.ERR_UNLINK, item._id + " is not in collection " + src_id];
+                            throw [error.ERR_UNLINK, item._id + " is not in collection " + src_id];
 
                         if (
                             g_db.item.firstExample({
@@ -897,7 +898,7 @@ router
                             })
                         )
                             throw [
-                                g_lib.ERR_LINK,
+                                error.ERR_LINK,
                                 item._id + " is already in collection " + dst_id,
                             ];
 
@@ -905,7 +906,7 @@ router
                             // Check for circular dependency
                             if (item._id == dst_id || g_lib.isSrcParentOfDest(item._id, dst_id))
                                 throw [
-                                    g_lib.ERR_LINK,
+                                    error.ERR_LINK,
                                     "Cannot link ancestor, " +
                                         item._id +
                                         ", to descendant, " +
@@ -940,7 +941,7 @@ router
 
                     if (cres.count() > g_lib.MAX_COLL_ITEMS)
                         throw [
-                            g_lib.ERR_INPUT_TOO_LONG,
+                            error.ERR_INPUT_TOO_LONG,
                             "Collection item limit exceeded (" + g_lib.MAX_COLL_ITEMS + " items)",
                         ];
 
@@ -967,7 +968,7 @@ router
             var item_id = g_lib.resolveID(req.queryParams.id, client);
 
             if (!item_id.startsWith("d/") && !item_id.startsWith("c/"))
-                throw [g_lib.ERR_INVALID_PARAM, "ID is not a collection or record."];
+                throw [error.ERR_INVALID_PARAM, "ID is not a collection or record."];
 
             var results = g_lib.getParents(item_id);
             if (req.queryParams.inclusive) {
@@ -1003,12 +1004,12 @@ router
             var item_id = g_lib.resolveID(req.queryParams.item, client);
 
             if (coll_id.charAt(0) != "c")
-                throw [g_lib.ERR_INVALID_PARAM, "ID is not a collection."];
+                throw [error.ERR_INVALID_PARAM, "ID is not a collection."];
 
             /*if ( !g_lib.hasAdminPermObject( client, coll_id )) {
                 var coll = g_db.c.document( coll_id );
                 if ( !g_lib.hasPermissions( client, coll, g_lib.PERM_LIST ))
-                    throw g_lib.ERR_PERM_DENIED;
+                    throw error.ERR_PERM_DENIED;
             }*/
 
             var qry = "for v in 1..1 outbound @coll item ";
@@ -1029,7 +1030,7 @@ router
                 var idx = ids.indexOf(item_id);
                 if (idx < 0)
                     throw [
-                        g_lib.ERR_NOT_FOUND,
+                        error.ERR_NOT_FOUND,
                         "Item " +
                             req.queryParams.item +
                             " was not found in collection " +

@@ -2,6 +2,7 @@
 
 // local imports
 const g_lib = require("./support");
+const error = require("./lib/error_codes");
 const { UserToken } = require("./lib/user_token");
 
 const g_db = require("@arangodb").db;
@@ -25,10 +26,10 @@ var tasks_func = (function () {
 
         // Check if repo and subject exist
         if (!g_db._exists(a_repo_id))
-            throw [g_lib.ERR_NOT_FOUND, "Repo, '" + a_repo_id + "', does not exist"];
+            throw [error.ERR_NOT_FOUND, "Repo, '" + a_repo_id + "', does not exist"];
 
         if (!g_db._exists(a_subject_id))
-            throw [g_lib.ERR_NOT_FOUND, "Subject, '" + a_subject_id + "', does not exist"];
+            throw [error.ERR_NOT_FOUND, "Subject, '" + a_subject_id + "', does not exist"];
 
         // Check for proper permissions
         g_lib.ensureAdminPermRepo(a_client, a_repo_id);
@@ -40,7 +41,7 @@ var tasks_func = (function () {
         });
         if (alloc)
             throw [
-                g_lib.ERR_INVALID_PARAM,
+                error.ERR_INVALID_PARAM,
                 "Subject, '" + a_subject_id + "', already has as allocation on " + a_repo_id,
             ];
 
@@ -55,7 +56,7 @@ var tasks_func = (function () {
         );
 
         if (res.hasNext()) {
-            throw [g_lib.ERR_IN_USE, "A duplicate allocation create task was found."];
+            throw [error.ERR_IN_USE, "A duplicate allocation create task was found."];
         }
 
         var repo = g_db.repo.document(a_repo_id);
@@ -158,10 +159,10 @@ var tasks_func = (function () {
         console.log("taskInitAllocDelete");
 
         if (!g_db._exists(a_repo_id))
-            throw [g_lib.ERR_NOT_FOUND, "Repo, '" + a_repo_id + "', does not exist"];
+            throw [error.ERR_NOT_FOUND, "Repo, '" + a_repo_id + "', does not exist"];
 
         if (!g_db._exists(a_subject_id))
-            throw [g_lib.ERR_NOT_FOUND, "Subject, '" + a_subject_id + "', does not exist"];
+            throw [error.ERR_NOT_FOUND, "Subject, '" + a_subject_id + "', does not exist"];
 
         var repo = g_db.repo.document(a_repo_id);
 
@@ -173,7 +174,7 @@ var tasks_func = (function () {
         });
         if (!alloc)
             throw [
-                g_lib.ERR_NOT_FOUND,
+                error.ERR_NOT_FOUND,
                 "Subject, '" + a_subject_id + "', has no allocation on " + a_repo_id,
             ];
 
@@ -186,7 +187,7 @@ var tasks_func = (function () {
                 },
             )
             .next();
-        if (count) throw [g_lib.ERR_IN_USE, "Cannot delete allocation - records present"];
+        if (count) throw [error.ERR_IN_USE, "Cannot delete allocation - records present"];
 
         // Check if there is an existing alloc task to involving the same allocation (repo + subject)
         var res = g_db._query(
@@ -199,7 +200,7 @@ var tasks_func = (function () {
         );
 
         if (res.hasNext()) {
-            throw [g_lib.ERR_IN_USE, "A duplicate allocation delete task was found."];
+            throw [error.ERR_IN_USE, "A duplicate allocation delete task was found."];
         }
 
         var path =
@@ -311,7 +312,7 @@ var tasks_func = (function () {
         if (result.glob_data.length + result.ext_data.length > 0 && !a_check) {
             var idx = a_path.indexOf("/");
             if (idx == -1)
-                throw [g_lib.ERR_INVALID_PARAM, "Invalid destination path (must include endpoint)"];
+                throw [error.ERR_INVALID_PARAM, "Invalid destination path (must include endpoint)"];
 
             // Check for duplicate names
             if (a_orig_fname) {
@@ -324,7 +325,7 @@ var tasks_func = (function () {
                     );
                     if (fnames.has(fname)) {
                         throw [
-                            g_lib.ERR_XFR_CONFLICT,
+                            error.ERR_XFR_CONFLICT,
                             "Duplicate filename(s) detected in transfer request.",
                         ];
                     }
@@ -338,7 +339,7 @@ var tasks_func = (function () {
                     );
                     if (fnames.has(fname)) {
                         throw [
-                            g_lib.ERR_XFR_CONFLICT,
+                            error.ERR_XFR_CONFLICT,
                             "Duplicate filename(s) detected in transfer request.",
                         ];
                     }
@@ -495,7 +496,7 @@ var tasks_func = (function () {
         if (result.glob_data.length > 0 && !a_check) {
             var idx = a_path.indexOf("/");
             if (idx == -1)
-                throw [g_lib.ERR_INVALID_PARAM, "Invalid destination path (must include endpoint)"];
+                throw [error.ERR_INVALID_PARAM, "Invalid destination path (must include endpoint)"];
 
             var state = {
                 path: a_path,
@@ -702,10 +703,10 @@ var tasks_func = (function () {
 
         if (a_proj_id) {
             if (!g_db.p.exists(a_proj_id))
-                throw [g_lib.ERR_INVALID_PARAM, "Project '" + a_proj_id + "' does not exist."];
+                throw [error.ERR_INVALID_PARAM, "Project '" + a_proj_id + "' does not exist."];
 
             if (!g_lib.hasManagerPermProj(a_client, a_proj_id))
-                throw [g_lib.ERR_PERM_DENIED, "Operation requires admin permissions to project."];
+                throw [error.ERR_PERM_DENIED, "Operation requires admin permissions to project."];
 
             owner_id = a_proj_id;
         } else {
@@ -714,14 +715,14 @@ var tasks_func = (function () {
 
         // Verify destination repo
         if (!g_db.repo.exists(a_dst_repo_id))
-            throw [g_lib.ERR_INVALID_PARAM, "No such repo '" + a_dst_repo_id + "'"];
+            throw [error.ERR_INVALID_PARAM, "No such repo '" + a_dst_repo_id + "'"];
 
         // Verify client/owner has an allocation
         var alloc = g_db.alloc.firstExample({
             _from: owner_id,
             _to: a_dst_repo_id,
         });
-        if (!alloc) throw [g_lib.ERR_INVALID_PARAM, "No allocation on '" + a_dst_repo_id + "'"];
+        if (!alloc) throw [error.ERR_INVALID_PARAM, "No allocation on '" + a_dst_repo_id + "'"];
 
         var result = g_proc.preprocessItems(
             {
@@ -884,13 +885,13 @@ var tasks_func = (function () {
                             });
                             if (alloc.rec_count + xfr.files.length > alloc.rec_limit)
                                 throw [
-                                    g_lib.ERR_PERM_DENIED,
+                                    error.ERR_PERM_DENIED,
                                     "Allocation record count limit exceeded on " +
                                         state.dst_repo_id,
                                 ];
                             if (alloc.data_size + xfr.size > alloc.data_limit)
                                 throw [
-                                    g_lib.ERR_PERM_DENIED,
+                                    error.ERR_PERM_DENIED,
                                     "Allocation data size limit exceeded on " + state.dst_repo_id,
                                 ];
 
@@ -898,7 +899,7 @@ var tasks_func = (function () {
                             obj.recMoveInit(xfr.files, state.dst_repo_id);
 
                             // TEST ONLY
-                            //throw [g_lib.ERR_INTERNAL_FAULT,"TEST ONLY ERROR"];
+                            //throw [error.ERR_INTERNAL_FAULT,"TEST ONLY ERROR"];
 
                             // Update task step
                             a_task.step += 1;
@@ -1006,7 +1007,7 @@ var tasks_func = (function () {
         // Verify destination collection
 
         if (!g_db.c.exists(a_dst_coll_id))
-            throw [g_lib.ERR_INVALID_PARAM, "No such collection '" + a_dst_coll_id + "'"];
+            throw [error.ERR_INVALID_PARAM, "No such collection '" + a_dst_coll_id + "'"];
 
         var owner_id = g_db.owner.firstExample({
             _from: a_dst_coll_id,
@@ -1018,7 +1019,7 @@ var tasks_func = (function () {
 
                 if (!g_lib.hasPermissions(a_client, coll, g_lib.PERM_CREATE))
                     throw [
-                        g_lib.ERR_PERM_DENIED,
+                        error.ERR_PERM_DENIED,
                         "Operation requires CREATE permission on destination collection '" +
                             a_dst_coll_id +
                             "'",
@@ -1036,13 +1037,13 @@ var tasks_func = (function () {
                 })
                 .toArray();
             if (!allocs.length)
-                throw [g_lib.ERR_PERM_DENIED, "No allocations available for '" + owner_id + "'"];
+                throw [error.ERR_PERM_DENIED, "No allocations available for '" + owner_id + "'"];
 
             g_lib.sortAllocations(allocs);
         } else {
             // Verify destination repo
             if (!g_db.repo.exists(a_dst_repo_id))
-                throw [g_lib.ERR_INVALID_PARAM, "No such repo '" + a_dst_repo_id + "'"];
+                throw [error.ERR_INVALID_PARAM, "No such repo '" + a_dst_repo_id + "'"];
 
             // Verify client/owner has an allocation
             if (
@@ -1051,14 +1052,14 @@ var tasks_func = (function () {
                     _to: a_dst_repo_id,
                 })
             )
-                throw [g_lib.ERR_INVALID_PARAM, "No allocation on '" + a_dst_repo_id + "'"];
+                throw [error.ERR_INVALID_PARAM, "No allocation on '" + a_dst_repo_id + "'"];
         }
 
         var result = g_proc.preprocessItems(a_client, owner_id, a_res_ids, g_lib.TT_REC_OWNER_CHG);
 
         if (result.has_pub) {
             throw [
-                g_lib.ERR_PERM_DENIED,
+                error.ERR_PERM_DENIED,
                 "Owner change not allowed - selection contains public data.",
             ];
         }
@@ -1269,13 +1270,13 @@ var tasks_func = (function () {
                             });
                             if (alloc.rec_count + xfr.files.length > alloc.rec_limit)
                                 throw [
-                                    g_lib.ERR_PERM_DENIED,
+                                    error.ERR_PERM_DENIED,
                                     "Allocation record count limit exceeded on " +
                                         state.dst_repo_id,
                                 ];
                             if (alloc.data_size + xfr.size > alloc.data_limit)
                                 throw [
-                                    g_lib.ERR_PERM_DENIED,
+                                    error.ERR_PERM_DENIED,
                                     "Allocation data size limit exceeded on " + state.dst_repo_id,
                                 ];
 
@@ -1380,7 +1381,7 @@ var tasks_func = (function () {
         var result = g_proc.preprocessItems(a_client, null, a_ids, g_lib.TT_REC_DEL);
 
         if (result.has_pub) {
-            throw [g_lib.ERR_PERM_DENIED, "Deletion not allowed - selection contains public data."];
+            throw [error.ERR_PERM_DENIED, "Deletion not allowed - selection contains public data."];
         }
 
         var i,
@@ -1570,7 +1571,7 @@ var tasks_func = (function () {
         for (i in a_proj_ids) {
             proj_id = a_proj_ids[i];
             if (!g_db.p.exists(proj_id))
-                throw [g_lib.ERR_INVALID_PARAM, "No such project '" + proj_id + "'"];
+                throw [error.ERR_INVALID_PARAM, "No such project '" + proj_id + "'"];
 
             g_lib.ensureAdminPermProj(a_client, proj_id);
         }
@@ -1728,7 +1729,7 @@ var tasks_func = (function () {
             case g_lib.TT_PROJ_DEL:
                 return obj.taskRunProjDelete;
             default:
-                throw [g_lib.ERR_INVALID_PARAM, "Invalid task type: " + a_task.type];
+                throw [error.ERR_INVALID_PARAM, "Invalid task type: " + a_task.type];
         }
     };
 
@@ -1908,7 +1909,7 @@ var tasks_func = (function () {
         if (a_mode == g_lib.TT_DATA_GET || a_mode == g_lib.TT_DATA_PUT) {
             idx = a_remote.indexOf("/");
             if (idx < 1)
-                throw [g_lib.ERR_INVALID_PARAM, "Invalid remote path (must include endpoint)"];
+                throw [error.ERR_INVALID_PARAM, "Invalid remote path (must include endpoint)"];
 
             //console.log("rem idx:",idx);
 
@@ -1972,7 +1973,7 @@ var tasks_func = (function () {
                             file.to = loc.d_src.substr(loc.d_src.lastIndexOf("/") + 1);
                             if (fnames.has(file.to)) {
                                 throw [
-                                    g_lib.ERR_XFR_CONFLICT,
+                                    error.ERR_XFR_CONFLICT,
                                     "Duplicate filename(s) detected in transfer request.",
                                 ];
                             }
@@ -2037,7 +2038,7 @@ var tasks_func = (function () {
 
                 idx = edat.source.indexOf("/");
                 if (idx < 0) {
-                    throw [g_lib.ERR_INVALID_PARAM, "Invalid external source path: " + edat.source];
+                    throw [error.ERR_INVALID_PARAM, "Invalid external source path: " + edat.source];
                 }
                 ep = edat.source.substr(0, idx);
                 src = edat.source.substr(idx);
@@ -2046,14 +2047,14 @@ var tasks_func = (function () {
                     idx = src.lastIndexOf("/");
                     if (idx < 0) {
                         throw [
-                            g_lib.ERR_INVALID_PARAM,
+                            error.ERR_INVALID_PARAM,
                             "Invalid external source path: " + edat.source,
                         ];
                     }
                     file.to = src.substr(idx + 1);
                     if (fnames.has(file.to)) {
                         throw [
-                            g_lib.ERR_XFR_CONFLICT,
+                            error.ERR_XFR_CONFLICT,
                             "Duplicate filename(s) detected in transfer request.",
                         ];
                     }
@@ -2551,13 +2552,13 @@ var tasks_func = (function () {
                 // DEV-ONLY SANITY CHECKS:
                 if (!loc.new_coll)
                     throw [
-                        g_lib.ERR_INTERNAL_FAULT,
+                        error.ERR_INTERNAL_FAULT,
                         "Record '" + data.id + "' missing destination collection!",
                     ];
 
                 if (!g_db.c.exists(loc.new_coll))
                     throw [
-                        g_lib.ERR_INTERNAL_FAULT,
+                        error.ERR_INTERNAL_FAULT,
                         "Record '" +
                             data.id +
                             "' destination collection '" +
@@ -2569,7 +2570,7 @@ var tasks_func = (function () {
 
                 if (coll.owner != loc.new_owner)
                     throw [
-                        g_lib.ERR_INTERNAL_FAULT,
+                        error.ERR_INTERNAL_FAULT,
                         "Record '" +
                             data.id +
                             "' destination collection '" +
@@ -2656,7 +2657,7 @@ var tasks_func = (function () {
             });
             if (!alloc)
                 throw [
-                    g_lib.ERR_INTERNAL_FAULT,
+                    error.ERR_INTERNAL_FAULT,
                     "Record '" + data.id + "' has mismatched allocation/location (cur)!",
                 ];
 
@@ -2677,7 +2678,7 @@ var tasks_func = (function () {
             });
             if (!alloc)
                 throw [
-                    g_lib.ERR_INTERNAL_FAULT,
+                    error.ERR_INTERNAL_FAULT,
                     "Record '" + data.id + "' has mismatched allocation/location (new)!",
                 ];
 
@@ -2702,7 +2703,7 @@ var tasks_func = (function () {
     obj.recMoveExt = function (a_data, a_dst_owner_id, a_dst_coll_id) {
         if (!g_db.c.exists(a_dst_coll_id)) {
             throw [
-                g_lib.ERR_INTERNAL_FAULT,
+                error.ERR_INTERNAL_FAULT,
                 "Destination collection '" + a_dst_coll_id + "' does not exist!",
             ];
         }
@@ -2716,7 +2717,7 @@ var tasks_func = (function () {
 
         if (coll.owner != a_dst_owner_id)
             throw [
-                g_lib.ERR_INTERNAL_FAULT,
+                error.ERR_INTERNAL_FAULT,
                 "Destination collection '" + a_dst_coll_id + "' not owned by new owner!",
             ];
 
@@ -2804,7 +2805,7 @@ var tasks_func = (function () {
                 _to: id,
             });
             if (lock)
-                throw [g_lib.ERR_PERM_DENIED, "Operation not permitted - '" + id + "' in use."];
+                throw [error.ERR_PERM_DENIED, "Operation not permitted - '" + id + "' in use."];
         }
         //console.log("_ensureExclusiveAccess done", Date.now());
     };

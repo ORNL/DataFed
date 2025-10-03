@@ -5,6 +5,7 @@ const router = createRouter();
 const joi = require("joi");
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
+const error = require("./lib/error_codes");
 
 module.exports = router;
 
@@ -30,11 +31,11 @@ router
                                 g_lib.PERM_RD_REC) ==
                             0
                         ) {
-                            throw g_lib.ERR_PERM_DENIED;
+                            throw error.ERR_PERM_DENIED;
                         }
                         if (req.queryParams.activate) {
                             throw [
-                                g_lib.ERR_PERM_DENIED,
+                                error.ERR_PERM_DENIED,
                                 "Only owner or admin may create a new annotaion in active state.",
                             ];
                         }
@@ -118,13 +119,13 @@ router
 
                     if (!req.queryParams.id.startsWith("n/"))
                         throw [
-                            g_lib.ERR_INVALID_PARAM,
+                            error.ERR_INVALID_PARAM,
                             "Invalid annotaion ID '" + req.queryParams.id + "'",
                         ];
 
                     if (!g_db._exists(req.queryParams.id))
                         throw [
-                            g_lib.ERR_INVALID_PARAM,
+                            error.ERR_INVALID_PARAM,
                             "Annotaion ID '" + req.queryParams.id + "' does not exist.",
                         ];
 
@@ -144,7 +145,7 @@ router
                     */
 
                     if (req.queryParams.new_state === note.state) {
-                        throw [g_lib.ERR_INVALID_PARAM, "Invalid new state for annotaion."];
+                        throw [error.ERR_INVALID_PARAM, "Invalid new state for annotaion."];
                     }
 
                     // Subject admins can do anything
@@ -160,10 +161,10 @@ router
                                         req.queryParams.title != undefined)) ||
                                 req.queryParams.new_state == g_lib.NOTE_ACTIVE
                             ) {
-                                throw g_lib.ERR_PERM_DENIED;
+                                throw error.ERR_PERM_DENIED;
                             }
                         } else {
-                            throw g_lib.ERR_PERM_DENIED;
+                            throw error.ERR_PERM_DENIED;
                         }
                     }
 
@@ -262,20 +263,20 @@ router
 
                     if (!req.queryParams.id.startsWith("n/"))
                         throw [
-                            g_lib.ERR_INVALID_PARAM,
+                            error.ERR_INVALID_PARAM,
                             "Invalid annotaion ID '" + req.queryParams.id + "'",
                         ];
 
                     if (!g_db._exists(req.queryParams.id))
                         throw [
-                            g_lib.ERR_INVALID_PARAM,
+                            error.ERR_INVALID_PARAM,
                             "Annotaion ID '" + req.queryParams.id + "' does not exist.",
                         ];
 
                     var note = g_db.n.document(req.queryParams.id);
 
                     if (req.queryParams.comment_idx >= note.comments.length)
-                        throw [g_lib.ERR_INVALID_PARAM, "Comment index out of range."];
+                        throw [error.ERR_INVALID_PARAM, "Comment index out of range."];
 
                     var obj = {
                             ut: Math.floor(Date.now() / 1000),
@@ -283,7 +284,7 @@ router
                         comment = note.comments[req.queryParams.comment_idx];
 
                     if (client._id != comment.user) {
-                        throw [g_lib.ERR_PERM_DENIED, "Only original commentor may edit comments."];
+                        throw [error.ERR_PERM_DENIED, "Only original commentor may edit comments."];
                     }
 
                     if (req.queryParams.comment != comment.comment) {
@@ -318,13 +319,13 @@ router
 
             if (!req.queryParams.id.startsWith("n/"))
                 throw [
-                    g_lib.ERR_INVALID_PARAM,
+                    error.ERR_INVALID_PARAM,
                     "Invalid annotaion ID '" + req.queryParams.id + "'",
                 ];
 
             if (!g_db._exists(req.queryParams.id))
                 throw [
-                    g_lib.ERR_INVALID_PARAM,
+                    error.ERR_INVALID_PARAM,
                     "Annotaion ID '" + req.queryParams.id + "' does not exist.",
                 ];
 
@@ -340,17 +341,17 @@ router
                         var doc = g_db._document(ne._from);
                         if (!client) {
                             if (!g_lib.hasPublicRead(doc._id)) {
-                                throw g_lib.ERR_PERM_DENIED;
+                                throw error.ERR_PERM_DENIED;
                             }
                         } else if (
                             (g_lib.getPermissions(client, doc, g_lib.PERM_RD_REC) &
                                 g_lib.PERM_RD_REC) ==
                             0
                         ) {
-                            throw g_lib.ERR_PERM_DENIED;
+                            throw error.ERR_PERM_DENIED;
                         }
                     } else {
-                        throw g_lib.ERR_PERM_DENIED;
+                        throw error.ERR_PERM_DENIED;
                     }
                 }
             }

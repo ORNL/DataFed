@@ -1,6 +1,7 @@
 "use strict";
 
 const g_lib = require("../support.js");
+const error = require("./error_codes");
 const { UserModel } = require("../models/user");
 const { GlobusCollectionModel } = require("../models/globus_collection");
 const { GlobusTokenModel } = require("../models/globus_token");
@@ -28,7 +29,7 @@ class UserToken {
         const { user_key, user_id, globus_collection_id } = kwargs;
         this.#user_model = new UserModel(user_id, user_key);
         if (!this.#user_model.exists()) {
-            throw [g_lib.ERR_NOT_FOUND, "Specified user does not exist: " + kwargs];
+            throw [error.ERR_NOT_FOUND, "Specified user does not exist: " + kwargs];
         }
         this.user = this.#user_model.get();
         if (typeof globus_collection_id !== "undefined") {
@@ -92,7 +93,7 @@ class UserToken {
                 collection_token = true;
             } else {
                 throw [
-                    g_lib.ERR_INVALID_PARAM,
+                    error.ERR_INVALID_PARAM,
                     "/token/get Requires 'collection_id' and 'collection_type' both if one is present, received " +
                         "collection_id: " +
                         collection_id +
