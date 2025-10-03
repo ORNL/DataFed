@@ -9,7 +9,7 @@ define("ace/ext/static_highlight", [
 ], function (e, t, n) {
     "use strict";
     function a(e) {
-        (this.type = e), (this.style = {}), (this.textContent = "");
+        ((this.type = e), (this.style = {}), (this.textContent = ""));
     }
     var r = e("../edit_session").EditSession,
         i = e("../layer/text").Text,
@@ -17,7 +17,7 @@ define("ace/ext/static_highlight", [
             ".ace_static_highlight {font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', 'Droid Sans Mono', monospace;font-size: 12px;white-space: pre-wrap}.ace_static_highlight .ace_gutter {width: 2em;text-align: right;padding: 0 3px 0 0;margin-right: 3px;}.ace_static_highlight.ace_show_gutter .ace_line {padding-left: 2.6em;}.ace_static_highlight .ace_line { position: relative; }.ace_static_highlight .ace_gutter-cell {-moz-user-select: -moz-none;-khtml-user-select: none;-webkit-user-select: none;user-select: none;top: 0;bottom: 0;left: 0;position: absolute;}.ace_static_highlight .ace_gutter-cell:before {content: counter(ace_line, decimal);counter-increment: ace_line;}.ace_static_highlight {counter-reset: ace_line;}",
         o = e("../config"),
         u = e("../lib/dom");
-    (a.prototype.cloneNode = function () {
+    ((a.prototype.cloneNode = function () {
         return this;
     }),
         (a.prototype.appendChild = function (e) {
@@ -26,17 +26,17 @@ define("ace/ext/static_highlight", [
         (a.prototype.toString = function () {
             var e = [];
             if (this.type != "fragment") {
-                e.push("<", this.type), this.className && e.push(" class='", this.className, "'");
+                (e.push("<", this.type), this.className && e.push(" class='", this.className, "'"));
                 var t = [];
                 for (var n in this.style) t.push(n, ":", this.style[n]);
-                t.length && e.push(" style='", t.join(""), "'"), e.push(">");
+                (t.length && e.push(" style='", t.join(""), "'"), e.push(">"));
             }
             return (
                 this.textContent && e.push(this.textContent),
                 this.type != "fragment" && e.push("</", this.type, ">"),
                 e.join("")
             );
-        });
+        }));
     var f = {
             createTextNode: function (e, t) {
                 return e;
@@ -49,7 +49,7 @@ define("ace/ext/static_highlight", [
             },
         },
         l = function () {
-            (this.config = {}), (this.dom = f);
+            ((this.config = {}), (this.dom = f));
         };
     l.prototype = i.prototype;
     var c = function (e, t, n) {
@@ -65,9 +65,9 @@ define("ace/ext/static_highlight", [
                 var h = e.childNodes[l];
                 h.nodeType == 3 ? ((f += h.data.length), (o += h.data)) : a.push(f, h);
             }
-        } else (o = e.textContent), t.trim && (o = o.trim());
+        } else ((o = e.textContent), t.trim && (o = o.trim()));
         c.render(o, i, s, t.firstLineNumber, !t.showGutter, function (t) {
-            u.importCssString(t.css, "ace_highlight"), (e.innerHTML = t.html);
+            (u.importCssString(t.css, "ace_highlight"), (e.innerHTML = t.html));
             var r = e.firstChild.firstChild;
             for (var i = 0; i < a.length; i += 2) {
                 var s = t.session.doc.indexToPosition(a[i]),
@@ -78,7 +78,7 @@ define("ace/ext/static_highlight", [
             n && n();
         });
     };
-    (c.render = function (e, t, n, i, s, u) {
+    ((c.render = function (e, t, n, i, s, u) {
         function h() {
             var r = c.renderSync(e, t, n, i, s);
             return u ? u(r) : r;
@@ -88,7 +88,7 @@ define("ace/ext/static_highlight", [
         typeof n == "string" &&
             (a++,
             o.loadModule(["theme", n], function (e) {
-                (n = e), --a || h();
+                ((n = e), --a || h());
             }));
         var l;
         return (
@@ -97,7 +97,7 @@ define("ace/ext/static_highlight", [
                 (a++,
                 o.loadModule(["mode", t], function (e) {
                     if (!f[t] || l) f[t] = new e.Mode(l);
-                    (t = f[t]), --a || h();
+                    ((t = f[t]), --a || h());
                 })),
             --a || h()
         );
@@ -105,37 +105,37 @@ define("ace/ext/static_highlight", [
         (c.renderSync = function (e, t, n, i, o) {
             i = parseInt(i || 1, 10);
             var u = new r("");
-            u.setUseWorker(!1), u.setMode(t);
+            (u.setUseWorker(!1), u.setMode(t));
             var a = new l();
-            a.setSession(u),
+            (a.setSession(u),
                 Object.keys(a.$tabStrings).forEach(function (e) {
                     if (typeof a.$tabStrings[e] == "string") {
                         var t = f.createFragment();
-                        (t.textContent = a.$tabStrings[e]), (a.$tabStrings[e] = t);
+                        ((t.textContent = a.$tabStrings[e]), (a.$tabStrings[e] = t));
                     }
                 }),
-                u.setValue(e);
+                u.setValue(e));
             var c = u.getLength(),
                 h = f.createElement("div");
             h.className = n.cssClass;
             var p = f.createElement("div");
-            (p.className = "ace_static_highlight" + (o ? "" : " ace_show_gutter")),
-                (p.style["counter-reset"] = "ace_line " + (i - 1));
+            ((p.className = "ace_static_highlight" + (o ? "" : " ace_show_gutter")),
+                (p.style["counter-reset"] = "ace_line " + (i - 1)));
             for (var d = 0; d < c; d++) {
                 var v = f.createElement("div");
                 v.className = "ace_line";
                 if (!o) {
                     var m = f.createElement("span");
-                    (m.className = "ace_gutter ace_gutter-cell"),
+                    ((m.className = "ace_gutter ace_gutter-cell"),
                         (m.textContent = ""),
-                        v.appendChild(m);
+                        v.appendChild(m));
                 }
-                a.$renderLine(v, d, !1), p.appendChild(v);
+                (a.$renderLine(v, d, !1), p.appendChild(v));
             }
-            return h.appendChild(p), { css: s + n.cssText, html: h.toString(), session: u };
+            return (h.appendChild(p), { css: s + n.cssText, html: h.toString(), session: u });
         }),
         (n.exports = c),
-        (n.exports.highlight = c);
+        (n.exports.highlight = c));
 });
 (function () {
     window.require(["ace/ext/static_highlight"], function (m) {

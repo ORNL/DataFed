@@ -6,8 +6,7 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/../")
 
-Help()
-{
+Help() {
   echo "$(basename $0) Build images for compose run by default will build all."
   echo
   echo "Syntax: $(basename $0) [-h|r|m|b]"
@@ -29,28 +28,30 @@ BASE_IMAGE=""
 eval set -- "$VALID_ARGS"
 while [ : ]; do
   case "$1" in
-    -h | --help)
-        Help
-        exit 0
-        ;;
-    -r | --repo-images)
-        BUILD_METADATA="FALSE"
-        shift 1
-        ;;
-    -m | --metadata-images)
-        BUILD_REPO="FALSE"
-        shift 1
-        ;;
-    -b | --base-image)
-        BASE_IMAGE="$2"
-        shift 2
-        ;;
-    --) shift; 
-        break 
-        ;;
-    \?) # incorrect option
-        echo "Error: Invalid option"
-        exit;;
+  -h | --help)
+    Help
+    exit 0
+    ;;
+  -r | --repo-images)
+    BUILD_METADATA="FALSE"
+    shift 1
+    ;;
+  -m | --metadata-images)
+    BUILD_REPO="FALSE"
+    shift 1
+    ;;
+  -b | --base-image)
+    BASE_IMAGE="$2"
+    shift 2
+    ;;
+  --)
+    shift
+    break
+    ;;
+  \?) # incorrect option
+    echo "Error: Invalid option"
+    exit
+    ;;
   esac
 done
 
@@ -58,10 +59,8 @@ echo "BASE_IMAGE:     $BASE_IMAGE"
 echo "BUILD_METADATA: $BUILD_METADATA"
 echo "BUILD_REPO:     $BUILD_REPO"
 
-if [[ "$BUILD_METADATA" == "TRUE" ]]
-then
-  if [ "$BASE_IMAGE" == "" ]
-  then
+if [[ "$BUILD_METADATA" == "TRUE" ]]; then
+  if [ "$BASE_IMAGE" == "" ]; then
     docker build \
       -f "${PROJECT_ROOT}/docker/Dockerfile.dependencies" \
       "${PROJECT_ROOT}" \
@@ -109,15 +108,13 @@ then
     -t datafed-foxx:latest
 fi
 
-if [[ "$BUILD_REPO" == "TRUE" ]]
-then
+if [[ "$BUILD_REPO" == "TRUE" ]]; then
   source "${PROJECT_ROOT}/scripts/dependency_versions.sh"
   cd "${PROJECT_ROOT}/external/globus-connect-server-deploy/docker"
   git checkout "$DATAFED_GCS_SUBMODULE_VERSION"
-  docker build --progress plain --tag "gcs-ubuntu-base:latest" - < "./docker-files/Dockerfile.ubuntu-20.04"
+  docker build --progress plain --tag "gcs-ubuntu-base:latest" - <"./docker-files/Dockerfile.debian-12"
   cd "${PROJECT_ROOT}"
-  if [ "$BASE_IMAGE" == "" ]
-  then
+  if [ "$BASE_IMAGE" == "" ]; then
     docker build \
       -f "${PROJECT_ROOT}/docker/Dockerfile.dependencies" \
       "${PROJECT_ROOT}" \

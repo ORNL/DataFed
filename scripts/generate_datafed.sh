@@ -11,8 +11,7 @@ PATH_TO_CONFIG_DIR=$(realpath "$PROJECT_ROOT/config")
 
 # This is a build config variable
 local_DATAFED_INSTALL_PATH=""
-if [ -z "${DATAFED_INSTALL_PATH}" ]
-then
+if [ -z "${DATAFED_INSTALL_PATH}" ]; then
   local_DATAFED_INSTALL_PATH="/opt/datafed"
 else
   local_DATAFED_INSTALL_PATH=$(printenv DATAFED_INSTALL_PATH)
@@ -21,28 +20,24 @@ fi
 # This is a build config variable
 local_DATAFED_DEPENDENCIES_INSTALL_PATH=""
 
-if [ -z "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]
-then
+if [ -z "${DATAFED_DEPENDENCIES_INSTALL_PATH}" ]; then
   local_DATAFED_DEPENDENCIES_INSTALL_PATH="/opt/datafed/dependencies"
 else
   local_DATAFED_DEPENDENCIES_INSTALL_PATH=$(printenv DATAFED_DEPENDENCIES_INSTALL_PATH)
 fi
 
 local_DATAFED_DEFAULT_LOG_PATH=""
-if [ -z "${DATAFED_DEFAULT_LOG_PATH}" ]
-then
+if [ -z "${DATAFED_DEFAULT_LOG_PATH}" ]; then
   local_DATAFED_DEFAULT_LOG_PATH="/var/log/datafed"
 else
   local_DATAFED_DEFAULT_LOG_PATH=$(printenv DATAFED_DEFAULT_LOG_PATH)
 fi
 
 local_DATAFED_DATABASE_PASSWORD=""
-if [[ ! -v DATAFED_DATABASE_PASSWORD ]]
-then
+if [[ ! -v DATAFED_DATABASE_PASSWORD ]]; then
   # Not set
   local_DATAFED_DATABASE_PASSWORD=""
-elif [[ -z "$DATAFED_DATABASE_PASSWORD" ]]
-then
+elif [[ -z "$DATAFED_DATABASE_PASSWORD" ]]; then
   # Empty
   local_DATAFED_DATABASE_PASSWORD=""
 else
@@ -50,182 +45,158 @@ else
 fi
 
 local_DATAFED_DATABASE_HOST=""
-if [[ -z "$DATAFED_DATABASE_HOST" ]]
-then
+if [[ -z "$DATAFED_DATABASE_HOST" ]]; then
   # Empty
   local_DATAFED_DATABASE_HOST="localhost"
 else
   local_DATAFED_DATABASE_HOST=$(printenv DATAFED_DATABASE_HOST)
 fi
 
+local_DATAFED_DATABASE_PORT=""
+if [[ -z "$DATAFED_DATABASE_PORT" ]]; then
+  # Empty
+  local_DATAFED_DATABASE_PORT="8529"
+else
+  local_DATAFED_DATABASE_PORT=$(printenv DATAFED_DATABASE_PORT)
+fi
 
 local_DATAFED_ZEROMQ_SESSION_SECRET=""
-if [ -z "${DATAFED_ZEROMQ_SESSION_SECRET}" ]
-then
+if [ -z "${DATAFED_ZEROMQ_SESSION_SECRET}" ]; then
   local_DATAFED_ZEROMQ_SESSION_SECRET=""
 else
   local_DATAFED_ZEROMQ_SESSION_SECRET=$(printenv DATAFED_ZEROMQ_SESSION_SECRET)
 fi
 
-local_DATAFED_ZEROMQ_SYSTEM_SECRET=""
-if [ -z "${DATAFED_ZEROMQ_SYSTEM_SECRET}" ]
-then
-  local_DATAFED_ZEROMQ_SYSTEM_SECRET=""
-else
-  local_DATAFED_ZEROMQ_SYSTEM_SECRET=$(printenv DATAFED_ZEROMQ_SYSTEM_SECRET)
-fi
-
 local_DATAFED_LEGO_EMAIL=""
-if [ -z "${DATAFED_LEGO_EMAIL}" ]
-then
+if [ -z "${DATAFED_LEGO_EMAIL}" ]; then
   local_DATAFED_LEGO_EMAIL=""
 else
   local_DATAFED_LEGO_EMAIL=$(printenv DATAFED_LEGO_EMAIL)
 fi
 
 local_DATAFED_GLOBUS_APP_ID=""
-if [ -z "${DATAFED_GLOBUS_APP_ID}" ]
-then
+if [ -z "${DATAFED_GLOBUS_APP_ID}" ]; then
   local_DATAFED_GLOBUS_APP_ID=""
 else
   local_DATAFED_GLOBUS_APP_ID=$(printenv DATAFED_GLOBUS_APP_ID)
 fi
 
 local_DATAFED_GLOBUS_APP_SECRET=""
-if [ -z "${DATAFED_GLOBUS_APP_SECRET}" ]
-then
+if [ -z "${DATAFED_GLOBUS_APP_SECRET}" ]; then
   local_DATAFED_GLOBUS_APP_SECRET=""
 else
   local_DATAFED_GLOBUS_APP_SECRET=$(printenv DATAFED_GLOBUS_APP_SECRET)
 fi
 
 local_DATAFED_SERVER_PORT=""
-if [ -z "${DATAFED_SERVER_PORT}" ]
-then
+if [ -z "${DATAFED_SERVER_PORT}" ]; then
   local_DATAFED_SERVER_PORT="7512"
 else
   local_DATAFED_SERVER_PORT=$(printenv DATAFED_SERVER_PORT)
 fi
 
 local_DATAFED_DOMAIN=""
-if [ -z "${DATAFED_DOMAIN}" ]
-then
+if [ -z "${DATAFED_DOMAIN}" ]; then
   local_DATAFED_DOMAIN="datafed.ornl.gov"
 else
   local_DATAFED_DOMAIN=$(printenv DATAFED_DOMAIN)
 fi
 
 local_DATAFED_GCS_ROOT_NAME=""
-if [ -z "${DATAFED_GCS_ROOT_NAME}" ]
-then
+if [ -z "${DATAFED_GCS_ROOT_NAME}" ]; then
   local_DATAFED_GCS_ROOT_NAME=""
 else
   local_DATAFED_GCS_ROOT_NAME=$(printenv DATAFED_GCS_ROOT_NAME)
 fi
 
 local_DATAFED_GCS_COLLECTION_BASE_PATH=""
-if [ -z "${DATAFED_GCS_COLLECTION_BASE_PATH}" ]
-then
+if [ -z "${DATAFED_GCS_COLLECTION_BASE_PATH}" ]; then
   local_DATAFED_GCS_COLLECTION_BASE_PATH=""
 else
   local_DATAFED_GCS_COLLECTION_BASE_PATH=$(printenv DATAFED_GCS_COLLECTION_BASE_PATH)
 fi
 
 local_DATAFED_GCS_COLLECTION_ROOT_PATH=""
-if [ -z "${DATAFED_GCS_COLLECTION_ROOT_PATH}" ]
-then
+if [ -z "${DATAFED_GCS_COLLECTION_ROOT_PATH}" ]; then
   local_DATAFED_GCS_COLLECTION_ROOT_PATH=""
 else
   local_DATAFED_GCS_COLLECTION_ROOT_PATH=$(printenv DATAFED_GCS_COLLECTION_ROOT_PATH)
 fi
 
 local_DATAFED_REPO_ID_AND_DIR=""
-if [ -z "${DATAFED_REPO_ID_AND_DIR}" ]
-then
+if [ -z "${DATAFED_REPO_ID_AND_DIR}" ]; then
   local_DATAFED_REPO_ID_AND_DIR=""
 else
   local_DATAFED_REPO_ID_AND_DIR=$(printenv DATAFED_REPO_ID_AND_DIR)
 fi
 
 local_DATAFED_WEB_CERT_PATH=""
-if [ -z "${DATAFED_WEB_CERT_PATH}" ]
-then
-local_DATAFED_WEB_CERT_PATH="${local_DATAFED_INSTALL_PATH}/keys/${local_DATAFED_DOMAIN}.crt"
+if [ -z "${DATAFED_WEB_CERT_PATH}" ]; then
+  local_DATAFED_WEB_CERT_PATH="${local_DATAFED_INSTALL_PATH}/keys/${local_DATAFED_DOMAIN}.crt"
 else
   local_DATAFED_WEB_CERT_PATH=$(printenv DATAFED_WEB_CERT_PATH)
 fi
 
 local_DATAFED_WEB_KEY_PATH=""
-if [ -z "${DATAFED_WEB_KEY_PATH}" ]
-then
+if [ -z "${DATAFED_WEB_KEY_PATH}" ]; then
   local_DATAFED_WEB_KEY_PATH="${local_DATAFED_INSTALL_PATH}/keys/${local_DATAFED_DOMAIN}.key"
 else
   local_DATAFED_WEB_KEY_PATH=$(printenv DATAFED_WEB_KEY_PATH)
 fi
 
-if [ -z "${DATAFED_CORE_ADDRESS_PORT_INTERNAL}" ]
-then
+if [ -z "${DATAFED_CORE_ADDRESS_PORT_INTERNAL}" ]; then
   local_DATAFED_CORE_ADDRESS_PORT_INTERNAL="${local_DATAFED_DOMAIN}:7513"
 else
   local_DATAFED_CORE_ADDRESS_PORT_INTERNAL=$(printenv DATAFED_CORE_ADDRESS_PORT_INTERNAL)
 fi
 
-if [ -z "${DATAFED_GOOGLE_ANALYTICS_TAG}" ]
-then
+if [ -z "${DATAFED_GOOGLE_ANALYTICS_TAG}" ]; then
   local_DATAFED_GOOGLE_ANALYTICS_TAG=""
 else
   local_DATAFED_GOOGLE_ANALYTICS_TAG=$(printenv DATAFED_GOOGLE_ANALYTICS_TAG)
 fi
 
-if [ -z "${DATAFED_GLOBUS_REPO_USER}" ]
-then
+if [ -z "${DATAFED_GLOBUS_REPO_USER}" ]; then
   local_DATAFED_GLOBUS_REPO_USER=""
 else
   local_DATAFED_GLOBUS_REPO_USER=$(printenv DATAFED_GLOBUS_REPO_USER)
 fi
 
-if [ -z "${DATAFED_CORE_USER}" ]
-then
+if [ -z "${DATAFED_CORE_USER}" ]; then
   local_DATAFED_CORE_USER=""
 else
   local_DATAFED_CORE_USER=$(printenv DATAFED_CORE_USER)
 fi
 
-
-if [ -z "${DATAFED_GLOBUS_CONTROL_PORT}" ]
-then
+if [ -z "${DATAFED_GLOBUS_CONTROL_PORT}" ]; then
   local_DATAFED_GLOBUS_CONTROL_PORT="443"
 else
   local_DATAFED_GLOBUS_CONTROL_PORT=$(printenv DATAFED_GLOBUS_CONTROL_PORT)
 fi
 
-if [ -z "${DATAFED_GLOBUS_ALLOWED_DOMAINS}" ]
-then
+if [ -z "${DATAFED_GLOBUS_ALLOWED_DOMAINS}" ]; then
   local_DATAFED_GLOBUS_ALLOWED_DOMAINS="globusid.org"
 else
   local_DATAFED_GLOBUS_ALLOWED_DOMAINS=$(printenv DATAFED_GLOBUS_ALLOWED_DOMAINS)
 fi
 
-if [ -z "${DATAFED_GLOBUS_SUBSCRIPTION}" ]
-then
-  # For compose will set by default to run on a port other than 443 because 
+if [ -z "${DATAFED_GLOBUS_SUBSCRIPTION}" ]; then
+  # For compose will set by default to run on a port other than 443 because
   # the core metadata services use 443 for the web server
   local_DATAFED_GLOBUS_SUBSCRIPTION=""
 else
   local_DATAFED_GLOBUS_SUBSCRIPTION=$(printenv DATAFED_GLOBUS_SUBSCRIPTION)
 fi
 
-if [ ! -d "$PATH_TO_CONFIG_DIR" ]
-then
+if [ ! -d "$PATH_TO_CONFIG_DIR" ]; then
   mkdir -p "$PATH_TO_CONFIG_DIR"
 fi
 
-if [ ! -f  "$PATH_TO_CONFIG_DIR/${CONFIG_FILE_NAME}" ]
-then
+if [ ! -f "$PATH_TO_CONFIG_DIR/${CONFIG_FILE_NAME}" ]; then
   touch "$PATH_TO_CONFIG_DIR/${CONFIG_FILE_NAME}"
 fi
 
-cat << EOF > "$PATH_TO_CONFIG_DIR/${CONFIG_FILE_NAME}"
+cat <<EOF >"$PATH_TO_CONFIG_DIR/${CONFIG_FILE_NAME}"
 # This is the master DataFed configuration file
 
 # This is used when generating the service files to determine
@@ -275,6 +246,8 @@ export DATAFED_DATABASE_PASSWORD="$local_DATAFED_DATABASE_PASSWORD"
 # Host of the metadata database, can be a domain name
 # or an IP address.
 export DATAFED_DATABASE_HOST="$local_DATAFED_DATABASE_HOST"
+# i.e. 8529 - Arango port
+export DATAFED_DATABASE_PORT="$local_DATAFED_DATABASE_PORT"
 # The user account the datafed core application will run under
 export DATAFED_CORE_USER="$local_DATAFED_CORE_USER"
 
@@ -282,7 +255,6 @@ export DATAFED_CORE_USER="$local_DATAFED_CORE_USER"
 # Env Variables for Web Server
 # ************************************************
 export DATAFED_ZEROMQ_SESSION_SECRET="$local_DATAFED_ZEROMQ_SESSION_SECRET"
-export DATAFED_ZEROMQ_SYSTEM_SECRET="$local_DATAFED_ZEROMQ_SYSTEM_SECRET"
 # An email address is required by LEGO when 
 # requesting certificates for the domain
 export DATAFED_LEGO_EMAIL="$local_DATAFED_LEGO_EMAIL"

@@ -2,17 +2,15 @@
 # cd ${PROJECT_ROOT} or cd DataFed
 # docker build -f core/docker/Dockerfile .
 
-ARG                        BUILD_BASE="ubuntu:focal"
 ARG                      DEPENDENCIES="dependencies"
 ARG                           RUNTIME="runtime"
 ARG                       DATAFED_DIR="/datafed"
 ARG              DATAFED_INSTALL_PATH="/opt/datafed"
 ARG DATAFED_DEPENDENCIES_INSTALL_PATH="/opt/datafed/dependencies"
-ARG                         GCS_IMAGE="code.ornl.gov:4567/dlsw/datafed/gcs-ubuntu-focal"
 ARG                         BUILD_DIR="$DATAFED_DIR/source"
 ARG                           NVM_DIR="$DATAFED_DIR/.nvm"
-ARG                           NVM_INC="$DATAFED_DIR/.nvm/versions/node/v13.14.0/include/node"
-ARG                           NVM_BIN="$DATAFED_DIR/.nvm/versions/node/v13.14.0/bin"
+ARG                           NVM_INC="$DATAFED_DIR/.nvm/versions/node/v20.18.2/include/node"
+ARG                           NVM_BIN="$DATAFED_DIR/.nvm/versions/node/v20.18.2/bin"
 ARG                           LIB_DIR="/usr/local/lib"
 
 FROM ${DEPENDENCIES} AS foxx-build
@@ -29,6 +27,7 @@ ARG DATAFED_DEPENDENCIES_INSTALL_PATH
 # If PATH is different on the host you could create a broken container.
 
 ENV                         BUILD_DIR="${BUILD_DIR}"
+ENV                              HOME="${BUILD_DIR}"
 ENV                       DATAFED_DIR="${DATAFED_DIR}"
 ENV DATAFED_DEPENDENCIES_INSTALL_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
 ENV              DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
@@ -57,13 +56,41 @@ RUN curl -OL https://download.arangodb.com/arangodb312/DEBIAN/Release.key; apt-k
 
 # RUN echo 'deb https://download.arangodb.com/arangodb311/DEBIAN/ /' | tee /etc/apt/sources.list.d/arangodb.list
 # If trust the site but the gpg key has expired can add [trusted=yes]
-# i.e.
+
 RUN echo 'deb [trusted=yes] https://download.arangodb.com/arangodb312/DEBIAN/ /' | tee /etc/apt/sources.list.d/arangodb.list
 RUN apt update
 RUN apt install arangodb3-client -y
 RUN arangosh --version
 
 USER root
+
+# Here we are selective with permissions because of the performance implications
+# of changing permissions of everything when building.
+RUN chown -R datafed:root /home/datafed \
+                 ${BUILD_DIR}/docker \
+                 ${BUILD_DIR}/config \
+                 ${BUILD_DIR}/scripts \
+                 ${BUILD_DIR}/core/ \
+                 ${BUILD_DIR}/common/ \
+                 ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm && \
+    chown datafed:root ${BUILD_DIR} ${DATAFED_DEPENDENCIES_INSTALL_PATH} && \
+    find ${BUILD_DIR}/config -maxdepth 1 -type f -exec chmod 0664 {} + && \
+    find ${BUILD_DIR}/core/database -type f -exec chmod 0664 {} + && \
+    find ${BUILD_DIR}/core -type d -exec chmod 0774 {} + && \
+    find ${BUILD_DIR}/common/proto/common -type d -exec chmod 0774 {} + && \
+    find ${BUILD_DIR}/common -type f -exec chmod 0664 {} + && \
+    find ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm -type d -exec chmod 0774 {} + && \
+    chmod 774    ${BUILD_DIR} \
+                 ${BUILD_DIR}/scripts \
+                 ${DATAFED_DEPENDENCIES_INSTALL_PATH} \
+                 ${BUILD_DIR}/core/database/tests/test_fixture_setup.sh \
+                 ${BUILD_DIR}/core/database/tests/test_foxx.sh \
+                 ${BUILD_DIR}/core/database/tests/test_teardown.sh \
+                 ${BUILD_DIR}/core/database/tests/test_setup.sh \
+                 ${BUILD_DIR}/docker/entrypoint_foxx.sh \
+                 ${BUILD_DIR}/scripts/generate_datafed.sh \
+                 ${BUILD_DIR}/scripts/install_foxx.sh
+USER datafed
 
 WORKDIR ${BUILD_DIR}
 

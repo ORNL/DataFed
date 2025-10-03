@@ -26,8 +26,8 @@ router
                 cnt = req.queryParams.count;
 
             if (req.queryParams.id) {
-                (qry = "for i in 1..1 inbound @par top filter is_same_collection('t',i)"),
-                    (par.par = req.queryParams.id);
+                ((qry = "for i in 1..1 inbound @par top filter is_same_collection('t',i)"),
+                    (par.par = req.queryParams.id));
             } else {
                 qry = "for i in t filter i.top == true";
             }

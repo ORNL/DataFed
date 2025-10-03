@@ -1,7 +1,7 @@
 define("ace/ext/whitespace", ["require", "exports", "module", "ace/lib/lang"], function (e, t, n) {
     "use strict";
     var r = e("../lib/lang");
-    (t.$detectIndentation = function (e, t) {
+    ((t.$detectIndentation = function (e, t) {
         function c(e) {
             var t = 0;
             for (var r = e; r < n.length; r += e) t += n[r] || 0;
@@ -15,13 +15,13 @@ define("ace/ext/whitespace", ["require", "exports", "module", "ace/lib/lang"], f
         for (var u = 0; u < o; u++) {
             var a = e[u];
             if (!/^\s*[^*+\-\s]/.test(a)) continue;
-            if (a[0] == "	") i++, (s = -Number.MAX_VALUE);
+            if (a[0] == "	") (i++, (s = -Number.MAX_VALUE));
             else {
                 var f = a.match(/^ */)[0].length;
                 if (f && a[f] != "	") {
                     var l = f - s;
-                    l > 0 && !(s % l) && !(f % l) && (r[l] = (r[l] || 0) + 1),
-                        (n[f] = (n[f] || 0) + 1);
+                    (l > 0 && !(s % l) && !(f % l) && (r[l] = (r[l] || 0) + 1),
+                        (n[f] = (n[f] || 0) + 1));
                 }
                 s = f;
             }
@@ -34,9 +34,9 @@ define("ace/ext/whitespace", ["require", "exports", "module", "ace/lib/lang"], f
             d = 0;
         for (var u = 1; u < 12; u++) {
             var v = c(u);
-            u == 1 ? ((d = v), (v = n[1] ? 0.9 : 0.8), n.length || (v = 0)) : (v /= d),
+            (u == 1 ? ((d = v), (v = n[1] ? 0.9 : 0.8), n.length || (v = 0)) : (v /= d),
                 r[u] && (v += r[u] / h),
-                v > p.score && (p = { score: v, length: u });
+                v > p.score && (p = { score: v, length: u }));
         }
         if (p.score && p.score > 1.4) var m = p.length;
         if (i > d + 1) {
@@ -48,7 +48,7 @@ define("ace/ext/whitespace", ["require", "exports", "module", "ace/lib/lang"], f
         (t.detectIndentation = function (e) {
             var n = e.getLines(0, 1e3),
                 r = t.$detectIndentation(n) || {};
-            return r.ch && e.setUseSoftTabs(r.ch == " "), r.length && e.setTabSize(r.length), r;
+            return (r.ch && e.setUseSoftTabs(r.ch == " "), r.length && e.setTabSize(r.length), r);
         }),
         (t.trimTrailingSpace = function (e, t) {
             var n = e.getDocument(),
@@ -70,17 +70,17 @@ define("ace/ext/whitespace", ["require", "exports", "module", "ace/lib/lang"], f
             for (var a = 0, f = r.length; a < f; a++) {
                 var l = r[a],
                     c = l.search(/\s+$/);
-                a == u &&
+                (a == u &&
                     (c < s[o].column && c > i && (c = s[o].column),
                     o++,
                     (u = s[o] ? s[o].row : -1)),
-                    c > i && n.removeInLine(a, c, l.length);
+                    c > i && n.removeInLine(a, c, l.length));
             }
         }),
         (t.convertIndentation = function (e, t, n) {
             var i = e.getTabString()[0],
                 s = e.getTabSize();
-            n || (n = s), t || (t = i);
+            (n || (n = s), t || (t = i));
             var o = t == "	" ? t : r.stringRepeat(t, n),
                 u = e.doc,
                 a = u.getAllLines(),
@@ -94,19 +94,19 @@ define("ace/ext/whitespace", ["require", "exports", "module", "ace/lib/lang"], f
                         m = Math.floor(v / s),
                         g = v % s,
                         y = f[m] || (f[m] = r.stringRepeat(o, m));
-                    (y += l[g] || (l[g] = r.stringRepeat(" ", g))),
+                    ((y += l[g] || (l[g] = r.stringRepeat(" ", g))),
                         y != d &&
                             (u.removeInLine(c, 0, d.length),
-                            u.insertInLine({ row: c, column: 0 }, y));
+                            u.insertInLine({ row: c, column: 0 }, y)));
                 }
             }
-            e.setTabSize(n), e.setUseSoftTabs(t == " ");
+            (e.setTabSize(n), e.setUseSoftTabs(t == " "));
         }),
         (t.$parseStringArg = function (e) {
             var t = {};
             /t/.test(e) ? (t.ch = "	") : /s/.test(e) && (t.ch = " ");
             var n = e.match(/\d+/);
-            return n && (t.length = parseInt(n[0], 10)), t;
+            return (n && (t.length = parseInt(n[0], 10)), t);
         }),
         (t.$parseArg = function (e) {
             return e
@@ -141,11 +141,11 @@ define("ace/ext/whitespace", ["require", "exports", "module", "ace/lib/lang"], f
                 name: "setIndentation",
                 exec: function (e, n) {
                     var r = t.$parseArg(n);
-                    r.length && e.session.setTabSize(r.length),
-                        r.ch && e.session.setUseSoftTabs(r.ch == " ");
+                    (r.length && e.session.setTabSize(r.length),
+                        r.ch && e.session.setUseSoftTabs(r.ch == " "));
                 },
             },
-        ]);
+        ]));
 });
 (function () {
     window.require(["ace/ext/whitespace"], function (m) {

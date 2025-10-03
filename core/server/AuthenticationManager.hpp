@@ -36,6 +36,8 @@ private:
 public:
   AuthenticationManager(){};
 
+  virtual ~AuthenticationManager(){};
+
   AuthenticationManager &operator=(AuthenticationManager &&other);
 
   AuthenticationManager(
@@ -83,6 +85,35 @@ public:
               const std::string &uid);
 
   /**
+   * Check if a specific key exists in a specific map type
+   **/
+  bool hasKey(const PublicKeyType &pub_key_type, const std::string &public_key) const;
+
+  /**
+   * Migrate a key from one type to another
+   **/
+  void migrateKey(const PublicKeyType &from_type, const PublicKeyType &to_type,
+                  const std::string &public_key, const std::string &uid);
+
+  /**
+   * Clear all transient keys from the authentication map.
+   * This is useful for cleaning up stale keys after service restarts.
+   **/
+  void clearTransientKeys();
+
+  /**
+   * Clear all session keys from the authentication map.
+   * This is useful for cleaning up stale keys after service restarts.
+   **/
+  void clearSessionKeys();
+
+  /**
+   * Clear all non-persistent (transient and session) keys.
+   * Persistent keys are preserved as they represent service accounts.
+   **/
+  void clearAllNonPersistentKeys();
+
+  /**
    * Will the id or throw an error
    *
    * Will look at all keys:
@@ -91,6 +122,12 @@ public:
    * - PERSISTENT
    **/
   virtual std::string getUID(const std::string &pub_key) const final;
+  
+  /**
+   * Safe version that returns empty string if key not found
+   * instead of throwing an exception
+   **/
+  std::string getUIDSafe(const std::string &pub_key) const;
 };
 
 } // namespace Core

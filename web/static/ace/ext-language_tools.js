@@ -1,4 +1,4 @@
-define(
+(define(
     "ace/snippets",
     [
         "require",
@@ -25,10 +25,10 @@ define(
             f = e("./tokenizer").Tokenizer,
             l = o.comparePoints,
             c = function () {
-                (this.snippetMap = {}), (this.snippetNameMap = {});
+                ((this.snippetMap = {}), (this.snippetNameMap = {}));
             };
         (function () {
-            r.implement(this, i),
+            (r.implement(this, i),
                 (this.getTokenizer = function () {
                     function e(e, t, n) {
                         return (
@@ -88,7 +88,7 @@ define(
                                     regex: /\$\{[\dA-Z_a-z]+/,
                                     onMatch: function (t, n, r) {
                                         var i = e(t.substr(1), n, r);
-                                        return r.unshift(i[0]), i;
+                                        return (r.unshift(i[0]), i);
                                     },
                                     next: "snippetVar",
                                 },
@@ -120,7 +120,7 @@ define(
                                 {
                                     regex: "`" + t("`") + "*`",
                                     onMatch: function (e, t, n) {
-                                        return (n[0].code = e.splice(1, -1)), "";
+                                        return ((n[0].code = e.splice(1, -1)), "");
                                     },
                                     next: "start",
                                 },
@@ -227,7 +227,7 @@ define(
                             }
                             return e.join("");
                         });
-                    return (this.variables.__ = null), u;
+                    return ((this.variables.__ = null), u);
                 }),
                 (this.resolveVariables = function (e, t) {
                     function o(t) {
@@ -245,13 +245,13 @@ define(
                                 if (i.processed < r) continue;
                                 if (i.text) {
                                     var s = this.getVariableValue(t, i.text);
-                                    s && i.fmtString && (s = this.tmStrFormat(s, i)),
+                                    (s && i.fmtString && (s = this.tmStrFormat(s, i)),
                                         (i.processed = r),
                                         i.expectIf == null
                                             ? s && (n.push(s), o(i))
                                             : s
                                               ? (i.skip = i.elseBranch)
-                                              : o(i);
+                                              : o(i));
                                 } else
                                     i.tabstopId != null
                                         ? n.push(i)
@@ -279,18 +279,18 @@ define(
                         r = e.session.getLine(n.row),
                         i = e.session.getTabString(),
                         s = r.match(/^\s*/)[0];
-                    n.column < s.length && (s = s.slice(0, n.column)), (t = t.replace(/\r/g, ""));
+                    (n.column < s.length && (s = s.slice(0, n.column)), (t = t.replace(/\r/g, "")));
                     var o = this.tokenizeTmSnippet(t);
-                    (o = this.resolveVariables(o, e)),
+                    ((o = this.resolveVariables(o, e)),
                         (o = o.map(function (e) {
                             return e == "\n"
                                 ? e + s
                                 : typeof e == "string"
                                   ? e.replace(/\t/g, i)
                                   : e;
-                        }));
+                        })));
                     var u = [];
-                    o.forEach(function (e, t) {
+                    (o.forEach(function (e, t) {
                         if (typeof e != "object") return;
                         var n = e.tabstopId,
                             r = u[n];
@@ -311,7 +311,7 @@ define(
                     }),
                         u.forEach(function (e) {
                             e.length = 0;
-                        });
+                        }));
                     var a = {};
                     for (var l = 0; l < o.length; l++) {
                         var c = o[l];
@@ -324,11 +324,11 @@ define(
                         }
                         var v = u[p],
                             m = typeof v.value == "string" ? [v.value] : f(v.value);
-                        m.unshift(l + 1, Math.max(0, d - l)),
+                        (m.unshift(l + 1, Math.max(0, d - l)),
                             m.push(c),
                             (a[p] = c),
                             o.splice.apply(o, m),
-                            v.indexOf(c) === -1 && v.push(c);
+                            v.indexOf(c) === -1 && v.push(c));
                     }
                     var g = 0,
                         y = 0,
@@ -336,10 +336,10 @@ define(
                     o.forEach(function (e) {
                         if (typeof e == "string") {
                             var t = e.split("\n");
-                            t.length > 1
+                            (t.length > 1
                                 ? ((y = t[t.length - 1].length), (g += t.length - 1))
                                 : (y += e.length),
-                                (b += e);
+                                (b += e));
                         } else
                             e.start
                                 ? (e.end = { row: g, column: y })
@@ -354,14 +354,14 @@ define(
                 (this.insertSnippet = function (e, t) {
                     var n = this;
                     if (e.inVirtualSelectionMode) return n.insertSnippetForSelection(e, t);
-                    e.forEachSelection(
+                    (e.forEachSelection(
                         function () {
                             n.insertSnippetForSelection(e, t);
                         },
                         null,
                         { keepOrder: !0 },
                     ),
-                        e.tabstopManager && e.tabstopManager.tabNext();
+                        e.tabstopManager && e.tabstopManager.tabNext());
                 }),
                 (this.$getScope = function (e) {
                     var t = e.session.$mode.$id || "";
@@ -370,13 +370,13 @@ define(
                         t === "php" && !e.session.$mode.inlinePhp && (t = "html");
                         var n = e.getCursorPosition(),
                             r = e.session.getState(n.row);
-                        typeof r == "object" && (r = r[0]),
+                        (typeof r == "object" && (r = r[0]),
                             r.substring &&
                                 (r.substring(0, 3) == "js-"
                                     ? (t = "javascript")
                                     : r.substring(0, 4) == "css-"
                                       ? (t = "css")
-                                      : r.substring(0, 4) == "php-" && (t = "php"));
+                                      : r.substring(0, 4) == "php-" && (t = "php")));
                     }
                     return t;
                 }),
@@ -399,7 +399,7 @@ define(
                             null,
                             { keepOrder: !0 },
                         );
-                    return r && e.tabstopManager && e.tabstopManager.tabNext(), r;
+                    return (r && e.tabstopManager && e.tabstopManager.tabNext(), r);
                 }),
                 (this.expandSnippetForSelection = function (e, t) {
                     var n = e.getCursorPosition(),
@@ -411,7 +411,7 @@ define(
                     return (
                         this.getActiveScopes(e).some(function (e) {
                             var t = o[e];
-                            return t && (u = this.findMatchingSnippet(t, i, s)), !!u;
+                            return (t && (u = this.findMatchingSnippet(t, i, s)), !!u);
                         }, this),
                         u
                             ? t && t.dryRun
@@ -449,7 +449,8 @@ define(
                 (this.register = function (e, t) {
                     function o(e) {
                         return (
-                            e && !/^\^?\(.*\)\$?$|^\\b$/.test(e) && (e = "(?:" + e + ")"), e || ""
+                            e && !/^\^?\(.*\)\$?$|^\\b$/.test(e) && (e = "(?:" + e + ")"),
+                            e || ""
                         );
                     }
                     function u(e, t, n) {
@@ -463,31 +464,31 @@ define(
                         );
                     }
                     function a(e) {
-                        e.scope || (e.scope = t || "_"),
+                        (e.scope || (e.scope = t || "_"),
                             (t = e.scope),
-                            n[t] || ((n[t] = []), (r[t] = {}));
+                            n[t] || ((n[t] = []), (r[t] = {})));
                         var o = r[t];
                         if (e.name) {
                             var a = o[e.name];
-                            a && i.unregister(a), (o[e.name] = e);
+                            (a && i.unregister(a), (o[e.name] = e));
                         }
-                        n[t].push(e),
+                        (n[t].push(e),
                             e.tabTrigger &&
                                 !e.trigger &&
                                 (!e.guard && /^\w/.test(e.tabTrigger) && (e.guard = "\\b"),
-                                (e.trigger = s.escapeRegExp(e.tabTrigger)));
+                                (e.trigger = s.escapeRegExp(e.tabTrigger))));
                         if (!e.trigger && !e.guard && !e.endTrigger && !e.endGuard) return;
-                        (e.startRe = u(e.trigger, e.guard, !0)),
+                        ((e.startRe = u(e.trigger, e.guard, !0)),
                             (e.triggerRe = new RegExp(e.trigger)),
                             (e.endRe = u(e.endTrigger, e.endGuard, !0)),
-                            (e.endTriggerRe = new RegExp(e.endTrigger));
+                            (e.endTriggerRe = new RegExp(e.endTrigger)));
                     }
                     var n = this.snippetMap,
                         r = this.snippetNameMap,
                         i = this;
-                    e || (e = []),
+                    (e || (e = []),
                         e && e.content ? a(e) : Array.isArray(e) && e.forEach(a),
-                        this._signal("registerSnippets", { scope: t });
+                        this._signal("registerSnippets", { scope: t }));
                 }),
                 (this.unregister = function (e, t) {
                     function i(e) {
@@ -512,18 +513,18 @@ define(
                     while ((i = r.exec(e))) {
                         if (i[1])
                             try {
-                                (n = JSON.parse(i[1])), t.push(n);
+                                ((n = JSON.parse(i[1])), t.push(n));
                             } catch (s) {}
-                        if (i[4]) (n.content = i[4].replace(/^\t/gm, "")), t.push(n), (n = {});
+                        if (i[4]) ((n.content = i[4].replace(/^\t/gm, "")), t.push(n), (n = {}));
                         else {
                             var o = i[2],
                                 u = i[3];
                             if (o == "regex") {
                                 var a = /\/((?:[^\/\\]|\\.)*)|$/g;
-                                (n.guard = a.exec(u)[1]),
+                                ((n.guard = a.exec(u)[1]),
                                     (n.trigger = a.exec(u)[1]),
                                     (n.endTrigger = a.exec(u)[1]),
-                                    (n.endGuard = a.exec(u)[1]);
+                                    (n.endGuard = a.exec(u)[1]));
                             } else
                                 o == "snippet"
                                     ? ((n.tabTrigger = u.match(/^\S*/)[0]), n.name || (n.name = u))
@@ -538,26 +539,26 @@ define(
                     return (
                         this.getActiveScopes(t).some(function (t) {
                             var i = n[t];
-                            return i && (r = i[e]), !!r;
+                            return (i && (r = i[e]), !!r);
                         }, this),
                         r
                     );
-                });
+                }));
         }).call(c.prototype);
         var h = function (e) {
             if (e.tabstopManager) return e.tabstopManager;
-            (e.tabstopManager = this),
+            ((e.tabstopManager = this),
                 (this.$onChange = this.onChange.bind(this)),
                 (this.$onChangeSelection = s.delayedCall(
                     this.onChangeSelection.bind(this),
                 ).schedule),
                 (this.$onChangeSession = this.onChangeSession.bind(this)),
                 (this.$onAfterExec = this.onAfterExec.bind(this)),
-                this.attach(e);
+                this.attach(e));
         };
         (function () {
-            (this.attach = function (e) {
-                (this.index = 0),
+            ((this.attach = function (e) {
+                ((this.index = 0),
                     (this.ranges = []),
                     (this.tabstops = []),
                     (this.$openTabstops = null),
@@ -567,10 +568,10 @@ define(
                     this.editor.on("changeSelection", this.$onChangeSelection),
                     this.editor.on("changeSession", this.$onChangeSession),
                     this.editor.commands.on("afterExec", this.$onAfterExec),
-                    this.editor.keyBinding.addKeyboardHandler(this.keyboardHandler);
+                    this.editor.keyBinding.addKeyboardHandler(this.keyboardHandler));
             }),
                 (this.detach = function () {
-                    this.tabstops.forEach(this.removeTabstopMarkers, this),
+                    (this.tabstops.forEach(this.removeTabstopMarkers, this),
                         (this.ranges = null),
                         (this.tabstops = null),
                         (this.selectedTabstop = null),
@@ -580,7 +581,7 @@ define(
                         this.editor.commands.removeListener("afterExec", this.$onAfterExec),
                         this.editor.keyBinding.removeKeyboardHandler(this.keyboardHandler),
                         (this.editor.tabstopManager = null),
-                        (this.editor = null);
+                        (this.editor = null));
                 }),
                 (this.onChange = function (e) {
                     var t = e,
@@ -606,14 +607,14 @@ define(
                         var d = h[p];
                         if (d.end.row < r.row) continue;
                         if (n && l(r, d.start) < 0 && l(i, d.end) > 0) {
-                            this.removeRange(d), p--;
+                            (this.removeRange(d), p--);
                             continue;
                         }
-                        d.start.row == s && d.start.column > r.column && (d.start.column += a),
+                        (d.start.row == s && d.start.column > r.column && (d.start.column += a),
                             d.end.row == s && d.end.column >= r.column && (d.end.column += a),
                             d.start.row >= s && (d.start.row += u),
                             d.end.row >= s && (d.end.row += u),
-                            l(d.start, d.end) > 0 && this.removeRange(d);
+                            l(d.start, d.end) > 0 && this.removeRange(d));
                     }
                     h.length || this.detach();
                 }),
@@ -653,17 +654,17 @@ define(
                 (this.tabNext = function (e) {
                     var t = this.tabstops.length,
                         n = this.index + (e || 1);
-                    (n = Math.min(Math.max(n, 1), t)),
+                    ((n = Math.min(Math.max(n, 1), t)),
                         n == t && (n = 0),
                         this.selectTabstop(n),
-                        n === 0 && this.detach();
+                        n === 0 && this.detach());
                 }),
                 (this.selectTabstop = function (e) {
                     this.$openTabstops = null;
                     var t = this.tabstops[this.index];
-                    t && this.addTabstopMarkers(t),
+                    (t && this.addTabstopMarkers(t),
                         (this.index = e),
-                        (t = this.tabstops[this.index]);
+                        (t = this.tabstops[this.index]));
                     if (!t || !t.length) return;
                     this.selectedTabstop = t;
                     if (!this.editor.inVirtualSelectionMode) {
@@ -681,17 +682,17 @@ define(
                     this.$openTabstops || (this.$openTabstops = []);
                     if (!e[0]) {
                         var r = o.fromPoints(n, n);
-                        v(r.start, t), v(r.end, t), (e[0] = [r]), (e[0].index = 0);
+                        (v(r.start, t), v(r.end, t), (e[0] = [r]), (e[0].index = 0));
                     }
                     var i = this.index,
                         s = [i + 1, 0],
                         u = this.ranges;
-                    e.forEach(function (e, n) {
+                    (e.forEach(function (e, n) {
                         var r = this.$openTabstops[n] || e;
                         for (var i = e.length; i--; ) {
                             var a = e[i],
                                 f = o.fromPoints(a.start, a.end || a.start);
-                            d(f.start, t),
+                            (d(f.start, t),
                                 d(f.end, t),
                                 (f.original = a),
                                 (f.tabstop = r),
@@ -699,15 +700,15 @@ define(
                                 r != e ? r.unshift(f) : (r[i] = f),
                                 a.fmtString
                                     ? ((f.linked = !0), (r.hasLinkedRanges = !0))
-                                    : r.firstNonLinked || (r.firstNonLinked = f);
+                                    : r.firstNonLinked || (r.firstNonLinked = f));
                         }
-                        r.firstNonLinked || (r.hasLinkedRanges = !1),
+                        (r.firstNonLinked || (r.hasLinkedRanges = !1),
                             r === e && (s.push(r), (this.$openTabstops[n] = r)),
-                            this.addTabstopMarkers(r);
+                            this.addTabstopMarkers(r));
                     }, this),
                         s.length > 2 &&
                             (this.tabstops.length && s.push(s.splice(2, 1)[0]),
-                            this.tabstops.splice.apply(this.tabstops, s));
+                            this.tabstops.splice.apply(this.tabstops, s)));
                 }),
                 (this.addTabstopMarkers = function (e) {
                     var t = this.editor.session;
@@ -718,19 +719,19 @@ define(
                 (this.removeTabstopMarkers = function (e) {
                     var t = this.editor.session;
                     e.forEach(function (e) {
-                        t.removeMarker(e.markerId), (e.markerId = null);
+                        (t.removeMarker(e.markerId), (e.markerId = null));
                     });
                 }),
                 (this.removeRange = function (e) {
                     var t = e.tabstop.indexOf(e);
-                    e.tabstop.splice(t, 1),
+                    (e.tabstop.splice(t, 1),
                         (t = this.ranges.indexOf(e)),
                         this.ranges.splice(t, 1),
                         this.editor.session.removeMarker(e.markerId),
                         e.tabstop.length ||
                             ((t = this.tabstops.indexOf(e.tabstop)),
                             t != -1 && this.tabstops.splice(t, 1),
-                            this.tabstops.length || this.detach());
+                            this.tabstops.length || this.detach()));
                 }),
                 (this.keyboardHandler = new a()),
                 this.keyboardHandler.bindKeys({
@@ -747,34 +748,34 @@ define(
                     Return: function (e) {
                         return !1;
                     },
-                });
+                }));
         }).call(h.prototype);
         var p = {};
-        (p.onChange = u.prototype.onChange),
+        ((p.onChange = u.prototype.onChange),
             (p.setPosition = function (e, t) {
-                (this.pos.row = e), (this.pos.column = t);
+                ((this.pos.row = e), (this.pos.column = t));
             }),
             (p.update = function (e, t, n) {
-                (this.$insertRight = n), (this.pos = e), this.onChange(t);
-            });
+                ((this.$insertRight = n), (this.pos = e), this.onChange(t));
+            }));
         var d = function (e, t) {
-                e.row == 0 && (e.column += t.column), (e.row += t.row);
+                (e.row == 0 && (e.column += t.column), (e.row += t.row));
             },
             v = function (e, t) {
-                e.row == t.row && (e.column -= t.column), (e.row -= t.row);
+                (e.row == t.row && (e.column -= t.column), (e.row -= t.row));
             };
-        e("./lib/dom").importCssString(
+        (e("./lib/dom").importCssString(
             ".ace_snippet-marker {    -moz-box-sizing: border-box;    box-sizing: border-box;    background: rgba(194, 193, 208, 0.09);    border: 1px dotted rgba(211, 208, 235, 0.62);    position: absolute;}",
         ),
-            (t.snippetManager = new c());
+            (t.snippetManager = new c()));
         var m = e("./editor").Editor;
         (function () {
-            (this.insertSnippet = function (e, n) {
+            ((this.insertSnippet = function (e, n) {
                 return t.snippetManager.insertSnippet(this, e, n);
             }),
                 (this.expandSnippet = function (e) {
                     return t.snippetManager.expandWithTab(this, e);
-                });
+                }));
         }).call(m.prototype);
     },
 ),
@@ -816,14 +817,14 @@ define(
                 l = function (e) {
                     var t = a.createElement("div"),
                         n = new f(t);
-                    e && e.appendChild(t),
+                    (e && e.appendChild(t),
                         (t.style.display = "none"),
                         (n.renderer.content.style.cursor = "default"),
                         n.renderer.setStyle("ace_autocomplete"),
                         n.setOption("displayIndentGuides", !1),
-                        n.setOption("dragDelay", 150);
+                        n.setOption("dragDelay", 150));
                     var r = function () {};
-                    (n.focus = r),
+                    ((n.focus = r),
                         (n.$isFocused = !0),
                         (n.renderer.$cursorLayer.restartTimer = r),
                         (n.renderer.$cursorLayer.element.style.opacity = 0),
@@ -834,14 +835,14 @@ define(
                         (n.session.$searchHighlight.clazz = "ace_highlight-marker"),
                         n.on("mousedown", function (e) {
                             var t = e.getDocumentPosition();
-                            n.selection.moveToPosition(t),
+                            (n.selection.moveToPosition(t),
                                 (c.start.row = c.end.row = t.row),
-                                e.stop();
-                        });
+                                e.stop());
+                        }));
                     var i,
                         l = new s(-1, 0, -1, Infinity),
                         c = new s(-1, 0, -1, Infinity);
-                    (c.id = n.session.addMarker(c, "ace_active-line", "fullLine")),
+                    ((c.id = n.session.addMarker(c, "ace_active-line", "fullLine")),
                         (n.setSelectOnHover = function (e) {
                             e
                                 ? l.id && (n.session.removeMarker(l.id), (l.id = null))
@@ -854,7 +855,7 @@ define(
                                 return;
                             }
                             if (i.x == e.x && i.y == e.y) return;
-                            (i = e), (i.scrollTop = n.renderer.scrollTop);
+                            ((i = e), (i.scrollTop = n.renderer.scrollTop));
                             var t = i.getDocumentPosition().row;
                             l.start.row != t && (l.id || n.setRow(t), p(t));
                         }),
@@ -862,7 +863,7 @@ define(
                             if (i && l.start.row != -1) {
                                 i.$pos = null;
                                 var e = i.getDocumentPosition().row;
-                                l.id || n.setRow(e), p(e, !0);
+                                (l.id || n.setRow(e), p(e, !0));
                             }
                         }),
                         n.renderer.on("afterRender", function () {
@@ -870,10 +871,10 @@ define(
                                 t = n.renderer.$textLayer,
                                 r = t.element.childNodes[e - t.config.firstRow];
                             if (r == t.selectedNode) return;
-                            t.selectedNode && a.removeCssClass(t.selectedNode, "ace_selected"),
+                            (t.selectedNode && a.removeCssClass(t.selectedNode, "ace_selected"),
                                 (t.selectedNode = r),
-                                r && a.addCssClass(r, "ace_selected");
-                        });
+                                r && a.addCssClass(r, "ace_selected"));
+                        }));
                     var h = function () {
                             p(-1);
                         },
@@ -883,7 +884,7 @@ define(
                                 t || n.session._emit("changeBackMarker"),
                                 n._emit("changeHoverMarker"));
                         };
-                    (n.getHoveredRow = function () {
+                    ((n.getHoveredRow = function () {
                         return l.start.row;
                     }),
                         o.addListener(n.container, "mouseout", h),
@@ -895,7 +896,7 @@ define(
                         (n.session.doc.getLine = function (e) {
                             var t = n.data[e];
                             return typeof t == "string" ? t : (t && t.value) || "";
-                        });
+                        }));
                     var d = n.session.bgTokenizer;
                     return (
                         (d.$tokenizeRow = function (e) {
@@ -917,9 +918,9 @@ define(
                                     f = l;
                                     var h = o.indexOf(c);
                                     if (h == -1) continue;
-                                    s(i.slice(a, h), ""),
+                                    (s(i.slice(a, h), ""),
                                         (a = h + c.length),
-                                        s(i.slice(h, a), "completion-highlight");
+                                        s(i.slice(h, a), "completion-highlight"));
                                 }
                             return (
                                 s(i.slice(a, i.length), ""),
@@ -938,10 +939,10 @@ define(
                         (n.filterText = ""),
                         (n.data = []),
                         (n.setData = function (e, t) {
-                            (n.filterText = t || ""),
+                            ((n.filterText = t || ""),
                                 n.setValue(u.stringRepeat("\n", e.length), -1),
                                 (n.data = e || []),
-                                n.setRow(0);
+                                n.setRow(0));
                         }),
                         (n.getData = function (e) {
                             return n.data[e];
@@ -950,22 +951,25 @@ define(
                             return c.start.row;
                         }),
                         (n.setRow = function (e) {
-                            (e = Math.max(this.autoSelect ? 0 : -1, Math.min(this.data.length, e))),
+                            ((e = Math.max(
+                                this.autoSelect ? 0 : -1,
+                                Math.min(this.data.length, e),
+                            )),
                                 c.start.row != e &&
                                     (n.selection.clearSelection(),
                                     (c.start.row = c.end.row = e || 0),
                                     n.session._emit("changeBackMarker"),
                                     n.moveCursorTo(e || 0, 0),
-                                    n.isOpen && n._signal("select"));
+                                    n.isOpen && n._signal("select")));
                         }),
                         n.on("changeSelection", function () {
-                            n.isOpen && n.setRow(n.selection.lead.row),
-                                n.renderer.scrollCursorIntoView();
+                            (n.isOpen && n.setRow(n.selection.lead.row),
+                                n.renderer.scrollCursorIntoView());
                         }),
                         (n.hide = function () {
-                            (this.container.style.display = "none"),
+                            ((this.container.style.display = "none"),
                                 this._signal("hide"),
-                                (n.isOpen = !1);
+                                (n.isOpen = !1));
                         }),
                         (n.show = function (e, t, r) {
                             var s = this.container,
@@ -975,7 +979,7 @@ define(
                                 f = a.$maxLines * t * 1.4,
                                 l = e.top + this.$borderSize,
                                 c = l > o / 2 && !r;
-                            c && l + t + f > o
+                            (c && l + t + f > o
                                 ? ((a.$maxPixelHeight = l - 2 * this.$borderSize),
                                   (s.style.top = ""),
                                   (s.style.bottom = o - l + "px"),
@@ -986,13 +990,13 @@ define(
                                   (s.style.bottom = ""),
                                   (n.isTopdown = !0)),
                                 (s.style.display = ""),
-                                this.renderer.$textLayer.checkForSizeChanges();
+                                this.renderer.$textLayer.checkForSizeChanges());
                             var h = e.left;
-                            h + s.offsetWidth > u && (h = u - s.offsetWidth),
+                            (h + s.offsetWidth > u && (h = u - s.offsetWidth),
                                 (s.style.left = h + "px"),
                                 this._signal("show"),
                                 (i = null),
-                                (n.isOpen = !0);
+                                (n.isOpen = !0));
                         }),
                         (n.getTextLeftOffset = function () {
                             return this.$borderSize + this.renderer.$padding + this.$imageSize;
@@ -1002,11 +1006,11 @@ define(
                         n
                     );
                 };
-            a.importCssString(
+            (a.importCssString(
                 ".ace_editor.ace_autocomplete .ace_marker-layer .ace_active-line {    background-color: #CAD6FA;    z-index: 1;}.ace_dark.ace_editor.ace_autocomplete .ace_marker-layer .ace_active-line {    background-color: #3a674e;}.ace_editor.ace_autocomplete .ace_line-hover {    border: 1px solid #abbffe;    margin-top: -1px;    background: rgba(233,233,253,0.4);    position: absolute;    z-index: 2;}.ace_dark.ace_editor.ace_autocomplete .ace_line-hover {    border: 1px solid rgba(109, 150, 13, 0.8);    background: rgba(58, 103, 78, 0.62);}.ace_completion-meta {    opacity: 0.5;    margin: 0.9em;}.ace_editor.ace_autocomplete .ace_completion-highlight{    color: #2d69c7;}.ace_dark.ace_editor.ace_autocomplete .ace_completion-highlight{    color: #93ca12;}.ace_editor.ace_autocomplete {    width: 300px;    z-index: 200000;    border: 1px lightgray solid;    position: fixed;    box-shadow: 2px 3px 5px rgba(0,0,0,.2);    line-height: 1.4;    background: #fefefe;    color: #111;}.ace_dark.ace_editor.ace_autocomplete {    border: 1px #484747 solid;    box-shadow: 2px 3px 5px rgba(0, 0, 0, 0.51);    line-height: 1.4;    background: #25282c;    color: #c1c1c1;}",
                 "autocompletion.css",
             ),
-                (t.AcePopup = l);
+                (t.AcePopup = l));
         },
     ),
     define("ace/autocomplete/util", ["require", "exports", "module"], function (e, t, n) {
@@ -1017,11 +1021,11 @@ define(
             i === 0 && n();
             for (var s = 0; s < i; s++)
                 t(e[s], function (e, t) {
-                    r++, r === i && n(e, t);
+                    (r++, r === i && n(e, t));
                 });
         };
         var r = /[a-zA-Z_0-9\$\-\u00A2-\uFFFF]/;
-        (t.retrievePrecedingIdentifier = function (e, t, n) {
+        ((t.retrievePrecedingIdentifier = function (e, t, n) {
             n = n || r;
             var i = [];
             for (var s = t - 1; s >= 0; s--) {
@@ -1058,7 +1062,7 @@ define(
                     ),
                     r || this.retrievePrecedingIdentifier(n, t.column)
                 );
-            });
+            }));
     }),
     define(
         "ace/autocomplete",
@@ -1084,7 +1088,7 @@ define(
                 a = e("./lib/dom"),
                 f = e("./snippets").snippetManager,
                 l = function () {
-                    (this.autoInsert = !1),
+                    ((this.autoInsert = !1),
                         (this.autoSelect = !0),
                         (this.exactMatch = !1),
                         (this.gatherCompletionsId = 0),
@@ -1099,16 +1103,16 @@ define(
                                 this.updateCompletions(!0);
                             }.bind(this),
                         )),
-                        (this.tooltipTimer = u.delayedCall(this.updateDocTooltip.bind(this), 50));
+                        (this.tooltipTimer = u.delayedCall(this.updateDocTooltip.bind(this), 50)));
                 };
-            (function () {
-                (this.$init = function () {
+            ((function () {
+                ((this.$init = function () {
                     return (
                         (this.popup = new i(document.body || document.documentElement)),
                         this.popup.on(
                             "click",
                             function (e) {
-                                this.insertMatch(), e.stop();
+                                (this.insertMatch(), e.stop());
                             }.bind(this),
                         ),
                         (this.popup.focus = this.editor.focus.bind(this.editor)),
@@ -1122,30 +1126,30 @@ define(
                         return this.popup || this.$init();
                     }),
                     (this.openPopup = function (e, t, n) {
-                        this.popup || this.$init(),
+                        (this.popup || this.$init(),
                             (this.popup.autoSelect = this.autoSelect),
                             this.popup.setData(
                                 this.completions.filtered,
                                 this.completions.filterText,
                             ),
-                            e.keyBinding.addKeyboardHandler(this.keyboardHandler);
+                            e.keyBinding.addKeyboardHandler(this.keyboardHandler));
                         var r = e.renderer;
                         this.popup.setRow(this.autoSelect ? 0 : -1);
                         if (!n) {
-                            this.popup.setTheme(e.getTheme()),
-                                this.popup.setFontSize(e.getFontSize());
+                            (this.popup.setTheme(e.getTheme()),
+                                this.popup.setFontSize(e.getFontSize()));
                             var i = r.layerConfig.lineHeight,
                                 s = r.$cursorLayer.getPixelPosition(this.base, !0);
                             s.left -= this.popup.getTextLeftOffset();
                             var o = e.container.getBoundingClientRect();
-                            (s.top += o.top - r.layerConfig.offset),
+                            ((s.top += o.top - r.layerConfig.offset),
                                 (s.left += o.left - e.renderer.scrollLeft),
                                 (s.left += r.gutterWidth),
-                                this.popup.show(s, i);
+                                this.popup.show(s, i));
                         } else n && !t && this.detach();
                     }),
                     (this.detach = function () {
-                        this.editor.keyBinding.removeKeyboardHandler(this.keyboardHandler),
+                        (this.editor.keyBinding.removeKeyboardHandler(this.keyboardHandler),
                             this.editor.off("changeSelection", this.changeListener),
                             this.editor.off("blur", this.blurListener),
                             this.editor.off("mousedown", this.mousedownListener),
@@ -1156,12 +1160,12 @@ define(
                             this.popup && this.popup.isOpen && this.popup.hide(),
                             this.base && this.base.detach(),
                             (this.activated = !1),
-                            (this.completions = this.base = null);
+                            (this.completions = this.base = null));
                     }),
                     (this.changeListener = function (e) {
                         var t = this.editor.selection.lead;
-                        (t.row != this.base.row || t.column < this.base.column) && this.detach(),
-                            this.activated ? this.changeTimer.schedule() : this.detach();
+                        ((t.row != this.base.row || t.column < this.base.column) && this.detach(),
+                            this.activated ? this.changeTimer.schedule() : this.detach());
                     }),
                     (this.blurListener = function (e) {
                         var t = document.activeElement,
@@ -1211,8 +1215,8 @@ define(
                             if (this.completions.filterText) {
                                 var n = this.editor.selection.getAllRanges();
                                 for (var r = 0, i; (i = n[r]); r++)
-                                    (i.start.column -= this.completions.filterText.length),
-                                        this.editor.session.remove(i);
+                                    ((i.start.column -= this.completions.filterText.length),
+                                        this.editor.session.remove(i));
                             }
                             e.snippet
                                 ? f.insertSnippet(this.editor, e.snippet)
@@ -1258,26 +1262,26 @@ define(
                         var n = e.getSession(),
                             r = e.getCursorPosition(),
                             i = s.getCompletionPrefix(e);
-                        (this.base = n.doc.createAnchor(r.row, r.column - i.length)),
-                            (this.base.$insertRight = !0);
+                        ((this.base = n.doc.createAnchor(r.row, r.column - i.length)),
+                            (this.base.$insertRight = !0));
                         var o = [],
                             u = e.completers.length;
                         return (
                             e.completers.forEach(function (a, f) {
                                 a.getCompletions(e, n, r, i, function (n, r) {
-                                    !n && r && (o = o.concat(r)),
+                                    (!n && r && (o = o.concat(r)),
                                         t(null, {
                                             prefix: s.getCompletionPrefix(e),
                                             matches: o,
                                             finished: --u === 0,
-                                        });
+                                        }));
                                 });
                             }),
                             !0
                         );
                     }),
                     (this.showPopup = function (e) {
-                        this.editor && this.detach(),
+                        (this.editor && this.detach(),
                             (this.activated = !0),
                             (this.editor = e),
                             e.completer != this &&
@@ -1286,7 +1290,7 @@ define(
                             e.on("blur", this.blurListener),
                             e.on("mousedown", this.mousedownListener),
                             e.on("mousewheel", this.mousewheelListener),
-                            this.updateCompletions();
+                            this.updateCompletions());
                     }),
                     (this.updateCompletions = function (e) {
                         if (e && this.base && this.completions) {
@@ -1317,9 +1321,9 @@ define(
                                 if (!o || !o.length) return i();
                                 if (s.indexOf(n.prefix) !== 0 || r != this.gatherCompletionsId)
                                     return;
-                                (this.completions = new c(o)),
+                                ((this.completions = new c(o)),
                                     this.exactMatch && (this.completions.exactMatch = !0),
-                                    this.completions.setFilter(s);
+                                    this.completions.setFilter(s));
                                 var u = this.completions.filtered;
                                 if (!u.length) return i();
                                 if (u.length == 1 && u[0].value == s && !u[0].snippet) return i();
@@ -1338,11 +1342,11 @@ define(
                             n = t && (t[e.getHoveredRow()] || t[e.getRow()]),
                             r = null;
                         if (!n || !this.editor || !this.popup.isOpen) return this.hideDocTooltip();
-                        this.editor.completers.some(function (e) {
-                            return e.getDocTooltip && (r = e.getDocTooltip(n)), r;
+                        (this.editor.completers.some(function (e) {
+                            return (e.getDocTooltip && (r = e.getDocTooltip(n)), r);
                         }),
                             r || (r = n),
-                            typeof r == "string" && (r = { docText: r });
+                            typeof r == "string" && (r = { docText: r }));
                         if (!r || (!r.docHTML && !r.docText)) return this.hideDocTooltip();
                         this.showDocTooltip(r);
                     }),
@@ -1356,13 +1360,13 @@ define(
                             (this.tooltipNode.onblur = this.blurListener.bind(this)),
                             (this.tooltipNode.onclick = this.onTooltipClick.bind(this)));
                         var t = this.tooltipNode;
-                        e.docHTML
+                        (e.docHTML
                             ? (t.innerHTML = e.docHTML)
                             : e.docText && (t.textContent = e.docText),
-                            t.parentNode || document.body.appendChild(t);
+                            t.parentNode || document.body.appendChild(t));
                         var n = this.popup,
                             r = n.container.getBoundingClientRect();
-                        (t.style.top = n.container.style.top),
+                        ((t.style.top = n.container.style.top),
                             (t.style.bottom = n.container.style.bottom),
                             (t.style.display = "block"),
                             window.innerWidth - r.right < 320
@@ -1379,52 +1383,52 @@ define(
                                           (t.style.bottom = ""))
                                     : ((t.style.right = window.innerWidth - r.left + "px"),
                                       (t.style.left = ""))
-                                : ((t.style.left = r.right + 1 + "px"), (t.style.right = ""));
+                                : ((t.style.left = r.right + 1 + "px"), (t.style.right = "")));
                     }),
                     (this.hideDocTooltip = function () {
                         this.tooltipTimer.cancel();
                         if (!this.tooltipNode) return;
                         var e = this.tooltipNode;
-                        !this.editor.isFocused() &&
+                        (!this.editor.isFocused() &&
                             document.activeElement == e &&
                             this.editor.focus(),
                             (this.tooltipNode = null),
-                            e.parentNode && e.parentNode.removeChild(e);
+                            e.parentNode && e.parentNode.removeChild(e));
                     }),
                     (this.onTooltipClick = function (e) {
                         var t = e.target;
                         while (t && t != this.tooltipNode) {
                             if (t.nodeName == "A" && t.href) {
-                                (t.rel = "noreferrer"), (t.target = "_blank");
+                                ((t.rel = "noreferrer"), (t.target = "_blank"));
                                 break;
                             }
                             t = t.parentNode;
                         }
-                    });
+                    }));
             }).call(l.prototype),
                 (l.startCommand = {
                     name: "startAutocomplete",
                     exec: function (e) {
-                        e.completer || (e.completer = new l()),
+                        (e.completer || (e.completer = new l()),
                             (e.completer.autoInsert = !1),
                             (e.completer.autoSelect = !0),
                             e.completer.showPopup(e),
-                            e.completer.cancelContextMenu();
+                            e.completer.cancelContextMenu());
                     },
                     bindKey: "Ctrl-Space|Ctrl-Shift-Space|Alt-Space",
-                });
+                }));
             var c = function (e, t) {
-                (this.all = e),
+                ((this.all = e),
                     (this.filtered = e),
                     (this.filterText = t || ""),
-                    (this.exactMatch = !1);
+                    (this.exactMatch = !1));
             };
-            (function () {
-                (this.setFilter = function (e) {
+            ((function () {
+                ((this.setFilter = function (e) {
                     if (e.length > this.filterText && e.lastIndexOf(this.filterText, 0) === 0)
                         var t = this.filtered;
                     else var t = this.all;
-                    (this.filterText = e),
+                    ((this.filterText = e),
                         (t = this.filterCompletions(t, this.filterText)),
                         (t = t.sort(function (e, t) {
                             return (
@@ -1432,13 +1436,13 @@ define(
                                 t.$score - e.$score ||
                                 (e.caption || e.value) < (t.caption || t.value)
                             );
-                        }));
+                        })));
                     var n = null;
-                    (t = t.filter(function (e) {
+                    ((t = t.filter(function (e) {
                         var t = e.snippet || e.caption || e.value;
                         return t === n ? !1 : ((n = t), !0);
                     })),
-                        (this.filtered = t);
+                        (this.filtered = t));
                 }),
                     (this.filterCompletions = function (e, t) {
                         var n = [],
@@ -1463,22 +1467,22 @@ define(
                                             m = u.indexOf(r[d], a + 1);
                                         c = v >= 0 ? (m < 0 || v < m ? v : m) : m;
                                         if (c < 0) continue e;
-                                        (h = c - a - 1),
+                                        ((h = c - a - 1),
                                             h > 0 &&
                                                 (a === -1 && (l += 10), (l += h), (f |= 1 << d)),
-                                            (a = c);
+                                            (a = c));
                                     }
                             }
-                            (o.matchMask = f),
+                            ((o.matchMask = f),
                                 (o.exactMatch = l ? 0 : 1),
                                 (o.$score = (o.score || 0) - l),
-                                n.push(o);
+                                n.push(o));
                         }
                         return n;
-                    });
+                    }));
             }).call(c.prototype),
                 (t.Autocomplete = l),
-                (t.FilteredList = c);
+                (t.FilteredList = c));
         },
     ),
     define(
@@ -1562,7 +1566,7 @@ define(
                             : (o = r.getActiveScopes(e));
                         var a = r.snippetMap,
                             f = [];
-                        o.forEach(function (e) {
+                        (o.forEach(function (e) {
                             var t = a[e] || [];
                             for (var n = t.length; n--; ) {
                                 var r = t[n],
@@ -1579,7 +1583,7 @@ define(
                                 });
                             }
                         }, this),
-                            s(null, f);
+                            s(null, f));
                     },
                     getDocTooltip: function (e) {
                         e.type == "snippet" &&
@@ -1594,15 +1598,15 @@ define(
                     },
                 },
                 c = [l, a, f];
-            (t.setCompleters = function (e) {
-                (c.length = 0), e && c.push.apply(c, e);
+            ((t.setCompleters = function (e) {
+                ((c.length = 0), e && c.push.apply(c, e));
             }),
                 (t.addCompleter = function (e) {
                     c.push(e);
                 }),
                 (t.textCompleter = a),
                 (t.keyWordCompleter = f),
-                (t.snippetCompleter = l);
+                (t.snippetCompleter = l));
             var h = {
                     name: "expandSnippet",
                     exec: function (e) {
@@ -1615,12 +1619,12 @@ define(
                 },
                 d = function (e) {
                     var t = e.$id;
-                    r.files || (r.files = {}), v(t), e.modes && e.modes.forEach(d);
+                    (r.files || (r.files = {}), v(t), e.modes && e.modes.forEach(d));
                 },
                 v = function (e) {
                     if (!e || r.files[e]) return;
                     var t = e.replace("mode", "snippets");
-                    (r.files[e] = {}),
+                    ((r.files[e] = {}),
                         s.loadModule(t, function (t) {
                             t &&
                                 ((r.files[e] = t),
@@ -1633,7 +1637,7 @@ define(
                                     t.includeScopes.forEach(function (e) {
                                         v("ace/mode/" + e);
                                     })));
-                        });
+                        }));
                 },
                 m = function (e) {
                     var t = e.editor,
@@ -1679,7 +1683,7 @@ define(
                 },
             });
         },
-    );
+    ));
 (function () {
     window.require(["ace/ext/language_tools"], function (m) {
         if (typeof module == "object" && typeof exports == "object" && module) {

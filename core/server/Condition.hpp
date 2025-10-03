@@ -22,6 +22,7 @@ class Condition {
 public:
   virtual ConditionType type() const noexcept = 0;
   virtual void enforce(AuthMap &auth_map, const std::string &public_key) = 0;
+  virtual ~Condition() {};
 };
 
 class Promote : public Condition {
@@ -41,6 +42,7 @@ public:
   }
 
   virtual void enforce(AuthMap &auth_map, const std::string &public_key) final;
+  virtual ~Promote() {};
 };
 
 class Reset : public Condition {
@@ -57,6 +59,7 @@ public:
   }
 
   virtual void enforce(AuthMap &auth_map, const std::string &public_key) final;
+  virtual ~Reset() {};
 };
 
 } // namespace Core
