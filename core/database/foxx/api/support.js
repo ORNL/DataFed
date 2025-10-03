@@ -1,6 +1,7 @@
 "use strict";
 
 const joi = require("joi");
+const error = require("./lib/error_codes");
 
 module.exports = (function () {
     var obj = {};
@@ -130,40 +131,6 @@ module.exports = (function () {
         grant: joi.number().optional(),
         inhgrant: joi.number().optional(),
     });
-
-    obj.ERR_INFO = [];
-    obj.ERR_COUNT = 0;
-
-    obj.ERR_AUTHN_FAILED = obj.ERR_COUNT++;
-    obj.ERR_INFO.push([400, "Authentication Failed"]);
-    obj.ERR_PERM_DENIED = obj.ERR_COUNT++;
-    obj.ERR_INFO.push([400, "Permission Denied"]);
-    obj.ERR_INVALID_PARAM = obj.ERR_COUNT++;
-    obj.ERR_INFO.push([400, "Invalid Parameter"]);
-    obj.ERR_INPUT_TOO_LONG = obj.ERR_COUNT++;
-    obj.ERR_INFO.push([400, "Input value too long"]);
-    obj.ERR_INVALID_CHAR = obj.ERR_COUNT++;
-    obj.ERR_INFO.push([400, "Invalid character"]);
-    obj.ERR_NOT_FOUND = obj.ERR_COUNT++;
-    obj.ERR_INFO.push([400, "Record Not Found"]);
-    obj.ERR_IN_USE = obj.ERR_COUNT++;
-    obj.ERR_INFO.push([400, "Value In Use"]);
-    obj.ERR_LINK = obj.ERR_COUNT++;
-    obj.ERR_INFO.push([400, "Collection Link Error"]);
-    obj.ERR_UNLINK = obj.ERR_COUNT++;
-    obj.ERR_INFO.push([400, "Collection Unlink Error"]);
-    obj.ERR_MISSING_REQ_PARAM = obj.ERR_COUNT++;
-    obj.ERR_INFO.push([400, "Missing one or more required parameters"]);
-    obj.ERR_NO_RAW_DATA = obj.ERR_COUNT++;
-    obj.ERR_INFO.push([400, "Record has no raw data"]);
-    obj.ERR_XFR_CONFLICT = obj.ERR_COUNT++;
-    obj.ERR_INFO.push([400, "Data transfer conflict"]);
-    obj.ERR_INTERNAL_FAULT = obj.ERR_COUNT++;
-    obj.ERR_INFO.push([400, "Internal server fault"]);
-    obj.ERR_NO_ALLOCATION = obj.ERR_COUNT++;
-    obj.ERR_INFO.push([400, "No allocation available"]);
-    obj.ERR_ALLOCATION_EXCEEDED = obj.ERR_COUNT++;
-    obj.ERR_INFO.push([400, "Storage allocation exceeded"]);
 
     obj.CHARSET_ID = 0;
     obj.CHARSET_ALIAS = 1;
@@ -320,7 +287,7 @@ module.exports = (function () {
 
         if (!spec) {
             throw [
-                obj.ERR_INTERNAL_FAULT,
+                error.ERR_INTERNAL_FAULT,
                 "Input specification for '" +
                     a_field +
                     "' not found. Please contact system administrator.",
@@ -345,7 +312,7 @@ module.exports = (function () {
             // Check length if specified
             if (spec.max_len && val.length > spec.max_len)
                 throw [
-                    obj.ERR_INPUT_TOO_LONG,
+                    error.ERR_INPUT_TOO_LONG,
                     "'" +
                         spec.label +
                         "' field is too long. Maximum length is " +
@@ -369,7 +336,7 @@ module.exports = (function () {
                         // lower alpha (a-z)
                         if (extra.indexOf(val.charAt(i)) == -1)
                             throw [
-                                obj.ERR_INVALID_CHAR,
+                                error.ERR_INVALID_CHAR,
                                 "Invalid character(s) in '" + spec.label + "' field.",
                             ];
                     }
@@ -385,7 +352,7 @@ module.exports = (function () {
                 if (val === "") {
                     if (spec.required)
                         throw [
-                            obj.ERR_MISSING_REQ_PARAM,
+                            error.ERR_MISSING_REQ_PARAM,
                             "Required field '" + spec.label + "' cannot be deleted.",
                         ];
 
@@ -393,7 +360,7 @@ module.exports = (function () {
                     else a_out[a_field] = null;
                 }
             } else if (spec.required)
-                throw [obj.ERR_MISSING_REQ_PARAM, "Missing required field '" + spec.label + "'."];
+                throw [error.ERR_MISSING_REQ_PARAM, "Missing required field '" + spec.label + "'."];
         }
     };
 
@@ -404,7 +371,7 @@ module.exports = (function () {
     obj.validatePassword = function (pw) {
         if (pw.length < obj.PASSWORD_MIN_LEN) {
             throw [
-                obj.ERR_INVALID_PARAM,
+                error.ERR_INVALID_PARAM,
                 "ERROR: password must be at least " +
                     obj.PASSWORD_MIN_LEN +
                     " characters in length.",
@@ -428,7 +395,7 @@ module.exports = (function () {
 
         if (j != 3) {
             throw [
-                obj.ERR_INVALID_PARAM,
+                error.ERR_INVALID_PARAM,
                 "ERROR: password must contain at least one number (0-9) and one special character (" +
                     obj.pw_chars +
                     ").",
@@ -454,10 +421,10 @@ module.exports = (function () {
     obj.handleException = function (e, res) {
         console.log("Service exception:", e);
 
-        if (obj.isInteger(e) && e >= 0 && e < obj.ERR_COUNT) {
-            res.throw(obj.ERR_INFO[e][0], obj.ERR_INFO[e][1]);
+        if (obj.isInteger(e) && e >= 0 && e < error.ERR_COUNT) {
+            res.throw(error.ERR_INFO[e][0], error.ERR_INFO[e][1]);
         } else if (Array.isArray(e)) {
-            res.throw(obj.ERR_INFO[e[0]][0], e[1]);
+            res.throw(error.ERR_INFO[e[0]][0], e[1]);
             //} else if ( e.hasOwnProperty( "errorNum" )) {
         } else if (Object.prototype.hasOwnProperty.call(e, "errorNum")) {
             switch (e.errorNum) {
@@ -588,7 +555,7 @@ module.exports = (function () {
             .toArray();
 
         if (result.length !== 1) {
-            throw [obj.ERR_NOT_FOUND, "No user matching Globus IDs found"];
+            throw [error.ERR_NOT_FOUND, "No user matching Globus IDs found"];
         }
 
         var first_uuid = result[0]._id;
@@ -596,7 +563,7 @@ module.exports = (function () {
         for (var i = 1; i < result.length; i++) {
             if (first_uuid != result[i]._id) {
                 throw [
-                    obj.ERR_INVALID_PARAM,
+                    error.ERR_INVALID_PARAM,
                     "uuid_list does not resolve to a single user, unable to unambiguously resolve user, it is possible that you have multiple accounts when you should have only a single one problematic ids are: " +
                         first_uuid +
                         " and " +
@@ -623,7 +590,7 @@ module.exports = (function () {
             })
             .toArray();
         if (result.length != 1) {
-            throw [obj.ERR_NOT_FOUND, "No user matching Globus IDs found"];
+            throw [error.ERR_NOT_FOUND, "No user matching Globus IDs found"];
         }
 
         var first_uuid = result[0]._id;
@@ -679,7 +646,7 @@ module.exports = (function () {
 
         if (a_client_id.startsWith("u/")) {
             if (!obj.db.u.exists(a_client_id)) {
-                throw [obj.ERR_INVALID_PARAM, "No such user '" + a_client_id + "'"];
+                throw [error.ERR_INVALID_PARAM, "No such user '" + a_client_id + "'"];
             }
 
             return obj.db._document({
@@ -709,7 +676,7 @@ module.exports = (function () {
             });
         } else {
             if (!obj.db.u.exists("u/" + a_client_id)) {
-                throw [obj.ERR_INVALID_PARAM, "No such user 'u/" + a_client_id + "'"];
+                throw [error.ERR_INVALID_PARAM, "No such user 'u/" + a_client_id + "'"];
             }
             return obj.db._document({
                 _id: "u/" + a_client_id,
@@ -724,7 +691,7 @@ module.exports = (function () {
 
         if (result.length != 1) {
             //console.log("Client", a_client_id, "not found, params:", params );
-            throw [obj.ERR_NOT_FOUND, "Account/Identity '" + a_client_id + "' not found"];
+            throw [error.ERR_NOT_FOUND, "Account/Identity '" + a_client_id + "' not found"];
         }
 
         return result[0];
@@ -795,10 +762,10 @@ module.exports = (function () {
             .toArray();
 
         if (result.length === 0) {
-            throw [obj.ERR_NOT_FOUND, "No user matching Globus IDs found"];
+            throw [error.ERR_NOT_FOUND, "No user matching Globus IDs found"];
         } else if (result.length > 1) {
             throw [
-                obj.ERR_NOT_FOUND,
+                error.ERR_NOT_FOUND,
                 "Multiple DataFed accounts associated with the provided Globus identities" +
                     result.toString(),
             ];
@@ -815,7 +782,7 @@ module.exports = (function () {
             })
             .toArray();
         if (result.length !== 1)
-            throw [obj.ERR_NOT_FOUND, "No user matching authentication key found"];
+            throw [error.ERR_NOT_FOUND, "No user matching authentication key found"];
 
         return result[0];
     };
@@ -832,7 +799,7 @@ module.exports = (function () {
 
         //console.log( "key res:", result );
         if (result.length != 1)
-            throw [obj.ERR_NOT_FOUND, "No user matching authentication key found"];
+            throw [error.ERR_NOT_FOUND, "No user matching authentication key found"];
 
         return result[0];
     };
@@ -922,17 +889,17 @@ module.exports = (function () {
             _from: a_user_id,
             _to: a_repo_id,
         });
-        if (!alloc) throw [obj.ERR_NO_ALLOCATION, "No allocation on repo " + a_repo_id];
+        if (!alloc) throw [error.ERR_NO_ALLOCATION, "No allocation on repo " + a_repo_id];
 
         if (alloc.data_size >= alloc.data_limit)
             throw [
-                obj.ERR_ALLOCATION_EXCEEDED,
+                error.ERR_ALLOCATION_EXCEEDED,
                 "Allocation data size exceeded (max: " + alloc.data_limit + ")",
             ];
 
         if (alloc.rec_count >= alloc.rec_limit)
             throw [
-                obj.ERR_ALLOCATION_EXCEEDED,
+                error.ERR_ALLOCATION_EXCEEDED,
                 "Allocation record count exceeded (max: " + alloc.rec_limit + ")",
             ];
 
@@ -968,7 +935,7 @@ module.exports = (function () {
         var id = obj.resolveID(a_obj_id, a_client);
 
         if (!obj.db._exists(id))
-            throw [obj.ERR_INVALID_PARAM, "Record '" + id + "' does not exist."];
+            throw [error.ERR_INVALID_PARAM, "Record '" + id + "' does not exist."];
 
         var doc = obj.db._document(id);
 
@@ -1085,7 +1052,7 @@ module.exports = (function () {
         if (first_owner !== null) {
             var owner_id = first_owner._to; // obj.db.owner.firstExample({ _from: a_object_id })._to;
         } else {
-            throw [obj.ERR_NOT_FOUND, "Data record for owner not found " + a_object_id + "."];
+            throw [error.ERR_NOT_FOUND, "Data record for owner not found " + a_object_id + "."];
         }
         if (owner_id == a_client._id) return true;
 
@@ -1113,7 +1080,7 @@ module.exports = (function () {
                 id: a_object_id,
             });
             if (!data.hasNext()) {
-                throw [obj.ERR_NOT_FOUND, "Data record " + a_object_id + " not found."];
+                throw [error.ERR_NOT_FOUND, "Data record " + a_object_id + " not found."];
             }
             data = data.next();
             if (a_client._id == data) return true;
@@ -1136,23 +1103,23 @@ module.exports = (function () {
     };
 
     obj.ensureAdminPermUser = function (a_client, a_user_id) {
-        if (!obj.hasAdminPermUser(a_client, a_user_id)) throw obj.ERR_PERM_DENIED;
+        if (!obj.hasAdminPermUser(a_client, a_user_id)) throw error.ERR_PERM_DENIED;
     };
 
     obj.ensureAdminPermProj = function (a_client, a_user_id) {
-        if (!obj.hasAdminPermProj(a_client, a_user_id)) throw obj.ERR_PERM_DENIED;
+        if (!obj.hasAdminPermProj(a_client, a_user_id)) throw error.ERR_PERM_DENIED;
     };
 
     obj.ensureManagerPermProj = function (a_client, a_user_id) {
-        if (!obj.hasManagerPermProj(a_client, a_user_id)) throw obj.ERR_PERM_DENIED;
+        if (!obj.hasManagerPermProj(a_client, a_user_id)) throw error.ERR_PERM_DENIED;
     };
 
     obj.ensureAdminPermObject = function (a_client, a_object_id) {
-        if (!obj.hasAdminPermObject(a_client, a_object_id)) throw obj.ERR_PERM_DENIED;
+        if (!obj.hasAdminPermObject(a_client, a_object_id)) throw error.ERR_PERM_DENIED;
     };
 
     obj.ensureAdminPermRepo = function (a_client, a_repo_id) {
-        if (!obj.hasAdminPermRepo(a_client, a_repo_id)) throw obj.ERR_PERM_DENIED;
+        if (!obj.hasAdminPermRepo(a_client, a_repo_id)) throw error.ERR_PERM_DENIED;
     };
 
     obj.isSrcParentOfDest = function (a_src_id, a_dest_id) {
@@ -1175,7 +1142,7 @@ module.exports = (function () {
 
         if (i != -1) {
             if (!a_id.startsWith("d/") && !a_id.startsWith("c/") && !a_id.startsWith("p/"))
-                throw [obj.ERR_INVALID_PARAM, "Invalid ID '" + a_id + "'"];
+                throw [error.ERR_INVALID_PARAM, "Invalid ID '" + a_id + "'"];
             id = a_id;
         } else {
             var alias_id = "a/";
@@ -1185,13 +1152,13 @@ module.exports = (function () {
             var alias = obj.db.alias.firstExample({
                 _to: alias_id,
             });
-            if (!alias) throw [obj.ERR_NOT_FOUND, "Alias '" + a_id + "' does not exist"];
+            if (!alias) throw [error.ERR_NOT_FOUND, "Alias '" + a_id + "' does not exist"];
 
             id = alias._from;
         }
 
         if (!obj.db._exists(id)) {
-            throw [obj.ERR_INVALID_PARAM, "Record '" + id + "' does not exist."];
+            throw [error.ERR_INVALID_PARAM, "Record '" + id + "' does not exist."];
         }
 
         return id;
@@ -1204,7 +1171,7 @@ module.exports = (function () {
 
         if (i != -1) {
             if (!a_id.startsWith("d/"))
-                throw [obj.ERR_INVALID_PARAM, "Invalid data record ID '" + a_id + "'"];
+                throw [error.ERR_INVALID_PARAM, "Invalid data record ID '" + a_id + "'"];
             id = a_id;
         } else {
             var alias_id = "a/";
@@ -1214,19 +1181,19 @@ module.exports = (function () {
             alias = obj.db.alias.firstExample({
                 _to: alias_id,
             });
-            if (!alias) throw [obj.ERR_NOT_FOUND, "Alias '" + a_id + "' does not exist"];
+            if (!alias) throw [error.ERR_NOT_FOUND, "Alias '" + a_id + "' does not exist"];
 
             id = alias._from;
 
             if (!id.startsWith("d/"))
                 throw [
-                    obj.ERR_INVALID_PARAM,
+                    error.ERR_INVALID_PARAM,
                     "Alias '" + a_id + "' does not identify a data record",
                 ];
         }
 
         if (!obj.db.d.exists(id)) {
-            throw [obj.ERR_INVALID_PARAM, "Data record '" + id + "' does not exist."];
+            throw [error.ERR_INVALID_PARAM, "Data record '" + id + "' does not exist."];
         }
 
         return id;
@@ -1238,7 +1205,7 @@ module.exports = (function () {
 
         if (i != -1) {
             if (!a_id.startsWith("c/"))
-                throw [obj.ERR_INVALID_PARAM, "Invalid collection ID '" + a_id + "'"];
+                throw [error.ERR_INVALID_PARAM, "Invalid collection ID '" + a_id + "'"];
             id = a_id;
         } else {
             var alias_id = "a/";
@@ -1248,19 +1215,19 @@ module.exports = (function () {
             var alias = obj.db.alias.firstExample({
                 _to: alias_id,
             });
-            if (!alias) throw [obj.ERR_NOT_FOUND, "Alias '" + a_id + "' does not exist"];
+            if (!alias) throw [error.ERR_NOT_FOUND, "Alias '" + a_id + "' does not exist"];
 
             id = alias._from;
 
             if (!id.startsWith("c/"))
                 throw [
-                    obj.ERR_INVALID_PARAM,
+                    error.ERR_INVALID_PARAM,
                     "Alias '" + a_id + "' does not identify a collection",
                 ];
         }
 
         if (!obj.db.c.exists(id)) {
-            throw [obj.ERR_INVALID_PARAM, "Collection '" + id + "' does not exist."];
+            throw [error.ERR_INVALID_PARAM, "Collection '" + id + "' does not exist."];
         }
 
         return id;
@@ -1272,7 +1239,7 @@ module.exports = (function () {
 
         if (i != -1) {
             if (!a_id.startsWith("c/"))
-                throw [obj.ERR_INVALID_PARAM, "Invalid collection ID '" + a_id + "'"];
+                throw [error.ERR_INVALID_PARAM, "Invalid collection ID '" + a_id + "'"];
             id = a_id;
         } else {
             var alias_id = "a/";
@@ -1283,19 +1250,19 @@ module.exports = (function () {
             var alias = obj.db.alias.firstExample({
                 _to: alias_id,
             });
-            if (!alias) throw [obj.ERR_NOT_FOUND, "Alias '" + alias_id + "' does not exist"];
+            if (!alias) throw [error.ERR_NOT_FOUND, "Alias '" + alias_id + "' does not exist"];
 
             id = alias._from;
 
             if (!id.startsWith("c/"))
                 throw [
-                    obj.ERR_INVALID_PARAM,
+                    error.ERR_INVALID_PARAM,
                     "Alias '" + alias_id + "' does not identify a collection",
                 ];
         }
 
         if (!obj.db.c.exists(id)) {
-            throw [obj.ERR_INVALID_PARAM, "Collection '" + id + "' does not exist."];
+            throw [error.ERR_INVALID_PARAM, "Collection '" + id + "' does not exist."];
         }
 
         return id;
@@ -1307,7 +1274,7 @@ module.exports = (function () {
 
         if (i != -1) {
             if (!a_id.startsWith("d/") && !a_id.startsWith("c/"))
-                throw [obj.ERR_INVALID_PARAM, "Invalid ID '" + a_id + "'"];
+                throw [error.ERR_INVALID_PARAM, "Invalid ID '" + a_id + "'"];
             id = a_id;
         } else {
             var alias_id = "a/";
@@ -1317,14 +1284,14 @@ module.exports = (function () {
             var alias = obj.db.alias.firstExample({
                 _to: alias_id,
             });
-            if (!alias) throw [obj.ERR_NOT_FOUND, "Alias '" + a_id + "' does not exist"];
+            if (!alias) throw [error.ERR_NOT_FOUND, "Alias '" + a_id + "' does not exist"];
 
             id = alias._from;
         }
 
         if (!obj.db._exists(id)) {
             throw [
-                obj.ERR_INVALID_PARAM,
+                error.ERR_INVALID_PARAM,
                 (id.charAt(0) == "d" ? "Data record '" : "Collection '") + id + "' does not exist.",
             ];
         }
@@ -1579,7 +1546,7 @@ module.exports = (function () {
 
         // Detect misplaced topic delimiters
         for (i in topics) {
-            if (topics[i].length === 0) throw [obj.ERR_INVALID_PARAM, "Invalid category"];
+            if (topics[i].length === 0) throw [error.ERR_INVALID_PARAM, "Invalid category"];
         }
 
         var topic, parent; //,tag;
@@ -2547,7 +2514,7 @@ module.exports = (function () {
                 dep = deps.next();
                 if (dep == src)
                     throw [
-                        obj.ERR_INVALID_PARAM,
+                        error.ERR_INVALID_PARAM,
                         "Circular dependency detected in references, from " + id,
                     ];
                 obj.checkDependencies(dep, src ? src : id, depth + 1);
@@ -2933,7 +2900,7 @@ module.exports = (function () {
             } else {
                 //console.log( "save", id );
                 if (tag.length > 40)
-                    throw [obj.ERR_INVALID_PARAM, "Tag too long (max 40 characters)."];
+                    throw [error.ERR_INVALID_PARAM, "Tag too long (max 40 characters)."];
 
                 for (j = 0; j < tag.length; j++) {
                     code = tag.charCodeAt(j);
@@ -2943,7 +2910,7 @@ module.exports = (function () {
                         code !== 45
                     )
                         // "-"
-                        throw [obj.ERR_INVALID_CHAR, "Invalid character(s) in tag."];
+                        throw [error.ERR_INVALID_CHAR, "Invalid character(s) in tag."];
                 }
 
                 obj.db.tag.save({
@@ -3056,7 +3023,7 @@ module.exports = (function () {
                         ((obj.PERM_RD_REC | obj.PERM_LIST) != (obj.PERM_RD_REC | obj.PERM_LIST))
                     ) {
                         throw [
-                            obj.ERR_PERM_DENIED,
+                            error.ERR_PERM_DENIED,
                             "Permission denied for collection '" + col._id + "'",
                         ];
                     }
@@ -3145,7 +3112,7 @@ module.exports = (function () {
                     if (a_inh_perm == undefined) {
                         // Only throw a PERM_DENIED error if this is one of the user-specified collections (not a child)
                         throw [
-                            obj.ERR_PERM_DENIED,
+                            error.ERR_PERM_DENIED,
                             "Permission denied for collection '" + col._id + "'",
                         ];
                     } else {
@@ -3208,7 +3175,7 @@ module.exports = (function () {
      *
      * GLOBUS_TRANSFER: "<UUID>|<scopes>"
      * @returns {{}} Object containing the parsed key/values of the input other_token_data string.
-     * @throws obj.ERR_INVALAD_PARAM
+     * @throws error.ERR_INVALAD_PARAM
      *
      * @example
      * // returns { uuid: "1cbaaee5-b938-4a4e-87a8-f1ec4d5d92f9", scopes: "urn:globus:auth:scope:transfer.api.globus.org:all+email" }
@@ -3223,13 +3190,13 @@ module.exports = (function () {
             // GLOBUS_TRANSFER parse currently assumes uuid and scopes exist, but this may change
             const parsed_data = other_token_data.split("|");
             if (parsed_data.length !== 2) {
-                throw [obj.ERR_INVALID_PARAM, "Unexpected count of additional token data provided"];
+                throw [error.ERR_INVALID_PARAM, "Unexpected count of additional token data provided"];
             }
 
             const parsed_uuid = parsed_data[0];
             if (!obj.isUUID(parsed_uuid)) {
                 throw [
-                    obj.ERR_INVALID_PARAM,
+                    error.ERR_INVALID_PARAM,
                     "Provided other_token_data does not follow format of '<UUID>|<scopes>'",
                 ];
             }
@@ -3237,7 +3204,7 @@ module.exports = (function () {
             if (!parsed_scopes.includes("transfer.api.globus.org")) {
                 // TODO: does this need validation, and is this validation sufficient?
                 throw [
-                    obj.ERR_INVALID_PARAM,
+                    error.ERR_INVALID_PARAM,
                     "Scopes included in other_token_data do not refer to transfer resource, but transfer resource was specified",
                 ];
             }

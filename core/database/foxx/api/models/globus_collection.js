@@ -1,6 +1,7 @@
 "use strict";
 
 const support = require("../support");
+const error = require("../lib/error_codes");
 
 const database = require("@arangodb").db;
 const globus_collection_collection = database.globus_coll;
@@ -32,7 +33,7 @@ class GlobusCollectionModel {
      */
     constructor(globus_collection_id) {
         if (!globus_collection_id) {
-            throw [support.ERR_MISSING_REQ_PARAM, "A Globus Collection ID must be provided"];
+            throw [error.ERR_MISSING_REQ_PARAM, "A Globus Collection ID must be provided"];
         }
         this.#globus_collection_uuid = globus_collection_id;
     }
