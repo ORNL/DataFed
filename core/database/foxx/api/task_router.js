@@ -18,14 +18,13 @@ router
         let task = null;
         try {
             logger.logRequestStarted({
-                client: "undefined",
+                client: req.queryParams.task_id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/view",
                 status: "Started",
                 description: "View an existing task record",
             });
-
             if (!g_db._exists(req.queryParams.task_id)) {
                 // WARNING - do not change this error message it is acted on by the task worker
                 throw [
@@ -56,7 +55,7 @@ router
 
             res.send([task]);
             logger.logRequestSuccess({
-                client: "undefined",
+                client: req.queryParams.task_id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/view",
@@ -66,15 +65,14 @@ router
             });
         } catch (e) {
             logger.logRequestFailure({
-                client: "undefined",
+                client: req.queryParams.task_id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/view",
                 status: "Failure",
                 description: "View an existing task record",
                 extra: task,
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
 
             g_lib.handleException(e, res);
@@ -92,7 +90,7 @@ router
 
         try {
             logger.logRequestStarted({
-                client: "undefined",
+                client: req.queryParams.task_id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/run",
@@ -183,7 +181,7 @@ router
 
                     result = run_func.call(g_tasks, task);
                     logger.logRequestSuccess({
-                        client: "undefined",
+                        client: req.queryParams.task_id,
                         correlationId: req.headers["x-correlation-id"],
                         httpVerb: "GET",
                         routePath: basePath + "/run",
@@ -246,7 +244,7 @@ router
             //console.log("task/run return");
             res.send(result);
             logger.logRequestSuccess({
-                client: "undefined",
+                client:req.queryParams.task_id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/run",
@@ -256,7 +254,7 @@ router
             });
         } catch (e) {
             logger.logRequestFailure({
-                client: "undefined",
+                client: req.queryParams.task_id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/run",
