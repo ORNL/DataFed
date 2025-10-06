@@ -2,6 +2,7 @@
 
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
+const error = require("./lib/error_codes");
 
 module.exports = (function () {
     var obj = {};
@@ -41,7 +42,7 @@ module.exports = (function () {
      * - `ext_data`: A list of external data records.
      * - `visited`: A record of visited items during recursion.
      *
-     * @throws {Error} g_lib.ERR_INVALID_MODE - If an invalid mode is passed.
+     * @throws {Error} error.ERR_INVALID_MODE - If an invalid mode is passed.
      *
      * @example
      * const result = obj.preprocessItems(client, newOwnerId, dataIds, g_lib.TT_DATA_GET);
@@ -170,7 +171,7 @@ module.exports = (function () {
             if (id.charAt(0) == "c") {
                 if (a_ctxt.mode == g_lib.TT_DATA_PUT)
                     throw [
-                        g_lib.ERR_INVALID_PARAM,
+                        error.ERR_INVALID_PARAM,
                         "Collections not supported for PUT operations.",
                     ];
                 is_coll = true;
@@ -195,7 +196,7 @@ module.exports = (function () {
 
             if (!g_db._exists(id))
                 throw [
-                    g_lib.ERR_INVALID_PARAM,
+                    error.ERR_INVALID_PARAM,
                     (is_coll ? "Collection '" : "Data record '") + id + "' does not exist.",
                 ];
 
@@ -211,7 +212,7 @@ module.exports = (function () {
 
                 // Make sure user isn't trying to delete root
                 if (doc.is_root && a_ctxt.mode == g_lib.TT_REC_DEL)
-                    throw [g_lib.ERR_PERM_DENIED, "Cannot delete root collection " + id];
+                    throw [error.ERR_PERM_DENIED, "Cannot delete root collection " + id];
 
                 /* If either collection OR data permission are not satisfied,
                 will need to evaluate grant and inherited collection
@@ -244,7 +245,7 @@ module.exports = (function () {
                             ((perm.grant | perm.inherited) & a_ctxt.coll_perm) !=
                             a_ctxt.coll_perm
                         ) {
-                            throw [g_lib.ERR_PERM_DENIED, "Permission denied for collection " + id];
+                            throw [error.ERR_PERM_DENIED, "Permission denied for collection " + id];
                         }
 
                         // inherited and inhgrant perms only apply to recursion
@@ -276,14 +277,14 @@ module.exports = (function () {
                                     a_ctxt.visited[doc.owner] = 1;
                                 } else {
                                     throw [
-                                        g_lib.ERR_PERM_DENIED,
+                                        error.ERR_PERM_DENIED,
                                         "Permission denied for data record " + id,
                                     ];
                                 }
                             }
                         } else {
                             throw [
-                                g_lib.ERR_PERM_DENIED,
+                                error.ERR_PERM_DENIED,
                                 "Permission denied for data record " + id,
                             ];
                         }
@@ -327,7 +328,7 @@ module.exports = (function () {
                                 a_ctxt.data_perm
                             )
                                 throw [
-                                    g_lib.ERR_PERM_DENIED,
+                                    error.ERR_PERM_DENIED,
                                     "Permission denied for data record " + id,
                                 ];
                         }
@@ -351,7 +352,7 @@ module.exports = (function () {
                                 a_ctxt.data_perm
                             ) {
                                 throw [
-                                    g_lib.ERR_PERM_DENIED,
+                                    error.ERR_PERM_DENIED,
                                     "Permission denied for data record " + id,
                                 ];
                             }
@@ -362,7 +363,7 @@ module.exports = (function () {
                 if (doc.external) {
                     if (a_ctxt.mode == g_lib.TT_DATA_PUT)
                         throw [
-                            g_lib.ERR_INVALID_PARAM,
+                            error.ERR_INVALID_PARAM,
                             "Cannot upload to external data on record '" + doc.id + "'.",
                         ];
 

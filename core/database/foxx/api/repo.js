@@ -3,6 +3,7 @@
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
 const { errors } = require("@arangodb");
+const error = require("./lib/error_codes");
 const pathModule = require("./posix_path");
 
 /**
@@ -80,12 +81,12 @@ class Repo {
                     this.#exists = true;
                 } else {
                     this.#exists = false;
-                    this.#error = g_lib.ERR_NOT_FOUND;
+                    this.#error = error.ERR_NOT_FOUND;
                     this.#err_msg = "Invalid repo: (" + a_key + "). No record found.";
                 }
             } catch (e) {
                 this.#exists = false;
-                this.#error = g_lib.ERR_INTERNAL_FAULT;
+                this.#error = error.ERR_INTERNAL_FAULT;
                 this.#err_msg = "Unknown error encountered.";
                 console.log(e);
             }
@@ -135,12 +136,12 @@ class Repo {
     pathType(a_path) {
         // Ensure the repo exists
         if (!this.#exists) {
-            throw [g_lib.ERR_PERM_DENIED, "Repo does not exist " + this.#repo_id];
+            throw [error.ERR_PERM_DENIED, "Repo does not exist " + this.#repo_id];
         }
 
         let repo = g_db._document(this.#repo_id);
         if (!repo.path) {
-            throw [g_lib.ERR_INTERNAL_FAULT, "Repo document is missing path: " + this.#repo_id];
+            throw [error.ERR_INTERNAL_FAULT, "Repo document is missing path: " + this.#repo_id];
         }
 
         // Get and sanitize the repo root path by removing the trailing slash if one exists

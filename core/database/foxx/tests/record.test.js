@@ -5,6 +5,7 @@ const expect = chai.expect;
 const Record = require("../api/record");
 const g_db = require("@arangodb").db;
 const g_lib = require("../api/support");
+const error = require("../api/lib/error_codes");
 const arangodb = require("@arangodb");
 
 function recordRepoAndUserSetup(record_key, user_id, repo_data) {
@@ -36,7 +37,7 @@ describe("Record Class", () => {
         const record = new Record("invalidKey");
         expect(record.exists()).to.be.false;
         expect(record.key()).to.equal("invalidKey");
-        expect(record.error()).to.equal(g_lib.ERR_NOT_FOUND);
+        expect(record.error()).to.equal(error.ERR_NOT_FOUND);
         expect(record.errorMessage()).to.equal("Invalid key: (invalidKey). No record found.");
     });
 
@@ -83,7 +84,7 @@ describe("Record Class", () => {
         expect(record.isManaged()).to.be.false;
         expect(record.exists()).to.be.true;
         expect(record.key()).to.equal(valid_key);
-        expect(record.error()).to.equal(g_lib.ERR_PERM_DENIED);
+        expect(record.error()).to.equal(error.ERR_PERM_DENIED);
         const pattern = /^Permission denied data is not managed by DataFed/;
         expect(record.errorMessage()).to.match(pattern);
     });
@@ -195,7 +196,7 @@ describe("Record Class", () => {
 
         const record = new Record(valid_key);
         expect(record.isPathConsistent("/incorrect/file/path/" + valid_key)).to.be.false;
-        expect(record.error()).to.equal(g_lib.ERR_PERM_DENIED);
+        expect(record.error()).to.equal(error.ERR_PERM_DENIED);
         const pattern = /^Record path is not consistent/;
         expect(record.errorMessage()).to.match(pattern);
     });
@@ -311,7 +312,7 @@ describe("Record Class", () => {
         const record = new Record(valid_key);
         expect(record.isPathConsistent("/incorrect/file/path/user/sherry/" + valid_key)).to.be
             .false;
-        expect(record.error()).to.equal(g_lib.ERR_PERM_DENIED);
+        expect(record.error()).to.equal(error.ERR_PERM_DENIED);
         const pattern = /^Record path is not consistent/;
         expect(record.errorMessage()).to.match(pattern);
     });
