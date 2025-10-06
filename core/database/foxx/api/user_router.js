@@ -944,18 +944,20 @@ router
                                 g_db._update(user_id, obj, {
                                     keepNull: false,
                                 });
-                                break;
-                            }
-                            logger.logRequestSuccess({
-                                client: client?._id,
-                                correlationId: req.headers["x-correlation-id"],
-                                httpVerb: "GET",
-                                routePath: basePath + "/token/set",
-                                status: "Success",
-                                description: "Setting user token",
-                                extra: "undefined",
-                            });
+                            break;
+                        }
                     }
+                    const tokenTypeName = Object.keys(g_lib.AccessTokenType).find( key => g_lib.AccessTokenType[key] === token_type);
+
+                    logger.logRequestSuccess({
+                            client: client?._id,
+                            correlationId: req.headers["x-correlation-id"], 
+                            httpVerb: "GET",
+                            routePath: basePath + "/token/set",
+                            status: "Success",
+                            description: "Setting user token",
+                            extra: `${tokenTypeName} (${token_type})`,
+                        });
                 },
             });
         } catch (e) {
@@ -1289,7 +1291,7 @@ router
                 routePath: basePath + "/view",
                 status: "Success",
                 description: "View User Information",
-                extra: user,
+                extra: user._id,
             }); //req.queryParams.details ?
         } catch (e) {
             g_lib.handleException(e, res);
@@ -1300,7 +1302,7 @@ router
                 routePath: basePath + "/view",
                 status: "Failure",
                 description: "View User Information",
-                extra: user,
+                extra: user._id,
                 error: e,
             });
         }
