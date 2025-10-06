@@ -938,26 +938,27 @@ router
                             });
                             break;
                         }
-                        case g_lib.AccessTokenType.GLOBUS_DEFAULT:
-                            {
-                                // Existing logic, default actions
-                                g_db._update(user_id, obj, {
-                                    keepNull: false,
-                                });
+                        case g_lib.AccessTokenType.GLOBUS_DEFAULT: {
+                            // Existing logic, default actions
+                            g_db._update(user_id, obj, {
+                                keepNull: false,
+                            });
                             break;
                         }
                     }
-                    const tokenTypeName = Object.keys(g_lib.AccessTokenType).find( key => g_lib.AccessTokenType[key] === token_type);
+                    const tokenTypeName = Object.keys(g_lib.AccessTokenType).find(
+                        (key) => g_lib.AccessTokenType[key] === token_type,
+                    );
 
                     logger.logRequestSuccess({
-                            client: client?._id,
-                            correlationId: req.headers["x-correlation-id"], 
-                            httpVerb: "GET",
-                            routePath: basePath + "/token/set",
-                            status: "Success",
-                            description: "Setting user token",
-                            extra: `${tokenTypeName} (${token_type})`,
-                        });
+                        client: client?._id,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "GET",
+                        routePath: basePath + "/token/set",
+                        status: "Success",
+                        description: "Setting user token",
+                        extra: `${tokenTypeName} (${token_type})`,
+                    });
                 },
             });
         } catch (e) {
