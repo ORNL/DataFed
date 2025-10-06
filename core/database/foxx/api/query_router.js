@@ -352,7 +352,7 @@ router
                 });
             }
         } catch (e) {
-            logger.logRequestSuccess({
+            logger.logRequestFailure({
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
@@ -747,7 +747,7 @@ router
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/exec/direct",
-                status: "Success",
+                status: "Failure",
                 description: "Execute published data search query",
                 extra: results,
                 message: e.message,
