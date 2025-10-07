@@ -245,7 +245,7 @@ router
             //console.log("task/run return");
             res.send(result);
             logger.logRequestSuccess({
-                client:req.queryParams.task_id,
+                client: req.queryParams.task_id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/run",
