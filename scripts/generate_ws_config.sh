@@ -34,7 +34,6 @@ Help() {
   echo "                                  datafed.ornl.gov:7513"
   echo "                                  The default is to use the domain name and port 7513."
   echo "-z, --zeromq-session-secret       ZeroMQ session secret"
-  echo "-y, --zeromq-system-secret        ZeroMQ system secret"
   echo "-w, --web-cert-path               Path to web server certificate file."
   echo "-k, --web-key-path                Path to web server key file."
   echo "-t, --google-analytics-tag        The tag associated with a Google Analytics stream"
@@ -101,7 +100,7 @@ else
   local_DATAFED_GOOGLE_ANALYTICS_TAG=$(printenv DATAFED_GOOGLE_ANALYTICS_TAG)
 fi
 
-VALID_ARGS=$(getopt -o hs:i:z:y:w:k:c:t: --long 'help',globus-secret:,globus-id:,zeromq-session-secret:,zeromq-system-secret:,web-cert-path:,web-key-path:,core-address-port:,google-analytics-tag: -- "$@")
+VALID_ARGS=$(getopt -o hs:i:z:w:k:c:t: --long 'help',globus-secret:,globus-id:,zeromq-session-secret:,web-cert-path:,web-key-path:,core-address-port:,google-analytics-tag: -- "$@")
 if [[ $? -ne 0 ]]; then
   exit 1
 fi
@@ -121,11 +120,6 @@ while [ : ]; do
   -i | --globus-id)
     echo "Processing 'DataFed Globus App client id' option. Input argument is '$2'"
     local_DATAFED_GLOBUS_APP_ID=$2
-    shift 2
-    ;;
-  -y | --zeromq-system-secret)
-    echo "Processing 'DataFed ZeroMQ system secret' option. Input argument is '$2'"
-    local_DATAFED_ZEROMQ_SYSTEM_SECRET=$2
     shift 2
     ;;
   -w | --web-cert-path)

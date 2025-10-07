@@ -74,9 +74,9 @@ The npm packages needed primarily by the web server are:
 
 This can be done with a helper scripts these scripts are for ubuntu::
 
-    ./DataFed/scripts/install_core_dependencies.sh
-    ./DataFed/scripts/install_repo_dependencies.sh
-    ./DataFed/scripts/install_ws_dependencies.sh
+    ./DataFed/external/DataFedDependencies/scripts/install_core_dependencies.sh
+    ./DataFed/external/DataFedDependencies/scripts/install_repo_dependencies.sh
+    ./DataFed/external/DataFedDependencies/scripts/install_ws_dependencies.sh
 
 The next step is to enter configuration options that are listed in ./config/datafed.sh. To
 generate a template for this file you will first need to run::
@@ -89,7 +89,6 @@ of the configuration options:
 1. DATAFED_DEFAULT_LOG_PATH - Needed by core, repo, web services
 2. DATAFED_DATABASE_PASSWORD - Needed by core
 3. DATAFED_ZEROMQ_SESSION_SECRET - Needed by web server
-4. DATAFED_ZEROMQ_SYSTEM_SECRET - Needed by web server
 5. DATAFED_LEGO_EMAIL - Needed by web server
 6. DATAFED_WEB_KEY_PATH - Needed by web server
 7. DATAFED_WEB_CERT_PATH - Needed by web server

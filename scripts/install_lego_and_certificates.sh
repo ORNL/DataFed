@@ -6,7 +6,7 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/..")
 source "${PROJECT_ROOT}/config/datafed.sh"
-source "${PROJECT_ROOT}/scripts/utils.sh"
+source "${PROJECT_ROOT}/external/DataFedDependencies/scripts/utils.sh"
 
 Help() {
   echo "$(basename $0) Will install lego and use Let's Encrypt to create certificates."
