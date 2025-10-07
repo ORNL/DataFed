@@ -110,8 +110,7 @@ router
                 status: "Failure",
                 description: "Create Query",
                 extra: result,
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
 
             g_lib.handleException(e, res);
@@ -218,8 +217,7 @@ router
                 status: "Failure",
                 description: "Update a saved query",
                 extra: result,
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -292,8 +290,7 @@ router
                 status: "Failure",
                 description: "View specified query",
                 extra: qry,
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
 
             g_lib.handleException(e, res);
@@ -361,8 +358,7 @@ router
                 status: "Failure",
                 description: "Delete specified query",
                 extra: req.queryParams.ids[i],
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
 
             g_lib.handleException(e, res);
@@ -439,8 +435,7 @@ router
                 status: "Failure",
                 description: "List client saved queries",
                 extra: result,
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -698,8 +693,7 @@ router
                 status: "Failure",
                 description: "Execute specified queries",
                 extra: results,
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -751,8 +745,7 @@ router
                 status: "Failure",
                 description: "Execute published data search query",
                 extra: results,
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
