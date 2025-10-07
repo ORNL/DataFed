@@ -262,8 +262,7 @@ router
                 status: "Failure",
                 description: "Run task",
                 extra: result,
-                message: e.message,
-                stack: e.stack,
+                e: e,
             });
             g_lib.handleException(e, res);
         }
@@ -293,7 +292,7 @@ router
         let result = null;
         try {
             logger.logRequestStarted({
-                client: "undefined",
+                client: ,req.queryParams.task_id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/abort",
@@ -321,7 +320,7 @@ router
 
             res.send(result);
             logger.logRequestSuccess({
-                client: "undefined",
+                client: req.queryParams.task_id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/abort",
@@ -331,15 +330,14 @@ router
             });
         } catch (e) {
             logger.logRequestFailure({
-                client: "undefined",
+                client: req.queryParams.task_id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/abort",
                 status: "Failure",
                 description: "Abort a schedule task",
                 extra: result,
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -353,7 +351,7 @@ router
     .post("/delete", function (req, res) {
         try {
             logger.logRequestStarted({
-                client: "undefined",
+                client: req.queryParams.task_id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/delete",
@@ -373,7 +371,7 @@ router
 
             g_lib.graph.task.remove(req.queryParams.task_id);
             logger.logRequestSuccess({
-                client: "undefined",
+                client: req.queryParams.task_id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/delete",
@@ -384,15 +382,14 @@ router
         } catch (e) {
             g_lib.handleException(e, res);
             logger.logRequestFailure({
-                client: "undefined",
+                client: req.queryParams.task_id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/delete",
                 status: "Failure",
                 description: "Delete an existing task record",
                 extra: "undefined",
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
         }
     })
@@ -406,7 +403,7 @@ router
         try {
             const client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
-                client: client?._id,
+                client: req.queryParams.task_id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/list",
@@ -448,7 +445,7 @@ router
 
             res.send(result);
             logger.logRequestSuccess({
-                client: client?._id,
+                client: req.queryParams.task_id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/list",
@@ -458,15 +455,14 @@ router
             });
         } catch (e) {
             logger.logRequestFailure({
-                client: client?._id,
+                client: req.queryParams.task_id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/list",
                 status: "Failure",
                 description: "List task records",
                 extra: result,
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -495,7 +491,7 @@ router
         try {
             result = [];
             logger.logRequestStarted({
-                client: "undefined",
+                client: req.queryParams.task_id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/reload",
@@ -519,7 +515,7 @@ router
 
             res.send(result);
             logger.logRequestSuccess({
-                client: "undefined",
+                client: req.queryParams.task_id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/reload",
@@ -529,15 +525,14 @@ router
             });
         } catch (e) {
             logger.logRequestFailure({
-                client: "undefined",
+                client: req.queryParams.task_id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/reload",
                 status: "Failure",
                 description: "Reload ready/running task records",
                 extra: result,
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -549,7 +544,7 @@ router
     .get("/purge", function (req, res) {
         try {
             logger.logRequestStarted({
-                client: "undefined",
+                client: req.queryParams.task_id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/purge",
@@ -575,7 +570,7 @@ router
                 },
             });
             logger.logRequestSuccess({
-                client: "undefined",
+                client: req.queryParams.task_id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/purge",
@@ -585,15 +580,14 @@ router
             });
         } catch (e) {
             logger.logRequestFailure({
-                client: "undefined",
+                client: req.queryParams.task_id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/purge",
                 status: "Failure",
                 description: "Purge completed task records",
                 extra: "undefined",
-                message: e.message,
-                stack: e.stack,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
