@@ -1292,7 +1292,7 @@ router
                 routePath: basePath + "/view",
                 status: "Success",
                 description: "View User Information",
-                extra: `uid=${user._id}, is_admin=${!!client?.is_admin}`,
+                extra: `uid=${user.uid}, is_admin=${!!client?.is_admin}`,
             }); //req.queryParams.details ?
         } catch (e) {
             g_lib.handleException(e, res);
@@ -1303,7 +1303,7 @@ router
                 routePath: basePath + "/view",
                 status: "Failure",
                 description: "View User Information",
-                extra: `uid=${user._id}, is_admin=${!!client?.is_admin}`,
+                extra: `uid=${user.uid}, is_admin=${!!client?.is_admin}`,
                 error: e,
             });
         }
