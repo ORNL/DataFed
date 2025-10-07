@@ -280,7 +280,7 @@ router
                 routePath: basePath + "/create",
                 status: "Success",
                 description: "Create new user entry",
-                extra: result,
+                extra: user.new.uid,
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -290,7 +290,7 @@ router
                 routePath: basePath + "/create",
                 status: "Failure",
                 description: "Create new user entry",
-                extra: result,
+                extra: user.new.uid,
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -1291,7 +1291,7 @@ router
                 routePath: basePath + "/view",
                 status: "Success",
                 description: "View User Information",
-                extra: user._id,
+                extra: `uid=${user._id}, is_admin=${!!client?.is_admin}`,
             }); //req.queryParams.details ?
         } catch (e) {
             g_lib.handleException(e, res);
@@ -1302,7 +1302,7 @@ router
                 routePath: basePath + "/view",
                 status: "Failure",
                 description: "View User Information",
-                extra: user._id,
+                extra: `uid=${user._id}, is_admin=${!!client?.is_admin}`,
                 error: e,
             });
         }
