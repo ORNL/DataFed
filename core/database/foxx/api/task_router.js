@@ -262,7 +262,7 @@ router
                 status: "Failure",
                 description: "Run task",
                 extra: result,
-                e: e,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
