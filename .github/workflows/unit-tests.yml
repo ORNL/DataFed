@@ -2,31 +2,21 @@ name: Unit-Testing
 on: push
 jobs:
     unit-test:
-        runs-on: ubuntu-24.04
+        runs-on: ubuntu-latest
+        container: debian:bookworm
         if: ${{ always() }}
         steps:
-            - uses: actions/checkout@v4
-            - name: Update ubuntu
-              run: sudo apt-get update
-            - name: Install software-properties-common
-              run: sudo apt install software-properties-common
-            - name: Add deadsnakes apt repository
-              run: sudo add-apt-repository ppa:deadsnakes/ppa
-            - name: Update to bring in deadsnakes packages
-              run: sudo apt update
-            - name: Install Python 3.9
-              run: sudo apt install python3.9 python3.9-dev python3.9-venv python3.9-distutils
-            - name: Ensure pip is installed
-              run: python3.9 -m ensurepip
+            - uses: actions/checkout@v2
+            - name: Update debian
+              run: apt update
             - name: Install dependencies
               run: |
                   ./scripts/generate_datafed.sh
-                  sudo ./scripts/install_core_dependencies.sh
-                  ./scripts/generate_datafed.sh
+                  ./scripts/install_core_dependencies.sh
             - name: Build
               run: |
-                  cmake -S. -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_WEB_SERVER=OFF
-                  cmake --build build -j4
+                  /opt/datafed/dependencies/bin/cmake -S. -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_WEB_SERVER=OFF
+                  /opt/datafed/dependencies/bin/cmake --build build -j4
             - name: Run tests
               run: |
-                  cmake --build build --target test
+                  /opt/datafed/dependencies/bin/cmake --build build --target test
