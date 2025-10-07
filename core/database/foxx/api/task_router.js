@@ -5,6 +5,7 @@ const router = createRouter();
 const joi = require("joi");
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
+const error = require("./lib/error_codes");
 const g_tasks = require("./tasks");
 const logger = require("./lib/logger");
 const basePath = "task";
@@ -28,7 +29,7 @@ router
             if (!g_db._exists(req.queryParams.task_id)) {
                 // WARNING - do not change this error message it is acted on by the task worker
                 throw [
-                    g_lib.ERR_INVALID_PARAM,
+                    error.ERR_INVALID_PARAM,
                     "Task " + req.queryParams.task_id + " does not exist.",
                 ];
             }
@@ -108,7 +109,7 @@ router
                 action: function () {
                     if (!g_db.task.exists(req.queryParams.task_id))
                         throw [
-                            g_lib.ERR_INVALID_PARAM,
+                            error.ERR_INVALID_PARAM,
                             "Task " + req.queryParams.task_id + " does not exist.",
                         ];
 
@@ -152,7 +153,7 @@ router
                             req.queryParams.step >= task.steps
                         ) {
                             throw [
-                                g_lib.ERR_INVALID_PARAM,
+                                error.ERR_INVALID_PARAM,
                                 "Called run on task " +
                                     task._id +
                                     " with invalid step: " +
@@ -161,7 +162,7 @@ router
                         }
                     } else {
                         throw [
-                            g_lib.ERR_INVALID_PARAM,
+                            error.ERR_INVALID_PARAM,
                             "Called run on task " +
                                 task._id +
                                 " with incorrect status: " +
@@ -310,7 +311,7 @@ router
                 action: function () {
                     if (!g_db._exists(req.queryParams.task_id))
                         throw [
-                            g_lib.ERR_INVALID_PARAM,
+                            error.ERR_INVALID_PARAM,
                             "Task " + req.queryParams.task_id + " does not exist.",
                         ];
 
@@ -362,13 +363,13 @@ router
 
             if (!g_db._exists(req.queryParams.task_id))
                 throw [
-                    g_lib.ERR_INVALID_PARAM,
+                    error.ERR_INVALID_PARAM,
                     "Task " + req.queryParams.task_id + " does not exist.",
                 ];
 
             var task = g_db.task.document(req.queryParams.task_id);
             if (task.status < g_lib.TS_SUCCEEDED)
-                throw [g_lib.ERR_IN_USE, "Cannot delete task that is still scheduled."];
+                throw [error.ERR_IN_USE, "Cannot delete task that is still scheduled."];
 
             g_lib.graph.task.remove(req.queryParams.task_id);
             logger.logRequestSuccess({

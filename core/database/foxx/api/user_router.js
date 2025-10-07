@@ -8,6 +8,7 @@ const auth = createAuth("pbkdf2");
 const g_db = require("@arangodb").db;
 const g_graph = require("@arangodb/general-graph")._graph("sdmsg");
 const g_lib = require("./support");
+const error = require("./lib/error_codes");
 const { UserToken } = require("./lib/user_token");
 const { UserModel } = require("./models/user");
 
@@ -22,11 +23,11 @@ router
             const client = g_lib.getUserFromClientID(req.queryParams.client);
             const is_verified = auth.verify(client.password, req.queryParams.pw);
             if (is_verified === false) {
-                throw g_lib.ERR_AUTHN_FAILED;
+                throw error.ERR_AUTHN_FAILED;
             }
 
             //if ( client.password != req.queryParams.pw )
-            //    throw g_lib.ERR_AUTHN_FAILED;
+            //    throw error.ERR_AUTHN_FAILED;
 
             res.send({
                 uid: client._id,
@@ -47,7 +48,7 @@ router
             var user = g_db._query("for i in u filter i.access == @tok return i", {
                 tok: req.queryParams.token,
             });
-            if (!user.hasNext()) throw g_lib.ERR_AUTHN_FAILED;
+            if (!user.hasNext()) throw error.ERR_AUTHN_FAILED;
 
             res.send({
                 uid: user.next()._id,
@@ -79,7 +80,7 @@ router
 
                     if (idx < 1)
                         throw [
-                            g_lib.ERR_INVALID_PARAM,
+                            error.ERR_INVALID_PARAM,
                             "ERROR: invalid user name (no first/last name) " + name,
                         ];
 
@@ -174,7 +175,7 @@ router
                             })
                         )
                             throw [
-                                g_lib.ERR_IN_USE,
+                                error.ERR_IN_USE,
                                 "ERROR: linked identity value, " + uuid + ", already in use",
                             ];
 
@@ -241,7 +242,7 @@ router
                     if (req.queryParams.subject) {
                         user_id = req.queryParams.subject;
                         if (!g_db.u.exists(user_id))
-                            throw [g_lib.ERR_INVALID_PARAM, "No such user '" + user_id + "'"];
+                            throw [error.ERR_INVALID_PARAM, "No such user '" + user_id + "'"];
                         g_lib.ensureAdminPermUser(client, user_id);
                     } else {
                         user_id = client._id;
@@ -260,7 +261,7 @@ router
 
                         if (idx < 1) {
                             throw [
-                                g_lib.ERR_INVALID_PARAM,
+                                error.ERR_INVALID_PARAM,
                                 "Invalid user name (no first/last name) " + req.queryParams.name,
                             ];
                         }
@@ -354,7 +355,7 @@ router
         try {
             var name = req.queryParams.name_uid.trim();
             if (name.length < 2)
-                throw [g_lib.ERR_INVALID_PARAM, "Input is too short for name/uid search."];
+                throw [error.ERR_INVALID_PARAM, "Input is too short for name/uid search."];
             else if (name.length < 3) name = " " + name + " "; // Pad to allow matches for very short first/last names (i.e. Bo, Li, Xi)
 
             var off = req.queryParams.offset ? req.queryParams.offset : 0,
@@ -409,7 +410,7 @@ router
                     if (req.queryParams.subject) {
                         user_id = req.queryParams.subject;
                         if (!g_db.u.exists(user_id))
-                            throw [g_lib.ERR_INVALID_PARAM, "No such user '" + user_id + "'"];
+                            throw [error.ERR_INVALID_PARAM, "No such user '" + user_id + "'"];
                         g_lib.ensureAdminPermUser(client, user_id);
                     } else {
                         user_id = client._id;
@@ -450,7 +451,7 @@ router
                     if (req.queryParams.subject) {
                         user_id = req.queryParams.subject;
                         if (!g_db.u.exists(user_id))
-                            throw [g_lib.ERR_INVALID_PARAM, "No such user '" + user_id + "'"];
+                            throw [error.ERR_INVALID_PARAM, "No such user '" + user_id + "'"];
                         g_lib.ensureAdminPermUser(client, user_id);
                     } else {
                         user_id = client._id;
@@ -482,7 +483,7 @@ router
             if (req.queryParams.subject) {
                 if (!g_db.u.exists(req.queryParams.subject))
                     throw [
-                        g_lib.ERR_INVALID_PARAM,
+                        error.ERR_INVALID_PARAM,
                         "No such user '" + req.queryParams.subject + "'",
                     ];
 
@@ -549,7 +550,7 @@ router
                         token_type === g_lib.AccessTokenType.GLOBUS_DEFAULT
                     ) {
                         throw [
-                            g_lib.ERR_INVALID_PARAM,
+                            error.ERR_INVALID_PARAM,
                             "Invalid parameters passed, the default action cannot process other_token_data.",
                         ];
                     } else if (
@@ -557,7 +558,7 @@ router
                         token_type !== g_lib.AccessTokenType.GLOBUS_DEFAULT
                     ) {
                         throw [
-                            g_lib.ERR_INVALID_PARAM,
+                            error.ERR_INVALID_PARAM,
                             "Invalid parameters passed, type and other_token_data depend on one another.",
                         ];
                     }
@@ -565,7 +566,7 @@ router
                     if (req.queryParams.subject) {
                         user_id = req.queryParams.subject;
                         if (!g_db.u.exists(user_id))
-                            throw [g_lib.ERR_INVALID_PARAM, "No such user '" + user_id + "'"];
+                            throw [error.ERR_INVALID_PARAM, "No such user '" + user_id + "'"];
                         g_lib.ensureAdminPermUser(client, user_id);
                         user_doc = g_db.u.document(user_id);
                     } else {
@@ -697,7 +698,7 @@ router
             if (req.queryParams.subject) {
                 if (!g_db.u.exists(req.queryParams.subject))
                     throw [
-                        g_lib.ERR_INVALID_PARAM,
+                        error.ERR_INVALID_PARAM,
                         "No such user '" + req.queryParams.subject + "'",
                     ];
 
@@ -752,7 +753,7 @@ router
             if (req.queryParams.subject) {
                 if (!g_db.u.exists(req.queryParams.subject))
                     throw [
-                        g_lib.ERR_INVALID_PARAM,
+                        error.ERR_INVALID_PARAM,
                         "No such user '" + req.queryParams.subject + "'",
                     ];
                 user = g_db.u.document({
@@ -762,7 +763,7 @@ router
                 user = g_lib.getUserFromClientID(req.queryParams.client);
             }
 
-            if (!user.access) throw [g_lib.ERR_NOT_FOUND, "No access token found"];
+            if (!user.access) throw [error.ERR_NOT_FOUND, "No access token found"];
 
             res.send(user.access);
         } catch (e) {
@@ -806,7 +807,7 @@ router
             if (req.queryParams.subject) {
                 if (!g_db.u.exists(req.queryParams.subject))
                     throw [
-                        g_lib.ERR_INVALID_PARAM,
+                        error.ERR_INVALID_PARAM,
                         "No such user '" + req.queryParams.subject + "'",
                     ];
                 user = g_db.u.document({
@@ -1019,7 +1020,7 @@ router
                     if (req.queryParams.subject) {
                         user_id = req.queryParams.subject;
                         if (!g_db.u.exists(user_id))
-                            throw [g_lib.ERR_INVALID_PARAM, "No such user '" + user_id + "'"];
+                            throw [error.ERR_INVALID_PARAM, "No such user '" + user_id + "'"];
                         g_lib.ensureAdminPermUser(client, user_id);
                     } else {
                         user_id = client._id;
@@ -1097,7 +1098,7 @@ router
             if (req.queryParams.subject) {
                 if (!g_db.u.exists(req.queryParams.subject))
                     throw [
-                        g_lib.ERR_INVALID_PARAM,
+                        error.ERR_INVALID_PARAM,
                         "No such user '" + req.queryParams.subject + "'",
                     ];
                 const subject = g_db.u.document(req.queryParams.subject);
@@ -1183,14 +1184,14 @@ router
                         }
                     } else
                         throw [
-                            g_lib.ERR_INVALID_PARAM,
+                            error.ERR_INVALID_PARAM,
                             "Invalid identity value: " + req.queryParams.ident,
                         ];
 
                     if (req.queryParams.subject) {
                         if (!g_db.u.exists(req.queryParams.subject))
                             throw [
-                                g_lib.ERR_INVALID_PARAM,
+                                error.ERR_INVALID_PARAM,
                                 "No such user '" + req.queryParams.subject + "'",
                             ];
 
@@ -1243,7 +1244,7 @@ router
                         g_graph.accn.remove("accn/" + req.queryParams.ident);
                     } else
                         throw [
-                            g_lib.ERR_INVALID_PARAM,
+                            error.ERR_INVALID_PARAM,
                             "Invalid identity value: " + req.queryParams.ident,
                         ];
                 },
