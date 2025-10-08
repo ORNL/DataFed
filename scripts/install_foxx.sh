@@ -52,6 +52,10 @@ local_CURL_SSL_ARG=""
 NODE_EXTRA_CA_CERTS=""
 if [[ ! -z "${local_SSL_CERT_FILE}" ]]; then
     if [ -f "${local_SSL_CERT_FILE}" ]; then
+        echo ""
+	echo "INFO - Found ssl certificates for arango! Building with https."
+	echo "${local_SSL_CERT_FILE}"
+	echo ""
         # Only run if defined and not empty, API_SCHEME must be https in this case
         local_DATABASE_API_SCHEME="https"
         local_CURL_SSL_ARG="--cacert $local_SSL_CERT_FILE"
@@ -100,22 +104,18 @@ while [ : ]; do
     exit 0
     ;;
   -u | --database-user)
-    echo "Processing 'Database user' option. Input argument is '$2'"
     local_DATABASE_USER=$2
     shift 2
     ;;
   -p | --database-password)
-    echo "Processing 'Database password' option. Input argument is '$2'"
     local_DATAFED_DATABASE_PASSWORD=$2
     shift 2
     ;;
   -f | --foxx-api-major-version)
-    echo "Processing 'Foxx major api version' option. Input argument is '$2'"
     local_FOXX_MAJOR_API_VERSION=$2
     shift 2
     ;;
   -i | --database-host)
-    echo "Processing 'database host' option. Input argument is '$2'"
     local_DATAFED_DATABASE_HOST=$2
     shift 2
     ;;
@@ -124,7 +124,7 @@ while [ : ]; do
     break
     ;;
   \?) # incorrect option
-    echo "Error: Invalid option"
+    echo "ERROR - Invalid option"
     exit
     ;;
   esac
@@ -132,9 +132,9 @@ done
 
 ERROR_DETECTED=0
 if [ -z "$local_DATAFED_DATABASE_PASSWORD" ]; then
-  echo "Error DATAFED_DATABASE_PASSWORD is not defined, this is a required argument"
-  echo "      This variable can be set using the command line option -p, --database-password"
-  echo "      or with the environment variable DATAFED_DATABASE_PASSWORD."
+  echo "ERROR - DATAFED_DATABASE_PASSWORD is not defined, this is a required argument"
+  echo "        This variable can be set using the command line option -p, --database-password"
+  echo "        or with the environment variable DATAFED_DATABASE_PASSWORD."
   ERROR_DETECTED=1
 fi
 
@@ -151,7 +151,7 @@ if [ "${local_DATABASE_API_SCHEME}" == "https" ]; then
   set -e
 
   if [ "$error_code" == "60" ]; then
-    echo "Error detected, untrusted certificate."
+    echo "ERROR - Untrusted certificate detected of address ${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}"
     echo "$output"
     exit 1
   fi
@@ -164,8 +164,8 @@ url="${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATAB
 code=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl ${local_CURL_SSL_ARG} -s -o /dev/null -w "%{http_code}" --user "$basic_auth" "$url")
 
 if [[ "$code" != "200" ]]; then
-  echo "Error detected in attempting to connect to database at $url"
-  echo "HTTP code is: $code"
+  echo "ERROR - Attempting to connect to database at $url"
+  echo "        HTTP code is: $code"
   exit 1
 fi
 
@@ -174,17 +174,15 @@ url2="${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATA
 # not exist
 output=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl ${local_CURL_SSL_ARG} -s -i --user "$basic_auth" "$url2")
 
-echo "Output: $output"
-
 if [[ "$output" == "" ]]; then
-  echo "curl command failed $url2 exiting"
+  echo "ERROR - curl command failed $url2 exiting"
   exit 1
 fi
 
 if [[ "$output" =~ .*"sdms".* ]]; then
-  echo "SDMS already exists do nothing"
+  echo "INFO - SDMS already exists do nothing."
 else
-  echo "Creating SDMS"
+  echo "INFO - Creating SDMS"
   arangosh --server.endpoint \
     "${local_ARANGOSH_SERVER_ENDPOINT_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
     --server.password "${local_DATAFED_DATABASE_PASSWORD}" \
@@ -211,11 +209,11 @@ fi
 # syntax for the REST http endpoints with curl so we are going to try the node module
 
 # 1. Install nvm which will allow us to update node
-echo "Installing nvm"
+echo "INFO - Installing nvm"
 install_nvm
-echo "Installing node"
+echo "INFO - Installing node"
 install_node
-echo "Installing foxx_cli"
+echo "INFO - Installing foxx_cli"
 install_foxx_cli
 
 FOXX_PREFIX=""
@@ -226,7 +224,6 @@ fi
 echo "${local_DATAFED_DATABASE_PASSWORD}" >"${SOURCE}/database_temp.password"
 PATH_TO_PASSWD_FILE="${SOURCE}/database_temp.password"
 
-echo "Path to PASSWRD file ${PATH_TO_PASSWD_FILE} passwd is $local_DATAFED_DATABASE_PASSWORD"
 echo "$local_DATAFED_DATABASE_PASSWORD" >"${PATH_TO_PASSWD_FILE}"
 
 { # try
@@ -242,14 +239,13 @@ echo "$local_DATAFED_DATABASE_PASSWORD" >"${PATH_TO_PASSWD_FILE}"
   INSTALL_API="FALSE"
   FOUND_API=$(echo "$existing_services" | grep "/api/${local_FOXX_MAJOR_API_VERSION}")
 
-  echo "$FOUND_API"
-
   RESULT=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl ${local_CURL_SSL_ARG} -s ${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/version)
   CODE=$(echo "${RESULT}" | jq '.code')
-  echo "Code is $CODE"
   if [ -z "${FOUND_API}" ]; then
+    echo "INFO - API found at ${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/version"
     INSTALL_API="TRUE"
   elif [ "$CODE" == "503" ]; then
+    echo "WARNING - $CODE returned, attempting to remove api at /api/${local_FOXX_MAJOR_API_VERSION}"
     INSTALL_API="TRUE"
     # Remove the api at this point
     # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint
@@ -261,8 +257,8 @@ echo "$local_DATAFED_DATABASE_PASSWORD" >"${PATH_TO_PASSWD_FILE}"
       --database "${local_DATABASE_NAME}"
   fi
 
-  echo "$RESULT"
   if [ "${INSTALL_API}" == "TRUE" ]; then
+    echo "INFO - Installing arango foxx services at /api/${local_FOXX_MAJOR_API_VERSION}"
     # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint
     "${FOXX_PREFIX}foxx" install \
       --server "${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
@@ -272,7 +268,7 @@ echo "$local_DATAFED_DATABASE_PASSWORD" >"${PATH_TO_PASSWD_FILE}"
       "/api/${local_FOXX_MAJOR_API_VERSION}" \
       "${DATAFED_PROJECT_ROOT}/core/database/foxx/"
   else
-    echo "DataFed Foxx Services have already been uploaded, replacing to ensure consisency"
+    echo "INFO - Replacing arango foxx services at /api/${local_FOXX_MAJOR_API_VERSION}"
     # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint
     "${FOXX_PREFIX}foxx" replace \
       --server "${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
@@ -280,9 +276,9 @@ echo "$local_DATAFED_DATABASE_PASSWORD" >"${PATH_TO_PASSWD_FILE}"
       -p "${PATH_TO_PASSWD_FILE}" \
       --database "${local_DATABASE_NAME}" \
       "/api/${local_FOXX_MAJOR_API_VERSION}" "${DATAFED_PROJECT_ROOT}/core/database/foxx/"
-    echo "foxx replace -u ${local_DATABASE_USER} -p ${PATH_TO_PASSWD_FILE} --database ${local_DATABASE_NAME} /api/${local_FOXX_MAJOR_API_VERSION} ${DATAFED_PROJECT_ROOT}/core/database/foxx"
   fi
   rm "${PATH_TO_PASSWD_FILE}"
 } || { # catch
+  echo "ERROR - Unexpected error encountered!"
   rm "${PATH_TO_PASSWD_FILE}"
 }

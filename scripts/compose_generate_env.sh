@@ -61,14 +61,14 @@ while [ : ]; do
     break
     ;;
   \?) # incorrect option
-    echo "Error: Invalid option"
+    echo "ERROR - Invalid command line flag detected."
     exit
     ;;
   esac
 done
 
 if [ ! -d "${COMPOSE_ENV_DIR}" ]; then
-  echo "Invalid folder for .env file specified ${COMPOSE_ENV_DIR}"
+  echo "ERROR - Invalid folder for .env file specified ${COMPOSE_ENV_DIR}"
   exit 1
 fi
 
@@ -76,7 +76,7 @@ fi
 read_existing_env() {
   local env_file="$1"
   if [ -f "$env_file" ]; then
-    echo "Reading existing values from $env_file"
+    echo "INFO - Reading existing values from $env_file"
     # Source the .env file to load existing values
     set -a # automatically export all variables
     source "$env_file"
@@ -108,14 +108,14 @@ ENV_FILE_PATH="${COMPOSE_ENV_DIR}/.env"
 # Check if .env file exists and handle accordingly
 if [ -f "$ENV_FILE_PATH" ]; then
   if [ "$FORCE_OVERWRITE" = "FALSE" ]; then
-    echo "Found existing .env file at $ENV_FILE_PATH"
-    echo "Reading existing values and updating with any new environment variables..."
+    echo "INFO - Found existing .env file at $ENV_FILE_PATH"
+    echo "INFO - Reading existing values and updating with any new environment variables..."
     read_existing_env "$ENV_FILE_PATH"
   else
-    echo "Force overwrite enabled. Existing .env file will be replaced."
+    echo "INFO - Force overwrite enabled. Existing .env file will be replaced."
   fi
 else
-  echo "Creating new .env file at $ENV_FILE_PATH"
+  echo "INFO - Creating new .env file at $ENV_FILE_PATH"
 fi
 
 local_DATAFED_KEY_DIR="${COMPOSE_ENV_DIR}/keys"
@@ -169,23 +169,23 @@ local_DATAFED_CORE_LOG_LEVEL=$(get_env_value "DATAFED_CORE_LOG_LEVEL" "3")
 need_web_certs="FALSE"
 # Check if we need to generate certificates
 if [ "$OVERWRITE_CERTS" = "TRUE" ]; then
-  echo "Overwrite certs flag enabled. Regenerating SSL certificates..."
+  echo "INFO - Overwrite certs flag enabled. Regenerating SSL certificates..."
   need_web_certs="TRUE"
 elif [ ! -e "$local_DATAFED_WEB_CERT_PATH" ] || [ ! -e "$local_DATAFED_WEB_KEY_PATH" ]; then
-  echo "SSL certificates not found. Generating new certificates..."
+  echo "INFO - SSL certificates not found. Generating new certificates..."
   need_web_certs="TRUE"
 else
-  echo "Using existing SSL certificates"
+  echo "INFO - Using existing SSL certificates"
 fi
 
 need_arango_certs="FALSE"
 # Decide if Arango certs need to be generated
 if [ "$ARANGO_USE_SSL" = "TRUE" ]; then
   if [ "$OVERWRITE_CERTS" = "TRUE" ] || [ ! -e "$local_DATAFED_ARANGO_CERT_PATH" ] || [ ! -e "$local_DATAFED_ARANGO_KEY_PATH" ]; then
-      echo "Generating SSL certificates for ArangoDB..."
+      echo "INFO - Generating SSL certificates for ArangoDB..."
       need_arango_certs="TRUE"
   else
-      echo "Using existing ArangoDB SSL certificates"
+      echo "INFO - Using existing ArangoDB SSL certificates"
   fi
 
   [ -z "$local_DATAFED_ARANGO_CERT_PATH" ] && \
@@ -200,7 +200,23 @@ if [ "$ARANGO_USE_SSL" = "TRUE" ]; then
   [ -z "$local_DATAFED_ARANGO_PEM_PATH" ] && \
     local_DATAFED_ARANGO_PEM_PATH="${local_DATAFED_KEY_DIR}/${local_DATAFED_ARANGO_PEM_NAME}"
 
-  local_DATAFED_DATABASE_IP_ADDRESS="https://arango"
+  if [ "$local_DATAFED_DATABASE_IP_ADDRESS" == "http://arango" ]; then
+    echo "WARNING - Switching http://arango to https://arango"
+    local_DATAFED_DATABASE_IP_ADDRESS="https://arango"
+  fi
+else
+  found_arango_certs="FALSE"
+  for file in \
+    "${local_DATAFED_KEY_DIR}/${local_DATAFED_ARANGO_KEY_NAME}" \
+    "${local_DATAFED_KEY_DIR}/${local_DATAFED_ARANGO_PEM_NAME}" \
+    "${local_DATAFED_KEY_DIR}/${local_DATAFED_ARANGO_CERT_NAME}"; do
+      [ -f "$file" ] && found_arango_certs="TRUE"
+  done
+
+  if [ "$found_arango_certs" == "TRUE" ]; then
+    echo "WARNING - Found arango certificate files in ${local_DATAFED_KEY_DIR}"
+    echo "          if you do not intend to build with https they will need to be removed!"
+  fi
 fi
 
 if [ "$need_web_certs" = "TRUE" ]; then
@@ -250,9 +266,9 @@ if [ -f "${local_DATAFED_ARANGO_CERT_PATH}" ]; then
   fi
 else
   if [ ${local_DATAFED_DATABASE_IP_ADDRESS} == "https://arango" ]; then
-    cho "WARNING - Discovered that Arango certs are not defined."
-    cho "          switching DATAFED_DATABASE_IP_ADDRESS from https://arango to http://arango"
-    ocal_DATAFED_DATABASE_IP_ADDRESS="http://arango"
+    echo "WARNING - Discovered that Arango certs are not defined."
+    echo "          switching DATAFED_DATABASE_IP_ADDRESS from https://arango to http://arango"
+    local_DATAFED_DATABASE_IP_ADDRESS="http://arango"
   fi
 fi
 
@@ -335,4 +351,4 @@ done <"$ENV_FILE_PATH"
 
 chmod +x "$unset_env_file_name"
 
-echo "Successfully created/updated .env file at: $ENV_FILE_PATH"
+echo "INFO - Successfully created/updated .env file at: $ENV_FILE_PATH"

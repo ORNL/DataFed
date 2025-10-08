@@ -37,6 +37,35 @@ Create the .env file fill in the missing components that are required.
 ```bash
 ./generate_env.sh
 ```
+
+Note: For the DataFed web service container in the compose instance, the SSL
+certificate and key paths are now hardcoded to
+
+    /opt/datafed/keys/cert.crt
+    /opt/datafed/keys/cert.key
+
+Ensure that if you are replacing the self‐signed certificates manually, the new
+certificates are placed in a keys folder (DataFed/compose/metadata|all/keys) that is
+mounted by the container.
+
+An optional flag ‘--arango-use-ssl’ (or -a) has been added to the
+generate_env.sh script. When this flag is set, additional SSL certificates for
+ArangoDB will be generated and the .env file will be populated with the
+following new variables:
+
+   DATAFED_ARANGO_CERT_PATH
+   DATAFED_ARANGO_KEY_PATH
+   DATAFED_ARANGO_PEM_PATH
+
+Be sure you have your keys folder correctly set up in (DataFed/compose/metadata|all/keys) so that
+the ArangoDB container can mount it and locate the necessary certificate files.
+If not using SSL with Arango, omit this flag so that the container will run
+over TCP (HTTP).
+
+WARNING - If you do not want to run with HTTPS be sure to remove
+datafed-arango.key, datafed-arango.pem, datafed-arango.crt from
+(DataFed/compose/metadata|all/keys) folder.
+
 ### 2. Fill in the needed .env variables for the Metadata Core Services
 
 The .env file will be created in the DataFed/compose/metadata folder and will be hidden.
@@ -305,19 +334,36 @@ docker run --env-file .env \
 To interact more directly with the container the '-i' flag can be added and the
 entrypoint file can be overwritten by including '--entrypoint /bin/bash'
 
-## Common Errors
+## Troubleshooting & Common Errors
+
+### Errors with HTTP and HTTPS for the ArangoDB instance
+
+It is advised to run the `generate_env.sh` script anytime you make changes to the
+.env file. It is designed to keep existing variables while ensuring consistency
+of compatible configuration arguments.
+
+To Turn on ssl.
+
+```
+./generate_env.sh --arango-use-ssl
+```
+
+If you want to turn it off you will have to be careful to remove the certificate
+files that are located in the compose/metadata|all/keys folders.
 
 ### Errors during Compose up
 
-Make sure all the ports that are needed are open on the local host. These
+Make sure all the ports that are needed are open on the localhost. These
 include, ports
 
-443 for the datafed-web and datafed-gcs container
-7512 for the datafed-core container
-50000-51000 for the datafed-gcs container
-9000 for the datafed-repo container
-80 for the datafed-gcs container
-8512 for arangodb web server interface
+| Port         | Description                                     |
+|--------------|-------------------------------------------------|
+| 443          | DataFed-web and DataFed-gcs container           |
+| 7512         | DataFed-core container                          |
+| 50000–51000  | DataFed-gcs container                           |
+| 9000         | DataFed-repo container                          |
+| 80           | DataFed-gcs container                           |
+| 8529         | ArangoDB web server interface                   |
 
 Make sure port 80 is not already bound on the host. Also note that the repo
 server keys should exist in the keys folder before running the gcs instance.
