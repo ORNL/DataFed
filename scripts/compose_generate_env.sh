@@ -210,7 +210,7 @@ else
     "${local_DATAFED_KEY_DIR}/${local_DATAFED_ARANGO_KEY_NAME}" \
     "${local_DATAFED_KEY_DIR}/${local_DATAFED_ARANGO_PEM_NAME}" \
     "${local_DATAFED_KEY_DIR}/${local_DATAFED_ARANGO_CERT_NAME}"; do
-      [ -f "$file" ] && found_arango_certs="TRUE"
+    [ -f "$file" ] && found_arango_certs="TRUE"
   done
 
   if [ "$found_arango_certs" == "TRUE" ]; then
