@@ -304,7 +304,7 @@ router
                     routePath: basePath + "/create",
                     status: "Success",
                     description: "Create a new data record",
-                    extra: result
+                    extra: result,
                 });
 
                 break;
@@ -318,7 +318,7 @@ router
                     description: "Create a new data record",
                     extra: result,
                     message: e.message,
-                    stack: e.stack
+                    stack: e.stack,
                 });
                 if (--retry == 0 || !e.errorNum || e.errorNum != 1200) {
                     g_lib.handleException(e, res);
@@ -413,7 +413,7 @@ router
                     routePath: basePath + "/create/batch",
                     status: "Success",
                     description: "Create a batch of new data records",
-                    extra: result
+                    extra: result,
                 });
 
                 break;
@@ -426,8 +426,7 @@ router
                     status: "Failure",
                     description: "Create a batch of new data records",
                     extra: result,
-                    message: e.message,
-                    stack: e.stack
+                    error: e
                 });
                 if (--retry == 0 || !e.errorNum || e.errorNum != 1200) {
                     g_lib.handleException(e, res);
