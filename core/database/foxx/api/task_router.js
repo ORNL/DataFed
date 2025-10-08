@@ -292,7 +292,7 @@ router
         let result = null;
         try {
             logger.logRequestStarted({
-                client: ,req.queryParams.task_id,
+                client: req.queryParams.task_id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/abort",
