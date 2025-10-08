@@ -51,23 +51,23 @@ local_ARANGOSH_SERVER_ENDPOINT_SCHEME="tcp"
 local_CURL_SSL_ARG=""
 NODE_EXTRA_CA_CERTS=""
 if [[ ! -z "${local_SSL_CERT_FILE}" ]]; then
-    if [ -f "${local_SSL_CERT_FILE}" ]; then
-        echo ""
-	echo "INFO - Found ssl certificates for arango! Building with https."
-	echo "${local_SSL_CERT_FILE}"
-	echo ""
-        # Only run if defined and not empty, API_SCHEME must be https in this case
-        local_DATABASE_API_SCHEME="https"
-        local_CURL_SSL_ARG="--cacert $local_SSL_CERT_FILE"
-        # So foxx will trust the certificate
-        export NODE_EXTRA_CA_CERTS="$local_SSL_CERT_FILE"
-    else
-        echo ""
-	echo "WARNING - SSL_CERT_FILE is defined but the file does not exist! Assuming,"
-	echo "          communication with the database will be over http not https."
-	echo "$local_SSL_CERT_FILE"
-        echo ""
-    fi
+  if [ -f "${local_SSL_CERT_FILE}" ]; then
+    echo ""
+    echo "INFO - Found ssl certificates for arango! Building with https."
+    echo "${local_SSL_CERT_FILE}"
+    echo ""
+    # Only run if defined and not empty, API_SCHEME must be https in this case
+    local_DATABASE_API_SCHEME="https"
+    local_CURL_SSL_ARG="--cacert $local_SSL_CERT_FILE"
+    # So foxx will trust the certificate
+    export NODE_EXTRA_CA_CERTS="$local_SSL_CERT_FILE"
+  else
+    echo ""
+    echo "WARNING - SSL_CERT_FILE is defined but the file does not exist! Assuming,"
+    echo "          communication with the database will be over http not https."
+    echo "$local_SSL_CERT_FILE"
+    echo ""
+  fi
 fi
 
 local_DATABASE_NAME="sdms"
