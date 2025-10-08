@@ -48,14 +48,27 @@ Help() {
 local_DATABASE_API_SCHEME="${DATABASE_API_SCHEME:-http}"
 local_SSL_CERT_FILE="${SSL_CERT_FILE:-}"
 local_ARANGOSH_SERVER_ENDPOINT_SCHEME="tcp"
+local_CURL_SSL_ARG=""
+NODE_EXTRA_CA_CERTS=""
+if [[ ! -z "${local_SSL_CERT_FILE}" ]]; then
+    if [ -f "${local_SSL_CERT_FILE}" ]; then
+        # Only run if defined and not empty, API_SCHEME must be https in this case
+        local_DATABASE_API_SCHEME="https"
+        local_CURL_SSL_ARG="--cacert $local_SSL_CERT_FILE"
+        # So foxx will trust the certificate
+        export NODE_EXTRA_CA_CERTS="$local_SSL_CERT_FILE"
+    else
+        echo ""
+	echo "WARNING - SSL_CERT_FILE is defined but the file does not exist! Assuming,"
+	echo "          communication with the database will be over http not https."
+	echo "$local_SSL_CERT_FILE"
+        echo ""
+    fi
+fi
 
 local_DATABASE_NAME="sdms"
 local_DATABASE_USER="root"
 local_DATABASE_PORT="8529"
-
-if [ -f "${local_SSL_CERT_FILE}" ]; then
-  export NODE_EXTRA_CA_CERTS="${local_SSL_CERT_FILE}"
-fi
 
 if [ -z "${DATAFED_DATABASE_PASSWORD}" ]; then
   local_DATAFED_DATABASE_PASSWORD=""
@@ -133,7 +146,7 @@ basic_auth="$local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD"
 
 if [ "${local_DATABASE_API_SCHEME}" == "https" ]; then
   set +e
-  output=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl --user "$basic_auth" ${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT} 2>&1)
+  output=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl ${local_CURL_SSL_ARG} --user "$basic_auth" ${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT} 2>&1)
   error_code="$?"
   set -e
 
@@ -148,7 +161,7 @@ fi
 
 url="${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_api/database/user"
 # Do not output to /dev/null we need the output
-code=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl -s -o /dev/null -w "%{http_code}" --user "$basic_auth" "$url")
+code=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl ${local_CURL_SSL_ARG} -s -o /dev/null -w "%{http_code}" --user "$basic_auth" "$url")
 
 if [[ "$code" != "200" ]]; then
   echo "Error detected in attempting to connect to database at $url"
@@ -159,7 +172,7 @@ fi
 url2="${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_api/database"
 # We are now going to initialize the DataFed database in Arango, but only if sdms database does
 # not exist
-output=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl -s -i --user "$basic_auth" "$url2")
+output=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl ${local_CURL_SSL_ARG} -s -i --user "$basic_auth" "$url2")
 
 echo "Output: $output"
 
@@ -231,7 +244,7 @@ echo "$local_DATAFED_DATABASE_PASSWORD" >"${PATH_TO_PASSWD_FILE}"
 
   echo "$FOUND_API"
 
-  RESULT=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl -s ${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/version)
+  RESULT=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl ${local_CURL_SSL_ARG} -s ${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/version)
   CODE=$(echo "${RESULT}" | jq '.code')
   echo "Code is $CODE"
   if [ -z "${FOUND_API}" ]; then

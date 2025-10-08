@@ -6,7 +6,7 @@ PROJECT_ROOT=$(realpath "${SOURCE}/..")
 Help() {
   echo "$(basename $0) Build .env file for compose."
   echo
-  echo "Syntax: $(basename $0) [-h|d|r|m|c|f]"
+  echo "Syntax: $(basename $0) [-h|d|r|m|c|f|a]"
   echo "options:"
   echo "-h, --help                        Print this help message"
   echo "-d, --directory                   Directory where .env will be created."
@@ -14,15 +14,17 @@ Help() {
   echo "-m, --metadata-images             Create .env for just metadata services"
   echo "-c, --no-overwrite-certs          Do not overwrite existing certificates"
   echo "-f, --force                       Force overwrite existing .env file"
+  echo "-a, --arango-use-ssl              Install certificates and use HTTPS for ArangoDB (default: HTTP)"
 }
 
-VALID_ARGS=$(getopt -o hd:mrfc --long 'help',directory:,repo-images,metadata-images,force,no-overwrite-certs -- "$@")
+VALID_ARGS=$(getopt -o hd:mrfca --long 'help',directory:,repo-images,metadata-images,force,no-overwrite-certs,arango-use-ssl -- "$@")
 
 BUILD_REPO="TRUE"
 BUILD_METADATA="TRUE"
 COMPOSE_ENV_DIR=""
 OVERWRITE_CERTS="TRUE"
 FORCE_OVERWRITE="FALSE"
+ARANGO_USE_SSL="FALSE"
 eval set -- "$VALID_ARGS"
 while [ : ]; do
   case "$1" in
@@ -48,6 +50,10 @@ while [ : ]; do
     ;;
   -f | --force)
     FORCE_OVERWRITE="TRUE"
+    shift 1
+    ;;
+  -a | --arango-use-ssl)
+    ARANGO_USE_SSL="TRUE"
     shift 1
     ;;
   --)
@@ -112,9 +118,9 @@ else
   echo "Creating new .env file at $ENV_FILE_PATH"
 fi
 
-local_DATAFED_WEB_KEY_DIR="${COMPOSE_ENV_DIR}/keys"
-if [ ! -d "$local_DATAFED_WEB_KEY_DIR" ]; then
-  mkdir -p "$local_DATAFED_WEB_KEY_DIR"
+local_DATAFED_KEY_DIR="${COMPOSE_ENV_DIR}/keys"
+if [ ! -d "$local_DATAFED_KEY_DIR" ]; then
+  mkdir -p "$local_DATAFED_KEY_DIR"
 fi
 
 # Use the new function to get values with proper fallback
@@ -122,9 +128,17 @@ local_DATAFED_DOMAIN=$(get_env_value "DATAFED_DOMAIN" "localhost")
 local_DATAFED_WEB_CERT_NAME="cert.crt"
 local_DATAFED_WEB_KEY_NAME="cert.key"
 
-local_DATAFED_WEB_CERT_PATH=$(get_env_value "DATAFED_WEB_CERT_PATH" "${local_DATAFED_WEB_KEY_DIR}/${local_DATAFED_WEB_CERT_NAME}")
-local_DATAFED_WEB_CSR_PATH=$(get_env_value "DATAFED_WEB_CSR_PATH" "${local_DATAFED_WEB_KEY_DIR}/cert.csr")
-local_DATAFED_WEB_KEY_PATH=$(get_env_value "DATAFED_WEB_KEY_PATH" "${local_DATAFED_WEB_KEY_DIR}/${local_DATAFED_WEB_KEY_NAME}")
+local_DATAFED_ARANGO_CERT_NAME="datafed-arango.crt"
+local_DATAFED_ARANGO_KEY_NAME="datafed-arango.key"
+local_DATAFED_ARANGO_PEM_NAME="datafed-arango.pem"
+
+local_DATAFED_WEB_CERT_PATH=$(get_env_value "DATAFED_WEB_CERT_PATH" "${local_DATAFED_KEY_DIR}/${local_DATAFED_WEB_CERT_NAME}")
+local_DATAFED_WEB_CSR_PATH=$(get_env_value "DATAFED_WEB_CSR_PATH" "${local_DATAFED_KEY_DIR}/cert.csr")
+local_DATAFED_WEB_KEY_PATH=$(get_env_value "DATAFED_WEB_KEY_PATH" "${local_DATAFED_KEY_DIR}/${local_DATAFED_WEB_KEY_NAME}")
+local_DATAFED_ARANGO_CERT_PATH=$(get_env_value "DATAFED_ARANGO_CERT_PATH" "")
+local_DATAFED_ARANGO_CSR_PATH=$(get_env_value "DATAFED_ARANGO_CSR_PATH" "")
+local_DATAFED_ARANGO_KEY_PATH=$(get_env_value "DATAFED_ARANGO_KEY_PATH" "")
+local_DATAFED_ARANGO_PEM_PATH=$(get_env_value "DATAFED_ARANGO_PEM_PATH" "")
 
 # Get all values using the new function
 local_DATAFED_UID=$(get_env_value "DATAFED_UID" "$(id -u)")
@@ -152,36 +166,94 @@ local_DATAFED_GLOBUS_CONTROL_PORT=$(get_env_value "DATAFED_GLOBUS_CONTROL_PORT" 
 local_DATAFED_GLOBUS_SUBSCRIPTION=$(get_env_value "DATAFED_GLOBUS_SUBSCRIPTION" "")
 local_DATAFED_CORE_LOG_LEVEL=$(get_env_value "DATAFED_CORE_LOG_LEVEL" "3")
 
-need_certs="FALSE"
+need_web_certs="FALSE"
 # Check if we need to generate certificates
 if [ "$OVERWRITE_CERTS" = "TRUE" ]; then
   echo "Overwrite certs flag enabled. Regenerating SSL certificates..."
-  need_certs="TRUE"
+  need_web_certs="TRUE"
 elif [ ! -e "$local_DATAFED_WEB_CERT_PATH" ] || [ ! -e "$local_DATAFED_WEB_KEY_PATH" ]; then
   echo "SSL certificates not found. Generating new certificates..."
-  need_certs="TRUE"
+  need_web_certs="TRUE"
 else
   echo "Using existing SSL certificates"
 fi
 
-if [ "$need_certs" = "TRUE" ]; then
-  if [ -e "$local_DATAFED_WEB_CERT_PATH" ]; then
-    rm "${local_DATAFED_WEB_CERT_PATH}"
+need_arango_certs="FALSE"
+# Decide if Arango certs need to be generated
+if [ "$ARANGO_USE_SSL" = "TRUE" ]; then
+  if [ "$OVERWRITE_CERTS" = "TRUE" ] || [ ! -e "$local_DATAFED_ARANGO_CERT_PATH" ] || [ ! -e "$local_DATAFED_ARANGO_KEY_PATH" ]; then
+      echo "Generating SSL certificates for ArangoDB..."
+      need_arango_certs="TRUE"
+  else
+      echo "Using existing ArangoDB SSL certificates"
   fi
-  if [ -e "$local_DATAFED_WEB_KEY_PATH" ]; then
-    rm "${local_DATAFED_WEB_KEY_PATH}"
-  fi
-  if [ -e "$local_DATAFED_WEB_CSR_PATH" ]; then
-    rm "${local_DATAFED_WEB_CSR_PATH}"
-  fi
+
+  [ -z "$local_DATAFED_ARANGO_CERT_PATH" ] && \
+  local_DATAFED_ARANGO_CERT_PATH="${local_DATAFED_KEY_DIR}/${local_DATAFED_ARANGO_CERT_NAME}"
+
+  [ -z "$local_DATAFED_ARANGO_CSR_PATH" ] && \
+    local_DATAFED_ARANGO_CSR_PATH="${local_DATAFED_KEY_DIR}/datafed-arango.csr"
+
+  [ -z "$local_DATAFED_ARANGO_KEY_PATH" ] && \
+    local_DATAFED_ARANGO_KEY_PATH="${local_DATAFED_KEY_DIR}/${local_DATAFED_ARANGO_KEY_NAME}"
+
+  [ -z "$local_DATAFED_ARANGO_PEM_PATH" ] && \
+    local_DATAFED_ARANGO_PEM_PATH="${local_DATAFED_KEY_DIR}/${local_DATAFED_ARANGO_PEM_NAME}"
+
+  local_DATAFED_DATABASE_IP_ADDRESS="https://arango"
+fi
+
+if [ "$need_web_certs" = "TRUE" ]; then
+  for file in \
+    "$local_DATAFED_WEB_CERT_PATH" \
+    "$local_DATAFED_WEB_KEY_PATH" \
+    "$local_DATAFED_WEB_CSR_PATH"; do
+      [ -e "$file" ] && rm "$file"
+  done
+
   openssl genrsa -out "$local_DATAFED_WEB_KEY_PATH" 2048
   openssl req -new -key "$local_DATAFED_WEB_KEY_PATH" \
     -out "${local_DATAFED_WEB_CSR_PATH}" \
-    -subj "/C=US/ST=TN/L=Oak Ridge/O=ORNL/OU=DLT/CN=${local_DATAFED_DOMAIN}"
+    -subj "/C=US/ST=TN/L=DataFed/O=DataFed/OU=DataFed/CN=${local_DATAFED_DOMAIN}"
   openssl x509 -req -days 3650 \
     -in "${local_DATAFED_WEB_CSR_PATH}" \
     -signkey "$local_DATAFED_WEB_KEY_PATH" \
     -out "$local_DATAFED_WEB_CERT_PATH"
+fi
+
+if [ "$need_arango_certs" = "TRUE" ]; then
+  for file in \
+    "$local_DATAFED_ARANGO_CERT_PATH" \
+    "$local_DATAFED_ARANGO_KEY_PATH" \
+    "$local_DATAFED_ARANGO_CSR_PATH" \
+    "$local_DATAFED_ARANGO_PEM_PATH"; do
+      [ -e "$file" ] && rm "$file"
+  done
+
+  openssl genrsa -out "$local_DATAFED_ARANGO_KEY_PATH" 2048
+  openssl req -new -key "$local_DATAFED_ARANGO_KEY_PATH" \
+    -out "${local_DATAFED_ARANGO_CSR_PATH}" \
+    -subj "/C=US/ST=TN/L=DataFed/O=DataFed/OU=DataFed/CN=arango"
+  openssl x509 -req -days 3650 \
+    -in "${local_DATAFED_ARANGO_CSR_PATH}" \
+    -signkey "$local_DATAFED_ARANGO_KEY_PATH" \
+    -out "$local_DATAFED_ARANGO_CERT_PATH"
+
+  cat "$local_DATAFED_ARANGO_CERT_PATH" "$local_DATAFED_ARANGO_KEY_PATH" > "$local_DATAFED_ARANGO_PEM_PATH"
+fi
+
+if [ -f "${local_DATAFED_ARANGO_CERT_PATH}" ]; then
+  if [ ${local_DATAFED_DATABASE_IP_ADDRESS} == "http://arango" ]; then
+    echo "WARNING - Discovered that Arango is set to use certificate: $local_DATAFED_ARANGO_CERT_PATH"
+    echo "          switching DATAFED_DATABASE_IP_ADDRESS from http://arango to https://arango"
+    local_DATAFED_DATABASE_IP_ADDRESS="https://arango"
+  fi
+else
+  if [ ${local_DATAFED_DATABASE_IP_ADDRESS} == "https://arango" ]; then
+    cho "WARNING - Discovered that Arango certs are not defined."
+    cho "          switching DATAFED_DATABASE_IP_ADDRESS from https://arango to http://arango"
+    ocal_DATAFED_DATABASE_IP_ADDRESS="http://arango"
+  fi
 fi
 
 # Handle repo domain logic
@@ -223,7 +295,10 @@ DATAFED_GLOBUS_APP_SECRET=${local_DATAFED_GLOBUS_APP_SECRET}
 DATAFED_GLOBUS_APP_ID=${local_DATAFED_GLOBUS_APP_ID}
 DATAFED_ZEROMQ_SESSION_SECRET=${local_DATAFED_ZEROMQ_SESSION_SECRET}
 DATAFED_WEB_CERT_PATH=${local_DATAFED_WEB_CERT_PATH}
-DATAFED_WEB_KEY_PATH=${local_DATAFED_WEB_CERT_PATH}
+DATAFED_WEB_KEY_PATH=${local_DATAFED_WEB_KEY_PATH}
+DATAFED_ARANGO_CERT_PATH=${local_DATAFED_ARANGO_CERT_PATH}
+DATAFED_ARANGO_KEY_PATH=${local_DATAFED_ARANGO_KEY_PATH}
+DATAFED_ARANGO_PEM_PATH=${local_DATAFED_ARANGO_PEM_PATH}
 DATAFED_DATABASE_PASSWORD=${local_DATAFED_DATABASE_PASSWORD}
 DATAFED_DATABASE_IP_ADDRESS=${local_DATAFED_DATABASE_IP_ADDRESS}
 DATAFED_DATABASE_PORT=${local_DATAFED_DATABASE_PORT}
