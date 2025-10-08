@@ -751,15 +751,15 @@ router
                         priv_key: user.priv_key,
                     },
                 ]);
-            logger.logRequestSuccess({
-                client: user?._id,
-                correlationId: req.headers["x-correlation-id"],
-                httpVerb: "GET",
-                routePath: basePath + "/keys/get",
-                status: "Success",
-                description: "Get user public and private keys",
-                extra: "undefined",
-            });
+                logger.logRequestSuccess({
+                    client: user?._id,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "GET",
+                    routePath: basePath + "/keys/get",
+                    status: "Success",
+                    description: "Get user public and private keys",
+                    extra: "undefined",
+                });
             }
         } catch (e) {
             logger.logRequestFailure({
