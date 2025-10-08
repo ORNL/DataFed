@@ -182,22 +182,22 @@ need_arango_certs="FALSE"
 # Decide if Arango certs need to be generated
 if [ "$ARANGO_USE_SSL" = "TRUE" ]; then
   if [ "$OVERWRITE_CERTS" = "TRUE" ] || [ ! -e "$local_DATAFED_ARANGO_CERT_PATH" ] || [ ! -e "$local_DATAFED_ARANGO_KEY_PATH" ]; then
-      echo "Generating SSL certificates for ArangoDB..."
-      need_arango_certs="TRUE"
+    echo "Generating SSL certificates for ArangoDB..."
+    need_arango_certs="TRUE"
   else
-      echo "Using existing ArangoDB SSL certificates"
+    echo "Using existing ArangoDB SSL certificates"
   fi
 
-  [ -z "$local_DATAFED_ARANGO_CERT_PATH" ] && \
-  local_DATAFED_ARANGO_CERT_PATH="${local_DATAFED_KEY_DIR}/${local_DATAFED_ARANGO_CERT_NAME}"
+  [ -z "$local_DATAFED_ARANGO_CERT_PATH" ] &&
+    local_DATAFED_ARANGO_CERT_PATH="${local_DATAFED_KEY_DIR}/${local_DATAFED_ARANGO_CERT_NAME}"
 
-  [ -z "$local_DATAFED_ARANGO_CSR_PATH" ] && \
+  [ -z "$local_DATAFED_ARANGO_CSR_PATH" ] &&
     local_DATAFED_ARANGO_CSR_PATH="${local_DATAFED_KEY_DIR}/datafed-arango.csr"
 
-  [ -z "$local_DATAFED_ARANGO_KEY_PATH" ] && \
+  [ -z "$local_DATAFED_ARANGO_KEY_PATH" ] &&
     local_DATAFED_ARANGO_KEY_PATH="${local_DATAFED_KEY_DIR}/${local_DATAFED_ARANGO_KEY_NAME}"
 
-  [ -z "$local_DATAFED_ARANGO_PEM_PATH" ] && \
+  [ -z "$local_DATAFED_ARANGO_PEM_PATH" ] &&
     local_DATAFED_ARANGO_PEM_PATH="${local_DATAFED_KEY_DIR}/${local_DATAFED_ARANGO_PEM_NAME}"
 
   local_DATAFED_DATABASE_IP_ADDRESS="https://arango"
@@ -208,7 +208,7 @@ if [ "$need_web_certs" = "TRUE" ]; then
     "$local_DATAFED_WEB_CERT_PATH" \
     "$local_DATAFED_WEB_KEY_PATH" \
     "$local_DATAFED_WEB_CSR_PATH"; do
-      [ -e "$file" ] && rm "$file"
+    [ -e "$file" ] && rm "$file"
   done
 
   openssl genrsa -out "$local_DATAFED_WEB_KEY_PATH" 2048
@@ -227,7 +227,7 @@ if [ "$need_arango_certs" = "TRUE" ]; then
     "$local_DATAFED_ARANGO_KEY_PATH" \
     "$local_DATAFED_ARANGO_CSR_PATH" \
     "$local_DATAFED_ARANGO_PEM_PATH"; do
-      [ -e "$file" ] && rm "$file"
+    [ -e "$file" ] && rm "$file"
   done
 
   openssl genrsa -out "$local_DATAFED_ARANGO_KEY_PATH" 2048
@@ -239,7 +239,7 @@ if [ "$need_arango_certs" = "TRUE" ]; then
     -signkey "$local_DATAFED_ARANGO_KEY_PATH" \
     -out "$local_DATAFED_ARANGO_CERT_PATH"
 
-  cat "$local_DATAFED_ARANGO_CERT_PATH" "$local_DATAFED_ARANGO_KEY_PATH" > "$local_DATAFED_ARANGO_PEM_PATH"
+  cat "$local_DATAFED_ARANGO_CERT_PATH" "$local_DATAFED_ARANGO_KEY_PATH" >"$local_DATAFED_ARANGO_PEM_PATH"
 fi
 
 if [ -f "${local_DATAFED_ARANGO_CERT_PATH}" ]; then
