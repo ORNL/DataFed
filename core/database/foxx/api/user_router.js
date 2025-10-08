@@ -743,7 +743,7 @@ router
                     description: "Get user public and private keys",
                     extra: "undefined",
                 });
-            } else
+            } else {
                 res.send([
                     {
                         uid: user._id,
@@ -760,6 +760,7 @@ router
                 description: "Get user public and private keys",
                 extra: "undefined",
             });
+            }
         } catch (e) {
             logger.logRequestFailure({
                 client: user?._id,
@@ -1426,7 +1427,7 @@ router
         }
 
         res.send(result);
-        logger.logRequestSucceed({
+        logger.logRequestSuccess({
             client: client?._id,
             correlationId: req.headers["x-correlation-id"],
             httpVerb: "GET",
