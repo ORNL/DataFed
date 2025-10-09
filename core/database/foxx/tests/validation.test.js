@@ -12,8 +12,8 @@ const {
     validateAllocationParams,
 } = require("../api/repository/validation");
 
-describe("Repository Validation Tests", function () {
-    describe("Result Type", function () {
+describe("unit_validation_repository: Repository Validation Tests", function () {
+    describe("unit_validation_repository: Result Type", function () {
         it("should create ok result", function () {
             const result = Result.ok("success");
             expect(result.ok).to.be.true;
@@ -29,7 +29,7 @@ describe("Repository Validation Tests", function () {
         });
     });
 
-    describe("validateNonEmptyString", function () {
+    describe("unit_validation_repository: validateNonEmptyString", function () {
         it("should accept valid non-empty strings", function () {
             const result = validateNonEmptyString("valid string", "Test field");
             expect(result.ok).to.be.true;
@@ -60,7 +60,7 @@ describe("Repository Validation Tests", function () {
         });
     });
 
-    describe("validateCommonFields", function () {
+    describe("unit_validation_repository: validateCommonFields", function () {
         it("should accept valid common fields", function () {
             const config = {
                 id: "test-repo",
@@ -133,7 +133,7 @@ describe("Repository Validation Tests", function () {
         });
     });
 
-    describe("validatePOSIXPath", function () {
+    describe("unit_validation_repository: validatePOSIXPath", function () {
         it("should accept valid absolute paths", function () {
             const result = validatePOSIXPath("/valid/path", "Test path");
             expect(result.ok).to.be.true;
@@ -164,7 +164,7 @@ describe("Repository Validation Tests", function () {
         });
     });
 
-    describe("validateRepositoryPath", function () {
+    describe("unit_validation_repository: validateRepositoryPath", function () {
         it("should accept path ending with repo ID", function () {
             const result = validateRepositoryPath("/data/repos/test-repo", "test-repo");
             expect(result.ok).to.be.true;
@@ -188,7 +188,7 @@ describe("Repository Validation Tests", function () {
         });
     });
 
-    describe("validateGlobusConfig", function () {
+    describe("unit_validation_repository: validateGlobusConfig", function () {
         function getValidGlobusConfig() {
             return {
                 id: "test-repo",
@@ -265,7 +265,7 @@ describe("Repository Validation Tests", function () {
         });
     });
 
-    describe("validateMetadataConfig", function () {
+    describe("unit_validation_repository: validateMetadataConfig", function () {
         function getValidMetadataConfig() {
             return {
                 id: "test-repo",
@@ -299,7 +299,7 @@ describe("Repository Validation Tests", function () {
         });
     });
 
-    describe("validateAllocationParams", function () {
+    describe("unit_validation_repository: validateAllocationParams", function () {
         it("should accept valid allocation parameters", function () {
             const params = {
                 subject: "user123",
