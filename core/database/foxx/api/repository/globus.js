@@ -3,7 +3,7 @@
 const { Result, ExecutionMethod, createAllocationResult } = require("./types");
 const { validateAllocationParams } = require("./validation");
 const g_tasks = require("../tasks");
-const g_lib = require("../support");
+const error = require("../lib/error_codes");
 
 /**
  * @module globus
@@ -63,7 +63,7 @@ const createAllocation = (repoData, params) => {
         // Handle both Error objects and array-style errors
         const errorMessage = e.message || (Array.isArray(e) && e[1]) || String(e);
         return Result.err({
-            code: g_lib.ERR_INTERNAL_FAULT,
+            code: error.ERR_INTERNAL_FAULT,
             message: `Failed to create allocation task: ${errorMessage}`,
         });
     }
@@ -73,7 +73,7 @@ const createAllocation = (repoData, params) => {
 const deleteAllocation = (repoData, subjectId) => {
     if (!subjectId || typeof subjectId !== "string") {
         return Result.err({
-            code: g_lib.ERR_INVALID_PARAM,
+            code: error.ERR_INVALID_PARAM,
             message: "Subject ID is required for allocation deletion",
         });
     }
@@ -94,7 +94,7 @@ const deleteAllocation = (repoData, subjectId) => {
         );
     } catch (e) {
         return Result.err({
-            code: g_lib.ERR_INTERNAL_FAULT,
+            code: error.ERR_INTERNAL_FAULT,
             message: `Failed to create deletion task: ${e.message}`,
         });
     }
@@ -118,7 +118,7 @@ const getCapacityInfo = (repoData) => {
         });
     } catch (e) {
         return Result.err({
-            code: g_lib.ERR_INTERNAL_FAULT,
+            code: error.ERR_INTERNAL_FAULT,
             message: `Failed to get capacity info: ${e.message}`,
         });
     }

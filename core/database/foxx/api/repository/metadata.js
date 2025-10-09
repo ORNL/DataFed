@@ -2,7 +2,7 @@
 
 const { Result, ExecutionMethod, createAllocationResult } = require("./types");
 const { validateAllocationParams } = require("./validation");
-const g_lib = require("../support");
+const error = require("../lib/error_codes");
 
 /**
  * @module metadata
@@ -57,7 +57,7 @@ const createAllocation = (repoData, params) => {
         return Result.ok(createAllocationResult(ExecutionMethod.DIRECT, result));
     } catch (e) {
         return Result.err({
-            code: g_lib.ERR_INTERNAL_FAULT,
+            code: error.ERR_INTERNAL_FAULT,
             message: `Failed to create metadata allocation: ${e.message}`,
         });
     }
@@ -67,7 +67,7 @@ const createAllocation = (repoData, params) => {
 const deleteAllocation = (repoData, subjectId) => {
     if (!subjectId || typeof subjectId !== "string") {
         return Result.err({
-            code: g_lib.ERR_INVALID_PARAM,
+            code: error.ERR_INVALID_PARAM,
             message: "Subject ID is required for allocation deletion",
         });
     }
@@ -85,7 +85,7 @@ const deleteAllocation = (repoData, subjectId) => {
         return Result.ok(createAllocationResult(ExecutionMethod.DIRECT, result));
     } catch (e) {
         return Result.err({
-            code: g_lib.ERR_INTERNAL_FAULT,
+            code: error.ERR_INTERNAL_FAULT,
             message: `Failed to delete metadata allocation: ${e.message}`,
         });
     }
@@ -109,7 +109,7 @@ const getCapacityInfo = (repoData) => {
         });
     } catch (e) {
         return Result.err({
-            code: g_lib.ERR_INTERNAL_FAULT,
+            code: error.ERR_INTERNAL_FAULT,
             message: `Failed to get capacity info: ${e.message}`,
         });
     }

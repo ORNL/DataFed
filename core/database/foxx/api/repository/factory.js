@@ -10,7 +10,7 @@ const {
 const { validateGlobusConfig, validateMetadataConfig } = require("./validation");
 const globusRepo = require("./globus");
 const metadataRepo = require("./metadata");
-const g_lib = require("../support");
+const error = require("../lib/error_codes");
 
 /**
  * Repository factory using Rust-compatible patterns
@@ -46,7 +46,7 @@ const createRepositoryByType = (config) => {
 
     if (missingFields.length > 0) {
         return Result.err({
-            code: g_lib.ERR_INVALID_PARAM,
+            code: error.ERR_INVALID_PARAM,
             message: `Missing required repository fields: ${missingFields.join(", ")}`,
         });
     }
@@ -108,7 +108,7 @@ const createRepositoryByType = (config) => {
              * @see https://doc.rust-lang.org/book/ch06-02-match.html#matching-with-option-t
              */
             return Result.err({
-                code: g_lib.ERR_INVALID_PARAM,
+                code: error.ERR_INVALID_PARAM,
                 message: `Unknown repository type: ${config.type}`,
             });
     }
@@ -145,14 +145,14 @@ const executeRepositoryOperation = (repository, operation, ...args) => {
     const impl = getRepositoryImplementation(repository.type);
     if (!impl) {
         return Result.err({
-            code: g_lib.ERR_INVALID_PARAM,
+            code: error.ERR_INVALID_PARAM,
             message: `No implementation for repository type: ${repository.type}`,
         });
     }
 
     if (typeof impl[operation] !== "function") {
         return Result.err({
-            code: g_lib.ERR_NOT_IMPLEMENTED,
+            code: error.ERR_NOT_IMPLEMENTED,
             message: `Operation '${operation}' not implemented for type: ${repository.type}`,
         });
     }
