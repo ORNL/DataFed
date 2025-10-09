@@ -47,7 +47,7 @@ module.exports = async function () {
     await page.waitForLoadState('networkidle', { timeout: 45000 });
 
     // --- Step 6: Fill in credentials robustly ---
-    console.log("INFO - 5. Fill in credentials");
+    console.log("INFO - 6. Fill in credentials");
     const usernameField = page.getByLabel(/username/i);
     await usernameField.waitFor({ state: 'visible', timeout: 45000 });
     await usernameField.fill(process.env.DATAFED_WEB_TEST_USERNAME);
