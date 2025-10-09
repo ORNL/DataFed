@@ -12,8 +12,8 @@ services:
             DATAFED_ZEROMQ_SESSION_SECRET: "${DATAFED_ZEROMQ_SESSION_SECRET}"
             DATAFED_DOMAIN: "${DATAFED_DOMAIN}"
             DATAFED_HTTPS_SERVER_PORT: "${DATAFED_HTTPS_SERVER_PORT}"
-            DATAFED_WEB_CERT_PATH: "${DATAFED_WEB_CERT_PATH}"
-            DATAFED_WEB_KEY_PATH: "${DATAFED_WEB_KEY_PATH}"
+            DATAFED_WEB_CERT_PATH: "/opt/datafed/keys/cert.crt"
+            DATAFED_WEB_KEY_PATH: "/opt/datafed/keys/cert.key"
             DATAFED_WEB_USER: "datafed"
             DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
             DATAFED_CORE_ADDRESS_PORT_INTERNAL: "datafed-core:7513"
@@ -37,13 +37,14 @@ services:
             DATAFED_GLOBUS_APP_ID: "${DATAFED_GLOBUS_APP_ID}"
             DATAFED_ZEROMQ_SESSION_SECRET: "${DATAFED_ZEROMQ_SESSION_SECRET}"
             DATAFED_DOMAIN: "${DATAFED_DOMAIN}"
-            DATAFED_WEB_CERT_PATH: "${DATAFED_WEB_CERT_PATH}"
-            DATAFED_WEB_KEY_PATH: "${DATAFED_WEB_KEY_PATH}"
+            DATAFED_WEB_CERT_PATH: "/opt/datafed/keys/cert.crt"
+            DATAFED_WEB_KEY_PATH: "/opt/datafed/keys/cert.key"
             DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
             DATAFED_DATABASE_PASSWORD: "${DATAFED_DATABASE_PASSWORD}"
             DATAFED_DATABASE_IP_ADDRESS: "${DATAFED_DATABASE_IP_ADDRESS}"
             DATAFED_DATABASE_IP_ADDRESS_PORT: "${DATAFED_DATABASE_IP_ADDRESS}:${DATAFED_DATABASE_PORT}"
             DATAFED_CORE_LOG_LEVEL: "${DATAFED_CORE_LOG_LEVEL}"
+            SSL_CERT_FILE: "/opt/datafed/keys/datafed-arango.crt"
         user: "${DATAFED_UID}:0"
         security_opt:
             - no-new-privileges:true
@@ -68,6 +69,7 @@ services:
             # NOTE enabling foxx tests will cause state changes in the database
             # do not run this unless you are ok with the database being wiped.
             ENABLE_FOXX_TESTS: "${DATAFED_ENABLE_FOXX_TESTS}"
+            SSL_CERT_FILE: "/usr/local/share/ca-certificates/datafed-arango.crt"
         user: "${DATAFED_UID}:0"
         security_opt:
             - no-new-privileges:true
@@ -78,6 +80,7 @@ services:
             retries: 20
         volumes:
             - foxx_tmp:/tmp
+            - ./keys/:/usr/local/share/ca-certificates/
         networks:
             - datafed-internal
 
@@ -87,10 +90,18 @@ services:
             ARANGO_ROOT_PASSWORD: "${DATAFED_DATABASE_PASSWORD}"
         volumes:
             - arango_db:/var/lib/arangodb3
+            - ./keys/:/usr/local/share/ca-certificates/
         ports:
             - 8529:8529 # Arangodb web UI
         networks:
             - datafed-internal
+        entrypoint: >
+         sh -c 'if [ -f /usr/local/share/ca-certificates/datafed-arango.pem ]; then
+           exec /entrypoint.sh --ssl.keyfile /usr/local/share/ca-certificates/datafed-arango.pem \
+                        --server.endpoint ssl://0.0.0.0:8529;
+         else
+           exec /entrypoint.sh --server.endpoint tcp://0.0.0.0:8529;
+         fi'
 
     # Needs the datafed-core to be up so it doesn't fail when trying to connect
     datafed-repo:

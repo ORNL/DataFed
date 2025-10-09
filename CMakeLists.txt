@@ -233,8 +233,10 @@ if( INSTALL_FOXX )
                                 OUTPUT_VARIABLE _out
                                 ERROR_VARIABLE _err
                                 RESULT_VARIABLE _res)
-                If (NOT \${_res} EQUAL \"0\")
+                if (NOT \${_res} EQUAL \"0\")
                     message( FATAL_ERROR \"out: \${_out} install_foxx failed: \${_err}\")
+		else()
+                    message( \"\${_out} install_foxx failed: \${_err}\")
                 endif()"
          )
 endif()
