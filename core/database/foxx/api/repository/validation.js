@@ -315,5 +315,4 @@ module.exports = {
     validatePartialGlobusConfig,
     validateMetadataConfig,
     validateAllocationParams,
-    validateRepositorySupportsDataOperations,
 };
