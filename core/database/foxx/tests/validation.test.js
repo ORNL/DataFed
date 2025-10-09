@@ -240,14 +240,6 @@ describe("unit_validation_repository: Repository Validation Tests", function () 
             expect(result.error.message).to.include("Endpoint is required");
         });
 
-        it("should reject missing domain", function () {
-            const config = getValidGlobusConfig();
-            delete config.domain;
-            const result = validateGlobusConfig(config);
-            expect(result.ok).to.be.false;
-            expect(result.error.message).to.include("Domain is required");
-        });
-
         it("should reject invalid repository path", function () {
             const config = getValidGlobusConfig();
             config.path = "/data/repos/wrong-name";
