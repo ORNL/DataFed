@@ -96,12 +96,12 @@ services:
         networks:
             - datafed-internal
         entrypoint: >
-         sh -c 'if [ -f /usr/local/share/ca-certificates/datafed-arango.pem ]; then
-           exec /entrypoint.sh --ssl.keyfile /usr/local/share/ca-certificates/datafed-arango.pem \
-                        --server.endpoint ssl://0.0.0.0:8529;
-         else
-           exec /entrypoint.sh --server.endpoint tcp://0.0.0.0:8529;
-         fi'
+            sh -c 'if [ -f /usr/local/share/ca-certificates/datafed-arango.pem ]; then
+              exec /entrypoint.sh --ssl.keyfile /usr/local/share/ca-certificates/datafed-arango.pem \
+                           --server.endpoint ssl://0.0.0.0:8529;
+            else
+              exec /entrypoint.sh --server.endpoint tcp://0.0.0.0:8529;
+            fi'
 
     # Needs the datafed-core to be up so it doesn't fail when trying to connect
     datafed-repo:
