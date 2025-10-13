@@ -172,7 +172,6 @@ router
                 },
             });
 
-
             for (;;) {
                 try {
                     if (req.queryParams.err_msg) {
