@@ -294,6 +294,7 @@ describe("unit_validation_repository: Repository Validation Tests", function () 
     describe("unit_validation_repository: validateAllocationParams", function () {
         it("should accept valid allocation parameters", function () {
             const params = {
+<<<<<<< HEAD
                 client: { _id: "user123", is_admin: true },
                 subject: "user123",
                 data_limit: 1000000,
@@ -302,13 +303,23 @@ describe("unit_validation_repository: Repository Validation Tests", function () 
             const result = validateAllocationParams(params);
             console.log("Result");
             console.log(result);
+=======
+                subject: "user123",
+                size: 1000000,
+            };
+            const result = validateAllocationParams(params);
+>>>>>>> devel
             expect(result.ok).to.be.true;
         });
 
         it("should accept allocation with path", function () {
             const params = {
                 subject: "user123",
+<<<<<<< HEAD
                 data_limit: 1000000,
+=======
+                size: 1000000,
+>>>>>>> devel
                 path: "/custom/path",
             };
             const result = validateAllocationParams(params);
@@ -317,7 +328,11 @@ describe("unit_validation_repository: Repository Validation Tests", function () 
 
         it("should reject missing subject", function () {
             const params = {
+<<<<<<< HEAD
                 data_limit: 1000000,
+=======
+                size: 1000000,
+>>>>>>> devel
             };
             const result = validateAllocationParams(params);
             expect(result.ok).to.be.false;
@@ -327,17 +342,29 @@ describe("unit_validation_repository: Repository Validation Tests", function () 
         it("should reject zero or negative size", function () {
             const params = {
                 subject: "user123",
+<<<<<<< HEAD
                 data_limit: 0,
             };
             const result = validateAllocationParams(params);
             expect(result.ok).to.be.false;
             expect(result.error.message).to.include("Allocation data_limit must be a positive number");
+=======
+                size: 0,
+            };
+            const result = validateAllocationParams(params);
+            expect(result.ok).to.be.false;
+            expect(result.error.message).to.include("Allocation size must be a positive number");
+>>>>>>> devel
         });
 
         it("should reject non-string path", function () {
             const params = {
                 subject: "user123",
+<<<<<<< HEAD
                 data_limit: 1000000,
+=======
+                size: 1000000,
+>>>>>>> devel
                 path: 123,
             };
             const result = validateAllocationParams(params);

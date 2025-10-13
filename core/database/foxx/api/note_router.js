@@ -6,6 +6,7 @@ const joi = require("joi");
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
 const error = require("./lib/error_codes");
+const permissions = require("./lib/permissions");
 
 module.exports = router;
 
@@ -25,10 +26,10 @@ router
                     var id = g_lib.resolveDataCollID(req.queryParams.subject, client),
                         doc = g_db._document(id);
 
-                    if (!g_lib.hasAdminPermObject(client, id)) {
+                    if (!permissions.hasAdminPermObject(client, id)) {
                         if (
-                            (g_lib.getPermissions(client, doc, g_lib.PERM_RD_REC) &
-                                g_lib.PERM_RD_REC) ==
+                            (permissions.getPermissions(client, doc, permissions.PERM_RD_REC) &
+                                permissions.PERM_RD_REC) ==
                             0
                         ) {
                             throw error.ERR_PERM_DENIED;
@@ -152,7 +153,7 @@ router
                     // Creators cannot edit if state is active
                     // Others can not update
 
-                    if (!g_lib.hasAdminPermObject(client, ne._from)) {
+                    if (!permissions.hasAdminPermObject(client, ne._from)) {
                         if (client._id == note.creator) {
                             if (
                                 (note.state == g_lib.NOTE_ACTIVE &&
@@ -335,7 +336,7 @@ router
                 var ne = g_db.note.firstExample({
                     _to: note._id,
                 });
-                if (!client || !g_lib.hasAdminPermObject(client, ne._from)) {
+                if (!client || !permissions.hasAdminPermObject(client, ne._from)) {
                     if (note.state == g_lib.NOTE_ACTIVE) {
                         // Anyone with read permission to subject doc can comment on active notes
                         var doc = g_db._document(ne._from);
@@ -344,8 +345,8 @@ router
                                 throw error.ERR_PERM_DENIED;
                             }
                         } else if (
-                            (g_lib.getPermissions(client, doc, g_lib.PERM_RD_REC) &
-                                g_lib.PERM_RD_REC) ==
+                            (permissions.getPermissions(client, doc, permissions.PERM_RD_REC) &
+                                permissions.PERM_RD_REC) ==
                             0
                         ) {
                             throw error.ERR_PERM_DENIED;
@@ -392,7 +393,7 @@ router
                 results = g_db._query(qry, {
                     subj: id,
                 });
-            } else if (g_lib.hasAdminPermObject(client, id)) {
+            } else if (permissions.hasAdminPermObject(client, id)) {
                 qry =
                     "for v in 1..1 outbound @subj note sort v.ut desc return {_id:v._id,state:v.state,type:v.type,subject_id:v.subject_id,title:v.title,creator:v.creator,parent_id:v.parent_id,ct:v.ct,ut:v.ut}";
                 results = g_db._query(qry, {

@@ -4,6 +4,7 @@ const createRouter = require("@arangodb/foxx/router");
 const router = createRouter();
 const joi = require("joi");
 const error = require("./lib/error_codes");
+const permissions = require("./lib/permissions");
 
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
@@ -205,7 +206,7 @@ router
                 },
                 action: function () {
                     var client = g_lib.getUserFromClientID(req.queryParams.client);
-                    g_lib.ensureAdminPermRepo(client, req.body.id);
+                    permissions.ensureAdminPermRepo(client, req.body.id);
                     var obj = {};
 
                     g_lib.procInputParam(req.body, "title", true, obj);
@@ -336,7 +337,7 @@ router
                     if (!g_db._exists(req.queryParams.id))
                         throw [error.ERR_NOT_FOUND, "Repo, " + req.queryParams.id + ", not found"];
 
-                    g_lib.ensureAdminPermRepo(client, req.queryParams.id);
+                    permissions.ensureAdminPermRepo(client, req.queryParams.id);
                     const graph = require("@arangodb/general-graph")._graph("sdmsg");
 
                     // Make sure there are no allocations present on repo
@@ -447,7 +448,7 @@ router
         var client = g_lib.getUserFromClientID(req.queryParams.client);
         var repo = g_db.repo.document(req.queryParams.repo);
 
-        g_lib.ensureAdminPermRepo(client, repo._id);
+        permissions.ensureAdminPermRepo(client, repo._id);
 
         var result = g_db
             ._query(
@@ -643,7 +644,7 @@ router
     .get("/alloc/stats", function (req, res) {
         try {
             var client = g_lib.getUserFromClientID(req.queryParams.client);
-            g_lib.ensureAdminPermRepo(client, req.queryParams.repo);
+            permissions.ensureAdminPermRepo(client, req.queryParams.repo);
             var result = getAllocStats(req.queryParams.repo, req.queryParams.subject);
             res.send(result);
         } catch (e) {
@@ -770,7 +771,7 @@ router
 
                     var repo = g_db.repo.document(req.queryParams.repo);
 
-                    g_lib.ensureAdminPermRepo(client, repo._id);
+                    permissions.ensureAdminPermRepo(client, repo._id);
 
                     var alloc = g_db.alloc.firstExample({
                         _from: subject_id,
