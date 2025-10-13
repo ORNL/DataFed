@@ -8,7 +8,7 @@ const g_lib = require("../api/support");
 const error = require("../api/lib/error_codes");
 const arangodb = require("@arangodb");
 
-describe("Testing Repo class", () => {
+describe("unit_repo: Testing Repo class", () => {
     beforeEach(() => {
         g_db.d.truncate();
         g_db.alloc.truncate();

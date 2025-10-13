@@ -46,8 +46,8 @@ const validateCommonFields = (config) => {
         errors.push(titleValidation.error.message);
     }
 
-    if (typeof config.capacity !== "number" || config.capacity <= 0) {
-        errors.push("Repository capacity must be a positive number");
+    if (typeof config.capacity !== "number") {
+        errors.push("Repository capacity must be a number.");
     }
 
     // Check for both 'admin' and 'admins' fields for backward compatibility
@@ -133,6 +133,9 @@ const validateGlobusConfig = (config) => {
     }
 
     const errors = [];
+    if (normalizedConfig.capacity <= 0) {
+        errors.push("Repository capacity must be a positive number: capacity=" + normalizedConfig.capacity);
+    }
 
     // Validate required Globus fields
     const pubKeyValidation = validateNonEmptyString(config.pub_key, "Public key");
@@ -187,15 +190,23 @@ const validateMetadataConfig = (config) => {
         return commonResult;
     }
 
+    const errors = [];
+    if (normalizedConfig.capacity != 0) {
+        errors.push("Repository capacity must be 0: capacity=" + normalizedConfig.capacity);
+    }
     // Metadata repositories don't need Globus-specific fields
     // But should not have them either
     const invalidFields = ["pub_key", "address", "endpoint", "path", "exp_path"];
     const presentInvalidFields = invalidFields.filter((field) => config[field] !== undefined);
 
     if (presentInvalidFields.length > 0) {
+        errors.push(`Metadata-only repositories should not have: ${presentInvalidFields.join(", ")}`);
+    }
+
+    if (errors.length > 0) {
         return Result.err({
             code: ERR_INVALID_PARAM,
-            message: `Metadata-only repositories should not have: ${presentInvalidFields.join(", ")}`,
+            message: errors.join("; "),
         });
     }
 
@@ -211,8 +222,9 @@ const validateAllocationParams = (params) => {
         errors.push(subjectValidation.error.message);
     }
 
-    if (typeof params.size !== "number" || params.size <= 0) {
-        errors.push("Allocation size must be a positive number");
+    if (typeof params.data_limit !== "number") {
+        errors.push("Allocation data_limit must be a number, type: " +
+          typeof(params.data_limit) + " data_limit: " + params.data_limit);
     }
 
     if (params.path && typeof params.path !== "string") {

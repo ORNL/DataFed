@@ -1,6 +1,7 @@
 "use strict";
 
-const { Result, ExecutionMethod, createAllocationResult } = require("./types");
+const { Result, createAllocationResult } = require("./types");
+const { ExecutionMethod } = require("../lib/execution_types");
 const { validateAllocationParams } = require("./validation");
 const g_tasks = require("../tasks");
 const error = require("../lib/error_codes");
@@ -33,11 +34,10 @@ const createAllocation = (repoData, params) => {
     try {
         // Create task for async Globus allocation
         // Note: taskInitAllocCreate expects (client, repo_id, subject_id, data_limit, rec_limit)
-        // For now, using a system client since this is called from the new repository pattern
-        const systemClient = { _id: "system", is_admin: true };
 
+        // params.client must contain _id, and is_admin members
         const taskResult = g_tasks.taskInitAllocCreate(
-            systemClient,
+            params.client,
             repoData._id,
             params.subject,
             params.size || params.data_limit, // Handle both parameter names
@@ -62,6 +62,7 @@ const createAllocation = (repoData, params) => {
     } catch (e) {
         // Handle both Error objects and array-style errors
         const errorMessage = e.message || (Array.isArray(e) && e[1]) || String(e);
+        console.log("ERROR: ", errorMessage);
         return Result.err({
             code: error.ERR_INTERNAL_FAULT,
             message: `Failed to create allocation task: ${errorMessage}`,
@@ -70,7 +71,7 @@ const createAllocation = (repoData, params) => {
 };
 
 // Delete allocation from Globus repository (async via task)
-const deleteAllocation = (repoData, subjectId) => {
+const deleteAllocation = (client, repoData, subjectId) => {
     if (!subjectId || typeof subjectId !== "string") {
         return Result.err({
             code: error.ERR_INVALID_PARAM,
@@ -80,7 +81,12 @@ const deleteAllocation = (repoData, subjectId) => {
 
     try {
         // Create task for async Globus allocation deletion
-        const task = g_tasks.repoAllocationDeleteTask({
+        console.log("repoData");
+        console.log(repoData);
+        console.log("subject");
+        console.log(subjectId);
+        const task = g_tasks.taskInitAllocDelete({
+            client,
             repo_id: repoData._id,
             subject: subjectId,
         });
@@ -93,6 +99,8 @@ const deleteAllocation = (repoData, subjectId) => {
             }),
         );
     } catch (e) {
+        console.log("Error is");
+        console.log(e);
         return Result.err({
             code: error.ERR_INTERNAL_FAULT,
             message: `Failed to create deletion task: ${e.message}`,

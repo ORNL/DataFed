@@ -294,17 +294,21 @@ describe("unit_validation_repository: Repository Validation Tests", function () 
     describe("unit_validation_repository: validateAllocationParams", function () {
         it("should accept valid allocation parameters", function () {
             const params = {
+                client: { _id: "user123", is_admin: true },
                 subject: "user123",
-                size: 1000000,
+                data_limit: 1000000,
+                path: "/some/path",
             };
             const result = validateAllocationParams(params);
+            console.log("Result");
+            console.log(result);
             expect(result.ok).to.be.true;
         });
 
         it("should accept allocation with path", function () {
             const params = {
                 subject: "user123",
-                size: 1000000,
+                data_limit: 1000000,
                 path: "/custom/path",
             };
             const result = validateAllocationParams(params);
@@ -313,7 +317,7 @@ describe("unit_validation_repository: Repository Validation Tests", function () 
 
         it("should reject missing subject", function () {
             const params = {
-                size: 1000000,
+                data_limit: 1000000,
             };
             const result = validateAllocationParams(params);
             expect(result.ok).to.be.false;
@@ -323,17 +327,17 @@ describe("unit_validation_repository: Repository Validation Tests", function () 
         it("should reject zero or negative size", function () {
             const params = {
                 subject: "user123",
-                size: 0,
+                data_limit: 0,
             };
             const result = validateAllocationParams(params);
             expect(result.ok).to.be.false;
-            expect(result.error.message).to.include("Allocation size must be a positive number");
+            expect(result.error.message).to.include("Allocation data_limit must be a positive number");
         });
 
         it("should reject non-string path", function () {
             const params = {
                 subject: "user123",
-                size: 1000000,
+                data_limit: 1000000,
                 path: 123,
             };
             const result = validateAllocationParams(params);
