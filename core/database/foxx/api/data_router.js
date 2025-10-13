@@ -426,7 +426,7 @@ router
                     status: "Failure",
                     description: "Create a batch of new data records",
                     extra: result,
-                    error: e
+                    error: e,
                 });
                 if (--retry == 0 || !e.errorNum || e.errorNum != 1200) {
                     g_lib.handleException(e, res);
@@ -824,12 +824,12 @@ router
         let client = req.queryParams.client;
         try {
             logger.logRequestStarted({
-                    client: client,
-                    correlationId: req.headers["x-correlation-id"],
-                    httpVerb: "POST",
-                    routePath: basePath + "/update",
-                    status: "Started",
-                    description: "Update an existing data record",
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/update",
+                status: "Started",
+                description: "Update an existing data record",
             });
 
             result = {
@@ -879,26 +879,25 @@ router
 
             res.send(result);
             logger.logRequestSuccess({
-                    client: client,
-                    correlationId: req.headers["x-correlation-id"],
-                    httpVerb: "POST",
-                    routePath: basePath + "/update",
-                    status: "Success",
-                    description: "Update an existing data record",
-                    extra: result
-                });
-
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/update",
+                status: "Success",
+                description: "Update an existing data record",
+                extra: result,
+            });
         } catch (e) {
             logger.logRequestFailure({
-                    client: client,
-                    correlationId: req.headers["x-correlation-id"],
-                    httpVerb: "POST",
-                    routePath: basePath + "/update",
-                    status: "Failure",
-                    description: "Update an existing data record",
-                    extra: result,
-                    error: e,
-                });
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/update",
+                status: "Failure",
+                description: "Update an existing data record",
+                extra: result,
+                error: e,
+            });
 
             g_lib.handleException(e, res);
         }
@@ -960,7 +959,6 @@ router
                 description: "Update a batch of existing data record",
             });
 
-
             result = {
                 results: [],
                 updates: new Set(),
@@ -1021,7 +1019,7 @@ router
                 routePath: basePath + "/update/batch",
                 status: "Success",
                 description: "Update a batch of existing data record",
-                extra: result
+                extra: result,
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -1032,7 +1030,7 @@ router
                 status: "Failure",
                 description: "Update a batch of existing data record",
                 extra: result,
-                error: e
+                error: e,
             });
 
             g_lib.handleException(e, res);
@@ -1094,13 +1092,13 @@ router
         let client = req.queryParams.client;
         try {
             logger.logRequestStarted({
-                    client: client,
-                    correlationId: req.headers["x-correlation-id"],
-                    httpVerb: "POST",
-                    routePath: basePath + "/update/md_err_msg",
-                    status: "Started",
-                    description: "Update data record schema validation error message"
-                });
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/update/md_err_msg",
+                status: "Started",
+                description: "Update data record schema validation error message",
+            });
 
             g_db._executeTransaction({
                 collections: {
@@ -1131,24 +1129,24 @@ router
                 },
             });
             logger.logRequestSuccess({
-                    client: client,
-                    correlationId: req.headers["x-correlation-id"],
-                    httpVerb: "POST",
-                    routePath: basePath + "/update/md_err_msg",
-                    status: "Success",
-                    description: "Update data record schema validation error message",
-                    extra:"undefined"
-                });
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/update/md_err_msg",
+                status: "Success",
+                description: "Update data record schema validation error message",
+                extra: "undefined",
+            });
         } catch (e) {
             logger.logRequestFailure({
-                    client: client,
-                    correlationId: req.headers["x-correlation-id"],
-                    httpVerb: "POST",
-                    routePath: basePath + "/update/md_err_msg",
-                    status: "Failure",
-                    description: "Update data record schema validation error message",
-                    extra:"undefined",
-                    error: e
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/update/md_err_msg",
+                status: "Failure",
+                description: "Update data record schema validation error message",
+                extra: "undefined",
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -1177,7 +1175,7 @@ router
                     routePath: basePath + "/update/size",
                     status: "Started",
                     description: "Update existing data record size",
-                    extra:"undefined"
+                    extra: "undefined",
                 });
 
                 result = [];
@@ -1236,20 +1234,20 @@ router
                     routePath: basePath + "/update/size",
                     status: "Success",
                     description: "Update existing data record size",
-                    extra:"undefined"
+                    extra: "undefined",
                 });
                 break;
             } catch (e) {
                 if (--retry == 0 || !e.errorNum || e.errorNum != 1200) {
                     logger.logRequestFailure({
-                    client: client,
-                    correlationId: req.headers["x-correlation-id"],
-                    httpVerb: "POST",
-                    routePath: basePath + "/update/size",
-                    status: "Failure",
-                    description: "Update existing data record size",
-                    extra:"undefined",
-                    error: e
+                        client: client,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "POST",
+                        routePath: basePath + "/update/size",
+                        status: "Failure",
+                        description: "Update existing data record size",
+                        extra: "undefined",
+                        error: e,
                     });
                     g_lib.handleException(e, res);
                 }
@@ -1288,7 +1286,7 @@ router
                 routePath: basePath + "/view",
                 status: "Started",
                 description: "Get data by ID or alias",
-                });
+            });
 
             const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
 
@@ -1364,8 +1362,7 @@ router
                 status: "Success",
                 description: "Get data by ID or alias",
                 extra: results,
-                });
-
+            });
         } catch (e) {
             logger.logRequestFailure({
                 client: client,
@@ -1376,7 +1373,7 @@ router
                 description: "Get data by ID or alias",
                 extra: results,
                 error: e,
-                });
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -1397,7 +1394,7 @@ router
                 routePath: basePath + "/export",
                 status: "Started",
                 description: "Export record metadata",
-                });
+            });
 
             g_db._executeTransaction({
                 collections: {
@@ -1492,7 +1489,7 @@ router
                 routePath: basePath + "/dep/graph/get",
                 status: "Started",
                 description: "Get data dependency graph",
-                });
+            });
             const client = g_lib.getUserFromClientID(req.queryParams.client);
             var data_id = g_lib.resolveDataID(req.queryParams.id, client);
             var i,
@@ -1669,7 +1666,6 @@ router
                 description: "Get data dependency graph",
                 extra: result,
             });
-
         } catch (e) {
             logger.logRequestFailure({
                 client: client,
@@ -1679,7 +1675,7 @@ router
                 status: "Failure",
                 description: "Get data dependency graph",
                 extra: result,
-                error: e
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -1745,7 +1741,7 @@ router
                         routePath: basePath + "/lock",
                         status: "Success",
                         description: "Toggle data record lock",
-                        extra: result
+                        extra: result,
                     });
                 },
             });
@@ -1758,7 +1754,7 @@ router
                 status: "Failure",
                 description: "Toggle data record lock",
                 extra: result,
-                error: e
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -1831,7 +1827,7 @@ router
                 routePath: basePath + "/path",
                 status: "Success",
                 description: "Get raw data local path",
-                extra: path
+                extra: path,
             });
             //res.send({ path: repo.exp_path + loc.path.substr( repo.path.length ) });
         } catch (e) {
@@ -1884,9 +1880,9 @@ router
                 owner_id = client._id;
             }
 
-            qry = "for v,e in 1..1 inbound @repo loc filter e.uid == @uid sort v.title",
-            result,
-            doc;
+            ((qry = "for v,e in 1..1 inbound @repo loc filter e.uid == @uid sort v.title"),
+                result,
+                doc);
 
             if (req.queryParams.offset != undefined && req.queryParams.count != undefined) {
                 qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
@@ -1938,7 +1934,6 @@ router
                 description: "List data records by allocation",
                 extra: result,
             });
-
         } catch (e) {
             logger.logRequestFailure({
                 client: client,
@@ -2038,7 +2033,6 @@ router
                         description: "Get (download) data to Globus destination path",
                         extra: result,
                     });
-
                 },
             });
         } catch (e) {
@@ -2154,21 +2148,21 @@ router
                         routePath: basePath + "/put",
                         status: "Success",
                         description: "Put (upload) raw data to record",
-                        extra: result
+                        extra: result,
                     });
                 },
             });
         } catch (e) {
-                logger.logRequestFailure({
-                        client: client,
-                        correlationId: req.headers["x-correlation-id"],
-                        httpVerb: "POST",
-                        routePath: basePath + "/put",
-                        status: "Failure",
-                        description: "Put (upload) raw data to record",
-                        extra: result,
-                        error: e,
-                    });
+            logger.logRequestFailure({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/put",
+                status: "Failure",
+                description: "Put (upload) raw data to record",
+                extra: result,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -2237,7 +2231,7 @@ router
                         routePath: basePath + "/alloc_chg",
                         status: "Success",
                         description: "Move raw data to a new allocation",
-                        extra: result
+                        extra: result,
                     });
                 },
             });
@@ -2250,7 +2244,7 @@ router
                 status: "Failure",
                 description: "Move raw data to a new allocation",
                 extra: result,
-                error: e
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -2315,7 +2309,7 @@ router
                         routePath: basePath + "/owner_chg",
                         status: "Success",
                         description: "Move data records and raw data to a new owner/allocation",
-                        extra: result
+                        extra: result,
                     });
                 },
             });
@@ -2328,7 +2322,7 @@ router
                 status: "Failure",
                 description: "Move data records and raw data to a new owner/allocation",
                 extra: result,
-                error: e
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -2409,7 +2403,7 @@ router
                             routePath: basePath + "/delete",
                             status: "Success",
                             description: "Delete collections, data records and raw data",
-                            extra: result
+                            extra: result,
                         });
                     },
                 });
@@ -2424,7 +2418,7 @@ router
                         status: "Failure",
                         description: "Delete collections, data records and raw data",
                         extra: result,
-                        error: e
+                        error: e,
                     });
                     g_lib.handleException(e, res);
                 }
