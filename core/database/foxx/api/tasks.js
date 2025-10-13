@@ -8,6 +8,8 @@ const { UserToken } = require("./lib/user_token");
 const g_db = require("@arangodb").db;
 const g_graph = require("@arangodb/general-graph")._graph("sdmsg");
 const g_proc = require("./process");
+const permissions = require("./lib/permissions");
+
 var g_internal = require("internal");
 
 var tasks_func = (function () {
@@ -32,7 +34,7 @@ var tasks_func = (function () {
             throw [error.ERR_NOT_FOUND, "Subject, '" + a_subject_id + "', does not exist"];
 
         // Check for proper permissions
-        g_lib.ensureAdminPermRepo(a_client, a_repo_id);
+        permissions.ensureAdminPermRepo(a_client, a_repo_id);
 
         // Check if there is already a matching allocation
         var alloc = g_db.alloc.firstExample({
@@ -166,7 +168,7 @@ var tasks_func = (function () {
 
         var repo = g_db.repo.document(a_repo_id);
 
-        g_lib.ensureAdminPermRepo(a_client, a_repo_id);
+        permissions.ensureAdminPermRepo(a_client, a_repo_id);
 
         var alloc = g_db.alloc.firstExample({
             _from: a_subject_id,
@@ -705,7 +707,7 @@ var tasks_func = (function () {
             if (!g_db.p.exists(a_proj_id))
                 throw [error.ERR_INVALID_PARAM, "Project '" + a_proj_id + "' does not exist."];
 
-            if (!g_lib.hasManagerPermProj(a_client, a_proj_id))
+            if (!permissions.hasManagerPermProj(a_client, a_proj_id))
                 throw [error.ERR_PERM_DENIED, "Operation requires admin permissions to project."];
 
             owner_id = a_proj_id;
@@ -1014,10 +1016,10 @@ var tasks_func = (function () {
         })._to;
 
         if (owner_id != a_client._id) {
-            if (owner_id.charAt(0) != "p" || !g_lib.hasManagerPermProj(a_client, owner_id)) {
+            if (owner_id.charAt(0) != "p" || !permissions.hasManagerPermProj(a_client, owner_id)) {
                 var coll = g_db.c.document(a_dst_coll_id);
 
-                if (!g_lib.hasPermissions(a_client, coll, g_lib.PERM_CREATE))
+                if (!permissions.hasPermissions(a_client, coll, permissions.PERM_CREATE))
                     throw [
                         error.ERR_PERM_DENIED,
                         "Operation requires CREATE permission on destination collection '" +
@@ -1573,7 +1575,7 @@ var tasks_func = (function () {
             if (!g_db.p.exists(proj_id))
                 throw [error.ERR_INVALID_PARAM, "No such project '" + proj_id + "'"];
 
-            g_lib.ensureAdminPermProj(a_client, proj_id);
+            permissions.ensureAdminPermProj(a_client, proj_id);
         }
 
         obj._ensureExclusiveAccess(a_proj_ids);
