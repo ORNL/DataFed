@@ -9,6 +9,7 @@ const g_db = require("@arangodb").db;
 const g_graph = require("@arangodb/general-graph")._graph("sdmsg");
 const g_lib = require("./support");
 const error = require("./lib/error_codes");
+const permissions = require("./lib/permissions");
 const { UserToken } = require("./lib/user_token");
 const { UserModel } = require("./models/user");
 const logger = require("./lib/logger");
@@ -337,7 +338,7 @@ router
                         user_id = req.queryParams.subject;
                         if (!g_db.u.exists(user_id))
                             throw [error.ERR_INVALID_PARAM, "No such user '" + user_id + "'"];
-                        g_lib.ensureAdminPermUser(client, user_id);
+                        permissions.ensureAdminPermUser(client, user_id);
                     } else {
                         user_id = client._id;
                     }
@@ -589,7 +590,7 @@ router
                         user_id = req.queryParams.subject;
                         if (!g_db.u.exists(user_id))
                             throw [error.ERR_INVALID_PARAM, "No such user '" + user_id + "'"];
-                        g_lib.ensureAdminPermUser(client, user_id);
+                        permissions.ensureAdminPermUser(client, user_id);
                     } else {
                         user_id = client._id;
                     }
@@ -660,7 +661,7 @@ router
                         user_id = req.queryParams.subject;
                         if (!g_db.u.exists(user_id))
                             throw [error.ERR_INVALID_PARAM, "No such user '" + user_id + "'"];
-                        g_lib.ensureAdminPermUser(client, user_id);
+                        permissions.ensureAdminPermUser(client, user_id);
                     } else {
                         user_id = client._id;
                     }
@@ -869,7 +870,7 @@ router
                         user_id = req.queryParams.subject;
                         if (!g_db.u.exists(user_id))
                             throw [error.ERR_INVALID_PARAM, "No such user '" + user_id + "'"];
-                        g_lib.ensureAdminPermUser(client, user_id);
+                        permissions.ensureAdminPermUser(client, user_id);
                         user_doc = g_db.u.document(user_id);
                     } else {
                         user_id = client._id;
@@ -1492,7 +1493,7 @@ router
                         user_id = req.queryParams.subject;
                         if (!g_db.u.exists(user_id))
                             throw [error.ERR_INVALID_PARAM, "No such user '" + user_id + "'"];
-                        g_lib.ensureAdminPermUser(client, user_id);
+                        permissions.ensureAdminPermUser(client, user_id);
                     } else {
                         user_id = client._id;
                     }
@@ -1596,7 +1597,7 @@ router
                         "No such user '" + req.queryParams.subject + "'",
                     ];
                 const subject = g_db.u.document(req.queryParams.subject);
-                g_lib.ensureAdminPermUser(client, subject._id);
+                permissions.ensureAdminPermUser(client, subject._id);
 
                 res.send(
                     g_db._query("for v in 1..1 outbound @client ident return v._key", {
@@ -1743,7 +1744,7 @@ router
                             ];
 
                         const user = g_db.u.document(req.queryParams.subject);
-                        g_lib.ensureAdminPermUser(client, user._id);
+                        permissions.ensureAdminPermUser(client, user._id);
 
                         g_db.ident.save({
                             _from: user._id,
@@ -1810,7 +1811,7 @@ router
                         status: "Started",
                         description: "Remove linked identity from user account",
                     });
-                    g_lib.ensureAdminPermUser(client, owner._id);
+                    permissions.ensureAdminPermUser(client, owner._id);
 
                     if (g_lib.isUUID(req.queryParams.ident)) {
                         g_graph.uuid.remove("uuid/" + req.queryParams.ident);

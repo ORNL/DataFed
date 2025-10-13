@@ -6,6 +6,7 @@ const joi = require("joi");
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
 const error = require("./lib/error_codes");
+const permissions = require("./lib/permissions");
 
 module.exports = router;
 
@@ -42,16 +43,16 @@ router
 
                     var is_admin = true;
 
-                    if (!g_lib.hasAdminPermObject(client, object._id)) {
+                    if (!permissions.hasAdminPermObject(client, object._id)) {
                         is_admin = false;
-                        if (!g_lib.hasPermissions(client, object, g_lib.PERM_SHARE))
+                        if (!permissions.hasPermissions(client, object, permissions.PERM_SHARE))
                             throw error.ERR_PERM_DENIED;
                     }
 
                     var client_perm, cur_rules;
 
                     if (!is_admin) {
-                        client_perm = g_lib.getPermissions(client, object, g_lib.PERM_ALL);
+                        client_perm = permissions.getPermissions(client, object, permissions.PERM_ALL);
                         cur_rules = g_db
                             ._query(
                                 "for v, e in 1..1 outbound @object acl return { id: v._id, gid: v.gid, grant: e.grant, inhgrant: e.inhgrant }",
@@ -109,7 +110,7 @@ router
                                     old_rule = cur_rules[old_rule];
                                     if (old_rule.grant != rule.grant) {
                                         chg = old_rule.grant ^ rule.grant;
-                                        if ((chg & client_perm) != (chg & ~g_lib.PERM_SHARE)) {
+                                        if ((chg & client_perm) != (chg & ~permissions.PERM_SHARE)) {
                                             console.log(
                                                 "bad alter",
                                                 rule.id,
@@ -127,7 +128,7 @@ router
                                     }
                                 } else {
                                     if (
-                                        rule.grant & g_lib.PERM_SHARE ||
+                                        rule.grant & permissions.PERM_SHARE ||
                                         (rule.grant & client_perm) != rule.grant
                                     ) {
                                         console.log(
@@ -202,8 +203,8 @@ router
             if (object._id[0] != "c" && object._id[0] != "d")
                 throw [error.ERR_INVALID_PARAM, "Invalid object type, " + object._id];
 
-            if (!g_lib.hasAdminPermObject(client, object._id)) {
-                if (!g_lib.hasPermissions(client, object, g_lib.PERM_SHARE))
+            if (!permissions.hasAdminPermObject(client, object._id)) {
+                if (!permissions.hasPermissions(client, object, permissions.PERM_SHARE))
                     throw error.ERR_PERM_DENIED;
             }
 
@@ -421,12 +422,12 @@ function dedupShares(client, shares) {
 
                 for (k = path.path.length - 1; k > 0; k--) {
                     coll = g_db.c.document(path.path[k]);
-                    perm = g_lib.getPermissionsLocal(client._id, coll);
-                    if (perm.inhgrant & g_lib.PERM_LIST) {
+                    perm = permissions.getPermissionsLocal(client._id, coll);
+                    if (perm.inhgrant & permissions.PERM_LIST) {
                         k = 0;
                         break;
                     }
-                    if ((perm.grant & g_lib.PERM_LIST) == 0) break;
+                    if ((perm.grant & permissions.PERM_LIST) == 0) break;
                 }
 
                 if (k == 0) {

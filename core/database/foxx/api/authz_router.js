@@ -6,6 +6,7 @@ const joi = require("joi");
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
 const error = require("./lib/error_codes");
+const permissions = require("./lib/permissions");
 const authzModule = require("./authz");
 const { Repo, PathType } = require("./repo");
 
@@ -114,7 +115,7 @@ router
     .get("/perm/check", function (req, res) {
         try {
             const client = g_lib.getUserFromClientID(req.queryParams.client);
-            var perms = req.queryParams.perms ? req.queryParams.perms : g_lib.PERM_ALL;
+            var perms = req.queryParams.perms ? req.queryParams.perms : permissions.PERM_ALL;
             var obj,
                 result = true,
                 id = g_lib.resolveID(req.queryParams.id, client),
@@ -128,23 +129,23 @@ router
                 var role = g_lib.getProjectRole(client._id, id);
                 if (role == g_lib.PROJ_NO_ROLE) {
                     // Non members have only VIEW permissions
-                    if (perms != g_lib.PERM_RD_REC) result = false;
+                    if (perms != permissions.PERM_RD_REC) result = false;
                 } else if (role == g_lib.PROJ_MEMBER) {
                     // Non members have only VIEW permissions
-                    if ((perms & ~g_lib.PERM_MEMBER) != 0) result = false;
+                    if ((perms & ~permissions.PERM_MEMBER) != 0) result = false;
                 } else if (role == g_lib.PROJ_MANAGER) {
                     // Managers have all but UPDATE
-                    if ((perms & ~g_lib.PERM_MANAGER) != 0) result = false;
+                    if ((perms & ~permissions.PERM_MANAGER) != 0) result = false;
                 }
             } else if (ty == "d") {
-                if (!g_lib.hasAdminPermObject(client, id)) {
+                if (!permissions.hasAdminPermObject(client, id)) {
                     obj = g_db.d.document(id);
                     if (obj.locked) result = false;
-                    else result = g_lib.hasPermissions(client, obj, perms);
+                    else result = permissions.hasPermissions(client, obj, perms);
                 }
             } else if (ty == "c") {
                 // If create perm is requested, ensure owner of collection has at least one allocation
-                if (perms & g_lib.PERM_CREATE) {
+                if (perms & permissions.PERM_CREATE) {
                     var owner = g_db.owner.firstExample({
                         _from: id,
                     });
@@ -160,9 +161,9 @@ router
                     }
                 }
 
-                if (!g_lib.hasAdminPermObject(client, id)) {
+                if (!permissions.hasAdminPermObject(client, id)) {
                     obj = g_db.c.document(id);
-                    result = g_lib.hasPermissions(client, obj, perms);
+                    result = permissions.hasPermissions(client, obj, perms);
                 }
             } else {
                 throw [error.ERR_INVALID_PARAM, "Invalid ID, " + req.queryParams.id];
@@ -185,7 +186,7 @@ router
     .get("/perm/get", function (req, res) {
         try {
             const client = g_lib.getUserFromClientID(req.queryParams.client);
-            var result = req.queryParams.perms ? req.queryParams.perms : g_lib.PERM_ALL;
+            var result = req.queryParams.perms ? req.queryParams.perms : permissions.PERM_ALL;
             var obj,
                 id = g_lib.resolveID(req.queryParams.id, client),
                 ty = id[0];
@@ -196,23 +197,23 @@ router
                 var role = g_lib.getProjectRole(client._id, id);
                 if (role == g_lib.PROJ_NO_ROLE) {
                     // Non members have only VIEW permissions
-                    result &= g_lib.PERM_RD_REC;
+                    result &= permissions.PERM_RD_REC;
                 } else if (role == g_lib.PROJ_MEMBER) {
-                    result &= g_lib.PERM_MEMBER;
+                    result &= permissions.PERM_MEMBER;
                 } else if (role == g_lib.PROJ_MANAGER) {
                     // Managers have all but UPDATE
-                    result &= g_lib.PERM_MANAGER;
+                    result &= permissions.PERM_MANAGER;
                 }
             } else if (ty == "d") {
-                if (!g_lib.hasAdminPermObject(client, id)) {
+                if (!permissions.hasAdminPermObject(client, id)) {
                     obj = g_db.d.document(id);
                     if (obj.locked) result = 0;
-                    else result = g_lib.getPermissions(client, obj, result);
+                    else result = permissions.getPermissions(client, obj, result);
                 }
             } else if (ty == "c") {
-                if (!g_lib.hasAdminPermObject(client, id)) {
+                if (!permissions.hasAdminPermObject(client, id)) {
                     obj = g_db.c.document(id);
-                    result = g_lib.getPermissions(client, obj, result);
+                    result = permissions.getPermissions(client, obj, result);
                 }
             } else throw [error.ERR_INVALID_PARAM, "Invalid ID, " + req.queryParams.id];
 
