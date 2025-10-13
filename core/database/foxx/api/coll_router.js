@@ -839,7 +839,12 @@ router
                         dst_perms = 0;
 
                     if (!permissions.hasAdminPermObject(client, src_id)) {
-                        src_perms = permissions.getPermissions(client, src, permissions.PERM_LINK, true);
+                        src_perms = permissions.getPermissions(
+                            client,
+                            src,
+                            permissions.PERM_LINK,
+                            true,
+                        );
                         if ((src_perms & permissions.PERM_LINK) == 0)
                             throw [
                                 error.ERR_PERM_DENIED,

@@ -1698,7 +1698,6 @@ module.exports = (function () {
         }
     };
 
-
     obj.getACLOwnersBySubject = function (subject, inc_users, inc_projects) {
         var results = [];
 
@@ -1875,7 +1874,10 @@ module.exports = (function () {
             id = a_subj.id || a_subj._id;
 
         if (a_client) {
-            if (a_admin || (a_admin === undefined && permissions.hasAdminPermObject(a_client, id))) {
+            if (
+                a_admin ||
+                (a_admin === undefined && permissions.hasAdminPermObject(a_client, id))
+            ) {
                 // Owner/admin - return notes that are open or active
                 res = obj.db._query(
                     "for n in 1..1 outbound @id note return {type:n.type,state:n.state,parent_id:n.parent_id}",
@@ -2362,7 +2364,8 @@ module.exports = (function () {
 
                     if (
                         perm.grant &
-                        ((permissions.PERM_RD_REC | permissions.PERM_LIST) != (permissions.PERM_RD_REC | permissions.PERM_LIST))
+                        ((permissions.PERM_RD_REC | permissions.PERM_LIST) !=
+                            (permissions.PERM_RD_REC | permissions.PERM_LIST))
                     ) {
                         throw [
                             error.ERR_PERM_DENIED,
@@ -2376,7 +2379,8 @@ module.exports = (function () {
 
                     if (
                         perm.inhgrant &
-                        ((permissions.PERM_RD_REC | permissions.PERM_LIST) == (permissions.PERM_RD_REC | permissions.PERM_LIST))
+                        ((permissions.PERM_RD_REC | permissions.PERM_LIST) ==
+                            (permissions.PERM_RD_REC | permissions.PERM_LIST))
                     ) {
                         child = obj.db._query(
                             "for i in 1..10 outbound @col item filter is_same_collection('c',i) return i._id",

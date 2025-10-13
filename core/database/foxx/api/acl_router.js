@@ -52,7 +52,11 @@ router
                     var client_perm, cur_rules;
 
                     if (!is_admin) {
-                        client_perm = permissions.getPermissions(client, object, permissions.PERM_ALL);
+                        client_perm = permissions.getPermissions(
+                            client,
+                            object,
+                            permissions.PERM_ALL,
+                        );
                         cur_rules = g_db
                             ._query(
                                 "for v, e in 1..1 outbound @object acl return { id: v._id, gid: v.gid, grant: e.grant, inhgrant: e.inhgrant }",
@@ -110,7 +114,10 @@ router
                                     old_rule = cur_rules[old_rule];
                                     if (old_rule.grant != rule.grant) {
                                         chg = old_rule.grant ^ rule.grant;
-                                        if ((chg & client_perm) != (chg & ~permissions.PERM_SHARE)) {
+                                        if (
+                                            (chg & client_perm) !=
+                                            (chg & ~permissions.PERM_SHARE)
+                                        ) {
                                             console.log(
                                                 "bad alter",
                                                 rule.id,

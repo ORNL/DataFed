@@ -6,7 +6,7 @@ module.exports = (function () {
     var obj = {};
 
     obj.db = require("@arangodb").db;
- 
+
     obj.PERM_RD_REC = 0x0001; // Read record info (description, keywords, details)
     obj.PERM_RD_META = 0x0002; // Read structured metadata
     obj.PERM_RD_DATA = 0x0004; // Read raw data

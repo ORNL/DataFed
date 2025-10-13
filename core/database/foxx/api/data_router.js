@@ -442,7 +442,8 @@ function recordUpdate(client, record, result) {
             perms |= permissions.PERM_WR_REC;
         }
 
-        if (data.locked || !permissions.hasPermissions(client, data, perms)) throw error.ERR_PERM_DENIED;
+        if (data.locked || !permissions.hasPermissions(client, data, perms))
+            throw error.ERR_PERM_DENIED;
     }
 
     var owner_id = g_db.owner.firstExample({
@@ -1115,7 +1116,10 @@ router
                         data,
                         permissions.PERM_RD_REC | permissions.PERM_RD_META,
                     );
-                    if (data.locked || (perms & (permissions.PERM_RD_REC | permissions.PERM_RD_META)) == 0)
+                    if (
+                        data.locked ||
+                        (perms & (permissions.PERM_RD_REC | permissions.PERM_RD_META)) == 0
+                    )
                         throw error.ERR_PERM_DENIED;
                     if ((perms & permissions.PERM_RD_META) == 0) rem_md = true;
                 }
