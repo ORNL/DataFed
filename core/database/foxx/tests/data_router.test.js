@@ -50,11 +50,11 @@ it("unit_data_router: should successfully create a new record", () => {
         },
     });
 
-  // Assert
-  expect(response.status).to.equal(400);
-  const body = response.json;
-  expect(body).to.be.an("object");
-  expect(body).to.have.property("results");
-  expect(body.results).to.be.an("array");
-  // maybe more specific assertions, e.g. record was created with correct fields
+    // Assert
+    expect(response.status).to.equal(400);
+    const body = response.json;
+    expect(body).to.be.an("object");
+    expect(body).to.have.property("results");
+    expect(body.results).to.be.an("array");
+    // maybe more specific assertions, e.g. record was created with correct fields
 });
