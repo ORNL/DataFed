@@ -258,11 +258,11 @@ router
     .post("/create", function (req, res) {
         var retry = 10;
         let result = null;
-        let client = null;
+        let client = req.queryParams.client;
         for (;;) {
             try {
                 logger.logRequestStarted({
-                    client: g_lib.getUserFromClientID(req.queryParams.client),
+                    client: client,
                     correlationId: req.headers["x-correlation-id"],
                     httpVerb: "POST",
                     routePath: basePath + "/create",
@@ -299,7 +299,7 @@ router
 
                 res.send(result);
                 logger.logRequestSuccess({
-                    client: g_lib.getUserFromClientID(req.queryParams.client),
+                    client: client,
                     correlationId: req.headers["x-correlation-id"],
                     httpVerb: "POST",
                     routePath: basePath + "/create",
@@ -311,7 +311,7 @@ router
                 break;
             } catch (e) {
                 logger.logRequestFailure({
-                    client: g_lib.getUserFromClientID(req.queryParams.client),
+                    client: client,
                     correlationId: req.headers["x-correlation-id"],
                     httpVerb: "POST",
                     routePath: basePath + "/create",
@@ -362,11 +362,11 @@ router
     .post("/create/batch", function (req, res) {
         var retry = 10;
         let result = null;
-        let client = null;
+        let client = req.queryParams.client;
         for (;;) {
             try {
                 logger.logRequestStarted({
-                    client: g_lib.getUserFromClientID(req.queryParams.client),
+                    client: client,
                     correlationId: req.headers["x-correlation-id"],
                     httpVerb: "POST",
                     routePath: basePath + "/create/batch",
@@ -407,7 +407,7 @@ router
 
                 res.send(result);
                 logger.logRequestSuccess({
-                    client: g_lib.getUserFromClientID(req.queryParams.client),
+                    client: client,
                     correlationId: req.headers["x-correlation-id"],
                     httpVerb: "POST",
                     routePath: basePath + "/create/batch",
@@ -419,7 +419,7 @@ router
                 break;
             } catch (e) {
                 logger.logRequestFailure({
-                    client: g_lib.getUserFromClientID(req.queryParams.client),
+                    client: client,
                     correlationId: req.headers["x-correlation-id"],
                     httpVerb: "POST",
                     routePath: basePath + "/create/batch",
@@ -820,10 +820,11 @@ function recordUpdate(client, record, result) {
 
 router
     .post("/update", function (req, res) {
-       let result = null; 
+        let result = null;
+        let client = req.queryParams.client;
         try {
             logger.logRequestStarted({
-                    client: g_lib.getUserFromClientID(req.queryParams.client),
+                    client: client,
                     correlationId: req.headers["x-correlation-id"],
                     httpVerb: "POST",
                     routePath: basePath + "/update",
@@ -878,7 +879,7 @@ router
 
             res.send(result);
             logger.logRequestSuccess({
-                    client: g_lib.getUserFromClientID(req.queryParams.client),
+                    client: client,
                     correlationId: req.headers["x-correlation-id"],
                     httpVerb: "POST",
                     routePath: basePath + "/update",
@@ -889,7 +890,7 @@ router
 
         } catch (e) {
             logger.logRequestFailure({
-                    client: g_lib.getUserFromClientID(req.queryParams.client),
+                    client: client,
                     correlationId: req.headers["x-correlation-id"],
                     httpVerb: "POST",
                     routePath: basePath + "/update",
@@ -948,9 +949,10 @@ router
 router
     .post("/update/batch", function (req, res) {
         let result = null;
+        let client = req.queryParams.client;
         try {
             logger.logRequestStarted({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/update/batch",
@@ -963,7 +965,7 @@ router
                 results: [],
                 updates: new Set(),
             };
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
+            const client = req.queryParams.client;
 
             g_db._executeTransaction({
                 collections: {
@@ -1013,7 +1015,7 @@ router
 
             res.send(result);
             logger.logRequestSuccess({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/update/batch",
@@ -1023,7 +1025,7 @@ router
             });
         } catch (e) {
             logger.logRequestFailure({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/update/batch",
@@ -1089,9 +1091,10 @@ router
 
 router
     .post("/update/md_err_msg", function (req, res) {
+        let client = req.queryParams.client;
         try {
             logger.logRequestStarted({
-                    client: g_lib.getUserFromClientID(req.queryParams.client),
+                    client: client,
                     correlationId: req.headers["x-correlation-id"],
                     httpVerb: "POST",
                     routePath: basePath + "/update/md_err_msg",
@@ -1128,7 +1131,7 @@ router
                 },
             });
             logger.logRequestSuccess({
-                    client: g_lib.getUserFromClientID(req.queryParams.client),
+                    client: client,
                     correlationId: req.headers["x-correlation-id"],
                     httpVerb: "POST",
                     routePath: basePath + "/update/md_err_msg",
@@ -1138,7 +1141,7 @@ router
                 });
         } catch (e) {
             logger.logRequestFailure({
-                    client: g_lib.getUserFromClientID(req.queryParams.client),
+                    client: client,
                     correlationId: req.headers["x-correlation-id"],
                     httpVerb: "POST",
                     routePath: basePath + "/update/md_err_msg",
@@ -1162,11 +1165,13 @@ router
     .post("/update/size", function (req, res) {
         var retry = 10;
         let result = null;
+        let client = req.queryParams.client;
+
         // Must do this in a retry loop in case of concurrent (non-put) updates
         for (;;) {
             try {
                 logger.logRequestStarted({
-                    client: g_lib.getUserFromClientID(req.queryParams.client),
+                    client: client,
                     correlationId: req.headers["x-correlation-id"],
                     httpVerb: "POST",
                     routePath: basePath + "/update/size",
@@ -1225,7 +1230,7 @@ router
 
                 res.send(result);
                 logger.logRequestSuccess({
-                    client: g_lib.getUserFromClientID(req.queryParams.client),
+                    client: client,
                     correlationId: req.headers["x-correlation-id"],
                     httpVerb: "POST",
                     routePath: basePath + "/update/size",
@@ -1237,7 +1242,7 @@ router
             } catch (e) {
                 if (--retry == 0 || !e.errorNum || e.errorNum != 1200) {
                     logger.logRequestFailure({
-                    client: g_lib.getUserFromClientID(req.queryParams.client),
+                    client: client,
                     correlationId: req.headers["x-correlation-id"],
                     httpVerb: "POST",
                     routePath: basePath + "/update/size",
@@ -1274,11 +1279,12 @@ router
 router
     .get("/view", function (req, res) {
         let results = null;
+        let client = req.queryParams.client;
         try {
             logger.logRequestStarted({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: client,
                 correlationId: req.headers["x-correlation-id"],
-                httpVerb: "POST",
+                httpVerb: "GET",
                 routePath: basePath + "/view",
                 status: "Started",
                 description: "Get data by ID or alias",
@@ -1351,9 +1357,9 @@ router
                 results: [data],
             });
             logger.logRequestSuccess({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: client,
                 correlationId: req.headers["x-correlation-id"],
-                httpVerb: "POST",
+                httpVerb: "GET",
                 routePath: basePath + "/view",
                 status: "Success",
                 description: "Get data by ID or alias",
@@ -1362,9 +1368,9 @@ router
 
         } catch (e) {
             logger.logRequestFailure({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: client,
                 correlationId: req.headers["x-correlation-id"],
-                httpVerb: "POST",
+                httpVerb: "GET",
                 routePath: basePath + "/view",
                 status: "Failure",
                 description: "Get data by ID or alias",
@@ -1382,9 +1388,10 @@ router
 router
     .post("/export", function (req, res) {
         let results = null;
+        let client = req.queryParams.client;
         try {
             logger.logRequestStarted({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/export",
@@ -1437,7 +1444,7 @@ router
 
                     res.send(results);
                     logger.logRequestSuccess({
-                        client: g_lib.getUserFromClientID(req.queryParams.client),
+                        client: client,
                         correlationId: req.headers["x-correlation-id"],
                         httpVerb: "POST",
                         routePath: basePath + "/export",
@@ -1449,7 +1456,7 @@ router
             });
         } catch (e) {
             logger.logRequestFailure({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/export",
@@ -1476,9 +1483,10 @@ router
 router
     .get("/dep/graph/get", function (req, res) {
         let result = null;
+        let client = req.queryParams.client;
         try {
             logger.logRequestStarted({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/dep/graph/get",
@@ -1653,7 +1661,7 @@ router
 
             res.send(result);
             logger.logRequestSuccess({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/dep/graph/get",
@@ -1664,7 +1672,7 @@ router
 
         } catch (e) {
             logger.logRequestFailure({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/dep/graph/get",
@@ -1684,9 +1692,10 @@ router
 router
     .get("/lock", function (req, res) {
         let result = null;
+        let client = req.queryParams.client;
         try {
             logger.logRequestStarted({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/lock",
@@ -1730,7 +1739,7 @@ router
                     }
                     res.send(result);
                     logger.logRequestSuccess({
-                        client: g_lib.getUserFromClientID(req.queryParams.client),
+                        client: client,
                         correlationId: req.headers["x-correlation-id"],
                         httpVerb: "GET",
                         routePath: basePath + "/lock",
@@ -1742,7 +1751,7 @@ router
             });
         } catch (e) {
             logger.logRequestFailure({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/lock",
@@ -1780,9 +1789,10 @@ router
 router
     .get("/path", function (req, res) {
         let path = null;
+        let client = req.queryParams.client;
         try {
             logger.logRequestStarted({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/path",
@@ -1815,7 +1825,7 @@ router
                 path: path,
             });
             logger.logRequestSuccess({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/path",
@@ -1826,7 +1836,7 @@ router
             //res.send({ path: repo.exp_path + loc.path.substr( repo.path.length ) });
         } catch (e) {
             logger.logRequestFailure({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/path",
@@ -1849,9 +1859,10 @@ router
         let result = null;
         let qry = null;
         let doc = null;
+        let client = req.queryParams.client;
         try {
             logger.logRequestStarted({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/list/by_alloc",
@@ -1919,7 +1930,7 @@ router
 
             res.send(result);
             logger.logRequestSuccess({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/list/by_alloc",
@@ -1930,7 +1941,7 @@ router
 
         } catch (e) {
             logger.logRequestFailure({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/list/by_alloc",
@@ -1953,9 +1964,10 @@ router
 router
     .post("/get", function (req, res) {
         let result = null;
+        let client = req.queryParams.client;
         try {
             logger.logRequestStarted({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/get",
@@ -2018,7 +2030,7 @@ router
 
                     res.send(result);
                     logger.logRequestSuccess({
-                        client: g_lib.getUserFromClientID(req.queryParams.client),
+                        client: client,
                         correlationId: req.headers["x-correlation-id"],
                         httpVerb: "POST",
                         routePath: basePath + "/get",
@@ -2031,7 +2043,7 @@ router
             });
         } catch (e) {
             logger.logRequestFailure({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/get",
@@ -2066,9 +2078,10 @@ router
 router
     .post("/put", function (req, res) {
         let result = null;
+        let client = req.queryParams.client;
         try {
             logger.logRequestStarted({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/put",
@@ -2083,7 +2096,7 @@ router
                     exclusive: ["task", "lock", "block"],
                 },
                 action: function () {
-                    const client = g_lib.getUserFromClientID(req.queryParams.client);
+                    client = g_lib.getUserFromClientID(req.queryParams.client);
                     var res_ids = [];
 
                     if (!req.body.check && !req.body.path)
@@ -2135,7 +2148,7 @@ router
 
                     res.send(result);
                     logger.logRequestSuccess({
-                        client: g_lib.getUserFromClientID(req.queryParams.client),
+                        client: client,
                         correlationId: req.headers["x-correlation-id"],
                         httpVerb: "POST",
                         routePath: basePath + "/put",
@@ -2147,7 +2160,7 @@ router
             });
         } catch (e) {
                 logger.logRequestFailure({
-                        client: g_lib.getUserFromClientID(req.queryParams.client),
+                        client: client,
                         correlationId: req.headers["x-correlation-id"],
                         httpVerb: "POST",
                         routePath: basePath + "/put",
@@ -2182,9 +2195,10 @@ router
 router
     .post("/alloc_chg", function (req, res) {
         let result = null;
+        let client = req.queryParams.client;
         try {
             logger.logRequestStarted({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/alloc_chg",
@@ -2217,7 +2231,7 @@ router
 
                     res.send(result);
                     logger.logRequestSuccess({
-                        client: g_lib.getUserFromClientID(req.queryParams.client),
+                        client: client,
                         correlationId: req.headers["x-correlation-id"],
                         httpVerb: "POST",
                         routePath: basePath + "/alloc_chg",
@@ -2229,7 +2243,7 @@ router
             });
         } catch (e) {
             logger.logRequestFailure({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/alloc_chg",
@@ -2259,9 +2273,10 @@ router
 router
     .post("/owner_chg", function (req, res) {
         let result = null;
+        let client = req.queryParams.client;
         try {
             logger.logRequestStarted({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/owner_chg",
@@ -2275,7 +2290,7 @@ router
                     exclusive: ["task", "lock", "block"],
                 },
                 action: function () {
-                    const client = g_lib.getUserFromClientID(req.queryParams.client);
+                    client = g_lib.getUserFromClientID(req.queryParams.client);
                     var id,
                         res_ids = [];
 
@@ -2294,7 +2309,7 @@ router
 
                     res.send(result);
                     logger.logRequestSuccess({
-                        client: g_lib.getUserFromClientID(req.queryParams.client),
+                        client: client,
                         correlationId: req.headers["x-correlation-id"],
                         httpVerb: "POST",
                         routePath: basePath + "/owner_chg",
@@ -2306,7 +2321,7 @@ router
             });
         } catch (e) {
             logger.logRequestFailure({
-                client: g_lib.getUserFromClientID(req.queryParams.client),
+                client: client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/owner_chg",
@@ -2339,10 +2354,11 @@ router
     .post("/delete", function (req, res) {
         var retry = 10;
         let result = null;
+        let client = req.queryParams.client;
         for (;;) {
             try {
                 logger.logRequestStarted({
-                    client: g_lib.getUserFromClientID(req.queryParams.client),
+                    client: client,
                     correlationId: req.headers["x-correlation-id"],
                     httpVerb: "POST",
                     routePath: basePath + "/delete",
@@ -2387,7 +2403,7 @@ router
 
                         res.send(result);
                         logger.logRequestSuccess({
-                            client: g_lib.getUserFromClientID(req.queryParams.client),
+                            client: client,
                             correlationId: req.headers["x-correlation-id"],
                             httpVerb: "POST",
                             routePath: basePath + "/delete",
@@ -2401,7 +2417,7 @@ router
             } catch (e) {
                 if (--retry == 0 || !e.errorNum || e.errorNum != 1200) {
                     logger.logRequestFailure({
-                        client: g_lib.getUserFromClientID(req.queryParams.client),
+                        client: client,
                         correlationId: req.headers["x-correlation-id"],
                         httpVerb: "POST",
                         routePath: basePath + "/delete",
