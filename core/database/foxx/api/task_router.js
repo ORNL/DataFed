@@ -172,8 +172,6 @@ router
                 },
             });
 
-            //console.log("task/run - call handler" );
-
             for (;;) {
                 try {
                     if (req.queryParams.err_msg) {
@@ -181,19 +179,8 @@ router
                     }
 
                     result = run_func.call(g_tasks, task);
-                    logger.logRequestSuccess({
-                        client: req.queryParams.task_id,
-                        correlationId: req.headers["x-correlation-id"],
-                        httpVerb: "GET",
-                        routePath: basePath + "/run",
-                        status: "Success",
-                        description: "Run task",
-                        extra: result,
-                    });
-
                     // An empty result means rollback has completed without additional errors
                     if (!result) {
-                        //console.log("Task run handler stopped rollback" );
                         result = {
                             cmd: g_lib.TC_STOP,
                             params: g_tasks.taskComplete(task._id, false, task.error),
@@ -242,7 +229,6 @@ router
                 }
             }
 
-            //console.log("task/run return");
             res.send(result);
             logger.logRequestSuccess({
                 client: req.queryParams.task_id,
