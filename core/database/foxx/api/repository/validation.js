@@ -134,7 +134,9 @@ const validateGlobusConfig = (config) => {
 
     const errors = [];
     if (normalizedConfig.capacity <= 0) {
-        errors.push("Repository capacity must be a positive number: capacity=" + normalizedConfig.capacity);
+        errors.push(
+            "Repository capacity must be a positive number: capacity=" + normalizedConfig.capacity,
+        );
     }
 
     // Validate required Globus fields
@@ -200,7 +202,9 @@ const validateMetadataConfig = (config) => {
     const presentInvalidFields = invalidFields.filter((field) => config[field] !== undefined);
 
     if (presentInvalidFields.length > 0) {
-        errors.push(`Metadata-only repositories should not have: ${presentInvalidFields.join(", ")}`);
+        errors.push(
+            `Metadata-only repositories should not have: ${presentInvalidFields.join(", ")}`,
+        );
     }
 
     if (errors.length > 0) {
@@ -214,14 +218,14 @@ const validateMetadataConfig = (config) => {
 };
 
 const validateRepoData = (repoData) => {
-  if (typeof repoData === "undefined") {
-    return Result.err({
-      code: ERR_INVALID_PARAM,
-      message: "Repo data is undefined.",
-    });
-  }
-  return Result.ok(true);
-}
+    if (typeof repoData === "undefined") {
+        return Result.err({
+            code: ERR_INVALID_PARAM,
+            message: "Repo data is undefined.",
+        });
+    }
+    return Result.ok(true);
+};
 
 // Validate allocation parameters
 const validateAllocationParams = (params) => {
@@ -233,13 +237,21 @@ const validateAllocationParams = (params) => {
     }
 
     if (typeof params.data_limit !== "number") {
-        errors.push("Allocation data_limit must be a number, type: " +
-          typeof(params.data_limit) + " data_limit: " + params.data_limit);
+        errors.push(
+            "Allocation data_limit must be a number, type: " +
+                typeof params.data_limit +
+                " data_limit: " +
+                params.data_limit,
+        );
     }
 
     if (typeof params.rec_limit !== "number") {
-        errors.push("Allocation rec_limit must be a number, type: " +
-          typeof(params.rec_limit) + " rec_limit: " + params.rec_limit);
+        errors.push(
+            "Allocation rec_limit must be a number, type: " +
+                typeof params.rec_limit +
+                " rec_limit: " +
+                params.rec_limit,
+        );
     }
 
     if (params.path && typeof params.path !== "string") {
@@ -260,7 +272,8 @@ const validatePartialGlobusAllocationParams = (params) => {
     if (params.data_limit <= 0) {
         return Result.err({
             code: ERR_INVALID_PARAM,
-            message: "Allocation data_limit must be a positive number data_limit: " + params.data_limit,
+            message:
+                "Allocation data_limit must be a positive number data_limit: " + params.data_limit,
         });
     }
     return Result.ok(true);

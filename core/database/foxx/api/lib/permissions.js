@@ -73,7 +73,11 @@ module.exports = (function () {
 
     obj.hasAdminPermObjectLoaded = function (a_client, a_object) {
         // TODO Should collection creator have admin rights?
-        if (a_object.owner == a_client._id || a_object.creator == a_client._id || a_client?.is_admin)
+        if (
+            a_object.owner == a_client._id ||
+            a_object.creator == a_client._id ||
+            a_client?.is_admin
+        )
             return true;
 
         if (a_object.owner.charAt(0) == "p") {

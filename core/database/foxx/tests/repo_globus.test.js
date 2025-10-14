@@ -14,27 +14,15 @@ describe("unit_repository_globus: Globus Repository Operations", function () {
     let deleteTaskStub;
 
     beforeEach(function () {
-
-        const collections = [
-            "d",
-            "alloc",
-            "loc",
-            "repo",
-            "admin",
-            "task",
-            "g",
-            "p",
-            "u",
-          ];
-       collections.forEach((name) => {
-         let col = g_db._collection(name);
-         if (col) {
-           col.truncate(); // truncate after ensuring collection exists
-         } else {
-          g_db._create(name); // create if it doesn’t exist
-       
-         }
-       });
+        const collections = ["d", "alloc", "loc", "repo", "admin", "task", "g", "p", "u"];
+        collections.forEach((name) => {
+            let col = g_db._collection(name);
+            if (col) {
+                col.truncate(); // truncate after ensuring collection exists
+            } else {
+                g_db._create(name); // create if it doesn’t exist
+            }
+        });
 
         // Reset stubs before each test
         if (taskStub) taskStub.restore();
@@ -211,7 +199,9 @@ describe("unit_repository_globus: Globus Repository Operations", function () {
             const result = globus.createAllocation(repoData, params);
 
             expect(result.ok).to.be.false;
-            expect(result.error.message).to.include("Allocation data_limit must be a positive number");
+            expect(result.error.message).to.include(
+                "Allocation data_limit must be a positive number",
+            );
         });
 
         it("unit_repository_globus: should reject allocation with negative data_limit", function () {
@@ -228,7 +218,9 @@ describe("unit_repository_globus: Globus Repository Operations", function () {
             const result = globus.createAllocation(repoData, params);
 
             expect(result.ok).to.be.false;
-            expect(result.error.message).to.include("Allocation data_limit must be a positive number data_limit: -1000");
+            expect(result.error.message).to.include(
+                "Allocation data_limit must be a positive number data_limit: -1000",
+            );
         });
 
         it("unit_repository_globus: should handle task creation error with Error object", function () {
@@ -266,9 +258,7 @@ describe("unit_repository_globus: Globus Repository Operations", function () {
             const repoData = getValidRepoData();
             const params = getValidAllocationParams();
 
-            taskStub = sinon
-                .stub(g_tasks, "taskInitAllocCreate")
-                .throws("String error message");
+            taskStub = sinon.stub(g_tasks, "taskInitAllocCreate").throws("String error message");
 
             const result = globus.createAllocation(repoData, params);
 
@@ -281,7 +271,7 @@ describe("unit_repository_globus: Globus Repository Operations", function () {
     describe("unit_repository_globus: deleteAllocation", function () {
         it("unit_repository_globus: should delete allocation with valid subject ID", function () {
             const repoData = getValidRepoData();
-            const client = { _id: "u/456", is_admin: true }
+            const client = { _id: "u/456", is_admin: true };
             const subjectId = "u/456";
 
             deleteTaskStub = sinon.stub(g_tasks, "taskInitAllocDelete").returns({
@@ -309,7 +299,7 @@ describe("unit_repository_globus: Globus Repository Operations", function () {
         });
 
         it("unit_repository_globus: should reject deletion with null subject ID", function () {
-            const client = { _id: "u/456", is_admin: true }
+            const client = { _id: "u/456", is_admin: true };
             const repoData = getValidRepoData();
 
             const result = globus.deleteAllocation(client, repoData, null);
@@ -322,7 +312,7 @@ describe("unit_repository_globus: Globus Repository Operations", function () {
         });
 
         it("unit_repository_globus: should reject deletion with undefined subject ID", function () {
-            const client = { _id: "u/456", is_admin: true }
+            const client = { _id: "u/456", is_admin: true };
             const repoData = getValidRepoData();
 
             const result = globus.deleteAllocation(client, repoData, undefined);
@@ -335,7 +325,7 @@ describe("unit_repository_globus: Globus Repository Operations", function () {
         });
 
         it("unit_repository_globus: should reject deletion with empty string subject ID", function () {
-            const client = { _id: "u/456", is_admin: true }
+            const client = { _id: "u/456", is_admin: true };
             const repoData = getValidRepoData();
 
             const result = globus.deleteAllocation(client, repoData, "");
@@ -348,7 +338,7 @@ describe("unit_repository_globus: Globus Repository Operations", function () {
         });
 
         it("unit_repository_globus: should reject deletion with non-string subject ID", function () {
-            const client = { _id: "u/456", is_admin: true }
+            const client = { _id: "u/456", is_admin: true };
             const repoData = getValidRepoData();
 
             const result = globus.deleteAllocation(client, repoData, 12345);
@@ -359,7 +349,6 @@ describe("unit_repository_globus: Globus Repository Operations", function () {
                 "Subject ID is required for allocation deletion",
             );
         });
-
     });
 
     describe("unit_repository_globus: supportsDataOperations", function () {

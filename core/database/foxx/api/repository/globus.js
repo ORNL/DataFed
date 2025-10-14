@@ -2,7 +2,7 @@
 
 const { Result, createAllocationResult } = require("./types");
 const { ExecutionMethod } = require("../lib/execution_types");
-const { validateAllocationParams, validatePartialGlobusAllocationParams} = require("./validation");
+const { validateAllocationParams, validatePartialGlobusAllocationParams } = require("./validation");
 const g_tasks = require("../tasks");
 const error = require("../lib/error_codes");
 
