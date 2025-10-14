@@ -1,7 +1,8 @@
 "use strict";
 
-const { Result, ExecutionMethod, createAllocationResult } = require("./types");
-const { validateAllocationParams } = require("./validation");
+const { Result, createAllocationResult } = require("./types");
+const { ExecutionMethod } = require("../lib/execution_types");
+const { validateAllocationParams, validateRepoData } = require("./validation");
 const error = require("../lib/error_codes");
 const permissions = require("../lib/permissions");
 const g_db = require("@arangodb").db;
@@ -28,13 +29,15 @@ const validate = (repoData) => {
 // declared in the router covers all arango documents and collections used here
 const createAllocation = (repoData, params) => {
     // Validate allocation parameters
-    console.log("1");
     const validationResult = validateAllocationParams(params);
     if (!validationResult.ok) {
         return validationResult;
     }
+    const validationResultRepo = validateRepoData(repoData);
+    if (!validationResultRepo.ok) {
+        return validationResultRepo;
+    }
 
-    console.log("2");
     try {
         // For metadata-only repos, allocations are just database records
         // No actual storage allocation happens
@@ -46,16 +49,13 @@ const createAllocation = (repoData, params) => {
         // The transaction needs to include the subect document and the repo document
         // to avoid the case where the nodes no longer exist.
 
-         // Check if repo and subject exist
-    console.log("3");
-         if (!g_db._exists(repoData._id)) {
+         if (!g_db.repo.exists(repoData._key)) {
              return Result.err({
                  code: error.ERR_NOT_FOUND,
                  message: "Failed to create metadata allocation: Repo, '" + repoData._id + "', does not exist.",
              });
          }
         
-    console.log("4");
          if (!g_db._exists(params.subject)) {
              return Result.err({
                  code: error.ERR_NOT_FOUND,
@@ -63,17 +63,22 @@ const createAllocation = (repoData, params) => {
              });
          }
         
-    console.log("5");
          // Check for proper permissions
-         permissions.ensureAdminPermRepo(params.client, repoData._id);
-        
-    console.log("6");
+         try {
+           permissions.ensureAdminPermRepo(params.client, repoData._id);
+         } catch (e) {
+           if (e == error.ERR_PERM_DENIED) {
+             return Result.err({
+                 code: error.ERR_PERM_DENIED,
+                 message: "Failed to create metadata allocation: client, '" + params.client._id + "', does not have permissions to create an allocation on " + repoData._id,
+             });
+           }
+         }
          // Check if there is already a matching allocation
          var alloc = g_db.alloc.firstExample({
              _from: params.subject,
              _to: repoData._id,
          });
-    console.log("7");
          if (alloc) {
              return Result.err({
                  code: error.ERR_INVALID_PARAM,
@@ -81,9 +86,7 @@ const createAllocation = (repoData, params) => {
              });
          }
 
-
-         console.log("Creating allocation with _from: " + params.subject + " to repo: " + repoData._id);
-         g_db.alloc.save({
+         const allocation = g_db.alloc.save({
            _from: params.subject,
            _to: repoData._id,
            data_limit: params.data_limit, 
@@ -97,6 +100,7 @@ const createAllocation = (repoData, params) => {
          // Save to allocations collection (would need to be created)
          // For now, return success with the allocation data
          const result = {
+             id: allocation._id,
              repo_id: repoData._id,
              subject: params.subject,
              rec_limit: params.rec_limit,
