@@ -3,6 +3,7 @@
 const { Result, ExecutionMethod, createAllocationResult } = require("./types");
 const { validateAllocationParams } = require("./validation");
 const error = require("../lib/error_codes");
+const permissions = require("../lib/permissions");
 const g_db = require("@arangodb").db;
 
 /**
@@ -64,7 +65,7 @@ const createAllocation = (repoData, params) => {
         
     console.log("5");
          // Check for proper permissions
-         g_lib.ensureAdminPermRepo(params.client, repoData._id);
+         permissions.ensureAdminPermRepo(params.client, repoData._id);
         
     console.log("6");
          // Check if there is already a matching allocation
@@ -137,7 +138,7 @@ const deleteAllocation = (client, repoData, subjectId) => {
 
         var repo = g_db.repo.document(repoData._id);
 
-        g_lib.ensureAdminPermRepo(client, repoData._id);
+        permissions.ensureAdminPermRepo(client, repoData._id);
 
         var alloc = g_db.alloc.firstExample({
             _from: params.subject,
