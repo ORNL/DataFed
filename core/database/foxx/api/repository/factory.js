@@ -38,11 +38,12 @@ const error = require("../lib/error_codes");
  */
 const createRepositoryByType = (config) => {
     const missingFields = [];
-    if (!config.id) missingFields.push("id");
-    if (!config.type) missingFields.push("type");
-    if (!config.title) missingFields.push("title");
-    if (!config.capacity) missingFields.push("capacity");
-    if (!config.admins) missingFields.push("admins");
+    console.log(config);
+    if (!("id" in config)) missingFields.push("id");
+    if (!("type" in config)) missingFields.push("type");
+    if (!("title" in config)) missingFields.push("title");
+    if (!("capacity" in config)) missingFields.push("capacity");
+    if (!("admins" in config)) missingFields.push("admins");
 
     if (missingFields.length > 0) {
         return Result.err({
