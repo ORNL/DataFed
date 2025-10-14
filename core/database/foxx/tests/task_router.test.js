@@ -13,27 +13,16 @@ const { db } = require("@arangodb");
 const task_base_url = `${baseUrl}/task`;
 
 describe("unit_task_router: the Foxx microservice task_router list/ endpoint", () => {
-
     beforeEach(() => {
-                const collections = [
-                    "d",
-                    "alloc",
-                    "loc",
-                    "repo",
-                    "admin",
-                    "g",
-                    "p",
-                    "u",
-                    "task",
-                ];
-                collections.forEach((name) => {
-                console.log("Truncating: " + name );
-                let col = db._collection(name);
-                console.log("col " + col );
-                if (col) {
-                    col.truncate(); // truncate after ensuring collection exists
-                } else {
-                    db._create(name); // create if it doesn’t exist
+        const collections = ["d", "alloc", "loc", "repo", "admin", "g", "p", "u", "task"];
+        collections.forEach((name) => {
+            console.log("Truncating: " + name);
+            let col = db._collection(name);
+            console.log("col " + col);
+            if (col) {
+                col.truncate(); // truncate after ensuring collection exists
+            } else {
+                db._create(name); // create if it doesn’t exist
             }
         });
     });
@@ -49,15 +38,15 @@ describe("unit_task_router: the Foxx microservice task_router list/ endpoint", (
             max_coll: 50,
             max_proj: 10,
             max_sav_qry: 20,
-            email: "fakeuser@gmail.com"
+            email: "fakeuser@gmail.com",
         });
 
         db.task.save({
             _key: "1",
             _id: "task/1",
-            client: "u/fakeUser",     // Add this so the query doesn't fail on client match
+            client: "u/fakeUser", // Add this so the query doesn't fail on client match
             ut: Date.now() / 1000,
-            status: 1
+            status: 1,
         });
 
         // arrange
@@ -72,26 +61,16 @@ describe("unit_task_router: the Foxx microservice task_router list/ endpoint", (
 
 // NOTE: describe block strings are compared against test specification during test call, not file name
 describe("unit_task_router: the Foxx microservice task_router view/ endpoint", () => {
-     beforeEach(() => {
-                const collections = [
-                    "d",
-                    "alloc",
-                    "loc",
-                    "repo",
-                    "admin",
-                    "g",
-                    "p",
-                    "u",
-                    "task",
-                ];
-                collections.forEach((name) => {
-                console.log("Truncating: " + name );
-                let col = db._collection(name);
-                console.log("col " + col );
-                if (col) {
-                    col.truncate(); // truncate after ensuring collection exists
-                } else {
-                    db._create(name); // create if it doesn’t exist
+    beforeEach(() => {
+        const collections = ["d", "alloc", "loc", "repo", "admin", "g", "p", "u", "task"];
+        collections.forEach((name) => {
+            console.log("Truncating: " + name);
+            let col = db._collection(name);
+            console.log("col " + col);
+            if (col) {
+                col.truncate(); // truncate after ensuring collection exists
+            } else {
+                db._create(name); // create if it doesn’t exist
             }
         });
     });
@@ -99,9 +78,9 @@ describe("unit_task_router: the Foxx microservice task_router view/ endpoint", (
         db.task.save({
             _key: "2",
             _id: "task/2",
-            client: "u/fakeUser",     // Add this so the query doesn't fail on client match
+            client: "u/fakeUser", // Add this so the query doesn't fail on client match
             ut: Date.now() / 1000,
-            status: 1
+            status: 1,
         });
         // arrange
         // TODO: make encoded query params less hard coded
@@ -119,7 +98,7 @@ describe("unit_task_router: the Foxx microservice task_router run/ endpoint", ()
         db.task.save({
             _key: "3",
             _id: "task/3",
-            client: "u/fakeUser",     // Add this so the query doesn't fail on client match
+            client: "u/fakeUser", // Add this so the query doesn't fail on client match
             ut: Date.now() / 1000,
             status: 1,
             type: g_lib.TT_DATA_GET,
