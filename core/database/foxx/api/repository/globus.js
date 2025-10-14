@@ -2,7 +2,7 @@
 
 const { Result, createAllocationResult } = require("./types");
 const { ExecutionMethod } = require("../lib/execution_types");
-const { validateAllocationParams } = require("./validation");
+const { validateAllocationParams, validatePartialGlobusAllocationParams} = require("./validation");
 const g_tasks = require("../tasks");
 const error = require("../lib/error_codes");
 
@@ -24,11 +24,30 @@ const validate = (repoData) => {
 };
 
 // Create allocation in Globus repository (async via task)
+//
+// Expectation
+//
+// params = {
+//   "client": {
+//     "_id": "u/bob",
+//     "is_admin": false
+//   },
+//   "subject": "u/tim",
+//   "data_limit": 100000,
+//   "rec_limit": 20000,
+//
+// }
+//
 const createAllocation = (repoData, params) => {
     // Validate allocation parameters
     const validationResult = validateAllocationParams(params);
     if (!validationResult.ok) {
         return validationResult;
+    }
+    const validationGlobusResult = validatePartialGlobusAllocationParams(params);
+    console.log(validationGlobusResult);
+    if (!validationGlobusResult.ok) {
+        return validationGlobusResult;
     }
 
     try {
@@ -62,7 +81,6 @@ const createAllocation = (repoData, params) => {
     } catch (e) {
         // Handle both Error objects and array-style errors
         const errorMessage = e.message || (Array.isArray(e) && e[1]) || String(e);
-        console.log("ERROR: ", errorMessage);
         return Result.err({
             code: error.ERR_INTERNAL_FAULT,
             message: `Failed to create allocation task: ${errorMessage}`,
@@ -81,10 +99,6 @@ const deleteAllocation = (client, repoData, subjectId) => {
 
     try {
         // Create task for async Globus allocation deletion
-        console.log("repoData");
-        console.log(repoData);
-        console.log("subject");
-        console.log(subjectId);
         const task = g_tasks.taskInitAllocDelete({
             client,
             repo_id: repoData._id,
@@ -99,8 +113,6 @@ const deleteAllocation = (client, repoData, subjectId) => {
             }),
         );
     } catch (e) {
-        console.log("Error is");
-        console.log(e);
         return Result.err({
             code: error.ERR_INTERNAL_FAULT,
             message: `Failed to create deletion task: ${e.message}`,
