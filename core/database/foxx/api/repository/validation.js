@@ -213,6 +213,16 @@ const validateMetadataConfig = (config) => {
     return Result.ok(true);
 };
 
+const validateRepoData = (repoData) => {
+  if (typeof repoData === "undefined") {
+    return Result.err({
+      code: ERR_INVALID_PARAM,
+      message: "Repo data is undefined.",
+    });
+  }
+  return Result.ok(true);
+}
+
 // Validate allocation parameters
 const validateAllocationParams = (params) => {
     const errors = [];
@@ -227,6 +237,11 @@ const validateAllocationParams = (params) => {
           typeof(params.data_limit) + " data_limit: " + params.data_limit);
     }
 
+    if (typeof params.rec_limit !== "number") {
+        errors.push("Allocation rec_limit must be a number, type: " +
+          typeof(params.rec_limit) + " rec_limit: " + params.rec_limit);
+    }
+
     if (params.path && typeof params.path !== "string") {
         errors.push("Allocation path must be a string if provided");
     }
@@ -238,6 +253,16 @@ const validateAllocationParams = (params) => {
         });
     }
 
+    return Result.ok(true);
+};
+
+const validatePartialGlobusAllocationParams = (params) => {
+    if (params.data_limit <= 0) {
+        return Result.err({
+            code: ERR_INVALID_PARAM,
+            message: "Allocation data_limit must be a positive number data_limit: " + params.data_limit,
+        });
+    }
     return Result.ok(true);
 };
 
@@ -327,4 +352,6 @@ module.exports = {
     validatePartialGlobusConfig,
     validateMetadataConfig,
     validateAllocationParams,
+    validatePartialGlobusAllocationParams,
+    validateRepoData,
 };
