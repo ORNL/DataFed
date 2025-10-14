@@ -451,7 +451,7 @@ router
                 routePath: basePath + "/list",
                 status: "Success",
                 description: "List task records",
-                extra: result,
+                extra: req.queryParams,
             });
         } catch (e) {
             logger.logRequestFailure({
