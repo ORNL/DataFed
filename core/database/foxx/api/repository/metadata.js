@@ -49,7 +49,7 @@ const createAllocation = (repoData, params) => {
         // The transaction needs to include the subect document and the repo document
         // to avoid the case where the nodes no longer exist.
 
-        if (!g_db.repo.exists(repoData._key)) {
+        if (!g_db._exists(repoData._key)) {
             return Result.err({
                 code: error.ERR_NOT_FOUND,
                 message:
@@ -130,8 +130,8 @@ const createAllocation = (repoData, params) => {
 };
 
 // Delete allocation from metadata repository (direct/synchronous)
-const deleteAllocation = (client, repoData, subjectId) => {
-    if (!subjectId || typeof subjectId !== "string") {
+const deleteAllocation = (client, repoData, subject) => {
+    if (!subject || typeof subject !== "string") {
         return Result.err({
             code: error.ERR_INVALID_PARAM,
             message: "Subject ID is required for allocation deletion",
@@ -205,7 +205,7 @@ const deleteAllocation = (client, repoData, subjectId) => {
         // No actual storage deallocation needed
         const result = {
             repo_id: repoData._id,
-            subject: subjectId,
+            subject: subject,
             status: "completed",
             message: "Metadata allocation removed",
         };

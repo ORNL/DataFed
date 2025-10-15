@@ -89,8 +89,8 @@ const createAllocation = (repoData, params) => {
 };
 
 // Delete allocation from Globus repository (async via task)
-const deleteAllocation = (client, repoData, subjectId) => {
-    if (!subjectId || typeof subjectId !== "string") {
+const deleteAllocation = (client, repoData, subject) => {
+    if (!subject || typeof subject !== "string") {
         return Result.err({
             code: error.ERR_INVALID_PARAM,
             message: "Subject ID is required for allocation deletion",
@@ -102,7 +102,7 @@ const deleteAllocation = (client, repoData, subjectId) => {
         const task = g_tasks.taskInitAllocDelete({
             client,
             repo_id: repoData._id,
-            subject: subjectId,
+            subject: subject,
         });
 
         return Result.ok(

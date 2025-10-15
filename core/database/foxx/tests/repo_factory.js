@@ -298,6 +298,43 @@ describe("unit_factory_repository: Repository Factory Tests", function () {
 
                 expect(result.ok).to.be.false;
             });
+
+
+            it("should reject negative capacity for METADATA_ONLY repository", function () {
+                const config = {
+                    id: "test-metadata-negative-capacity",
+                    type: RepositoryType.METADATA_ONLY,
+                    title: "Test Metadata Repository Negative Capacity",
+                    capacity: -100,
+                    admins: ["u/george"],
+                };
+
+                g_db.u.save({
+                    _id: "u/george",
+                    _key: "george",
+                });
+
+                const result = createRepositoryByType(config);
+                expect(result.ok).to.be.false;
+            });
+
+            it("should reject non-zero positive capacity for METADATA_ONLY repository", function () {
+                const config = {
+                    id: "test-metadata-nonzero-capacity",
+                    type: RepositoryType.METADATA_ONLY,
+                    title: "Test Metadata Repository Nonzero Capacity",
+                    capacity: 1,
+                    admins: ["u/george"],
+                };
+
+                g_db.u.save({
+                    _id: "u/george",
+                    _key: "george",
+                });
+
+                const result = createRepositoryByType(config);
+                expect(result.ok).to.be.false;
+            });
         });
     });
 
