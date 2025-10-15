@@ -299,7 +299,6 @@ describe("unit_factory_repository: Repository Factory Tests", function () {
                 expect(result.ok).to.be.false;
             });
 
-
             it("should reject negative capacity for METADATA_ONLY repository", function () {
                 const config = {
                     id: "test-metadata-negative-capacity",
