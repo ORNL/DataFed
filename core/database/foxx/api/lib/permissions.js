@@ -32,7 +32,7 @@ module.exports = (function () {
     obj.PERM_PUBLIC = 0x0047;
 
     obj.hasAdminPermUser = function (a_client, a_user_id) {
-        if (a_client._id != a_user_id && !a_client.is_admin) {
+        if (a_client._id != a_user_id && !a_client?.is_admin) {
             return false;
         } else {
             return true;
@@ -41,7 +41,7 @@ module.exports = (function () {
 
     obj.hasAdminPermProj = function (a_client, a_proj_id) {
         if (
-            !a_client.is_admin &&
+            !a_client?.is_admin &&
             !obj.db.owner.firstExample({
                 _from: a_proj_id,
                 _to: a_client._id,
@@ -55,7 +55,7 @@ module.exports = (function () {
 
     obj.hasManagerPermProj = function (a_client, a_proj_id) {
         if (
-            !a_client.is_admin &&
+            !a_client?.is_admin &&
             !obj.db.owner.firstExample({
                 _from: a_proj_id,
                 _to: a_client._id,
@@ -73,7 +73,11 @@ module.exports = (function () {
 
     obj.hasAdminPermObjectLoaded = function (a_client, a_object) {
         // TODO Should collection creator have admin rights?
-        if (a_object.owner == a_client._id || a_object.creator == a_client._id || a_client.is_admin)
+        if (
+            a_object.owner == a_client._id ||
+            a_object.creator == a_client._id ||
+            a_client?.is_admin
+        )
             return true;
 
         if (a_object.owner.charAt(0) == "p") {
@@ -124,7 +128,7 @@ module.exports = (function () {
      * @returns {boolean} - if client has admin rights on the object.
      **/
     obj.hasAdminPermObject = function (a_client, a_object_id) {
-        if (a_client.is_admin) return true;
+        if (a_client?.is_admin) return true;
 
         var first_owner = obj.db.owner.firstExample({
             _from: a_object_id,
@@ -170,7 +174,7 @@ module.exports = (function () {
 
     obj.hasAdminPermRepo = function (a_client, a_repo_id) {
         if (
-            !a_client.is_admin &&
+            !a_client?.is_admin &&
             !obj.db.admin.firstExample({
                 _from: a_repo_id,
                 _to: a_client._id,

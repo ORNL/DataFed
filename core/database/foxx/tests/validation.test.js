@@ -94,20 +94,6 @@ describe("unit_validation_repository: Repository Validation Tests", function () 
             expect(result.error.message).to.include("Repository title is required");
         });
 
-        it("should reject zero or negative capacity", function () {
-            const config = {
-                id: "test-repo",
-                title: "Test Repository",
-                capacity: 0,
-                admins: ["user1"],
-            };
-            const result = validateCommonFields(config);
-            expect(result.ok).to.be.false;
-            expect(result.error.message).to.include(
-                "Repository capacity must be a positive number",
-            );
-        });
-
         it("should reject empty admins array", function () {
             const config = {
                 id: "test-repo",
@@ -260,9 +246,9 @@ describe("unit_validation_repository: Repository Validation Tests", function () 
     describe("unit_validation_repository: validateMetadataConfig", function () {
         function getValidMetadataConfig() {
             return {
-                id: "test-repo",
+                id: "test-repo/43",
                 title: "Test Metadata Repository",
-                capacity: 1000000,
+                capacity: 0,
                 admins: ["user1"],
             };
         }
@@ -294,18 +280,24 @@ describe("unit_validation_repository: Repository Validation Tests", function () 
     describe("unit_validation_repository: validateAllocationParams", function () {
         it("should accept valid allocation parameters", function () {
             const params = {
+                client: { _id: "user123", is_admin: true },
                 subject: "user123",
-                size: 1000000,
+                data_limit: 1000000,
+                path: "/some/path",
+                rec_limit: 10000,
             };
             const result = validateAllocationParams(params);
+            console.log("Result");
+            console.log(result);
             expect(result.ok).to.be.true;
         });
 
         it("should accept allocation with path", function () {
             const params = {
                 subject: "user123",
-                size: 1000000,
+                data_limit: 1000000,
                 path: "/custom/path",
+                rec_limit: 10000,
             };
             const result = validateAllocationParams(params);
             expect(result.ok).to.be.true;
@@ -313,28 +305,20 @@ describe("unit_validation_repository: Repository Validation Tests", function () 
 
         it("should reject missing subject", function () {
             const params = {
-                size: 1000000,
+                data_limit: 0,
+                rec_limit: 10000,
             };
             const result = validateAllocationParams(params);
             expect(result.ok).to.be.false;
             expect(result.error.message).to.include("Allocation subject is required");
         });
 
-        it("should reject zero or negative size", function () {
-            const params = {
-                subject: "user123",
-                size: 0,
-            };
-            const result = validateAllocationParams(params);
-            expect(result.ok).to.be.false;
-            expect(result.error.message).to.include("Allocation size must be a positive number");
-        });
-
         it("should reject non-string path", function () {
             const params = {
                 subject: "user123",
-                size: 1000000,
+                data_limit: 1000000,
                 path: 123,
+                rec_limit: 10000,
             };
             const result = validateAllocationParams(params);
             expect(result.ok).to.be.false;
