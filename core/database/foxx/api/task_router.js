@@ -238,7 +238,7 @@ router
                 routePath: basePath + "/run",
                 status: "Failure",
                 description: "Run task",
-                extra:{ type: task?.type },
+                extra: { type: task?.type },
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -431,7 +431,7 @@ router
                 extra: {
                     queryParams: req.queryParams,
                     _countTotal: result._countTotal,
-                }
+                },
             });
         } catch (e) {
             logger.logRequestFailure({
