@@ -4,6 +4,7 @@ const createRouter = require("@arangodb/foxx/router");
 const router = createRouter();
 const joi = require("joi");
 
+const error = require("./lib/error_codes");
 const g_db = require("@arangodb").db;
 const g_graph = require("@arangodb/general-graph")._graph("sdmsg");
 const g_lib = require("./support");
@@ -38,7 +39,7 @@ router
 
                         if (count >= client.max_sav_qry)
                             throw [
-                                g_lib.ERR_ALLOCATION_EXCEEDED,
+                                error.ERR_ALLOCATION_EXCEEDED,
                                 "Saved query limit reached (" +
                                     client.max_sav_qry +
                                     "). Contact system administrator to increase limit.",
@@ -118,7 +119,7 @@ router
                     var qry = g_db.q.document(req.body.id);
 
                     if (client._id != qry.owner && !client.is_admin) {
-                        throw g_lib.ERR_PERM_DENIED;
+                        throw error.ERR_PERM_DENIED;
                     }
 
                     // Update time and title (if set)
@@ -190,7 +191,7 @@ router
             var qry = g_db.q.document(req.queryParams.id);
 
             if (client._id != qry.owner && !client.is_admin) {
-                throw g_lib.ERR_PERM_DENIED;
+                throw error.ERR_PERM_DENIED;
             }
 
             qry.id = qry._id;
@@ -222,7 +223,7 @@ router
             for (var i in req.queryParams.ids) {
                 if (!req.queryParams.ids[i].startsWith("q/")) {
                     throw [
-                        g_lib.ERR_INVALID_PARAM,
+                        error.ERR_INVALID_PARAM,
                         "Invalid query ID '" + req.queryParams.ids[i] + "'.",
                     ];
                 }
@@ -232,13 +233,13 @@ router
                 });
                 if (!owner) {
                     throw [
-                        g_lib.ERR_NOT_FOUND,
+                        error.ERR_NOT_FOUND,
                         "Query '" + req.queryParams.ids[i] + "' not found.",
                     ];
                 }
 
                 if (client._id != owner._to && !client.is_admin) {
-                    throw g_lib.ERR_PERM_DENIED;
+                    throw error.ERR_PERM_DENIED;
                 }
 
                 g_graph.q.remove(owner._from);
@@ -313,7 +314,7 @@ function execQuery(client, mode, published, orig_query) {
         if (query.params.owner.startsWith("u/") && query.params.owner != client._id) {
             // A non-client owner for non-public searches means this is a search over shared data
             if (!g_db.u.exists(query.params.owner))
-                throw [g_lib.ERR_NOT_FOUND, "user " + query.params.owner + " not found"];
+                throw [error.ERR_NOT_FOUND, "user " + query.params.owner + " not found"];
 
             ctxt = query.params.owner;
 
@@ -330,7 +331,7 @@ function execQuery(client, mode, published, orig_query) {
                     .toArray();
                 if (!query.params.cols) {
                     throw [
-                        g_lib.ERR_PERM_DENIED,
+                        error.ERR_PERM_DENIED,
                         "No access to user '" + query.params.owner + "' data/collections.",
                     ];
                 }
@@ -338,7 +339,7 @@ function execQuery(client, mode, published, orig_query) {
             }
         } else if (query.params.owner.startsWith("p/")) {
             if (!g_db.p.exists(query.params.owner))
-                throw [g_lib.ERR_NOT_FOUND, "Project " + query.params.owner + " not found"];
+                throw [error.ERR_NOT_FOUND, "Project " + query.params.owner + " not found"];
 
             // Must determine clients access to the project
 
@@ -364,7 +365,7 @@ function execQuery(client, mode, published, orig_query) {
                         .toArray();
                     if (!query.params.cols) {
                         throw [
-                            g_lib.ERR_PERM_DENIED,
+                            error.ERR_PERM_DENIED,
                             "No access to project '" + query.params.owner + "'.",
                         ];
                     }
@@ -395,7 +396,7 @@ function execQuery(client, mode, published, orig_query) {
                         })._to != query.params.owner
                     ) {
                         throw [
-                            g_lib.ERR_INVALID_PARAM,
+                            error.ERR_INVALID_PARAM,
                             "Collection '" + col + "' not in search scope.",
                         ];
                     }
@@ -414,7 +415,7 @@ function execQuery(client, mode, published, orig_query) {
         // sch_id is id:ver
         var idx = query.params.sch_id.indexOf(":");
         if (idx < 0) {
-            throw [g_lib.ERR_INVALID_PARAM, "Schema ID missing version number suffix."];
+            throw [error.ERR_INVALID_PARAM, "Schema ID missing version number suffix."];
         }
         var sch_id = query.params.sch_id.substr(0, idx),
             sch_ver = parseInt(query.params.sch_id.substr(idx + 1));
@@ -424,7 +425,7 @@ function execQuery(client, mode, published, orig_query) {
             ver: sch_ver,
         });
         if (!query.params.sch)
-            throw [g_lib.ERR_NOT_FOUND, "Schema '" + sch_id + "-" + sch_ver + "' does not exist."];
+            throw [error.ERR_NOT_FOUND, "Schema '" + sch_id + "-" + sch_ver + "' does not exist."];
 
         query.params.sch = query.params.sch._id;
         delete query.params.sch_id;
@@ -508,7 +509,7 @@ router
             var qry = g_db.q.document(req.queryParams.id);
 
             if (client._id != qry.owner && !client.is_admin) {
-                throw g_lib.ERR_PERM_DENIED;
+                throw error.ERR_PERM_DENIED;
             }
 
             if (req.queryParams.offset != undefined && req.queryParams.count != undefined) {

@@ -12,8 +12,8 @@ set -euf -o pipefail
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
-PROJECT_ROOT=$(realpath "${SOURCE}/../../../")
-source "${PROJECT_ROOT}/config/datafed.sh"
+DATAFED_PROJECT_ROOT=$(realpath "${SOURCE}/../../../")
+source "${DATAFED_PROJECT_ROOT}/config/datafed.sh"
 
 PATH_TO_PASSWD_FILE="${SOURCE}/database_temp.password"
 rm "${PATH_TO_PASSWD_FILE}"

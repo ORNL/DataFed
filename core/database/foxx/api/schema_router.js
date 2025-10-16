@@ -4,6 +4,7 @@ const createRouter = require("@arangodb/foxx/router");
 const router = createRouter();
 const joi = require("joi");
 
+const error = require("./lib/error_codes");
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
 const g_graph = require("@arangodb/general-graph")._graph("sdmsg");
@@ -101,11 +102,11 @@ router
                     if (req.body.sys) {
                         if (!client.is_admin)
                             throw [
-                                g_lib.ERR_PERM_DENIED,
+                                error.ERR_PERM_DENIED,
                                 "Creating a system schema requires admin privileges.",
                             ];
                         if (!req.body.pub)
-                            throw [g_lib.ERR_INVALID_PARAM, "System schemas cannot be private."];
+                            throw [error.ERR_INVALID_PARAM, "System schemas cannot be private."];
                     } else {
                         obj.own_id = client._id;
                         obj.own_nm = client.name;
@@ -161,7 +162,7 @@ router
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
                     var idx = req.queryParams.id.indexOf(":");
                     if (idx < 0) {
-                        throw [g_lib.ERR_INVALID_PARAM, "Schema ID missing version number suffix."];
+                        throw [error.ERR_INVALID_PARAM, "Schema ID missing version number suffix."];
                     }
                     var sch_id = req.queryParams.id.substr(0, idx),
                         sch_ver = parseInt(req.queryParams.id.substr(idx + 1)),
@@ -172,7 +173,7 @@ router
 
                     if (!sch_old) {
                         throw [
-                            g_lib.ERR_NOT_FOUND,
+                            error.ERR_NOT_FOUND,
                             "Schema '" + req.queryParams.id + "' not found.",
                         ];
                     }
@@ -180,7 +181,7 @@ router
                     // Cannot modify schemas that are in use
                     if (sch_old.cnt) {
                         throw [
-                            g_lib.ERR_PERM_DENIED,
+                            error.ERR_PERM_DENIED,
                             "Schema is associated with data records - cannot update.",
                         ];
                     }
@@ -192,13 +193,13 @@ router
                         })
                     ) {
                         throw [
-                            g_lib.ERR_PERM_DENIED,
+                            error.ERR_PERM_DENIED,
                             "Schema is referenced by another schema - cannot update.",
                         ];
                     }
 
                     if (sch_old.own_id != client._id && !client.is_admin)
-                        throw g_lib.ERR_PERM_DENIED;
+                        throw error.ERR_PERM_DENIED;
 
                     var obj = {};
 
@@ -209,12 +210,12 @@ router
                     if (req.body.sys) {
                         if (!client.is_admin)
                             throw [
-                                g_lib.ERR_PERM_DENIED,
+                                error.ERR_PERM_DENIED,
                                 "Changing to a system schema requires admin privileges.",
                             ];
 
                         if (!sch_old.pub && !req.body.pub)
-                            throw [g_lib.ERR_INVALID_PARAM, "System schemas cannot be private."];
+                            throw [error.ERR_INVALID_PARAM, "System schemas cannot be private."];
 
                         obj.own_id = null;
                         obj.own_nm = null;
@@ -230,7 +231,7 @@ router
                             }))
                     ) {
                         throw [
-                            g_lib.ERR_PERM_DENIED,
+                            error.ERR_PERM_DENIED,
                             "Cannot change schema ID once revisions exist.",
                         ];
                     }
@@ -292,7 +293,7 @@ router
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
                     var idx = req.queryParams.id.indexOf(":");
                     if (idx < 0) {
-                        throw [g_lib.ERR_INVALID_PARAM, "Schema ID missing version number suffix."];
+                        throw [error.ERR_INVALID_PARAM, "Schema ID missing version number suffix."];
                     }
                     var sch_id = req.queryParams.id.substr(0, idx),
                         sch_ver = parseInt(req.queryParams.id.substr(idx + 1)),
@@ -303,11 +304,11 @@ router
 
                     if (!sch)
                         throw [
-                            g_lib.ERR_NOT_FOUND,
+                            error.ERR_NOT_FOUND,
                             "Schema '" + req.queryParams.id + "' not found.",
                         ];
 
-                    if (sch.own_id != client._id && !client.is_admin) throw g_lib.ERR_PERM_DENIED;
+                    if (sch.own_id != client._id && !client.is_admin) throw error.ERR_PERM_DENIED;
 
                     if (
                         g_db.sch_ver.firstExample({
@@ -315,13 +316,13 @@ router
                         })
                     )
                         throw [
-                            g_lib.ERR_PERM_DENIED,
+                            error.ERR_PERM_DENIED,
                             "A revision of schema '" + req.queryParams.id + "' already exists.",
                         ];
 
                     if (!sch.own_id && !client.is_admin)
                         throw [
-                            g_lib.ERR_PERM_DENIED,
+                            error.ERR_PERM_DENIED,
                             "Revising a system schema requires admin privileges.",
                         ];
 
@@ -340,7 +341,7 @@ router
                     if (req.body.sys) {
                         if (!client.is_admin)
                             throw [
-                                g_lib.ERR_PERM_DENIED,
+                                error.ERR_PERM_DENIED,
                                 "Creating a system schema requires admin privileges.",
                             ];
 
@@ -349,7 +350,7 @@ router
                     }
 
                     if (!sch.pub && !sch.own_id)
-                        throw [g_lib.ERR_INVALID_PARAM, "System schemas cannot be private."];
+                        throw [error.ERR_INVALID_PARAM, "System schemas cannot be private."];
 
                     g_lib.procInputParam(req.body, "desc", true, sch);
 
@@ -409,7 +410,7 @@ router
             const client = g_lib.getUserFromClientID(req.queryParams.client);
             var idx = req.queryParams.id.indexOf(":");
             if (idx < 0) {
-                throw [g_lib.ERR_INVALID_PARAM, "Schema ID missing version number suffix."];
+                throw [error.ERR_INVALID_PARAM, "Schema ID missing version number suffix."];
             }
             var sch_id = req.queryParams.id.substr(0, idx),
                 sch_ver = parseInt(req.queryParams.id.substr(idx + 1)),
@@ -419,14 +420,14 @@ router
                 });
 
             if (!sch_old)
-                throw [g_lib.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found."];
+                throw [error.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found."];
 
-            if (sch_old.own_id != client._id && !client.is_admin) throw g_lib.ERR_PERM_DENIED;
+            if (sch_old.own_id != client._id && !client.is_admin) throw error.ERR_PERM_DENIED;
 
             // Cannot delete schemas that are in use
             if (sch_old.cnt) {
                 throw [
-                    g_lib.ERR_PERM_DENIED,
+                    error.ERR_PERM_DENIED,
                     "Schema is associated with data records - cannot update.",
                 ];
             }
@@ -438,7 +439,7 @@ router
                 })
             ) {
                 throw [
-                    g_lib.ERR_PERM_DENIED,
+                    error.ERR_PERM_DENIED,
                     "Schema is referenced by another schema - cannot update.",
                 ];
             }
@@ -452,7 +453,7 @@ router
                     _to: sch_old._id,
                 })
             ) {
-                throw [g_lib.ERR_PERM_DENIED, "Cannot delete intermediate schema revisions."];
+                throw [error.ERR_PERM_DENIED, "Cannot delete intermediate schema revisions."];
             }
 
             g_graph.sch.remove(sch_old._id);
@@ -471,7 +472,7 @@ router
             const client = g_lib.getUserFromClientID(req.queryParams.client);
             var idx = req.queryParams.id.indexOf(":");
             if (idx < 0) {
-                throw [g_lib.ERR_INVALID_PARAM, "Schema ID missing version number suffix."];
+                throw [error.ERR_INVALID_PARAM, "Schema ID missing version number suffix."];
             }
             var sch_id = req.queryParams.id.substr(0, idx),
                 sch_ver = parseInt(req.queryParams.id.substr(idx + 1)),
@@ -480,10 +481,10 @@ router
                     ver: sch_ver,
                 });
 
-            if (!sch) throw [g_lib.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found."];
+            if (!sch) throw [error.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found."];
 
             if (!(sch.pub || sch.own_id == client._id || client.is_admin))
-                throw g_lib.ERR_PERM_DENIED;
+                throw error.ERR_PERM_DENIED;
 
             if (req.queryParams.resolve) {
                 var refs = {};
@@ -660,7 +661,7 @@ function validateKey(val) {
     }
 
     if (i == len) {
-        throw [g_lib.ERR_INVALID_CHAR, "Malformed property '" + val + "'."];
+        throw [error.ERR_INVALID_CHAR, "Malformed property '" + val + "'."];
     }
 
     code = val.charCodeAt(i);
@@ -673,7 +674,7 @@ function validateKey(val) {
         // upper alpha (A-Z)
         i++;
     } else {
-        throw [g_lib.ERR_INVALID_CHAR, "Malformed property '" + val + "'."];
+        throw [error.ERR_INVALID_CHAR, "Malformed property '" + val + "'."];
     }
 
     // Check remaining chars
@@ -687,7 +688,7 @@ function validateKey(val) {
             code != 95
         ) {
             // _
-            throw [g_lib.ERR_INVALID_CHAR, "Illegal character(s) in property '" + val + "'."];
+            throw [error.ERR_INVALID_CHAR, "Illegal character(s) in property '" + val + "'."];
         }
     }
 }
@@ -734,7 +735,7 @@ function updateSchemaRefs(a_sch) {
 
         if (idx < 0)
             throw [
-                g_lib.ERR_INVALID_PARAM,
+                error.ERR_INVALID_PARAM,
                 "Invalid reference ID '" + v + "' in schema (expected id:ver).",
             ];
 
@@ -748,9 +749,9 @@ function updateSchemaRefs(a_sch) {
             ver: ver,
         });
 
-        if (!r) throw [g_lib.ERR_INVALID_PARAM, "Referenced schema '" + v + "' does not exist."];
+        if (!r) throw [error.ERR_INVALID_PARAM, "Referenced schema '" + v + "' does not exist."];
 
-        if (r._id == a_sch._id) throw [g_lib.ERR_INVALID_PARAM, "Schema references self."];
+        if (r._id == a_sch._id) throw [error.ERR_INVALID_PARAM, "Schema references self."];
 
         g_graph.sch_dep.save({
             _from: a_sch._id,
@@ -769,7 +770,7 @@ function gatherRefs(a_doc, a_refs) {
             gatherRefs(v, a_refs);
         } else if (k == "$ref") {
             if (typeof v !== "string")
-                throw [g_lib.ERR_INVALID_PARAM, "Invalid reference type in schema."];
+                throw [error.ERR_INVALID_PARAM, "Invalid reference type in schema."];
 
             // Add dependencies to external schemas, only once
             i = v.indexOf("#");

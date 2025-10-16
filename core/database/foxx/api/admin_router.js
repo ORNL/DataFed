@@ -6,6 +6,7 @@ const joi = require("joi");
 
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
+const permissions = require("./lib/permissions");
 //const   perf = require('@arangodb/foxx');
 
 module.exports = router;
@@ -27,7 +28,6 @@ router
     .get("/test", function (req, res) {
         try {
             const client = g_lib.getUserFromClientID(req.queryParams.client);
-            //var perms = req.queryParams.perms?req.queryParams.perms:g_lib.PERM_ALL;
             var result = true;
             var item = g_lib.resolveID(req.queryParams.item, client);
             var obj = g_db[item[0]].document(item);
@@ -35,8 +35,7 @@ router
             var t1 = new Date();
 
             for (var i = 0; i < 1000; i++) {
-                result = g_lib.hasPermissions(client, obj, 3);
-                //result = g_lib.getPermissions( client, obj, 255 );
+                result = permissions.hasPermissions(client, obj, 3);
             }
             var t2 = new Date();
 

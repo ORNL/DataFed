@@ -3,6 +3,8 @@
 const createRouter = require("@arangodb/foxx/router");
 const router = createRouter();
 const joi = require("joi");
+const error = require("./lib/error_codes");
+const permissions = require("./lib/permissions");
 
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
@@ -17,7 +19,7 @@ router
             client = g_lib.getUserFromClientID(req.queryParams.client);
 
             if (req.queryParams.all && !client.is_admin) {
-                throw g_lib.ERR_PERM_DENIED;
+                throw error.ERR_PERM_DENIED;
             }
         }
 
@@ -106,7 +108,7 @@ router
                 },
                 action: function () {
                     var client = g_lib.getUserFromClientID(req.queryParams.client);
-                    if (!client.is_admin) throw g_lib.ERR_PERM_DENIED;
+                    if (!client.is_admin) throw error.ERR_PERM_DENIED;
 
                     var obj = {
                         capacity: req.body.capacity,
@@ -123,7 +125,7 @@ router
 
                     if (!obj.path.startsWith("/"))
                         throw [
-                            g_lib.ERR_INVALID_PARAM,
+                            error.ERR_INVALID_PARAM,
                             "Repository path must be an absolute path file system path.",
                         ];
 
@@ -132,7 +134,7 @@ router
                     var idx = obj.path.lastIndexOf("/", obj.path.length - 2);
                     if (obj.path.substr(idx + 1, obj.path.length - idx - 2) != obj._key)
                         throw [
-                            g_lib.ERR_INVALID_PARAM,
+                            error.ERR_INVALID_PARAM,
                             "Last part of repository path must be repository ID suffix (" +
                                 obj._key +
                                 ")",
@@ -150,7 +152,7 @@ router
                     for (var i in req.body.admins) {
                         if (!g_db._exists(req.body.admins[i]))
                             throw [
-                                g_lib.ERR_NOT_FOUND,
+                                error.ERR_NOT_FOUND,
                                 "User, " + req.body.admins[i] + ", not found",
                             ];
 
@@ -204,7 +206,7 @@ router
                 },
                 action: function () {
                     var client = g_lib.getUserFromClientID(req.queryParams.client);
-                    g_lib.ensureAdminPermRepo(client, req.body.id);
+                    permissions.ensureAdminPermRepo(client, req.body.id);
                     var obj = {};
 
                     g_lib.procInputParam(req.body, "title", true, obj);
@@ -214,7 +216,7 @@ router
                     if (req.body.path) {
                         if (!req.body.path.startsWith("/"))
                             throw [
-                                g_lib.ERR_INVALID_PARAM,
+                                error.ERR_INVALID_PARAM,
                                 "Repository path must be an absolute path file system path.",
                             ];
 
@@ -226,7 +228,7 @@ router
                         var key = req.body.id.substr(5);
                         if (obj.path.substr(idx + 1, obj.path.length - idx - 2) != key)
                             throw [
-                                g_lib.ERR_INVALID_PARAM,
+                                error.ERR_INVALID_PARAM,
                                 "Last part of repository path must be repository ID suffix (" +
                                     key +
                                     ")",
@@ -257,7 +259,7 @@ router
                         for (var i in req.body.admins) {
                             if (!g_db._exists(req.body.admins[i]))
                                 throw [
-                                    g_lib.ERR_NOT_FOUND,
+                                    error.ERR_NOT_FOUND,
                                     "User, " + req.body.admins[i] + ", not found",
                                 ];
                             g_db.admin.save({
@@ -324,7 +326,7 @@ router
                         .toArray();
                     if (items_connected_to_repo.length > 0) {
                         throw [
-                            g_lib.ERR_IN_USE,
+                            error.ERR_IN_USE,
                             "Cannot delete repo. The repository is in use: " +
                                 items_connected_to_repo.join(", "),
                         ];
@@ -333,9 +335,9 @@ router
                     var client = g_lib.getUserFromClientID(req.queryParams.client);
 
                     if (!g_db._exists(req.queryParams.id))
-                        throw [g_lib.ERR_NOT_FOUND, "Repo, " + req.queryParams.id + ", not found"];
+                        throw [error.ERR_NOT_FOUND, "Repo, " + req.queryParams.id + ", not found"];
 
-                    g_lib.ensureAdminPermRepo(client, req.queryParams.id);
+                    permissions.ensureAdminPermRepo(client, req.queryParams.id);
                     const graph = require("@arangodb/general-graph")._graph("sdmsg");
 
                     // Make sure there are no allocations present on repo
@@ -345,7 +347,7 @@ router
                     console.log(alloc);
                     if (alloc.hasNext())
                         throw [
-                            g_lib.ERR_IN_USE,
+                            error.ERR_IN_USE,
                             "Cannot delete repo with associated allocations. Allocations still exist on the repository.",
                         ];
                     // Remove the repo vertex from the graph and all edges, this includes all
@@ -438,7 +440,7 @@ function calcSize(a_item, a_recurse, a_depth, a_visited, a_result) {
                 calcSize(items.next(), a_recurse, a_depth + 1, a_visited, a_result);
             }
         }
-    } else throw [g_lib.ERR_INVALID_PARAM, "Invalid item type for size calculation: " + a_item];
+    } else throw [error.ERR_INVALID_PARAM, "Invalid item type for size calculation: " + a_item];
 }
 
 router
@@ -446,7 +448,7 @@ router
         var client = g_lib.getUserFromClientID(req.queryParams.client);
         var repo = g_db.repo.document(req.queryParams.repo);
 
-        g_lib.ensureAdminPermRepo(client, repo._id);
+        permissions.ensureAdminPermRepo(client, repo._id);
 
         var result = g_db
             ._query(
@@ -546,7 +548,7 @@ router
                     owner_id != client._id &&
                     g_lib.getProjectRole(client._id, owner_id) == g_lib.PROJ_NO_ROLE
                 ) {
-                    throw g_lib.ERR_PERM_DENIED;
+                    throw error.ERR_PERM_DENIED;
                 }
             } else {
                 owner_id = client._id;
@@ -593,7 +595,7 @@ function getAllocStats(a_repo, a_subject) {
         });
         if (!alloc)
             throw [
-                g_lib.ERR_INVALID_PARAM,
+                error.ERR_INVALID_PARAM,
                 "Subject " + a_subject + " has no allocation on repo " + a_repo,
             ];
 
@@ -642,7 +644,7 @@ router
     .get("/alloc/stats", function (req, res) {
         try {
             var client = g_lib.getUserFromClientID(req.queryParams.client);
-            g_lib.ensureAdminPermRepo(client, req.queryParams.repo);
+            permissions.ensureAdminPermRepo(client, req.queryParams.repo);
             var result = getAllocStats(req.queryParams.repo, req.queryParams.subject);
             res.send(result);
         } catch (e) {
@@ -760,16 +762,16 @@ router
 
                     if (!g_db._exists(req.queryParams.repo))
                         throw [
-                            g_lib.ERR_NOT_FOUND,
+                            error.ERR_NOT_FOUND,
                             "Repo, '" + req.queryParams.repo + "', does not exist",
                         ];
 
                     if (!g_db._exists(subject_id))
-                        throw [g_lib.ERR_NOT_FOUND, "Subject, " + subject_id + ", not found"];
+                        throw [error.ERR_NOT_FOUND, "Subject, " + subject_id + ", not found"];
 
                     var repo = g_db.repo.document(req.queryParams.repo);
 
-                    g_lib.ensureAdminPermRepo(client, repo._id);
+                    permissions.ensureAdminPermRepo(client, repo._id);
 
                     var alloc = g_db.alloc.firstExample({
                         _from: subject_id,
@@ -777,7 +779,7 @@ router
                     });
                     if (!alloc)
                         throw [
-                            g_lib.ERR_NOT_FOUND,
+                            error.ERR_NOT_FOUND,
                             "Subject, '" + subject_id + "', has no allocation on " + repo._id,
                         ];
 
@@ -823,14 +825,14 @@ router
                         if (req.queryParams.subject.startsWith("p/")) {
                             if (!g_db._exists(subject_id))
                                 throw [
-                                    g_lib.ERR_NOT_FOUND,
+                                    error.ERR_NOT_FOUND,
                                     "Project, " + req.queryParams.subject + ", not found",
                                 ];
 
                             var role = g_lib.getProjectRole(client._id, req.queryParams.subject);
                             if (role != g_lib.PROJ_MANAGER && role != g_lib.PROJ_ADMIN)
                                 throw [
-                                    g_lib.ERR_PERM_DENIED,
+                                    error.ERR_PERM_DENIED,
                                     "Setting default allocation on project requires admin/manager rights.",
                                 ];
 
@@ -840,7 +842,7 @@ router
 
                             if (subject_id != client._id && !client.is_admin)
                                 throw [
-                                    g_lib.ERR_PERM_DENIED,
+                                    error.ERR_PERM_DENIED,
                                     "Setting default allocation on user requires admin rights.",
                                 ];
                         }
@@ -848,7 +850,7 @@ router
 
                     if (!g_db._exists(req.queryParams.repo))
                         throw [
-                            g_lib.ERR_NOT_FOUND,
+                            error.ERR_NOT_FOUND,
                             "Repo, '" + req.queryParams.repo + "', does not exist",
                         ];
 

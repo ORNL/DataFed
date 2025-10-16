@@ -58,3 +58,4 @@ variables:
     REGISTRY: "camden.ornl.gov"
     DATAFED_DEPENDENCIES_INSTALL_PATH: "/shared/install"
     DOCKER_TLS_CERTDIR: "" # Required for running docker in docker
+    GIT_SUBMODULE_STRATEGY: recursive

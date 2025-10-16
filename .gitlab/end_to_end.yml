@@ -53,7 +53,6 @@ end-to-end-foxx-setup:
         - echo "--name \"${CONTAINER_NAME}\" \\" >> "${RUN_FILE}"
         - echo "--user \"${USER_ID}:0\" \\" >> "${RUN_FILE}"
         - echo "--security-opt no-new-privileges \\" >> "${RUN_FILE}"
-        - echo "-e DATAFED_ZEROMQ_SYSTEM_SECRET=\"$CI_DATAFED_ZEROMQ_SYSTEM_SECRET\" \\" >> "${RUN_FILE}"
         - echo "-e ENABLE_FOXX_TESTS=\"TRUE\" \\" >> "${RUN_FILE}"
         - echo "-e DATAFED_DOMAIN=\"$CI_DATAFED_DOMAIN\" \\" >> "${RUN_FILE}"
         - echo "-e DATAFED_DATABASE_PASSWORD=\"$CI_DATAFED_DATABASE_PASSWORD\" \\" >> "${RUN_FILE}"
@@ -145,7 +144,6 @@ end-to-end-core-setup:
         - echo "-e DATAFED_GLOBUS_APP_SECRET=\"$CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_core.sh
         - echo "-e DATAFED_GLOBUS_APP_ID=\"$CI_DATAFED_GLOBUS_APP_ID\" \\" >> run_core.sh
         - echo "-e DATAFED_ZEROMQ_SESSION_SECRET=\"$CI_DATAFED_ZEROMQ_SESSION_SECRET\" \\" >> run_core.sh
-        - echo "-e DATAFED_ZEROMQ_SYSTEM_SECRET=\"$CI_DATAFED_ZEROMQ_SYSTEM_SECRET\" \\" >> run_core.sh
         - echo "-e DATAFED_DOMAIN=\"$CI_DATAFED_DOMAIN\" \\" >> run_core.sh
         - echo "-e DATAFED_DATABASE_PASSWORD=\"$CI_DATAFED_DATABASE_PASSWORD\" \\" >> run_core.sh
         - echo "-e DATAFED_DATABASE_IP_ADDRESS_PORT=\"$CI_DATAFED_DATABASE_IP_ADDRESS_PORT\" \\" >> run_core.sh
@@ -204,7 +202,6 @@ end-to-end-ws-setup:
         - echo "-e DATAFED_GLOBUS_APP_SECRET=\"$CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_web.sh
         - echo "-e DATAFED_GLOBUS_APP_ID=\"$CI_DATAFED_GLOBUS_APP_ID\" \\" >> run_web.sh
         - echo "-e DATAFED_ZEROMQ_SESSION_SECRET=\"$CI_DATAFED_ZEROMQ_SESSION_SECRET\" \\" >> run_web.sh
-        - echo "-e DATAFED_ZEROMQ_SYSTEM_SECRET=\"$CI_DATAFED_ZEROMQ_SYSTEM_SECRET\" \\" >> run_web.sh
         - echo "-e DATAFED_DOMAIN=\"$CI_DATAFED_DOMAIN\" \\" >> run_web.sh
         - echo "-e DATAFED_WEB_CERT_PATH=\"/opt/datafed/keys/${DATAFED_WEB_CERT_NAME}\" \\" >> run_web.sh
         - echo "-e DATAFED_WEB_KEY_PATH=\"/opt/datafed/keys/${DATAFED_WEB_KEY_NAME}\" \\" >> run_web.sh
@@ -260,7 +257,6 @@ end-to-end-repo-setup:
         - echo "-e DATAFED_GLOBUS_APP_SECRET=\"$CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> "${RUN_FILE}"
         - echo "-e DATAFED_GLOBUS_APP_ID=\"$CI_DATAFED_GLOBUS_APP_ID\" \\" >> "${RUN_FILE}"
         - echo "-e DATAFED_ZEROMQ_SESSION_SECRET=\"$CI_DATAFED_ZEROMQ_SESSION_SECRET\" \\" >> "${RUN_FILE}"
-        - echo "-e DATAFED_ZEROMQ_SYSTEM_SECRET=\"$CI_DATAFED_ZEROMQ_SYSTEM_SECRET\" \\" >> "${RUN_FILE}"
         - echo "-e DATAFED_HTTPS_SERVER_PORT=\"443\" \\" >> "${RUN_FILE}"
         - echo "-e DATAFED_DOMAIN=\"$CI_DATAFED_DOMAIN\" \\" >> "${RUN_FILE}"
         - echo "-e DATAFED_CORE_ADDRESS_PORT_INTERNAL=\"${CI_DATAFED_DOMAIN}:7513\" \\" >> "${RUN_FILE}"
@@ -324,7 +320,6 @@ end-to-end-gcs-authz-setup:
         - echo "-e DATAFED_GLOBUS_APP_SECRET=\"$CI_DATAFED_GLOBUS_APP_SECRET\" \\" >> run_globus.sh
         - echo "-e DATAFED_GLOBUS_APP_ID=\"$CI_DATAFED_GLOBUS_APP_ID\" \\" >> run_globus.sh
         - echo "-e DATAFED_ZEROMQ_SESSION_SECRET=\"$CI_DATAFED_ZEROMQ_SESSION_SECRET\" \\" >> run_globus.sh
-        - echo "-e DATAFED_ZEROMQ_SYSTEM_SECRET=\"$CI_DATAFED_ZEROMQ_SYSTEM_SECRET\" \\" >> run_globus.sh
         - echo "-e DATAFED_DOMAIN=\"$CI_DATAFED_DOMAIN\" \\" >> run_globus.sh
         - echo "-e DATAFED_HTTPS_SERVER_PORT=\"443\" \\" >> run_globus.sh
         - echo "-e DATAFED_DEFAULT_LOG_PATH=\"$CONTAINER_LOG_FILE_PATH\" \\" >> run_globus.sh
@@ -372,7 +367,6 @@ end_to_end_client-test:
     variables:
         GIT_STRATEGY: clone
         DATAFED_DATABASE_HOST: "${CI_DATAFED_DATABASE_HOST}"
-        DATAFED_DATABASE_ZEROMQ_SYSTEM_SECRET: "${CI_DATAFED_DATABASE_ZEROMQ_SYSTEM_SECRET}"
         DATAFED_DATABASE_PASSWORD: "${CI_DATAFED_DATABASE_PASSWORD}"
         DATAFED_USER89_PASSWORD: "${CI_DATAFED_USER89_PASSWORD}"
         DATAFED_USER89_GLOBUS_REFRESH_TOKEN: "${CI_DATAFED_USER89_GLOBUS_REFRESH_TOKEN}"
@@ -382,7 +376,6 @@ end_to_end_client-test:
         DATAFED_USER99_GLOBUS_REFRESH_TOKEN: "${CI_DATAFED_USER99_GLOBUS_REFRESH_TOKEN}"
         DATAFED_USER99_GLOBUS_ACCESS_TOKEN: "${CI_DATAFED_USER99_GLOBUS_ACCESS_TOKEN}"
         DATAFED_USER99_GLOBUS_UUID: "${CI_DATAFED_USER99_GLOBUS_UUID}"
-        DATAFED_ZEROMQ_SYSTEM_SECRET: "${CI_DATAFED_ZEROMQ_SYSTEM_SECRET}"
         DATAFED_DOMAIN: "${CI_DATAFED_DOMAIN}"
         DATAFED_PYTHON_CLIENT_ALLOW_SELF_SIGNED_CERTS: "TRUE"
     stage: end-to-end-test

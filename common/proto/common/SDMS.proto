@@ -318,6 +318,7 @@ message RepoData
     optional string             domain      = 9;
     optional string             exp_path    = 10;
     repeated string             admin       = 11;
+    optional string             type        = 12;
 }
 
 
