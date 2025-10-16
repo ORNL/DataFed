@@ -220,6 +220,7 @@ router
             }
 
             res.send(result);
+            task = g_db.task.document(req.queryParams.task_id);
             logger.logRequestSuccess({
                 client: req?.queryParams?.task_id,
                 correlationId: req.headers["x-correlation-id"],
@@ -227,7 +228,7 @@ router
                 routePath: basePath + "/run",
                 status: "Success",
                 description: "Run task",
-                extra: result,
+                extra: { type: task?.type },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -237,7 +238,7 @@ router
                 routePath: basePath + "/run",
                 status: "Failure",
                 description: "Run task",
-                extra: result,
+                extra:{ type: task?.type },
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -428,8 +429,8 @@ router
                 status: "Success",
                 description: "List task records",
                 extra: {
-                    result: result,
-                    numOfTasks: result._countTotal,
+                    queryParams: req.queryParams,
+                    _countTotal: result._countTotal,
                 }
             });
         } catch (e) {
