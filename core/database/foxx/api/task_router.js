@@ -55,7 +55,7 @@ router
             delete task._key;
 
             const { state, ...partial_task } = task;
-            
+
             res.send([task]);
             logger.logRequestSuccess({
                 client: req?.queryParams?.task_id,
@@ -430,7 +430,7 @@ router
                 extra: {
                     result: result,
                     numOfTasks: result._countTotal,
-                }
+                },
             });
         } catch (e) {
             logger.logRequestFailure({

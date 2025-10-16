@@ -14,7 +14,7 @@ const task_base_url = `${baseUrl}/task`;
 
 describe("unit_task_router: the Foxx microservice task_router list/ endpoint", () => {
     beforeEach(() => {
-        const collections = [ "u", "task"];
+        const collections = ["u", "task"];
         collections.forEach((name) => {
             let col = db._collection(name);
             if (col) {
@@ -77,7 +77,6 @@ describe("unit_task_router: the Foxx microservice task_router list/ endpoint", (
         // assert
         expect(response.status).to.equal(400);
     });
-
 });
 
 // NOTE: describe block strings are compared against test specification during test call, not file name
@@ -144,5 +143,4 @@ describe("unit_task_router: the Foxx microservice task_router run/ endpoint", ()
         // assert
         expect(response.status).to.equal(400);
     });
-
 });
