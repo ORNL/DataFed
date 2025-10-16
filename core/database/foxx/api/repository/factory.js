@@ -115,6 +115,81 @@ const createRepositoryByType = (config) => {
     }
 };
 
+
+    /**
+     * Find repository by ID
+     * This is an associated function (doesn't take self)
+     * @param {string} repoId - Repository ID (with or without "repo/" prefix)
+     * @returns {{ok: boolean, error?: *, value?: *}} Result containing repository or error
+     * @see https://doc.rust-lang.org/book/ch05-03-method-syntax.html#associated-functions
+     */
+const find = (repoId) => {
+        try {
+            const key = repoId.startsWith("repo/") ? repoId.slice(5) : repoId;
+            const repo = g_db.repo.document(key);
+
+            // Default to GLOBUS type if missing (backward compatibility)
+            // This handles legacy repositories that don't have a type field
+            if (!repo.type) {
+                repo.type = RepositoryType.GLOBUS;
+            }
+
+            // Return as tagged union based on type
+            return Result.ok({
+                id: repo._id, // Add id at top level for easy access
+                type: repo.type,
+                data: repo,
+            });
+        } catch (e) {
+            if (e.errorNum === 1202) {
+                // Document not found
+                return Result.err({
+                    code: 404,
+                    message: `Repository not found: ${repoId}`,
+                });
+            }
+            return Result.err({
+                code: e.errorNum || 500,
+                message: e.errorMessage || "Failed to find repository",
+            });
+        }
+    },
+
+    // List repositories with optional filter
+const list = (filter = {}) => {
+        try {
+            let query = "FOR r IN repo";
+            const bindVars = {};
+
+            if (filter.type) {
+                query += " FILTER r.type == @type";
+                bindVars.type = filter.type;
+            }
+
+            if (filter.admin) {
+                query += " FILTER @admin IN r.admins";
+                bindVars.admin = filter.admin;
+            }
+
+            query += " RETURN r";
+
+            const results = g_db._query(query, bindVars).toArray();
+            return Result.ok(
+                results.map((repo) => ({
+                    type: repo.type,
+                    data: repo,
+                })),
+            );
+        } catch (e) {
+            return Result.err({
+                code: e.errorNum || 500,
+                message: e.errorMessage || "Failed to list repositories",
+            });
+        }
+    },
+
+
+
 /**
  * Get repository implementation based on type
  * This emulates Rust's trait object dynamic dispatch
@@ -142,24 +217,24 @@ const getRepositoryImplementation = (repositoryType) => {
  * @returns {{ok: boolean, error: *}|*} Result of the operation
  * @see https://doc.rust-lang.org/book/ch17-02-trait-objects.html#trait-objects-perform-dynamic-dispatch
  */
-const executeRepositoryOperation = (repository, operation, ...args) => {
-    const impl = getRepositoryImplementation(repository.type);
-    if (!impl) {
-        return Result.err({
-            code: error.ERR_INVALID_PARAM,
-            message: `No implementation for repository type: ${repository.type}`,
-        });
-    }
-
-    if (typeof impl[operation] !== "function") {
-        return Result.err({
-            code: error.ERR_NOT_IMPLEMENTED,
-            message: `Operation '${operation}' not implemented for type: ${repository.type}`,
-        });
-    }
-
-    return impl[operation](repository.data, ...args);
-};
+//const executeRepositoryOperation = (repository, operation, ...args) => {
+//    const impl = getRepositoryImplementation(repository.type);
+//    if (!impl) {
+//        return Result.err({
+//            code: error.ERR_INVALID_PARAM,
+//            message: `No implementation for repository type: ${repository.type}`,
+//        });
+//    }
+//
+//    if (typeof impl[operation] !== "function") {
+//        return Result.err({
+//            code: error.ERR_NOT_IMPLEMENTED,
+//            message: `Operation '${operation}' not implemented for type: ${repository.type}`,
+//        });
+//    }
+//
+//    return impl[operation](repository.data, ...args);
+//};
 
 module.exports = {
     createRepositoryByType,

@@ -24,16 +24,27 @@ const validate = (repoData) => {
     return Result.ok(true);
 };
 
+class Metadata extends BaseRepository {
+
+  constructor(config) {
+    super(config);
+  }
+
+  type = () => {
+      return RepositoryType.METADATA_ONLY; 
+  }
+
+
 // Create allocation in metadata repository (direct/synchronous)
 // NOTE: We do not need a transaction here, we are assuming the transaction
 // declared in the router covers all arango documents and collections used here
-const createAllocation = (repoData, params) => {
+createAllocation = (params) => {
     // Validate allocation parameters
     const validationResult = validateAllocationParams(params);
     if (!validationResult.ok) {
         return validationResult;
     }
-    const validationResultRepo = validateRepoData(repoData);
+    const validationResultRepo = validateRepoData(this.repoData);
     if (!validationResultRepo.ok) {
         return validationResultRepo;
     }
@@ -49,12 +60,12 @@ const createAllocation = (repoData, params) => {
         // The transaction needs to include the subect document and the repo document
         // to avoid the case where the nodes no longer exist.
 
-        if (!g_db._exists(repoData._key)) {
+        if (!g_db._exists(this.repoData._id)) {
             return Result.err({
                 code: error.ERR_NOT_FOUND,
                 message:
                     "Failed to create metadata allocation: Repo, '" +
-                    repoData._id +
+                    this.repoData._id +
                     "', does not exist.",
             });
         }
@@ -71,7 +82,7 @@ const createAllocation = (repoData, params) => {
 
         // Check for proper permissions
         try {
-            permissions.ensureAdminPermRepo(params.client, repoData._id);
+            permissions.ensureAdminPermRepo(params.client, this.repoData._id);
         } catch (e) {
             if (e == error.ERR_PERM_DENIED) {
                 return Result.err({
@@ -80,14 +91,14 @@ const createAllocation = (repoData, params) => {
                         "Failed to create metadata allocation: client, '" +
                         params.client._id +
                         "', does not have permissions to create an allocation on " +
-                        repoData._id,
+                        this.repoData._id,
                 });
             }
         }
         // Check if there is already a matching allocation
         var alloc = g_db.alloc.firstExample({
             _from: params.subject,
-            _to: repoData._id,
+            _to: this.repoData._id,
         });
         if (alloc) {
             return Result.err({
@@ -96,13 +107,13 @@ const createAllocation = (repoData, params) => {
                     "Failed to create metadata allocation: Subject, '" +
                     params.subject +
                     "', already has an allocation on " +
-                    repoData._id,
+                    this.repoData._id,
             });
         }
 
         const allocation = g_db.alloc.save({
             _from: params.subject,
-            _to: repoData._id,
+            _to: this.repoData._id,
             data_limit: params.data_limit,
             rec_limit: params.rec_limit,
             rec_count: 0,
@@ -115,7 +126,7 @@ const createAllocation = (repoData, params) => {
         // For now, return success with the allocation data
         const result = {
             id: allocation._id,
-            repo_id: repoData._id,
+            repo_id: this.repoData._id,
             subject: params.subject,
             rec_limit: params.rec_limit,
         };
@@ -130,7 +141,7 @@ const createAllocation = (repoData, params) => {
 };
 
 // Delete allocation from metadata repository (direct/synchronous)
-const deleteAllocation = (client, repoData, subject) => {
+   deleteAllocation = (client, subject) => {
     if (!subject || typeof subject !== "string") {
         return Result.err({
             code: error.ERR_INVALID_PARAM,
@@ -139,42 +150,56 @@ const deleteAllocation = (client, repoData, subject) => {
     }
 
     try {
-        if (!g_db._exists(repoData._id)) {
+        if (!g_db._exists(this.repoData._id)) {
             return Result.err({
                 code: error.ERR_NOT_FOUND,
                 message:
                     "Failed to delete metadata allocation: Repo, '" +
-                    repoData._id +
+                    this.repoData._id +
                     "', does not exist ",
             });
         }
 
-        if (!g_db._exists(params.subject)) {
+        if (!g_db._exists(subject)) {
             return Result.err({
                 code: error.ERR_NOT_FOUND,
                 message:
                     "Failed to delete metadata allocation: Subject, '" +
-                    params.subject +
+                    subject +
                     "', does not exist ",
             });
         }
 
-        var repo = g_db.repo.document(repoData._id);
+        var repo = g_db.repo.document(this.repoData._id);
 
-        permissions.ensureAdminPermRepo(client, repoData._id);
+        try {
+            permissions.ensureAdminPermRepo(client, this.repoData._id);
+        } catch (e) {
+            if (e == error.ERR_PERM_DENIED) {
+                return Result.err({
+                    code: error.ERR_PERM_DENIED,
+                    message:
+                        "Failed to delete metadata allocation: client, '" +
+                        client._id +
+                        "', does not have permissions to delete an allocation of " +
+                        subject + " on " +
+                        this.repoData._id,
+                });
+            }
+        }
 
         var alloc = g_db.alloc.firstExample({
-            _from: params.subject,
-            _to: repoData._id,
+            _from: subject,
+            _to: this.repoData._id,
         });
         if (!alloc) {
             return Result.err({
                 code: error.ERR_NOT_FOUND,
                 message:
                     "Failed to delete metadata allocation: Subject, '" +
-                    params.subject +
+                    subject +
                     "', has no allocation on " +
-                    repoData._id,
+                    this.repoData._id,
             });
         }
 
@@ -182,8 +207,8 @@ const deleteAllocation = (client, repoData, subject) => {
             ._query(
                 "return length(for v, e in 1..1 inbound @repo loc filter e.uid == @subj return 1)",
                 {
-                    repo: a_repo_id,
-                    subj: a_subject_id,
+                    repo: this.repoData._id,
+                    subj: subject,
                 },
             )
             .next();
@@ -198,13 +223,13 @@ const deleteAllocation = (client, repoData, subject) => {
         }
 
         g_db.alloc.removeByExample({
-            _from: params.subject,
-            _to: repoData._id,
+            _from: subject,
+            _to: this.repoData._id,
         });
         // For metadata-only repos, just remove the database record
         // No actual storage deallocation needed
         const result = {
-            repo_id: repoData._id,
+            repo_id: this.repoData._id,
             subject: subject,
             status: "completed",
             message: "Metadata allocation removed",
@@ -220,18 +245,18 @@ const deleteAllocation = (client, repoData, subject) => {
 };
 
 // Metadata repositories do NOT support data operations
-const supportsDataOperations = (repoData) => {
+const supportsDataOperations = () => {
     return Result.ok(false);
 };
 
 // Get capacity information for metadata repository
-const getCapacityInfo = (repoData) => {
+const getCapacityInfo = () => {
     try {
         // Metadata repos have logical capacity limits, not physical
         return Result.ok({
-            total_capacity: repoData.capacity,
+            total_capacity: this.repoData.capacity,
             used_capacity: 0, // Would track metadata record count/size
-            available_capacity: repoData.capacity,
+            available_capacity: this.repoData.capacity,
             supports_quotas: false,
             is_metadata_only: true,
         });
@@ -243,6 +268,7 @@ const getCapacityInfo = (repoData) => {
     }
 };
 
+}
 /**
  * Export all operations (trait implementation)
  * These exports define the trait implementation for metadata repository type
