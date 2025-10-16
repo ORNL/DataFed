@@ -2,36 +2,42 @@
 
 const { Result, RepositoryType } = require("./types");
 const g_db = require("@arangodb").db;
+const { validateNonEmptyString } = require("./validation");
+const error = require("../lib/error_codes");
 
-/**
- * Trait-like repository operations following Rust patterns
- * All operations take repository as first parameter (like Rust &self)
- * Operations return Result types for error handling
- */
+const createRepositoryData = ({
+    key,
+    type,
+    title,
+    desc,
+    capacity,
+    admins,
+    // Type-specific fields handled through composition
+    typeSpecific = {},
+}) => ({
+    _key: key,
+    _id: `repo/${key}`,
+    type,
+    title,
+    desc,
+    capacity,
+    admins,
+    ...typeSpecific,
+});
 
-/**
- * Repository operations following Rust trait patterns
- * @type {object}
- * @property {function(object): {ok: boolean, error?: *, value?: *}} validate - Validate repository configuration
- * @property {function(object, object): {ok: boolean, error?: *, value?: *}} createAllocation - Create allocation for repository
- * @property {function(object, string): {ok: boolean, error?: *, value?: *}} deleteAllocation - Delete allocation from repository
- * @property {function(object): {ok: boolean, error?: *, value?: *}} supportsDataOperations - Check if repository supports data operations
- * @property {function(object): {ok: boolean, error?: *, value?: *}} getCapacityInfo - Get repository capacity information
- * @property {function(object): {ok: boolean, error?: *, value?: *}} save - Save repository to database
- * @property {function(object, object): {ok: boolean, error?: *, value?: *}} update - Update repository in database
- * @property {function(string): {ok: boolean, error?: *, value?: *}} find - Find repository by ID
- * @property {function(object=): {ok: boolean, error?: *, value?: *}} list - List repositories with optional filter
- * @property {function(object, string, string): {ok: boolean, value: boolean}} checkPermission - Check repository permissions
- * @see https://doc.rust-lang.org/book/ch10-02-traits.html
- * @description Traits define shared behavior in an abstract way
- * @see https://doc.rust-lang.org/book/ch05-03-method-syntax.html
- * @description The first parameter acts like &self in Rust methods
- */
-const BaseRepository = {
+class BaseRepository {
 
     constructor(config, typeSpecificConfig) {
+      if (new.target === BaseRepository) {
+        return Result.err({
+          code: error.ERR_INTERNAL_FAULT,
+          message: "BaseRepository cannot be instantiated directly",
+        });
+
+      }
+
       this.repoData = createRepositoryData({
-          id: config.id,
+          key: config.key,
           type: config.type,
           title: config.title,
           desc: config.desc,
@@ -39,59 +45,62 @@ const BaseRepository = {
           admins: config.admins,
           typeSpecific: typeSpecificConfig,
       });
-    },
+
+      return Result.ok(this);
+    }
     // Validate repository configuration
-    validate: () => {
+    validate(config) {
         return Result.err({
-                code: error.ERR_INTERNAL_FAULT,
+                code: error.ERR_INVALID_OPERATION,
                 message: `BaseRepository - unimplemented validation method called.`,
         });
-    },
+    }
 
     // Create allocation for repository
-    createAllocation: (allocationParams) => {
+    createAllocation(allocationParams) {
         return Result.err({
-                code: error.ERR_INTERNAL_FAULT,
+                code: error.ERR_INVALID_OPERATION,
                 message: `BaseRepository - unimplemented createAllocation method called.`,
         });
-    },
+    }
 
     // Delete allocation from repository
-    deleteAllocation: (subjectId) => {
+    deleteAllocation(subjectId) {
         return Result.err({
-                code: error.ERR_INTERNAL_FAULT,
+                code: error.ERR_INVALID_OPERATION,
                 message: `BaseRepository - unimplemented deleteAllocation method called.`,
         });
-    },
+    }
 
     // Check if repository supports data operations
-    supportsDataOperations: () => {
+    supportsDataOperations(){
         return Result.err({
-                code: error.ERR_INTERNAL_FAULT,
+                code: error.ERR_INVALID_OPERATION,
                 message: `BaseRepository - unimplemented supportsDataOperations method called.`,
         });
-    },
+    }
 
-   // Check if repository supports data operations
-    type: () => {
+   // Return repository type 
+    type() {
         return Result.err({
                 code: error.ERR_INTERNAL_FAULT,
                 message: `BaseRepository - unimplemented type method called.`,
         });
-    },
+    }
 
     // Get repository capacity information
-    getCapacityInfo: () => {
+    getCapacityInfo() {
         return Result.err({
-                code: error.ERR_INTERNAL_FAULT,
+                code: error.ERR_INVALID_OPERATION,
                 message: `BaseRepository - unimplemented getCapacity method called.`,
         });
-    },
+    }
 
     // Save repository to database
-    save: () => {
+    save() {
         try {
-            const saved = g_db.repo.save(this.repoData, { returnNew: true });
+            const { _id, ...repo_data } = this.repoData;
+            const saved = g_db.repo.save( repo_data, { returnNew: true });
             return Result.ok(saved.new);
         } catch (e) {
             return Result.err({
@@ -99,10 +108,10 @@ const BaseRepository = {
                 message: e.errorMessage || "Failed to save repository",
             });
         }
-    },
+    }
 
     // Update repository in database
-    update: (updates) => {
+    update(updates) {
         try {
             // Lazy migration: ensure type field exists when updating
             // If the repository doesn't have a type, add it based on current state
@@ -110,20 +119,27 @@ const BaseRepository = {
                 updates.type = this.repoData.type || RepositoryType.GLOBUS;
             }
 
-            const updated = g_db.repo.update(this.repoData._key, updates, { returnNew: true });
-            return Result.ok(updated.new);
+            if( g_db._exists(this.repoData._id) ) {
+                const updated = g_db.repo.update(this.repoData._key, updates, { returnNew: true });
+                this.repoData = updated.new;
+                return Result.ok(updated.new);
+            }
+            return Result.err({
+                code: error.ERR_INTERNAL_FAULT,
+                message: `Failed to update repository, repository document was not found (${this.repoData._id})`,
+            });
         } catch (e) {
             return Result.err({
                 code: e.errorNum || 500,
                 message: e.errorMessage || "Failed to update repository",
             });
         }
-    },
+    }
 
     // Check repository permissions
-    checkPermission: (userId, permission) => {
-        console.log("\nINFO - ===== RepositoryOps.checkPermission =====");
-        console.log("INFO - Repository ID:", this.repoData.id);
+    checkPermission(userId, permission) {
+        console.log("INFO - ===== RepositoryOps.checkPermission =====");
+        console.log("INFO - Repository ID:", this.repoData._id);
         console.log("INFO - User ID:", userId);
         console.log("INFO - Permission type:", permission);
         console.log("INFO - Repository data.admins:", this.repoData.admins);
@@ -136,14 +152,15 @@ const BaseRepository = {
         }
 
         // Check for admin edge in the database
-        const g_db = require("@arangodb").db;
-        const adminEdge = g_db.admin.firstExample({
-            _from: this.repoData.id,
-            _to: userId,
-        });
+        let adminEdge;
+        try {
+          adminEdge = g_db.admin.firstExample({ _from: this.repoData._id, _to: userId });
+        } catch (e) {
+          adminEdge = null;
+        }
 
         if (adminEdge) {
-            console.log("INFO - Admin edge found from", this.repoData.id, "to", userId);
+            console.log("INFO - Admin edge found from", this.repoData._id, "to", userId);
             console.log("INFO - ===== checkPermission: GRANTED (admin edge) =====");
             return Result.ok(true);
         }
@@ -159,7 +176,7 @@ const BaseRepository = {
         console.log("INFO - No permission found - not in admins array, no admin edge, not system admin");
         console.log("INFO - ===== checkPermission: DENIED =====");
         return Result.ok(false);
-    },
+    }
 };
 
 module.exports = { BaseRepository };
