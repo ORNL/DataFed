@@ -3,7 +3,7 @@
 const { Result, RepositoryType } = require("./types");
 const g_db = require("@arangodb").db;
 const { validateNonEmptyString } = require("./validation");
-const error = require("../lib/error_codes");
+const error = require("../../lib/error_codes");
 
 const createRepositoryData = ({
     key,

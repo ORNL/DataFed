@@ -10,7 +10,7 @@ const {
 const { validateGlobusConfig, validateMetadataConfig } = require("./validation");
 const globusRepo = require("./repository/globus");
 const metadataRepo = require("./repository/metadata");
-const error = require("../lib/error_codes");
+const error = require("../../lib/error_codes");
 
 /**
  * Repository factory using Rust-compatible patterns

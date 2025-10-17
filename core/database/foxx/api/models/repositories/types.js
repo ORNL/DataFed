@@ -1,6 +1,6 @@
 "use strict";
 
-const { ExecutionMethod } = require("../lib/execution_types");
+const { ExecutionMethod } = require("../../lib/execution_types");
 /**
  * Repository type system using Rust-compatible patterns
  * This module defines types as enum-like constants and data structures

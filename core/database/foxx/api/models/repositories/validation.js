@@ -1,7 +1,7 @@
 "use strict";
 
 const { Result } = require("./types");
-const error = require("../lib/error_codes");
+const error = require("../../lib/error_codes");
 
 // Define error code constant if not available from g_lib
 const ERR_INVALID_PARAM = error.ERR_INVALID_PARAM !== undefined ? error.ERR_INVALID_PARAM : 2;

@@ -1,7 +1,7 @@
 "use strict";
 
 const { expect } = require("chai");
-const { BaseRepository } = require("../api/repositories/base_repository");
+const { BaseRepository } = require("../api/models/repositories/base_repository");
 const g_db = require("@arangodb").db;
 const error = require("../api/lib/error_codes");
 const permissions = require("../api/lib/permissions");

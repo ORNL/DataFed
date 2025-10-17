@@ -1,9 +1,9 @@
 "use strict";
 
 const { expect } = require("chai");
-const { Result } = require("../api/repositories/types");
+const { Result } = require("../api/models/repositories/types");
 const { ExecutionMethod } = require("../api/lib/execution_types");
-const { MetadataRepo } = require("../api/repositories/repository/metadata");
+const { MetadataRepo } = require("../api/models/repositories/repository/metadata");
 const g_tasks = require("../api/tasks");
 const g_db = require("@arangodb").db;
 const error = require("../api/lib/error_codes");

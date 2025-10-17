@@ -1,11 +1,11 @@
 "use strict";
 
 const { RepositoryType, Result, createAllocationResult } = require("../types");
-const { ExecutionMethod } = require("../../lib/execution_types");
+const { ExecutionMethod } = require("../../../lib/execution_types");
 const { BaseRepository } = require("../base_repository.js");
 const { validateAllocationParams, validateNonEmptyString, validateRepositoryPath, validatePOSIXPath } = require("../validation");
-const g_tasks = require("../../tasks");
-const error = require("../../lib/error_codes");
+const g_tasks = require("../../../tasks");
+const error = require("../../../lib/error_codes");
 
 /**
  * Globus-specific configuration
