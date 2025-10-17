@@ -120,64 +120,64 @@ const validateRepositoryPath = (path, repoId) => {
 };
 
 // Validate Globus-specific configuration
-const validateGlobusConfig = (config) => {
-    // Normalize admin/admins field for backward compatibility
-    const normalizedConfig = { ...config };
-    if (config.admin && !config.admins) {
-        normalizedConfig.admins = config.admin;
-    }
-
-    const commonResult = validateCommonFields(normalizedConfig);
-    if (!commonResult.ok) {
-        return commonResult;
-    }
-
-    const errors = [];
-    if (normalizedConfig.capacity <= 0) {
-        errors.push(
-            "Repository capacity must be a positive number: capacity=" + normalizedConfig.capacity,
-        );
-    }
-
-    // Validate required Globus fields
-    const pubKeyValidation = validateNonEmptyString(config.pub_key, "Public key");
-    if (!pubKeyValidation.ok) {
-        errors.push(pubKeyValidation.error.message);
-    }
-
-    const addressValidation = validateNonEmptyString(config.address, "Address");
-    if (!addressValidation.ok) {
-        errors.push(addressValidation.error.message);
-    }
-
-    const endpointValidation = validateNonEmptyString(config.endpoint, "Endpoint");
-    if (!endpointValidation.ok) {
-        errors.push(endpointValidation.error.message);
-    }
-
-    if (errors.length > 0) {
-        return Result.err({
-            code: ERR_INVALID_PARAM,
-            message: errors.join("; "),
-        });
-    }
-
-    // Validate repository path
-    const pathResult = validateRepositoryPath(config.path, config.id);
-    if (!pathResult.ok) {
-        return pathResult;
-    }
-
-    // Validate export path if provided
-    if (config.exp_path) {
-        const expPathResult = validatePOSIXPath(config.exp_path, "Export path");
-        if (!expPathResult.ok) {
-            return expPathResult;
-        }
-    }
-
-    return Result.ok(true);
-};
+//const validateGlobusConfig = (config) => {
+//    // Normalize admin/admins field for backward compatibility
+//    const normalizedConfig = { ...config };
+//    if (config.admin && !config.admins) {
+//        normalizedConfig.admins = config.admin;
+//    }
+//
+//    const commonResult = validateCommonFields(normalizedConfig);
+//    if (!commonResult.ok) {
+//        return commonResult;
+//    }
+//
+//    const errors = [];
+//    if (normalizedConfig.capacity <= 0) {
+//        errors.push(
+//            "Repository capacity must be a positive number: capacity=" + normalizedConfig.capacity,
+//        );
+//    }
+//
+//    // Validate required Globus fields
+//    const pubKeyValidation = validateNonEmptyString(config.pub_key, "Public key");
+//    if (!pubKeyValidation.ok) {
+//        errors.push(pubKeyValidation.error.message);
+//    }
+//
+//    const addressValidation = validateNonEmptyString(config.address, "Address");
+//    if (!addressValidation.ok) {
+//        errors.push(addressValidation.error.message);
+//    }
+//
+//    const endpointValidation = validateNonEmptyString(config.endpoint, "Endpoint");
+//    if (!endpointValidation.ok) {
+//        errors.push(endpointValidation.error.message);
+//    }
+//
+//    if (errors.length > 0) {
+//        return Result.err({
+//            code: ERR_INVALID_PARAM,
+//            message: errors.join("; "),
+//        });
+//    }
+//
+//    // Validate repository path
+//    const pathResult = validateRepositoryPath(config.path, config.id);
+//    if (!pathResult.ok) {
+//        return pathResult;
+//    }
+//
+//    // Validate export path if provided
+//    if (config.exp_path) {
+//        const expPathResult = validatePOSIXPath(config.exp_path, "Export path");
+//        if (!expPathResult.ok) {
+//            return expPathResult;
+//        }
+//    }
+//
+//    return Result.ok(true);
+//};
 
 // Validate metadata-only repository configuration
 const validateMetadataConfig = (config) => {
@@ -268,103 +268,103 @@ const validateAllocationParams = (params) => {
     return Result.ok(true);
 };
 
-const validatePartialGlobusAllocationParams = (params) => {
-    if (params.data_limit <= 0) {
-        return Result.err({
-            code: ERR_INVALID_PARAM,
-            message:
-                "Allocation data_limit must be a positive number data_limit: " + params.data_limit,
-        });
-    }
-    return Result.ok(true);
-};
+//const validatePartialGlobusAllocationParams = (params) => {
+//    if (params.data_limit <= 0) {
+//        return Result.err({
+//            code: ERR_INVALID_PARAM,
+//            message:
+//                "Allocation data_limit must be a positive number data_limit: " + params.data_limit,
+//        });
+//    }
+//    return Result.ok(true);
+//};
 
 // Validate partial Globus configuration (for updates)
-const validatePartialGlobusConfig = (config, repoId) => {
-    // For partial updates, we don't require all fields
-    // Only validate the fields that are provided
-    const errors = [];
+//const validatePartialGlobusConfig = (config, repoId) => {
+//    // For partial updates, we don't require all fields
+//    // Only validate the fields that are provided
+//    const errors = [];
+//
+//    // Normalize admin/admins field for backward compatibility
+//    const normalizedConfig = { ...config };
+//    if (config.admin && !config.admins) {
+//        normalizedConfig.admins = config.admin;
+//    }
+//
+//    // Validate provided fields
+//    if (normalizedConfig.title !== undefined) {
+//        const titleValidation = validateNonEmptyString(normalizedConfig.title, "Repository title");
+//        if (!titleValidation.ok) {
+//            errors.push(titleValidation.error.message);
+//        }
+//    }
+//
+//    if (normalizedConfig.capacity !== undefined) {
+//        if (typeof normalizedConfig.capacity !== "number" || normalizedConfig.capacity <= 0) {
+//            errors.push("Repository capacity must be a positive number");
+//        }
+//    }
+//
+//    if (normalizedConfig.admins !== undefined) {
+//        if (!Array.isArray(normalizedConfig.admins) || normalizedConfig.admins.length === 0) {
+//            errors.push("Repository must have at least one admin");
+//        }
+//    }
+//
+//    if (normalizedConfig.pub_key !== undefined) {
+//        const pubKeyValidation = validateNonEmptyString(normalizedConfig.pub_key, "Public key");
+//        if (!pubKeyValidation.ok) {
+//            errors.push(pubKeyValidation.error.message);
+//        }
+//    }
+//
+//    if (normalizedConfig.address !== undefined) {
+//        const addressValidation = validateNonEmptyString(normalizedConfig.address, "Address");
+//        if (!addressValidation.ok) {
+//            errors.push(addressValidation.error.message);
+//        }
+//    }
+//
+//    if (normalizedConfig.endpoint !== undefined) {
+//        const endpointValidation = validateNonEmptyString(normalizedConfig.endpoint, "Endpoint");
+//        if (!endpointValidation.ok) {
+//            errors.push(endpointValidation.error.message);
+//        }
+//    }
+//
+//    if (normalizedConfig.path !== undefined && repoId) {
+//        const pathResult = validateRepositoryPath(normalizedConfig.path, repoId);
+//        if (!pathResult.ok) {
+//            return pathResult;
+//        }
+//    }
+//
+//    if (normalizedConfig.exp_path !== undefined) {
+//        const expPathResult = validatePOSIXPath(normalizedConfig.exp_path, "Export path");
+//        if (!expPathResult.ok) {
+//            return expPathResult;
+//        }
+//    }
+//
+//    if (errors.length > 0) {
+//        return Result.err({
+//            code: ERR_INVALID_PARAM,
+//            message: errors.join("; "),
+//        });
+//    }
+//
+//    return Result.ok(true);
+//};
 
-    // Normalize admin/admins field for backward compatibility
-    const normalizedConfig = { ...config };
-    if (config.admin && !config.admins) {
-        normalizedConfig.admins = config.admin;
-    }
-
-    // Validate provided fields
-    if (normalizedConfig.title !== undefined) {
-        const titleValidation = validateNonEmptyString(normalizedConfig.title, "Repository title");
-        if (!titleValidation.ok) {
-            errors.push(titleValidation.error.message);
-        }
-    }
-
-    if (normalizedConfig.capacity !== undefined) {
-        if (typeof normalizedConfig.capacity !== "number" || normalizedConfig.capacity <= 0) {
-            errors.push("Repository capacity must be a positive number");
-        }
-    }
-
-    if (normalizedConfig.admins !== undefined) {
-        if (!Array.isArray(normalizedConfig.admins) || normalizedConfig.admins.length === 0) {
-            errors.push("Repository must have at least one admin");
-        }
-    }
-
-    if (normalizedConfig.pub_key !== undefined) {
-        const pubKeyValidation = validateNonEmptyString(normalizedConfig.pub_key, "Public key");
-        if (!pubKeyValidation.ok) {
-            errors.push(pubKeyValidation.error.message);
-        }
-    }
-
-    if (normalizedConfig.address !== undefined) {
-        const addressValidation = validateNonEmptyString(normalizedConfig.address, "Address");
-        if (!addressValidation.ok) {
-            errors.push(addressValidation.error.message);
-        }
-    }
-
-    if (normalizedConfig.endpoint !== undefined) {
-        const endpointValidation = validateNonEmptyString(normalizedConfig.endpoint, "Endpoint");
-        if (!endpointValidation.ok) {
-            errors.push(endpointValidation.error.message);
-        }
-    }
-
-    if (normalizedConfig.path !== undefined && repoId) {
-        const pathResult = validateRepositoryPath(normalizedConfig.path, repoId);
-        if (!pathResult.ok) {
-            return pathResult;
-        }
-    }
-
-    if (normalizedConfig.exp_path !== undefined) {
-        const expPathResult = validatePOSIXPath(normalizedConfig.exp_path, "Export path");
-        if (!expPathResult.ok) {
-            return expPathResult;
-        }
-    }
-
-    if (errors.length > 0) {
-        return Result.err({
-            code: ERR_INVALID_PARAM,
-            message: errors.join("; "),
-        });
-    }
-
-    return Result.ok(true);
-};
-
+//    validateGlobusConfig,
+//    validatePartialGlobusConfig,
+//    validateMetadataConfig,
+//    validatePartialGlobusAllocationParams,
 module.exports = {
     validateNonEmptyString,
     validateCommonFields,
     validatePOSIXPath,
     validateRepositoryPath,
-    validateGlobusConfig,
-    validatePartialGlobusConfig,
-    validateMetadataConfig,
     validateAllocationParams,
-    validatePartialGlobusAllocationParams,
     validateRepoData,
 };

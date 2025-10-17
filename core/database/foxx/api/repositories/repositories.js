@@ -8,8 +8,8 @@ const {
     createGlobusConfig,
 } = require("./types");
 const { validateGlobusConfig, validateMetadataConfig } = require("./validation");
-const globusRepo = require("./globus");
-const metadataRepo = require("./metadata");
+const globusRepo = require("./repository/globus");
+const metadataRepo = require("./repository/metadata");
 const error = require("../lib/error_codes");
 
 /**
@@ -36,7 +36,9 @@ const error = require("../lib/error_codes");
  * @returns {{ok: boolean, error: *}|{ok: boolean, value: *}} Result object containing repository or error
  * @see https://doc.rust-lang.org/book/ch06-02-match.html
  */
-const createRepositoryByType = (config) => {
+class Repositories {
+
+  createRepositoryByType = (config) => {
     const missingFields = [];
     console.log(config);
     if (!("id" in config)) missingFields.push("id");
@@ -188,7 +190,7 @@ const list = (filter = {}) => {
         }
     },
 
-
+}
 
 /**
  * Get repository implementation based on type
@@ -197,17 +199,17 @@ const list = (filter = {}) => {
  * @returns {object|null} Repository implementation object or null if not found
  * @see https://doc.rust-lang.org/book/ch17-02-trait-objects.html
  */
-const getRepositoryImplementation = (repositoryType) => {
-    switch (repositoryType) {
-        case RepositoryType.GLOBUS:
-            return globusRepo;
-        case RepositoryType.METADATA_ONLY:
-            return metadataRepo;
-        default:
-            return null;
-    }
-};
-
+//const getRepositoryImplementation = (repositoryType) => {
+//    switch (repositoryType) {
+//        case RepositoryType.GLOBUS:
+//            return globusRepo;
+//        case RepositoryType.METADATA_ONLY:
+//            return metadataRepo;
+//        default:
+//            return null;
+//    }
+//};
+//}
 /**
  * Execute operation on repository using dynamic dispatch
  * This pattern emulates Rust's trait method dispatch
@@ -237,7 +239,5 @@ const getRepositoryImplementation = (repositoryType) => {
 //};
 
 module.exports = {
-    createRepositoryByType,
-    getRepositoryImplementation,
-    executeRepositoryOperation,
+    Repositories
 };

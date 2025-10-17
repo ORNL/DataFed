@@ -44,43 +44,26 @@ const Result = {
  * @returns {{_key: string, _id: string, type: string, title: string, desc: string, capacity: number, admins: string[]}} Repository data object with ArangoDB fields
  * @see https://doc.rust-lang.org/book/ch05-01-defining-structs.html
  */
-const createRepositoryData = ({
-    id,
-    type,
-    title,
-    desc,
-    capacity,
-    admins,
-    // Type-specific fields handled through composition
-    typeSpecific = {},
-}) => ({
-    _key: id,
-    _id: `repo/${id}`,
-    type,
-    title,
-    desc,
-    capacity,
-    admins,
-    ...typeSpecific,
-});
+//const createRepositoryData = ({
+//    id,
+//    type,
+//    title,
+//    desc,
+//    capacity,
+//    admins,
+//    // Type-specific fields handled through composition
+//    typeSpecific = {},
+//}) => ({
+//    _key: id,
+//    _id: `repo/${id}`,
+//    type,
+//    title,
+//    desc,
+//    capacity,
+//    admins,
+//    ...typeSpecific,
+//});
 
-/**
- * Globus-specific configuration
- * @param {object} config - Globus configuration object
- * @param {string} config.endpoint - Globus endpoint identifier
- * @param {string} config.path - Repository path on filesystem
- * @param {string} config.pub_key - Public key for ZeroMQ CURVE authentication
- * @param {string} config.address - Network address
- * @param {string} [config.exp_path] - Export path
- * @returns {{endpoint: string, path: string, pub_key: string, address: string, exp_path: string }} Globus configuration object
- */
-const createGlobusConfig = ({ endpoint, path, pub_key, address, exp_path }) => ({
-    endpoint,
-    path,
-    pub_key,
-    address,
-    exp_path,
-});
 
 /**
  * Tagged union for repositories (type + data)
@@ -107,10 +90,10 @@ const createAllocationResult = (method, payload) => ({
     ...(method === ExecutionMethod.TASK ? { task: payload } : { result: payload }),
 });
 
+//    createRepositoryData,
 module.exports = {
     RepositoryType,
     Result,
-    createRepositoryData,
     createGlobusConfig,
     createRepository,
     createAllocationResult,

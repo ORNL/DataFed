@@ -49,7 +49,7 @@ class BaseRepository {
       return Result.ok(this);
     }
     // Validate repository configuration
-    validate(config) {
+    static validate(config) {
         return Result.err({
                 code: error.ERR_INVALID_OPERATION,
                 message: `BaseRepository - unimplemented validation method called.`,
@@ -66,10 +66,7 @@ class BaseRepository {
 
     // Delete allocation from repository
     deleteAllocation(subjectId) {
-        return Result.err({
-                code: error.ERR_INVALID_OPERATION,
-                message: `BaseRepository - unimplemented deleteAllocation method called.`,
-        });
+        return Result.ok(this.repoData.capacity);
     }
 
     // Check if repository supports data operations
