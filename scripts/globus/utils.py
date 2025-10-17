@@ -131,6 +131,21 @@ def createNewClient(auth_client, client_name, project_id):
 
     return client_id
 
+def createNewRedirectClient(auth_client, client_name, project_id, redirect_uri):
+    client_id = getClientId(auth_client, client_name, project_id)
+
+    client_exists = False
+    if client_id:
+        client_exists = True
+
+    if client_exists is False:
+        result = auth_client.create_client(
+            client_name, project=project_id, public_client=False,
+            redirect_uris=[redirect_uri]
+        )
+        client_id = result["client"]["id"]
+
+    return client_id
 
 def getCredentialID(auth_client, client_id, cred_name):
     get_client_cred_result = auth_client.get_client_credentials(client_id)
@@ -284,6 +299,15 @@ def createClient(auth_client, client_name, project_id, cred_name, cred_file):
     )
     return client_id, client_secret
 
+def createRedirectClient(auth_client, client_name, project_id, cred_name, cred_file, redirect_uri):
+    client_id = createNewRedirectClient(auth_client, client_name, project_id, redirect_uri)
+
+    cred_id = getCredentialID(auth_client, client_id, cred_name)
+
+    client_secret = getClientSecret(
+        auth_client, client_id, cred_name, cred_id, cred_file
+    )
+    return client_id, client_secret
 
 def getGCSClientIDFromDeploymentFile(deployment_key_file):
     deployment_key_exists, deployment_key_empty = validFile(deployment_key_file)
