@@ -20,15 +20,14 @@ class MetadataRepo extends BaseRepository {
   constructor(config) {
     const config_result = MetadataRepo.validate(config);
     if ( config_result.ok == false ) {
-      return result;
+      return config_result;
     }
 
-
-    const result = super(normalizedConfig);
+    const result = super(config);
     if ( result.ok == false ) {
       return result;
     }
-
+    this.repoData = result.value.repoData;
     return Result.ok(this.value);
 
   }
@@ -62,17 +61,15 @@ class MetadataRepo extends BaseRepository {
       //
       // The transaction needs to include the subect document and the repo document
       // to avoid the case where the nodes no longer exist.
-
-      if (!g_db._exists(this.repoData._id)) {
+      if (!g_db._exists(this.repoData.id)) {
         return Result.err({
           code: error.ERR_NOT_FOUND,
           message:
           "Failed to create metadata allocation: Repo, '" +
-          this.repoData._id +
+          this.repoData.id +
           "', does not exist.",
         });
       }
-
       if (!g_db._exists(params.subject)) {
         return Result.err({
           code: error.ERR_NOT_FOUND,
@@ -85,7 +82,7 @@ class MetadataRepo extends BaseRepository {
 
       // Check for proper permissions
       try {
-        permissions.ensureAdminPermRepo(params.client, this.repoData._id);
+        permissions.ensureAdminPermRepo(params.client, this.repoData.id);
       } catch (e) {
         if (e == error.ERR_PERM_DENIED) {
           return Result.err({
@@ -94,14 +91,14 @@ class MetadataRepo extends BaseRepository {
             "Failed to create metadata allocation: client, '" +
             params.client._id +
             "', does not have permissions to create an allocation on " +
-            this.repoData._id,
+            this.repoData.id,
           });
         }
       }
       // Check if there is already a matching allocation
       var alloc = g_db.alloc.firstExample({
         _from: params.subject,
-        _to: this.repoData._id,
+        _to: this.repoData.id,
       });
       if (alloc) {
         return Result.err({
@@ -110,13 +107,13 @@ class MetadataRepo extends BaseRepository {
           "Failed to create metadata allocation: Subject, '" +
           params.subject +
           "', already has an allocation on " +
-          this.repoData._id,
+          this.repoData.id,
         });
       }
 
       const allocation = g_db.alloc.save({
         _from: params.subject,
-        _to: this.repoData._id,
+        _to: this.repoData.id,
         data_limit: params.data_limit,
         rec_limit: params.rec_limit,
         rec_count: 0,
@@ -129,7 +126,7 @@ class MetadataRepo extends BaseRepository {
       // For now, return success with the allocation data
       const result = {
         id: allocation._id,
-        repo_id: this.repoData._id,
+        repo_id: this.repoData.id,
         subject: params.subject,
         rec_limit: params.rec_limit,
       };
@@ -153,12 +150,12 @@ class MetadataRepo extends BaseRepository {
     }
 
     try {
-      if (!g_db._exists(this.repoData._id)) {
+      if (!g_db._exists(this.repoData.id)) {
         return Result.err({
           code: error.ERR_NOT_FOUND,
           message:
           "Failed to delete metadata allocation: Repo, '" +
-          this.repoData._id +
+          this.repoData.id +
           "', does not exist ",
         });
       }
@@ -173,10 +170,10 @@ class MetadataRepo extends BaseRepository {
         });
       }
 
-      var repo = g_db.repo.document(this.repoData._id);
+      var repo = g_db.repo.document(this.repoData.id);
 
       try {
-        permissions.ensureAdminPermRepo(client, this.repoData._id);
+        permissions.ensureAdminPermRepo(client, this.repoData.id);
       } catch (e) {
         if (e == error.ERR_PERM_DENIED) {
           return Result.err({
@@ -186,7 +183,7 @@ class MetadataRepo extends BaseRepository {
             client._id +
             "', does not have permissions to delete an allocation of " +
             subject + " on " +
-            this.repoData._id,
+            this.repoData.id,
           });
         }
       }
@@ -195,7 +192,7 @@ class MetadataRepo extends BaseRepository {
       try {
         alloc = g_db.alloc.firstExample({
           _from: subject,
-          _to: this.repoData._id,
+          _to: this.repoData.id,
         });
       }  catch {
         alloc = null
@@ -207,7 +204,7 @@ class MetadataRepo extends BaseRepository {
           "Failed to delete metadata allocation: Subject, '" +
           subject +
           "', has no allocation on " +
-          this.repoData._id,
+          this.repoData.id,
         });
       }
 
@@ -215,7 +212,7 @@ class MetadataRepo extends BaseRepository {
         ._query(
           "return length(for v, e in 1..1 inbound @repo loc filter e.uid == @subj return 1)",
           {
-            repo: this.repoData._id,
+            repo: this.repoData.id,
             subj: subject,
           },
         )
@@ -232,12 +229,12 @@ class MetadataRepo extends BaseRepository {
 
       g_db.alloc.removeByExample({
         _from: subject,
-        _to: this.repoData._id,
+        _to: this.repoData.id,
       });
       // For metadata-only repos, just remove the database record
       // No actual storage deallocation needed
       const result = {
-        repo_id: this.repoData._id,
+        repo_id: this.repoData.id,
         subject: subject,
         status: "completed",
         message: "Metadata allocation removed",

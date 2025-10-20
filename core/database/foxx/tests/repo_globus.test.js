@@ -2,9 +2,9 @@
 
 const { expect } = require("chai");
 const sinon = require("sinon");
-const { Result } = require("../api/models/repository/types");
+const { Result } = require("../api/models/repositories/types");
 const { ExecutionMethod } = require("../api/lib/execution_types");
-const globus = require("../api/models/repository/globus");
+const globus = require("../api/models/repositories/repository/globus");
 const g_tasks = require("../api/tasks");
 const error = require("../api/lib/error_codes");
 const g_db = require("@arangodb").db;

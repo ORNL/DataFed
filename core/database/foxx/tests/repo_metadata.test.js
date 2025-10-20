@@ -88,8 +88,6 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
 
       const repoConfig = getValidRepoData();
       const result = new MetadataRepo(repoConfig);
-      console.log("Result is");
-      console.log(result);
       expect(result.ok).to.be.true;
       expect(result.value.type()).to.equal("metadata_only");
     });
@@ -184,24 +182,19 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
         it("unit_repository_metadata: should return false because of all of the incomplete repository data.", function () {
             const repoData = { id: "repo/123" };
             const result = MetadataRepo.validate(repoData);
-            console.log("Result incomplete!");
-            console.log(result);
             expect(result.ok).to.be.false;
             expect(result.error.message).to.include("Repository title is required and must be a non-empty string; Repository capacity must be a number.; Repository must have at least one admin");
         });
 
         it("unit_repository_metadata: should return false for null repository data", function () {
             const result = MetadataRepo.validate(null);
-            console.log(result);
             expect(result.ok).to.be.false;
         });
     });
 
     describe("unit_repository_metadata: createAllocation", function () {
         it("unit_repository_metadata: should fail to create allocation with non existent repo.", function () {
-            //const repoData = getValidRepoData();
             const params = getValidAllocationParams();
-            //const result = metadata.createAllocation(repoData, params);
             const repo = new MetadataRepo(getValidRepoData()).value;
             const result = repo.createAllocation(params);
 

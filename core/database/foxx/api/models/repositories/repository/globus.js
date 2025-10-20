@@ -81,10 +81,11 @@ class GlobusRepo extends BaseRepository {
         normalizedConfig.admins = config.admin;
     }
 
-     const result = super(normalizedConfig, globusConfig);
+    const result = super(normalizedConfig, globusConfig);
     if ( result.ok == false ) {
       return result;
     }
+    this.repoData = result.value.repoData;
 
     return Result.ok(this.value);
 
@@ -114,7 +115,7 @@ class GlobusRepo extends BaseRepository {
           // params.client must contain _id, and is_admin members
           const taskResult = g_tasks.taskInitAllocCreate(
               params.client,
-              this.repoData._id,
+              this.repoData.id,
               params.subject,
               params.size || params.data_limit, // Handle both parameter names
               params.rec_limit || 1000000, // Default to 1M records if not specified
@@ -128,7 +129,7 @@ class GlobusRepo extends BaseRepository {
           // The web service needs properties like state, task_id, status, etc.
           return Result.ok({
               id: `alloc/${Date.now()}`, // Temporary allocation ID format
-              repo_id: this.repoData._id,
+              repo_id: this.repoData.id,
               subject: params.subject,
               task_id: task._id,
               status: task.status,
@@ -158,7 +159,7 @@ class GlobusRepo extends BaseRepository {
           // Create task for async Globus allocation deletion
           const task = g_tasks.taskInitAllocDelete({
               client,
-              repo_id: this.repoData._id,
+              repo_id: this.repoData.id,
               subject: subject,
           });
   

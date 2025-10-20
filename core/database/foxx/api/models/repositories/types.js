@@ -94,7 +94,6 @@ const createAllocationResult = (method, payload) => ({
 module.exports = {
     RepositoryType,
     Result,
-    createGlobusConfig,
     createRepository,
     createAllocationResult,
 };

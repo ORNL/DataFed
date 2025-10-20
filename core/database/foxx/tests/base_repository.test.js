@@ -46,6 +46,8 @@ describe("unit_base_repository: Base Repository tests", function () {
 
     expect(save_result.ok).to.equal(true);
     const savedRepo = save_result.value;
+    console.log("Saved repo");
+    console.log(savedRepo);
     expect(savedRepo).to.have.property("_key", "123");
 
     // verify it exists in DB
@@ -116,10 +118,7 @@ describe("unit_base_repository: Base Repository tests", function () {
   });
 
   it("should return error for unimplemented validate()", function () {
-    const repoConfig = getValidRepoData();
-    const result = new TestRepo(repoConfig);
-
-    const validate_result = result.value.validate();
+    const validate_result = TestRepo.validate({});
     expect(validate_result.ok).to.be.false;
     expect(validate_result.error.code).to.equal(error.ERR_INVALID_OPERATION);
   });
