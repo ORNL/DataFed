@@ -64,7 +64,6 @@ const validatePartialGlobusAllocationParams = (params) => {
 //
 class GlobusRepo extends BaseRepository {
     constructor(config) {
-        
         const config_result = GlobusRepo.validate(config);
         if (config_result.ok == false) {
             return config_result;
@@ -160,20 +159,12 @@ class GlobusRepo extends BaseRepository {
             console.log("Repo data");
             console.log(this.repoData);
             // Create task for async Globus allocation deletion
-            const task_result = g_tasks.taskInitAllocDelete(
-                client,
-                this.repoData.id,
-                subject);
+            const task_result = g_tasks.taskInitAllocDelete(client, this.repoData.id, subject);
 
             console.log("Deletion task from support.");
             console.log(task_result);
-            return Result.ok(
-                createAllocationResult(ExecutionMethod.DEFERRED,
-                   task_result.task 
-                ),
-            );
+            return Result.ok(createAllocationResult(ExecutionMethod.DEFERRED, task_result.task));
         } catch (e) {
-
             const errorMessage = e.message || (Array.isArray(e) && e[1]) || String(e);
             return Result.err({
                 code: error.ERR_INTERNAL_FAULT,
@@ -183,7 +174,6 @@ class GlobusRepo extends BaseRepository {
     }
 
     static validate(config) {
-
         if (config == null) {
             return Result.ok(true);
         }

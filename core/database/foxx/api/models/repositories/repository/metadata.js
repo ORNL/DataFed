@@ -88,7 +88,7 @@ class MetadataRepo extends BaseRepository {
                 const errorMessage = e.message || (Array.isArray(e) && e[1]) || String(e);
                 return Result.err({
                     code: error.ERR_PERM_DENIED,
-                    message: 'Allocation creation failed - ' + errorMessage,
+                    message: "Allocation creation failed - " + errorMessage,
                 });
             }
             // Check if there is already a matching allocation

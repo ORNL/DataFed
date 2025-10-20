@@ -203,7 +203,14 @@ module.exports = (function () {
     };
 
     obj.ensureAdminPermRepo = function (a_client, a_repo_id) {
-        if (!obj.hasAdminPermRepo(a_client, a_repo_id)) throw [error.ERR_PERM_DENIED, "Client, '" + a_client?._id + "', does not have administrative repository permissions on " + a_repo_id ];
+        if (!obj.hasAdminPermRepo(a_client, a_repo_id))
+            throw [
+                error.ERR_PERM_DENIED,
+                "Client, '" +
+                    a_client?._id +
+                    "', does not have administrative repository permissions on " +
+                    a_repo_id,
+            ];
     };
 
     /* Test if client has requested permission(s) for specified object. Note: this call does NOT check for

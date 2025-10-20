@@ -305,7 +305,8 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
             console.log("RV is");
             console.log(rv);
             expect(rv.error.code).to.equal(error.ERR_PERM_DENIED);
-            expect(rv.error.message).to.include("Allocation creation failed - Client, \'u/456\', does not have administrative repository permissions on repo/123"
+            expect(rv.error.message).to.include(
+                "Allocation creation failed - Client, \'u/456\', does not have administrative repository permissions on repo/123",
             );
         });
 
