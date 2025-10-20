@@ -383,7 +383,6 @@ module.exports = (function () {
     };
 
     obj.getPermissions = function (a_client, a_object, a_req_perm, a_inherited = false) {
-
         var perm_found = 0,
             acl,
             acls,
@@ -533,14 +532,12 @@ module.exports = (function () {
             acls,
             i;
 
-
         if (a_object.topic) {
             perm.grant |= obj.PERM_PUBLIC;
             perm.inhgrant |= obj.PERM_PUBLIC;
         }
 
         if (a_object.acls & 1) {
-
             acls = obj.db
                 ._query("for v, e in 1..1 outbound @object acl filter v._id == @client return e", {
                     object: a_object._id,
@@ -557,7 +554,6 @@ module.exports = (function () {
 
         // Evaluate group permissions on object
         if (a_object.acls & 2) {
-
             acls = obj.db
                 ._query(
                     "for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]",
@@ -575,7 +571,6 @@ module.exports = (function () {
         }
 
         if (a_get_inherited) {
-
             var children = [a_object];
             var parents, parent;
 
@@ -591,14 +586,12 @@ module.exports = (function () {
                     )
                     .toArray();
 
-
                 if (parents.length == 0) break;
 
                 for (i in parents) {
                     parent = parents[i];
 
                     if (parent.topic) {
-
                         perm.inherited |= obj.PERM_PUBLIC;
 
                         if ((a_req_perm & perm.inherited) == a_req_perm) break;
@@ -606,7 +599,6 @@ module.exports = (function () {
 
                     // User ACL
                     if (parent.acls && (parent.acls & 1) != 0) {
-
                         acls = obj.db
                             ._query(
                                 "for v, e in 1..1 outbound @object acl filter v._id == @client return e",
@@ -628,7 +620,6 @@ module.exports = (function () {
 
                     // Group ACL
                     if (parent.acls && (parent.acls & 2) != 0) {
-
                         acls = obj.db
                             ._query(
                                 "for v, e, p in 2..2 outbound @object acl, outbound member filter is_same_collection('g',p.vertices[1]) and p.vertices[2]._id == @client return p.edges[0]",
