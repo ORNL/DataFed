@@ -462,7 +462,7 @@ end_to_end_error_discovery_arango:
     tags:
         - ci-datafed-arango
     script:
-        - sudo journalctl --no-pager -u arangodb3.service
+        - sudo journalctl --no-pager -u arangodb3.service --since "3 hours ago"
 
 end_to_end_error_discovery_gcs:
     needs: ["check-ci-infrastructure", "end-to-end-gcs-authz-setup", "end-to-end-signal"]
