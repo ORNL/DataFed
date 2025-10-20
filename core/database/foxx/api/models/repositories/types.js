@@ -10,12 +10,12 @@ const { ExecutionMethod } = require("../../lib/execution_types");
 /**
  * Repository type enum (similar to Rust enum)
  * In Rust, enums are used to define a type that can be one of several variants
- * @type {Readonly<{GLOBUS: string, METADATA_ONLY: string}>}
+ * @type {Readonly<{GLOBUS: string, METADATA: string}>}
  * @see https://doc.rust-lang.org/book/ch06-01-defining-an-enum.html
  */
 const RepositoryType = Object.freeze({
     GLOBUS: "globus",
-    METADATA_ONLY: "metadata_only",
+    METADATA: "metadata",
 });
 
 /**
@@ -35,7 +35,7 @@ const Result = {
  * Rust favors composition over inheritance - structs contain data, traits define behavior
  * @param {object} config - Configuration object
  * @param {string} config.id - Repository ID
- * @param {string} config.type - Repository type (globus or metadata_only)
+ * @param {string} config.type - Repository type (globus or metadata)
  * @param {string} config.title - Repository title
  * @param {string} [config.desc] - Repository description
  * @param {number} config.capacity - Storage capacity in bytes
@@ -80,13 +80,13 @@ const createRepository = (type, data) => ({
 
 /**
  * Allocation result structure
- * @param {string} method - Execution method (TASK or DIRECT)
+ * @param {string} method - Execution method (DEFERRED or DIRECT)
  * @param {object} payload - Result payload (task info or direct result)
  * @returns {{execution_method: string, task?: object, result?: object}} Allocation result with execution method and appropriate payload
  */
 const createAllocationResult = (method, payload) => ({
     execution_method: method,
-    ...(method === ExecutionMethod.TASK ? { task: payload } : { result: payload }),
+    ...(method === ExecutionMethod.DEFERRED ? { task: payload } : { result: payload }),
 });
 
 //    createRepositoryData,

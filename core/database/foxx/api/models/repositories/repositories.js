@@ -7,9 +7,8 @@ const {
     createRepositoryData,
     createGlobusConfig,
 } = require("./types");
-const { validateGlobusConfig, validateMetadataConfig } = require("./validation");
-const globusRepo = require("./repository/globus");
-const metadataRepo = require("./repository/metadata");
+const { GlobusRepo } = require("./repository/globus");
+const { MetadataRepo } = require("./repository/metadata");
 const error = require("../../lib/error_codes");
 
 /**
@@ -37,7 +36,7 @@ const error = require("../../lib/error_codes");
  * @see https://doc.rust-lang.org/book/ch06-02-match.html
  */
 class Repositories {
-    createRepositoryByType = (config) => {
+    static createRepositoryByType = (config) => {
         const missingFields = [];
         console.log(config);
         if (!("id" in config)) missingFields.push("id");
@@ -59,48 +58,11 @@ class Repositories {
          */
         switch (config.type) {
             case RepositoryType.GLOBUS: {
-                const validationResult = validateGlobusConfig(config);
-                if (!validationResult.ok) {
-                    return validationResult;
-                }
-
-                const globusConfig = createGlobusConfig({
-                    endpoint: config.endpoint,
-                    path: config.path,
-                    pub_key: config.pub_key,
-                    address: config.address,
-                    exp_path: config.exp_path,
-                });
-
-                const repoData = createRepositoryData({
-                    id: config.id,
-                    type: config.type,
-                    title: config.title,
-                    desc: config.desc,
-                    capacity: config.capacity,
-                    admins: config.admins,
-                    typeSpecific: globusConfig,
-                });
-
-                return Result.ok(createRepository(RepositoryType.GLOBUS, repoData));
+                return new GlobusRepo(config);
             }
 
-            case RepositoryType.METADATA_ONLY: {
-                const validationResult = validateMetadataConfig(config);
-                if (!validationResult.ok) {
-                    return validationResult;
-                }
-
-                const repoData = createRepositoryData({
-                    id: config.id,
-                    type: config.type,
-                    title: config.title,
-                    desc: config.desc,
-                    capacity: config.capacity,
-                    admins: config.admins,
-                });
-
-                return Result.ok(createRepository(RepositoryType.METADATA_ONLY, repoData));
+            case RepositoryType.METADATA: {
+                return new MetadataRepo(config);
             }
 
             default:
@@ -123,7 +85,7 @@ class Repositories {
      * @returns {{ok: boolean, error?: *, value?: *}} Result containing repository or error
      * @see https://doc.rust-lang.org/book/ch05-03-method-syntax.html#associated-functions
      */
-    find(repoId) {
+    static find(repoId) {
         try {
             const key = repoId.startsWith("repo/") ? repoId.slice(5) : repoId;
             const repo = g_db.repo.document(key);
@@ -156,7 +118,7 @@ class Repositories {
     }
 
     // List repositories with optional filter
-    list(filter = {}) {
+    static list(filter = {}) {
         try {
             let query = "FOR r IN repo";
             const bindVars = {};
@@ -200,7 +162,7 @@ class Repositories {
 //    switch (repositoryType) {
 //        case RepositoryType.GLOBUS:
 //            return globusRepo;
-//        case RepositoryType.METADATA_ONLY:
+//        case RepositoryType.METADATA:
 //            return metadataRepo;
 //        default:
 //            return null;

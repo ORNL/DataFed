@@ -35,7 +35,7 @@ class MetadataRepo extends BaseRepository {
     }
 
     type() {
-        return RepositoryType.METADATA_ONLY;
+        return RepositoryType.METADATA;
     }
 
     // Create allocation in metadata repository (direct/synchronous)
@@ -85,16 +85,11 @@ class MetadataRepo extends BaseRepository {
             try {
                 permissions.ensureAdminPermRepo(params.client, this.repoData.id);
             } catch (e) {
-                if (e == error.ERR_PERM_DENIED) {
-                    return Result.err({
-                        code: error.ERR_PERM_DENIED,
-                        message:
-                            "Failed to create metadata allocation: client, '" +
-                            params.client._id +
-                            "', does not have permissions to create an allocation on " +
-                            this.repoData.id,
-                    });
-                }
+                const errorMessage = e.message || (Array.isArray(e) && e[1]) || String(e);
+                return Result.err({
+                    code: error.ERR_PERM_DENIED,
+                    message: 'Allocation creation failed - ' + errorMessage,
+                });
             }
             // Check if there is already a matching allocation
             var alloc = g_db.alloc.firstExample({
@@ -120,7 +115,7 @@ class MetadataRepo extends BaseRepository {
                 rec_count: 0,
                 data_size: 0,
                 path: "/",
-                type: "metadata_only",
+                type: RepositoryType.METADATA,
             });
 
             // Save to allocations collection (would need to be created)

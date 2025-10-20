@@ -2,7 +2,7 @@
 
 const { RepositoryType, Result, createAllocationResult } = require("../types");
 const { ExecutionMethod } = require("../../../lib/execution_types");
-const { BaseRepository } = require("../base_repository.js");
+const { BaseRepository } = require("../base_repository");
 const {
     validateAllocationParams,
     validateNonEmptyString,
@@ -64,6 +64,7 @@ const validatePartialGlobusAllocationParams = (params) => {
 //
 class GlobusRepo extends BaseRepository {
     constructor(config) {
+        
         const config_result = GlobusRepo.validate(config);
         if (config_result.ok == false) {
             return config_result;
@@ -103,7 +104,6 @@ class GlobusRepo extends BaseRepository {
         }
 
         const validationGlobusResult = validatePartialGlobusAllocationParams(params);
-        console.log(validationGlobusResult);
         if (!validationGlobusResult.ok) {
             return validationGlobusResult;
         }
@@ -156,37 +156,37 @@ class GlobusRepo extends BaseRepository {
         }
 
         try {
+            console.log("deleteAllocation 1");
+            console.log("Repo data");
+            console.log(this.repoData);
             // Create task for async Globus allocation deletion
-            const task = g_tasks.taskInitAllocDelete({
+            const task_result = g_tasks.taskInitAllocDelete(
                 client,
-                repo_id: this.repoData.id,
-                subject: subject,
-            });
+                this.repoData.id,
+                subject);
 
+            console.log("Deletion task from support.");
+            console.log(task_result);
             return Result.ok(
-                createAllocationResult(ExecutionMethod.TASK, {
-                    task_id: task.task_id,
-                    status: task.status,
-                    queue_time: task.queue_time,
-                }),
+                createAllocationResult(ExecutionMethod.DEFERRED,
+                   task_result.task 
+                ),
             );
         } catch (e) {
+
+            const errorMessage = e.message || (Array.isArray(e) && e[1]) || String(e);
             return Result.err({
                 code: error.ERR_INTERNAL_FAULT,
-                message: `Failed to create deletion task: ${e.message}`,
+                message: `Failed to create allocation task: ${errorMessage}`,
             });
         }
     }
 
     static validate(config) {
-        const globusConfig = createGlobusConfig({
-            endpoint: config.endpoint,
-            path: config.path,
-            pub_key: config.pub_key,
-            address: config.address,
-            exp_path: config.exp_path,
-        });
 
+        if (config == null) {
+            return Result.ok(true);
+        }
         // For partial updates, we don't require all fields
         // Only validate the fields that are provided
         const errors = [];

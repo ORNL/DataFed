@@ -88,7 +88,7 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
             const repoConfig = getValidRepoData();
             const result = new MetadataRepo(repoConfig);
             expect(result.ok).to.be.true;
-            expect(result.value.type()).to.equal("metadata_only");
+            expect(result.value.type()).to.equal("metadata");
         });
 
         it("should fail if capacity is not 0", function () {
@@ -302,10 +302,10 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
 
             const repo = new MetadataRepo(getValidRepoData()).value;
             const rv = repo.createAllocation(params);
-
+            console.log("RV is");
+            console.log(rv);
             expect(rv.error.code).to.equal(error.ERR_PERM_DENIED);
-            expect(rv.error.message).to.include(
-                "Failed to create metadata allocation: client, 'u/456', does not have permissions to create an allocation on repo/123",
+            expect(rv.error.message).to.include("Allocation creation failed - Client, \'u/456\', does not have administrative repository permissions on repo/123"
             );
         });
 
@@ -436,7 +436,7 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
             expect(savedAlloc.rec_count).to.equal(0);
             expect(savedAlloc.data_size).to.equal(0);
             expect(savedAlloc.path).to.equal("/");
-            expect(savedAlloc.type).to.equal("metadata_only");
+            expect(savedAlloc.type).to.equal("metadata");
         });
 
         it("should handle custom path parameter", function () {
