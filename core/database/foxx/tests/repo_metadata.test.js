@@ -43,7 +43,6 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
         };
     }
 
-
     function getValidUserData() {
         return {
             _id: "u/456",
@@ -80,32 +79,32 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
         };
     }
 
-  describe("constructor and validation", function () {
-    it("should create MetadataRepo successfully with valid config", function () {
-      g_db.u.save(getValidUserData());
-      const repoRawConfig = getValidRawRepoData();
-      g_db.repo.save(repoRawConfig);
+    describe("constructor and validation", function () {
+        it("should create MetadataRepo successfully with valid config", function () {
+            g_db.u.save(getValidUserData());
+            const repoRawConfig = getValidRawRepoData();
+            g_db.repo.save(repoRawConfig);
 
-      const repoConfig = getValidRepoData();
-      const result = new MetadataRepo(repoConfig);
-      expect(result.ok).to.be.true;
-      expect(result.value.type()).to.equal("metadata_only");
-    });
+            const repoConfig = getValidRepoData();
+            const result = new MetadataRepo(repoConfig);
+            expect(result.ok).to.be.true;
+            expect(result.value.type()).to.equal("metadata_only");
+        });
 
-    it("should fail if capacity is not 0", function () {
-      const config = { ...getValidRepoData(), capacity: 10 };
-      const repo = new MetadataRepo(config);
-      expect(repo.ok).to.be.false;
-      expect(repo.error.code).to.equal(error.ERR_INVALID_PARAM);
-    });
+        it("should fail if capacity is not 0", function () {
+            const config = { ...getValidRepoData(), capacity: 10 };
+            const repo = new MetadataRepo(config);
+            expect(repo.ok).to.be.false;
+            expect(repo.error.code).to.equal(error.ERR_INVALID_PARAM);
+        });
 
-    it("should fail if invalid fields exist", function () {
-      const config = { ...getValidRepoData(), pub_key: "something" };
-      const repo = new MetadataRepo(config);
-      expect(repo.ok).to.be.false;
-      expect(repo.error.message).to.include("Metadata-only repositories should not have");
+        it("should fail if invalid fields exist", function () {
+            const config = { ...getValidRepoData(), pub_key: "something" };
+            const repo = new MetadataRepo(config);
+            expect(repo.ok).to.be.false;
+            expect(repo.error.message).to.include("Metadata-only repositories should not have");
+        });
     });
-  });
 
     describe("unit_repository_metadata: Validation failures", function () {
         it("unit_repository_metadata: should fail when subject is missing", function () {
@@ -183,7 +182,9 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
             const repoData = { id: "repo/123" };
             const result = MetadataRepo.validate(repoData);
             expect(result.ok).to.be.false;
-            expect(result.error.message).to.include("Repository title is required and must be a non-empty string; Repository capacity must be a number.; Repository must have at least one admin");
+            expect(result.error.message).to.include(
+                "Repository title is required and must be a non-empty string; Repository capacity must be a number.; Repository must have at least one admin",
+            );
         });
 
         it("unit_repository_metadata: should return false for null repository data", function () {
@@ -304,7 +305,7 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
 
             expect(rv.error.code).to.equal(error.ERR_PERM_DENIED);
             expect(rv.error.message).to.include(
-                "Failed to create metadata allocation: client, 'u/456', does not have permissions to create an allocation on repo/123"
+                "Failed to create metadata allocation: client, 'u/456', does not have permissions to create an allocation on repo/123",
             );
         });
 
@@ -438,7 +439,8 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
             expect(savedAlloc.type).to.equal("metadata_only");
         });
 
-        it("should handle custom path parameter", function () { //            const repoData = getValidRepoData();
+        it("should handle custom path parameter", function () {
+            //            const repoData = getValidRepoData();
             const repoData = getValidRawRepoData();
             const userData = getValidUserData();
             const params = getValidAllocationParams();
@@ -486,114 +488,108 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
         });
     });
 
-  describe("unit_repository_metadata: Parameter validation", function () {
+    describe("unit_repository_metadata: Parameter validation", function () {
+        it("should reject null subject", function () {
+            const repoData = getValidRawRepoData();
+            const userData = getValidUserData();
+            g_db.repo.save(repoData);
+            g_db.u.save(userData);
 
-    it("should reject null subject", function () {
-      const repoData = getValidRawRepoData();
-      const userData = getValidUserData();
-      g_db.repo.save(repoData);
-      g_db.u.save(userData);
+            const repo = new MetadataRepo(getValidRepoData()).value;
+            const rv = repo.deleteAllocation(userData, null);
 
-      const repo = new MetadataRepo(getValidRepoData()).value;
-      const rv = repo.deleteAllocation(userData, null);
+            expect(rv.ok).to.be.false;
+            expect(rv.error.code).to.equal(error.ERR_INVALID_PARAM);
+            expect(rv.error.message).to.equal("Subject ID is required for allocation deletion");
+        });
 
-      expect(rv.ok).to.be.false;
-      expect(rv.error.code).to.equal(error.ERR_INVALID_PARAM);
-      expect(rv.error.message).to.equal("Subject ID is required for allocation deletion");
+        it("should reject undefined subject", function () {
+            const repoData = getValidRawRepoData();
+            const userData = getValidUserData();
+            g_db.repo.save(repoData);
+            g_db.u.save(userData);
+            const repo = new MetadataRepo(getValidRepoData()).value;
+            const rv = repo.deleteAllocation(userData, undefined);
+
+            expect(rv.ok).to.be.false;
+            expect(rv.error.code).to.equal(error.ERR_INVALID_PARAM);
+            expect(rv.error.message).to.equal("Subject ID is required for allocation deletion");
+        });
+
+        it("should reject empty string subject", function () {
+            const repoData = getValidRawRepoData();
+            const userData = getValidUserData();
+            g_db.repo.save(repoData);
+            g_db.u.save(userData);
+            const repo = new MetadataRepo(getValidRepoData()).value;
+            const rv = repo.deleteAllocation(userData, "");
+
+            expect(rv.ok).to.be.false;
+            expect(rv.error.code).to.equal(error.ERR_INVALID_PARAM);
+            expect(rv.error.message).to.equal("Subject ID is required for allocation deletion");
+        });
+
+        it("should reject non-string subject", function () {
+            const repoData = getValidRawRepoData();
+            const userData = getValidUserData();
+            g_db.repo.save(repoData);
+            g_db.u.save(userData);
+            const repo = new MetadataRepo(getValidRepoData()).value;
+            const rv = repo.deleteAllocation(userData, 123);
+
+            expect(rv.ok).to.be.false;
+            expect(rv.error.code).to.equal(error.ERR_INVALID_PARAM);
+            expect(rv.error.message).to.equal("Subject ID is required for allocation deletion");
+        });
+
+        it("should reject object as subject", function () {
+            const repoData = getValidRepoData();
+            const userData = getValidUserData();
+            g_db.repo.save(repoData);
+            g_db.u.save(userData);
+            const repo = new MetadataRepo(getValidRepoData()).value;
+            const rv = repo.deleteAllocation(userData, { id: "u/user" });
+
+            expect(rv.ok).to.be.false;
+            expect(rv.error.code).to.equal(error.ERR_INVALID_PARAM);
+            expect(rv.error.message).to.equal("Subject ID is required for allocation deletion");
+        });
     });
 
-    it("should reject undefined subject", function () {
-      const repoData = getValidRawRepoData();
-      const userData = getValidUserData();
-      g_db.repo.save(repoData);
-      g_db.u.save(userData);
-      const repo = new MetadataRepo(getValidRepoData()).value;
-      const rv = repo.deleteAllocation(userData, undefined);
+    describe("unit_repository_metadata:  Repository existence checks", function () {
+        it("should fail when repository does not exist", function () {
+            const repoData = getValidRawRepoData();
+            const userData = getValidUserData();
+            g_db.u.save(userData);
 
-      expect(rv.ok).to.be.false;
-      expect(rv.error.code).to.equal(error.ERR_INVALID_PARAM);
-      expect(rv.error.message).to.equal("Subject ID is required for allocation deletion");
+            const repo = new MetadataRepo(getValidRepoData()).value;
+            const rv = repo.deleteAllocation(userData, userData._id);
+
+            expect(rv.ok).to.be.false;
+            expect(rv.error.code).to.equal(error.ERR_NOT_FOUND);
+            expect(rv.error.message).to.include("Failed to delete metadata allocation: Repo");
+            expect(rv.error.message).to.include(repoData._id);
+            expect(rv.error.message).to.include("does not exist");
+        });
+
+        it("should fail when subject does not exist", function () {
+            const repoData = getValidRawRepoData();
+            const userData = getValidUserData();
+            g_db.u.save(userData);
+            g_db.repo.save(repoData);
+
+            const repo = new MetadataRepo(getValidRepoData()).value;
+            const rv = repo.deleteAllocation(userData, "u/ghost");
+            expect(rv.ok).to.be.false;
+            expect(rv.error.code).to.equal(error.ERR_NOT_FOUND);
+            expect(rv.error.message).to.include("Failed to delete metadata allocation: Subject");
+            expect(rv.error.message).to.include("u/ghost");
+            expect(rv.error.message).to.include("does not exist");
+        });
     });
 
-    it("should reject empty string subject", function () {
-      const repoData = getValidRawRepoData();
-      const userData = getValidUserData();
-      g_db.repo.save(repoData);
-      g_db.u.save(userData);
-      const repo = new MetadataRepo(getValidRepoData()).value;
-      const rv = repo.deleteAllocation(userData, "");
-
-      expect(rv.ok).to.be.false;
-      expect(rv.error.code).to.equal(error.ERR_INVALID_PARAM);
-      expect(rv.error.message).to.equal("Subject ID is required for allocation deletion");
-    });
-
-    it("should reject non-string subject", function () {
-      const repoData = getValidRawRepoData();
-      const userData = getValidUserData();
-      g_db.repo.save(repoData);
-      g_db.u.save(userData);
-      const repo = new MetadataRepo(getValidRepoData()).value;
-      const rv = repo.deleteAllocation(userData, 123);
-
-      expect(rv.ok).to.be.false;
-      expect(rv.error.code).to.equal(error.ERR_INVALID_PARAM);
-      expect(rv.error.message).to.equal("Subject ID is required for allocation deletion");
-    });
-
-    it("should reject object as subject", function () {
-      const repoData = getValidRepoData();
-      const userData = getValidUserData();
-      g_db.repo.save(repoData);
-      g_db.u.save(userData);
-      const repo = new MetadataRepo(getValidRepoData()).value;
-      const rv = repo.deleteAllocation(userData, { id: "u/user" });
-
-      expect(rv.ok).to.be.false;
-      expect(rv.error.code).to.equal(error.ERR_INVALID_PARAM);
-      expect(rv.error.message).to.equal("Subject ID is required for allocation deletion");
-    });
-
-   });
-
-  describe("unit_repository_metadata:  Repository existence checks", function () {
-
-    it("should fail when repository does not exist", function () {
-      const repoData = getValidRawRepoData();
-      const userData = getValidUserData();
-      g_db.u.save(userData);
-
-      const repo = new MetadataRepo(getValidRepoData()).value;
-      const rv = repo.deleteAllocation(userData, userData._id);
-
-      expect(rv.ok).to.be.false;
-      expect(rv.error.code).to.equal(error.ERR_NOT_FOUND);
-      expect(rv.error.message).to.include("Failed to delete metadata allocation: Repo");
-      expect(rv.error.message).to.include(repoData._id);
-      expect(rv.error.message).to.include("does not exist");
-    });
-
-    it("should fail when subject does not exist", function () {
-      const repoData = getValidRawRepoData();
-      const userData = getValidUserData();
-      g_db.u.save(userData);
-      g_db.repo.save(repoData);
-
-      const repo = new MetadataRepo(getValidRepoData()).value;
-      const rv = repo.deleteAllocation(userData, "u/ghost");
-      expect(rv.ok).to.be.false;
-      expect(rv.error.code).to.equal(error.ERR_NOT_FOUND);
-      expect(rv.error.message).to.include("Failed to delete metadata allocation: Subject");
-      expect(rv.error.message).to.include("u/ghost");
-      expect(rv.error.message).to.include("does not exist");
-    });
-
-  });
-
-   describe("unit_repository_metadata: Allocation existence checks", function () {
-
+    describe("unit_repository_metadata: Allocation existence checks", function () {
         it("should fail when allocation does not exist", function () {
-
             const repoData = getValidRawRepoData();
             const userData = getValidUserData();
             g_db.u.save(userData);
@@ -605,7 +601,7 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
 
             const repo = new MetadataRepo(getValidRepoData()).value;
             const rv = repo.deleteAllocation(userData, userData._id);
-            
+
             expect(rv.ok).to.be.false;
             expect(rv.error.code).to.equal(error.ERR_NOT_FOUND);
             expect(rv.error.message).to.include("Failed to delete metadata allocation: Subject");
@@ -633,5 +629,4 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
             expect(g_db._exists(alloc._id)).to.be.false;
         });
     });
-
 });

@@ -64,7 +64,6 @@ const Result = {
 //    ...typeSpecific,
 //});
 
-
 /**
  * Tagged union for repositories (type + data)
  * Rust enums can contain data, creating tagged unions (also called algebraic data types)

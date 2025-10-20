@@ -26,42 +26,40 @@ const createRepositoryData = ({
 });
 
 class BaseRepository {
-
     constructor(config, typeSpecificConfig) {
-      if (new.target === BaseRepository) {
-        return Result.err({
-          code: error.ERR_INTERNAL_FAULT,
-          message: "BaseRepository cannot be instantiated directly",
+        if (new.target === BaseRepository) {
+            return Result.err({
+                code: error.ERR_INTERNAL_FAULT,
+                message: "BaseRepository cannot be instantiated directly",
+            });
+        }
+
+        this.repoData = createRepositoryData({
+            id: `repo/${config.key}`,
+            key: config.key,
+            type: config.type,
+            title: config.title,
+            desc: config.desc,
+            capacity: config.capacity,
+            admins: config.admins,
+            typeSpecific: typeSpecificConfig,
         });
 
-      }
-
-      this.repoData = createRepositoryData({
-          id: `repo/${config.key}`,
-          key: config.key,
-          type: config.type,
-          title: config.title,
-          desc: config.desc,
-          capacity: config.capacity,
-          admins: config.admins,
-          typeSpecific: typeSpecificConfig,
-      });
-
-      return Result.ok(this);
+        return Result.ok(this);
     }
     // Validate repository configuration
     static validate(config) {
         return Result.err({
-                code: error.ERR_INVALID_OPERATION,
-                message: `BaseRepository - unimplemented validation method called.`,
+            code: error.ERR_INVALID_OPERATION,
+            message: `BaseRepository - unimplemented validation method called.`,
         });
     }
 
     // Create allocation for repository
     createAllocation(allocationParams) {
         return Result.err({
-                code: error.ERR_INVALID_OPERATION,
-                message: `BaseRepository - unimplemented createAllocation method called.`,
+            code: error.ERR_INVALID_OPERATION,
+            message: `BaseRepository - unimplemented createAllocation method called.`,
         });
     }
 
@@ -71,26 +69,26 @@ class BaseRepository {
     }
 
     // Check if repository supports data operations
-    supportsDataOperations(){
+    supportsDataOperations() {
         return Result.err({
-                code: error.ERR_INVALID_OPERATION,
-                message: `BaseRepository - unimplemented supportsDataOperations method called.`,
+            code: error.ERR_INVALID_OPERATION,
+            message: `BaseRepository - unimplemented supportsDataOperations method called.`,
         });
     }
 
-   // Return repository type 
+    // Return repository type
     type() {
         return Result.err({
-                code: error.ERR_INTERNAL_FAULT,
-                message: `BaseRepository - unimplemented type method called.`,
+            code: error.ERR_INTERNAL_FAULT,
+            message: `BaseRepository - unimplemented type method called.`,
         });
     }
 
     // Get repository capacity information
     getCapacityInfo() {
         return Result.err({
-                code: error.ERR_INVALID_OPERATION,
-                message: `BaseRepository - unimplemented getCapacity method called.`,
+            code: error.ERR_INVALID_OPERATION,
+            message: `BaseRepository - unimplemented getCapacity method called.`,
         });
     }
 
@@ -99,7 +97,7 @@ class BaseRepository {
         try {
             const { id, ...repo_data } = this.repoData;
             const repo_data_key = { ...repo_data, _key: repo_data.key };
-            const saved = g_db.repo.save( repo_data_key, { returnNew: true });
+            const saved = g_db.repo.save(repo_data_key, { returnNew: true });
             return Result.ok(saved.new);
         } catch (e) {
             return Result.err({
@@ -118,7 +116,7 @@ class BaseRepository {
                 updates.type = this.repoData.type || RepositoryType.GLOBUS;
             }
 
-            if( g_db._exists(this.repoData.id) ) {
+            if (g_db._exists(this.repoData.id)) {
                 const updated = g_db.repo.update(this.repoData.key, updates, { returnNew: true });
                 this.repoData = updated.new;
                 return Result.ok(updated.new);
@@ -153,9 +151,9 @@ class BaseRepository {
         // Check for admin edge in the database
         let adminEdge;
         try {
-          adminEdge = g_db.admin.firstExample({ _from: this.repoData.id, _to: userId });
+            adminEdge = g_db.admin.firstExample({ _from: this.repoData.id, _to: userId });
         } catch (e) {
-          adminEdge = null;
+            adminEdge = null;
         }
 
         if (adminEdge) {
@@ -172,10 +170,12 @@ class BaseRepository {
             return Result.ok(true);
         }
 
-        console.log("INFO - No permission found - not in admins array, no admin edge, not system admin");
+        console.log(
+            "INFO - No permission found - not in admins array, no admin edge, not system admin",
+        );
         console.log("INFO - ===== checkPermission: DENIED =====");
         return Result.ok(false);
     }
-};
+}
 
 module.exports = { BaseRepository };

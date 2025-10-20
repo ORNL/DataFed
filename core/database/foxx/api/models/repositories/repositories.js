@@ -37,86 +37,84 @@ const error = require("../../lib/error_codes");
  * @see https://doc.rust-lang.org/book/ch06-02-match.html
  */
 class Repositories {
+    createRepositoryByType = (config) => {
+        const missingFields = [];
+        console.log(config);
+        if (!("id" in config)) missingFields.push("id");
+        if (!("type" in config)) missingFields.push("type");
+        if (!("title" in config)) missingFields.push("title");
+        if (!("capacity" in config)) missingFields.push("capacity");
+        if (!("admins" in config)) missingFields.push("admins");
 
-  createRepositoryByType = (config) => {
-    const missingFields = [];
-    console.log(config);
-    if (!("id" in config)) missingFields.push("id");
-    if (!("type" in config)) missingFields.push("type");
-    if (!("title" in config)) missingFields.push("title");
-    if (!("capacity" in config)) missingFields.push("capacity");
-    if (!("admins" in config)) missingFields.push("admins");
-
-    if (missingFields.length > 0) {
-        return Result.err({
-            code: error.ERR_INVALID_PARAM,
-            message: `Missing required repository fields: ${missingFields.join(", ")}`,
-        });
-    }
-    /**
-     * Type-based creation using switch (Rust match pattern)
-     * Each case is like a match arm in Rust, handling a specific variant
-     * @see https://doc.rust-lang.org/book/ch18-03-pattern-syntax.html
-     */
-    switch (config.type) {
-        case RepositoryType.GLOBUS: {
-            const validationResult = validateGlobusConfig(config);
-            if (!validationResult.ok) {
-                return validationResult;
-            }
-
-            const globusConfig = createGlobusConfig({
-                endpoint: config.endpoint,
-                path: config.path,
-                pub_key: config.pub_key,
-                address: config.address,
-                exp_path: config.exp_path,
-            });
-
-            const repoData = createRepositoryData({
-                id: config.id,
-                type: config.type,
-                title: config.title,
-                desc: config.desc,
-                capacity: config.capacity,
-                admins: config.admins,
-                typeSpecific: globusConfig,
-            });
-
-            return Result.ok(createRepository(RepositoryType.GLOBUS, repoData));
-        }
-
-        case RepositoryType.METADATA_ONLY: {
-            const validationResult = validateMetadataConfig(config);
-            if (!validationResult.ok) {
-                return validationResult;
-            }
-
-            const repoData = createRepositoryData({
-                id: config.id,
-                type: config.type,
-                title: config.title,
-                desc: config.desc,
-                capacity: config.capacity,
-                admins: config.admins,
-            });
-
-            return Result.ok(createRepository(RepositoryType.METADATA_ONLY, repoData));
-        }
-
-        default:
-            /**
-             * In Rust, match must be exhaustive - all cases must be handled
-             * The default case ensures we handle unknown variants
-             * @see https://doc.rust-lang.org/book/ch06-02-match.html#matching-with-option-t
-             */
+        if (missingFields.length > 0) {
             return Result.err({
                 code: error.ERR_INVALID_PARAM,
-                message: `Unknown repository type: ${config.type}`,
+                message: `Missing required repository fields: ${missingFields.join(", ")}`,
             });
-    }
-};
+        }
+        /**
+         * Type-based creation using switch (Rust match pattern)
+         * Each case is like a match arm in Rust, handling a specific variant
+         * @see https://doc.rust-lang.org/book/ch18-03-pattern-syntax.html
+         */
+        switch (config.type) {
+            case RepositoryType.GLOBUS: {
+                const validationResult = validateGlobusConfig(config);
+                if (!validationResult.ok) {
+                    return validationResult;
+                }
 
+                const globusConfig = createGlobusConfig({
+                    endpoint: config.endpoint,
+                    path: config.path,
+                    pub_key: config.pub_key,
+                    address: config.address,
+                    exp_path: config.exp_path,
+                });
+
+                const repoData = createRepositoryData({
+                    id: config.id,
+                    type: config.type,
+                    title: config.title,
+                    desc: config.desc,
+                    capacity: config.capacity,
+                    admins: config.admins,
+                    typeSpecific: globusConfig,
+                });
+
+                return Result.ok(createRepository(RepositoryType.GLOBUS, repoData));
+            }
+
+            case RepositoryType.METADATA_ONLY: {
+                const validationResult = validateMetadataConfig(config);
+                if (!validationResult.ok) {
+                    return validationResult;
+                }
+
+                const repoData = createRepositoryData({
+                    id: config.id,
+                    type: config.type,
+                    title: config.title,
+                    desc: config.desc,
+                    capacity: config.capacity,
+                    admins: config.admins,
+                });
+
+                return Result.ok(createRepository(RepositoryType.METADATA_ONLY, repoData));
+            }
+
+            default:
+                /**
+                 * In Rust, match must be exhaustive - all cases must be handled
+                 * The default case ensures we handle unknown variants
+                 * @see https://doc.rust-lang.org/book/ch06-02-match.html#matching-with-option-t
+                 */
+                return Result.err({
+                    code: error.ERR_INVALID_PARAM,
+                    message: `Unknown repository type: ${config.type}`,
+                });
+        }
+    };
 
     /**
      * Find repository by ID
@@ -125,7 +123,7 @@ class Repositories {
      * @returns {{ok: boolean, error?: *, value?: *}} Result containing repository or error
      * @see https://doc.rust-lang.org/book/ch05-03-method-syntax.html#associated-functions
      */
-const find = (repoId) => {
+    find(repoId) {
         try {
             const key = repoId.startsWith("repo/") ? repoId.slice(5) : repoId;
             const repo = g_db.repo.document(key);
@@ -155,10 +153,10 @@ const find = (repoId) => {
                 message: e.errorMessage || "Failed to find repository",
             });
         }
-    },
+    }
 
     // List repositories with optional filter
-const list = (filter = {}) => {
+    list(filter = {}) {
         try {
             let query = "FOR r IN repo";
             const bindVars = {};
@@ -188,8 +186,7 @@ const list = (filter = {}) => {
                 message: e.errorMessage || "Failed to list repositories",
             });
         }
-    },
-
+    }
 }
 
 /**
@@ -239,5 +236,5 @@ const list = (filter = {}) => {
 //};
 
 module.exports = {
-    Repositories
+    Repositories,
 };
