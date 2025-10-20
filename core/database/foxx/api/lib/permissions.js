@@ -226,9 +226,6 @@ module.exports = (function () {
         a_inherited = false,
         any = false,
     ) {
-        //console.log("check perm:", a_req_perm, "client:", a_client._id, "object:", a_object._id, "any:", any );
-        //console.log("grant:", a_object.grant );
-
         var perm_found = 0,
             acl,
             acls,
@@ -257,7 +254,6 @@ module.exports = (function () {
             if (acls.length) {
                 for (i in acls) {
                     acl = acls[i];
-                    //console.log("user_perm:",acl);
                     perm_found |= acl.grant;
                     if (a_inherited && acl.inhgrant) perm_found |= acl.inhgrant;
                 }
@@ -281,7 +277,6 @@ module.exports = (function () {
             if (acls.length) {
                 for (i in acls) {
                     acl = acls[i];
-                    //console.log("group_perm:",acl);
                     perm_found |= acl.grant;
                     if (a_inherited && acl.inhgrant) perm_found |= acl.inhgrant;
                 }
@@ -372,7 +367,6 @@ module.exports = (function () {
             children = parents;
         }
 
-        //console.log("perm (last): false" );
         return false;
     };
 
@@ -389,8 +383,6 @@ module.exports = (function () {
     };
 
     obj.getPermissions = function (a_client, a_object, a_req_perm, a_inherited = false) {
-        //console.log("get perm:", a_req_perm, "client:", a_client._id, "object:", a_object._id, "any:", any );
-        //console.log("grant:", a_object.grant );
 
         var perm_found = 0,
             acl,
@@ -419,7 +411,6 @@ module.exports = (function () {
             if (acls.length) {
                 for (i in acls) {
                     acl = acls[i];
-                    //console.log("user_perm:",acl);
                     perm_found |= acl.grant;
                     if (a_inherited && acl.inhgrant) perm_found |= acl.inhgrant;
                 }
@@ -444,7 +435,6 @@ module.exports = (function () {
             if (acls.length) {
                 for (i in acls) {
                     acl = acls[i];
-                    //console.log("group_perm:",acl);
                     perm_found |= acl.grant;
                     if (a_inherited && acl.inhgrant) perm_found |= acl.inhgrant;
                 }
@@ -543,16 +533,13 @@ module.exports = (function () {
             acls,
             i;
 
-        //console.log("getPermissionsLocal",a_object._id);
 
         if (a_object.topic) {
-            //console.log("has topic 1");
             perm.grant |= obj.PERM_PUBLIC;
             perm.inhgrant |= obj.PERM_PUBLIC;
         }
 
         if (a_object.acls & 1) {
-            //console.log("chk local user acls");
 
             acls = obj.db
                 ._query("for v, e in 1..1 outbound @object acl filter v._id == @client return e", {
@@ -570,7 +557,6 @@ module.exports = (function () {
 
         // Evaluate group permissions on object
         if (a_object.acls & 2) {
-            //console.log("chk local group acls");
 
             acls = obj.db
                 ._query(
@@ -589,7 +575,6 @@ module.exports = (function () {
         }
 
         if (a_get_inherited) {
-            //console.log("chk inherited");
 
             var children = [a_object];
             var parents, parent;
@@ -606,7 +591,6 @@ module.exports = (function () {
                     )
                     .toArray();
 
-                //console.log("parents",parents);
 
                 if (parents.length == 0) break;
 
@@ -614,7 +598,6 @@ module.exports = (function () {
                     parent = parents[i];
 
                     if (parent.topic) {
-                        //console.log("has topic 2");
 
                         perm.inherited |= obj.PERM_PUBLIC;
 
@@ -623,7 +606,6 @@ module.exports = (function () {
 
                     // User ACL
                     if (parent.acls && (parent.acls & 1) != 0) {
-                        //console.log("chk par user acls");
 
                         acls = obj.db
                             ._query(
@@ -646,7 +628,6 @@ module.exports = (function () {
 
                     // Group ACL
                     if (parent.acls && (parent.acls & 2) != 0) {
-                        //console.log("chk par group acls");
 
                         acls = obj.db
                             ._query(

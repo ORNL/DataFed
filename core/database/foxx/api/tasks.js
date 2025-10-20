@@ -30,11 +30,9 @@ var tasks_func = (function () {
         if (!g_db._exists(a_repo_id))
             throw [error.ERR_NOT_FOUND, "Repo, '" + a_repo_id + "', does not exist"];
 
-        console.log("taskInitAllocCreate 2");
         if (!g_db._exists(a_subject_id))
             throw [error.ERR_NOT_FOUND, "Subject, '" + a_subject_id + "', does not exist"];
 
-        console.log("taskInitAllocCreate 3");
         // Check for proper permissions
         permissions.ensureAdminPermRepo(a_client, a_repo_id);
 
@@ -43,14 +41,12 @@ var tasks_func = (function () {
             _from: a_subject_id,
             _to: a_repo_id,
         });
-        console.log("taskInitAllocCreate 4");
         if (alloc)
             throw [
                 error.ERR_INVALID_PARAM,
                 "Subject, '" + a_subject_id + "', already has as allocation on " + a_repo_id,
             ];
 
-        console.log("taskInitAllocCreate 5");
         // Check if there is an existing alloc task to involving the same allocation (repo + subject)
         var res = g_db._query(
             "for v, e in 1..1 inbound @repo lock filter e.context == @subj && v.type == @type return v._id",
@@ -61,11 +57,9 @@ var tasks_func = (function () {
             },
         );
 
-        console.log("taskInitAllocCreate 6");
         if (res.hasNext()) {
             throw [error.ERR_IN_USE, "A duplicate allocation create task was found: " + res.next()];
         }
-        console.log("taskInitAllocCreate 7");
 
         var repo = g_db.repo.document(a_repo_id);
         var path =
@@ -73,7 +67,6 @@ var tasks_func = (function () {
             (a_subject_id.charAt(0) == "p" ? "project/" : "user/") +
             a_subject_id.substr(2) +
             "/";
-        console.log("taskInitAllocCreate 8");
         var state = {
             repo_id: a_repo_id,
             subject: a_subject_id,
@@ -81,10 +74,7 @@ var tasks_func = (function () {
             rec_limit: a_rec_limit,
             repo_path: path,
         };
-        console.log("taskInitAllocCreate 9");
         var task = obj._createTask(a_client._id, g_lib.TT_ALLOC_CREATE, 2, state);
-        console.log("Task is");
-        console.log(task);
         if (
             g_proc._lockDepsGeneral(task._id, [
                 {
@@ -110,8 +100,6 @@ var tasks_func = (function () {
                 },
             ).new;
         }
-        console.log("Task is now.");
-        console.log(task);
         return {
             task: task,
         };

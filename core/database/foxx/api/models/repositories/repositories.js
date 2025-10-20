@@ -31,7 +31,6 @@ const error = require("../../lib/error_codes");
 class Repositories {
     static createRepositoryByType = (config) => {
         const missingFields = [];
-        console.log(config);
         if (!("id" in config)) missingFields.push("id");
         if (!("type" in config)) missingFields.push("type");
         if (!("title" in config)) missingFields.push("title");

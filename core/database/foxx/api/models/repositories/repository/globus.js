@@ -155,14 +155,9 @@ class GlobusRepo extends BaseRepository {
         }
 
         try {
-            console.log("deleteAllocation 1");
-            console.log("Repo data");
-            console.log(this.repoData);
             // Create task for async Globus allocation deletion
             const task_result = g_tasks.taskInitAllocDelete(client, this.repoData.id, subject);
 
-            console.log("Deletion task from support.");
-            console.log(task_result);
             return Result.ok(createAllocationResult(ExecutionMethod.DEFERRED, task_result.task));
         } catch (e) {
             const errorMessage = e.message || (Array.isArray(e) && e[1]) || String(e);
