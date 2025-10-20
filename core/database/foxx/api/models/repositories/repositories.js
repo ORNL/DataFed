@@ -12,28 +12,21 @@ const { MetadataRepo } = require("./repository/metadata");
 const error = require("../../lib/error_codes");
 
 /**
- * Repository factory using Rust-compatible patterns
- * Uses switch/case for type-based polymorphism instead of inheritance
- */
-
-/**
- * Create repository based on type (similar to Rust match expression)
- * Rust's match expression provides exhaustive pattern matching
- * JavaScript's switch is used here to emulate this pattern
+ * Create repository based on type
+ *
  * @param {object} config - Repository configuration object
  * @param {string} config.id - Repository ID
  * @param {string} config.type - Repository type (from RepositoryType enum)
  * @param {string} config.title - Repository title
- * @param {string} [config.desc] - Repository description
+ * @param {string} config.desc - Repository description
  * @param {number} config.capacity - Storage capacity in bytes
  * @param {string[]} config.admins - Array of admin user IDs
- * @param {string} [config.endpoint] - Globus endpoint (required for GLOBUS type)
- * @param {string} [config.path] - File path (required for GLOBUS type)
- * @param {string} [config.pub_key] - Public key for ZeroMQ CURVE authentication (required for GLOBUS type)
- * @param {string} [config.address] - Network address (required for GLOBUS type)
- * @param {string} [config.exp_path] - Export path (optional for GLOBUS type)
+ * @param {string} config.endpoint - Globus endpoint (required for GLOBUS type)
+ * @param {string} config.path - File path (required for GLOBUS type)
+ * @param {string} config.pub_key - Public key for ZeroMQ CURVE authentication (required for GLOBUS type)
+ * @param {string} config.address - Network address (required for GLOBUS type)
+ * @param {string} config.exp_path - Export path (optional for GLOBUS type)
  * @returns {{ok: boolean, error: *}|{ok: boolean, value: *}} Result object containing repository or error
- * @see https://doc.rust-lang.org/book/ch06-02-match.html
  */
 class Repositories {
     static createRepositoryByType = (config) => {
@@ -53,8 +46,6 @@ class Repositories {
         }
         /**
          * Type-based creation using switch (Rust match pattern)
-         * Each case is like a match arm in Rust, handling a specific variant
-         * @see https://doc.rust-lang.org/book/ch18-03-pattern-syntax.html
          */
         switch (config.type) {
             case RepositoryType.GLOBUS: {
@@ -66,11 +57,6 @@ class Repositories {
             }
 
             default:
-                /**
-                 * In Rust, match must be exhaustive - all cases must be handled
-                 * The default case ensures we handle unknown variants
-                 * @see https://doc.rust-lang.org/book/ch06-02-match.html#matching-with-option-t
-                 */
                 return Result.err({
                     code: error.ERR_INVALID_PARAM,
                     message: `Unknown repository type: ${config.type}`,
@@ -83,7 +69,6 @@ class Repositories {
      * This is an associated function (doesn't take self)
      * @param {string} repoId - Repository ID (with or without "repo/" prefix)
      * @returns {{ok: boolean, error?: *, value?: *}} Result containing repository or error
-     * @see https://doc.rust-lang.org/book/ch05-03-method-syntax.html#associated-functions
      */
     static find(repoId) {
         try {
@@ -150,52 +135,6 @@ class Repositories {
         }
     }
 }
-
-/**
- * Get repository implementation based on type
- * This emulates Rust's trait object dynamic dispatch
- * @param {string} repositoryType - Repository type from RepositoryType enum
- * @returns {object|null} Repository implementation object or null if not found
- * @see https://doc.rust-lang.org/book/ch17-02-trait-objects.html
- */
-//const getRepositoryImplementation = (repositoryType) => {
-//    switch (repositoryType) {
-//        case RepositoryType.GLOBUS:
-//            return globusRepo;
-//        case RepositoryType.METADATA:
-//            return metadataRepo;
-//        default:
-//            return null;
-//    }
-//};
-//}
-/**
- * Execute operation on repository using dynamic dispatch
- * This pattern emulates Rust's trait method dispatch
- * @param {object} repository - Repository object with type and data fields
- * @param {string} operation - Operation name to execute
- * @param {...*} args - Additional arguments to pass to the operation
- * @returns {{ok: boolean, error: *}|*} Result of the operation
- * @see https://doc.rust-lang.org/book/ch17-02-trait-objects.html#trait-objects-perform-dynamic-dispatch
- */
-//const executeRepositoryOperation = (repository, operation, ...args) => {
-//    const impl = getRepositoryImplementation(repository.type);
-//    if (!impl) {
-//        return Result.err({
-//            code: error.ERR_INVALID_PARAM,
-//            message: `No implementation for repository type: ${repository.type}`,
-//        });
-//    }
-//
-//    if (typeof impl[operation] !== "function") {
-//        return Result.err({
-//            code: error.ERR_NOT_IMPLEMENTED,
-//            message: `Operation '${operation}' not implemented for type: ${repository.type}`,
-//        });
-//    }
-//
-//    return impl[operation](repository.data, ...args);
-//};
 
 module.exports = {
     Repositories,
