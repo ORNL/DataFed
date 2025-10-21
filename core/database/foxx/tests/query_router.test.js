@@ -14,7 +14,7 @@ const qry_base_url = `${baseUrl}/qry`;
 
 describe("unit_query_router: the Foxx microservice qry_router endpoints", () => {
     beforeEach(() => {
-        const collections = [ "u", "qry"];
+        const collections = ["u", "qry"];
         collections.forEach((name) => {
             let col = db._collection(name);
             if (col) {
@@ -25,135 +25,134 @@ describe("unit_query_router: the Foxx microservice qry_router endpoints", () => 
         });
     });
 
-it("should successfully run the create route", () => {
-    db.u.save({
-        _key: "fakeUser",
-        _id: "u/fakeUser",
-        name: "fake user",
-        name_first: "fake",
-        name_last: "user",
-        is_admin: true,
-        max_coll: 50,
-        max_proj: 10,
-        max_sav_qry: 20,
-        email: "fakeuser@gmail.com",
+    it("should successfully run the create route", () => {
+        db.u.save({
+            _key: "fakeUser",
+            _id: "u/fakeUser",
+            name: "fake user",
+            name_first: "fake",
+            name_last: "user",
+            is_admin: true,
+            max_coll: 50,
+            max_proj: 10,
+            max_sav_qry: 20,
+            email: "fakeuser@gmail.com",
+        });
+
+        // Arrange
+        const request_string = `${qry_base_url}/create?client=u/fakeUser`;
+
+        const body = {
+            title: "My Query",
+            qry_begin: "FOR i IN something",
+            qry_end: "RETURN i",
+            qry_filter: "",
+            params: {},
+            limit: 10,
+            query: {}, // adjust if necessary
+        };
+
+        const response = request.post(request_string, {
+            json: true,
+            body: body,
+            headers: {
+                "x-correlation-id": "test-correlation-id",
+            },
+        });
+
+        // Assert
+        expect(response.status).to.equal(200);
     });
 
-    // Arrange
-    const request_string = `${qry_base_url}/create?client=u/fakeUser`;
+    it("should fail running the create route", () => {
+        db.u.save({
+            _key: "fakeUser",
+            _id: "u/fakeUser",
+            name: "fake user",
+            name_first: "fake",
+            name_last: "user",
+            is_admin: true,
+            max_coll: 50,
+            max_proj: 10,
+            max_sav_qry: 20,
+            email: "fakeuser@gmail.com",
+        });
 
-    const body = {
-        title: "My Query",
-        qry_begin: "FOR i IN something",
-        qry_end: "RETURN i",
-        qry_filter: "",
-        params: {},
-        limit: 10,
-        query: {}, // adjust if necessary
-    };
+        // Arrange
+        const request_string = `${qry_base_url}/create?client=u/wellthiswasunexpected`;
 
-    const response = request.post(request_string, {
-        json: true,
-        body: body,
-        headers: {
-            "x-correlation-id": "test-correlation-id"
-        }
-    });
+        const body = {
+            title: "My Query",
+            qry_begin: "FOR i IN something",
+            qry_end: "RETURN i",
+            qry_filter: "",
+            params: {},
+            limit: 10,
+            query: {}, // adjust if necessary
+        };
 
-    // Assert
-    expect(response.status).to.equal(200);
-    });
+        const response = request.post(request_string, {
+            json: true,
+            body: body,
+            headers: {
+                "x-correlation-id": "test-correlation-id",
+            },
+        });
 
-it("should fail running the create route", () => {
-    db.u.save({
-        _key: "fakeUser",
-        _id: "u/fakeUser",
-        name: "fake user",
-        name_first: "fake",
-        name_last: "user",
-        is_admin: true,
-        max_coll: 50,
-        max_proj: 10,
-        max_sav_qry: 20,
-        email: "fakeuser@gmail.com",
-    });
-
-    // Arrange
-    const request_string = `${qry_base_url}/create?client=u/wellthiswasunexpected`;
-
-    const body = {
-        title: "My Query",
-        qry_begin: "FOR i IN something",
-        qry_end: "RETURN i",
-        qry_filter: "",
-        params: {},
-        limit: 10,
-        query: {}, // adjust if necessary
-    };
-
-    const response = request.post(request_string, {
-        json: true,
-        body: body,
-        headers: {
-            "x-correlation-id": "test-correlation-id"
-        }
-    });
-
-    // Assert
-    expect(response.status).to.equal(400);
+        // Assert
+        expect(response.status).to.equal(400);
     });
 
     it("should return a list of saved queries for a valid user", () => {
-    // arrange
-    const fakeUser = {
-        _key: "fakeUser",
-        _id: "u/fakeUser",
-        name: "Fake User",
-        email: "fakeuser@datadev.org",
-        is_admin: false,
-        max_coll: 5,
-        max_proj: 5,
-        max_sav_qry: 10,
-    };
+        // arrange
+        const fakeUser = {
+            _key: "fakeUser",
+            _id: "u/fakeUser",
+            name: "Fake User",
+            email: "fakeuser@datadev.org",
+            is_admin: false,
+            max_coll: 5,
+            max_proj: 5,
+            max_sav_qry: 10,
+        };
 
-    db.u.save(fakeUser);
+        db.u.save(fakeUser);
 
-    // Save the query and the edge between the query and the user
-    var request_string = `${qry_base_url}/create?client=u/fakeUser`;
+        // Save the query and the edge between the query and the user
+        var request_string = `${qry_base_url}/create?client=u/fakeUser`;
 
-    var body = {
-        title: "Test Query Title",
-        qry_begin: "FOR i IN something",
-        qry_end: "RETURN i",
-        qry_filter: "",
-        params: {},
-        limit: 10,
-        query: {}, // adjust if necessary
-    };
+        var body = {
+            title: "Test Query Title",
+            qry_begin: "FOR i IN something",
+            qry_end: "RETURN i",
+            qry_filter: "",
+            params: {},
+            limit: 10,
+            query: {}, // adjust if necessary
+        };
 
-    var response = request.post(request_string, {
-        json: true,
-        body: body,
-        headers: {
-            "x-correlation-id": "test-correlation-id"
-        }
+        var response = request.post(request_string, {
+            json: true,
+            body: body,
+            headers: {
+                "x-correlation-id": "test-correlation-id",
+            },
+        });
+
+        request_string = `${qry_base_url}/list?client=u/fakeUser`;
+
+        // act
+        response = request.get(request_string, {
+            headers: {
+                "x-correlation-id": "test-correlation-id",
+            },
+        });
+
+        var parsed = JSON.parse(response.body);
+        console.log("Response body:", response.body);
+        // assert
+        expect(response.status).to.equal(200);
+        expect(parsed).to.be.an("array");
+        expect(parsed.length).to.be.greaterThan(0);
     });
-
-
-    request_string = `${qry_base_url}/list?client=u/fakeUser`;
-
-    // act
-    response = request.get(request_string, {
-        headers: {
-            "x-correlation-id": "test-correlation-id"
-        }
-    });
-
-    var parsed = JSON.parse(response.body);
-    console.log("Response body:", response.body);
-    // assert
-    expect(response.status).to.equal(200);
-    expect(parsed).to.be.an("array");
-    expect(parsed.length).to.be.greaterThan(0);
-});
 });
