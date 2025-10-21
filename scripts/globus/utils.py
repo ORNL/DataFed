@@ -194,42 +194,51 @@ def validFile(file_name):
     return file_exists, file_empty
 
 
-def getCredentialFromFile(cred_file_name, cred_id):
+def getCredentialFromFile(cred_file_name, cred_id, cred_type="setup"):
     # Check to see if the local secret is the same id and not just the same
     # name
     _, cred_empty = validFile(cred_file_name)
     if cred_empty is False:
         with open(cred_file_name, "r") as f:
             loaded_data = json.load(f)
+            if cred_type in loaded_data.keys():
+                loaded_data = loaded_data[cred_type]
+            else :
+                print(f"Failed to get credential from file '{cred_file_name}': credential type '{cred_type}' not found.")
             if loaded_data["client"] == cred_id:
                 return loaded_data["secret"]
     return None
 
 
-def getClientIdFromCredFile(cred_file_name):
+def getClientIdFromCredFile(cred_file_name, cred_type="setup"):
     # Check to see if the local secret is the same id and not just the same
     # name
     _, cred_empty = validFile(cred_file_name)
     if cred_empty is False:
         with open(cred_file_name, "r") as f:
             loaded_data = json.load(f)
-            return loaded_data["client"]
+            if cred_type in loaded_data.keys():
+                loaded_data = loaded_data[cred_type]
+                return loaded_data["client"]
+            else :
+                print(f"Failed to get client ID from file '{cred_file_name}': credential type '{cred_type}' not found.")
     return None
 
+# Doesn't appear to be referenced in any files. Commenting out
+# to test if it is safe to remove.
 
-def getEndpointIdFromFile(deployment_key_file_path):
-    # Check to see if the local secret is the same id and not just the same
-    # name
-    _, empty = validFile(deployment_key_file_path)
-    if empty is False:
-        with open(deployment_key_file_path, "r") as f:
-            loaded_data = json.load(f)
-            return loaded_data["client_id"]
-    return None
+# def getEndpointIdFromFile(deployment_key_file_path):
+#     # Check to see if the local secret is the same id and not just the same
+#     # name
+#     _, empty = validFile(deployment_key_file_path)
+#     if empty is False:
+#         with open(deployment_key_file_path, "r") as f:
+#             loaded_data = json.load(f)
+#             return loaded_data["client_id"]
+#     return None
 
 
-def createNewCredential(auth_client, client_id, cred_name, cred_file):
-
+def createNewCredential(auth_client, client_id, cred_name, cred_file, cred_type):
     get_client_cred_result = auth_client.get_client_credentials(client_id)
     for cred in get_client_cred_result["credentials"]:
         # Should have stored secret locally
@@ -237,13 +246,16 @@ def createNewCredential(auth_client, client_id, cred_name, cred_file):
 
     cred_result = auth_client.create_client_credential(client_id, cred_name)
     # Have to change this to a dict
-    obj = {
-        "client": cred_result["credential"]["client"],
-        "id": cred_result["credential"]["id"],
-        "name": cred_result["credential"]["name"],
-        "secret": cred_result["credential"]["secret"],
-    }
 
+    obj = { cred_type: 
+        {
+            "client": cred_result["credential"]["client"],
+            "id": cred_result["credential"]["id"],
+            "name": cred_result["credential"]["name"],
+            "secret": cred_result["credential"]["secret"],
+        }
+    }
+    
     # Check that the folder exists
     folder_path = os.path.dirname(cred_file)
     if not os.path.exists(folder_path):
@@ -261,9 +273,9 @@ def createNewCredential(auth_client, client_id, cred_name, cred_file):
     return cred_result["credential"]["secret"]
 
 
-def getClientSecret(auth_client, client_id, cred_name, cred_id, cred_file):
+def getClientSecret(auth_client, client_id, cred_name, cred_id, cred_file, cred_type):
 
-    client_secret = getCredentialFromFile(cred_file, cred_id)
+    client_secret = getCredentialFromFile(cred_file, cred_id, cred_type)
 
     create_new_credential = True
     remove_cached_credential = True
@@ -283,29 +295,27 @@ def getClientSecret(auth_client, client_id, cred_name, cred_id, cred_file):
     if create_new_credential:
         # Remove credentials from cloud
         client_secret = createNewCredential(
-            auth_client, client_id, cred_name, cred_file
+            auth_client, client_id, cred_name, cred_file, cred_type
         )
 
     return client_secret
 
 
-def createClient(auth_client, client_name, project_id, cred_name, cred_file):
-    client_id = createNewClient(auth_client, client_name, project_id)
+def createClient(auth_client, client_name, project_id, cred_name, cred_file, redirect_uri=None):
+    if redirect_uri is not None:
+        client_id = createNewRedirectClient(auth_client, client_name, project_id, redirect_uri)
+        cred_type = "web"
+    else :
+        # if we haven't provided a redirect_uri, assume we're trying to
+        # create a setup client, because that was previously the only
+        # time this function was called.
+        client_id = createNewClient(auth_client, client_name, project_id)
+        cred_type = "setup"
 
     cred_id = getCredentialID(auth_client, client_id, cred_name)
 
     client_secret = getClientSecret(
-        auth_client, client_id, cred_name, cred_id, cred_file
-    )
-    return client_id, client_secret
-
-def createRedirectClient(auth_client, client_name, project_id, cred_name, cred_file, redirect_uri):
-    client_id = createNewRedirectClient(auth_client, client_name, project_id, redirect_uri)
-
-    cred_id = getCredentialID(auth_client, client_id, cred_name)
-
-    client_secret = getClientSecret(
-        auth_client, client_id, cred_name, cred_id, cred_file
+        auth_client, client_id, cred_name, cred_id, cred_file, cred_type
     )
     return client_id, client_secret
 

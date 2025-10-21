@@ -31,7 +31,7 @@ REDIRECT_CRED_NAME = os.getenv("DATAFED_GLOBUS_REDIRECT_CRED_NAME", default_REDI
 if len(REDIRECT_CRED_NAME) == 0 :
     REDIRECT_CRED_NAME = default_REDIRECT_CRED_NAME
 
-default_REDIRECT_CRED_FILE_PATH = os.path.abspath("./globus/webserver_cred.json")
+default_REDIRECT_CRED_FILE_PATH = os.path.abspath("./globus/globus_config.json")
 REDIRECT_CRED_FILE_PATH = os.getenv("DATAFED_GLOBUS_REDIRECT_CRED_FILE_PATH", default_REDIRECT_CRED_FILE_PATH)
 if len(REDIRECT_CRED_FILE_PATH) == 0:
     REDIRECT_CRED_FILE_PATH = default_REDIRECT_CRED_FILE_PATH
@@ -102,6 +102,6 @@ if count != 1:
 
 print(f"Project id is {project_id}")
 
-redirect_c_id, redirect_c_secret = utils.createRedirectClient(
+redirect_c_id, redirect_c_secret = utils.createClient(
     ac_rt, REDIRECT_CLIENT_NAME, project_id, REDIRECT_CRED_NAME, REDIRECT_CRED_FILE_PATH, REDIRECT_PATH
 )

@@ -1,9 +1,8 @@
 #!/bin/bash
-SCRIPT=$(realpath "$0")
+SCRIPT=$(realpath "${BASH_SOURCE[0]}")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/..")
 
-echo ${PROJECT_ROOT}
 source "${PROJECT_ROOT}/scripts/dependency_versions.sh"
 
 # This script should be run after generating the .env file as it will pull
