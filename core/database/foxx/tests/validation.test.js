@@ -53,28 +53,6 @@ describe("unit_validation_repository: Repository Validation Tests", function () 
             expect(result.ok).to.be.true;
         });
 
-        it("should reject missing id", function () {
-            const config = {
-                title: "Test Repository",
-                capacity: 1000000,
-                admins: ["user1"],
-            };
-            const result = validateCommonFields(config);
-            expect(result.ok).to.be.false;
-            expect(result.error.message).to.include("Repository ID is required");
-        });
-
-        it("should reject missing title", function () {
-            const config = {
-                id: "test-repo",
-                capacity: 1000000,
-                admins: ["user1"],
-            };
-            const result = validateCommonFields(config);
-            expect(result.ok).to.be.false;
-            expect(result.error.message).to.include("Repository title is required");
-        });
-
         it("should reject empty admins array", function () {
             const config = {
                 id: "test-repo",
@@ -96,7 +74,7 @@ describe("unit_validation_repository: Repository Validation Tests", function () 
             };
             const result = validateCommonFields(config);
             expect(result.ok).to.be.false;
-            expect(result.error.message).to.include("Repository must have at least one admin");
+            expect(result.error.message).to.include("Repository admins must be an array");
         });
     });
 

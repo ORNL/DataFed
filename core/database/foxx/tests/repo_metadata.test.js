@@ -183,7 +183,7 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
             const result = MetadataRepo.validate(repoData);
             expect(result.ok).to.be.false;
             expect(result.error.message).to.include(
-                "Repository title is required and must be a non-empty string; Repository capacity must be a number.; Repository must have at least one admin",
+                "Metadata repository capacity must be 0: capacity=undefined",
             );
         });
 

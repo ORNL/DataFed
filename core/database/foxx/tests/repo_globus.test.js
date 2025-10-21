@@ -143,7 +143,7 @@ describe("unit_repository_globus: Globus Repository Operations", function () {
 
         it("unit_repository_globus: should return ok for null repository data", function () {
             const result = GlobusRepo.validate(null);
-            expect(result.ok).to.be.true;
+            expect(result.ok).to.be.false;
         });
     });
 

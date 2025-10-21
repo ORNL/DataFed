@@ -1,9 +1,11 @@
 "use strict";
 
+const Joi = require("joi");
 const { RepositoryType, Result, createAllocationResult } = require("../types");
 const { ExecutionMethod } = require("../../../lib/execution_types");
 const { BaseRepository } = require("../base_repository");
 const {
+    validateCommonFields,
     validateAllocationParams,
     validateNonEmptyString,
     validateRepositoryPath,
@@ -170,7 +172,10 @@ class GlobusRepo extends BaseRepository {
 
     static validate(config) {
         if (config == null) {
-            return Result.ok(true);
+            return Result.err({
+                code: error.ERR_INVALID_PARAM,
+                message: "Unable to validate globus repo config 'null' config provided.",
+            });
         }
         // For partial updates, we don't require all fields
         // Only validate the fields that are provided
@@ -182,72 +187,88 @@ class GlobusRepo extends BaseRepository {
             normalizedConfig.admins = config.admin;
         }
 
-        // Validate provided fields
-        if (normalizedConfig.title !== undefined) {
-            const titleValidation = validateNonEmptyString(
-                normalizedConfig.title,
-                "Repository title",
-            );
-            if (!titleValidation.ok) {
-                errors.push(titleValidation.error.message);
-            }
+        const commonResult = validateCommonFields(normalizedConfig);
+        if (!commonResult.ok) {
+            return commonResult;
         }
 
-        if (normalizedConfig.capacity !== undefined) {
-            if (typeof normalizedConfig.capacity !== "number" || normalizedConfig.capacity <= 0) {
-                errors.push("Repository capacity must be a positive number");
-            }
+        // Define Joi schema using old-style .error() message customization
+        const schema = Joi.object()
+            .keys({
+                pub_key: Joi.string()
+                    .min(1)
+                    .error((errors) => {
+                        errors.forEach((err) => {
+                            switch (err.type) {
+                                case "string.base":
+                                    err.message = "Public key must be a string";
+                                    break;
+                                case "string.min":
+                                case "any.empty":
+                                    err.message = "Public key cannot be empty";
+                                    break;
+                            }
+                        });
+                        return errors;
+                    }),
+
+                address: Joi.string()
+                    .min(1)
+                    .error((errors) => {
+                        errors.forEach((err) => {
+                            switch (err.type) {
+                                case "string.base":
+                                    err.message = "Address must be a string";
+                                    break;
+                                case "string.min":
+                                case "any.empty":
+                                    err.message = "Address cannot be empty";
+                                    break;
+                            }
+                        });
+                        return errors;
+                    }),
+
+                endpoint: Joi.string()
+                    .min(1)
+                    .error((errors) => {
+                        errors.forEach((err) => {
+                            switch (err.type) {
+                                case "string.base":
+                                    err.message = "Endpoint must be a string";
+                                    break;
+                                case "string.min":
+                                case "any.empty":
+                                    err.message = "Endpoint cannot be empty";
+                                    break;
+                            }
+                        });
+                        return errors;
+                    }),
+
+                path: Joi.string().optional(),
+                exp_path: Joi.string().optional(),
+            })
+            .unknown(true); // allow extra fields not explicitly validated
+
+        // Validate
+        const { error: joiError, value } = Joi.validate(normalizedConfig, schema, {
+            abortEarly: false, // collect all errors
+        });
+
+        if (joiError) {
+            return Result.err({
+                code: error.ERR_INVALID_PARAM,
+                message: joiError.details.map((d) => d.message).join("; "),
+            });
         }
 
-        if (normalizedConfig.admins !== undefined) {
-            if (!Array.isArray(normalizedConfig.admins) || normalizedConfig.admins.length === 0) {
-                errors.push("Repository must have at least one admin");
-            }
-        }
-
-        if (normalizedConfig.pub_key !== undefined) {
-            const pubKeyValidation = validateNonEmptyString(normalizedConfig.pub_key, "Public key");
-            if (!pubKeyValidation.ok) {
-                errors.push(pubKeyValidation.error.message);
-            }
-        }
-
-        if (normalizedConfig.address !== undefined) {
-            const addressValidation = validateNonEmptyString(normalizedConfig.address, "Address");
-            if (!addressValidation.ok) {
-                errors.push(addressValidation.error.message);
-            }
-        }
-
-        if (normalizedConfig.endpoint !== undefined) {
-            const endpointValidation = validateNonEmptyString(
-                normalizedConfig.endpoint,
-                "Endpoint",
-            );
-            if (!endpointValidation.ok) {
-                errors.push(endpointValidation.error.message);
-            }
-        }
-
+        // Perform additional custom validations (that require multiple fields)
         if (normalizedConfig.path !== undefined && normalizedConfig.key) {
             const pathResult = validateRepositoryPath(normalizedConfig.path, normalizedConfig.key);
             if (!pathResult.ok) {
                 return pathResult;
             }
-        }
-
-        if (normalizedConfig.exp_path !== undefined) {
-            const expPathResult = validatePOSIXPath(normalizedConfig.exp_path, "Export path");
-            if (!expPathResult.ok) {
-                return expPathResult;
-            }
-        }
-
-        if (errors.length > 0) {
-            return Result.err({
-                code: error.ERR_INVALID_PARAM,
-                message: errors.join("; "),
-            });
         }
 
         return Result.ok(true);

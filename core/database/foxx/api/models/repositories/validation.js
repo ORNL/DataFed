@@ -1,5 +1,6 @@
 "use strict";
 
+const Joi = require("joi");
 const { Result } = require("./types");
 const error = require("../../lib/error_codes");
 
@@ -27,32 +28,83 @@ const validateNonEmptyString = (value, fieldName) => {
 // Validate common repository fields
 // Pure function - no side effects, deterministic output
 const validateCommonFields = (config) => {
-    const errors = [];
+    const schema = Joi.object()
+        .keys({
+            id: Joi.string()
+                .min(1)
+                .error((errors) => {
+                    errors.forEach((err) => {
+                        switch (err.type) {
+                            case "string.base":
+                                err.message = "Repository ID must be a non-empty string";
+                                break;
+                        }
+                    });
+                    return errors;
+                }),
 
-    const idValidation = validateNonEmptyString(config.id, "Repository ID");
-    if (!idValidation.ok) {
-        errors.push(idValidation.error.message);
-    }
+            title: Joi.string()
+                .min(1)
+                .error((errors) => {
+                    errors.forEach((err) => {
+                        switch (err.type) {
+                            case "string.base":
+                                err.message = "Repository title must be a string";
+                                break;
+                            case "string.min":
+                            case "any.empty":
+                                err.message = "Repository title cannot be empty";
+                                break;
+                        }
+                    });
+                    return errors;
+                }),
 
-    const titleValidation = validateNonEmptyString(config.title, "Repository title");
-    if (!titleValidation.ok) {
-        errors.push(titleValidation.error.message);
-    }
+            capacity: Joi.number()
+                .min(0)
+                .error((errors) => {
+                    errors.forEach((err) => {
+                        switch (err.type) {
+                            case "number.base":
+                                err.message = "Repository capacity must be a number";
+                                break;
+                            case "number.min":
+                                err.message = "Repository capacity cannot be negative";
+                                break;
+                        }
+                    });
+                    return errors;
+                }),
 
-    if (typeof config.capacity !== "number") {
-        errors.push("Repository capacity must be a number.");
-    }
+            admins: Joi.array()
+                .items(Joi.string().min(1))
+                .min(1)
+                .error((errors) => {
+                    errors.forEach((err) => {
+                        switch (err.type) {
+                            case "array.base":
+                                err.message = "Repository admins must be an array";
+                                break;
+                            case "array.min":
+                                err.message = "Repository must have at least one admin";
+                                break;
+                        }
+                    });
+                    return errors;
+                }),
 
-    // Check for both 'admin' and 'admins' fields for backward compatibility
-    const adminField = config.admins || config.admin;
-    if (!Array.isArray(adminField) || adminField.length === 0) {
-        errors.push("Repository must have at least one admin");
-    }
+            key: Joi.string().optional(),
+        })
+        .unknown(true); // allow extra fields not explicitly validated
 
-    if (errors.length > 0) {
+    const { error: joiError, value } = Joi.validate(config, schema, {
+        abortEarly: false, // collect all errors
+    });
+
+    if (joiError) {
         return Result.err({
-            code: ERR_INVALID_PARAM,
-            message: errors.join("; "),
+            code: error.ERR_INVALID_PARAM,
+            message: joiError.details.map((d) => d.message).join("; "),
         });
     }
 

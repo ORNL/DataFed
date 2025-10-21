@@ -248,6 +248,13 @@ class MetadataRepo extends BaseRepository {
 
     // Normalize admin/admins field for backward compatibility
     static validate(config) {
+        if (config == null) {
+            return Result.err({
+                code: error.ERR_INVALID_PARAM,
+                message: "Unable to validate metadata repo config 'null' config provided.",
+            });
+        }
+
         const normalizedConfig = { ...config };
         if (config?.admin && !config?.admins) {
             normalizedConfig.admins = config.admin;
@@ -260,7 +267,9 @@ class MetadataRepo extends BaseRepository {
 
         const errors = [];
         if (normalizedConfig.capacity != 0) {
-            errors.push("Repository capacity must be 0: capacity=" + normalizedConfig.capacity);
+            errors.push(
+                "Metadata repository capacity must be 0: capacity=" + normalizedConfig.capacity,
+            );
         }
         // Metadata repositories don't need Globus-specific fields
         // But should not have them either
