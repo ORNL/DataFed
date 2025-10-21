@@ -424,7 +424,10 @@ router
                 routePath: basePath + "/list",
                 status: "Success",
                 description: "List client saved queries",
-                extra: result,
+                extra: {
+                    queryParams: req.queryParams,
+                    _countTotal: result._countTotal,
+                },
             });
         } catch (e) {
             logger.logRequestFailure({
