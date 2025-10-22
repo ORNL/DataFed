@@ -262,9 +262,7 @@ class MetadataRepo extends BaseRepository {
 
         const errors = [];
         if (config.capacity != 0) {
-            errors.push(
-                "Metadata repository capacity must be 0: capacity=" + config.capacity,
-            );
+            errors.push("Metadata repository capacity must be 0: capacity=" + config.capacity);
         }
         // Metadata repositories don't need Globus-specific fields
         // But should not have them either
@@ -291,7 +289,6 @@ class MetadataRepo extends BaseRepository {
     supportsDataOperations() {
         return Result.ok(false);
     }
-
 }
 
 module.exports = {

@@ -91,5 +91,4 @@ describe("integration_repositories: Repository Factory and Operations", function
             expect(result.error.message).to.include("Unknown repository type");
         });
     });
-
 });

@@ -465,7 +465,6 @@ describe("unit_repository_globus: Globus Repository Operations", function () {
             const globus_repo = new GlobusRepo(repoData).value;
             const capacity = globus_repo.capacity();
             expect(capacity).to.equal(5000000000);
-
         });
 
         it("unit_repository_globus: should handle repository without capacity field", function () {

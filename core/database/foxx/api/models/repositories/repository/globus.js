@@ -267,7 +267,6 @@ class GlobusRepo extends BaseRepository {
     supportsDataOperations() {
         return Result.ok(true);
     }
-
 }
 
 module.exports = {
