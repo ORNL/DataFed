@@ -314,7 +314,12 @@ module.exports = (function () {
                         if (extra.indexOf(val.charAt(i)) == -1)
                             throw [
                                 error.ERR_INVALID_CHAR,
-                                "Invalid character(s) in '" + spec.label + "' field '" + val + "' detected char '" + val.charAt(i)
+                                "Invalid character(s) in '" +
+                                    spec.label +
+                                    "' field '" +
+                                    val +
+                                    "' detected char '" +
+                                    val.charAt(i),
                             ];
                     }
                 }

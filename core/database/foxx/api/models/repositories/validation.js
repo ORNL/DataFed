@@ -42,7 +42,7 @@ const validateCommonFields = (config) => {
                     });
                     return errors;
                 }),
-             
+
             title: Joi.string()
                 .min(1)
                 .error((errors) => {
@@ -77,7 +77,8 @@ const validateCommonFields = (config) => {
                                 err.message = "Repository key cannot be longer than 40 characters";
                                 break;
                             case "string.pattern.base":
-                                err.message = "Repository key may only contain lowercase letters, numbers, underscores, hyphens and periods.";
+                                err.message =
+                                    "Repository key may only contain lowercase letters, numbers, underscores, hyphens and periods.";
                                 break;
                         }
                     });

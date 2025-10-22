@@ -110,7 +110,7 @@ router
                 action: function () {
                     var client = g_lib.getUserFromClientID(req.queryParams.client);
                     if (!client.is_admin) throw error.ERR_PERM_DENIED;
-                    
+
                     console.log("create 1");
                     var obj = {
                         key: req.body.id,
@@ -119,7 +119,7 @@ router
                         address: req.body.address,
                         endpoint: req.body.endpoint,
                         path: req.body.path,
-                        type: req.body?.type
+                        type: req.body?.type,
                     };
                     console.log(req.body);
                     console.log("create 2");
@@ -130,11 +130,11 @@ router
                     g_lib.procInputParam(req.body, "summary", false, obj);
                     console.log("create 5");
 
-                    if( req.body?.type == undefined || req.body?.type == RepositoryType.GLOBUS ) {
-                      obj["type"] = RepositoryType.GLOBUS;
-                    console.log("create 6");
-                      g_lib.procInputParam(req.body, "domain", false, obj);
-                    console.log("create 7");
+                    if (req.body?.type == undefined || req.body?.type == RepositoryType.GLOBUS) {
+                        obj["type"] = RepositoryType.GLOBUS;
+                        console.log("create 6");
+                        g_lib.procInputParam(req.body, "domain", false, obj);
+                        console.log("create 7");
 
                         if (!obj.path.startsWith("/"))
                             throw [
@@ -165,8 +165,8 @@ router
                     const repo_result = Repositories.createRepositoryByType(obj);
                     console.log("create 9");
                     console.log(repo_result);
-                    if( repo_result.ok == false) {
-                        throw [ repo_result.error.code, repo_result.error.message ]
+                    if (repo_result.ok == false) {
+                        throw [repo_result.error.code, repo_result.error.message];
                     }
                     console.log("create 10");
                     let repo = repo_result.value;
@@ -174,22 +174,22 @@ router
                     console.log(repo.id());
                     console.log("create 11");
                     let repo_doc_result = repo.save();
-                    if( repo_doc_result.ok == false ) {
-                        throw [ repo_doc_result.error.code, repo_doc_result.error.message ]
+                    if (repo_doc_result.ok == false) {
+                        throw [repo_doc_result.error.code, repo_doc_result.error.message];
                     }
                     console.log("create 12");
                     let repo_doc = repo_doc_result.value;
                     console.log("create 13");
 
                     for (var i in req.body.admins) {
-                    console.log("create 14");
+                        console.log("create 14");
                         if (!g_db._exists(req.body.admins[i]))
                             throw [
                                 error.ERR_NOT_FOUND,
                                 "User, " + req.body.admins[i] + ", not found",
                             ];
 
-                    console.log("create 15");
+                        console.log("create 15");
                         g_db.admin.save({
                             _from: repo.id(),
                             _to: req.body.admins[i],
@@ -225,7 +225,7 @@ router
                 path: joi.string().optional(),
                 exp_path: joi.string().optional(),
                 admins: joi.array().items(joi.string()).required(),
-                type: joi.string().valid(RepositoryType.GLOBUS,RepositoryType.METADATA ).optional()
+                type: joi.string().valid(RepositoryType.GLOBUS, RepositoryType.METADATA).optional(),
             })
             .required(),
         "Repo fields",

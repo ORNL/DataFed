@@ -39,7 +39,6 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
         };
     }
 
-
     function getValidRawRepoData() {
         return {
             _id: "repo/123",
@@ -224,7 +223,7 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
 
             expect(result.ok).to.be.false;
             expect(result.error.message).to.include(
-              "Failed to create metadata allocation: Repo, \'repo/undefined\', does not exist",
+                "Failed to create metadata allocation: Repo, \'repo/undefined\', does not exist",
             );
         });
 

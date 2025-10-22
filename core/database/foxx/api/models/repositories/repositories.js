@@ -46,12 +46,12 @@ class Repositories {
          */
         switch (config.type) {
             case RepositoryType.GLOBUS: {
-        console.log("Creating by type GLOBUS");
+                console.log("Creating by type GLOBUS");
                 return new GlobusRepo(config);
             }
 
             case RepositoryType.METADATA: {
-        console.log("Creating by type METADATA");
+                console.log("Creating by type METADATA");
                 return new MetadataRepo(config);
             }
 

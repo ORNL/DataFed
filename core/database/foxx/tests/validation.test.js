@@ -52,7 +52,6 @@ describe("unit_validation_repository: Repository Validation Tests", function () 
             const result = validateCommonFields(config);
             expect(result.ok).to.be.true;
         });
-
     });
 
     describe("unit_validation_repository: validatePOSIXPath", function () {

@@ -26,12 +26,8 @@ const createRepositoryData = ({
 // WARNING - this will completely replace arrays
 function deepMerge(target, source) {
     for (const key of Object.keys(source)) {
-        if (
-            source[key] &&
-            typeof source[key] === 'object' &&
-            !Array.isArray(source[key])
-        ) {
-            if (!target[key] || typeof target[key] !== 'object') {
+        if (source[key] && typeof source[key] === "object" && !Array.isArray(source[key])) {
+            if (!target[key] || typeof target[key] !== "object") {
                 target[key] = {};
             }
             deepMerge(target[key], source[key]);
@@ -52,30 +48,30 @@ class BaseRepository {
         }
 
         let new_repo_data = createRepositoryData({
-                key: config.key,
-                type: config.type,
-                title: config.title,
-                desc: config.desc,
-                capacity: config.capacity,
-                typeSpecific: typeSpecificConfig,
-            });
- 
+            key: config.key,
+            type: config.type,
+            title: config.title,
+            desc: config.desc,
+            capacity: config.capacity,
+            typeSpecific: typeSpecificConfig,
+        });
+
         console.log("config is");
         console.log(config);
         let id_defined = false;
         if (config.id !== undefined) {
             if (config.id.startsWith("repo/") && config.id.length > "repo/".length) {
-                id_defined = true
+                id_defined = true;
             }
         }
 
         let key_defined = false;
         if (config.key !== undefined) {
-            key_defined = true
+            key_defined = true;
         }
 
-        if ( key_defined && id_defined ) {
-            if ( config.id !== `repo/${config.key}` ) {
+        if (key_defined && id_defined) {
+            if (config.id !== `repo/${config.key}`) {
                 return Result.err({
                     code: error.ERR_INVALID_PARAM,
                     message: `BaseRepository - provided key ${config.key} is in conflict with id ${config.id}.`,
@@ -83,51 +79,47 @@ class BaseRepository {
             }
         }
 
-        if ( key_defined ) {
-            config.id = `repo/${config.key}`
-        } else if ( id_defined ) {
-            config.key = config.id.slice("repo/".length)
+        if (key_defined) {
+            config.id = `repo/${config.key}`;
+        } else if (id_defined) {
+            config.key = config.id.slice("repo/".length);
         }
 
         console.log("Config is!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         console.log("");
         console.log(config);
         // If we have a key we assume the repo exists
-        if( config.key != undefined ) {
-          try {
-            if ( g_db._exists(config.id) ) {
-                const existingDoc = g_db.repo.document(config.key);
-                const { _id, _key, _rev, ...temp } = existingDoc;
-                console.log("existingData found");
-                console.log(existingDoc);
-                this.repoData = {
-                  id: existingDoc._id,
-                  key: existingDoc._key,
-                  ...temp,
-                };
-                this.repoData = deepMerge(this.repoData, new_repo_data);
-            } else {
-                this.repoData = new_repo_data;
+        if (config.key != undefined) {
+            try {
+                if (g_db._exists(config.id)) {
+                    const existingDoc = g_db.repo.document(config.key);
+                    const { _id, _key, _rev, ...temp } = existingDoc;
+                    console.log("existingData found");
+                    console.log(existingDoc);
+                    this.repoData = {
+                        id: existingDoc._id,
+                        key: existingDoc._key,
+                        ...temp,
+                    };
+                    this.repoData = deepMerge(this.repoData, new_repo_data);
+                } else {
+                    this.repoData = new_repo_data;
+                }
+                console.log("Repo data after deepMerge");
+                console.log(this.repoData);
+            } catch {
+                return Result.err({
+                    code: error.ERR_INVALID_PARAM,
+                    message: `BaseRepository - unable to create repository instance ${config.key}.`,
+                });
             }
-            console.log("Repo data after deepMerge");
-            console.log(this.repoData);
-          } catch {
-
-            return Result.err({
-                code: error.ERR_INVALID_PARAM,
-                message: `BaseRepository - unable to create repository instance ${config.key}.`,
-            });
-          }
         } else {
-            this.repoData = { ...new_repo_data,
-                id: `repo/${config.key}`,
-                key: config.key
-            };
+            this.repoData = { ...new_repo_data, id: `repo/${config.key}`, key: config.key };
 
             console.log("Repo data, now that we know document doesn't exist");
             console.log(this.repoData);
         }
-     
+
         return Result.ok(this);
     }
 
@@ -184,9 +176,12 @@ class BaseRepository {
             console.log(id);
             console.log(key);
             console.log(this.repoData);
-            if(key != undefined) {
-                if ( g_db._exists(id) ) {
-                    const updated = g_db.repo.update({ _key: key, ...repo_data }, { returnNew: true });
+            if (key != undefined) {
+                if (g_db._exists(id)) {
+                    const updated = g_db.repo.update(
+                        { _key: key, ...repo_data },
+                        { returnNew: true },
+                    );
                     const { _id, _key, _rev, ...updated_repo_data } = updated.new;
                     this.repoData = { id: _id, key: _key, ...updated_repo_data };
                     return Result.ok(updated.new);
@@ -237,48 +232,48 @@ class BaseRepository {
         }
     }
 
-//    // Check repository permissions
-//    checkPermission(userId, permission) {
-//        console.log("INFO - ===== RepositoryOps.checkPermission =====");
-//        console.log("INFO - Repository ID:", this.repoData.id);
-//        console.log("INFO - User ID:", userId);
-//        console.log("INFO - Permission type:", permission);
-//
-//        // Check if user is in admins array (if it exists)
-//        if (this.repoData.admins && this.repoData.admins.includes(userId)) {
-//            console.log("INFO - User found in repository.data.admins array");
-//            console.log("INFO - ===== checkPermission: GRANTED (admins array) =====");
-//            return Result.ok(true);
-//        }
-//
-//        // Check for admin edge in the database
-//        let adminEdge;
-//        try {
-//            adminEdge = g_db.admin.firstExample({ _from: this.repoData.id, _to: userId });
-//        } catch (e) {
-//            adminEdge = null;
-//        }
-//
-//        if (adminEdge) {
-//            console.log("INFO - Admin edge found from", this.repoData.id, "to", userId);
-//            console.log("INFO - ===== checkPermission: GRANTED (admin edge) =====");
-//            return Result.ok(true);
-//        }
-//
-//        // Check if user is system admin
-//        const userDoc = g_db._document(userId);
-//        if (userDoc && userDoc.is_admin) {
-//            console.log("INFO - User is system admin (is_admin: true)");
-//            console.log("INFO - ===== checkPermission: GRANTED (system admin) =====");
-//            return Result.ok(true);
-//        }
-//
-//        console.log(
-//            "INFO - No permission found - not in admins array, no admin edge, not system admin",
-//        );
-//        console.log("INFO - ===== checkPermission: DENIED =====");
-//        return Result.ok(false);
-//    }
+    //    // Check repository permissions
+    //    checkPermission(userId, permission) {
+    //        console.log("INFO - ===== RepositoryOps.checkPermission =====");
+    //        console.log("INFO - Repository ID:", this.repoData.id);
+    //        console.log("INFO - User ID:", userId);
+    //        console.log("INFO - Permission type:", permission);
+    //
+    //        // Check if user is in admins array (if it exists)
+    //        if (this.repoData.admins && this.repoData.admins.includes(userId)) {
+    //            console.log("INFO - User found in repository.data.admins array");
+    //            console.log("INFO - ===== checkPermission: GRANTED (admins array) =====");
+    //            return Result.ok(true);
+    //        }
+    //
+    //        // Check for admin edge in the database
+    //        let adminEdge;
+    //        try {
+    //            adminEdge = g_db.admin.firstExample({ _from: this.repoData.id, _to: userId });
+    //        } catch (e) {
+    //            adminEdge = null;
+    //        }
+    //
+    //        if (adminEdge) {
+    //            console.log("INFO - Admin edge found from", this.repoData.id, "to", userId);
+    //            console.log("INFO - ===== checkPermission: GRANTED (admin edge) =====");
+    //            return Result.ok(true);
+    //        }
+    //
+    //        // Check if user is system admin
+    //        const userDoc = g_db._document(userId);
+    //        if (userDoc && userDoc.is_admin) {
+    //            console.log("INFO - User is system admin (is_admin: true)");
+    //            console.log("INFO - ===== checkPermission: GRANTED (system admin) =====");
+    //            return Result.ok(true);
+    //        }
+    //
+    //        console.log(
+    //            "INFO - No permission found - not in admins array, no admin edge, not system admin",
+    //        );
+    //        console.log("INFO - ===== checkPermission: DENIED =====");
+    //        return Result.ok(false);
+    //    }
 }
 
 module.exports = { BaseRepository };

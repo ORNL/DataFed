@@ -468,7 +468,7 @@ describe("unit_repository_globus: Globus Repository Operations", function () {
         });
 
         it("unit_repository_globus: should return true even for incomplete repository data", function () {
-            const repoData = { };
+            const repoData = {};
 
             const globus_repo = new GlobusRepo(repoData).value;
             const result = globus_repo.supportsDataOperations();
