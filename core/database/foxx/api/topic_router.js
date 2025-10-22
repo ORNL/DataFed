@@ -14,7 +14,18 @@ module.exports = router;
 
 router
     .get("/list/topics", function (req, res) {
+        const client = g_lib.getUserFromClientID(req.queryParams.client);
         try {
+
+            logger.logRequestStarted({
+                        client: client?._id,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "GET",
+                        routePath: basePath + "/list/topics",
+                        status: "Started",
+                        description: "List topics",
+                });
+
             var qry,
                 par = {},
                 result,
@@ -58,7 +69,26 @@ router
             });
 
             res.send(result);
+            logger.logRequestSuccess({
+                    client: client?._id,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "GET",
+                    routePath: basePath + "/list/topics",
+                    status: "Success",
+                    description: "List topics",
+                    extra: result
+                });
         } catch (e) {
+            logger.logRequestFailure({
+                    client: client?._id,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "GET",
+                    routePath: basePath + "/list/topics",
+                    status: "Failure",
+                    description: "List topics",
+                    extra: result,
+                    error: e
+                });
             g_lib.handleException(e, res);
         }
     })
@@ -71,14 +101,44 @@ router
 
 router
     .get("/view", function (req, res) {
+        const client = g_lib.getUserFromClientID(req.queryParams.client);
+        let topic = undefined;
         try {
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Started",
+                description: "View topic",
+            });
+
             if (!g_db.t.exists(req.queryParams.id))
                 throw [error.ERR_NOT_FOUND, "Topic, " + req.queryParams.id + ", not found"];
 
             var topic = g_db.t.document(req.queryParams.id);
 
             res.send([topic]);
+            logger.logRequestSuccess({
+                    client: client?._id,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "GET",
+                    routePath: basePath + "/view",
+                    status: "Success",
+                    description: "View topic",
+                    extra: topic,
+                });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Failure",
+                description: "View topic",
+                extra: topic,
+                error:e
+            });
             g_lib.handleException(e, res);
         }
     })
