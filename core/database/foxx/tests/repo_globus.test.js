@@ -463,13 +463,9 @@ describe("unit_repository_globus: Globus Repository Operations", function () {
         it("unit_repository_globus: should return capacity information for repository", function () {
             const repoData = getValidRepoData();
             const globus_repo = new GlobusRepo(repoData).value;
-            const result = globus_repo.getCapacityInfo(repoData);
+            const capacity = globus_repo.capacity();
+            expect(capacity).to.equal(5000000000);
 
-            expect(result.ok).to.be.true;
-            expect(result.value).to.have.property("total_capacity", repoData.capacity);
-            expect(result.value).to.have.property("used_capacity", 0);
-            expect(result.value).to.have.property("available_capacity", repoData.capacity);
-            expect(result.value).to.have.property("supports_quotas", true);
         });
 
         it("unit_repository_globus: should handle repository without capacity field", function () {
@@ -478,11 +474,8 @@ describe("unit_repository_globus: Globus Repository Operations", function () {
                 title: "Test Repository",
             };
             const globus_repo = new GlobusRepo(repoData).value;
-            const result = globus_repo.getCapacityInfo(repoData);
-
-            expect(result.ok).to.be.true;
-            expect(result.value).to.have.property("total_capacity", undefined);
-            expect(result.value).to.have.property("available_capacity", undefined);
+            const capacity = globus_repo.capacity();
+            expect(capacity).to.equal(undefined);
         });
     });
 });

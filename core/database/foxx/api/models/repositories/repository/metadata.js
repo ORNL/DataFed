@@ -255,20 +255,15 @@ class MetadataRepo extends BaseRepository {
             });
         }
 
-        const normalizedConfig = { ...config };
-        if (config?.admin && !config?.admins) {
-            normalizedConfig.admins = config.admin;
-        }
-
-        const commonResult = validateCommonFields(normalizedConfig);
+        const commonResult = validateCommonFields(config);
         if (!commonResult.ok) {
             return commonResult;
         }
 
         const errors = [];
-        if (normalizedConfig.capacity != 0) {
+        if (config.capacity != 0) {
             errors.push(
-                "Metadata repository capacity must be 0: capacity=" + normalizedConfig.capacity,
+                "Metadata repository capacity must be 0: capacity=" + config.capacity,
             );
         }
         // Metadata repositories don't need Globus-specific fields
@@ -297,24 +292,6 @@ class MetadataRepo extends BaseRepository {
         return Result.ok(false);
     }
 
-    // Get capacity information for metadata repository
-    getCapacityInfo = () => {
-        try {
-            // Metadata repos have logical capacity limits, not physical
-            return Result.ok({
-                total_capacity: this.repoData.capacity,
-                used_capacity: 0, // Would track metadata record count/size
-                available_capacity: this.repoData.capacity,
-                supports_quotas: false,
-                is_metadata_only: true,
-            });
-        } catch (e) {
-            return Result.err({
-                code: error.ERR_INTERNAL_FAULT,
-                message: `Failed to get capacity info: ${e.message}`,
-            });
-        }
-    };
 }
 
 module.exports = {

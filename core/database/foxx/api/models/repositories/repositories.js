@@ -76,9 +76,7 @@ class Repositories {
 
             // Default to GLOBUS type if missing (backward compatibility)
             // This handles legacy repositories that don't have a type field
-            if (!repo.type) {
-                repo.type = RepositoryType.GLOBUS;
-            }
+            repo.type ??= RepositoryType.GLOBUS;
 
             // Return as tagged union based on type
             return Result.ok({
