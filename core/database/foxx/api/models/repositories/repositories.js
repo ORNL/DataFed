@@ -2,7 +2,6 @@
 
 const {
     RepositoryType,
-    Result,
     createRepository,
     createRepositoryData,
     createGlobusConfig,
@@ -10,6 +9,7 @@ const {
 const { GlobusRepo } = require("./repository/globus");
 const { MetadataRepo } = require("./repository/metadata");
 const error = require("../../lib/error_codes");
+const { Result } = require("../../lib/result");
 
 /**
  * Create repository based on type

@@ -1,7 +1,7 @@
 "use strict";
 
 const Joi = require("joi");
-const { Result } = require("./types");
+const { Result } = require("../../lib/result");
 const error = require("../../lib/error_codes");
 
 // Define error code constant if not available from g_lib

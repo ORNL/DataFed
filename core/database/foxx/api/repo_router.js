@@ -7,11 +7,42 @@ const error = require("./lib/error_codes");
 const permissions = require("./lib/permissions");
 const { RepositoryType } = require("./models/repositories/types");
 const { Repositories } = require("./models/repositories/repositories");
+const { Result } = require("./lib/result"); 
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
 const g_tasks = require("./tasks");
 
 module.exports = router;
+
+function validateAndNormalizeRepoPath(obj) {
+    if (!obj.path || typeof obj.path !== "string") {
+        throw [error.ERR_INVALID_PARAM, "Repository path must be a valid string."];
+    }
+
+    // Must start with a slash
+    if (!obj.path.startsWith("/")) {
+        throw [error.ERR_INVALID_PARAM, "Repository path must be an absolute file system path."];
+    }
+
+    // Ensure trailing slash
+    if (!obj.path.endsWith("/")) {
+        obj.path += "/";
+    }
+
+    // Extract last folder name before trailing slash
+    const idx = obj.path.lastIndexOf("/", obj.path.length - 2);
+    const lastPart = obj.path.substring(idx + 1, obj.path.length - 1);
+
+    // Ensure last part matches repository key
+    if (lastPart !== obj.key) {
+        throw [
+            error.ERR_INVALID_PARAM,
+            `Last part of repository path must match repository ID suffix (${obj.key})`,
+        ];
+    }
+
+    return obj.path; // return the normalized path if needed
+}
 
 router
     .get("/list", function (req, res) {
@@ -111,7 +142,6 @@ router
                     var client = g_lib.getUserFromClientID(req.queryParams.client);
                     if (!client.is_admin) throw error.ERR_PERM_DENIED;
 
-                    console.log("create 1");
                     var obj = {
                         key: req.body.id,
                         capacity: req.body.capacity,
@@ -121,37 +151,13 @@ router
                         path: req.body.path,
                         type: req.body?.type,
                     };
-                    console.log(req.body);
-                    console.log("create 2");
-                    //g_lib.procInputParam(req.body, "id", false, obj);
-                    console.log("create 3");
                     g_lib.procInputParam(req.body, "title", false, obj);
-                    console.log("create 4");
                     g_lib.procInputParam(req.body, "summary", false, obj);
-                    console.log("create 5");
 
                     if (req.body?.type == undefined || req.body?.type == RepositoryType.GLOBUS) {
                         obj["type"] = RepositoryType.GLOBUS;
-                        console.log("create 6");
                         g_lib.procInputParam(req.body, "domain", false, obj);
-                        console.log("create 7");
-
-                        if (!obj.path.startsWith("/"))
-                            throw [
-                                error.ERR_INVALID_PARAM,
-                                "Repository path must be an absolute path file system path.",
-                            ];
-
-                        if (!obj.path.endsWith("/")) obj.path += "/";
-
-                        var idx = obj.path.lastIndexOf("/", obj.path.length - 2);
-                        if (obj.path.substr(idx + 1, obj.path.length - idx - 2) != obj.key)
-                            throw [
-                                error.ERR_INVALID_PARAM,
-                                "Last part of repository path must be repository ID suffix (" +
-                                    obj._key +
-                                    ")",
-                            ];
+                        validateAndNormalizeRepoPath(obj);
 
                         if (req.body.exp_path) {
                             obj.exp_path = req.body.exp_path;
@@ -159,47 +165,23 @@ router
                         }
                     }
 
-                    console.log("create 8");
-                    console.log(obj);
-                    console.log("create 8");
-                    const repo_result = Repositories.createRepositoryByType(obj);
-                    console.log("create 9");
-                    console.log(repo_result);
-                    if (repo_result.ok == false) {
-                        throw [repo_result.error.code, repo_result.error.message];
-                    }
-                    console.log("create 10");
-                    let repo = repo_result.value;
-                    console.log("Repo id is");
-                    console.log(repo.id());
-                    console.log("create 11");
-                    let repo_doc_result = repo.save();
-                    if (repo_doc_result.ok == false) {
-                        throw [repo_doc_result.error.code, repo_doc_result.error.message];
-                    }
-                    console.log("create 12");
-                    let repo_doc = repo_doc_result.value;
-                    console.log("create 13");
+                    const repo = Repositories.createRepositoryByType(obj).raiseIfError();
+                    const repo_doc = repo.save().raiseIfError();
 
-                    for (var i in req.body.admins) {
-                        console.log("create 14");
-                        if (!g_db._exists(req.body.admins[i]))
+                    for (const adminId of req.body.admins) {
+                        if (!g_db._exists(adminId))
                             throw [
                                 error.ERR_NOT_FOUND,
-                                "User, " + req.body.admins[i] + ", not found",
+                                "User, " + adminId + ", not found",
                             ];
 
-                        console.log("create 15");
                         g_db.admin.save({
                             _from: repo.id(),
-                            _to: req.body.admins[i],
+                            _to: adminId,
                         });
                     }
 
-                    console.log("create 16");
-                    console.log(repo_doc);
                     repo_doc.id = repo_doc._id;
-                    console.log("create 17");
                     delete repo_doc._id;
                     delete repo_doc._key;
                     delete repo_doc._rev;

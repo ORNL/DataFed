@@ -1,9 +1,10 @@
 "use strict";
 
-const { Result, RepositoryType } = require("./types");
+const { RepositoryType } = require("./types");
 const g_db = require("@arangodb").db;
 const { validateNonEmptyString } = require("./validation");
 const error = require("../../lib/error_codes");
+const { Result } = require("../../lib/result");
 
 const createRepositoryData = ({
     key,
@@ -231,49 +232,6 @@ class BaseRepository {
             });
         }
     }
-
-    //    // Check repository permissions
-    //    checkPermission(userId, permission) {
-    //        console.log("INFO - ===== RepositoryOps.checkPermission =====");
-    //        console.log("INFO - Repository ID:", this.repoData.id);
-    //        console.log("INFO - User ID:", userId);
-    //        console.log("INFO - Permission type:", permission);
-    //
-    //        // Check if user is in admins array (if it exists)
-    //        if (this.repoData.admins && this.repoData.admins.includes(userId)) {
-    //            console.log("INFO - User found in repository.data.admins array");
-    //            console.log("INFO - ===== checkPermission: GRANTED (admins array) =====");
-    //            return Result.ok(true);
-    //        }
-    //
-    //        // Check for admin edge in the database
-    //        let adminEdge;
-    //        try {
-    //            adminEdge = g_db.admin.firstExample({ _from: this.repoData.id, _to: userId });
-    //        } catch (e) {
-    //            adminEdge = null;
-    //        }
-    //
-    //        if (adminEdge) {
-    //            console.log("INFO - Admin edge found from", this.repoData.id, "to", userId);
-    //            console.log("INFO - ===== checkPermission: GRANTED (admin edge) =====");
-    //            return Result.ok(true);
-    //        }
-    //
-    //        // Check if user is system admin
-    //        const userDoc = g_db._document(userId);
-    //        if (userDoc && userDoc.is_admin) {
-    //            console.log("INFO - User is system admin (is_admin: true)");
-    //            console.log("INFO - ===== checkPermission: GRANTED (system admin) =====");
-    //            return Result.ok(true);
-    //        }
-    //
-    //        console.log(
-    //            "INFO - No permission found - not in admins array, no admin edge, not system admin",
-    //        );
-    //        console.log("INFO - ===== checkPermission: DENIED =====");
-    //        return Result.ok(false);
-    //    }
 }
 
 module.exports = { BaseRepository };
