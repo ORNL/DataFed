@@ -172,12 +172,8 @@ class BaseRepository {
         });
     }
 
-    // Get repository capacity information
-    getCapacityInfo() {
-        return Result.err({
-            code: error.ERR_INVALID_OPERATION,
-            message: `BaseRepository - unimplemented getCapacity method called.`,
-        });
+    capacity() {
+        return this.repoData?.capacity;
     }
 
     // Save repository to database

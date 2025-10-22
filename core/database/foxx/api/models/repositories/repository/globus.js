@@ -79,11 +79,7 @@ class GlobusRepo extends BaseRepository {
             exp_path: config.exp_path,
         });
 
-        const normalizedConfig = { ...config };
-
-        console.log("Normalized COnfig");
-        console.log(normalizedConfig);
-        const result = super(normalizedConfig, globusConfig);
+        const result = super(config, globusConfig);
         if (result.ok == false) {
             return result;
         }
@@ -182,9 +178,7 @@ class GlobusRepo extends BaseRepository {
         // Only validate the fields that are provided
         const errors = [];
 
-        const normalizedConfig = { ...config };
-
-        const commonResult = validateCommonFields(normalizedConfig);
+        const commonResult = validateCommonFields(config);
         if (!commonResult.ok) {
             return commonResult;
         }
@@ -249,7 +243,7 @@ class GlobusRepo extends BaseRepository {
             .unknown(true); // allow extra fields not explicitly validated
 
         // Validate
-        const { error: joiError, value } = Joi.validate(normalizedConfig, schema, {
+        const { error: joiError, value } = Joi.validate(config, schema, {
             abortEarly: false, // collect all errors
         });
 
@@ -261,8 +255,8 @@ class GlobusRepo extends BaseRepository {
         }
 
         // Perform additional custom validations (that require multiple fields)
-        if (normalizedConfig.path !== undefined && normalizedConfig.key) {
-            const pathResult = validateRepositoryPath(normalizedConfig.path, normalizedConfig.key);
+        if (config.path !== undefined && config.key) {
+            const pathResult = validateRepositoryPath(config.path, config.key);
             if (!pathResult.ok) {
                 return pathResult;
             }
@@ -274,25 +268,6 @@ class GlobusRepo extends BaseRepository {
     // Globus repositories support data operations
     supportsDataOperations() {
         return Result.ok(true);
-    }
-
-    // Get capacity information for Globus repository
-    getCapacityInfo() {
-        try {
-            // For Globus repos, we'd typically query the actual filesystem
-            // For now, return the configured capacity
-            return Result.ok({
-                total_capacity: this.repoData.capacity,
-                used_capacity: 0, // Would be populated from actual usage
-                available_capacity: this.repoData.capacity,
-                supports_quotas: true,
-            });
-        } catch (e) {
-            return Result.err({
-                code: error.ERR_INTERNAL_FAULT,
-                message: `Failed to get capacity info: ${e.message}`,
-            });
-        }
     }
 }
 
