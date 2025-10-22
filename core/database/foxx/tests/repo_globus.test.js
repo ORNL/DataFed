@@ -49,6 +49,20 @@ describe("unit_repository_globus: Globus Repository Operations", function () {
         };
     }
 
+    function getValidRepoData() {
+        return {
+            id: "repo/123",
+            key: "123",
+            title: "Test Globus Repository",
+            capacity: 5000000000,
+            pub_key: "{Yys%Fr7VBct5AilOs$SnW%k$Qm[DBwvGeS0MQ46",
+            address: "burning-fast-repo.org",
+            endpoint: "8b7f1c4e-3d4a-4d6a-9a76-9e4b3e95b7b8",
+            domain: "fire",
+            path: "/one/repo/to/rule/them/all/123",
+        };
+    }
+
     function getRawAllocationCreateTask() {
         return {
             _id: "task/43",
@@ -444,16 +458,20 @@ describe("unit_repository_globus: Globus Repository Operations", function () {
     describe("unit_repository_globus: supportsDataOperations", function () {
         it("unit_repository_globus: should always return true for Globus repositories", function () {
             const repoData = getValidRepoData();
-            const globus_repo = new GlobusRepo(repoData).value;
-            const result = globus_repo.supportsDataOperations(repoData);
+            const { id, key, ...repo_without_key } = repoData;
+            const globus_repo_result = new GlobusRepo(repo_without_key);
+            expect(globus_repo_result.ok).to.be.true;
+            const globus_repo = globus_repo_result.value;
+            const result = globus_repo.supportsDataOperations();
             expect(result.ok).to.be.true;
             expect(result.value).to.be.true;
         });
 
         it("unit_repository_globus: should return true even for incomplete repository data", function () {
-            const repoData = { _id: "repo/123" };
+            const repoData = { };
+
             const globus_repo = new GlobusRepo(repoData).value;
-            const result = globus_repo.supportsDataOperations(repoData);
+            const result = globus_repo.supportsDataOperations();
             expect(result.ok).to.be.true;
             expect(result.value).to.be.true;
         });
@@ -462,8 +480,12 @@ describe("unit_repository_globus: Globus Repository Operations", function () {
     describe("unit_repository_globus: getCapacityInfo", function () {
         it("unit_repository_globus: should return capacity information for repository", function () {
             const repoData = getValidRepoData();
-            const globus_repo = new GlobusRepo(repoData).value;
-            const result = globus_repo.getCapacityInfo(repoData);
+
+            const { id, key, ...repo_without_key } = repoData;
+            const globus_repo_result = new GlobusRepo(repo_without_key);
+            const globus_repo = globus_repo_result.value;
+
+            const result = globus_repo.getCapacityInfo();
 
             expect(result.ok).to.be.true;
             expect(result.value).to.have.property("total_capacity", repoData.capacity);

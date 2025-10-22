@@ -80,16 +80,17 @@ class GlobusRepo extends BaseRepository {
         });
 
         const normalizedConfig = { ...config };
-        if (config?.admin && !config?.admins) {
-            normalizedConfig.admins = config.admin;
-        }
 
+        console.log("Normalized COnfig");
+        console.log(normalizedConfig);
         const result = super(normalizedConfig, globusConfig);
         if (result.ok == false) {
             return result;
         }
         this.repoData = result.value.repoData;
 
+        console.log("repoData after calling super");
+        console.log(this.repoData);
         return Result.ok(this.value);
     }
 
@@ -181,11 +182,7 @@ class GlobusRepo extends BaseRepository {
         // Only validate the fields that are provided
         const errors = [];
 
-        // Normalize admin/admins field for backward compatibility
         const normalizedConfig = { ...config };
-        if (config?.admin && !config?.admins) {
-            normalizedConfig.admins = config.admin;
-        }
 
         const commonResult = validateCommonFields(normalizedConfig);
         if (!commonResult.ok) {

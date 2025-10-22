@@ -5,7 +5,8 @@ const router = createRouter();
 const joi = require("joi");
 const error = require("./lib/error_codes");
 const permissions = require("./lib/permissions");
-
+const { RepositoryType } = require("./models/repositories/types");
+const { Repositories } = require("./models/repositories/repositories");
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
 const g_tasks = require("./tasks");
@@ -109,64 +110,100 @@ router
                 action: function () {
                     var client = g_lib.getUserFromClientID(req.queryParams.client);
                     if (!client.is_admin) throw error.ERR_PERM_DENIED;
-
+                    
+                    console.log("create 1");
                     var obj = {
+                        key: req.body.id,
                         capacity: req.body.capacity,
                         pub_key: req.body.pub_key,
                         address: req.body.address,
                         endpoint: req.body.endpoint,
                         path: req.body.path,
+                        type: req.body?.type
                     };
-
-                    g_lib.procInputParam(req.body, "id", false, obj);
+                    console.log(req.body);
+                    console.log("create 2");
+                    //g_lib.procInputParam(req.body, "id", false, obj);
+                    console.log("create 3");
                     g_lib.procInputParam(req.body, "title", false, obj);
+                    console.log("create 4");
                     g_lib.procInputParam(req.body, "summary", false, obj);
-                    g_lib.procInputParam(req.body, "domain", false, obj);
+                    console.log("create 5");
 
-                    if (!obj.path.startsWith("/"))
-                        throw [
-                            error.ERR_INVALID_PARAM,
-                            "Repository path must be an absolute path file system path.",
-                        ];
+                    if( req.body?.type == undefined || req.body?.type == RepositoryType.GLOBUS ) {
+                      obj["type"] = RepositoryType.GLOBUS;
+                    console.log("create 6");
+                      g_lib.procInputParam(req.body, "domain", false, obj);
+                    console.log("create 7");
 
-                    if (!obj.path.endsWith("/")) obj.path += "/";
+                        if (!obj.path.startsWith("/"))
+                            throw [
+                                error.ERR_INVALID_PARAM,
+                                "Repository path must be an absolute path file system path.",
+                            ];
 
-                    var idx = obj.path.lastIndexOf("/", obj.path.length - 2);
-                    if (obj.path.substr(idx + 1, obj.path.length - idx - 2) != obj._key)
-                        throw [
-                            error.ERR_INVALID_PARAM,
-                            "Last part of repository path must be repository ID suffix (" +
-                                obj._key +
-                                ")",
-                        ];
+                        if (!obj.path.endsWith("/")) obj.path += "/";
 
-                    if (req.body.exp_path) {
-                        obj.exp_path = req.body.exp_path;
-                        if (!obj.exp_path.endsWith("/")) obj.path += "/";
+                        var idx = obj.path.lastIndexOf("/", obj.path.length - 2);
+                        if (obj.path.substr(idx + 1, obj.path.length - idx - 2) != obj.key)
+                            throw [
+                                error.ERR_INVALID_PARAM,
+                                "Last part of repository path must be repository ID suffix (" +
+                                    obj._key +
+                                    ")",
+                            ];
+
+                        if (req.body.exp_path) {
+                            obj.exp_path = req.body.exp_path;
+                            if (!obj.exp_path.endsWith("/")) obj.path += "/";
+                        }
                     }
 
-                    var repo = g_db.repo.save(obj, {
-                        returnNew: true,
-                    });
+                    console.log("create 8");
+                    console.log(obj);
+                    console.log("create 8");
+                    const repo_result = Repositories.createRepositoryByType(obj);
+                    console.log("create 9");
+                    console.log(repo_result);
+                    if( repo_result.ok == false) {
+                        throw [ repo_result.error.code, repo_result.error.message ]
+                    }
+                    console.log("create 10");
+                    let repo = repo_result.value;
+                    console.log("Repo id is");
+                    console.log(repo.id());
+                    console.log("create 11");
+                    let repo_doc_result = repo.save();
+                    if( repo_doc_result.ok == false ) {
+                        throw [ repo_doc_result.error.code, repo_doc_result.error.message ]
+                    }
+                    console.log("create 12");
+                    let repo_doc = repo_doc_result.value;
+                    console.log("create 13");
 
                     for (var i in req.body.admins) {
+                    console.log("create 14");
                         if (!g_db._exists(req.body.admins[i]))
                             throw [
                                 error.ERR_NOT_FOUND,
                                 "User, " + req.body.admins[i] + ", not found",
                             ];
 
+                    console.log("create 15");
                         g_db.admin.save({
-                            _from: repo._id,
+                            _from: repo.id(),
                             _to: req.body.admins[i],
                         });
                     }
 
-                    repo.new.id = repo.new._id;
-                    delete repo.new._id;
-                    delete repo.new._key;
-                    delete repo.new._rev;
-                    res.send([repo.new]);
+                    console.log("create 16");
+                    console.log(repo_doc);
+                    repo_doc.id = repo_doc._id;
+                    console.log("create 17");
+                    delete repo_doc._id;
+                    delete repo_doc._key;
+                    delete repo_doc._rev;
+                    res.send([repo_doc]);
                 },
             });
         } catch (e) {
@@ -182,12 +219,13 @@ router
                 desc: joi.string().optional(),
                 domain: joi.string().optional(),
                 capacity: joi.number().integer().min(0).required(),
-                pub_key: joi.string().required(),
-                address: joi.string().required(),
-                endpoint: joi.string().required(),
-                path: joi.string().required(),
+                pub_key: joi.string().optional(),
+                address: joi.string().optional(),
+                endpoint: joi.string().optional(),
+                path: joi.string().optional(),
                 exp_path: joi.string().optional(),
                 admins: joi.array().items(joi.string()).required(),
+                type: joi.string().valid(RepositoryType.GLOBUS,RepositoryType.METADATA ).optional()
             })
             .required(),
         "Repo fields",

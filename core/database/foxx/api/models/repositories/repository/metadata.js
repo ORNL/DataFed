@@ -256,9 +256,6 @@ class MetadataRepo extends BaseRepository {
         }
 
         const normalizedConfig = { ...config };
-        if (config?.admin && !config?.admins) {
-            normalizedConfig.admins = config.admin;
-        }
 
         const commonResult = validateCommonFields(normalizedConfig);
         if (!commonResult.ok) {

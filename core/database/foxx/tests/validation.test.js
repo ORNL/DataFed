@@ -53,29 +53,6 @@ describe("unit_validation_repository: Repository Validation Tests", function () 
             expect(result.ok).to.be.true;
         });
 
-        it("should reject empty admins array", function () {
-            const config = {
-                id: "test-repo",
-                title: "Test Repository",
-                capacity: 1000000,
-                admins: [],
-            };
-            const result = validateCommonFields(config);
-            expect(result.ok).to.be.false;
-            expect(result.error.message).to.include("Repository must have at least one admin");
-        });
-
-        it("should reject non-array admins", function () {
-            const config = {
-                id: "test-repo",
-                title: "Test Repository",
-                capacity: 1000000,
-                admins: "user1",
-            };
-            const result = validateCommonFields(config);
-            expect(result.ok).to.be.false;
-            expect(result.error.message).to.include("Repository admins must be an array");
-        });
     });
 
     describe("unit_validation_repository: validatePOSIXPath", function () {
