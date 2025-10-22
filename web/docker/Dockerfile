@@ -76,6 +76,7 @@ ENV          DATAFED_DIR="$DATAFED_DIR"
 ENV            BUILD_DIR="$BUILD_DIR"
 ENV          DATAFED_DEFAULT_LOG_PATH="$DATAFED_INSTALL_PATH/logs"
 
+RUN apt update
 RUN apt install -y make g++
 
 WORKDIR ${DATAFED_DIR}
