@@ -2,7 +2,6 @@
 
 const {
     RepositoryType,
-    Result,
     createRepository,
     createRepositoryData,
     createGlobusConfig,
@@ -10,6 +9,7 @@ const {
 const { GlobusRepo } = require("./repository/globus");
 const { MetadataRepo } = require("./repository/metadata");
 const error = require("../../lib/error_codes");
+const { Result } = require("../../lib/result");
 
 /**
  * Create repository based on type
@@ -20,7 +20,6 @@ const error = require("../../lib/error_codes");
  * @param {string} config.title - Repository title
  * @param {string} config.desc - Repository description
  * @param {number} config.capacity - Storage capacity in bytes
- * @param {string[]} config.admins - Array of admin user IDs
  * @param {string} config.endpoint - Globus endpoint (required for GLOBUS type)
  * @param {string} config.path - File path (required for GLOBUS type)
  * @param {string} config.pub_key - Public key for ZeroMQ CURVE authentication (required for GLOBUS type)
@@ -31,11 +30,9 @@ const error = require("../../lib/error_codes");
 class Repositories {
     static createRepositoryByType = (config) => {
         const missingFields = [];
-        if (!("id" in config)) missingFields.push("id");
         if (!("type" in config)) missingFields.push("type");
         if (!("title" in config)) missingFields.push("title");
         if (!("capacity" in config)) missingFields.push("capacity");
-        if (!("admins" in config)) missingFields.push("admins");
 
         if (missingFields.length > 0) {
             return Result.err({
@@ -108,11 +105,6 @@ class Repositories {
             if (filter.type) {
                 query += " FILTER r.type == @type";
                 bindVars.type = filter.type;
-            }
-
-            if (filter.admin) {
-                query += " FILTER @admin IN r.admins";
-                bindVars.admin = filter.admin;
             }
 
             query += " RETURN r";
