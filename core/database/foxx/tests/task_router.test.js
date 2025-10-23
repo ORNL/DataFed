@@ -12,15 +12,13 @@ const { db } = require("@arangodb");
 
 const task_base_url = `${baseUrl}/task`;
 
-
-    after(function() {
-        const collections = ["u", "task",];
-        collections.forEach((name) => {
+after(function () {
+    const collections = ["u", "task"];
+    collections.forEach((name) => {
         let col = db._collection(name);
         if (col) col.truncate();
-        });
     });
-
+});
 
 describe("unit_task_router: the Foxx microservice task_router list/ endpoint", () => {
     beforeEach(() => {
@@ -34,7 +32,7 @@ describe("unit_task_router: the Foxx microservice task_router list/ endpoint", (
             }
         });
     });
-    
+
     it("should successfully run the list route", () => {
         db.u.save({
             _key: "fakeUser",
