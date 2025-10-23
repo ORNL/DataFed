@@ -32,7 +32,7 @@ module.exports = (function () {
     obj.PERM_PUBLIC = 0x0047;
 
     obj.hasAdminPermUser = function (a_client, a_user_id) {
-        if (a_client._id != a_user_id && !a_client.is_admin) {
+        if (a_client._id != a_user_id && !a_client?.is_admin) {
             return false;
         } else {
             return true;
@@ -41,7 +41,7 @@ module.exports = (function () {
 
     obj.hasAdminPermProj = function (a_client, a_proj_id) {
         if (
-            !a_client.is_admin &&
+            !a_client?.is_admin &&
             !obj.db.owner.firstExample({
                 _from: a_proj_id,
                 _to: a_client._id,
@@ -55,7 +55,7 @@ module.exports = (function () {
 
     obj.hasManagerPermProj = function (a_client, a_proj_id) {
         if (
-            !a_client.is_admin &&
+            !a_client?.is_admin &&
             !obj.db.owner.firstExample({
                 _from: a_proj_id,
                 _to: a_client._id,
@@ -73,7 +73,11 @@ module.exports = (function () {
 
     obj.hasAdminPermObjectLoaded = function (a_client, a_object) {
         // TODO Should collection creator have admin rights?
-        if (a_object.owner == a_client._id || a_object.creator == a_client._id || a_client.is_admin)
+        if (
+            a_object.owner == a_client._id ||
+            a_object.creator == a_client._id ||
+            a_client?.is_admin
+        )
             return true;
 
         if (a_object.owner.charAt(0) == "p") {
@@ -124,7 +128,7 @@ module.exports = (function () {
      * @returns {boolean} - if client has admin rights on the object.
      **/
     obj.hasAdminPermObject = function (a_client, a_object_id) {
-        if (a_client.is_admin) return true;
+        if (a_client?.is_admin) return true;
 
         var first_owner = obj.db.owner.firstExample({
             _from: a_object_id,
@@ -170,7 +174,7 @@ module.exports = (function () {
 
     obj.hasAdminPermRepo = function (a_client, a_repo_id) {
         if (
-            !a_client.is_admin &&
+            !a_client?.is_admin &&
             !obj.db.admin.firstExample({
                 _from: a_repo_id,
                 _to: a_client._id,
@@ -199,7 +203,14 @@ module.exports = (function () {
     };
 
     obj.ensureAdminPermRepo = function (a_client, a_repo_id) {
-        if (!obj.hasAdminPermRepo(a_client, a_repo_id)) throw error.ERR_PERM_DENIED;
+        if (!obj.hasAdminPermRepo(a_client, a_repo_id))
+            throw [
+                error.ERR_PERM_DENIED,
+                "Client, '" +
+                    a_client?._id +
+                    "', does not have administrative repository permissions on " +
+                    a_repo_id,
+            ];
     };
 
     /* Test if client has requested permission(s) for specified object. Note: this call does NOT check for
@@ -215,9 +226,6 @@ module.exports = (function () {
         a_inherited = false,
         any = false,
     ) {
-        //console.log("check perm:", a_req_perm, "client:", a_client._id, "object:", a_object._id, "any:", any );
-        //console.log("grant:", a_object.grant );
-
         var perm_found = 0,
             acl,
             acls,
@@ -246,7 +254,6 @@ module.exports = (function () {
             if (acls.length) {
                 for (i in acls) {
                     acl = acls[i];
-                    //console.log("user_perm:",acl);
                     perm_found |= acl.grant;
                     if (a_inherited && acl.inhgrant) perm_found |= acl.inhgrant;
                 }
@@ -270,7 +277,6 @@ module.exports = (function () {
             if (acls.length) {
                 for (i in acls) {
                     acl = acls[i];
-                    //console.log("group_perm:",acl);
                     perm_found |= acl.grant;
                     if (a_inherited && acl.inhgrant) perm_found |= acl.inhgrant;
                 }
@@ -361,7 +367,6 @@ module.exports = (function () {
             children = parents;
         }
 
-        //console.log("perm (last): false" );
         return false;
     };
 
@@ -378,9 +383,6 @@ module.exports = (function () {
     };
 
     obj.getPermissions = function (a_client, a_object, a_req_perm, a_inherited = false) {
-        //console.log("get perm:", a_req_perm, "client:", a_client._id, "object:", a_object._id, "any:", any );
-        //console.log("grant:", a_object.grant );
-
         var perm_found = 0,
             acl,
             acls,
@@ -408,7 +410,6 @@ module.exports = (function () {
             if (acls.length) {
                 for (i in acls) {
                     acl = acls[i];
-                    //console.log("user_perm:",acl);
                     perm_found |= acl.grant;
                     if (a_inherited && acl.inhgrant) perm_found |= acl.inhgrant;
                 }
@@ -433,7 +434,6 @@ module.exports = (function () {
             if (acls.length) {
                 for (i in acls) {
                     acl = acls[i];
-                    //console.log("group_perm:",acl);
                     perm_found |= acl.grant;
                     if (a_inherited && acl.inhgrant) perm_found |= acl.inhgrant;
                 }
@@ -532,17 +532,12 @@ module.exports = (function () {
             acls,
             i;
 
-        //console.log("getPermissionsLocal",a_object._id);
-
         if (a_object.topic) {
-            //console.log("has topic 1");
             perm.grant |= obj.PERM_PUBLIC;
             perm.inhgrant |= obj.PERM_PUBLIC;
         }
 
         if (a_object.acls & 1) {
-            //console.log("chk local user acls");
-
             acls = obj.db
                 ._query("for v, e in 1..1 outbound @object acl filter v._id == @client return e", {
                     object: a_object._id,
@@ -559,8 +554,6 @@ module.exports = (function () {
 
         // Evaluate group permissions on object
         if (a_object.acls & 2) {
-            //console.log("chk local group acls");
-
             acls = obj.db
                 ._query(
                     "for v, e, p in 2..2 outbound @object acl, outbound member filter p.vertices[2]._id == @client return p.edges[0]",
@@ -578,8 +571,6 @@ module.exports = (function () {
         }
 
         if (a_get_inherited) {
-            //console.log("chk inherited");
-
             var children = [a_object];
             var parents, parent;
 
@@ -595,16 +586,12 @@ module.exports = (function () {
                     )
                     .toArray();
 
-                //console.log("parents",parents);
-
                 if (parents.length == 0) break;
 
                 for (i in parents) {
                     parent = parents[i];
 
                     if (parent.topic) {
-                        //console.log("has topic 2");
-
                         perm.inherited |= obj.PERM_PUBLIC;
 
                         if ((a_req_perm & perm.inherited) == a_req_perm) break;
@@ -612,8 +599,6 @@ module.exports = (function () {
 
                     // User ACL
                     if (parent.acls && (parent.acls & 1) != 0) {
-                        //console.log("chk par user acls");
-
                         acls = obj.db
                             ._query(
                                 "for v, e in 1..1 outbound @object acl filter v._id == @client return e",
@@ -635,8 +620,6 @@ module.exports = (function () {
 
                     // Group ACL
                     if (parent.acls && (parent.acls & 2) != 0) {
-                        //console.log("chk par group acls");
-
                         acls = obj.db
                             ._query(
                                 "for v, e, p in 2..2 outbound @object acl, outbound member filter is_same_collection('g',p.vertices[1]) and p.vertices[2]._id == @client return p.edges[0]",
