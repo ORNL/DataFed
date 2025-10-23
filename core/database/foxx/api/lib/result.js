@@ -5,8 +5,20 @@
  * @type {{ok: (function(*): {ok: boolean, value: *}), err: (function(*): {ok: boolean, error: *})}}
  */
 const Result = {
-  ok: (value) => ({ ok: true, value, raiseIfError() { return this.value; } }),
-  err: (error) => ({ ok: false, error, raiseIfError() { throw [this.error.code, this.error.message] } }),
+    ok: (value) => ({
+        ok: true,
+        value,
+        raiseIfError() {
+            return this.value;
+        },
+    }),
+    err: (error) => ({
+        ok: false,
+        error,
+        raiseIfError() {
+            throw [this.error.code, this.error.message];
+        },
+    }),
 };
 
 module.exports = {

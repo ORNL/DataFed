@@ -7,7 +7,7 @@ const error = require("./lib/error_codes");
 const permissions = require("./lib/permissions");
 const { RepositoryType } = require("./models/repositories/types");
 const { Repositories } = require("./models/repositories/repositories");
-const { Result } = require("./lib/result"); 
+const { Result } = require("./lib/result");
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
 const g_tasks = require("./tasks");
@@ -170,10 +170,7 @@ router
 
                     for (const adminId of req.body.admins) {
                         if (!g_db._exists(adminId))
-                            throw [
-                                error.ERR_NOT_FOUND,
-                                "User, " + adminId + ", not found",
-                            ];
+                            throw [error.ERR_NOT_FOUND, "User, " + adminId + ", not found"];
 
                         g_db.admin.save({
                             _from: repo.id(),
