@@ -1031,14 +1031,23 @@ message RepoAllocationStatsReply
 
 // Request to create a new allocation on a repo for a user or project.
 // Only repo admins may make this request. On success, a background task is
-// started to create the allocation.
-// Reply: TaskDataReply on success, NackError on error
+// started to create the allocation if it is a DataFed managed globus repo,
+// for a metadata only repo it is created immediatly.
+// Reply: TaskDataReply (to be superseded by RepoAllocationCreateResponse) 
+// on success, NackError on error
 message RepoAllocationCreateRequest
 {
     required string             repo        = 1; // Repo ID
     required string             subject     = 2; // User/project ID
     required uint64             data_limit  = 3; // Data size limit (bytes)
     required uint32             rec_limit   = 4; // Data record limit(count)
+}
+
+message RepoAllocationCreateResponse
+{
+    required SDMS.ExecutionMethod execution_method = 1; // The execution method that was used to create the allocation
+    optional SDMS.TaskData        task = 2;             // The task data if deferred execution
+    optional SDMS.AllocData       result = 3;           // The Allocation data if direct execution
 }
 
 // Request to update an existing allocation. Only repo admins may make this
