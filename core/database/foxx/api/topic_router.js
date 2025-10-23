@@ -7,7 +7,9 @@ const error = require("./lib/error_codes");
 
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
+const logger = require("./lib/logger");
 
+const basePath = "topic";
 module.exports = router;
 
 //==================== TOPIC API FUNCTIONS
@@ -116,7 +118,7 @@ router
             if (!g_db.t.exists(req.queryParams.id))
                 throw [error.ERR_NOT_FOUND, "Topic, " + req.queryParams.id + ", not found"];
 
-            var topic = g_db.t.document(req.queryParams.id);
+            topic = g_db.t.document(req.queryParams.id);
 
             res.send([topic]);
             logger.logRequestSuccess({
@@ -149,6 +151,17 @@ router
 
 router
     .get("/search", function (req, res) {
+        const client = g_lib.getUserFromClientID(req.queryParams.client);
+ 
+        logger.logRequestStarted({
+            client: client?._id,
+            correlationId: req.headers["x-correlation-id"],
+            httpVerb: "GET",
+            routePath: basePath + "/search",
+            status: "Started",
+            description: "Search topics",
+        });
+
         try {
             var tokens = req.queryParams.phrase.match(/(?:[^\s"]+|"[^"]*")+/g),
                 qry = "for i in topicview search analyzer((",
@@ -214,7 +227,27 @@ router
             }
 
             res.send(result);
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/search",
+                status: "Success",
+                description: "Search topics",
+                extra: result,
+            });
+
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/search",
+                status: "Failure",
+                description: "Search topics",
+                extra: result,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
