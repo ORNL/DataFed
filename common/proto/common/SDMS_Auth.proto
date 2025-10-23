@@ -922,7 +922,7 @@ message RepoCreateRequest
     optional string             endpoint    = 9; // Globus endpoint UUID or legacy name
     optional string             pub_key     = 10; // Public encryption key
     required uint64             capacity    = 11; // Total data capacity
-    optional string             admin       = 12; // Repo admin(s)
+    repeated string             admin       = 12; // Repo admin(s)
     optional string             type        = 13; // Repository type (defaults to "globus")
 }
 
