@@ -16,15 +16,14 @@ router
     .get("/list/topics", function (req, res) {
         const client = g_lib.getUserFromClientID(req.queryParams.client);
         try {
-
             logger.logRequestStarted({
-                        client: client?._id,
-                        correlationId: req.headers["x-correlation-id"],
-                        httpVerb: "GET",
-                        routePath: basePath + "/list/topics",
-                        status: "Started",
-                        description: "List topics",
-                });
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/list/topics",
+                status: "Started",
+                description: "List topics",
+            });
 
             var qry,
                 par = {},
@@ -70,25 +69,25 @@ router
 
             res.send(result);
             logger.logRequestSuccess({
-                    client: client?._id,
-                    correlationId: req.headers["x-correlation-id"],
-                    httpVerb: "GET",
-                    routePath: basePath + "/list/topics",
-                    status: "Success",
-                    description: "List topics",
-                    extra: result
-                });
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/list/topics",
+                status: "Success",
+                description: "List topics",
+                extra: result,
+            });
         } catch (e) {
             logger.logRequestFailure({
-                    client: client?._id,
-                    correlationId: req.headers["x-correlation-id"],
-                    httpVerb: "GET",
-                    routePath: basePath + "/list/topics",
-                    status: "Failure",
-                    description: "List topics",
-                    extra: result,
-                    error: e
-                });
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/list/topics",
+                status: "Failure",
+                description: "List topics",
+                extra: result,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -120,14 +119,14 @@ router
 
             res.send([topic]);
             logger.logRequestSuccess({
-                    client: client?._id,
-                    correlationId: req.headers["x-correlation-id"],
-                    httpVerb: "GET",
-                    routePath: basePath + "/view",
-                    status: "Success",
-                    description: "View topic",
-                    extra: topic,
-                });
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Success",
+                description: "View topic",
+                extra: topic,
+            });
         } catch (e) {
             logger.logRequestFailure({
                 client: client?._id,
@@ -137,7 +136,7 @@ router
                 status: "Failure",
                 description: "View topic",
                 extra: topic,
-                error:e
+                error: e,
             });
             g_lib.handleException(e, res);
         }
