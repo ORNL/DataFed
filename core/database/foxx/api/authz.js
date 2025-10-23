@@ -6,6 +6,7 @@ const Record = require("./record");
 const pathModule = require("./posix_path");
 const g_lib = require("./support");
 const error = require("./lib/error_codes");
+const permissions = require("./lib/permissions");
 const { Repo, PathType } = require("./repo");
 
 module.exports = (function () {
@@ -37,19 +38,19 @@ module.exports = (function () {
         const data_id = "d/" + a_data_key;
         // If the user is not an admin of the object we will need
         // to check if the user has the write authorization
-        if (g_lib.hasAdminPermObject(a_client, data_id)) {
+        if (permissions.hasAdminPermObject(a_client, data_id)) {
             return true;
         }
         let data = g_db.d.document(data_id);
         // Grab the data item
-        if (g_lib.hasPermissions(a_client, data, a_perm)) {
+        if (permissions.hasPermissions(a_client, data, a_perm)) {
             return true;
         }
         return false;
     };
 
     obj.readRecord = function (client, path) {
-        const permission = g_lib.PERM_RD_DATA;
+        const permission = permissions.PERM_RD_DATA;
         const path_components = pathModule.splitPOSIXPath(path);
         const data_key = path_components.at(-1);
         let record = new Record(data_key);
@@ -84,7 +85,7 @@ module.exports = (function () {
     };
 
     obj.none = function (client, path) {
-        const permission = g_lib.PERM_NONE;
+        const permission = permissions.PERM_NONE;
     };
 
     obj.denied = function (client, path) {
@@ -92,7 +93,7 @@ module.exports = (function () {
     };
 
     obj.createRecord = function (client, path) {
-        const permission = g_lib.PERM_WR_DATA;
+        const permission = permissions.PERM_WR_DATA;
         const path_components = pathModule.splitPOSIXPath(path);
         const data_key = path_components.at(-1);
 
