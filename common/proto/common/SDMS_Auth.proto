@@ -1031,7 +1031,8 @@ message RepoAllocationStatsReply
 
 // Request to create a new allocation on a repo for a user or project.
 // Only repo admins may make this request. On success, a background task is
-// started to create the allocation.
+// started to create the allocation if it is a DataFed managed globus repo,
+// for a metadata only repo it is created immediatly.
 // Reply: TaskDataReply (to be superseded by RepoAllocationCreateResponse) 
 // on success, NackError on error
 message RepoAllocationCreateRequest
