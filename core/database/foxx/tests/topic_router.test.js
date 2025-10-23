@@ -40,7 +40,7 @@ describe("unit_topic_router: the Foxx microservice topic_router /view endpoint",
         });
 
         db.t.save({
-        _key: "12110",
+            _key: "12110",
         });
 
         // arrange
@@ -67,7 +67,7 @@ describe("unit_topic_router: the Foxx microservice topic_router /view endpoint",
         });
 
         db.t.save({
-        _key: "10",
+            _key: "10",
         });
 
         // arrange
@@ -78,5 +78,4 @@ describe("unit_topic_router: the Foxx microservice topic_router /view endpoint",
         // assert
         expect(response.status).to.equal(200);
     });
-
 });

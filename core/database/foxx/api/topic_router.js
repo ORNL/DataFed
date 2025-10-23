@@ -151,7 +151,7 @@ router
 router
     .get("/search", function (req, res) {
         const client = g_lib.getUserFromClientID(req.queryParams.client);
- 
+
         logger.logRequestStarted({
             client: client?._id,
             correlationId: req.headers["x-correlation-id"],
@@ -235,7 +235,6 @@ router
                 description: "Search topics",
                 extra: result,
             });
-
         } catch (e) {
             logger.logRequestFailure({
                 client: client?._id,
