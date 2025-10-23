@@ -6,6 +6,7 @@ const joi = require("joi");
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
 const error = require("./lib/error_codes");
+const permissions = require("./lib/permissions");
 const g_proc = require("./process");
 const g_tasks = require("./tasks");
 const { UserToken } = require("./lib/user_token");
@@ -27,9 +28,9 @@ function recordCreate(client, record, result) {
             _from: parent_id,
         })._to;
         if (owner_id != client._id) {
-            if (!g_lib.hasManagerPermProj(client, owner_id)) {
+            if (!permissions.hasManagerPermProj(client, owner_id)) {
                 var parent_coll = g_db.c.document(parent_id);
-                if (!g_lib.hasPermissions(client, parent_coll, g_lib.PERM_CREATE)) {
+                if (!permissions.hasPermissions(client, parent_coll, permissions.PERM_CREATE)) {
                     throw error.ERR_PERM_DENIED;
                 }
             }
@@ -423,11 +424,11 @@ function recordUpdate(client, record, result) {
     var data_id = g_lib.resolveDataID(record.id, client);
     var data = g_db.d.document(data_id);
 
-    if (!g_lib.hasAdminPermObject(client, data_id)) {
+    if (!permissions.hasAdminPermObject(client, data_id)) {
         // Required permissions depend on which fields are being modified:
         // Metadata = PERM_WR_META, file_size = PERM_WR_DATA, all else = ADMIN
         var perms = 0;
-        if (record.md !== undefined) perms |= g_lib.PERM_WR_META;
+        if (record.md !== undefined) perms |= permissions.PERM_WR_META;
 
         if (
             record.title !== undefined ||
@@ -438,10 +439,11 @@ function recordUpdate(client, record, result) {
             (record.dep_add && record.dep_add.length) ||
             (record.dep_rem && record.dep_rem.length)
         ) {
-            perms |= g_lib.PERM_WR_REC;
+            perms |= permissions.PERM_WR_REC;
         }
 
-        if (data.locked || !g_lib.hasPermissions(client, data, perms)) throw error.ERR_PERM_DENIED;
+        if (data.locked || !permissions.hasPermissions(client, data, perms))
+            throw error.ERR_PERM_DENIED;
     }
 
     var owner_id = g_db.owner.firstExample({
@@ -1106,17 +1108,20 @@ router
                 admin = false;
 
             if (client) {
-                admin = g_lib.hasAdminPermObject(client, data_id);
+                admin = permissions.hasAdminPermObject(client, data_id);
 
                 if (!admin) {
-                    var perms = g_lib.getPermissions(
+                    var perms = permissions.getPermissions(
                         client,
                         data,
-                        g_lib.PERM_RD_REC | g_lib.PERM_RD_META,
+                        permissions.PERM_RD_REC | permissions.PERM_RD_META,
                     );
-                    if (data.locked || (perms & (g_lib.PERM_RD_REC | g_lib.PERM_RD_META)) == 0)
+                    if (
+                        data.locked ||
+                        (perms & (permissions.PERM_RD_REC | permissions.PERM_RD_META)) == 0
+                    )
                         throw error.ERR_PERM_DENIED;
-                    if ((perms & g_lib.PERM_RD_META) == 0) rem_md = true;
+                    if ((perms & permissions.PERM_RD_META) == 0) rem_md = true;
                 }
             } else if (!g_lib.hasPublicRead(data_id)) {
                 throw error.ERR_PERM_DENIED;
@@ -1432,8 +1437,8 @@ router
                     for (i in req.queryParams.ids) {
                         obj = g_lib.getObject(req.queryParams.ids[i], client);
 
-                        if (!g_lib.hasAdminPermObject(client, obj._id)) {
-                            if (!g_lib.hasPermissions(client, obj, g_lib.PERM_LOCK))
+                        if (!permissions.hasAdminPermObject(client, obj._id)) {
+                            if (!permissions.hasPermissions(client, obj, permissions.PERM_LOCK))
                                 throw error.ERR_PERM_DENIED;
                         }
                         g_db._update(
@@ -1489,10 +1494,10 @@ router
             const client = g_lib.getUserFromClientID(req.queryParams.client);
             var data_id = g_lib.resolveDataID(req.queryParams.id, client);
 
-            if (!g_lib.hasAdminPermObject(client, data_id)) {
+            if (!permissions.hasAdminPermObject(client, data_id)) {
                 var data = g_db.d.document(data_id);
-                var perms = g_lib.getPermissions(client, data, g_lib.PERM_RD_DATA);
-                if ((perms & g_lib.PERM_RD_DATA) == 0) throw error.ERR_PERM_DENIED;
+                var perms = permissions.getPermissions(client, data, permissions.PERM_RD_DATA);
+                if ((perms & permissions.PERM_RD_DATA) == 0) throw error.ERR_PERM_DENIED;
             }
 
             var loc = g_db.loc.firstExample({
@@ -1531,9 +1536,9 @@ router
             if (req.queryParams.subject) {
                 owner_id = req.queryParams.subject;
                 if (req.queryParams.subject.startsWith("u/")) {
-                    g_lib.ensureAdminPermUser(client, owner_id);
+                    permissions.ensureAdminPermUser(client, owner_id);
                 } else {
-                    g_lib.ensureManagerPermProj(client, owner_id);
+                    permissions.ensureManagerPermProj(client, owner_id);
                 }
             } else {
                 owner_id = client._id;
