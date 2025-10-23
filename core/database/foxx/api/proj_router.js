@@ -7,6 +7,7 @@ const joi = require("joi");
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
 const error = require("./lib/error_codes");
+const permissions = require("./lib/permissions");
 const g_tasks = require("./tasks");
 
 module.exports = router;
@@ -150,8 +151,8 @@ router
                     g_db.acl.save({
                         _from: root._id,
                         _to: mem_grp._id,
-                        grant: g_lib.PERM_MEMBER,
-                        inhgrant: g_lib.PERM_MEMBER,
+                        grant: permissions.PERM_MEMBER,
+                        inhgrant: permissions.PERM_MEMBER,
                     });
 
                     proj.new.admins = [];
@@ -234,8 +235,8 @@ router
 
                     var is_admin = true;
 
-                    if (!g_lib.hasAdminPermProj(client, proj_id)) {
-                        if (!g_lib.hasManagerPermProj(client, proj_id)) {
+                    if (!permissions.hasAdminPermProj(client, proj_id)) {
+                        if (!permissions.hasManagerPermProj(client, proj_id)) {
                             throw error.ERR_PERM_DENIED;
                         }
                         is_admin = false;
@@ -526,7 +527,7 @@ router
 
         var user_id;
         if (req.queryParams.subject) {
-            g_lib.ensureAdminPermUser(client, req.queryParams.subject);
+            permissions.ensureAdminPermUser(client, req.queryParams.subject);
         } else user_id = client._id;
 
         if (req.queryParams.offset != undefined && req.queryParams.count != undefined) {

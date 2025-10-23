@@ -4,6 +4,7 @@ const createRouter = require("@arangodb/foxx/router");
 const router = createRouter();
 const joi = require("joi");
 const error = require("./lib/error_codes");
+const permissions = require("./lib/permissions");
 
 const g_db = require("@arangodb").db;
 const g_graph = require("@arangodb/general-graph")._graph("sdmsg");
@@ -29,7 +30,7 @@ router
 
                     if (req.queryParams.proj) {
                         uid = req.queryParams.proj;
-                        g_lib.ensureManagerPermProj(client, uid);
+                        permissions.ensureManagerPermProj(client, uid);
                     } else {
                         uid = client._id;
                     }
@@ -127,8 +128,7 @@ router
                                 "Group ID '" + req.queryParams.gid + "' not found",
                             ];
 
-                        //g_lib.ensureAdminPermObject( client, group._id );
-                        g_lib.ensureManagerPermProj(client, uid);
+                        permissions.ensureManagerPermProj(client, uid);
                     } else {
                         group = g_db.g.firstExample({
                             uid: client._id,
@@ -252,8 +252,7 @@ router
                                 "Group ID '" + req.queryParams.gid + "' not found",
                             ];
 
-                        //g_lib.ensureAdminPermObject( client, group._id );
-                        g_lib.ensureManagerPermProj(client, uid);
+                        permissions.ensureManagerPermProj(client, uid);
 
                         // Make sure special members project is protected
                         if (group.gid == "members") throw error.ERR_PERM_DENIED;

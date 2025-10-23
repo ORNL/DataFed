@@ -3,6 +3,7 @@
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
 const error = require("./lib/error_codes");
+const permissions = require("./lib/permissions");
 
 module.exports = (function () {
     var obj = {};
@@ -68,31 +69,31 @@ module.exports = (function () {
 
         switch (a_mode) {
             case g_lib.TT_DATA_GET:
-                ctxt.data_perm = g_lib.PERM_RD_DATA;
-                ctxt.coll_perm = g_lib.PERM_LIST;
+                ctxt.data_perm = permissions.PERM_RD_DATA;
+                ctxt.coll_perm = permissions.PERM_LIST;
                 break;
             case g_lib.TT_DATA_PUT:
-                ctxt.data_perm = g_lib.PERM_WR_DATA;
+                ctxt.data_perm = permissions.PERM_WR_DATA;
                 // Collections not allowed
                 break;
             case g_lib.TT_REC_ALLOC_CHG:
                 // Must be data owner OR if owned by a project, the project or
                 // an admin, or the creator.
-                ctxt.coll_perm = g_lib.PERM_LIST;
+                ctxt.coll_perm = permissions.PERM_LIST;
                 break;
             case g_lib.TT_REC_OWNER_CHG:
                 // Must have all read+delete, or be owner or creator OR, if owned by a project, the project or
                 // an admin.
-                ctxt.data_perm = g_lib.PERM_RD_ALL | g_lib.PERM_DELETE;
-                ctxt.coll_perm = g_lib.PERM_LIST;
+                ctxt.data_perm = permissions.PERM_RD_ALL | permissions.PERM_DELETE;
+                ctxt.coll_perm = permissions.PERM_LIST;
                 break;
             case g_lib.TT_REC_DEL:
-                ctxt.data_perm = g_lib.PERM_DELETE;
-                ctxt.coll_perm = g_lib.PERM_DELETE;
+                ctxt.data_perm = permissions.PERM_DELETE;
+                ctxt.coll_perm = permissions.PERM_DELETE;
                 break;
             case g_lib.TT_DATA_EXPORT:
-                ctxt.data_perm = g_lib.PERM_RD_REC | g_lib.PERM_RD_META;
-                ctxt.coll_perm = g_lib.PERM_LIST;
+                ctxt.data_perm = permissions.PERM_RD_REC | permissions.PERM_RD_META;
+                ctxt.coll_perm = permissions.PERM_LIST;
                 break;
         }
 
@@ -223,12 +224,12 @@ module.exports = (function () {
                     (coll_perm & a_ctxt.coll_perm) != a_ctxt.coll_perm ||
                     (data_perm & a_ctxt.data_perm) != a_ctxt.data_perm
                 ) {
-                    if (!g_lib.hasAdminPermObjectLoaded(a_ctxt.client, doc)) {
+                    if (!permissions.hasAdminPermObjectLoaded(a_ctxt.client, doc)) {
                         if (a_coll_perm != null)
                             // Already have inherited permission, don't ask again
-                            perm = g_lib.getPermissionsLocal(a_ctxt.client._id, doc);
+                            perm = permissions.getPermissionsLocal(a_ctxt.client._id, doc);
                         else
-                            perm = g_lib.getPermissionsLocal(
+                            perm = permissions.getPermissionsLocal(
                                 a_ctxt.client._id,
                                 doc,
                                 true,
@@ -272,7 +273,7 @@ module.exports = (function () {
                     if (doc.owner != a_ctxt.client._id) {
                         if (doc.owner.startsWith("p/")) {
                             if (!(doc.owner in a_ctxt.visited)) {
-                                if (g_lib.hasManagerPermProj(a_ctxt.client, doc.owner)) {
+                                if (permissions.hasManagerPermProj(a_ctxt.client, doc.owner)) {
                                     // Put project ID in visited to avoid checking permissions again
                                     a_ctxt.visited[doc.owner] = 1;
                                 } else {
@@ -301,7 +302,7 @@ module.exports = (function () {
 
                         if (doc.owner.startsWith("p/")) {
                             if (!(doc.owner in a_ctxt.visited)) {
-                                if (g_lib.hasManagerPermProj(a_ctxt.client, doc.owner)) {
+                                if (permissions.hasManagerPermProj(a_ctxt.client, doc.owner)) {
                                     // Put project ID in visited to avoid checking permissions again
                                     a_ctxt.visited[doc.owner] = 1;
                                     ok = true;
@@ -314,9 +315,9 @@ module.exports = (function () {
                         if (!ok && (a_data_perm & a_ctxt.data_perm) != a_ctxt.data_perm) {
                             if (a_data_perm != null)
                                 // Already have inherited permission, don't ask again
-                                perm = g_lib.getPermissionsLocal(a_ctxt.client._id, doc);
+                                perm = permissions.getPermissionsLocal(a_ctxt.client._id, doc);
                             else
-                                perm = g_lib.getPermissionsLocal(
+                                perm = permissions.getPermissionsLocal(
                                     a_ctxt.client._id,
                                     doc,
                                     true,
@@ -335,12 +336,12 @@ module.exports = (function () {
                     }
                 } else {
                     if ((a_data_perm & a_ctxt.data_perm) != a_ctxt.data_perm) {
-                        if (!g_lib.hasAdminPermObjectLoaded(a_ctxt.client, doc)) {
+                        if (!permissions.hasAdminPermObjectLoaded(a_ctxt.client, doc)) {
                             if (a_data_perm != null)
                                 // Already have inherited permission, don't ask again
-                                perm = g_lib.getPermissionsLocal(a_ctxt.client._id, doc);
+                                perm = permissions.getPermissionsLocal(a_ctxt.client._id, doc);
                             else
-                                perm = g_lib.getPermissionsLocal(
+                                perm = permissions.getPermissionsLocal(
                                     a_ctxt.client._id,
                                     doc,
                                     true,

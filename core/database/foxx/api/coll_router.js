@@ -8,6 +8,7 @@ const g_db = require("@arangodb").db;
 const g_graph = require("@arangodb/general-graph")._graph("sdmsg");
 const g_lib = require("./support");
 const error = require("./lib/error_codes");
+const permissions = require("./lib/permissions");
 
 module.exports = router;
 
@@ -38,14 +39,14 @@ router
                                 _from: parent_id,
                             })._to;
                             if (owner_id != client._id) {
-                                if (!g_lib.hasManagerPermProj(client, owner_id)) {
+                                if (!permissions.hasManagerPermProj(client, owner_id)) {
                                     var parent_coll = g_db.c.document(parent_id);
 
                                     if (
-                                        !g_lib.hasPermissions(
+                                        !permissions.hasPermissions(
                                             client,
                                             parent_coll,
-                                            g_lib.PERM_CREATE,
+                                            permissions.PERM_CREATE,
                                         )
                                     )
                                         throw error.ERR_PERM_DENIED;
@@ -233,7 +234,7 @@ router
 
                         //console.log("coll obj:",obj);
 
-                        if (!g_lib.hasAdminPermObject(client, coll_id)) {
+                        if (!permissions.hasAdminPermObject(client, coll_id)) {
                             var perms = 0;
 
                             if (
@@ -241,11 +242,11 @@ router
                                 obj.alias !== undefined ||
                                 obj.desc !== undefined
                             )
-                                perms |= g_lib.PERM_WR_REC;
+                                perms |= permissions.PERM_WR_REC;
 
-                            if (obj.topic !== undefined) perms |= g_lib.PERM_SHARE;
+                            if (obj.topic !== undefined) perms |= permissions.PERM_SHARE;
 
-                            if (!g_lib.hasPermissions(client, coll, perms))
+                            if (!permissions.hasPermissions(client, coll, perms))
                                 throw error.ERR_PERM_DENIED;
                         }
 
@@ -423,10 +424,10 @@ router
                 admin = false;
 
             if (client) {
-                admin = g_lib.hasAdminPermObject(client, coll_id);
+                admin = permissions.hasAdminPermObject(client, coll_id);
 
                 if (!admin) {
-                    if (!g_lib.hasPermissions(client, coll, g_lib.PERM_RD_REC)) {
+                    if (!permissions.hasPermissions(client, coll, permissions.PERM_RD_REC)) {
                         //console.log("perm denied");
                         throw error.ERR_PERM_DENIED;
                     }
@@ -464,10 +465,10 @@ router
                 admin = false;
 
             if (client) {
-                admin = g_lib.hasAdminPermObject(client, coll_id);
+                admin = permissions.hasAdminPermObject(client, coll_id);
 
                 if (!admin) {
-                    if (!g_lib.hasPermissions(client, coll, g_lib.PERM_LIST))
+                    if (!permissions.hasPermissions(client, coll, permissions.PERM_LIST))
                         throw error.ERR_PERM_DENIED;
                 }
             } else if (!g_lib.hasPublicRead(coll_id)) {
@@ -553,11 +554,9 @@ router
                     })._to;
                     var chk_perm = false;
 
-                    if (!g_lib.hasAdminPermObject(client, coll_id)) {
-                        var req_perm = g_lib.PERM_LINK;
-                        //if ( req.queryParams.remove && req.queryParams.remove.length )
-                        //    req_perm |= g_lib.PERM_SHARE;
-                        if (!g_lib.hasPermissions(client, coll, req_perm, true))
+                    if (!permissions.hasAdminPermObject(client, coll_id)) {
+                        var req_perm = permissions.PERM_LINK;
+                        if (!permissions.hasPermissions(client, coll, req_perm, true))
                             throw [
                                 error.ERR_PERM_DENIED,
                                 "Permission denied - requires LINK on collection.",
@@ -839,9 +838,14 @@ router
                         src_perms = 0,
                         dst_perms = 0;
 
-                    if (!g_lib.hasAdminPermObject(client, src_id)) {
-                        src_perms = g_lib.getPermissions(client, src, g_lib.PERM_LINK, true);
-                        if ((src_perms & g_lib.PERM_LINK) == 0)
+                    if (!permissions.hasAdminPermObject(client, src_id)) {
+                        src_perms = permissions.getPermissions(
+                            client,
+                            src,
+                            permissions.PERM_LINK,
+                            true,
+                        );
+                        if ((src_perms & permissions.PERM_LINK) == 0)
                             throw [
                                 error.ERR_PERM_DENIED,
                                 "Permission denied - requires LINK on source collection.",
@@ -850,14 +854,14 @@ router
                         chk_perm = true;
                     }
 
-                    if (!g_lib.hasAdminPermObject(client, dst_id)) {
-                        dst_perms = g_lib.getPermissions(
+                    if (!permissions.hasAdminPermObject(client, dst_id)) {
+                        dst_perms = permissions.getPermissions(
                             client,
                             dst,
-                            g_lib.PERM_LINK /*| g_lib.PERM_SHARE*/,
+                            permissions.PERM_LINK,
                             true,
                         );
-                        if ((dst_perms & g_lib.PERM_LINK) == 0)
+                        if ((dst_perms & permissions.PERM_LINK) == 0)
                             throw [
                                 error.ERR_PERM_DENIED,
                                 "Permission denied - requires LINK on destination collection.",
@@ -1005,12 +1009,6 @@ router
 
             if (coll_id.charAt(0) != "c")
                 throw [error.ERR_INVALID_PARAM, "ID is not a collection."];
-
-            /*if ( !g_lib.hasAdminPermObject( client, coll_id )) {
-                var coll = g_db.c.document( coll_id );
-                if ( !g_lib.hasPermissions( client, coll, g_lib.PERM_LIST ))
-                    throw error.ERR_PERM_DENIED;
-            }*/
 
             var qry = "for v in 1..1 outbound @coll item ";
             if (item_id.charAt(0) == "c")

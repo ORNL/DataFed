@@ -35,6 +35,8 @@ module.exports = (function () {
     obj.ERR_INFO.push([400, "No allocation available"]);
     obj.ERR_ALLOCATION_EXCEEDED = obj.ERR_COUNT++;
     obj.ERR_INFO.push([400, "Storage allocation exceeded"]);
+    obj.ERR_INVALID_OPERATION = obj.ERR_COUNT++;
+    obj.ERR_INFO.push([400, "Invalid operation"]);
 
     return obj;
 })();
