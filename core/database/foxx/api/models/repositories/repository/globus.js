@@ -1,7 +1,11 @@
 "use strict";
 
 const Joi = require("joi");
+<<<<<<< HEAD
 const { RepositoryType, createAllocationResult } = require("../types");
+=======
+const { RepositoryType, Result, createAllocationResult } = require("../types");
+>>>>>>> devel
 const { ExecutionMethod } = require("../../../lib/execution_types");
 const { BaseRepository } = require("../base_repository");
 const {
@@ -13,7 +17,10 @@ const {
 } = require("../validation");
 const g_tasks = require("../../../tasks");
 const error = require("../../../lib/error_codes");
+<<<<<<< HEAD
 const { Result } = require("../../../lib/result");
+=======
+>>>>>>> devel
 
 /**
  * Globus-specific configuration
@@ -86,8 +93,11 @@ class GlobusRepo extends BaseRepository {
         }
         this.repoData = result.value.repoData;
 
+<<<<<<< HEAD
         console.log("repoData after calling super");
         console.log(this.repoData);
+=======
+>>>>>>> devel
         return Result.ok(this.value);
     }
 

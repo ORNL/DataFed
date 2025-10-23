@@ -57,8 +57,6 @@ class BaseRepository {
             typeSpecific: typeSpecificConfig,
         });
 
-        console.log("config is");
-        console.log(config);
         let id_defined = false;
         if (config.id !== undefined) {
             if (config.id.startsWith("repo/") && config.id.length > "repo/".length) {
@@ -86,9 +84,6 @@ class BaseRepository {
             config.key = config.id.slice("repo/".length);
         }
 
-        console.log("Config is!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        console.log("");
-        console.log(config);
         // If we have a key we assume the repo exists
         if (config.key != undefined) {
             try {
@@ -173,10 +168,6 @@ class BaseRepository {
     save() {
         try {
             const { id, key, ...repo_data } = this.repoData;
-            console.log("Trying to save");
-            console.log(id);
-            console.log(key);
-            console.log(this.repoData);
             if (key != undefined) {
                 if (g_db._exists(id)) {
                     const updated = g_db.repo.update(

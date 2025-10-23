@@ -156,6 +156,16 @@ Here is an example for the core service:
         -v "/local/path/keys/datafed-core-key.priv:/opt/datafed/keys/datafed-core-key.priv" \
         -t "datafed-core:latest" 
 
+If arango has been built with self signed certificates and the core service needs to communicate
+with it, the following additional environment variables need to be added.
+
+```
+# An env variable to point to the certificate
+ -e SSL_CERT_FILE: "/opt/datafed/keys/datafed-arango.crt"
+# A volume mount that actually mountes the .crt file
+ -v "/local/path/keys/datafed-arango.crt:/opt/datafed/keys/datafed-arango.crt"
+```
+
 Web Service
 ------------
 
@@ -170,19 +180,19 @@ Here is an example for the web service:
         -e DATAFED_GLOBUS_APP_ID="" \
         -e DATAFED_ZEROMQ_SESSION_SECRET="" \
         -e DATAFED_DOMAIN="" \
-	    -e DATAFED_WEB_CERT_PATH="" \
-	    -e DATAFED_WEB_KEY_PATH="" \
+        -e DATAFED_WEB_CERT_PATH="" \
+        -e DATAFED_WEB_KEY_PATH="" \
         -e DATAFED_DEFAULT_LOG_PATH="" \
         -e DATAFED_CORE_ADDRESS_PORT_INTERNAL="" \
-	    -e DATAFED_GOOGLE_ANALYTICS_TAG="" \
+        -e DATAFED_GOOGLE_ANALYTICS_TAG="" \
         -e UID="" \
         --network datafed-network \
         -p 7513:7513 \
         -p 7512:7512 \
         -v "/local/path/logs:/datafed/logs" \
         -v "/local/path/keys/datafed-core-key.pub:/opt/datafed/keys/datafed-core-key.pub" \
-	    -v "$DATAFED_WEB_CERT_PATH:$DATAFED_WEB_CERT_PATH" \
-	    -v "$DATAFED_WEB_KEY_PATH:$DATAFED_WEB_KEY_PATH" \
+        -v "$DATAFED_WEB_CERT_PATH:$DATAFED_WEB_CERT_PATH" \
+        -v "$DATAFED_WEB_KEY_PATH:$DATAFED_WEB_KEY_PATH" \
         -t "datafed-web:latest" 
 
 Repository Service
@@ -252,6 +262,26 @@ Here is an example for the Globus Connect Server service:
         -t "datafed-gcs:latest"
 
 Notice that the gcs container must run in host networking mode to avoid performance bottlenecks with GridFTP.
+
+ArangoDB
+-------------
+
+Notes on running arango in a container can be found on their official web site. I will only include here that if running the arango with ssl enabled the certificate must be passed in.
+
+.. code-block:: bash
+
+   docker run -d \
+       --restart=always \
+        --network datafed-network \
+        -p 8529:8529 \
+        -v "/opt/datafed/keys/datafed-arango.pem:/usr/local/share/ca-certificates/datafed-arango.pem:ro" \
+        -e ARANGO_ROOT_PASSWORD="" \
+        arangodb/arangodb:latest \
+        --ssl.keyfile /usr/local/share/ca-certificates/datafed-arango.pem \
+        --server.endpoint ssl://0.0.0.0:8529
+
+
+
 
 Nginx Service
 -------------

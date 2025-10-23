@@ -92,43 +92,6 @@ describe("unit_base_repository: Base Repository tests", function () {
             /Failed to update repository, repository document was not found \(repo\/undefined\)/,
         );
     });
-    //
-    //    it("should check permission for admin in admins array", function () {
-    //        const repoConfig = getValidRepoDataNoIdKey();
-    //        const result = new TestRepo(repoConfig);
-    //        const repo = result.value;
-    //        repo.save();
-    //
-    //        const check_result = result.value.checkPermission("u/awesome_admin", "admin");
-    //        expect(check_result.ok).to.be.true;
-    //        expect(check_result.value).to.be.true;
-    //    });
-    //
-    //    it("should check permission for system admin", function () {
-    //        // create a system admin user
-    //        g_db.u.save({ _key: "system_admin", is_admin: true });
-    //
-    //        const repoConfig = getValidRepoDataNoIdKey();
-    //        const result = new TestRepo(repoConfig);
-    //        result.value.save();
-    //
-    //        const check_result = result.value.checkPermission("u/system_admin", "admin");
-    //        expect(check_result.ok).to.be.true;
-    //        expect(check_result.value).to.be.true;
-    //    });
-    //
-    //    it("should deny permission for normal user", function () {
-    //        g_db.u.save({ _key: "user2", is_admin: false });
-    //
-    //        const repoConfig = getValidRepoDataNoIdKey();
-    //        const result = new TestRepo(repoConfig);
-    //        const repo = result.value;
-    //        const result_of_save = repo.save();
-    //
-    //        const check_result = repo.checkPermission("u/user2", "admin");
-    //        expect(check_result.ok).to.be.true;
-    //        expect(check_result.value).to.be.false;
-    //    });
 
     it("should return error for unimplemented validate()", function () {
         const validate_result = TestRepo.validate({});

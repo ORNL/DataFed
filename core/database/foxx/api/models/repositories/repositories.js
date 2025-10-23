@@ -40,18 +40,15 @@ class Repositories {
                 message: `Missing required repository fields: ${missingFields.join(", ")}`,
             });
         }
-        console.log("Creating by type 1");
         /**
          * Type-based creation using switch (Rust match pattern)
          */
         switch (config.type) {
             case RepositoryType.GLOBUS: {
-                console.log("Creating by type GLOBUS");
                 return new GlobusRepo(config);
             }
 
             case RepositoryType.METADATA: {
-                console.log("Creating by type METADATA");
                 return new MetadataRepo(config);
             }
 
