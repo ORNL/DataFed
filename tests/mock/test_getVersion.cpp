@@ -4,8 +4,6 @@
 #include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>
 
-//#include "Version.hpp"
-
 // Public includes
 #include "common/CommunicatorFactory.hpp"
 #include "common/CredentialFactory.hpp"
@@ -24,10 +22,6 @@
 #include <filesystem>
 
 using namespace SDMS;
-
-//extern "C" {
-//#include "AuthzWorker.h"
-//}
 
 std::string get_env_or_default(const char* env_name, const std::string& default_value) {
     const char* val = std::getenv(env_name);
