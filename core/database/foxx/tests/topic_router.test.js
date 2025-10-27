@@ -14,10 +14,10 @@ const topic_base_url = `${baseUrl}/topic`;
 
 describe("unit_topic_router: the Foxx microservice topic_router /view endpoint", () => {
     after(function () {
-    const collections = ["u", "t"];
-    collections.forEach((name) => {
-        let col = db._collection(name);
-        if (col) col.truncate();
+        const collections = ["u", "t"];
+        collections.forEach((name) => {
+            let col = db._collection(name);
+            if (col) col.truncate();
         });
     });
 
