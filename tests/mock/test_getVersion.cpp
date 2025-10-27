@@ -4,7 +4,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include "Version.hpp"
+//#include "Version.hpp"
 
 // Public includes
 #include "common/CommunicatorFactory.hpp"
@@ -21,18 +21,29 @@
 
 // Standard includes
 #include <fstream>
+#include <filesystem>
 
 using namespace SDMS;
 
-extern "C" {
-#include "AuthzWorker.h"
+//extern "C" {
+//#include "AuthzWorker.h"
+//}
+
+std::string get_env_or_default(const char* env_name, const std::string& default_value) {
+    const char* val = std::getenv(env_name);
+    if (val && *val != '\0') {
+        return std::string(val);
+    }
+    return default_value;
 }
 
 BOOST_AUTO_TEST_SUITE(mock_liveness_get_version)
 
 BOOST_AUTO_TEST_CASE(mock_liveness_test_get_version) {
 
-  std::string fname = "../../mock_core/mock-datafed-core-key.pub";
+  std::cout << "Running from: " << std::filesystem::current_path() << std::endl;
+  std::string default_pub_key_path = std::filesystem::current_path() / "mock-datafed-core-key.pub";
+  std::string fname = get_env_or_default("DATAFED_MOCK_CORE_PUB_KEY", default_pub_key_path);
   std::string mock_core_server_address = "tcp://localhost:9998";
   std::ifstream inf(fname.c_str());
   if (!inf.is_open() || !inf.good()) {

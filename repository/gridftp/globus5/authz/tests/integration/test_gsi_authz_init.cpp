@@ -29,8 +29,16 @@ globus_result_t gsi_authz_init();
 struct Config getConfig();
 }
 
+std::string get_env_or_default(const char* env_name, const std::string& default_value) {
+    const char* val = std::getenv(env_name);
+    if (val && *val != '\0') {
+        return std::string(val);
+    }
+    return default_value;
+}
+
 const std::string repo_id = "repo/samoas";
-const std::string server_key_path = "../../mock_core/mock-datafed-core-key.pub";
+const std::string default_server_key_path = "../../mock_core/mock-datafed-core-key.pub";
 const std::string server_address = "tcp://localhost:9998";
 const std::string pub_key_path = "./datafed-repo-key.pub";
 const std::string pub_key = "Wxwm^-Cf7cJrqS)}/B?cDAq(L=@AwSA*({jhBu1]";
@@ -58,6 +66,7 @@ BOOST_AUTO_TEST_CASE(test_gsi_authz_init) {
                                  file_path);
   }
 
+  std::string server_key_path = get_env_or_default("DATAFED_MOCK_CORE_PUB_KEY", default_server_key_path);
   config_file << "server_address=" << server_address << std::endl;
   config_file << "server_key=" << server_key_path << std::endl;
   config_file << "repo_id=" << repo_id << std::endl;

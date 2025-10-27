@@ -15,5 +15,9 @@ foreach(PROG
   add_test(integration_${PROG} integration_${PROG})
 
   set_tests_properties(integration_${PROG} PROPERTIES FIXTURES_REQUIRED FIX_MOCK)
+  message("MOCK CORE KEY PATH: ${DATAFED_MOCK_CORE_PUB_KEY}")
+set_tests_properties(integration_${PROG} PROPERTIES
+    ENVIRONMENT "DATAFED_MOCK_CORE_PUB_KEY=${DATAFED_MOCK_CORE_PUB_KEY}"
+)
 
 endforeach(PROG)

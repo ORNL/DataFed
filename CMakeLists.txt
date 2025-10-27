@@ -27,6 +27,7 @@ OPTION(BUILD_PYTHON_CLIENT "Build python client" TRUE)
 OPTION(BUILD_TESTS "Build Tests" TRUE)
 OPTION(BUILD_WEB_SERVER "Build DataFed Web Server" TRUE)
 OPTION(ENABLE_UNIT_TESTS "Enable unit tests" TRUE)
+OPTION(ENABLE_INTEGRATION_TESTS "Enable integration tests" TRUE)
 OPTION(ENABLE_MEMORY_TESTS "Enable memory tests" FALSE)
 OPTION(BUILD_SHARED_LIBS "By default DataFed tries to build static libraries
 with the exception of libdatafed-authz which must always be a shared library,
@@ -188,6 +189,12 @@ if( BUILD_FOXX OR BUILD_CORE_SERVER )
   add_subdirectory( core )
 endif()
 
+# Must occur before building authz, location of mock keys are defined here
+# ENV DATAFED_MOCK_CORE_PUB_KEY
+if (ENABLE_INTEGRATION_TESTS OR ENABLE_END_TO_END_TESTS)
+    add_subdirectory(tests)
+endif()
+
 if( BUILD_REPO_SERVER OR BUILD_AUTHZ)
   add_subdirectory( repository )
 endif()
@@ -239,26 +246,6 @@ if( INSTALL_FOXX )
                     message( \"\${_out} install_foxx failed: \${_err}\")
                 endif()"
          )
-endif()
-
-if (ENABLE_END_TO_END_TESTS)
-	if (NOT ENABLE_END_TO_END_API_TESTS AND NOT ENABLE_END_TO_END_WEB_TESTS)
-    message (FATAL_ERROR "Cannot run end-to-end tests because one of the ENABLE_END_TO_END web or API flag is not on")
-  else()
-    add_subdirectory(tests/end-to-end)
-    add_subdirectory(tests/end-to-end/web-UI)
-  endif()
-else()
-  if (ENABLE_END_TO_END_API_TESTS)
-    if (BUILD_PYTHON_CLIENT)
-      add_subdirectory(tests/end-to-end)
-    else()
-      message (FATAL_ERROR "Cannot run end-to-end tests because BUILD_PYTHON_CLIENT is not on")
-    endif()
-  endif()
-  if (ENABLE_END_TO_END_WEB_TESTS)
-    add_subdirectory(tests/end-to-end/web-UI)
-  endif()
 endif()
 
 find_library(SODIUM NAMES libsodium.a PATHS ${DEPENDENCY_INSTALL_PATH}/lib)
