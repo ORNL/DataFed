@@ -224,18 +224,20 @@ def getClientIdFromCredFile(cred_file_name, cred_type="setup"):
                 print(f"Failed to get client ID from file '{cred_file_name}': credential type '{cred_type}' not found.")
     return None
 
-# Doesn't appear to be referenced in any files. Commenting out
-# to test if it is safe to remove.
 
-# def getEndpointIdFromFile(deployment_key_file_path):
-#     # Check to see if the local secret is the same id and not just the same
-#     # name
-#     _, empty = validFile(deployment_key_file_path)
-#     if empty is False:
-#         with open(deployment_key_file_path, "r") as f:
-#             loaded_data = json.load(f)
-#             return loaded_data["client_id"]
-#     return None
+# Doesn't appear to be used.
+# Not removing until we have a chance to refactor the entire
+#   globus configuration setup process.
+
+def getEndpointIdFromFile(deployment_key_file_path):
+    # Check to see if the local secret is the same id and not just the same
+    # name
+    _, empty = validFile(deployment_key_file_path)
+    if empty is False:
+        with open(deployment_key_file_path, "r") as f:
+            loaded_data = json.load(f)
+            return loaded_data["client_id"]
+    return None
 
 
 def createNewCredential(auth_client, client_id, cred_name, cred_file, cred_type):
