@@ -53,7 +53,6 @@ router
                 description: "Update message metrics",
                 extra: obj,
             });
-
         } catch (e) {
             logger.logRequestFailure({
                 client: client?._id,
@@ -63,7 +62,7 @@ router
                 status: "Failure",
                 description: "Update message metrics",
                 extra: obj,
-                error: e
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -120,7 +119,6 @@ router
                 description: "Update message metrics",
                 extra: result,
             });
-
         } catch (e) {
             logger.logRequestFailure({
                 client: client?._id,
@@ -147,7 +145,9 @@ router
 
 router
     .get("/users/active", function (req, res) {
-        const client = req.queryParams.client ? g_lib.getUserFromClientID(req.queryParams.client) : null;
+        const client = req.queryParams.client
+            ? g_lib.getUserFromClientID(req.queryParams.client)
+            : null;
         try {
             logger.logRequestStarted({
                 client: client?._id,
@@ -188,9 +188,8 @@ router
                 routePath: basePath + "/users/active",
                 status: "Success",
                 description: "Get recently active users from metrics",
-                extra: cnt
+                extra: cnt,
             });
-
         } catch (e) {
             logger.logRequestFailure({
                 client: client?._id,
@@ -200,7 +199,7 @@ router
                 status: "Failure",
                 description: "Get recently active users from metrics",
                 extra: cnt,
-                error: e
+                error: e,
             });
 
             g_lib.handleException(e, res);
@@ -245,7 +244,6 @@ router
                 description: "Purge older metrics",
                 extra: "undefined",
             });
-
         } catch (e) {
             logger.logRequestFailure({
                 client: client?._id,
@@ -254,7 +252,7 @@ router
                 routePath: basePath + "/purge",
                 status: "Failure",
                 description: "Purge older metrics",
-                extra: "undefined", 
+                extra: "undefined",
                 error: e,
             });
             g_lib.handleException(e, res);

@@ -10,12 +10,12 @@ const metrics_base_url = `${baseUrl}/metrics`;
 
 describe("unit_metrics_router: /users/active endpoint", () => {
     after(function () {
-    const collections = ["metrics"];
-    collections.forEach((name) => {
-        let col = db._collection(name);
-        if (col) col.truncate();
+        const collections = ["metrics"];
+        collections.forEach((name) => {
+            let col = db._collection(name);
+            if (col) col.truncate();
+        });
     });
-});
     beforeEach(() => {
         const collections = ["metrics"];
         collections.forEach((name) => {
@@ -94,4 +94,3 @@ describe("unit_metrics_router: /users/active endpoint", () => {
         expect(body).to.deep.equal({});
     });
 });
-
