@@ -53,8 +53,8 @@ scripts/admin_datafed_backup.sh
 scripts/admin_refresh_certs.sh
 scripts/globus/__pycache__
 services/
-tests/
-tmp/mock_core/Version.hpp
+tests/mock_core/Version.hpp
+tmp
 web/SDMS.proto
 web/SDMS_Anon.proto
 web/SDMS_Auth.proto
