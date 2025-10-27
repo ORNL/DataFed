@@ -13,6 +13,14 @@ const { db } = require("@arangodb");
 const qry_base_url = `${baseUrl}/qry`;
 
 describe("unit_query_router: the Foxx microservice qry_router endpoints", () => {
+    after(function () {
+        const collections = ["u", "task"];
+        collections.forEach((name) => {
+            let col = db._collection(name);
+            if (col) col.truncate();
+        });
+    });
+
     beforeEach(() => {
         const collections = ["u", "qry"];
         collections.forEach((name) => {
