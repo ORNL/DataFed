@@ -15,10 +15,9 @@ run-build-dependencies:
         variables:
             UPSTREAM_DATAFED_DEPENCIES_SHA: "${CI_COMMIT_SHA}"
             UPSTREAM_DATAFED_DEPENDENCIES_BRANCH: "${CI_COMMIT_REF_NAME}"
-    variables:
-        REGISTRY: "${REGISTRY}"
-        HARBOR_USER: "${HARBOR_USER}"
-        HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
+            REGISTRY: "${REGISTRY}"
+            HARBOR_USER: "${HARBOR_USER}"
+            HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
 
 build-runtime:
     extends: .docker_base_build_script
