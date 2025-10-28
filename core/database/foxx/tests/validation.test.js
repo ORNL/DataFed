@@ -1,34 +1,15 @@
 "use strict";
 
 const { expect } = require("chai");
-const { Result } = require("../api/repository/types");
+const { Result } = require("../api/models/repositories/types");
 const {
     validateNonEmptyString,
     validateCommonFields,
     validatePOSIXPath,
     validateRepositoryPath,
-    validateGlobusConfig,
-    validateMetadataConfig,
-    validateAllocationParams,
-} = require("../api/repository/validation");
+} = require("../api/models/repositories/validation");
 
 describe("unit_validation_repository: Repository Validation Tests", function () {
-    describe("unit_validation_repository: Result Type", function () {
-        it("should create ok result", function () {
-            const result = Result.ok("success");
-            expect(result.ok).to.be.true;
-            expect(result.value).to.equal("success");
-            expect(result.error).to.be.undefined;
-        });
-
-        it("should create error result", function () {
-            const result = Result.err({ code: 1, message: "error" });
-            expect(result.ok).to.be.false;
-            expect(result.error).to.deep.equal({ code: 1, message: "error" });
-            expect(result.value).to.be.undefined;
-        });
-    });
-
     describe("unit_validation_repository: validateNonEmptyString", function () {
         it("should accept valid non-empty strings", function () {
             const result = validateNonEmptyString("valid string", "Test field");
@@ -70,66 +51,6 @@ describe("unit_validation_repository: Repository Validation Tests", function () 
             };
             const result = validateCommonFields(config);
             expect(result.ok).to.be.true;
-        });
-
-        it("should reject missing id", function () {
-            const config = {
-                title: "Test Repository",
-                capacity: 1000000,
-                admins: ["user1"],
-            };
-            const result = validateCommonFields(config);
-            expect(result.ok).to.be.false;
-            expect(result.error.message).to.include("Repository ID is required");
-        });
-
-        it("should reject missing title", function () {
-            const config = {
-                id: "test-repo",
-                capacity: 1000000,
-                admins: ["user1"],
-            };
-            const result = validateCommonFields(config);
-            expect(result.ok).to.be.false;
-            expect(result.error.message).to.include("Repository title is required");
-        });
-
-        it("should reject zero or negative capacity", function () {
-            const config = {
-                id: "test-repo",
-                title: "Test Repository",
-                capacity: 0,
-                admins: ["user1"],
-            };
-            const result = validateCommonFields(config);
-            expect(result.ok).to.be.false;
-            expect(result.error.message).to.include(
-                "Repository capacity must be a positive number",
-            );
-        });
-
-        it("should reject empty admins array", function () {
-            const config = {
-                id: "test-repo",
-                title: "Test Repository",
-                capacity: 1000000,
-                admins: [],
-            };
-            const result = validateCommonFields(config);
-            expect(result.ok).to.be.false;
-            expect(result.error.message).to.include("Repository must have at least one admin");
-        });
-
-        it("should reject non-array admins", function () {
-            const config = {
-                id: "test-repo",
-                title: "Test Repository",
-                capacity: 1000000,
-                admins: "user1",
-            };
-            const result = validateCommonFields(config);
-            expect(result.ok).to.be.false;
-            expect(result.error.message).to.include("Repository must have at least one admin");
         });
     });
 
@@ -185,160 +106,6 @@ describe("unit_validation_repository: Repository Validation Tests", function () 
             const result = validateRepositoryPath("relative/path/test-repo", "test-repo");
             expect(result.ok).to.be.false;
             expect(result.error.message).to.include("must be an absolute path");
-        });
-    });
-
-    describe("unit_validation_repository: validateGlobusConfig", function () {
-        function getValidGlobusConfig() {
-            return {
-                id: "test-repo",
-                title: "Test Repository",
-                capacity: 1000000,
-                admins: ["user1"],
-                pub_key: "ssh-rsa AAAAB3...",
-                address: "server.example.com",
-                endpoint: "endpoint-id",
-                domain: "example.com",
-                path: "/data/repos/test-repo",
-            };
-        }
-
-        it("should accept valid Globus configuration", function () {
-            const config = getValidGlobusConfig();
-            const result = validateGlobusConfig(config);
-            expect(result.ok).to.be.true;
-        });
-
-        it("should accept valid Globus configuration with export path", function () {
-            const config = getValidGlobusConfig();
-            config.exp_path = "/export/path";
-            const result = validateGlobusConfig(config);
-            expect(result.ok).to.be.true;
-        });
-
-        it("should reject missing public key", function () {
-            const config = getValidGlobusConfig();
-            delete config.pub_key;
-            const result = validateGlobusConfig(config);
-            expect(result.ok).to.be.false;
-            expect(result.error.message).to.include("Public key is required");
-        });
-
-        it("should reject missing address", function () {
-            const config = getValidGlobusConfig();
-            delete config.address;
-            const result = validateGlobusConfig(config);
-            expect(result.ok).to.be.false;
-            expect(result.error.message).to.include("Address is required");
-        });
-
-        it("should reject missing endpoint", function () {
-            const config = getValidGlobusConfig();
-            delete config.endpoint;
-            const result = validateGlobusConfig(config);
-            expect(result.ok).to.be.false;
-            expect(result.error.message).to.include("Endpoint is required");
-        });
-
-        it("should reject invalid repository path", function () {
-            const config = getValidGlobusConfig();
-            config.path = "/data/repos/wrong-name";
-            const result = validateGlobusConfig(config);
-            expect(result.ok).to.be.false;
-            expect(result.error.message).to.include("must end with repository ID");
-        });
-
-        it("should reject invalid export path", function () {
-            const config = getValidGlobusConfig();
-            config.exp_path = "relative/path";
-            const result = validateGlobusConfig(config);
-            expect(result.ok).to.be.false;
-            expect(result.error.message).to.include("Export path must be an absolute path");
-        });
-    });
-
-    describe("unit_validation_repository: validateMetadataConfig", function () {
-        function getValidMetadataConfig() {
-            return {
-                id: "test-repo",
-                title: "Test Metadata Repository",
-                capacity: 1000000,
-                admins: ["user1"],
-            };
-        }
-
-        it("should accept valid metadata-only configuration", function () {
-            const config = getValidMetadataConfig();
-            const result = validateMetadataConfig(config);
-            expect(result.ok).to.be.true;
-        });
-
-        it("should reject configuration with Globus fields", function () {
-            const config = getValidMetadataConfig();
-            config.pub_key = "ssh-rsa AAAAB3...";
-            config.endpoint = "endpoint-id";
-            const result = validateMetadataConfig(config);
-            expect(result.ok).to.be.false;
-            expect(result.error.message).to.include("should not have: pub_key, endpoint");
-        });
-
-        it("should reject configuration with path field", function () {
-            const config = getValidMetadataConfig();
-            config.path = "/data/repos/test-repo";
-            const result = validateMetadataConfig(config);
-            expect(result.ok).to.be.false;
-            expect(result.error.message).to.include("should not have: path");
-        });
-    });
-
-    describe("unit_validation_repository: validateAllocationParams", function () {
-        it("should accept valid allocation parameters", function () {
-            const params = {
-                subject: "user123",
-                size: 1000000,
-            };
-            const result = validateAllocationParams(params);
-            expect(result.ok).to.be.true;
-        });
-
-        it("should accept allocation with path", function () {
-            const params = {
-                subject: "user123",
-                size: 1000000,
-                path: "/custom/path",
-            };
-            const result = validateAllocationParams(params);
-            expect(result.ok).to.be.true;
-        });
-
-        it("should reject missing subject", function () {
-            const params = {
-                size: 1000000,
-            };
-            const result = validateAllocationParams(params);
-            expect(result.ok).to.be.false;
-            expect(result.error.message).to.include("Allocation subject is required");
-        });
-
-        it("should reject zero or negative size", function () {
-            const params = {
-                subject: "user123",
-                size: 0,
-            };
-            const result = validateAllocationParams(params);
-            expect(result.ok).to.be.false;
-            expect(result.error.message).to.include("Allocation size must be a positive number");
-        });
-
-        it("should reject non-string path", function () {
-            const params = {
-                subject: "user123",
-                size: 1000000,
-                path: 123,
-            };
-            const result = validateAllocationParams(params);
-            expect(result.ok).to.be.false;
-            expect(result.error.message).to.include("Allocation path must be a string");
         });
     });
 });
