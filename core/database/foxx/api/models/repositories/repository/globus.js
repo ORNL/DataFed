@@ -1,7 +1,7 @@
 "use strict";
 
 const Joi = require("joi");
-const { RepositoryType, Result, createAllocationResult } = require("../types");
+const { RepositoryType, createAllocationResult } = require("../types");
 const { ExecutionMethod } = require("../../../lib/execution_types");
 const { BaseRepository } = require("../base_repository");
 const {
@@ -13,6 +13,7 @@ const {
 } = require("../validation");
 const g_tasks = require("../../../tasks");
 const error = require("../../../lib/error_codes");
+const { Result } = require("../../../lib/result");
 
 /**
  * Globus-specific configuration
