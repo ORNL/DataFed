@@ -64,7 +64,7 @@ router
                 routePath: basePath + "/search",
                 status: "Success",
                 description: "Search for tags by name",
-                extra: result
+                extra: result,
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -75,7 +75,7 @@ router
                 status: "Failure",
                 description: "Search for tags by name",
                 extra: result,
-                error: e
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -138,7 +138,7 @@ router
                         routePath: basePath + "/list/by_count",
                         status: "Success",
                         description: "List tags by count",
-                        extra: result
+                        extra: result,
                     });
                 },
             });
@@ -151,7 +151,7 @@ router
                 status: "Failure",
                 description: "List tags by count",
                 extra: result,
-                error: e
+                error: e,
             });
 
             g_lib.handleException(e, res);

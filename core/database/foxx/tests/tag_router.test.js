@@ -60,5 +60,4 @@ describe("unit_tag_router: the Foxx microservice topic_router /search endpoint",
         // assert
         expect(response.status).to.equal(200);
     });
-
 });
