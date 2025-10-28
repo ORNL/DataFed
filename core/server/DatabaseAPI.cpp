@@ -2158,23 +2158,28 @@ void DatabaseAPI::repoCreate(const Auth::RepoCreateRequest &a_request,
   Value result;
 
   nlohmann::json payload;
+
+  // Required attributes
   payload["id"] = a_request.id();
   payload["title"] = a_request.title();
-  payload["path"] = a_request.path();
-  payload["pub_key"] = a_request.pub_key();
-  payload["address"] = a_request.address();
-  payload["endpoint"] = a_request.endpoint();
-  payload["capacity"] = to_string(a_request.capacity());
+  payload["capacity"] = std::to_string(a_request.capacity());
+  
+  // Helper to add optional fields if present
+  auto add_if_present = [&](auto has_fn, auto get_fn, const std::string& key) {
+      if ((a_request.*has_fn)()) {
+          payload[key] = (a_request.*get_fn)();
+      }
+  };
+  
+  // List of optional fields to check
+  add_if_present(&Auth::RepoCreateRequest::has_path,     &Auth::RepoCreateRequest::path,     "path");
+  add_if_present(&Auth::RepoCreateRequest::has_pub_key,  &Auth::RepoCreateRequest::pub_key,  "pub_key");
+  add_if_present(&Auth::RepoCreateRequest::has_address,  &Auth::RepoCreateRequest::address,  "address");
+  add_if_present(&Auth::RepoCreateRequest::has_endpoint, &Auth::RepoCreateRequest::endpoint, "endpoint");
+  add_if_present(&Auth::RepoCreateRequest::has_desc,     &Auth::RepoCreateRequest::desc,     "desc");
+  add_if_present(&Auth::RepoCreateRequest::has_domain,   &Auth::RepoCreateRequest::domain,   "domain");
+  add_if_present(&Auth::RepoCreateRequest::has_exp_path, &Auth::RepoCreateRequest::exp_path, "exp_path");
 
-  if (a_request.has_desc()) {
-    payload["desc"] = a_request.desc();
-  }
-  if (a_request.has_domain()) {
-    payload["domain"] = a_request.domain();
-  }
-  if (a_request.has_exp_path()) {
-    payload["exp_path"] = a_request.exp_path();
-  }
   if (a_request.admin_size() > 0) {
     nlohmann::json admins = nlohmann::json::array();
     for (int i = 0; i < a_request.admin_size(); ++i) {

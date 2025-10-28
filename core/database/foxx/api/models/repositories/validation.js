@@ -1,7 +1,7 @@
 "use strict";
 
 const Joi = require("joi");
-const { Result } = require("./types");
+const { Result } = require("../../lib/result");
 const error = require("../../lib/error_codes");
 
 // Define error code constant if not available from g_lib
@@ -60,6 +60,31 @@ const validateCommonFields = (config) => {
                     return errors;
                 }),
 
+            key: Joi.string()
+                .max(40)
+                .lowercase()
+                .regex(/^[a-z0-9_.-]+$/)
+                .error((errors) => {
+                    errors.forEach((err) => {
+                        switch (err.type) {
+                            case "string.base":
+                                err.message = "Repository key must be a string";
+                                break;
+                            case "string.empty":
+                                err.message = "Repository key is empty";
+                                break;
+                            case "string.max":
+                                err.message = "Repository key cannot be longer than 40 characters";
+                                break;
+                            case "string.pattern.base":
+                                err.message =
+                                    "Repository key may only contain lowercase letters, numbers, underscores, hyphens and periods.";
+                                break;
+                        }
+                    });
+                    return errors;
+                }),
+
             capacity: Joi.number()
                 .min(0)
                 .error((errors) => {
@@ -70,23 +95,6 @@ const validateCommonFields = (config) => {
                                 break;
                             case "number.min":
                                 err.message = "Repository capacity cannot be negative";
-                                break;
-                        }
-                    });
-                    return errors;
-                }),
-
-            admins: Joi.array()
-                .items(Joi.string().min(1))
-                .min(1)
-                .error((errors) => {
-                    errors.forEach((err) => {
-                        switch (err.type) {
-                            case "array.base":
-                                err.message = "Repository admins must be an array";
-                                break;
-                            case "array.min":
-                                err.message = "Repository must have at least one admin";
                                 break;
                         }
                     });
