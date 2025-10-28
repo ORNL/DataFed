@@ -58,7 +58,7 @@ var tasks_func = (function () {
         );
 
         if (res.hasNext()) {
-            throw [error.ERR_IN_USE, "A duplicate allocation create task was found."];
+            throw [error.ERR_IN_USE, "A duplicate allocation create task was found: " + res.next()];
         }
 
         var repo = g_db.repo.document(a_repo_id);
@@ -75,7 +75,6 @@ var tasks_func = (function () {
             repo_path: path,
         };
         var task = obj._createTask(a_client._id, g_lib.TT_ALLOC_CREATE, 2, state);
-
         if (
             g_proc._lockDepsGeneral(task._id, [
                 {
@@ -101,7 +100,6 @@ var tasks_func = (function () {
                 },
             ).new;
         }
-
         return {
             task: task,
         };
@@ -202,7 +200,7 @@ var tasks_func = (function () {
         );
 
         if (res.hasNext()) {
-            throw [error.ERR_IN_USE, "A duplicate allocation delete task was found."];
+            throw [error.ERR_IN_USE, "A duplicate allocation delete task was found: " + res.next()];
         }
 
         var path =

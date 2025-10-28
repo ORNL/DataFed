@@ -1,57 +1,57 @@
 ---
 stages:
-  - build
+    - build
 
 include:
-  - local: .gitlab/common.yml
+    - local: .gitlab/common.yml
 
 build-ws:
-  extends: .docker_build_script
-  stage: build
-  variables:
-    PROJECT: "datafed"
-    COMPONENT: "ws"
-    GIT_STRATEGY: clone
-    DOCKER_FILE_PATH: "web/docker/Dockerfile"
-    DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
-    BUILD_INTERMEDIATE: "TRUE"
-    INTERMEDIATE_TARGET: "ws-build" # Name of the layer in the dockerfile
-    INTERMEDIATE_LAYER_NAME: "build"
-  tags:
-    - ci-datafed-core
-    - docker
-  rules:
-    - changes:
-        - docker/**/*
-        - scripts/**/*
-        - web/**/*
-        - cmake/**/*
-        - common/proto/**/*
-        - .gitlab-ci.yml
-        - CMakeLists.txt
-      when: on_success
+    extends: .docker_build_script
+    stage: build
+    variables:
+        PROJECT: "datafed"
+        COMPONENT: "ws"
+        GIT_STRATEGY: clone
+        DOCKER_FILE_PATH: "web/docker/Dockerfile"
+        DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
+        BUILD_INTERMEDIATE: "TRUE"
+        INTERMEDIATE_TARGET: "ws-build" # Name of the layer in the dockerfile
+        INTERMEDIATE_LAYER_NAME: "build"
+    tags:
+        - ci-datafed-core
+        - docker
+    rules:
+        - changes:
+              - docker/**/*
+              - scripts/**/*
+              - web/**/*
+              - cmake/**/*
+              - common/proto/**/*
+              - .gitlab-ci.yml
+              - CMakeLists.txt
+          when: on_success
 
 retag-image:
-  extends: .docker_retag_image
-  stage: build
-  variables:
-    PROJECT: "datafed"
-    COMPONENT: "ws"
-    GIT_STRATEGY: clone
-    DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
-    BUILD_INTERMEDIATE: "TRUE"
-    INTERMEDIATE_TARGET: "ws-build" # Name of the layer in the dockerfile
-    INTERMEDIATE_LAYER_NAME: "build"
-  tags:
-    - docker
-  rules:
-    - changes:
-        - docker/**/*
-        - scripts/**/*
-        - web/**/*
-        - cmake/**/*
-        - common/proto/**/*
-        - .gitlab-ci.yml
-        - CMakeLists.txt
-      when: never
-    - when: on_success
+    extends: .docker_retag_image
+    stage: build
+    variables:
+        PROJECT: "datafed"
+        COMPONENT: "ws"
+        GIT_STRATEGY: clone
+        DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
+        BUILD_INTERMEDIATE: "TRUE"
+        INTERMEDIATE_TARGET: "ws-build" # Name of the layer in the dockerfile
+        INTERMEDIATE_LAYER_NAME: "build"
+    tags:
+        - docker
+    rules:
+        - changes:
+              - docker/**/*
+              - scripts/**/*
+              - web/**/*
+              - cmake/**/*
+              - common/proto/**/*
+              - .gitlab-ci.yml
+              - CMakeLists.txt
+          when: never
+        - when: on_success
