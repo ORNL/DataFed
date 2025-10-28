@@ -52,7 +52,8 @@ RUN ${DATAFED_DEPENDENCIES_ROOT}/scripts/generate_dependencies_config.sh && \
           -DBUILD_DOCS=False           \
           -DBUILD_PYTHON_CLIENT=False  \
           -DBUILD_FOXX=False           \
-          -DBUILD_COMMON=False
+          -DBUILD_COMMON=False         \
+          -DENABLE_INTEGRATION_TESTS=False
 RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build
 RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build --target install
 # Only part of the final install can be done here
