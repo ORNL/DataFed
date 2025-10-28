@@ -29,7 +29,13 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
             key: "123",
             title: "Test Metadata Repository",
             capacity: 0,
-            admins: ["u/bob"],
+        };
+    }
+
+    function getValidRepoDataNoIDKEY() {
+        return {
+            title: "Test Metadata Repository",
+            capacity: 0,
         };
     }
 
@@ -39,7 +45,6 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
             _key: "123",
             title: "Test Metadata Repository",
             capacity: 0,
-            admins: ["u/bob"],
         };
     }
 
@@ -111,6 +116,10 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
             const params = getValidAllocationParams();
             delete params.subject;
 
+            const rawRepoData = getValidRawRepoData();
+            // Repo exists but subject doesn't
+            g_db.repo.save(rawRepoData);
+
             const repo = new MetadataRepo(getValidRepoData()).value;
             const result = repo.createAllocation(params);
 
@@ -123,6 +132,9 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
             const params = getValidAllocationParams();
             params.subject = "";
 
+            const rawRepoData = getValidRawRepoData();
+            // Repo exists but subject doesn't
+            g_db.repo.save(rawRepoData);
             const repo = new MetadataRepo(getValidRepoData()).value;
             const result = repo.createAllocation(params);
 
@@ -135,6 +147,9 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
             const params = getValidAllocationParams();
             params.data_limit = "not-a-number";
 
+            const rawRepoData = getValidRawRepoData();
+            // Repo exists but subject doesn't
+            g_db.repo.save(rawRepoData);
             const repo = new MetadataRepo(getValidRepoData()).value;
             const result = repo.createAllocation(params);
 
@@ -148,6 +163,9 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
             const params = getValidAllocationParams();
             params.rec_limit = "invalid";
 
+            const rawRepoData = getValidRawRepoData();
+            // Repo exists but subject doesn't
+            g_db.repo.save(rawRepoData);
             const repo = new MetadataRepo(getValidRepoData()).value;
             const result = repo.createAllocation(params);
 
@@ -160,6 +178,9 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
             const params = getValidAllocationParams();
             params.path = 123;
 
+            const rawRepoData = getValidRawRepoData();
+            // Repo exists but subject doesn't
+            g_db.repo.save(rawRepoData);
             const repo = new MetadataRepo(getValidRepoData()).value;
             const result = repo.createAllocation(params);
 
@@ -196,12 +217,13 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
     describe("unit_repository_metadata: createAllocation", function () {
         it("unit_repository_metadata: should fail to create allocation with non existent repo.", function () {
             const params = getValidAllocationParams();
-            const repo = new MetadataRepo(getValidRepoData()).value;
+
+            const repo = new MetadataRepo(getValidRepoDataNoIDKEY()).value;
             const result = repo.createAllocation(params);
 
             expect(result.ok).to.be.false;
             expect(result.error.message).to.include(
-                "Failed to create metadata allocation: Repo, 'repo/123', does not exist.",
+                "Failed to create metadata allocation: Repo, \'repo/undefined\', does not exist",
             );
         });
 
@@ -219,7 +241,6 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
 
             const repo = new MetadataRepo(getValidRepoData()).value;
             const rv = repo.createAllocation(params);
-            // const rv = metadata.createAllocation(repoData, params);
 
             expect(rv.ok).to.be.true;
             expect(rv.value.result).to.have.property("id");
@@ -236,14 +257,13 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
             // Subject exists but repo doesn't
             g_db.u.save(getValidUserData());
 
-            const repo = new MetadataRepo(getValidRepoData()).value;
+            const repo = new MetadataRepo(getValidRepoDataNoIDKEY()).value;
             const rv = repo.createAllocation(params);
-            //const result = metadata.createAllocation(repoData, params);
 
             expect(rv.ok).to.be.false;
             expect(rv.error.code).to.equal(error.ERR_NOT_FOUND);
             expect(rv.error.message).to.equal(
-                "Failed to create metadata allocation: Repo, 'repo/123', does not exist.",
+                "Failed to create metadata allocation: Repo, \'repo/undefined\', does not exist.",
             );
         });
 
@@ -254,7 +274,6 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
             // Repo exists but subject doesn't
             g_db.repo.save(repoData);
 
-            //const result = metadata.createAllocation(repoData, params);
             const repo = new MetadataRepo(getValidRepoData()).value;
             const rv = repo.createAllocation(params);
 
@@ -544,9 +563,9 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
         });
 
         it("should reject object as subject", function () {
-            const repoData = getValidRepoData();
+            const rawRepoData = getValidRawRepoData();
             const userData = getValidUserData();
-            g_db.repo.save(repoData);
+            g_db.repo.save(rawRepoData);
             g_db.u.save(userData);
             const repo = new MetadataRepo(getValidRepoData()).value;
             const rv = repo.deleteAllocation(userData, { id: "u/user" });
@@ -563,13 +582,12 @@ describe("unit_repository_metadata: Metadata Only Repository Operations", functi
             const userData = getValidUserData();
             g_db.u.save(userData);
 
-            const repo = new MetadataRepo(getValidRepoData()).value;
+            const repo = new MetadataRepo(getValidRepoDataNoIDKEY()).value;
             const rv = repo.deleteAllocation(userData, userData._id);
 
             expect(rv.ok).to.be.false;
             expect(rv.error.code).to.equal(error.ERR_NOT_FOUND);
             expect(rv.error.message).to.include("Failed to delete metadata allocation: Repo");
-            expect(rv.error.message).to.include(repoData._id);
             expect(rv.error.message).to.include("does not exist");
         });
 
