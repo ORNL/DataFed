@@ -129,7 +129,8 @@ long DatabaseAPI::dbGet(const char *a_url_path,
   struct curl_slist* headers = nullptr;
 
   // safe: curl_slist_append copies the string internally
-  headers = curl_slist_append(headers, (std::string("x-correlation-id: ") + log_context.correlation_id).c_str());
+  std::string header = "x-correlation-id: " + log_context.correlation_id;
+  headers = curl_slist_append(headers, header.c_str());
 
   // attach headers to the CURL handle
   curl_easy_setopt(m_curl, CURLOPT_HTTPHEADER, headers);
@@ -208,7 +209,8 @@ long DatabaseAPI::dbPost(const char *a_url_path,
   struct curl_slist* headers = nullptr;
 
   // safe: curl_slist_append copies the string internally
-  headers = curl_slist_append(headers, (std::string("x-correlation-id: ") + log_context.correlation_id).c_str());
+  std::string header = "x-correlation-id: " + log_context.correlation_id;
+  headers = curl_slist_append(headers, header.c_str());
 
   // attach headers to the CURL handle
   curl_easy_setopt(m_curl, CURLOPT_HTTPHEADER, headers);
