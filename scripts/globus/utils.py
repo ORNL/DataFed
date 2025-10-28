@@ -134,11 +134,8 @@ def createNewClient(auth_client, client_name, project_id):
 def createNewRedirectClient(auth_client, client_name, project_id, redirect_uri):
     client_id = getClientId(auth_client, client_name, project_id)
 
-    client_exists = False
-    if client_id:
-        client_exists = True
-
-    if client_exists is False:
+    client_exists = bool(client_id)
+    if not client_exists:
         result = auth_client.create_client(
             client_name, project=project_id, public_client=False,
             redirect_uris=[redirect_uri]
