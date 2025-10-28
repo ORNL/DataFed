@@ -33,7 +33,20 @@ describe("integration_repositories: Repository Factory and Operations", function
             title: "Globus Repo",
             desc: "Valid globus repo",
             capacity: 1000,
-            admins: ["u/admin"],
+            endpoint: "XXXXYYYY-XXXX-YYYY-XXXX-YYYYXXXXYYYY",
+            path: "/data/123",
+            pub_key: "ABC123",
+            address: "tcp://localhost:5555",
+            exp_path: "/export",
+        };
+    }
+
+    function getValidGlobusConfigNoIdKey() {
+        return {
+            type: RepositoryType.GLOBUS,
+            title: "Globus Repo",
+            desc: "Valid globus repo",
+            capacity: 1000,
             endpoint: "XXXXYYYY-XXXX-YYYY-XXXX-YYYYXXXXYYYY",
             path: "/data/123",
             pub_key: "ABC123",
@@ -49,13 +62,21 @@ describe("integration_repositories: Repository Factory and Operations", function
             title: "Metadata Repo",
             desc: "Valid metadata repo",
             capacity: 0,
-            admins: ["u/bob"],
+        };
+    }
+
+    function getValidMetadataConfigNoIdKey() {
+        return {
+            type: RepositoryType.METADATA,
+            title: "Metadata Repo",
+            desc: "Valid metadata repo",
+            capacity: 0,
         };
     }
 
     describe("integration_repositories: createRepositoryByType()", function () {
         it("should create a valid GLOBUS repository", function () {
-            const result = Repositories.createRepositoryByType(getValidGlobusConfig());
+            const result = Repositories.createRepositoryByType(getValidGlobusConfigNoIdKey());
             console.log("result is");
             console.log(result);
             expect(result.ok).to.be.true;
@@ -64,7 +85,7 @@ describe("integration_repositories: Repository Factory and Operations", function
         });
 
         it("should create a valid METADATA repository", function () {
-            const result = Repositories.createRepositoryByType(getValidMetadataConfig());
+            const result = Repositories.createRepositoryByType(getValidMetadataConfigNoIdKey());
             expect(result.ok).to.be.true;
             expect(result.value).to.exist;
             expect(result.value.type()).to.equal("metadata");
@@ -84,7 +105,6 @@ describe("integration_repositories: Repository Factory and Operations", function
                 type: "UNKNOWN_TYPE",
                 title: "Invalid Repo",
                 capacity: 1000,
-                admins: ["u/admin"],
             };
             const result = Repositories.createRepositoryByType(invalid);
             expect(result.ok).to.be.false;

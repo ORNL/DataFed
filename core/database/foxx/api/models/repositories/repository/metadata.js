@@ -1,6 +1,6 @@
 "use strict";
 
-const { Result, createAllocationResult, RepositoryType } = require("../types");
+const { createAllocationResult, RepositoryType } = require("../types");
 const { ExecutionMethod } = require("../../../lib/execution_types");
 const { BaseRepository } = require("../base_repository.js");
 const {
@@ -9,6 +9,7 @@ const {
     validateCommonFields,
 } = require("../validation");
 const error = require("../../../lib/error_codes");
+const { Result } = require("../../../lib/result");
 const permissions = require("../../../lib/permissions");
 const g_db = require("@arangodb").db;
 
