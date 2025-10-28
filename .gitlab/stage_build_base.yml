@@ -12,10 +12,11 @@ run-build-dependencies:
             - artifact: dependencies_image.yml
               job: check-dependencies-image
         strategy: depend
+        variables:
+            UPSTREAM_DATAFED_DEPENCIES_SHA: "${CI_COMMIT_SHA}"
+            UPSTREAM_DATAFED_DEPENDENCIES_BRANCH: "${CI_COMMIT_REF_NAME}"
     variables:
         REGISTRY: "${REGISTRY}"
-        UPSTREAM_DATAFED_DEPENCIES_SHA: "${CI_COMMIT_SHA}"
-        UPSTREAM_DATAFED_DEPENDENCIES_BRANCH: "${CI_COMMIT_REF_NAME}"
         HARBOR_USER: "${HARBOR_USER}"
         HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
 
