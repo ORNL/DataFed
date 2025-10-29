@@ -16,17 +16,18 @@ module.exports = router;
 
 router
     .post("/search", function (req, res) {
-        const client = req.queryParams.client
+        let client = null;
+        try {
+            client = req.queryParams.client
             ? g_lib.getUserFromClientID(req.queryParams.client)
             : null;
-        try {
             logger.logRequestStarted({
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/search",
                 status: "Started",
-                description: "Search for tags by name",
+                description: `Search for tags by name (${req.queryParams?.name?.trim()})`,
             });
             var name = req.queryParams.name.trim();
             if (name.length < 3)
@@ -88,10 +89,12 @@ router
 
 router
     .post("/list/by_count", function (req, res) {
-        const client = req.queryParams.client
+        let client = null;
+        let tot = null;
+        try {
+            client = req.queryParams.client
             ? g_lib.getUserFromClientID(req.queryParams.client)
             : null;
-        try {
             logger.logRequestStarted({
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
@@ -120,7 +123,7 @@ router
                         },
                     );
 
-                    var tot = result.getExtra().stats.fullCount;
+                    tot = result.getExtra().stats.fullCount;
                     result = result.toArray();
                     result.push({
                         paging: {
@@ -138,7 +141,7 @@ router
                         routePath: basePath + "/list/by_count",
                         status: "Success",
                         description: "List tags by count",
-                        extra: result,
+                        extra: tot,
                     });
                 },
             });
@@ -150,7 +153,7 @@ router
                 routePath: basePath + "/list/by_count",
                 status: "Failure",
                 description: "List tags by count",
-                extra: result,
+                extra: tot,
                 error: e,
             });
 
