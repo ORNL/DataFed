@@ -14,15 +14,15 @@ PROJECT_ROOT=$(realpath ${SOURCE}/../..)
 
 # The env variables below are needed for running globus-connect-server without
 # interactively logging in
-export GCS_CLI_CLIENT_ID=$(jq -r .client </opt/datafed/globus/client_cred.json)
-export GCS_CLI_CLIENT_SECRET=$(jq -r .secret </opt/datafed/globus/client_cred.json)
+export GCS_CLI_CLIENT_ID=$(jq -r '.client // setup.client' </opt/datafed/globus/client_cred.json)
+export GCS_CLI_CLIENT_SECRET=$(jq -r '.secret // setup.secret'  </opt/datafed/globus/client_cred.json)
 export GCS_CLI_ENDPOINT_ID=$(jq -r .client_id </opt/datafed/globus/deployment-key.json)
 
 export DEPLOYMENT_KEY_PATH="/opt/datafed/globus/deployment-key.json"
 # These env variables are for running the gcs entrypoint file
 
-export GLOBUS_CLIENT_ID=$(jq -r .client </opt/datafed/globus/client_cred.json)
-export GLOBUS_CLIENT_SECRET=$(jq -r .secret </opt/datafed/globus/client_cred.json)
+export GLOBUS_CLIENT_ID=$(jq -r '.client // setup.client' </opt/datafed/globus/client_cred.json)
+export GLOBUS_CLIENT_SECRET=$(jq -r '.secret // setup.secret' </opt/datafed/globus/client_cred.json)
 export DEPLOYMENT_KEY=$(cat "$DEPLOYMENT_KEY_PATH")
 
 if [ "$BUILD_WITH_METADATA_SERVICES" == "TRUE" ]; then
