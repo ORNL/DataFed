@@ -19,8 +19,8 @@ router
         let client = null;
         try {
             client = req.queryParams.client
-            ? g_lib.getUserFromClientID(req.queryParams.client)
-            : null;
+                ? g_lib.getUserFromClientID(req.queryParams.client)
+                : null;
             logger.logRequestStarted({
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
@@ -93,8 +93,8 @@ router
         let tot = null;
         try {
             client = req.queryParams.client
-            ? g_lib.getUserFromClientID(req.queryParams.client)
-            : null;
+                ? g_lib.getUserFromClientID(req.queryParams.client)
+                : null;
             logger.logRequestStarted({
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
