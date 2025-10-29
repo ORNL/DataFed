@@ -15,7 +15,7 @@ PROJECT_ROOT=$(realpath ${SOURCE}/../..)
 # The env variables below are needed for running globus-connect-server without
 # interactively logging in
 export GCS_CLI_CLIENT_ID=$(jq -r '.client // setup.client' </opt/datafed/globus/client_cred.json)
-export GCS_CLI_CLIENT_SECRET=$(jq -r '.secret // setup.secret'  </opt/datafed/globus/client_cred.json)
+export GCS_CLI_CLIENT_SECRET=$(jq -r '.secret // setup.secret' </opt/datafed/globus/client_cred.json)
 export GCS_CLI_ENDPOINT_ID=$(jq -r .client_id </opt/datafed/globus/deployment-key.json)
 
 export DEPLOYMENT_KEY_PATH="/opt/datafed/globus/deployment-key.json"
