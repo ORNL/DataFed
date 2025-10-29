@@ -3,10 +3,10 @@
 /**
  * Execution methods
  * A enum-like constant representing different execution strategies
- * @type {Readonly<{TASK: string, DIRECT: string}>}
+ * @type {Readonly<{DEFERRED: string, DIRECT: string}>}
  */
 const ExecutionMethod = Object.freeze({
-    TASK: "task",
+    DEFERRED: "deferred",
     DIRECT: "direct",
 });
 
