@@ -35,7 +35,7 @@ if len(CRED_NAME) == 0:
     CRED_NAME = default_CRED_NAME
 
 # Name of the file where we will store confidential client credentials
-default_CRED_FILE_PATH = os.path.abspath("./globus/client_cred.json")
+default_CRED_FILE_PATH = os.path.abspath("./globus/globus_config.json")
 CRED_FILE_PATH = os.getenv("DATAFED_GLOBUS_CRED_FILE_PATH", default_CRED_FILE_PATH)
 if len(CRED_FILE_PATH) == 0:
     CRED_FILE_PATH = default_CRED_FILE_PATH
