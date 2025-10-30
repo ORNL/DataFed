@@ -7,7 +7,7 @@ import os
 import sys
 
 # Hard coded Native Client ID
-CLIENT_ID = "f8d0afca-7ac4-4a3c-ac05-f94f5d9afce8"
+CLIENT_ID = "d7a7db79-c746-4947-9273-54cf578e4785"
 
 # The Globus project the GCS endpoint will be created in
 default_DATAFED_GCS_ROOT_NAME = "DataFed Repo"
