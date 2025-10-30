@@ -7,7 +7,7 @@ import os
 import sys
 
 # Hard coded Native Client ID
-CLIENT_ID = "f8d0afca-7ac4-4a3c-ac05-f94f5d9afce8"
+CLIENT_ID = "d7a7db79-c746-4947-9273-54cf578e4785"
 
 # The Globus project the GCS endpoint will be created in
 default_DATAFED_GCS_ROOT_NAME = "DataFed Repo"
@@ -35,7 +35,7 @@ if len(CRED_NAME) == 0:
     CRED_NAME = default_CRED_NAME
 
 # Name of the file where we will store confidential client credentials
-default_CRED_FILE_PATH = os.path.abspath("./globus/client_cred.json")
+default_CRED_FILE_PATH = os.path.abspath("./globus/globus_config.json")
 CRED_FILE_PATH = os.getenv("DATAFED_GLOBUS_CRED_FILE_PATH", default_CRED_FILE_PATH)
 if len(CRED_FILE_PATH) == 0:
     CRED_FILE_PATH = default_CRED_FILE_PATH
