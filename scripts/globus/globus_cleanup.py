@@ -7,7 +7,7 @@ import os
 import utils
 
 # Native Client ID for the DataFed Globus Setup Scripts
-CLIENT_ID = "f8d0afca-7ac4-4a3c-ac05-f94f5d9afce8"  # NATIVE
+CLIENT_ID = "d7a7db79-c746-4947-9273-54cf578e4785"  # NATIVE
 
 # The Globus project the GCS endpoint will be created in
 if os.getenv("DATAFED_GCS_ROOT_NAME") is not None:
