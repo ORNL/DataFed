@@ -5,8 +5,13 @@
 
 // Third party includes
 #include <zmq.h>
+#include <openssl/conf.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
+#include <openssl/err.h>
 
 // Standard includes
+#include <algorithm>
 #include <array>
 #include <cstdio>
 #include <iomanip>
@@ -15,6 +20,7 @@
 #include <set>
 #include <string.h>
 #include <string>
+#include <fstream>
 
 using namespace std;
 
@@ -34,6 +40,22 @@ std::string exec(const char *cmd) {
   return result;
 }
 
+void readFile(const std::string &fileName,const int arraySize, unsigned char* array)
+{
+    //Converting Key for encryption funct
+    unsigned char keyChar[arraySize] = {};
+    //Grabbing key
+    std::ifstream keyFile(fileName, std::ios::binary);
+    if(!keyFile.is_open())
+    {
+        throw TraceException(__FILE__, __LINE__, 0, std::string("Cannot find token key file: ") + fileName); 
+        return;
+    }
+
+    keyFile.read(reinterpret_cast<char*>(keyChar),arraySize);
+
+    std::copy(keyChar, keyChar + arraySize, array);
+}
 size_t curlResponseWriteCB(char *ptr, size_t size, size_t nmemb,
                            void *userdata) {
   if (!userdata)
