@@ -38,7 +38,7 @@ std::string get_env_or_default(const char* env_name, const std::string& default_
 }
 
 const std::string repo_id = "repo/samoas";
-const std::string default_server_key_path = "../../mock_core/mock-datafed-core-key.pub";
+const std::string default_server_key_path = "./mock-datafed-core-key.pub";
 const std::string server_address = "tcp://localhost:9998";
 const std::string pub_key_path = "./datafed-repo-key.pub";
 const std::string pub_key = "Wxwm^-Cf7cJrqS)}/B?cDAq(L=@AwSA*({jhBu1]";
