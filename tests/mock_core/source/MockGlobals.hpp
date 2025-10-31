@@ -14,6 +14,11 @@ extern const uint64_t repo_capacity;
 extern const char *repo_desc;
 extern const char *repo_globus_uuid;
 extern const char *repo_path;
+extern const char *repo_type;
 extern const uint32_t repo_port;
+extern const char *authenticated_test_user;
+extern const char *test_user_password;
+extern const char *test_user_public_key;
+extern const char *test_user_token;
 } // namespace MockGlobals
 #endif // MOCK_GLOBALS_H

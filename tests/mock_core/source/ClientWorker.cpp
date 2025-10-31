@@ -3,6 +3,9 @@
 #include "ClientWorker.hpp"
 #include "Version.hpp"
 
+#include "IMockCoreServer.hpp"
+#include "MockGlobals.hpp"
+
 // DataFed Common includes
 #include "common/CommunicatorFactory.hpp"
 #include "common/CredentialFactory.hpp"
@@ -41,8 +44,8 @@ map<uint16_t, ClientWorker::msg_fun_t> ClientWorker::m_msg_handlers;
 
 ClientWorker::ClientWorker(IMockCoreServer &a_core, size_t a_tid,
                            LogContext log_context_in)
-    : m_config(Config::getInstance()), m_tid(a_tid), m_run(true),
-      m_log_context(log_context_in),
+    : m_config(Config::getInstance()), m_core(a_core), m_tid(a_tid),
+      m_run(true), m_log_context(log_context_in),
       m_msg_mapper(std::unique_ptr<IMessageMapper>(new ProtoBufMap)) {
   setupMsgHandlers();
   LogContext log_context = m_log_context;
@@ -104,11 +107,20 @@ void ClientWorker::setupMsgHandlers() {
     // Requests that require the server to take action
     SET_MSG_HANDLER(proto_id, VersionRequest,
                     &ClientWorker::procVersionRequest);
+    SET_MSG_HANDLER(proto_id, AuthenticateByTokenRequest,
+                    &ClientWorker::procAuthenticateByTokenRequest);
+    SET_MSG_HANDLER(proto_id, GetAuthStatusRequest,
+                    &ClientWorker::procGetAuthStatusRequest);
+
+    SET_MSG_HANDLER(proto_id, AuthenticateByPasswordRequest,
+                    &ClientWorker::procAuthenticateByPasswordRequest);
 
     // Register and setup handlers for the Authenticated interface
     proto_id = m_msg_mapper->getProtocolID(MessageProtocol::GOOGLE_AUTHORIZED);
     SET_MSG_HANDLER(proto_id, RepoAuthzRequest,
                     &ClientWorker::procRepoAuthzRequest);
+
+    SET_MSG_HANDLER(proto_id, RepoCreateRequest, &ClientWorker::procRepoCreate);
 
   } catch (TraceException &e) {
     DL_ERROR(m_log_context, "exception: " << e.toString());
@@ -357,6 +369,7 @@ std::unique_ptr<IMessage>
 ClientWorker::procRepoAuthzRequest(const std::string &a_uid,
                                    std::unique_ptr<IMessage> &&msg_request,
                                    LogContext log_context) {
+  DL_INFO(log_context, "RepoAuthzRequest received.");
   (void)a_uid;
   log_context.correlation_id =
       std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
@@ -368,6 +381,130 @@ ClientWorker::procRepoAuthzRequest(const std::string &a_uid,
                            << ", act: " << request->action());
 
   EXCEPT(1, "This function needs to be mocked before testing repo request.");
+  PROC_MSG_END(log_context);
+}
+
+std::unique_ptr<IMessage> ClientWorker::procAuthenticateByPasswordRequest(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request,
+    LogContext log_context) {
+  (void)a_uid;
+  log_context.correlation_id =
+      std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+
+  PROC_MSG_BEGIN(AuthenticateByPasswordRequest, AuthStatusReply, log_context)
+
+  DL_INFO(log_context,
+          "Starting manual password authentication for " << request->uid());
+
+  if (strcmp(request->password().c_str(), MockGlobals::test_user_password) ==
+      0) {
+    reply.set_uid(MockGlobals::authenticated_test_user);
+    reply.set_auth(true);
+  } else {
+
+    DL_ERROR(m_log_context,
+             "User is not authenticated - this is not the actual error: "
+                 << request->uid());
+  }
+  DL_INFO(log_context,
+          "Manual password authentication SUCCESS for " << reply.uid());
+
+  m_core.authenticateClient(
+      a_uid, std::get<std::string>(msg_request->get(MessageAttribute::KEY)),
+      reply.uid(), log_context);
+
+  PROC_MSG_END(log_context);
+}
+std::unique_ptr<IMessage> ClientWorker::procAuthenticateByTokenRequest(
+    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request,
+    LogContext log_context) {
+  (void)a_uid;
+  log_context.correlation_id =
+      std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+  PROC_MSG_BEGIN(AuthenticateByTokenRequest, AuthStatusReply, log_context)
+
+  DL_INFO(log_context, "Starting manual token authentication");
+
+  if (strcmp(request->token().c_str(), MockGlobals::test_user_token) == 0) {
+    reply.set_uid(MockGlobals::authenticated_test_user);
+    reply.set_auth(true);
+  } else {
+
+    DL_ERROR(m_log_context,
+             "User is not authenticated - this is not the actual error: "
+                 << reply.uid());
+  }
+  DL_INFO(log_context,
+          "Manual token authentication SUCCESS for " << reply.uid());
+
+  // Token is passed in and compared with "token" value attached to user
+  // document
+  //
+  // On success the database will return
+  // {
+  //     uid: 'u/good_bob',
+  //     authorized: true
+  // }
+  //
+  // If error will throw a 400 error with 'Authentication Failed' message
+
+  DL_INFO(log_context,
+          "Manual token authentication SUCCESS for " << reply.uid());
+
+  m_core.authenticateClient(
+      a_uid, std::get<std::string>(msg_request->get(MessageAttribute::KEY)),
+      reply.uid(), log_context);
+
+  PROC_MSG_END(log_context);
+}
+
+std::unique_ptr<IMessage>
+ClientWorker::procGetAuthStatusRequest(const std::string &a_uid,
+                                       std::unique_ptr<IMessage> &&msg_request,
+                                       LogContext log_context) {
+  (void)a_uid;
+  log_context.correlation_id =
+      std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+  PROC_MSG_BEGIN(GetAuthStatusRequest, AuthStatusReply, log_context)
+  DL_INFO(log_context, "GetAuthStatusRequest received for " << a_uid);
+
+  if (strcmp(a_uid.c_str(), MockGlobals::authenticated_test_user) == 0) {
+    DL_INFO(log_context, a_uid << " authorized");
+    reply.set_auth(true);
+    reply.set_uid(a_uid);
+  } else {
+    DL_WARNING(log_context, a_uid << std::string(" not authorized"));
+    reply.set_auth(false);
+  }
+
+  PROC_MSG_END(log_context);
+}
+
+std::unique_ptr<IMessage>
+ClientWorker::procRepoCreate(const std::string &a_uid,
+                             std::unique_ptr<IMessage> &&msg_request,
+                             LogContext log_context) {
+  log_context.correlation_id =
+      std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+  PROC_MSG_BEGIN(RepoCreateRequest, RepoDataReply, log_context)
+
+  DL_INFO(log_context, "RepoCreate received for " << a_uid);
+  RepoData repo;
+  repo.set_id(MockGlobals::repo_id);
+  repo.set_title(MockGlobals::repo_title);
+  repo.set_desc(MockGlobals::repo_desc);
+  repo.set_capacity(MockGlobals::repo_capacity);
+  repo.set_address(MockGlobals::repo_listen_address);
+  repo.set_endpoint(MockGlobals::repo_globus_uuid);
+  repo.set_pub_key(MockGlobals::pub_repo_key);
+  repo.set_path(MockGlobals::repo_path);
+  repo.set_type(MockGlobals::repo_type);
+  repo.add_admin(MockGlobals::authenticated_test_user);
+
+  RepoData *repo_ptr = reply.add_repo();
+  *repo_ptr = repo;
+  DL_INFO(log_context, "RepoCreate type is " << repo.type());
+
   PROC_MSG_END(log_context);
 }
 

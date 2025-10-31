@@ -65,7 +65,7 @@ int main(int a_argc, char **a_argv) {
     opts.add_options()("help,?", "Show help")(
         "cred-dir,c", po::value<string>(&config.cred_dir),
         "Server credentials directory, will look for files "
-        "mock-datafed-core.priv and mock-datafed-core.pub.")(
+        "datafed-mock-core-key.priv and datafed-mock-core-key.pub.")(
         "port,p", po::value<uint32_t>(&config.port),
         "Service port, this is the public port core service is listening on "
         "for mock set to 9998, private by default is public_port + 1")(
@@ -80,7 +80,7 @@ int main(int a_argc, char **a_argv) {
       po::notify(opt_map);
 
       if (opt_map.count("help")) {
-        cout << "Usage: mock-datafed-core [options]\n";
+        cout << "Usage: datafed-mock-core [options]\n";
         cout << opts << endl;
         return 0;
       }
@@ -89,14 +89,14 @@ int main(int a_argc, char **a_argv) {
         string pub_key, priv_key;
         generateKeys(pub_key, priv_key);
 
-        string fname = "./mock-datafed-core-key.pub";
+        string fname = "./datafed-mock-core-key.pub";
         ofstream outf(fname.c_str());
         if (!outf.is_open() || !outf.good())
           EXCEPT_PARAM(1, "Could not open file: " << fname);
         outf << pub_key;
         outf.close();
 
-        fname = "./mock-datafed-core-key.priv";
+        fname = "./datafed-mock-core-key.priv";
         outf.open(fname.c_str());
         if (!outf.is_open() || !outf.good())
           EXCEPT_PARAM(1, "Could not open file: " << fname);

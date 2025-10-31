@@ -8,10 +8,14 @@ const char *pub_repo_key = "Wxwm^-Cf7cJrqS)}/B?cDAq(L=@AwSA*({jhBu1]";
 const char *repo_listen_address = "tcp://localhost:10000";
 const char *repo_id = "repo/samoas";
 const char *repo_title = "Samoas are the best girl scout cookie";
+const char *repo_type = "globus";
 const uint64_t repo_capacity = 100000;
 const char *repo_desc = "There really is no comparison";
 const char *repo_globus_uuid = "550e8400-e29b-41d4-a716-446655440000";
 const char *repo_path = "/mnt/data/samoas";
 const uint32_t repo_port = 9998;
-
+const char *authenticated_test_user = "authenticated_bob";
+const char *test_user_password = "open_sesame";
+const char *test_user_token = "validToken-4KDl-90ufsdfFDPPher0%lkfda";
+const char *test_user_public_key = "Yne@$w-vo<fVvi]a<NY6T1ed:M$fCG*[IaLV{hID";
 } // namespace MockGlobals

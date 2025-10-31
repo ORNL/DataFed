@@ -8,6 +8,7 @@
 #include "PublicKeyTypes.hpp"
 
 // Common includes
+#include "common/DynaLog.hpp"
 #include "common/IAuthenticationManager.hpp"
 
 // Standard includes
@@ -32,6 +33,8 @@ private:
   AuthMap m_auth_mapper;
 
   mutable std::mutex m_lock;
+
+  LogContext m_log_context;
 
 public:
   AuthenticationManager(){};

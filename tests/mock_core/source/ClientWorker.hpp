@@ -65,14 +65,35 @@ private:
                        std::unique_ptr<IMessage> &&msg_request,
                        LogContext log_context);
 
+  std::unique_ptr<IMessage>
+  procGetAuthStatusRequest(const std::string &a_uid,
+                           std::unique_ptr<IMessage> &&msg_request,
+                           LogContext log_context);
+
+  std::unique_ptr<IMessage>
+  procAuthenticateByTokenRequest(const std::string &a_uid,
+                                 std::unique_ptr<IMessage> &&msg_request,
+                                 LogContext log_context);
+
+  std::unique_ptr<IMessage>
+  procAuthenticateByPasswordRequest(const std::string &a_uid,
+                                    std::unique_ptr<IMessage> &&msg_request,
+                                    LogContext log_context);
+
+  std::unique_ptr<IMessage>
+  procRepoCreate(const std::string &a_uid,
+                 std::unique_ptr<IMessage> &&msg_request,
+                 LogContext log_context);
+
   typedef std::unique_ptr<IMessage> (ClientWorker::*msg_fun_t)(
       const std::string &a_uid, std::unique_ptr<IMessage> &&request,
       LogContext log_context);
 
   bool isRunning() const;
 
-  Config &m_config; ///< Ref to configuration singleton
-  size_t m_tid;     ///< Thread ID
+  Config &m_config;        ///< Ref to configuration singleton
+  IMockCoreServer &m_core; ///< Ref to parent CoreServer interface
+  size_t m_tid;            ///< Thread ID
   std::unique_ptr<std::thread> m_worker_thread; ///< Local thread handle
   mutable std::mutex m_run_mutex;
   bool m_run; ///< Thread run flag
