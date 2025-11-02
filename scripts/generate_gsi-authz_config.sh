@@ -11,7 +11,7 @@ source "${PROJECT_ROOT}/config/datafed.sh"
 PATH_TO_CONFIG_DIR=$(realpath "$SOURCE/../config")
 CONFIG_FILE_NAME="gsi-authz.conf"
 
-cat << EOF > "$PATH_TO_CONFIG_DIR/$CONFIG_FILE_NAME"
+cat <<EOF >"$PATH_TO_CONFIG_DIR/$CONFIG_FILE_NAME"
 GLOBUS_GSI_AUTHZ_SYSTEM_INIT           $DATAFED_INSTALL_PATH/authz/libdatafed-authz gsi_authz_init
 GLOBUS_GSI_AUTHZ_SYSTEM_DESTROY        $DATAFED_INSTALL_PATH/authz/libdatafed-authz gsi_authz_destroy
 GLOBUS_GSI_AUTHZ_HANDLE_INIT           $DATAFED_INSTALL_PATH/authz/libdatafed-authz gsi_authz_handle_init
@@ -26,7 +26,5 @@ echo
 echo "gsi-conf file is being placed here: $PATH_TO_CONFIG_DIR/${CONFIG_FILE_NAME}"
 echo
 echo "Contents are:"
-echo 
+echo
 cat "$PATH_TO_CONFIG_DIR/${CONFIG_FILE_NAME}"
-
-

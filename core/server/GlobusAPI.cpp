@@ -48,16 +48,26 @@ GlobusAPI::GlobusAPI(LogContext log_context)
 
 GlobusAPI &GlobusAPI::operator=(GlobusAPI &&other) noexcept {
   if (this != &other) {
+    curl_easy_cleanup(m_curl_auth);
+    curl_easy_cleanup(m_curl_xfr);
     this->m_curl_xfr = other.m_curl_xfr;
     this->m_curl_auth = other.m_curl_auth;
+    other.m_curl_xfr = nullptr;
+    other.m_curl_auth = nullptr;
     this->m_log_context = other.m_log_context;
   }
   return *this;
 }
 
 GlobusAPI::~GlobusAPI() {
-  curl_easy_cleanup(m_curl_auth);
-  curl_easy_cleanup(m_curl_xfr);
+  if(m_curl_auth)
+  {
+    curl_easy_cleanup(m_curl_auth);
+  }
+  if(m_curl_xfr)
+  {
+    curl_easy_cleanup(m_curl_xfr);
+  }
 }
 
 long GlobusAPI::get(CURL *a_curl, const std::string &a_base_url,

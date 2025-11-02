@@ -55,6 +55,8 @@ public:
    * Purge keys if needed
    **/
   virtual void purge() = 0;
+
+  virtual ~IAuthenticationManager() {};
 };
 
 } // namespace SDMS

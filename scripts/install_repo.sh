@@ -16,7 +16,6 @@ mkdir -p "${DATAFED_DEFAULT_LOG_PATH}"
 cp "$PROJECT_ROOT/config/datafed-repo.cfg" "${DATAFED_INSTALL_PATH}/repo"
 
 # Generate keys only if they do not exist
-if [ ! -f "${DATAFED_INSTALL_PATH}/keys/datafed-repo-key.priv" ]
-then
+if [ ! -f "${DATAFED_INSTALL_PATH}/keys/datafed-repo-key.priv" ]; then
   "${DATAFED_INSTALL_PATH}/repo/datafed-repo" --gen-keys --cred-dir "${DATAFED_INSTALL_PATH}/keys"
 fi

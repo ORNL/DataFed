@@ -5,6 +5,8 @@ const router = createRouter();
 const joi = require("joi");
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
+const error = require("./lib/error_codes");
+const permissions = require("./lib/permissions");
 const g_proc = require("./process");
 const g_tasks = require("./tasks");
 const { UserToken } = require("./lib/user_token");
@@ -26,10 +28,10 @@ function recordCreate(client, record, result) {
             _from: parent_id,
         })._to;
         if (owner_id != client._id) {
-            if (!g_lib.hasManagerPermProj(client, owner_id)) {
+            if (!permissions.hasManagerPermProj(client, owner_id)) {
                 var parent_coll = g_db.c.document(parent_id);
-                if (!g_lib.hasPermissions(client, parent_coll, g_lib.PERM_CREATE)) {
-                    throw g_lib.ERR_PERM_DENIED;
+                if (!permissions.hasPermissions(client, parent_coll, permissions.PERM_CREATE)) {
+                    throw error.ERR_PERM_DENIED;
                 }
             }
         }
@@ -49,7 +51,7 @@ function recordCreate(client, record, result) {
     );
     if (cnt_res.next() >= g_lib.MAX_COLL_ITEMS)
         throw [
-            g_lib.ERR_INPUT_TOO_LONG,
+            error.ERR_INPUT_TOO_LONG,
             "Parent collection item limit exceeded (" + g_lib.MAX_COLL_ITEMS + " items)",
         ];
 
@@ -75,7 +77,7 @@ function recordCreate(client, record, result) {
         // Verify source path is a full globus path to a file
         if (obj.source) {
             if (!g_lib.isFullGlobusPath(obj.source, true, false)) {
-                throw [g_lib.ERR_INVALID_PARAM, "Source must be a full Globus path to a file."];
+                throw [error.ERR_INVALID_PARAM, "Source must be a full Globus path to a file."];
             }
 
             obj.size = 1048576; // Don't know actual size - doesn't really matter
@@ -88,7 +90,7 @@ function recordCreate(client, record, result) {
             repo_alloc = g_lib.assignRepo(owner_id);
         }
 
-        if (!repo_alloc) throw [g_lib.ERR_NO_ALLOCATION, "No allocation available"];
+        if (!repo_alloc) throw [error.ERR_NO_ALLOCATION, "No allocation available"];
 
         // Extension setting only apply to managed data
         if (record.ext) {
@@ -102,7 +104,7 @@ function recordCreate(client, record, result) {
 
     if (record.md) {
         obj.md = JSON.parse(record.md); // parse escaped JSON string TODO: this could be dangerous
-        if (Array.isArray(obj.md)) throw [g_lib.ERR_INVALID_PARAM, "Metadata cannot be an array"];
+        if (Array.isArray(obj.md)) throw [error.ERR_INVALID_PARAM, "Metadata cannot be an array"];
     }
 
     if (obj.alias) {
@@ -127,7 +129,7 @@ function recordCreate(client, record, result) {
     if (obj.sch_id) {
         var idx = obj.sch_id.indexOf(":");
         if (idx < 0) {
-            throw [g_lib.ERR_INVALID_PARAM, "Schema ID missing version number suffix."];
+            throw [error.ERR_INVALID_PARAM, "Schema ID missing version number suffix."];
         }
         ((sch_id = obj.sch_id.substr(0, idx)), (sch_ver = parseInt(obj.sch_id.substr(idx + 1))));
         var sch = g_db.sch.firstExample({
@@ -135,7 +137,7 @@ function recordCreate(client, record, result) {
             ver: sch_ver,
         });
 
-        if (!sch) throw [g_lib.ERR_INVALID_PARAM, "Schema '" + obj.sch_id + "' does not exist"];
+        if (!sch) throw [error.ERR_INVALID_PARAM, "Schema '" + obj.sch_id + "' does not exist"];
 
         obj.sch_id = sch._id;
         g_db._update(sch._id, {
@@ -174,7 +176,7 @@ function recordCreate(client, record, result) {
                 _key: alias_key,
             })
         )
-            throw [g_lib.ERR_INVALID_PARAM, "Alias, " + alias_key + ", already in use"];
+            throw [error.ERR_INVALID_PARAM, "Alias, " + alias_key + ", already in use"];
 
         g_db.a.save({
             _key: alias_key,
@@ -210,7 +212,7 @@ function recordCreate(client, record, result) {
                 })
             )
                 throw [
-                    g_lib.ERR_INVALID_PARAM,
+                    error.ERR_INVALID_PARAM,
                     "Only one dependency can be defined between any two data records.",
                 ];
             g_db.dep.save({
@@ -422,11 +424,11 @@ function recordUpdate(client, record, result) {
     var data_id = g_lib.resolveDataID(record.id, client);
     var data = g_db.d.document(data_id);
 
-    if (!g_lib.hasAdminPermObject(client, data_id)) {
+    if (!permissions.hasAdminPermObject(client, data_id)) {
         // Required permissions depend on which fields are being modified:
         // Metadata = PERM_WR_META, file_size = PERM_WR_DATA, all else = ADMIN
         var perms = 0;
-        if (record.md !== undefined) perms |= g_lib.PERM_WR_META;
+        if (record.md !== undefined) perms |= permissions.PERM_WR_META;
 
         if (
             record.title !== undefined ||
@@ -437,10 +439,11 @@ function recordUpdate(client, record, result) {
             (record.dep_add && record.dep_add.length) ||
             (record.dep_rem && record.dep_rem.length)
         ) {
-            perms |= g_lib.PERM_WR_REC;
+            perms |= permissions.PERM_WR_REC;
         }
 
-        if (data.locked || !g_lib.hasPermissions(client, data, perms)) throw g_lib.ERR_PERM_DENIED;
+        if (data.locked || !permissions.hasPermissions(client, data, perms))
+            throw error.ERR_PERM_DENIED;
     }
 
     var owner_id = g_db.owner.firstExample({
@@ -465,7 +468,7 @@ function recordUpdate(client, record, result) {
     } else if (record.md) {
         obj.md = JSON.parse(record.md);
         if (Array.isArray(obj.md)) {
-            throw [g_lib.ERR_INVALID_PARAM, "Metadata cannot be an array"];
+            throw [error.ERR_INVALID_PARAM, "Metadata cannot be an array"];
         }
         obj.md_err_msg = null;
         obj.md_err = false;
@@ -491,7 +494,7 @@ function recordUpdate(client, record, result) {
 
         var idx = obj.sch_id.indexOf(":");
         if (idx < 0) {
-            throw [g_lib.ERR_INVALID_PARAM, "Schema ID missing version number suffix."];
+            throw [error.ERR_INVALID_PARAM, "Schema ID missing version number suffix."];
         }
         var sch_id = obj.sch_id.substr(0, idx),
             sch_ver = parseInt(obj.sch_id.substr(idx + 1));
@@ -502,7 +505,7 @@ function recordUpdate(client, record, result) {
         });
 
         if (!sch) {
-            throw [g_lib.ERR_INVALID_PARAM, "Schema '" + obj.sch_id + "' does not exist"];
+            throw [error.ERR_INVALID_PARAM, "Schema '" + obj.sch_id + "' does not exist"];
         }
 
         obj.sch_id = sch._id;
@@ -521,7 +524,7 @@ function recordUpdate(client, record, result) {
     if (data.external) {
         if (obj.source) {
             if (!g_lib.isFullGlobusPath(obj.source, true, false)) {
-                throw [g_lib.ERR_INVALID_PARAM, "Source must be a full Globus path to a file."];
+                throw [error.ERR_INVALID_PARAM, "Source must be a full Globus path to a file."];
             }
 
             obj.size = 1048576; // Don't know actual size - doesn't really matter
@@ -529,7 +532,7 @@ function recordUpdate(client, record, result) {
     } else {
         if (obj.source) {
             throw [
-                g_lib.ERR_INVALID_PARAM,
+                error.ERR_INVALID_PARAM,
                 "Raw data source cannot be specified for managed data records.",
             ];
         }
@@ -616,7 +619,7 @@ function recordUpdate(client, record, result) {
                     _key: alias_key,
                 })
             )
-                throw [g_lib.ERR_INVALID_PARAM, "Alias, " + obj.alias + ", already in use"];
+                throw [error.ERR_INVALID_PARAM, "Alias, " + obj.alias + ", already in use"];
 
             g_db.a.save({
                 _key: alias_key,
@@ -633,7 +636,7 @@ function recordUpdate(client, record, result) {
     }
 
     if (record.deps != undefined && (record.deps_add != undefined || record.deps_rem != undefined))
-        throw [g_lib.ERR_INVALID_PARAM, "Cannot use both dependency set and add/remove."];
+        throw [error.ERR_INVALID_PARAM, "Cannot use both dependency set and add/remove."];
 
     var dep,
         id,
@@ -654,7 +657,7 @@ function recordUpdate(client, record, result) {
             });
             if (!dep)
                 throw [
-                    g_lib.ERR_INVALID_PARAM,
+                    error.ERR_INVALID_PARAM,
                     "Specified dependency on " + id + " does not exist.",
                 ];
 
@@ -676,7 +679,7 @@ function recordUpdate(client, record, result) {
             dep = record.dep_add[i];
             id = g_lib.resolveDataID(dep.id, client);
             if (!id.startsWith("d/"))
-                throw [g_lib.ERR_INVALID_PARAM, "Dependencies can only be set on data records."];
+                throw [error.ERR_INVALID_PARAM, "Dependencies can only be set on data records."];
 
             if (
                 g_db.dep.firstExample({
@@ -686,7 +689,7 @@ function recordUpdate(client, record, result) {
                 })
             )
                 throw [
-                    g_lib.ERR_INVALID_PARAM,
+                    error.ERR_INVALID_PARAM,
                     "Only one dependency of each type may be defined between any two data records.",
                 ];
 
@@ -980,7 +983,7 @@ router
                             _id: data_id,
                         })
                     )
-                        throw [g_lib.ERR_INVALID_PARAM, "Record, " + data_id + ", does not exist."];
+                        throw [error.ERR_INVALID_PARAM, "Record, " + data_id + ", does not exist."];
 
                     // TODO Update schema validation error flag
                     g_db._update(
@@ -1105,20 +1108,23 @@ router
                 admin = false;
 
             if (client) {
-                admin = g_lib.hasAdminPermObject(client, data_id);
+                admin = permissions.hasAdminPermObject(client, data_id);
 
                 if (!admin) {
-                    var perms = g_lib.getPermissions(
+                    var perms = permissions.getPermissions(
                         client,
                         data,
-                        g_lib.PERM_RD_REC | g_lib.PERM_RD_META,
+                        permissions.PERM_RD_REC | permissions.PERM_RD_META,
                     );
-                    if (data.locked || (perms & (g_lib.PERM_RD_REC | g_lib.PERM_RD_META)) == 0)
-                        throw g_lib.ERR_PERM_DENIED;
-                    if ((perms & g_lib.PERM_RD_META) == 0) rem_md = true;
+                    if (
+                        data.locked ||
+                        (perms & (permissions.PERM_RD_REC | permissions.PERM_RD_META)) == 0
+                    )
+                        throw error.ERR_PERM_DENIED;
+                    if ((perms & permissions.PERM_RD_META) == 0) rem_md = true;
                 }
             } else if (!g_lib.hasPublicRead(data_id)) {
-                throw g_lib.ERR_PERM_DENIED;
+                throw error.ERR_PERM_DENIED;
             }
 
             data.notes = g_lib.getNoteMask(client, data);
@@ -1431,9 +1437,9 @@ router
                     for (i in req.queryParams.ids) {
                         obj = g_lib.getObject(req.queryParams.ids[i], client);
 
-                        if (!g_lib.hasAdminPermObject(client, obj._id)) {
-                            if (!g_lib.hasPermissions(client, obj, g_lib.PERM_LOCK))
-                                throw g_lib.ERR_PERM_DENIED;
+                        if (!permissions.hasAdminPermObject(client, obj._id)) {
+                            if (!permissions.hasPermissions(client, obj, permissions.PERM_LOCK))
+                                throw error.ERR_PERM_DENIED;
                         }
                         g_db._update(
                             obj._id,
@@ -1476,9 +1482,9 @@ router
  * @param {object} req - The request object, containing the query parameters.
  * @param {object} res - The response object, used to send the raw data path or error.
  *
- * @throws {Error} g_lib.ERR_PERM_DENIED - If the client does not have permission to read the data.
- * @throws {Error} g_lib.ERR_NO_RAW_DATA - If the raw data is not found.
- * @throws {Error} g_lib.ERR_INVALID_PARAM - If the data belongs to a different domain than specified.
+ * @throws {Error} error.ERR_PERM_DENIED - If the client does not have permission to read the data.
+ * @throws {Error} error.ERR_NO_RAW_DATA - If the raw data is not found.
+ * @throws {Error} error.ERR_INVALID_PARAM - If the data belongs to a different domain than specified.
  *
  * @returns {void} - Returns the raw data path in the response if the request is successful.
  */
@@ -1488,21 +1494,21 @@ router
             const client = g_lib.getUserFromClientID(req.queryParams.client);
             var data_id = g_lib.resolveDataID(req.queryParams.id, client);
 
-            if (!g_lib.hasAdminPermObject(client, data_id)) {
+            if (!permissions.hasAdminPermObject(client, data_id)) {
                 var data = g_db.d.document(data_id);
-                var perms = g_lib.getPermissions(client, data, g_lib.PERM_RD_DATA);
-                if ((perms & g_lib.PERM_RD_DATA) == 0) throw g_lib.ERR_PERM_DENIED;
+                var perms = permissions.getPermissions(client, data, permissions.PERM_RD_DATA);
+                if ((perms & permissions.PERM_RD_DATA) == 0) throw error.ERR_PERM_DENIED;
             }
 
             var loc = g_db.loc.firstExample({
                 _from: data_id,
             });
-            if (!loc) throw g_lib.ERR_NO_RAW_DATA;
+            if (!loc) throw error.ERR_NO_RAW_DATA;
 
             var repo = g_db.repo.document(loc._to);
             if (repo.domain != req.queryParams.domain)
                 throw [
-                    g_lib.ERR_INVALID_PARAM,
+                    error.ERR_INVALID_PARAM,
                     "Can only access data from '" + repo.domain + "' domain",
                 ];
 
@@ -1530,9 +1536,9 @@ router
             if (req.queryParams.subject) {
                 owner_id = req.queryParams.subject;
                 if (req.queryParams.subject.startsWith("u/")) {
-                    g_lib.ensureAdminPermUser(client, owner_id);
+                    permissions.ensureAdminPermUser(client, owner_id);
                 } else {
-                    g_lib.ensureManagerPermProj(client, owner_id);
+                    permissions.ensureManagerPermProj(client, owner_id);
                 }
             } else {
                 owner_id = client._id;
@@ -1611,7 +1617,7 @@ router
 
                     if (!req.body.check && !req.body.path)
                         throw [
-                            g_lib.ERR_INVALID_PARAM,
+                            error.ERR_INVALID_PARAM,
                             "Must provide path parameter if not running check.",
                         ];
 
@@ -1623,7 +1629,7 @@ router
                     }).exists();
                     if (is_collection && !token_exists) {
                         throw [
-                            g_lib.ERR_NOT_FOUND,
+                            error.ERR_NOT_FOUND,
                             "Globus token for mapped collection " +
                                 collection_id +
                                 " for user " +
@@ -1693,13 +1699,13 @@ router
 
                     if (!req.body.check && !req.body.path)
                         throw [
-                            g_lib.ERR_INVALID_PARAM,
+                            error.ERR_INVALID_PARAM,
                             "Must provide path parameter if not running check.",
                         ];
 
                     if (req.body.id.length > 1)
                         throw [
-                            g_lib.ERR_INVALID_PARAM,
+                            error.ERR_INVALID_PARAM,
                             "Concurrent put of multiple records no supported.",
                         ];
 
@@ -1711,7 +1717,7 @@ router
                     }).exists();
                     if (is_collection && !token_exists) {
                         throw [
-                            g_lib.ERR_NOT_FOUND,
+                            error.ERR_NOT_FOUND,
                             "Globus token for mapped collection " +
                                 collection_id +
                                 " for user " +

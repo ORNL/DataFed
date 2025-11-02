@@ -12,15 +12,13 @@ source ${PROJECT_ROOT}/config/datafed.sh
 PATH_TO_SERVICE_DIR=$(realpath "$SOURCE/../services")
 SERVICE_FILE_NAME="datafed-ws.service"
 
-if [ ! -d "$PATH_TO_SERVICE_DIR" ]
-then
+if [ ! -d "$PATH_TO_SERVICE_DIR" ]; then
   mkdir -p "$PATH_TO_SERVICE_DIR"
 fi
 
 local_DATAFED_LOG_PATH=""
 
-if [ ! -z "${DATAFED_DEFAULT_LOG_PATH}" ]
-then
+if [ ! -z "${DATAFED_DEFAULT_LOG_PATH}" ]; then
   local_DATAFED_LOG_PATH="/var/log/datafed"
 else
   local_DATAFED_LOG_PATH=$(printenv DATAFED_DEFAULT_LOG_PATH)
@@ -29,12 +27,11 @@ fi
 DATAFED_WS_LOG_FILE_PATH="/$local_DATAFED_LOG_PATH/datafed-ws.log"
 
 # Remove double forward slashes
-DATAFED_WS_LOG_FILE_PATH=$( echo "$DATAFED_WS_LOG_FILE_PATH" | sed 's/\/\//\//g')
-if [ -d "$PATH_TO_SERVICE_DIR" ]
-then
+DATAFED_WS_LOG_FILE_PATH=$(echo "$DATAFED_WS_LOG_FILE_PATH" | sed 's/\/\//\//g')
+if [ -d "$PATH_TO_SERVICE_DIR" ]; then
   mkdir -p $PATH_TO_SERVICE_DIR
 fi
-cat << EOF > "$PATH_TO_SERVICE_DIR/$SERVICE_FILE_NAME"
+cat <<EOF >"$PATH_TO_SERVICE_DIR/$SERVICE_FILE_NAME"
 [Unit]
 Description=DataFed Web Server
 [Service]

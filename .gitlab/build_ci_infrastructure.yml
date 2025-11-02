@@ -1,10 +1,10 @@
 ---
 stages:
-  - build-infrastructure
+    - build-infrastructure
 
 build-infrastructure-job:
-  stage: build-infrastructure
-  trigger:
-    project: dlsw/datafed/ci
-    branch: main
-    strategy: depend
+    stage: build-infrastructure
+    trigger:
+        project: dlsw/datafed/ci
+        branch: main
+        strategy: depend

@@ -22,14 +22,13 @@ if [ $# -gt 0 ]; then
 else
 
   # Force the user to manaully rm the file to avoid accidental overwrites.
-  if [ -f "$BUILD_ARG_FILE" ]
-  then
+  if [ -f "$BUILD_ARG_FILE" ]; then
     echo "$BUILD_ARG_FILE already exist! Will not overwrite!"
     exit 0
   fi
 fi
 
 # Needs to append to the ./build-args.sh file not overwrite.
-cat << EOF >> "$BUILD_ARG_FILE"
-BASE_IMAGE=ubuntu:focal
+cat <<EOF >>"$BUILD_ARG_FILE"
+BASE_IMAGE=debian:bookworm-slim
 EOF

@@ -1,40 +1,39 @@
 name: Jupyter Notebook Linter
 on:
-  push:
-    paths:
-      - '**/*.ipynb'
-      - '.github/workflows/jupyternotebook-lint.yml'
+    push:
+        paths:
+            - "**/*.ipynb"
+            - ".github/workflows/jupyternotebook-lint.yml"
 
 jobs:
-  lint-jupyter:
-    runs-on: ubuntu-latest
+    lint-jupyter:
+        runs-on: ubuntu-latest
 
-    steps:
-      # Step 1: Checkout the repository
-      - name: Checkout Code
-        uses: actions/checkout@v4
+        steps:
+            # Step 1: Checkout the repository
+            - name: Checkout Code
+              uses: actions/checkout@v4
 
-      # Step 2: Set up Python environment
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'  # Specify the Python version
+            # Step 2: Set up Python environment
+            - name: Set up Python
+              uses: actions/setup-python@v4
+              with:
+                  python-version: "3.10" # Specify the Python version
 
-      # Step 3: Install dependencies
-      - name: Install nbQA, flake8, and black
-        run: |
-          pip install nbqa flake8 black
+            # Step 3: Install dependencies
+            - name: Install nbQA, flake8, and black
+              run: |
+                  pip install nbqa flake8 black
 
-      # Step 4: Run flake8 and black on notebooks in ./jupyter_notebooks folder
-      - name: Lint Jupyter Notebooks with flake8
-        run: nbqa flake8 .
-        working-directory: jupyter_notebooks
+            # Step 4: Run flake8 and black on notebooks in ./jupyter_notebooks folder
+            - name: Lint Jupyter Notebooks with flake8
+              run: nbqa flake8 .
+              working-directory: jupyter_notebooks
 
-      - name: Format Jupyter Notebooks with black
-        run: nbqa black . --check
-        working-directory: jupyter_notebooks
+            - name: Format Jupyter Notebooks with black
+              run: nbqa black . --check
+              working-directory: jupyter_notebooks
 
-      # Step 5: Report status
-      - name: Complete
-        run: echo "Jupyter Notebook linting completed!"
-
+            # Step 5: Report status
+            - name: Complete
+              run: echo "Jupyter Notebook linting completed!"

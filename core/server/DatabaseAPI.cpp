@@ -442,7 +442,6 @@ void DatabaseAPI::userCreate(const Auth::UserCreateRequest &a_request,
                                          << ", name: " << a_request.name());
 
   vector<pair<string, string>> params;
-  params.push_back({"secret", a_request.secret()});
   params.push_back({"uid", a_request.uid()});
   params.push_back({"name", a_request.name()});
   params.push_back({"email", a_request.email()});
@@ -2159,23 +2158,28 @@ void DatabaseAPI::repoCreate(const Auth::RepoCreateRequest &a_request,
   Value result;
 
   nlohmann::json payload;
+
+  // Required attributes
   payload["id"] = a_request.id();
   payload["title"] = a_request.title();
-  payload["path"] = a_request.path();
-  payload["pub_key"] = a_request.pub_key();
-  payload["address"] = a_request.address();
-  payload["endpoint"] = a_request.endpoint();
-  payload["capacity"] = to_string(a_request.capacity());
+  payload["capacity"] = std::to_string(a_request.capacity());
+  
+  // Helper to add optional fields if present
+  auto add_if_present = [&](auto has_fn, auto get_fn, const std::string& key) {
+      if ((a_request.*has_fn)()) {
+          payload[key] = (a_request.*get_fn)();
+      }
+  };
+  
+  // List of optional fields to check
+  add_if_present(&Auth::RepoCreateRequest::has_path,     &Auth::RepoCreateRequest::path,     "path");
+  add_if_present(&Auth::RepoCreateRequest::has_pub_key,  &Auth::RepoCreateRequest::pub_key,  "pub_key");
+  add_if_present(&Auth::RepoCreateRequest::has_address,  &Auth::RepoCreateRequest::address,  "address");
+  add_if_present(&Auth::RepoCreateRequest::has_endpoint, &Auth::RepoCreateRequest::endpoint, "endpoint");
+  add_if_present(&Auth::RepoCreateRequest::has_desc,     &Auth::RepoCreateRequest::desc,     "desc");
+  add_if_present(&Auth::RepoCreateRequest::has_domain,   &Auth::RepoCreateRequest::domain,   "domain");
+  add_if_present(&Auth::RepoCreateRequest::has_exp_path, &Auth::RepoCreateRequest::exp_path, "exp_path");
 
-  if (a_request.has_desc()) {
-    payload["desc"] = a_request.desc();
-  }
-  if (a_request.has_domain()) {
-    payload["domain"] = a_request.domain();
-  }
-  if (a_request.has_exp_path()) {
-    payload["exp_path"] = a_request.exp_path();
-  }
   if (a_request.admin_size() > 0) {
     nlohmann::json admins = nlohmann::json::array();
     for (int i = 0; i < a_request.admin_size(); ++i) {
@@ -3657,69 +3661,97 @@ void DatabaseAPI::taskPurge(uint32_t a_age_sec, LogContext log_context) {
       }
   */
 
+/**
+ * @brief Converts client metrics into a structured JSON string.
+ *
+ * This method takes a timestamp, a total count, and a nested map of client
+ * metrics, and produces a JSON string with the following structure:
+ *
+ * - `timestamp`: the timestamp provided.
+ * - `total`: the total count provided.
+ * - `uids` (or clients): a JSON object where each key is a client ID and the
+ * value is an object containing:
+ *     - `tot`: subtotal for the client (from message type 0, if present)
+ *     - `msg`: an object mapping message types (as strings) to counts.
+ *
+ * @param a_timestamp The timestamp to include in the JSON payload.
+ * @param a_total The total count across all clients (sum of all subtotals).
+ * @param a_metrics A map where:
+ *   - The first key (`std::string`) is the client ID.
+ *   - The nested map (`std::map<uint16_t, uint32_t>`) maps:
+ *       - Key: message type (uint16_t), where `0` is reserved for subtotal.
+ *       - Value: count of messages for that type, at key `0` it is the
+ * subtotal.
+ *   - If a client has no metrics, the nested map will be empty.
+ *   - Message type `0` is used as a subtotal and is never a valid message type.
+ *
+ * @return A formatted JSON string representing the clients and their message
+ * counts.
+ *
+ * @note The JSON structure will always include the `"uids"` object, even if
+ * empty.
+ * @note Message type keys in `"msg"` are converted to strings to ensure valid
+ * JSON objects.
+ *
+ * In the below example total is equivalent to subtotal because there is only
+ * one client.
+ *
+ * @example
+ * Input:
+ * @code
+ * timestamp = 111
+ * total = 15
+ * metrics = {
+ *     {"client1", {{0, 15}, {1, 10}, {2, 5}}}
+ * }
+ * @endcode
+ *
+ * Output JSON:
+ * @code
+ * {
+ *   "timestamp": 111,
+ *   "total": 15,
+ *   "uids": {
+ *     "client1": {
+ *       "tot": 15,
+ *       "msg": {
+ *         "1": 10,
+ *         "2": 5
+ *       }
+ *     }
+ *   }
+ * }
+ * @endcode
+ */
 std::string DatabaseAPI::newJsonMetricParse(
     uint32_t a_timestamp, uint32_t a_total,
     const std::map<std::string, std::map<uint16_t, uint32_t>> &a_metrics) {
-  map<string, std::map<uint16_t, uint32_t>>::const_iterator u;
-  map<uint16_t, uint32_t>::const_iterator m;
+
   nlohmann::json payload;
-  payload["timestamp"] = to_string(a_timestamp);
-  payload["total"] = to_string(a_total);
+  payload["timestamp"] = a_timestamp;
+  payload["total"] = a_total;
 
-  nlohmann::json uids;
-  for (u = a_metrics.begin(); u != a_metrics.end(); ++u) {
-    nlohmann::json uid_body;
-    uid_body["tot"] = to_string(u->second.at(0));
-    nlohmann::json uid_msg;
-    for (m = u->second.begin(); m != u->second.end(); ++m) {
-      if (m->first != 0) {
-        uid_msg[to_string(m->first)] = to_string(m->second);
-      }
+  nlohmann::json clients_json = nlohmann::json::object();
+
+  for (const auto &[client_id, client_metrics] : a_metrics) {
+    nlohmann::json client_json;
+
+    // Use safe access for total
+    auto it = client_metrics.find(0);
+    client_json["tot"] = (it != client_metrics.end()) ? it->second : 0;
+
+    nlohmann::json msg_json;
+    for (const auto &[msg_id, msg_count] : client_metrics) {
+      if (msg_id != 0)
+        msg_json[std::to_string(msg_id)] = msg_count;
     }
-    uid_body["msg"] = uid_msg;
 
-    uids[u->first] = uid_body;
+    client_json["msg"] = msg_json;
+    clients_json[client_id] = client_json;
   }
 
-  payload["uids"] = uids;
-  string body = payload.dump(-1, ' ', true);
-  return body;
-}
-
-// TODO: verify and remove
-std::string DatabaseAPI::oldJsonMetricParse(
-    uint32_t a_timestamp, uint32_t a_total,
-    const std::map<std::string, std::map<uint16_t, uint32_t>> &a_metrics) {
-  map<string, std::map<uint16_t, uint32_t>>::const_iterator u;
-  map<uint16_t, uint32_t>::const_iterator m;
-  string body = "{\"timestamp\":" + to_string(a_timestamp) +
-                ",\"total\":" + to_string(a_total) + ",\"uids\":{";
-  bool c = false, cc;
-
-  for (u = a_metrics.begin(); u != a_metrics.end(); ++u) {
-    if (c)
-      body += ",";
-    else
-      c = true;
-
-    body += "\"" + u->first + "\":{\"tot\":" + to_string(u->second.at(0)) +
-            ",\"msg\":{";
-
-    for (cc = false, m = u->second.begin(); m != u->second.end(); ++m) {
-      if (m->first != 0) {
-        if (cc)
-          body += ",";
-        else
-          cc = true;
-
-        body += "\"" + to_string(m->first) + "\":" + to_string(m->second);
-      }
-    }
-    body += "}}";
-  }
-
-  body += "}}";
-  return body;
+  payload["uids"] = clients_json;
+  return payload.dump(-1, ' ', true);
 }
 
 void DatabaseAPI::metricsUpdateMsgCounts(
@@ -3727,21 +3759,7 @@ void DatabaseAPI::metricsUpdateMsgCounts(
     const std::map<std::string, std::map<uint16_t, uint32_t>> &a_metrics,
     LogContext log_context) {
 
-  string body;
-  string new_body = newJsonMetricParse(a_timestamp, a_total, a_metrics);
-  string old_body = oldJsonMetricParse(a_timestamp, a_total, a_metrics);
-
-  if (new_body == old_body) {
-    // on match use safer serialization
-    body = new_body;
-  } else {
-    body = old_body;
-    DL_WARNING(
-        log_context,
-        "Serialized metric bodies did not match, new serialization yielded:\n"
-            << new_body << "\n old serialization yielded:\n"
-            << old_body);
-  }
+  std::string body = newJsonMetricParse(a_timestamp, a_total, a_metrics);
 
   libjson::Value result;
 

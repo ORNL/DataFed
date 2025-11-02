@@ -1,7 +1,7 @@
 #!/bin/bash
 # Description
-# 
-# This script is designed to query the database and get all user emails and 
+#
+# This script is designed to query the database and get all user emails and
 # output them to a file. As well as print them to the terminal.
 #
 # -e has been removed so that if an error occurs the PASSWORD File is deleted and not left lying around
@@ -13,8 +13,7 @@ SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/..")
 source "${PROJECT_ROOT}/config/datafed.sh"
 
-Help()
-{
+Help() {
   echo "$(basename $0) Will set up a configuration file for the core server"
   echo
   echo "Syntax: $(basename $0) [-h|u|p|o]"
@@ -35,15 +34,13 @@ Help()
 local_DATABASE_NAME="sdms"
 local_DATABASE_USER="root"
 
-if [ -z "${DATAFED_DATABASE_PASSWORD}" ]
-then
+if [ -z "${DATAFED_DATABASE_PASSWORD}" ]; then
   local_DATAFED_DATABASE_PASSWORD=""
 else
   local_DATAFED_DATABASE_PASSWORD=$(printenv DATAFED_DATABASE_PASSWORD)
 fi
 
-if [ -z "${DATAFED_OUTPUT_FILE}" ]
-then
+if [ -z "${DATAFED_OUTPUT_FILE}" ]; then
   local_DATAFED_OUTPUT_FILE=""
 else
   local_DATAFED_OUTPUT_FILE=$(printenv DATAFED_OUTPUT_FILE)
@@ -51,39 +48,40 @@ fi
 
 VALID_ARGS=$(getopt -o hu:p:o: --long 'help',database-user:,database-password:,output-file: -- "$@")
 if [[ $? -ne 0 ]]; then
-      exit 1;
+  exit 1
 fi
 eval set -- "$VALID_ARGS"
 while [ : ]; do
   case "$1" in
-    -h | --help)
-        Help
-        exit 0
-        ;;
-    -u | --database-user)
-        local_DATABASE_USER=$2
-        shift 2
-        ;;
-    -p | --database-password)
-        local_DATAFED_DATABASE_PASSWORD=$2
-        shift 2
-        ;;
-    -o | --output-file)
-        local_DATAFED_OUTPUT_FILE=$2
-        shift 2
-        ;;
-    --) shift; 
-        break 
-        ;;
-    \?) # incorrect option
-        echo "Error: Invalid option"
-        exit;;
+  -h | --help)
+    Help
+    exit 0
+    ;;
+  -u | --database-user)
+    local_DATABASE_USER=$2
+    shift 2
+    ;;
+  -p | --database-password)
+    local_DATAFED_DATABASE_PASSWORD=$2
+    shift 2
+    ;;
+  -o | --output-file)
+    local_DATAFED_OUTPUT_FILE=$2
+    shift 2
+    ;;
+  --)
+    shift
+    break
+    ;;
+  \?) # incorrect option
+    echo "Error: Invalid option"
+    exit
+    ;;
   esac
 done
 
 ERROR_DETECTED=0
-if [ -z "$local_DATAFED_DATABASE_PASSWORD" ]
-then
+if [ -z "$local_DATAFED_DATABASE_PASSWORD" ]; then
   echo "Error DATAFED_DATABASE_PASSWORD is not defined, this is a required argument"
   echo "      This variable can be set using the command line option -p, --database-password"
   echo "      or with the environment variable DATAFED_DATABASE_PASSWORD."
@@ -91,14 +89,12 @@ then
 fi
 
 # Check if the variable is empty
-if [ -z "$local_DATAFED_OUTPUT_FILE" ]
-then
+if [ -z "$local_DATAFED_OUTPUT_FILE" ]; then
   # Variable is empty or not defined
   local_DATAFED_OUTPUT_FILE="datafed_user_emails.txt"
 fi
 
-if [ "$ERROR_DETECTED" == "1" ]
-then
+if [ "$ERROR_DETECTED" == "1" ]; then
   exit 1
 fi
 
@@ -110,18 +106,16 @@ if [[ ! "$output" =~ .*"sdms".* ]]; then
   exit 1
 fi
 
-data=$(curl -s -X POST --header 'accept: application/json' -u "$local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD" http://localhost:8529/_db/sdms/_api/cursor -d "{ \"query\" : \"FOR user1 IN u RETURN user1.email\" }") 
-emails=$(echo "$data" | jq .result) 
-emails_cleaned=$(echo "$emails" | sed 's/", "/ /g' | sed 's/\[ "//g'  | sed 's/" \]//g') 
+data=$(curl -s -X POST --header 'accept: application/json' -u "$local_DATABASE_USER:$local_DATAFED_DATABASE_PASSWORD" http://localhost:8529/_db/sdms/_api/cursor -d "{ \"query\" : \"FOR user1 IN u RETURN user1.email\" }")
+emails=$(echo "$data" | jq .result)
+emails_cleaned=$(echo "$emails" | sed 's/", "/ /g' | sed 's/\[ "//g' | sed 's/" \]//g')
 
-if [ -f "$local_DATAFED_OUTPUT_FILE" ]
-then
+if [ -f "$local_DATAFED_OUTPUT_FILE" ]; then
   # Remove file if it exists
   rm "$local_DATAFED_OUTPUT_FILE"
 fi
 
-for email in ${emails_cleaned} 
-do 
+for email in ${emails_cleaned}; do
   echo "$email"
-  echo "$email"  >> "$local_DATAFED_OUTPUT_FILE"
-done 
+  echo "$email" >>"$local_DATAFED_OUTPUT_FILE"
+done

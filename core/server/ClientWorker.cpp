@@ -363,8 +363,9 @@ void ClientWorker::workerThread(LogContext log_context) {
         const std::string uid =
             std::get<std::string>(message.get(MessageAttribute::ID));
         if (msg_type != task_list_msg_type) {
-          DL_DEBUG(message_log_context,
-                   "W" << m_tid << " msg " << msg_type << " [" << uid << "]");
+          DL_DEBUG(message_log_context, "W" << m_tid << " msg "
+                                            << proto_map.toString(msg_type)
+                                            << " [" << uid << "]");
         }
 
         if (uid.compare("anon") == 0 && msg_type > 0x1FF) {

@@ -2,6 +2,7 @@
 
 const createRouter = require("@arangodb/foxx/router");
 const router = createRouter();
+const error = require("./lib/error_codes");
 const joi = require("joi");
 
 const g_db = require("@arangodb").db;
@@ -16,7 +17,7 @@ router
         try {
             var name = req.queryParams.name.trim();
             if (name.length < 3)
-                throw [g_lib.ERR_INVALID_PARAM, "Input is too short for tag search."];
+                throw [error.ERR_INVALID_PARAM, "Input is too short for tag search."];
 
             var off = req.queryParams.offset ? req.queryParams.offset : 0,
                 cnt = req.queryParams.count ? req.queryParams.count : 50,

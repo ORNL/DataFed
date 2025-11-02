@@ -10,8 +10,7 @@ PROJECT_ROOT=$(realpath ${SOURCE}/..)
 source ${PROJECT_ROOT}/config/datafed.sh
 
 echo "SOURCE Is $SOURCE"
-Help()
-{
+Help() {
   echo "$(basename $0) Will set up a configuration file for the core server"
   echo
   echo "Syntax: $(basename $0) [-h|t|c|f|s|i|a|u|p]"
@@ -47,58 +46,50 @@ Help()
 }
 
 # Set defaults use environment variables by default
-if [ -z "${DATAFED_CORE_CLIENT_THREADS}" ]
-then
+if [ -z "${DATAFED_CORE_CLIENT_THREADS}" ]; then
   local_DATAFED_CORE_CLIENT_THREADS="2"
 else
   local_DATAFED_CORE_CLIENT_THREADS=$(printenv DATAFED_CORE_CLIENT_THREADS)
 fi
 
-if [ -z "${DATAFED_CORE_TASK_THREADS}" ]
-then
+if [ -z "${DATAFED_CORE_TASK_THREADS}" ]; then
   local_DATAFED_CORE_TASK_THREADS="2"
 else
   local_DATAFED_CORE_TASK_THREADS=$(printenv DATAFED_CORE_TASK_THREADS)
 fi
 
-if [ -z "${DATAFED_CRED_DIR}" ]
-then
+if [ -z "${DATAFED_CRED_DIR}" ]; then
   local_DATAFED_CRED_DIR="${DATAFED_INSTALL_PATH}/keys/"
 else
   local_DATAFED_CRED_DIR=$(printenv DATAFED_CRED_DIR)
 fi
 
-if [ -z "${DATAFED_GLOBUS_APP_ID}" ]
-then
+if [ -z "${DATAFED_GLOBUS_APP_ID}" ]; then
   local_DATAFED_GLOBUS_APP_ID=""
 else
   local_DATAFED_GLOBUS_APP_ID=$(printenv DATAFED_GLOBUS_APP_ID)
 fi
 
-if [ -z "${DATAFED_GLOBUS_APP_SECRET}" ]
-then
+if [ -z "${DATAFED_GLOBUS_APP_SECRET}" ]; then
   local_DATAFED_GLOBUS_APP_SECRET=""
 else
   local_DATAFED_GLOBUS_APP_SECRET=$(printenv DATAFED_GLOBUS_APP_SECRET)
 fi
 
 local_DATABASE_USER="root"
-if [ -z "${DATAFED_DATABASE_IP_ADDRESS_PORT}" ]
-then
+if [ -z "${DATAFED_DATABASE_IP_ADDRESS_PORT}" ]; then
   local_DATAFED_DATABASE_IP_ADDRESS_PORT="http://127.0.0.1:8529"
 else
   local_DATAFED_DATABASE_IP_ADDRESS_PORT=$(printenv DATAFED_DATABASE_IP_ADDRESS_PORT)
 fi
 
-if [ -z "${DATAFED_DATABASE_PASSWORD}" ]
-then
+if [ -z "${DATAFED_DATABASE_PASSWORD}" ]; then
   local_DATAFED_DATABASE_PASSWORD=""
 else
   local_DATAFED_DATABASE_PASSWORD=$(printenv DATAFED_DATABASE_PASSWORD)
 fi
 
-if [ -z "${DATAFED_CORE_LOG_LEVEL}" ]
-then
+if [ -z "${DATAFED_CORE_LOG_LEVEL}" ]; then
   local_DATAFED_CORE_LOG_LEVEL=3
 else
   local_DATAFED_CORE_LOG_LEVEL=$(printenv DATAFED_CORE_LOG_LEVEL)
@@ -106,111 +97,108 @@ fi
 
 VALID_ARGS=$(getopt -o ht:c:f:a:s:i:u:p --long 'help',threads-task:,cred-dir:,threads-client:,database-ip-address:,globus-secret:,globus-id:,database-user:,database-password: -- "$@")
 if [[ $? -ne 0 ]]; then
-      exit 1;
+  exit 1
 fi
 eval set -- "$VALID_ARGS"
 while [ : ]; do
   echo "$1"
   case "$1" in
-    -h | --help)
-        Help
-        exit 0
-        ;;
-    -t | --threads)
-        echo "Processing 'threads-task' option. Input argument is '$2'"
-        local_DATAFED_CORE_TASK_THREADS=$2
-        shift 2
-        ;;
-    -c | --cred-dir)
-        echo "Processing 'credential directory' option. Input argument is '$2'"
-        local_DATAFED_CRED_DIR=$2
-        shift 2
-        ;;
-    -f | --threads-client)
-        echo "Processing 'threads client' option. Input argument is '$2'"
-        local_DATAFED_CORE_CLIENT_THREADS=$2
-        shift 2
-        ;;
-    -s | --globus-secret)
-        echo "Processing 'DataFed Globus App secret' option. Input argument is '$2'"
-        local_DATAFED_GLOBUS_APP_SECRET=$2
-        shift 2
-        ;;
-    -i | --globus-id)
-        echo "Processing 'DataFed Globus App client id' option. Input argument is '$2'"
-        local_DATAFED_GLOBUS_APP_ID=$2
-        shift 2
-        ;;
-    -u | --database-user)
-        echo "Processing 'Database user' option. Input argument is '$2'"
-        local_DATABASE_USER=$2
-        shift 2
-        ;;
-    -p | --database-password)
-        echo "Processing 'Database password' option. Input argument is '$2'"
-        local_DATAFED_DATABASE_PASSWORD=$2
-        shift 2
-        ;;
-      -a | --database-ip-address)
-        echo "Processing 'Database IP address' option. Input argument is '$2'"
-        local_DATAFED_DATABASE_IP_ADDRESS_PORT=$2
-        shift 2
-        ;;
-    --) shift; 
-        break 
-        ;;
-    \?) # incorrect option
-        echo "Error: Invalid option"
-        exit;;
+  -h | --help)
+    Help
+    exit 0
+    ;;
+  -t | --threads)
+    echo "Processing 'threads-task' option. Input argument is '$2'"
+    local_DATAFED_CORE_TASK_THREADS=$2
+    shift 2
+    ;;
+  -c | --cred-dir)
+    echo "Processing 'credential directory' option. Input argument is '$2'"
+    local_DATAFED_CRED_DIR=$2
+    shift 2
+    ;;
+  -f | --threads-client)
+    echo "Processing 'threads client' option. Input argument is '$2'"
+    local_DATAFED_CORE_CLIENT_THREADS=$2
+    shift 2
+    ;;
+  -s | --globus-secret)
+    echo "Processing 'DataFed Globus App secret' option. Input argument is '$2'"
+    local_DATAFED_GLOBUS_APP_SECRET=$2
+    shift 2
+    ;;
+  -i | --globus-id)
+    echo "Processing 'DataFed Globus App client id' option. Input argument is '$2'"
+    local_DATAFED_GLOBUS_APP_ID=$2
+    shift 2
+    ;;
+  -u | --database-user)
+    echo "Processing 'Database user' option. Input argument is '$2'"
+    local_DATABASE_USER=$2
+    shift 2
+    ;;
+  -p | --database-password)
+    echo "Processing 'Database password' option. Input argument is '$2'"
+    local_DATAFED_DATABASE_PASSWORD=$2
+    shift 2
+    ;;
+  -a | --database-ip-address)
+    echo "Processing 'Database IP address' option. Input argument is '$2'"
+    local_DATAFED_DATABASE_IP_ADDRESS_PORT=$2
+    shift 2
+    ;;
+  --)
+    shift
+    break
+    ;;
+  \?) # incorrect option
+    echo "Error: Invalid option"
+    exit
+    ;;
   esac
 done
 
 ERROR_DETECTED=0
-if [ -z "$local_DATAFED_GLOBUS_APP_SECRET" ]
-then
+if [ -z "$local_DATAFED_GLOBUS_APP_SECRET" ]; then
   echo "Error DATAFED_GLOBUS_APP_SECRET is not defined, this is a required argument."
   echo "      This variable can be set using the command line option -s, --globus-secret"
   echo "      or with the environment variable DATAFED_GLOBUS_APP_SECRET."
   ERROR_DETECTED=1
 fi
 
-if [ -z "$local_DATAFED_GLOBUS_APP_ID" ]
-then
+if [ -z "$local_DATAFED_GLOBUS_APP_ID" ]; then
   echo "Error DATAFED_GLOBUS_APP_ID is not defined, this is a required argument"
   echo "      This variable can be set using the command line option -i, --globus-id"
   echo "      or with the environment variable DATAFED_GLOBUS_APP_ID."
   ERROR_DETECTED=1
 fi
 
-if [ -z "$local_DATAFED_DATABASE_PASSWORD" ]
-then
+if [ -z "$local_DATAFED_DATABASE_PASSWORD" ]; then
   echo "Error DATAFED_DATABASE_PASSWORD is not defined, this is a required argument"
   echo "      This variable can be set using the command line option -p, --database-password"
   echo "      or with the environment variable DATAFED_DATABASE_PASSWORD."
   ERROR_DETECTED=1
 fi
 
-if [ -z "$local_DATAFED_DATABASE_IP_ADDRESS_PORT" ]
-then
+if [ -z "$local_DATAFED_DATABASE_IP_ADDRESS_PORT" ]; then
   echo "Error DATAFED_DATABASE_IP_ADDRESS_PORT is not defined, this is a required argument"
   echo "      This variable can be set using the command line option -a, --database-ip-address-port"
   echo "      or with the environment variable DATAFED_DATABASE_IP_ADDRESS_PORT. A default variable"
   echo "      should have been defined as http://127.0.0.1:8529 so you are likely overwriting the default."
 fi
 
-if [ "$ERROR_DETECTED" == "1" ]
-then
+if [ "$ERROR_DETECTED" == "1" ]; then
   exit 1
 fi
 
-FOXX_MAJOR_API_VERSION=$(cat ${PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs )
+FOXX_MAJOR_API_VERSION=$(cat ${PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs)
 local_DATABASE_API_URL="${local_DATAFED_DATABASE_IP_ADDRESS_PORT}/_db/sdms/api/${FOXX_MAJOR_API_VERSION}/"
 
 PATH_TO_CONFIG_DIR=$(realpath "$SOURCE/../config")
 
 CONFIG_FILE_NAME="datafed-core.cfg"
 
-cat << EOF > "$PATH_TO_CONFIG_DIR/$CONFIG_FILE_NAME"
+cat <<EOF >"$PATH_TO_CONFIG_DIR/$CONFIG_FILE_NAME"
 # Note this file can be generated with $(basename $0)
 # Default location to log files
 cred-dir=$local_DATAFED_CRED_DIR
@@ -240,5 +228,5 @@ echo
 echo "Config file is being placed here: $PATH_TO_CONFIG_DIR/$CONFIG_FILE_NAME"
 echo
 echo "Contents are:"
-echo 
+echo
 cat "$PATH_TO_CONFIG_DIR/$CONFIG_FILE_NAME"

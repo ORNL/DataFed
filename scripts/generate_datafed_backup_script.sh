@@ -15,33 +15,29 @@ echo "$FILE_NAME $VERSION"
 
 ERROR_DETECTED=0
 # The admin should who should be receiving emails about the backups
-if [ -z "$DATAFED_ADMIN_EMAIL" ]
-then
+if [ -z "$DATAFED_ADMIN_EMAIL" ]; then
   echo "Error DATAFED_ADMIN_EMAIL is not defined, this is a required argument."
   ERROR_DETECTED=1
 fi
 
 # DataFed system email is from the actual system not from a person, it is
 # used to fill in the from field when sending emails out to admins or users.
-if [ -z "$DATAFED_SYSTEM_EMAIL" ]
-then
+if [ -z "$DATAFED_SYSTEM_EMAIL" ]; then
   echo "Error DATAFED_SYSTEM_EMAIL is not defined, this is a required argument"
   ERROR_DETECTED=1
 fi
 
 # Where the database backups will be placed.
-if [ -z "$DATAFED_DATABASE_BACKUP_PATH" ]
-then
+if [ -z "$DATAFED_DATABASE_BACKUP_PATH" ]; then
   echo "Error DATAFED_DATABASE_BACKUP_PATH is not defined, this is a required argument"
   ERROR_DETECTED=1
 fi
 
-if [ "$ERROR_DETECTED" == "1" ]
-then
+if [ "$ERROR_DETECTED" == "1" ]; then
   exit 1
 fi
 
-cat << OUTER_EOF > "$PROJECT_ROOT/scripts/admin_datafed_backup.sh"
+cat <<OUTER_EOF >"$PROJECT_ROOT/scripts/admin_datafed_backup.sh"
 #!/bin/bash
 
 # This script needs to be registered in the crontab

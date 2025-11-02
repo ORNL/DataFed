@@ -80,13 +80,14 @@ Server::Server(LogContext log_context)
   purge_conditions[PublicKeyType::SESSION].emplace_back(
       std::make_unique<Reset>(accesses_to_reset, key_type_to_apply_reset));
 
-  // Load repository config from DB
-  m_config.loadRepositoryConfig(m_auth_manager, log_context);
-
-  // Must occur after loading config settings
+  // Initialize AuthenticationManager BEFORE loading repository config
+  // This ensures repos are loaded into the correct instance
   m_auth_manager = std::move(AuthenticationManager(
       purge_intervals, std::move(purge_conditions), m_config.db_url,
       m_config.db_user, m_config.db_pass));
+
+  // Now load repository config from DB into the initialized AuthenticationManager
+  m_config.loadRepositoryConfig(m_auth_manager, log_context);
 
   // Start ZAP handler must be started before any other socket binds are called
   // m_zap_thread = thread( &Server::zapHandler, this );
@@ -136,7 +137,7 @@ void Server::loadKeys(const std::string &a_cred_dir) {
 void Server::waitForDB() {
   DL_INFO(m_log_context, "Waiting for DB...");
 
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < 20; i++) {
     try {
       DatabaseAPI db_client(m_config.db_url, m_config.db_user,
                             m_config.db_pass);
@@ -144,9 +145,9 @@ void Server::waitForDB() {
       DL_INFO(m_log_context, "DB Ping Success");
       return;
     } catch (...) {
-      DL_INFO(m_log_context, "DB connection error");
+      DL_WARNING(m_log_context, "DB connection error.");
     }
-    sleep(5);
+    sleep(10);
   }
 
   EXCEPT(1, "Unable to connect to DB");

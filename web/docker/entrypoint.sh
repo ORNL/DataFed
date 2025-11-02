@@ -4,7 +4,7 @@
 set -euf -o pipefail
 
 if [ -n "$UID" ]; then
-    usermod -u "$UID" datafed
+  usermod -u "$UID" datafed
 fi
 
 chown -R datafed:root "${DATAFED_INSTALL_PATH}/web"
@@ -32,13 +32,11 @@ fi
 # Send output to file as well as print to terminal
 log_path=$(grep "log-path" "${BUILD_DIR}/config/datafed-ws.cfg" | cut -d "=" -f 2 | tr -d ' ')
 
-if [ ! -d "${log_path}" ]
-then
+if [ ! -d "${log_path}" ]; then
   su -c "mkdir -p ${log_path}" datafed
 fi
 
-if [ ! -f "${DATAFED_INSTALL_PATH}/keys/datafed-core-key.pub" ]
-then
+if [ ! -f "${DATAFED_INSTALL_PATH}/keys/datafed-core-key.pub" ]; then
   echo "datafed-core-key.pub not found"
   exit 1
 fi
@@ -52,8 +50,7 @@ fi
 
 cd "$DATAFED_INSTALL_PATH/web"
 datafed_ws_exec=$(basename "$1")
-if [ "${datafed_ws_exec}" = "datafed-ws.js" ]
-then
+if [ "${datafed_ws_exec}" = "datafed-ws.js" ]; then
   # Send output to log file
   su datafed -c '"$@"' -- argv0 "$@" 2>&1 | su datafed -c "tee $log_path/datafed-ws.log"
 else
@@ -61,4 +58,3 @@ else
   # If not do not by default send to log file
   su datafed -c '"$@"' -- argv0 "$@"
 fi
-

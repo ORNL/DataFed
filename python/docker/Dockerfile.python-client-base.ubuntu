@@ -14,7 +14,7 @@ COPY ./scripts/dependency_install_functions.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/dependency_versions.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_datafed.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/utils.sh ${BUILD_DIR}/scripts/
-COPY ./scripts/install_python_client_dependencies.sh ${BUILD_DIR}/scripts/
+COPY ./external/DataFedDependencies/scripts/install_python_client_dependencies.sh ${BUILD_DIR}/scripts/
 
 RUN echo "#!/bin/bash\n\$@" > /usr/bin/sudo && chmod +x /usr/bin/sudo
 RUN ${BUILD_DIR}/scripts/generate_datafed.sh
