@@ -26,37 +26,36 @@ describe("unit_note_router: the Foxx microservice note_router /create endpoint",
             { name: "u", type: "document" },
             { name: "d", type: "document" },
             { name: "note", type: "edge" }, // must be edge
-            ];
+        ];
 
-    collections.forEach(({ name, type }) => {
-        const col = db._collection(name);
-        if (col) {
-            col.truncate();
-        } else {
-            db._create(name, { type: type === "edge" ? 3 : 2 });
-        }
+        collections.forEach(({ name, type }) => {
+            const col = db._collection(name);
+            if (col) {
+                col.truncate();
+            } else {
+                db._create(name, { type: type === "edge" ? 3 : 2 });
+            }
         });
     });
 
     it("should successfully run the search route", () => {
-
         const user = db.u.save({
-        _key: "testUser",
-        _id: "u/testUser",
-        name: "Test User",
-        email: "testuser@example.com",
-        is_admin: true,
+            _key: "testUser",
+            _id: "u/testUser",
+            name: "Test User",
+            email: "testuser@example.com",
+            is_admin: true,
         });
 
         const data = db.d.save({
-        _key: "ID",
-        _id: "d/ID",
-        owner: user._id,
+            _key: "ID",
+            _id: "d/ID",
+            owner: user._id,
         });
 
         // Prepare the request
         const request_string = `${note_base_url}/create?client=${encodeURIComponent(
-        user._id
+            user._id,
         )}&subject=${encodeURIComponent(data._id)}&type=1&title=UnitTestTitle&comment=UnitTestComment`;
 
         // act
@@ -194,7 +193,7 @@ describe("unit_note_router: the Foxx microservice note_router /create endpoint",
 
         // Act: call /note/view
         const request_string = `${note_base_url}/view?client=${encodeURIComponent(
-            user._id
+            user._id,
         )}&id=${encodeURIComponent(note_doc._id)}`;
 
         const response = request.get(request_string);
@@ -207,7 +206,7 @@ describe("unit_note_router: the Foxx microservice note_router /create endpoint",
         expect(body.results[0].title).to.equal("Viewable Note");
     });
 
- it("should list all annotations for a subject", () => {
+    it("should list all annotations for a subject", () => {
         // Arrange: create a user and subject document
         const user = db.u.save({
             _key: "testUser",
@@ -251,7 +250,7 @@ describe("unit_note_router: the Foxx microservice note_router /create endpoint",
 
         // Act: call /note/list/by_subject
         const request_string = `${note_base_url}/list/by_subject?client=${encodeURIComponent(
-            user._id
+            user._id,
         )}&subject=${encodeURIComponent(subject._id)}`;
 
         const response = request.get(request_string);
@@ -264,7 +263,7 @@ describe("unit_note_router: the Foxx microservice note_router /create endpoint",
         expect(body.results.map((r) => r.title)).to.include("Subject Note 1");
     });
 
-        it("should purge old closed annotations", () => {
+    it("should purge old closed annotations", () => {
         // Arrange: create user and subject
         const user = db.u.save({
             _key: "purgeUser",
@@ -317,7 +316,7 @@ describe("unit_note_router: the Foxx microservice note_router /create endpoint",
 
         // Act: purge notes older than 50,000 seconds
         const request_string = `${note_base_url}/purge?client=${encodeURIComponent(
-            user._id
+            user._id,
         )}&age_sec=50000`;
 
         const response = request.get(request_string);
