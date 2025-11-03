@@ -15,9 +15,7 @@ module.exports = router;
 
 router
     .post("/create", function (req, res) {
-        
         var client = null;
-        var doc = null;
         try {
             client = req.queryParams.client
                 ? g_lib.getUserFromClientID(req.queryParams.client)
@@ -40,7 +38,7 @@ router
                 action: function () {
                     client = g_lib.getUserFromClientID(req.queryParams.client);
                     var id = g_lib.resolveDataCollID(req.queryParams.subject, client);
-                    doc = g_db._document(id);
+                    var doc = g_db._document(id);
 
                     if (!permissions.hasAdminPermObject(client, id)) {
                         if (
@@ -102,6 +100,7 @@ router
                         results: [note.new],
                         updates: Object.values(updates),
                     });
+                    var { _key, _rev, ...result } = doc; 
                     logger.logRequestSuccess({
                         client: client?._id,
                         correlationId: req.headers["x-correlation-id"],
@@ -109,7 +108,7 @@ router
                         routePath: basePath + "/create",
                         status: "Success",
                         description: "Create an annotation on an object",
-                        extra: doc 
+                        extra: result 
                     });
                 },
             });
@@ -121,7 +120,7 @@ router
                     routePath: basePath + "/create",
                     status: "Failure",
                     description: "Create an annotation on an object",
-                    extra: doc,
+                    extra: null,
                     error: e
                 });
             g_lib.handleException(e, res);
@@ -276,7 +275,7 @@ router
                         results: [note],
                         updates: Object.values(updates),
                     });
-                    
+                    var { _key, _rev, ...result } = doc; 
                     logger.logRequestSuccess({
                         client: client?._id,
                         correlationId: req.headers["x-correlation-id"],
@@ -284,7 +283,7 @@ router
                         routePath: basePath + "/update",
                         status: "Success",
                         description: "Update an annotation",
-                        extra: doc
+                        extra: result
                     });
                 },
             });
@@ -296,7 +295,7 @@ router
                 routePath: basePath + "/update",
                 status: "Failure",
                 description: "Update an annotation",
-                extra: doc,
+                extra: null,
                 error: e
             });
             g_lib.handleException(e, res);
@@ -552,7 +551,7 @@ router
                 routePath: basePath + "/list/by_subject",
                 status: "Success",
                 description: "List annotations by subject",
-                extra: results.toArray()
+                extra: results._countTotal,
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -562,7 +561,7 @@ router
                 routePath: basePath + "/list/by_subject",
                 status: "Failure",
                 description: "List annotations by subject",
-                extra: results.toArray(),
+                extra: results._countTotal,
                 error: e
             });
             g_lib.handleException(e, res);
@@ -577,6 +576,7 @@ router
     .get("/purge", function (req, res) {
         let client = null;
         let id = null;
+        const purgedIds = [];
         try {
             client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
             logger.logRequestStarted({
@@ -608,7 +608,8 @@ router
                         );
                     while (notes.hasNext()) {
                         id = notes.next();
-                        console.log("purging", id);
+                        purgedIds.push(id);
+
                         // This will also delete all dependent annotations
                         g_lib.annotationDelete(id);
                     }
@@ -622,7 +623,7 @@ router
                 routePath: basePath + "/purge",
                 status: "Success",
                 description: "Purge old closed annotations",
-                extra: `Id of purged note: ${id}`
+                extra: `Ids of purged notes: ${purgedIds.join(", ")}`
             });
         } catch (e) {
             logger.logRequestFailure({
