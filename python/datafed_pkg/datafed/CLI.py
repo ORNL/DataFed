@@ -459,6 +459,11 @@ def _global_output_options(func):
 )
 @click.option("-m", "--manual-auth", is_flag=True, help="Force manual authentication")
 @click.option(
+    "--device-auth",
+    is_flag=True,
+    help="Use device authorization flow when manual authentication is required",
+)
+@click.option(
     "-s",
     "--script",
     is_flag=True,
@@ -3078,6 +3083,7 @@ def _initialize(opts):
 
     try:
         man_auth = opts["manual_auth"]
+        use_device_auth = opts.get("device_auth")
 
         if man_auth:
             # print("CLI - manual auth")
@@ -3119,19 +3125,22 @@ def _initialize(opts):
                     "Cannot manually authentication when running non-interactively."
                 )
 
-            i = 0
-            while i < 3:
-                i += 1
-                uid = click.prompt("User ID")
-                password = getpass.getpass(prompt="Password: ")
-                try:
-                    _capi.loginByPassword(uid, password)
-                    break
-                except Exception as e:
-                    click.echo(e)
+            if use_device_auth:
+                _perform_device_authorization(_capi)
+            else:
+                i = 0
+                while i < 3:
+                    i += 1
+                    uid = click.prompt("User ID")
+                    password = getpass.getpass(prompt="Password: ")
+                    try:
+                        _capi.loginByPassword(uid, password)
+                        break
+                    except Exception as e:
+                        click.echo(e)
 
-            if i == 3:
-                raise Exception("Too many failed log-in attempts.")
+                if i == 3:
+                    raise Exception("Too many failed log-in attempts.")
 
         tmp = _capi.cfg.get("verbosity")
         if tmp is not None:
@@ -3148,6 +3157,35 @@ def _initialize(opts):
         _interactive = False
         raise
 
+
+def _perform_device_authorization(capi):
+    """
+    Run the interactive device authorization login flow.
+    """
+    try:
+        session = capi.startDeviceAuthorization()
+    except Exception as exc:
+        raise Exception("Unable to start device authorization flow: {}".format(exc))
+
+    verification_uri = session.get("verification_uri")
+    code = session.get("code")
+
+    if not verification_uri or not code:
+        raise Exception("Device authorization response was incomplete.")
+
+    click.echo("Complete authentication by visiting: {}".format(verification_uri))
+    click.echo("When prompted, enter the code: {}".format(code))
+    click.echo("Waiting for authorization to complete...")
+
+    try:
+        capi.pollDeviceAuthorization(code=code)
+    except TimeoutError as exc:
+        raise Exception("Device authorization timed out.") from exc
+    except Exception:
+        raise
+
+    if _output_mode == _OM_TEXT:
+        click.echo("Device authorization successful.")
 
 def _addConfigOptions():
     for _, v in Config._opt_info.items():
