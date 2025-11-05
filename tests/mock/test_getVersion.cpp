@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_SUITE(mock_liveness_get_version)
 BOOST_AUTO_TEST_CASE(mock_liveness_test_get_version) {
 
   std::cout << "Running from: " << std::filesystem::current_path() << std::endl;
-  std::string default_pub_key_path = std::filesystem::current_path() / "mock-datafed-core-key.pub";
+  std::string default_pub_key_path = std::filesystem::current_path() / "datafed-mock-core-key.pub";
   std::string fname = get_env_or_default("DATAFED_MOCK_CORE_PUB_KEY", default_pub_key_path);
   std::string mock_core_server_address = "tcp://localhost:9998";
   std::ifstream inf(fname.c_str());
@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(mock_liveness_test_get_version) {
             << std::endl;
   std::cout << "cred private key: " << cred_options[CredentialType::PRIVATE_KEY]
             << std::endl;
-  // Server key should be the public key of the mock-datafed-core.pub
+  // Server key should be the public key of the datafed-mock-core-key.pub
   std::cout << "cred server key: " << cred_options[CredentialType::SERVER_KEY]
             << std::endl;
 

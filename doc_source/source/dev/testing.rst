@@ -2,9 +2,12 @@
 Testing
 =======
 
-If you're developing DataFed, there are several ways to test the application. This guide focuses on running **unit tests** for the Foxx microservices used with ArangoDB.
+If you're developing DataFed, there are several ways to test the application. This guide focuses on running
 
-Unit Testing with Foxx Microservices
+A. **unit tests** for the Foxx microservices used with ArangoDB.
+B. **integration tests** using the python client code.
+
+A. Unit Testing with Foxx Microservices
 ====================================
 
 ArangoDB supports running small applications called *Foxx microservices*. You can run unit tests for these services without standing up the full DataFed application by using a standalone ArangoDB instance.
@@ -73,5 +76,66 @@ DATAFED_DATABASE_PASSWORD, can be anything but it should be consistent with what
      --security-opt no-new-privileges \
      datafed-foxx:latest
 
-This will deploy the Foxx microservices and automatically execute the unit tests against the ArangoDB instance.
+This will deploy the Foxx microservices and automatically execute the unit
+tests against the ArangoDB instance.
+
+B. Integration Testing with Python Client
+=========================================
+
+The python client integration tests can be run by running a mock core service
+in either directly on the host, or by building it in an container and running
+the container.
+
+If using CMake and Ctest to run the tests it will build the mock core service
+and run it outside of a container.  The guide below demonstrates the
+alternative or running the mock core service in a container.
+
+1. Build and Run python client against Mock Core Server
+-------------------------------------------------------
+
+If you want to test the python client against a mock of the core service a mock
+is located in the tests/mock_core folder. This container can be run to provide
+dummy responses to mimic the zmq communication flow. The mock core service is
+provisioned with specific dummy values for an authenticated user.
+
+To build the mock the following can be run.
+
+NOTE: This assumes that the datafed dependencies and datafed runtime base
+images have already been built and are cached locally.
+
+The below must be executed from the root of the DataFed github repo.
+
+.. code-block:: bash
+   docker build \
+     --build-arg DEPENDENCIES=datafed-dependencies:latest \
+     --build-arg RUNTIME=datafed-runtime:latest \
+     -f tests/mock_core/docker/Dockerfile . \
+     -t datafed-mock-core:latest
+
+To run the mock
+
+.. code-block:: bash
+   export MOCK_KEYS_FOLDER=$(pwd)/keys
+   export MOCK_LOG_FOLDER=$(pwd)/logs
+   mkdir -p ${MOCK_KEYS_FOLDER}
+   mkdir -p ${MOCK_LOG_FOLDER}
+   docker run \
+     --user $(id -u) \
+     -p 9998:9998 \
+     -v ${MOCK_LOG_FOLDER}:/opt/datafed/logs \
+     -v ${MOCK_KEYS_FOLDER}:/opt/datafed/keys \
+     -t datafed-mock-core:latest
+
+You should be able to run python integration tests directly against the core
+service. NOTE, you will have to make sure that python integration tests have
+access to the mock's public key.
+
+The below assumes that the python interpreter is in an environment with all of
+the required modules already installed.
+
+.. code-block:: bash
+
+   DATAFED_MOCK_CORE_PUB_KEY=${MOCK_KEYS_FOLDER}/datafed-mock-core-key.pub
+   PYTHONPATH=./python/datafed_pkg ./python/datafed_pkg/tests/integration/test_MessageLib.py
+
 

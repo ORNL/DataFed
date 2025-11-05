@@ -1,14 +1,15 @@
 
-if( BUILD_MOCK_CORE AND NOT BUILD_COMMON )
-  message(FATAL_ERROR "BUILD_MOCK_CORE is enabled but build common is disabled, if you wish to build the mock core executable please enable BUILD_COMMON.")
+if( BUILD_MOCK_CORE_SERVER AND NOT BUILD_COMMON )
+  message(FATAL_ERROR "BUILD_MOCK_CORE_SERVER is enabled but build common is disabled, if you wish to build the mock core executable please enable BUILD_COMMON.")
 endif()
 
-if( INSTALL_MOCK_CORE_SERVER AND NOT BUILD_MOCK_CORE )
+if( INSTALL_MOCK_CORE_SERVER AND NOT BUILD_MOCK_CORE_SERVER )
   message(FATAL_ERROR "INSTALL_MOCK_CORE_SERVER is enabled but BUILD_MOCK_CORE_SERVER is disabled, if you wish to install the mock core server executable please enable BUILD_MOCK_CORE_SERVER.")
 endif()
 
-if( BUILD_MOCK_CORE AND BUILD_COMMON )
+if( BUILD_MOCK_CORE_SERVER AND BUILD_COMMON )
   add_subdirectory(mock_core/source)
+  set(DATAFED_MOCK_CORE_PUB_KEY "${CMAKE_BINARY_DIR}/tests/mock_core/source/datafed-mock-core-key.pub" PARENT_SCOPE)
   install( TARGETS datafed-mock-core DESTINATION ${DATAFED_INSTALL_PATH}/tests/mock_core/source )
 endif()
 
@@ -26,8 +27,6 @@ if( ENABLE_INTEGRATION_TESTS )
       COMMAND ${CMAKE_CURRENT_BINARY_DIR}/mock/mock_start.sh
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/tests/mock_core/source
     )
-
-    set(DATAFED_MOCK_CORE_PUB_KEY "${CMAKE_BINARY_DIR}/tests/mock_core/source/mock-datafed-core-key.pub" PARENT_SCOPE)
 
     # Add a custom target to stop the server
     add_test(NAME stop_mock

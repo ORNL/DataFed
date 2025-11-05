@@ -28,7 +28,7 @@ OPTION(BUILD_TESTS "Build Tests" TRUE)
 OPTION(BUILD_WEB_SERVER "Build DataFed Web Server" TRUE)
 OPTION(ENABLE_UNIT_TESTS "Enable unit tests" TRUE)
 OPTION(ENABLE_INTEGRATION_TESTS "Enable integration tests" TRUE)
-OPTION(BUILD_MOCK_CORE "Enable integration tests" FALSE)
+OPTION(BUILD_MOCK_CORE_SERVER "Build Mock Core Server" FALSE)
 OPTION(ENABLE_MEMORY_TESTS "Enable memory tests" FALSE)
 OPTION(BUILD_SHARED_LIBS "By default DataFed tries to build static libraries
 with the exception of libdatafed-authz which must always be a shared library,
@@ -192,7 +192,7 @@ endif()
 
 # Must occur before building authz, location of mock keys are defined here
 # ENV DATAFED_MOCK_CORE_PUB_KEY
-if (ENABLE_INTEGRATION_TESTS OR ENABLE_END_TO_END_TESTS OR BUILD_MOCK_CORE)
+if (ENABLE_INTEGRATION_TESTS OR ENABLE_END_TO_END_TESTS OR BUILD_MOCK_CORE_SERVER)
     add_subdirectory(tests)
 endif()
 
@@ -202,7 +202,7 @@ endif()
 
 if( BUILD_PYTHON_CLIENT )
   # make target = pydatafed
-  file(COPY ${PROJECT_SOURCE_DIR}/external/DataFedDependencies/python/datafed_pkg/requirements.txt DESTINATION ${PROJECT_SOURCE_DIR}/python/datafed_pkg/requirements.txt)
+  file(COPY ${PROJECT_SOURCE_DIR}/external/DataFedDependencies/python/datafed_pkg/requirements.txt DESTINATION ${PROJECT_SOURCE_DIR}/python/datafed_pkg/)
   add_subdirectory( python EXCLUDE_FROM_ALL )
 endif()
 
