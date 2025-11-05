@@ -5,6 +5,7 @@ from globus_sdk import AuthClient, GroupsClient
 import utils
 
 import os, sys
+import urllib.parse
 
 CLIENT_ID = "d7a7db79-c746-4947-9273-54cf578e4785"
 
@@ -40,7 +41,7 @@ default_DOMAIN = "localhost"
 DOMAIN = os.getenv("DATAFED_DOMAIN", default_DOMAIN)
 if len(DOMAIN) == 0:
     DOMAIN = default_DOMAIN
-REDIRECT_PATH = os.path.join("https://", DOMAIN, "ui/authn")
+REDIRECT_PATH = urllib.parse.urljoin(f"https://{DOMAIN}","ui/authn")
 
 # begin oauth
 client = globus_sdk.NativeAppAuthClient(CLIENT_ID)
