@@ -1,0 +1,20 @@
+---
+stages:
+    - build
+
+include:
+    - local: .gitlab/common.yml
+
+build-core-mock:
+    extends: .docker_build_script
+    stage: build
+    variables:
+        PROJECT: "datafed"
+        COMPONENT: "core-mock"
+        GIT_STRATEGY: clone
+        DOCKER_FILE_PATH: "tests/core_mock/docker/Dockerfile"
+        DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
+        BUILD_INTERMEDIATE: "FALSE"
+    tags:
+        - ci-datafed-core
+        - docker

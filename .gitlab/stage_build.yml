@@ -102,3 +102,22 @@ run-foxx-build-job:
         REGISTRY: "${REGISTRY}"
         HARBOR_USER: "${HARBOR_USER}"
         HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
+
+run-core-mock-build-job:
+    needs:
+        - job: build-runtime
+        - job: check-core-mock-image
+        - job: run-build-dependencies
+          artifacts: true
+    stage: build
+    trigger:
+        include:
+            - artifact: core_mock_image.yml
+              job: check-core-mock-image
+        strategy: depend
+    variables:
+        REGISTRY: "${REGISTRY}"
+        HARBOR_USER: "${HARBOR_USER}"
+        HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
+
+
