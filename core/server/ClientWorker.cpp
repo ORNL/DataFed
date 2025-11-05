@@ -1,6 +1,7 @@
 
 // Local DataFed includes
 #include "ClientWorker.hpp"
+#include "ICoreServer.hpp"
 #include "TaskMgr.hpp"
 #include "Version.hpp"
 

@@ -55,6 +55,7 @@ def command_lib_options():
         }
 
 
+
 @pytest.fixture
 def repo_create_options():
     """Create temporary key files for testing."""

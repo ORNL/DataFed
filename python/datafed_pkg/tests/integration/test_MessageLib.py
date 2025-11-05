@@ -34,6 +34,7 @@ def temp_key_files():
 
         if os.path.exists(server_key_file):
             # grab the key from the file instead of writing the default key
+
             # to the file.
             with open(server_key_file, "r") as f:
                 server_key = f.read().strip()
@@ -53,6 +54,7 @@ def temp_key_files():
             "client_priv": client_priv_key_file,
             "server_key": server_key,
             "temp_dir": temp_dir,
+
         }
 
 
@@ -73,6 +75,7 @@ class TestConnectionEstablishment:
         assert api.keysLoaded() is True
         assert api.keysValid() is True
 
+
     def test_successful_connection_with_direct_keys(self, temp_key_files):
         """Test successful connection using keys directly."""
         api = MessageLib.API(
@@ -86,6 +89,7 @@ class TestConnectionEstablishment:
         assert api._conn is not None
         assert api.keysLoaded() is True
         assert api.keysValid() is True
+
 
     def test_anonymous_connection(self, temp_key_files):
         """Test anonymous connection without client keys."""
@@ -122,6 +126,7 @@ class TestConnectionEstablishment:
                 server_pub_key=temp_key_files["server_key"],
             )
 
+
     def test_missing_server_port_raises_exception(self, temp_key_files):
         """Test that missing server port raises exception."""
         with pytest.raises(Exception, match="Server port is not defined"):
@@ -129,6 +134,7 @@ class TestConnectionEstablishment:
                 server_host=Defaults.mock_core_server_host,
                 server_pub_key=temp_key_files["server_key"],
             )
+
 
     def test_missing_server_key_raises_exception(self):
         """Test that missing server key raises exception."""
@@ -176,6 +182,7 @@ class TestConnectionEstablishment:
             client_priv_key_file=bad_priv_key_file,
         )
 
+
         assert api._conn is not None
         assert api.keysLoaded() is True
         assert api.keysValid() is False  # Keys were invalid
@@ -218,6 +225,7 @@ class TestAuthentication:
         with pytest.raises(Exception, match="Password authentication failed"):
             api.manualAuthByPassword("invalid_user", "wrong_password")
 
+
     def test_manual_auth_by_token_success(self, temp_key_files):
         """Test successful manual authentication by token."""
         api = MessageLib.API(
@@ -233,6 +241,7 @@ class TestAuthentication:
         auth_status, uid = api.getAuthStatus()
         assert auth_status is True
         assert uid is not None
+
 
     def test_manual_auth_by_token_failure(self, temp_key_files):
         """Test failed manual authentication by token."""
