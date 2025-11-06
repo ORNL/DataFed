@@ -592,11 +592,14 @@ the registration page.
 
                                     a_resp.redirect("/ui/register");
                                 } else {
-				    if ( reply.user.length > 1 ) {
-				        logger.warn("ui/authn", getCurrentLineNumber(), "More than one user was returned from DataFed, this can happen if a user has registered two or more separate accounts with DataFed and has since linked their identities from a third party identity manager. DataFed will select the first identity when logging in.");
-
-			            }
-				    let username = reply.user[0]?.uid?.replace(/^u\//, '');
+                                    if (reply.user.length > 1) {
+                                        logger.warn(
+                                            "ui/authn",
+                                            getCurrentLineNumber(),
+                                            "More than one user was returned from DataFed, this can happen if a user has registered two or more separate accounts with DataFed and has since linked their identities from a third party identity manager. DataFed will select the first identity when logging in.",
+                                        );
+                                    }
+                                    let username = reply.user[0]?.uid?.replace(/^u\//, "");
                                     logger.info(
                                         "/ui/authn",
                                         getCurrentLineNumber(),
@@ -604,7 +607,7 @@ the registration page.
                                             uid +
                                             " verified, mapped to: " +
                                             username +
-					    " acc:" +
+                                            " acc:" +
                                             xfr_token.access_token +
                                             ", ref: " +
                                             xfr_token.refresh_token +
