@@ -16,7 +16,9 @@ module.exports = router;
 router
     .post("/create", function (req, res) {
         let client = null;
-        let result;
+        let result = {};
+        let doc;
+        let _key, _rev;
         try { 
             g_db._executeTransaction({
                 collections: {
@@ -26,7 +28,7 @@ router
                 action: function () {
                     client = g_lib.getUserFromClientID(req.queryParams.client);
                     var id = g_lib.resolveDataCollID(req.queryParams.subject, client);
-                    let doc = g_db._document(id);
+                    doc = g_db._document(id);
                     logger.logRequestStarted({
                         client: client?._id,
                         correlationId: req.headers["x-correlation-id"],
@@ -110,7 +112,9 @@ router
                 },
             });
         } catch (e) {
-            ({ _key, _rev, ...result } = doc);
+            if (doc) {
+                ({ _key, _rev, ...result } = doc);
+            }
             logger.logRequestFailure({
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
@@ -140,7 +144,7 @@ router
 router
     .post("/update", function (req, res) {
         let client = null;
-        let result;
+        let result,doc,_key,_rev;
         try { 
                 g_db._executeTransaction({
                 collections: {
@@ -272,11 +276,7 @@ router
                         results: [note],
                         updates: Object.values(updates),
                     });
-<<<<<<< HEAD
                     ({ _key, _rev, ...result } = doc);
-=======
-                    var { _key, _rev, ...result } = doc;
->>>>>>> 186c635c6382653c8f2e885a882f2843ab17dccd
                     logger.logRequestSuccess({
                         client: client?._id,
                         correlationId: req.headers["x-correlation-id"],
@@ -289,8 +289,10 @@ router
                 },
             });
         } catch (e) {
-            ({ _key, _rev, ...result } = doc);
-             logger.logRequestFailure({
+            if (doc) {
+                ({ _key, _rev, ...result } = doc);
+            }
+            logger.logRequestFailure({
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
@@ -516,8 +518,7 @@ router
                 description: "List annotations by subject",
             });
 
-            var results,
-                qry,
+                var qry,
                 id = g_lib.resolveDataCollID(req.queryParams.subject, client);
 
             if (!client) {
