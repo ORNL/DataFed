@@ -15,21 +15,9 @@ module.exports = router;
 
 router
     .post("/create", function (req, res) {
-        var client = null;
-        try {
-            client = req.queryParams.client
-                ? g_lib.getUserFromClientID(req.queryParams.client)
-                : null;
-
-            logger.logRequestStarted({
-                client: client?._id,
-                correlationId: req.headers["x-correlation-id"],
-                httpVerb: "POST",
-                routePath: basePath + "/create",
-                status: "Started",
-                description: "Create an annotation on an object",
-            });
-
+        let client = null;
+        let result;
+        try { 
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn", "d", "c"],
@@ -38,7 +26,15 @@ router
                 action: function () {
                     client = g_lib.getUserFromClientID(req.queryParams.client);
                     var id = g_lib.resolveDataCollID(req.queryParams.subject, client);
-                    var doc = g_db._document(id);
+                    let doc = g_db._document(id);
+                    logger.logRequestStarted({
+                        client: client?._id,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "POST",
+                        routePath: basePath + "/create",
+                        status: "Started",
+                        description: "Create an annotation on an object",
+                    });
 
                     if (!permissions.hasAdminPermObject(client, id)) {
                         if (
@@ -100,7 +96,7 @@ router
                         results: [note.new],
                         updates: Object.values(updates),
                     });
-                    var { _key, _rev, ...result } = doc; 
+                    ({ _key, _rev, ...result } = doc); 
                     logger.logRequestSuccess({
                         client: client?._id,
                         correlationId: req.headers["x-correlation-id"],
@@ -113,6 +109,7 @@ router
                 },
             });
         } catch (e) {
+            ({ _key, _rev, ...result } = doc);
             logger.logRequestFailure({
                     client: client?._id,
                     correlationId: req.headers["x-correlation-id"],
@@ -141,25 +138,24 @@ router
 
 router
     .post("/update", function (req, res) {
-        var client = null;
-        try {
-            client = g_lib.getUserFromClientID(req.queryParams.client);
-            logger.logRequestStarted({
-                client: client?._id,
-                correlationId: req.headers["x-correlation-id"],
-                httpVerb: "POST",
-                routePath: basePath + "/update",
-                status: "Started",
-                description: "Update an annotation",
-            });
-
-            g_db._executeTransaction({
+        let client = null;
+        let result;
+        try { 
+                g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn"],
                     write: ["d", "n", "note"],
                 },
                 action: function () {
                     client = g_lib.getUserFromClientID(req.queryParams.client);
+                    logger.logRequestStarted({
+                        client: client?._id,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "POST",
+                        routePath: basePath + "/update",
+                        status: "Started",
+                        description: "Update an annotation",
+                    });
 
                     if (!req.queryParams.id.startsWith("n/"))
                         throw [
@@ -275,7 +271,7 @@ router
                         results: [note],
                         updates: Object.values(updates),
                     });
-                    var { _key, _rev, ...result } = doc; 
+                    ({ _key, _rev, ...result } = doc);
                     logger.logRequestSuccess({
                         client: client?._id,
                         correlationId: req.headers["x-correlation-id"],
@@ -288,6 +284,7 @@ router
                 },
             });
         } catch (e) {
+            ({ _key, _rev, ...result } = doc);
              logger.logRequestFailure({
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
@@ -316,19 +313,9 @@ router
 
 router
     .post("/comment/edit", function (req, res) {
-        var client = null;
-        var note = null;
-        try {
-            client = g_lib.getUserFromClientID(req.queryParams.client);
-            logger.logRequestStarted({
-                client: client?._id,
-                correlationId: req.headers["x-correlation-id"],
-                httpVerb: "POST",
-                routePath: basePath + "/comment/edit",
-                status: "Started",
-                description: "Edit an annotation comment"
-            });
-
+        let client = null;
+        let note = null;
+        try { 
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn"],
@@ -336,6 +323,14 @@ router
                 },
                 action: function () {
                     client = g_lib.getUserFromClientID(req.queryParams.client);
+                    logger.logRequestStarted({
+                        client: client?._id,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "POST",
+                        routePath: basePath + "/comment/edit",
+                        status: "Started",
+                        description: "Edit an annotation comment"
+                    });
 
                     if (!req.queryParams.id.startsWith("n/"))
                         throw [
@@ -387,7 +382,7 @@ router
                 },
             });
         } catch (e) {
-            logger.logRequestSuccess({
+            logger.logRequestFailure({
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
@@ -409,7 +404,7 @@ router
 
 router
     .get("/view", function (req, res) {
-        var client = null;
+        let client = null;
         try {
             client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
             logger.logRequestStarted({
@@ -505,6 +500,7 @@ router
 router
     .get("/list/by_subject", function (req, res) {
         let client = null;
+        let results = null;
         try {
             client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
             logger.logRequestStarted({
@@ -551,7 +547,7 @@ router
                 routePath: basePath + "/list/by_subject",
                 status: "Success",
                 description: "List annotations by subject",
-                extra: results._countTotal,
+                extra: results?._countTotal,
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -561,7 +557,7 @@ router
                 routePath: basePath + "/list/by_subject",
                 status: "Failure",
                 description: "List annotations by subject",
-                extra: results._countTotal,
+                extra: results?._countTotal,
                 error: e
             });
             g_lib.handleException(e, res);
