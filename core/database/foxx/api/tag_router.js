@@ -66,11 +66,10 @@ router
                 routePath: basePath + "/search",
                 status: "Success",
                 description: `Search for tags by name(${req.queryParams?.name?.trim()})`,
-                extra: 
-                    {
-                     requestedName: name,
-                     returnedCount: result.length - 1, // subtract the paging object
-                    }
+                extra: {
+                    requestedName: name,
+                    returnedCount: result.length - 1, // subtract the paging object
+                },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -80,11 +79,10 @@ router
                 routePath: basePath + "/search",
                 status: "Failure",
                 description: `Search for tags by name(${req.queryParams?.name?.trim()})`,
-                extra: 
-                    {
-                     requestedName: name,
-                     returnedCount: result.length - 1, // subtract the paging object
-                    },
+                extra: {
+                    requestedName: name,
+                    returnedCount: result.length - 1, // subtract the paging object
+                },
                 error: e,
             });
             g_lib.handleException(e, res);
