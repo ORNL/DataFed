@@ -3,13 +3,13 @@ SCRIPT=$(realpath "${BASH_SOURCE[0]}")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/..")
 
-source "${PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_versions.sh"
+source "${PROJECT_ROOT}/scripts/dependency_versions.sh"
 
 # This script should be run after generating the .env file as it will pull
 # values from the .env file
 Help() {
-  echo "$(basename $0) generate globus files. Note the .env file must exist."
-  echo " in the specified directory."
+  echo "$(basename $0) generate credentials for the DataFed Web Server."
+  echo "Note the .env file must exist in the specified directory."
   echo
   echo "Syntax: $(basename $0) [-h|d]"
   echo "options:"
@@ -81,9 +81,7 @@ sed -i 's/=\([^"]*\)/="\1"/' "${DIRECTORY}/.env_shell"
 # Cleanup after loading env
 rm "${DIRECTORY}/.env_shell"
 
-DATAFED_GLOBUS_DEPLOYMENT_KEY_PATH="$DATAFED_HOST_DEPLOYMENT_KEY_PATH" \
-  DATAFED_GLOBUS_CRED_FILE_PATH="$DATAFED_HOST_CRED_FILE_PATH" \
-  DATAFED_GLOBUS_CONTROL_PORT="$DATAFED_GLOBUS_CONTROL_PORT" \
-  DATAFED_GLOBUS_SUBSCRIPTION="$DATAFED_GLOBUS_SUBSCRIPTION" \
+DATAFED_GLOBUS_REDIRECT_CRED_FILE_PATH="$DATAFED_GLOBUS_REDIRECT_CRED_FILE_PATH" \
   DATAFED_GCS_ROOT_NAME="$DATAFED_GCS_ROOT_NAME" \
-  "python${DATAFED_PYTHON_VERSION}" "${PROJECT_ROOT}/scripts/globus/initialize_globus_endpoint.py"
+  DATAFED_DOMAIN="$DATAFED_DOMAIN" \
+  "python${DATAFED_PYTHON_VERSION}" "${PROJECT_ROOT}/scripts/globus/generate_web_server_credentials.py"
