@@ -19,7 +19,7 @@ router
         let result = {};
         let doc;
         let _key, _rev;
-        try { 
+        try {
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn", "d", "c"],
@@ -99,7 +99,7 @@ router
                         results: [note.new],
                         updates: Object.values(updates),
                     });
-                    ({ _key, _rev, ...result } = doc); 
+                    ({ _key, _rev, ...result } = doc);
                     logger.logRequestSuccess({
                         client: client?._id,
                         correlationId: req.headers["x-correlation-id"],
@@ -144,9 +144,9 @@ router
 router
     .post("/update", function (req, res) {
         let client = null;
-        let result,doc,_key,_rev;
-        try { 
-                g_db._executeTransaction({
+        let result, doc, _key, _rev;
+        try {
+            g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn"],
                     write: ["d", "n", "note"],
@@ -322,7 +322,7 @@ router
     .post("/comment/edit", function (req, res) {
         let client = null;
         let note = null;
-        try { 
+        try {
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn"],
@@ -336,7 +336,7 @@ router
                         httpVerb: "POST",
                         routePath: basePath + "/comment/edit",
                         status: "Started",
-                        description: "Edit an annotation comment"
+                        description: "Edit an annotation comment",
                     });
 
                     if (!req.queryParams.id.startsWith("n/"))
@@ -518,7 +518,7 @@ router
                 description: "List annotations by subject",
             });
 
-                var qry,
+            var qry,
                 id = g_lib.resolveDataCollID(req.queryParams.subject, client);
 
             if (!client) {
@@ -563,7 +563,7 @@ router
                 status: "Failure",
                 description: "List annotations by subject",
                 extra: results?._countTotal,
-                error: e
+                error: e,
             });
             g_lib.handleException(e, res);
         }
