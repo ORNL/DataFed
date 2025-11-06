@@ -64,7 +64,6 @@ describe("getGlobusConsentURL", function () {
                 refresh_tokens: false,
                 requested_scopes,
                 query_params: "{}",
-                state: "_default",
             });
             options.success({ consent_url: "http://example.com" });
         });
