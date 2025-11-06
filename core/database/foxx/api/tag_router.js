@@ -17,6 +17,7 @@ module.exports = router;
 router
     .post("/search", function (req, res) {
         let client = null;
+        let cnt = null;
         try {
             client = req.queryParams.client
                 ? g_lib.getUserFromClientID(req.queryParams.client)
@@ -33,9 +34,9 @@ router
             if (name.length < 3)
                 throw [error.ERR_INVALID_PARAM, "Input is too short for tag search."];
 
-            var off = req.queryParams.offset ? req.queryParams.offset : 0,
-                cnt = req.queryParams.count ? req.queryParams.count : 50,
-                result = g_db._query(
+            var off = req.queryParams.offset ? req.queryParams.offset : 0;
+            cnt = req.queryParams.count ? req.queryParams.count : 50;
+            var result = g_db._query(
                     "for t in tagview search analyzer(t._key in tokens(@name,'tag_name'), 'tag_name') let s = BM25(t) sort s desc limit @off,@cnt return {name: t._key, count: t.count}",
                     {
                         name: name,
@@ -64,8 +65,12 @@ router
                 httpVerb: "POST",
                 routePath: basePath + "/search",
                 status: "Success",
-                description: "Search for tags by name",
-                extra: result,
+                description: `Search for tags by name(${req.queryParams?.name?.trim()})`,
+                extra: 
+                    {
+                     requestedName: name,
+                     returnedCount: result.length - 1, // subtract the paging object
+                    }
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -74,8 +79,12 @@ router
                 httpVerb: "POST",
                 routePath: basePath + "/search",
                 status: "Failure",
-                description: "Search for tags by name",
-                extra: result,
+                description: `Search for tags by name(${req.queryParams?.name?.trim()})`,
+                extra: 
+                    {
+                     requestedName: name,
+                     returnedCount: result.length - 1, // subtract the paging object
+                    },
                 error: e,
             });
             g_lib.handleException(e, res);
