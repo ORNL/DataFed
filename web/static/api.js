@@ -1019,13 +1019,19 @@ export function themeSave(a_theme, a_cb) {
     _asyncGet("/ui/theme/save?theme=" + encodeURIComponent(a_theme), null, a_cb);
 }
 
+function generateState() {
+    const array = new Uint8Array(16);
+    window.crypto.getRandomValues(array);
+    return Array.from(array, b => b.toString(16).padStart(2, "0")).join("");
+}
+
 export function getGlobusConsentURL(
     a_cb,
     collection_id,
     requested_scopes,
     refresh_tokens = false,
     query_params = {},
-    state = "_default",
+    state = generateState(),
 ) {
     _asyncGet(
         "/api/globus/consent_url",
