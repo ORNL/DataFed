@@ -122,7 +122,7 @@ router
                 routePath: basePath + "/create",
                 status: "Failure",
                 description: "Create an annotation on an object",
-                extra: null,
+                extra: result,
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -299,7 +299,7 @@ router
                 routePath: basePath + "/update",
                 status: "Failure",
                 description: "Update an annotation",
-                extra: null,
+                extra: result,
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -394,7 +394,7 @@ router
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/comment/edit",
-                status: "Success",
+                status: "Failure",
                 description: "Edit an annotation comment",
                 extra: note,
                 error: e,
@@ -633,7 +633,7 @@ router
                 routePath: basePath + "/purge",
                 status: "Failure",
                 description: "Purge old closed annotations",
-                extra: id,
+                extra: { last_purged_note: id },
                 error: e,
             });
             g_lib.handleException(e, res);
