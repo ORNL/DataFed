@@ -18,6 +18,7 @@ router
     .post("/search", function (req, res) {
         let client = null;
         let result = null;
+        let total = null;
         try {
             client = req.queryParams.client
                 ? g_lib.getUserFromClientID(req.queryParams.client)
@@ -47,7 +48,7 @@ router
                     fullCount: true,
                 },
             );
-            var tot = result.getExtra().stats.fullCount;
+            tot = result.getExtra().stats.fullCount;
 
             result = result.toArray();
             result.push({
@@ -69,6 +70,7 @@ router
                 extra: {
                     requestedName: name,
                     returnedCount: result?.length - 1, // subtract the paging object
+                    total_found: tot,
                 },
             });
         } catch (e) {
@@ -82,6 +84,7 @@ router
                 extra: {
                     requestedName: name,
                     returnedCount: result?.length - 1, // subtract the paging object
+                    total_found: tot,
                 },
                 error: e,
             });
@@ -148,7 +151,7 @@ router
                         routePath: basePath + "/list/by_count",
                         status: "Success",
                         description: "List tags by count",
-                        extra: { total_matching_tag: tot },
+                        extra: { total_tags: tot },
                     });
                 },
             });
@@ -160,7 +163,7 @@ router
                 routePath: basePath + "/list/by_count",
                 status: "Failure",
                 description: "List tags by count",
-                extra: { total_matching_tag: tot },
+                extra: { total_tags: tot },
                 error: e,
             });
 
