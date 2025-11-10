@@ -35,7 +35,7 @@ router
                         httpVerb: "POST",
                         routePath: basePath + "/create",
                         status: "Started",
-                        description: "Create an annotation on an object",
+                        description: "Create an annotation on an object " + req.queryParams.subject,
                     });
 
                     if (!permissions.hasAdminPermObject(client, id)) {
@@ -106,7 +106,7 @@ router
                         httpVerb: "POST",
                         routePath: basePath + "/create",
                         status: "Success",
-                        description: "Create an annotation on an object",
+                        description: "Create an annotation on an object " + req.queryParams.subject,
                         extra: result,
                     });
                 },
@@ -121,7 +121,7 @@ router
                 httpVerb: "POST",
                 routePath: basePath + "/create",
                 status: "Failure",
-                description: "Create an annotation on an object",
+                description: "Create an annotation on an object " + req.queryParams.subject,
                 extra: result,
                 error: e,
             });
@@ -159,7 +159,7 @@ router
                         httpVerb: "POST",
                         routePath: basePath + "/update",
                         status: "Started",
-                        description: "Update an annotation",
+                        description: "Update annotation " + req.queryParams.id,
                     });
 
                     if (!req.queryParams.id.startsWith("n/"))
@@ -283,7 +283,7 @@ router
                         httpVerb: "POST",
                         routePath: basePath + "/update",
                         status: "Success",
-                        description: "Update an annotation",
+                        description: "Update annotation " + req.queryParams.id,
                         extra: result,
                     });
                 },
@@ -298,7 +298,7 @@ router
                 httpVerb: "POST",
                 routePath: basePath + "/update",
                 status: "Failure",
-                description: "Update an annotation",
+                description: "Update annotation " + req.queryParams.id,
                 extra: result,
                 error: e,
             });
@@ -336,7 +336,7 @@ router
                         httpVerb: "POST",
                         routePath: basePath + "/comment/edit",
                         status: "Started",
-                        description: "Edit an annotation comment",
+                        description: "Edit annotation comment " + req.queryParams.id,
                     });
 
                     if (!req.queryParams.id.startsWith("n/"))
@@ -383,7 +383,7 @@ router
                         httpVerb: "POST",
                         routePath: basePath + "/comment/edit",
                         status: "Success",
-                        description: "Edit an annotation comment",
+                        description: "Edit annotation comment " + req.queryParams.id,
                         extra: note,
                     });
                 },
@@ -395,7 +395,7 @@ router
                 httpVerb: "POST",
                 routePath: basePath + "/comment/edit",
                 status: "Failure",
-                description: "Edit an annotation comment",
+                description: "Edit an annotation comment " + req.queryParams.id,
                 extra: note,
                 error: e,
             });
@@ -420,7 +420,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/view",
                 status: "Started",
-                description: "Edit an annotation comment",
+                description: "View annotation " + req.queryParams.id,
             });
 
             if (!req.queryParams.id.startsWith("n/"))
@@ -480,7 +480,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/view",
                 status: "Success",
-                description: "View annotation",
+                description: "View annotation " + req.queryParams.id,
                 extra: note,
             });
         } catch (e) {
@@ -490,7 +490,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/view",
                 status: "Failure",
-                description: "View annotation",
+                description: "View annotation " + req.queryParams.id,
                 extra: note,
                 error: e,
             });
@@ -515,7 +515,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/list/by_subject",
                 status: "Started",
-                description: "List annotations by subject",
+                description: "List annotations by subject " + req.queryParams.subject,
             });
 
             var qry,
@@ -551,7 +551,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/list/by_subject",
                 status: "Success",
-                description: "List annotations by subject",
+                description: "List annotations by subject " + req.queryParams.subject,
                 extra: results?._countTotal,
             });
         } catch (e) {
@@ -561,7 +561,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/list/by_subject",
                 status: "Failure",
-                description: "List annotations by subject",
+                description: "List annotations by subject " + req.queryParams.subject,
                 extra: results?._countTotal,
                 error: e,
             });
@@ -586,7 +586,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/purge",
                 status: "Started",
-                description: "Purge old closed annotations",
+                description: "Purge old closed annotations older than " + req.queryParams.age_sec,
             });
 
             g_db._executeTransaction({
@@ -622,7 +622,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/purge",
                 status: "Success",
-                description: "Purge old closed annotations",
+                description: "Purge old closed annotations older than " + req.queryParams.age_sec,
                 extra: `Ids of purged notes: ${purgedIds.join(", ")}`,
             });
         } catch (e) {
@@ -632,7 +632,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/purge",
                 status: "Failure",
-                description: "Purge old closed annotations",
+                description: "Purge old closed annotations older than " + req.queryParams.age_sec,
                 extra: { last_purged_note: id },
                 error: e,
             });
