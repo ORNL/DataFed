@@ -37,16 +37,16 @@ router
             var off = req.queryParams.offset ? req.queryParams.offset : 0;
             var cnt = req.queryParams.count ? req.queryParams.count : 50;
             result = g_db._query(
-                    "for t in tagview search analyzer(t._key in tokens(@name,'tag_name'), 'tag_name') let s = BM25(t) sort s desc limit @off,@cnt return {name: t._key, count: t.count}",
-                    {
-                        name: name,
-                        off: off,
-                        cnt: cnt,
-                    },
-                    {
-                        fullCount: true,
-                    },
-                );
+                "for t in tagview search analyzer(t._key in tokens(@name,'tag_name'), 'tag_name') let s = BM25(t) sort s desc limit @off,@cnt return {name: t._key, count: t.count}",
+                {
+                    name: name,
+                    off: off,
+                    cnt: cnt,
+                },
+                {
+                    fullCount: true,
+                },
+            );
             var tot = result.getExtra().stats.fullCount;
 
             result = result.toArray();
@@ -66,11 +66,10 @@ router
                 routePath: basePath + "/search",
                 status: "Success",
                 description: `Search for tags by name(${req.queryParams?.name?.trim()})`,
-                extra: 
-                    {
-                     requestedName: name,
-                     returnedCount: result?.length - 1, // subtract the paging object
-                    }
+                extra: {
+                    requestedName: name,
+                    returnedCount: result?.length - 1, // subtract the paging object
+                },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -80,11 +79,10 @@ router
                 routePath: basePath + "/search",
                 status: "Failure",
                 description: `Search for tags by name(${req.queryParams?.name?.trim()})`,
-                extra: 
-                    {
-                     requestedName: name,
-                     returnedCount: result?.length - 1, // subtract the paging object
-                    },
+                extra: {
+                    requestedName: name,
+                    returnedCount: result?.length - 1, // subtract the paging object
+                },
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -150,7 +148,7 @@ router
                         routePath: basePath + "/list/by_count",
                         status: "Success",
                         description: "List tags by count",
-                        extra: {"total_matching_tag": tot},
+                        extra: { total_matching_tag: tot },
                     });
                 },
             });
@@ -162,7 +160,7 @@ router
                 routePath: basePath + "/list/by_count",
                 status: "Failure",
                 description: "List tags by count",
-                extra: {"total_matching_tag": tot},
+                extra: { total_matching_tag: tot },
                 error: e,
             });
 
