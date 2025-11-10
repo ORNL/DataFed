@@ -17,7 +17,7 @@ module.exports = router;
 router
     .post("/search", function (req, res) {
         let client = null;
-        let cnt = null;
+        let result = null;
         try {
             client = req.queryParams.client
                 ? g_lib.getUserFromClientID(req.queryParams.client)
@@ -35,8 +35,8 @@ router
                 throw [error.ERR_INVALID_PARAM, "Input is too short for tag search."];
 
             var off = req.queryParams.offset ? req.queryParams.offset : 0;
-            cnt = req.queryParams.count ? req.queryParams.count : 50;
-            var result = g_db._query(
+            var cnt = req.queryParams.count ? req.queryParams.count : 50;
+            result = g_db._query(
                     "for t in tagview search analyzer(t._key in tokens(@name,'tag_name'), 'tag_name') let s = BM25(t) sort s desc limit @off,@cnt return {name: t._key, count: t.count}",
                     {
                         name: name,
@@ -46,8 +46,8 @@ router
                     {
                         fullCount: true,
                     },
-                ),
-                tot = result.getExtra().stats.fullCount;
+                );
+            var tot = result.getExtra().stats.fullCount;
 
             result = result.toArray();
             result.push({
@@ -69,7 +69,7 @@ router
                 extra: 
                     {
                      requestedName: name,
-                     returnedCount: result.length - 1, // subtract the paging object
+                     returnedCount: result?.length - 1, // subtract the paging object
                     }
             });
         } catch (e) {
@@ -83,7 +83,7 @@ router
                 extra: 
                     {
                      requestedName: name,
-                     returnedCount: result.length - 1, // subtract the paging object
+                     returnedCount: result?.length - 1, // subtract the paging object
                     },
                 error: e,
             });
@@ -150,7 +150,7 @@ router
                         routePath: basePath + "/list/by_count",
                         status: "Success",
                         description: "List tags by count",
-                        extra: tot,
+                        extra: {"total_matching_tag": tot},
                     });
                 },
             });
@@ -162,7 +162,7 @@ router
                 routePath: basePath + "/list/by_count",
                 status: "Failure",
                 description: "List tags by count",
-                extra: tot,
+                extra: {"total_matching_tag": tot},
                 error: e,
             });
 
