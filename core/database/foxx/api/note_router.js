@@ -385,10 +385,10 @@ router
                         status: "Success",
                         description: "Edit annotation comment " + req.queryParams.id,
                         extra: {
-                                title: note.new.title,
-                                creator: note.new.creator,
-                                comments: note.new.comments,
-                            },
+                            title: note.new.title,
+                            creator: note.new.creator,
+                            comments: note.new.comments,
+                        },
                     });
                 },
             });
@@ -486,10 +486,10 @@ router
                 status: "Success",
                 description: "View annotation " + req.queryParams.id,
                 extra: {
-                        title: note.title,
-                        creator: note.creator,
-                        comments: note.comments,
-                        },
+                    title: note.title,
+                    creator: note.creator,
+                    comments: note.comments,
+                },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -500,10 +500,10 @@ router
                 status: "Failure",
                 description: "View annotation " + req.queryParams.id,
                 extra: {
-                        title: note?.title,
-                        creator: note?.creator,
-                        comments: note?.comments,
-                        },
+                    title: note?.title,
+                    creator: note?.creator,
+                    comments: note?.comments,
+                },
                 error: e,
             });
 
