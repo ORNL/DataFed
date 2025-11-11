@@ -384,7 +384,11 @@ router
                         routePath: basePath + "/comment/edit",
                         status: "Success",
                         description: "Edit annotation comment " + req.queryParams.id,
-                        extra: note,
+                        extra: {
+                                title: note.new.title,
+                                creator: note.new.creator,
+                                comments: note.new.comments,
+                            },
                     });
                 },
             });
@@ -396,7 +400,7 @@ router
                 routePath: basePath + "/comment/edit",
                 status: "Failure",
                 description: "Edit an annotation comment " + req.queryParams.id,
-                extra: note,
+                extra: note.new,
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -481,7 +485,11 @@ router
                 routePath: basePath + "/view",
                 status: "Success",
                 description: "View annotation " + req.queryParams.id,
-                extra: note,
+                extra: {
+                        title: note.title,
+                        creator: note.creator,
+                        comments: note.comments,
+                        },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -491,7 +499,11 @@ router
                 routePath: basePath + "/view",
                 status: "Failure",
                 description: "View annotation " + req.queryParams.id,
-                extra: note,
+                extra: {
+                        title: note?.title,
+                        creator: note?.creator,
+                        comments: note?.comments,
+                        },
                 error: e,
             });
 
@@ -579,7 +591,7 @@ router
         let id = null;
         const purgedIds = [];
         try {
-            client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
+            client = req.queryParams?.client;
             logger.logRequestStarted({
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
