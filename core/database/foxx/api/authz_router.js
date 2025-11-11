@@ -14,7 +14,17 @@ module.exports = router;
 
 router
     .get("/gridftp", function (req, res) {
+        let client = null;
         try {
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/gridftp",
+                status: "Started",
+                description: "Checks authorization",
+            });
             console.log(
                 "/gridftp start authz client",
                 req.queryParams.client,
@@ -39,7 +49,7 @@ router
             // "max_sav_qry" : 20,
             // :
             // "email" : "bobjones@gmail.com"
-            const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
+            client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
             if (!client) {
                 console.log(
                     "AUTHZ act: " +
@@ -92,7 +102,27 @@ router
                     req.queryParams.file +
                     " SUCCESS",
             );
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/gridftp",
+                status: "Success",
+                description: "Checks authorization",
+                extra: client,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/gridftp",
+                status: "Success",
+                description: "Checks authorization",
+                extra: client,
+                error: e
+            });
+
             g_lib.handleException(e, res);
         }
     })
@@ -113,11 +143,22 @@ router
 
 router
     .get("/perm/check", function (req, res) {
+        let client = null;
+        let result = null;
         try {
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/perm/check",
+                status: "Started",
+                description: "Checks client permissions for object",
+            });
+
             var perms = req.queryParams.perms ? req.queryParams.perms : permissions.PERM_ALL;
-            var obj,
-                result = true,
+            var obj;
+            result = true,
                 id = g_lib.resolveID(req.queryParams.id, client),
                 ty = id[0];
 
@@ -172,7 +213,26 @@ router
             res.send({
                 granted: result,
             });
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/perm/check",
+                status: "Success",
+                description: "Checks client permissions for object",
+                extra: result,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/perm/check",
+                status: "Failure",
+                description: "Checks client permissions for object",
+                extra: result,
+                error: e
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -184,9 +244,20 @@ router
 
 router
     .get("/perm/get", function (req, res) {
+        let client = null;
+        let result = null;
         try {
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
-            var result = req.queryParams.perms ? req.queryParams.perms : permissions.PERM_ALL;
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/perm/get",
+                status: "Started",
+                description: "Gets client permissions for object",
+            });
+
+            result = req.queryParams.perms ? req.queryParams.perms : permissions.PERM_ALL;
             var obj,
                 id = g_lib.resolveID(req.queryParams.id, client),
                 ty = id[0];
@@ -220,7 +291,26 @@ router
             res.send({
                 granted: result,
             });
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/perm/get",
+                status: "Success",
+                description: "Gets client permissions for object",
+                extra: result
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/perm/get",
+                status: "Success",
+                description: "Gets client permissions for object",
+                extra: result,
+                error: e
+            });
             g_lib.handleException(e, res);
         }
     })
