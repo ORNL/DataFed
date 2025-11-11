@@ -18,7 +18,7 @@ router
     .post("/search", function (req, res) {
         let client = null;
         let result = null;
-        let total = null;
+        let tot = null;
         try {
             client = req.queryParams.client
                 ? g_lib.getUserFromClientID(req.queryParams.client)
