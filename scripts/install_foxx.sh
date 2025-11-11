@@ -161,13 +161,38 @@ fi
 
 url="${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_api/database/user"
 # Do not output to /dev/null we need the output
-code=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl ${local_CURL_SSL_ARG} -s -o /dev/null -w "%{http_code}" --user "$basic_auth" "$url")
 
-if [[ "$code" != "200" ]]; then
-  echo "ERROR - Attempting to connect to database at $url"
-  echo "        HTTP code is: $code"
-  exit 1
-fi
+max_retries=3
+retry_delay=5
+
+for attempt in $(seq 1 $max_retries); do
+  set +e
+  code=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" \
+    curl ${local_CURL_SSL_ARG} -s -o /dev/null -w "%{http_code}" \
+    --user "$basic_auth" "$url")
+  error_code=$?
+  set -e
+
+  if [[ "$error_code" -eq 0 && "$code" -eq 200 ]]; then
+    echo "INFO - Attempting to connect to database at $url"
+    echo "       HTTP code is: $code"
+    echo "       Succeeded"
+    break
+  fi
+
+  if [[ "$attempt" -lt "$max_retries" ]]; then
+    echo "WARNING - Attempting to connect to database at $url"
+    echo "          HTTP code is: $code"
+    echo "          Failed"
+    echo "          Retrying in ${retry_delay}s..."
+    sleep "$retry_delay"
+  else
+    echo "ERROR - Attempting to connect to database at $url"
+    echo "        HTTP code is: $code"
+    echo "        Failed after $max_retries"
+    exit 1
+  fi
+done
 
 url2="${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_api/database"
 # We are now going to initialize the DataFed database in Arango, but only if sdms database does
