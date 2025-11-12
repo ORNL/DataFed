@@ -74,9 +74,32 @@ class API:
         self._cur_sel = None
         self._cur_ep = None
         self._cur_alias_prefix = ""
+        self._pending_device_code = None
 
         self.cfg = Config.API(opts)
         _opts = self._setSaneDefaultOptions()
+
+        client_token = _opts.get("client_token")
+        if client_token:
+            try:
+                token_valid = self.validateAccessToken(client_token)
+            except Exception:
+                token_valid = False
+
+            if not token_valid:
+                refresh_token = self.cfg.get("client_refresh_token")
+                if refresh_token:
+                    refreshed = self.refreshDeviceAuthorization(
+                        refresh_token=refresh_token,
+                        save=True,
+                        auto_login=False,
+                    )
+                    client_token = refreshed["access_token"]
+                    _opts["client_token"] = client_token
+                else:
+                    self.cfg.set("client_token", "", save=True)
+                    self.cfg.set("client_refresh_token", "", save=True)
+                    del _opts["client_token"]
 
         self._mapi = MessageLib.API(**_opts)
         self._mapi.setNackExceptionEnabled(True)
@@ -150,6 +173,350 @@ class API:
 
         self._uid = self._mapi._uid
         self._cur_sel = self._mapi._uid
+
+    def loginByToken(self, token, save=True, refresh_token=None):
+        """
+        Manually authenticate client by access token.
+
+        Parameters
+        ----------
+        token : str
+            OAuth/OIDC access token
+        save : bool, optional
+            Persist token to the client configuration if True.
+        refresh_token : str, optional
+            Refresh token returned alongside the access token.
+        """
+        if not token:
+            raise Exception("Token authentication requires a non-empty token.")
+
+        # Reset current state to ensure a clean authentication attempt
+        self.logout()
+
+        self._mapi.manualAuthByToken(token)
+
+        self._uid = self._mapi._uid
+        self._cur_sel = self._mapi._uid
+
+        if save:
+            self.cfg.set("client_token", token, save=True)
+            if refresh_token:
+                self.cfg.set("client_refresh_token", refresh_token, save=True)
+
+    def _should_verify_tls(self):
+        """
+        Determine whether HTTPS requests should verify certificates.
+        """
+        allow_self_signed = self.cfg.get("allow_self_signed_certs")
+        if isinstance(allow_self_signed, str):
+            allow_self_signed = allow_self_signed.lower() in ("true", "1", "yes")
+        return not bool(allow_self_signed)
+
+    def _get_core_api_base_url(self):
+        """
+        Resolve the base URL for the core REST API.
+        """
+        base_url = self.cfg.get("core_api_url")
+        if base_url:
+            base_url = base_url.strip()
+            if not base_url:
+                raise Exception(
+                    "Core API base URL is empty. Set 'core_api_url' to a valid HTTP(S) URL."
+                )
+            if "://" not in base_url:
+                base_url = "https://" + base_url
+            return base_url.rstrip("/")
+
+        host = self.cfg.get("server_host")
+        port = self.cfg.get("core_api_port")
+        if host and port:
+            return "https://{}:{}".format(host, port)
+
+        raise Exception(
+            "Core API base URL is not configured. Set 'core_api_url' or provide both "
+            "'server_host' and 'core_api_port'."
+        )
+
+    def _format_api_error(self, response):
+        body = response.text.strip()
+        if len(body) > 200:
+            body = body[:200] + "..."
+        return body or "empty response body"
+
+    def _core_api_request(self, path, payload, method="POST", timeout=30):
+        """
+        Issue an HTTP request to the DataFed core REST API.
+        """
+        base_url = self._get_core_api_base_url()
+        url = "{}/{}".format(base_url, path.lstrip("/"))
+        verify = self._should_verify_tls()
+
+        try:
+            response = requests.request(
+                method, url, json=payload, timeout=timeout, verify=verify
+            )
+        except requests.RequestException as exc:
+            raise Exception("Device authorization request to {} failed: {}".format(url, exc))
+
+        return response
+
+    def _parse_json_response(self, response, context):
+        try:
+            return response.json()
+        except ValueError as exc:
+            raise Exception(
+                "Failed to parse {} response: {}".format(context, exc)
+            )
+
+    def _compute_retry_after(self, response, fallback):
+        retry_after = response.headers.get("Retry-After")
+        if retry_after:
+            try:
+                wait_time = int(retry_after)
+                if wait_time > 0:
+                    return wait_time
+            except ValueError:
+                pass
+        return fallback
+
+    def startDeviceAuthorization(self, scope=None):
+        """
+        Initiate the device authorization flow.
+
+        Parameters
+        ----------
+        scope : str, optional
+            Override the configured OAuth scope request.
+
+        Returns
+        -------
+        dict :
+            Dictionary containing 'verification_uri' and 'code'.
+        """
+        scope_value = scope or self.cfg.get("device_auth_scope")
+        if not scope_value:
+            raise Exception(
+                "Device authorization scope is not configured. Set 'device_auth_scope'."
+            )
+
+        response = self._core_api_request("/auth/device", {"scope": scope_value})
+        if response.status_code != 200:
+            raise Exception(
+                "Device authorization start failed (HTTP {}): {}".format(
+                    response.status_code, self._format_api_error(response)
+                )
+            )
+
+        payload = self._parse_json_response(response, "device authorization start")
+        verification_uri = payload.get("verification_uri")
+        code = payload.get("code")
+
+        if not verification_uri or not code:
+            raise Exception(
+                "Device authorization start response missing verification URI or code."
+            )
+
+        self._pending_device_code = code
+        return {"verification_uri": verification_uri, "code": code}
+
+    def pollDeviceAuthorization(
+        self,
+        code=None,
+        poll_interval=5,
+        timeout=600,
+        save=True,
+        auto_login=True,
+    ):
+        """
+        Poll the device authorization endpoint until tokens are issued.
+
+        Parameters
+        ----------
+        code : str, optional
+            Device code returned by startDeviceAuthorization. If omitted, the most
+            recent pending code is used.
+        poll_interval : int, optional
+            Seconds between polling attempts.
+        timeout : int, optional
+            Maximum seconds to wait before timing out. Use None to wait indefinitely.
+        save : bool, optional
+            Persist any returned tokens to the configuration if True.
+        auto_login : bool, optional
+            Automatically authenticate the current session with the received access token.
+
+        Returns
+        -------
+        dict :
+            Dictionary containing 'access_token' and optional 'refresh_token'.
+        """
+        device_code = code or self._pending_device_code
+        if not device_code:
+            raise Exception(
+                "Device authorization code is not available. Call startDeviceAuthorization first."
+            )
+
+        interval = max(1, int(poll_interval))
+        deadline = time.time() + timeout if timeout else None
+
+        while True:
+            response = self._core_api_request("/auth/device/poll", {"code": device_code})
+
+            if response.status_code == 200:
+                payload = self._parse_json_response(
+                    response, "device authorization poll"
+                )
+                access_token = payload.get("access_token")
+                if not access_token:
+                    raise Exception(
+                        "Device authorization poll response missing access token."
+                    )
+
+                refresh_token = payload.get("refresh_token")
+
+                if save:
+                    self.cfg.set("client_token", access_token, save=True)
+                    if refresh_token:
+                        self.cfg.set("client_refresh_token", refresh_token, save=True)
+
+                if auto_login:
+                    self.loginByToken(
+                        access_token,
+                        save=False,
+                        refresh_token=refresh_token,
+                    )
+
+                self._pending_device_code = None
+                return payload
+
+            if response.status_code == 429:
+                wait_time = self._compute_retry_after(response, interval + 5)
+            elif response.status_code in (400, 401):
+                if deadline and time.time() >= deadline:
+                    raise TimeoutError(
+                        "Timed out waiting for device authorization to complete."
+                    )
+                time.sleep(interval)
+                continue
+            else:
+                raise Exception(
+                    "Device authorization poll failed (HTTP {}): {}".format(
+                        response.status_code, self._format_api_error(response)
+                    )
+                )
+
+            if deadline and time.time() + wait_time > deadline:
+                raise TimeoutError(
+                    "Timed out waiting for device authorization to complete."
+                )
+
+            time.sleep(wait_time)
+
+    def refreshDeviceAuthorization(
+        self,
+        refresh_token=None,
+        save=True,
+        auto_login=True,
+    ):
+        """
+        Exchange a refresh token for a new access token via the core REST API.
+
+        Parameters
+        ----------
+        refresh_token : str, optional
+            Override the stored refresh token.
+        save : bool, optional
+            Persist returned tokens to the configuration if True.
+        auto_login : bool, optional
+            Automatically authenticate the current session with the new access token.
+
+        Returns
+        -------
+        dict :
+            Dictionary containing 'access_token' and optional 'refresh_token'.
+        """
+        token = refresh_token or self.cfg.get("client_refresh_token")
+        if not token:
+            raise Exception(
+                "Refresh token is not available. Provide 'refresh_token' or authenticate via the device flow first."
+            )
+
+        response = self._core_api_request(
+            "/auth/device/refresh", {"refresh_token": token}
+        )
+
+        if response.status_code != 200:
+            if response.status_code in (400, 401):
+                raise Exception(
+                    "Stored refresh token is no longer valid. Please re-run the device authorization flow."
+                )
+
+            raise Exception(
+                "Device authorization refresh failed (HTTP {}): {}".format(
+                    response.status_code, self._format_api_error(response)
+                )
+            )
+
+        payload = self._parse_json_response(
+            response, "device authorization refresh"
+        )
+        access_token = payload.get("access_token")
+
+        if not access_token:
+            raise Exception(
+                "Device authorization refresh response missing access token."
+            )
+
+        new_refresh_token = payload.get("refresh_token") or token
+
+        if save:
+            self.cfg.set("client_token", access_token, save=True)
+            self.cfg.set("client_refresh_token", new_refresh_token, save=True)
+
+        if auto_login:
+            self.loginByToken(
+                access_token,
+                save=False,
+                refresh_token=new_refresh_token,
+            )
+
+        return {
+            "access_token": access_token,
+            "refresh_token": new_refresh_token,
+        }
+
+    def validateAccessToken(self, token=None):
+        """
+        Validate an access token using the core API.
+
+        Parameters
+        ----------
+        token : str, optional
+            Token to validate. If omitted, uses the stored client token.
+
+        Returns
+        -------
+        bool :
+            True if the token is valid; False if invalid or expired.
+        """
+        access_token = token or self.cfg.get("client_token")
+        if not access_token:
+            return False
+
+        response = self._core_api_request(
+            "/auth/legacy/validate", {"token": access_token}
+        )
+
+        if response.status_code == 200:
+            return True
+
+        if response.status_code in (400, 401):
+            return False
+
+        raise Exception(
+            "Token validation failed (HTTP {}): {}".format(
+                response.status_code, self._format_api_error(response)
+            )
+        )
 
     def generateCredentials(self):
         """
@@ -2692,6 +3059,12 @@ class API:
         if "server_port" not in opts:
             self.cfg.set("server_port", 7512)
             opts["server_port"] = 7512
+            save = True
+
+        if "device_auth_scope" not in opts:
+            default_scope = "openid offline_access"
+            self.cfg.set("device_auth_scope", default_scope)
+            opts["device_auth_scope"] = default_scope
             save = True
 
         if "allow_self_signed_certs" not in opts:
