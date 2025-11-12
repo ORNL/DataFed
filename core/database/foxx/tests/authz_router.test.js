@@ -335,7 +335,7 @@ describe("unit_authz_router: the Foxx microservice authz_router", () => {
         // assert
         expect(response.status).to.equal(204);
     });
-        //
+    //
     // ===== PERM CHECK TESTS =====
     //
     it("unit_authz_router: perm/check should return granted=true for admin user on owned record", () => {
@@ -389,5 +389,4 @@ describe("unit_authz_router: the Foxx microservice authz_router", () => {
         const response = request.get(request_string);
         expect(response.status).to.equal(400);
     });
-
 });

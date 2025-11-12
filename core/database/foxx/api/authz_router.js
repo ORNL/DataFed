@@ -127,7 +127,7 @@ router
                     id: client?._id,
                     is_admin: client?.is_admin,
                 },
-                error: e
+                error: e,
             });
 
             g_lib.handleException(e, res);
@@ -238,7 +238,7 @@ router
                 status: "Failure",
                 description: "Checks client permissions for object",
                 extra: result,
-                error: e
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -305,7 +305,7 @@ router
                 routePath: basePath + "/perm/get",
                 status: "Success",
                 description: "Gets client permissions for object",
-                extra: result
+                extra: result,
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -316,7 +316,7 @@ router
                 status: "Failure",
                 description: "Gets client permissions for object",
                 extra: result,
-                error: e
+                error: e,
             });
             g_lib.handleException(e, res);
         }
