@@ -8,8 +8,9 @@ const g_lib = require("./support");
 const error = require("./lib/error_codes");
 const permissions = require("./lib/permissions");
 const authzModule = require("./authz");
+const logger = require("./lib/logger");
 const { Repo, PathType } = require("./repo");
-
+const basePath = "";
 module.exports = router;
 
 router
@@ -109,7 +110,10 @@ router
                 routePath: basePath + "/gridftp",
                 status: "Success",
                 description: "Checks authorization",
-                extra: client,
+                extra: {
+                    id: client?._id,
+                    is_admin: client?.is_admin,
+                },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -117,9 +121,12 @@ router
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/gridftp",
-                status: "Success",
+                status: "Failure",
                 description: "Checks authorization",
-                extra: client,
+                extra: {
+                    id: client?._id,
+                    is_admin: client?.is_admin,
+                },
                 error: e
             });
 
@@ -158,8 +165,8 @@ router
 
             var perms = req.queryParams.perms ? req.queryParams.perms : permissions.PERM_ALL;
             var obj;
-            result = true,
-                id = g_lib.resolveID(req.queryParams.id, client),
+            result = true;
+            var id = g_lib.resolveID(req.queryParams.id, client),
                 ty = id[0];
 
             if (id[1] != "/") {
@@ -306,7 +313,7 @@ router
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/perm/get",
-                status: "Success",
+                status: "Failure",
                 description: "Gets client permissions for object",
                 extra: result,
                 error: e
