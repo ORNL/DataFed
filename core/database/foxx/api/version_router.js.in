@@ -5,6 +5,8 @@ const router = createRouter();
 const joi = require('joi');
 const g_db = require('@arangodb').db;
 const g_lib = require('./support');
+const logger = require("./lib/logger");
+const basePath = "";
 
 module.exports = router;
 
@@ -14,6 +16,14 @@ module.exports = router;
 
 router.get('/version', function(req, res) {
         try {
+            logger.logRequestStarted({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/version",
+                status: "Started",
+                description: "Get version numbers",
+            });
             res.send({
                 "release_year": @DATAFED_RELEASE_YEAR@,
                 "release_month": @DATAFED_RELEASE_MONTH@,
@@ -27,7 +37,26 @@ router.get('/version', function(req, res) {
                 "component_minor": @DATAFED_FOXX_MINOR@,
                 "component_patch": @DATAFED_FOXX_PATCH@
             });
+            logger.logRequestSuccess({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/version",
+                status: "Success",
+                description: "Get version numbers",
+                extra: null
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/version",
+                status: "Failure",
+                description: "Get version numbers",
+                extra: null,
+                error: e
+            });
             g_lib.handleException(e, res);
         }
     })
