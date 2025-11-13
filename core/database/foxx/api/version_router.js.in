@@ -17,7 +17,7 @@ module.exports = router;
 router.get('/version', function(req, res) {
         try {
             logger.logRequestStarted({
-                client: client,
+                client: "anonymous",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/version",
@@ -38,7 +38,7 @@ router.get('/version', function(req, res) {
                 "component_patch": @DATAFED_FOXX_PATCH@
             });
             logger.logRequestSuccess({
-                client: client,
+                client: "anonymous",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/version",
@@ -48,7 +48,7 @@ router.get('/version', function(req, res) {
             });
         } catch (e) {
             logger.logRequestFailure({
-                client: client,
+                client: "anonymous",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/version",
