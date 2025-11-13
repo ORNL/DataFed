@@ -75,23 +75,25 @@ std::ostream &operator<<(std::ostream &out, const LogLine &log_line) {
   return out;
 }
 
+uint32_t Logger::m_stream_id = 0;
+
 void Logger::output(const LogLevel level, std::string file, std::string func,
                     int line_num, const LogContext &context,
                     const std::string &message) {
 
-  size_t index = 0;
+  std::lock_guard<std::mutex> lock(m_streams_mutex); // Lock the list mutex
   for (auto &output_stream : m_streams) {
-    std::lock_guard<std::mutex> lock(*m_mutexes.at(index));
-    index++;
+    std::lock_guard<std::mutex> stream_lock(
+        *output_stream.mutex); // Lock individual stream mutex
     boost::posix_time::ptime time =
         boost::posix_time::microsec_clock::universal_time();
-    output_stream.get() << boost::posix_time::to_iso_extended_string(time)
-                        << "Z ";
-    output_stream.get() << toString(level) << " ";
-    output_stream.get() << file << ":" << func << ":" << line_num << " ";
+    output_stream.stream.get()
+        << boost::posix_time::to_iso_extended_string(time) << "Z ";
+    output_stream.stream.get() << toString(level) << " ";
+    output_stream.stream.get() << file << ":" << func << ":" << line_num << " ";
     LogLine log_line(context, message);
-    output_stream.get() << log_line;
-    output_stream.get() << std::endl;
+    output_stream.stream.get() << log_line;
+    output_stream.stream.get() << std::endl;
   }
 
   if (m_output_to_syslog) {
@@ -107,9 +109,28 @@ void Logger::output(const LogLevel level, std::string file, std::string func,
 
 void Logger::setLevel(LogLevel level) noexcept { m_log_level = level; }
 
-void Logger::addStream(std::ostream &stream) {
-  m_streams.push_back(std::ref(stream));
-  m_mutexes.emplace_back(std::make_unique<std::mutex>());
+uint32_t Logger::addStream(std::ostream &stream) {
+  std::lock_guard<std::mutex> lock(m_streams_mutex); // Lock the list mutex
+
+  // Make sure the stream id is unique
+  bool exists = true;
+  while(exists) {
+    ++m_stream_id;
+    uint32_t stream_id = m_stream_id;
+    exists = std::any_of(m_streams.begin(), m_streams.end(), 
+                          [stream_id](const StreamEntry& obj) { return obj.id == stream_id; });
+  } 
+
+  m_streams.insert(m_streams.end(),
+                             StreamEntry{stream, m_stream_id}); // Insert and get iterator
+  return m_stream_id; // Return the iterator pointing to the new stream element
+}
+
+void Logger::removeStream(const uint32_t stream_id) {
+  std::lock_guard<std::mutex> lock(m_streams_mutex); // Lock the list mutex
+
+  // Remove the object with the specified ID
+  m_streams.remove_if([stream_id](const StreamEntry& obj) { return obj.id == stream_id; });
 }
 
 void Logger::trace(std::string file, std::string func, int line_num,

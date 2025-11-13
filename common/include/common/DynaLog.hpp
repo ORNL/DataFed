@@ -9,10 +9,10 @@
 // Standard includes
 #include <functional>
 #include <iostream>
+#include <list>
 #include <memory>
 #include <mutex>
 #include <string>
-#include <vector>
 
 // Have to use macros for the line and func macros to work
 #define DL_LOG(level, context, message)                                        \
@@ -116,12 +116,29 @@ public:
 std::ostream &operator<<(std::ostream &out, const LogLine &log_line);
 
 class Logger {
+public:
+  // Define the structure for each element of list used to track
+  // streams.
+  struct StreamEntry {
+    std::reference_wrapper<std::ostream>
+        stream;                        // Reference wrapper for the stream
+    uint32_t id;                       // id for the stream
+    std::unique_ptr<std::mutex> mutex; // Mutex for thread-safe operations
+
+    StreamEntry(std::ostream &out_stream, uint32_t a_id)
+        : stream(out_stream), id(a_id), mutex(std::make_unique<std::mutex>()) {}
+  };
 private:
+  // List was chosen because we will need to be adding and removing streams that
+  // are at different points in the list this does not work well in a
+  // vector datastructure.
+  mutable std::list<StreamEntry> m_streams; // List to hold stream entries
+  mutable std::mutex m_streams_mutex;       // Mutex to protect the list 
+  static uint32_t m_stream_id;              // Used to create an id for the stream
+
   // Parameters
-  std::vector<std::reference_wrapper<std::ostream>> m_streams;
   LogLevel m_log_level = LogLevel::INFO;
   bool m_output_to_syslog = false;
-  mutable std::vector<std::unique_ptr<std::mutex>> m_mutexes;
 
   // Internal Methods
   void output(const LogLevel, std::string, std::string, int,
@@ -130,7 +147,21 @@ private:
 public:
   // Methods
   void setLevel(LogLevel) noexcept;
-  void addStream(std::ostream &stream);
+ 
+  /**
+   * Add a new stream and return an identifier to it for easy removal
+   * in the future.
+   *
+   * @note care should be taken when adding streams because they are
+   * are stored as references, if the object goes out of scope the
+   * stored reference becomes invalid. removeStream should be called
+   * befor a stream goes out of scope.
+   **/
+  uint32_t addStream(std::ostream &stream);
+
+  // Remove a stream by id, this is fast for a linked list.
+  void removeStream(const uint32_t stream_id);
+
   void setSysLog(bool on_or_off) noexcept { m_output_to_syslog = on_or_off; }
 
   void log(const LogLevel, std::string file_name, std::string func_name, int,
