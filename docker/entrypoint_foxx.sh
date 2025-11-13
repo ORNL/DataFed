@@ -67,6 +67,7 @@ if [ ! -f "$install_flag" ]; then
     -DBUILD_PYTHON_CLIENT=False
     -DBUILD_FOXX=True
     -DINSTALL_FOXX=True
+    -DENABLE_INTEGRATION_TESTS=False
   )
 
   # Add the ENABLE_FOXX_TESTS option if it's set to TRUE
