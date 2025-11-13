@@ -176,6 +176,7 @@ bool DatabaseAPI::dbGetRaw(const std::string url, string &a_result) {
   a_result.clear();
   error[0] = 0;
 
+  curl_easy_setopt(m_curl, CURLOPT_HTTPHEADER, nullptr);  // Clear any previous headers
   // attach headers to the CURL handle
   curl_easy_setopt(m_curl, CURLOPT_URL, url.c_str());
   curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, &a_result);
