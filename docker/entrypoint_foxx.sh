@@ -42,7 +42,7 @@ fi
 # we may want to keep the existing state and not overwrite the database.
 install_flag="/tmp/.foxx_is_installed"
 if [ ! -f "$install_flag" ]; then
-  echo "Installing foxx."
+  echo "INFO - Installing foxx."
   log_path="$DATAFED_DEFAULT_LOG_PATH"
   if [ ! -d "${log_path}" ]; then
     mkdir -p "${log_path}" datafed
@@ -81,9 +81,6 @@ if [ ! -f "$install_flag" ]; then
 
   "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" --build build
 
-  # Give arango container a minute to initialize
-  # should be replaced with health check at some point
-  sleep 5
   "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" --build build --target install
 
   if [ "$ENABLE_FOXX_TESTS" == "TRUE" ]; then
@@ -97,7 +94,7 @@ if [ ! -f "$install_flag" ]; then
   # Create flag to indicate container has done its job
   touch "$install_flag"
 else
-  echo "$install_flag has been found skipping reinstall"
+  echo "INFO - $install_flag has been found skipping reinstall"
 fi
 
 # Keep container alive for a little bit, the CI pipelines check that the
@@ -105,3 +102,4 @@ fi
 # might fail because it wasn't able to determine if the container actually
 # ran.
 sleep 60
+echo "INFO - Initialization of Database has completed successfully."
