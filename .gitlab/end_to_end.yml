@@ -387,8 +387,7 @@ end_to_end_client-test:
     script:
         - export DATAFED_REPO_FORM_PATH="$(pwd)/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.json"
         - env > env_file
-        - echo "Testing"
-        - source /shared/install/python/datafed/bin/activate
+        - source /opt/datafed/dependencies/python/datafed/bin/activate
         - ./scripts/generate_datafed.sh
         - >
             cmake -S. -B build
