@@ -27,6 +27,7 @@ OPTION(BUILD_PYTHON_CLIENT "Build python client" TRUE)
 OPTION(BUILD_TESTS "Build Tests" TRUE)
 OPTION(BUILD_WEB_SERVER "Build DataFed Web Server" TRUE)
 OPTION(ENABLE_UNIT_TESTS "Enable unit tests" TRUE)
+OPTION(ENABLE_INTEGRATION_TESTS "Enable integration tests" TRUE)
 OPTION(ENABLE_MEMORY_TESTS "Enable memory tests" FALSE)
 OPTION(BUILD_SHARED_LIBS "By default DataFed tries to build static libraries
 with the exception of libdatafed-authz which must always be a shared library,
@@ -52,7 +53,14 @@ if(NOT EXISTS ${DATAFED_CONFIG_SH})
     "${PROJECT_SOURCE_DIR}/scripts/generate_datafed.sh")
 endif()
 
-file(READ "${PROJECT_SOURCE_DIR}/scripts/dependency_versions.sh" DEPENDENCY_VERSIONS)
+set(DATAFED_DEPENDENCIES_SH "${DataFed_SOURCE_DIR}/external/DataFedDependencies/config/dependencies.sh")
+if(NOT EXISTS ${DATAFED_DEPENDENCIES_SH})
+  message(FATAL_ERROR "Error: File '${DATAFED_DEPENDENCIES_SH}' does not exist. "
+    "Please run generate_dependencies.sh first to populate defaults."
+    "${PROJECT_SOURCE_DIR}/external/DataFedDependencies/scripts/generate_datafed.sh")
+endif()
+
+file(READ "${PROJECT_SOURCE_DIR}/external/DataFedDependencies/scripts/dependency_versions.sh" DEPENDENCY_VERSIONS)
 
 get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_DYNAMIC_LIBRARY_PROTOBUF_VERSION" PROTOBUF_LIBRARY_VERSION)
 get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_PROTOBUF_VERSION" PROTOBUF_COMPILER_VERSION)
@@ -72,11 +80,10 @@ endif()
 
 if(NOT DEFINED DATAFED_DOMAIN)
   get_value_from_datafed_sh("DATAFED_DOMAIN" DATAFED_DOMAIN)
-  message("TESTING: DATAFED_DOMAIN : ${DATAFED_DOMAIN}")
 endif()
 
 if(NOT DEFINED DATAFED_DEPENDENCIES_INSTALL_PATH)
-  get_value_from_datafed_sh("DATAFED_DEPENDENCIES_INSTALL_PATH" DEPENDENCY_INSTALL_PATH)
+  get_value_from_dependencies_sh("DATAFED_DEPENDENCIES_INSTALL_PATH" DEPENDENCY_INSTALL_PATH)
 endif()
 
 set(CMAKE_PREFIX_PATH "${DEPENDENCY_INSTALL_PATH}")
@@ -181,12 +188,19 @@ if( BUILD_FOXX OR BUILD_CORE_SERVER )
   add_subdirectory( core )
 endif()
 
+# Must occur before building authz, location of mock keys are defined here
+# ENV DATAFED_MOCK_CORE_PUB_KEY
+if (ENABLE_INTEGRATION_TESTS OR ENABLE_END_TO_END_TESTS)
+    add_subdirectory(tests)
+endif()
+
 if( BUILD_REPO_SERVER OR BUILD_AUTHZ)
   add_subdirectory( repository )
 endif()
 
 if( BUILD_PYTHON_CLIENT )
   # make target = pydatafed
+  file(COPY ${PROJECT_SOURCE_DIR}/external/DataFedDependencies/python/datafed_pkg/requirements.txt DESTINATION ${PROJECT_SOURCE_DIR}/python/datafed_pkg/requirements.txt)
   add_subdirectory( python EXCLUDE_FROM_ALL )
 endif()
 
@@ -225,30 +239,12 @@ if( INSTALL_FOXX )
                                 OUTPUT_VARIABLE _out
                                 ERROR_VARIABLE _err
                                 RESULT_VARIABLE _res)
-                If (NOT \${_res} EQUAL \"0\")
+                if (NOT \${_res} EQUAL \"0\")
                     message( FATAL_ERROR \"out: \${_out} install_foxx failed: \${_err}\")
+                else()
+                    message( \"\${_out} install_foxx completed: \${_err}\")
                 endif()"
          )
-endif()
-
-if (ENABLE_END_TO_END_TESTS)
-	if (NOT ENABLE_END_TO_END_API_TESTS AND NOT ENABLE_END_TO_END_WEB_TESTS)
-    message (FATAL_ERROR "Cannot run end-to-end tests because one of the ENABLE_END_TO_END web or API flag is not on")
-  else()
-    add_subdirectory(tests/end-to-end)
-    add_subdirectory(tests/end-to-end/web-UI)
-  endif()
-else()
-  if (ENABLE_END_TO_END_API_TESTS)
-    if (BUILD_PYTHON_CLIENT)
-      add_subdirectory(tests/end-to-end)
-    else()
-      message (FATAL_ERROR "Cannot run end-to-end tests because BUILD_PYTHON_CLIENT is not on")
-    endif()
-  endif()
-  if (ENABLE_END_TO_END_WEB_TESTS)
-    add_subdirectory(tests/end-to-end/web-UI)
-  endif()
 endif()
 
 find_library(SODIUM NAMES libsodium.a PATHS ${DEPENDENCY_INSTALL_PATH}/lib)

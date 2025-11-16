@@ -3,7 +3,7 @@ const chai = require("chai");
 const expect = chai.expect;
 const authzModule = require("../api/authz");
 const g_db = require("@arangodb").db;
-const g_lib = require("../api/support");
+const permissions = require("../api/lib/permissions");
 const arangodb = require("@arangodb");
 
 describe("Authz functions", () => {
@@ -49,7 +49,7 @@ describe("Authz functions", () => {
                 _to: owner_id,
             });
 
-            let req_perm = g_lib.PERM_CREATE;
+            let req_perm = permissions.PERM_CREATE;
 
             expect(authzModule.isRecordActionAuthorized(client, data_key, req_perm)).to.be.true;
         });
@@ -74,7 +74,7 @@ describe("Authz functions", () => {
 
             g_db.u.save(client);
 
-            let req_perm = g_lib.PERM_CREATE;
+            let req_perm = permissions.PERM_CREATE;
 
             expect(() =>
                 authzModule.isRecordActionAuthorized(client, data_key, req_perm),
@@ -106,7 +106,7 @@ describe("Authz functions", () => {
                 _to: "u/george",
             });
 
-            let req_perm = g_lib.PERM_CREATE;
+            let req_perm = permissions.PERM_CREATE;
 
             expect(authzModule.isRecordActionAuthorized(client, data_key, req_perm)).to.be.true;
         });
@@ -156,7 +156,7 @@ describe("Authz functions", () => {
                 _from: project_id,
                 _to: bob_id,
             });
-            let req_perm = g_lib.PERM_CREATE;
+            let req_perm = permissions.PERM_CREATE;
 
             expect(authzModule.isRecordActionAuthorized(bob, data_key, req_perm)).to.be.true;
         });
@@ -198,7 +198,7 @@ describe("Authz functions", () => {
                 },
                 { waitForSync: true },
             );
-            let req_perm = g_lib.PERM_CREATE;
+            let req_perm = permissions.PERM_CREATE;
 
             expect(authzModule.isRecordActionAuthorized(bob, data_key, req_perm)).to.be.false;
         });
@@ -287,7 +287,7 @@ describe("Authz functions", () => {
                 },
                 { waitForSync: true },
             );
-            let req_perm = g_lib.PERM_CREATE;
+            let req_perm = permissions.PERM_CREATE;
 
             // Non-project admin should not have permission
             expect(authzModule.isRecordActionAuthorized(mandy, data_key, req_perm)).to.be.false;
@@ -353,7 +353,7 @@ describe("Authz functions", () => {
 
             g_db.u.save(tim, { waitForSync: true });
 
-            let req_perm = g_lib.PERM_READ;
+            let req_perm = permissions.PERM_READ;
 
             expect(authzModule.isRecordActionAuthorized(tim, data_key, req_perm)).to.be.false;
         });

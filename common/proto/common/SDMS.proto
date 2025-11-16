@@ -96,6 +96,11 @@ enum AccessTokenType {
     ACCESS_SENTINEL = 255;
 }
 
+// Used to specify how the work is being done on the servers.
+enum ExecutionMethod {
+    DIRECT = 1;
+    DEFERRED = 2;
+}
 // ============================ Data Structures
 
 // Allocation-specific statistics data
@@ -115,10 +120,11 @@ message AllocData
     required uint64             data_size   = 3;
     required uint32             rec_limit   = 4;
     required uint32             rec_count   = 5;
-    required string             path        = 6;
+    optional string             path        = 6;
     optional string             id          = 7;
     optional bool               is_def      = 8;
     optional AllocStatsData     stats       = 9;
+    optional string             repo_type   = 10;
 }
 
 // For viewing dependencies
@@ -318,6 +324,7 @@ message RepoData
     optional string             domain      = 9;
     optional string             exp_path    = 10;
     repeated string             admin       = 11;
+    optional string             type        = 12;
 }
 
 
