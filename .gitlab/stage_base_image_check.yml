@@ -1,0 +1,38 @@
+---
+check-dependencies-image:
+    stage: base-image-check
+    variables:
+        PROJECT: "datafed"
+        COMPONENT: "dependencies"
+        BUILD_INTERMEDIATE: "FALSE"
+    tags:
+        - docker
+    script:
+        - |
+            cd "$CI_PROJECT_DIR/external/DataFedDependencies"
+            BRANCH=$(git branch --show-current)
+            cd "$CI_PROJECT_DIR"
+            DOWNSTREAM_SHA=$(git submodule status ./external/DataFedDependencies/ | awk '{print $1}')
+            DOWNSTREAM_SHA="${DOWNSTREAM_SHA#-}"
+            docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
+            FORCE_BUILD="FALSE"
+            echo "Pulling: ${REGISTRY}/${PROJECT}/${COMPONENT}:${DOWNSTREAM_SHA}"
+            set +e
+            docker pull --quiet "${REGISTRY}/${PROJECT}/${COMPONENT}:${DOWNSTREAM_SHA}"
+            if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD="TRUE"; fi;
+            set -e
+            if [ "$FORCE_BUILD" == "TRUE" ]
+            then
+              cp .gitlab/build/force_build_${COMPONENT}_image.yml ${COMPONENT}_image.yml
+            else
+              cp .gitlab/build/skip_build_${COMPONENT}_image.yml ${COMPONENT}_image.yml
+            fi
+            echo "REGISTRY=${REGISTRY}" >> build.env
+            echo "HARBOR_USER=${HARBOR_USER}" >> build.env
+            echo "HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN=${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}" >> build.env
+            sed -i 's/\(HARBOR_USER=.*\)\$/\1$$/g' build.env
+    artifacts:
+        paths:
+            - ${COMPONENT}_image.yml
+        reports:
+            dotenv: build.env

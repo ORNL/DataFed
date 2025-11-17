@@ -60,13 +60,12 @@ Assuming you're at the root of the DataFed repository:
 
 Now, run the Foxx container with the appropriate environment variables to install the services and enable testing:
 
-DATAFED_DATABASE_PASSWORD, and DATAFED_ZEROMQ_SYSTEM_SECRET can be anything but they should be consistent with what is in the config/datafed.sh file.
+DATAFED_DATABASE_PASSWORD, can be anything but it should be consistent with what is in the config/datafed.sh file.
 
 .. code-block:: bash
 
    docker run \
      -e DATAFED_DATABASE_PASSWORD="<password>" \
-     -e DATAFED_ZEROMQ_SYSTEM_SECRET="<secret>" \
      -e INSTALL_FOXX=ON \
      -e ENABLE_FOXX_TESTS=TRUE \
      --user $(id -u):0 \

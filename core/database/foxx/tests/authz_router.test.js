@@ -6,7 +6,7 @@ const request = require("@arangodb/request");
 const { baseUrl } = module.context;
 const g_db = require("@arangodb").db;
 const g_lib = require("../api/support");
-
+const permissions = require("../api/lib/permissions");
 // Constants used throughout test file
 // The base URL for the authz foxx route
 const authz_base_url = `${baseUrl}/authz`;
@@ -167,8 +167,8 @@ function defaultWorkingSetupProject() {
     g_db.acl.save({
         _from: root._id,
         _to: mem_grp._id,
-        grant: g_lib.PERM_MEMBER,
-        inhgrant: g_lib.PERM_MEMBER,
+        grant: permissions.PERM_MEMBER,
+        inhgrant: permissions.PERM_MEMBER,
     });
 
     g_db.loc.save({
