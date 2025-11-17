@@ -6,6 +6,8 @@ const joi = require("joi");
 
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
+const error = require("./lib/error_codes");
+const permissions = require("./lib/permissions");
 const g_tasks = require("./tasks");
 
 module.exports = router;
@@ -47,7 +49,7 @@ router
                         .toArray();
                     if (repos.length == 0)
                         throw [
-                            g_lib.ERR_PERM_DENIED,
+                            error.ERR_PERM_DENIED,
                             "Projects can only be created by repository administrators.",
                         ];
 
@@ -63,7 +65,7 @@ router
                             .next();
                         if (count >= client.max_proj)
                             throw [
-                                g_lib.ERR_ALLOCATION_EXCEEDED,
+                                error.ERR_ALLOCATION_EXCEEDED,
                                 "Project limit reached (" +
                                     client.max_proj +
                                     "). Contact system administrator to increase limit.",
@@ -149,8 +151,8 @@ router
                     g_db.acl.save({
                         _from: root._id,
                         _to: mem_grp._id,
-                        grant: g_lib.PERM_MEMBER,
-                        inhgrant: g_lib.PERM_MEMBER,
+                        grant: permissions.PERM_MEMBER,
+                        inhgrant: permissions.PERM_MEMBER,
                     });
 
                     proj.new.admins = [];
@@ -162,7 +164,7 @@ router
                             uid = req.queryParams.admins[i];
                             if (uid == client._id) continue;
                             if (!g_db._exists(uid))
-                                throw [g_lib.ERR_NOT_FOUND, "User, " + uid + ", not found"];
+                                throw [error.ERR_NOT_FOUND, "User, " + uid + ", not found"];
 
                             g_db.admin.save({
                                 _from: proj._id,
@@ -177,7 +179,7 @@ router
                             uid = req.queryParams.members[i];
                             if (uid == client._id || proj.new.admins.indexOf(uid) != -1) continue;
                             if (!g_db._exists(uid))
-                                throw [g_lib.ERR_NOT_FOUND, "User, " + uid + ", not found"];
+                                throw [error.ERR_NOT_FOUND, "User, " + uid + ", not found"];
 
                             g_db.member.save({
                                 _from: mem_grp._id,
@@ -229,13 +231,13 @@ router
                     var proj_id = req.queryParams.id;
 
                     if (!g_db.p.exists(proj_id))
-                        throw [g_lib.ERR_INVALID_PARAM, "No such project '" + proj_id + "'"];
+                        throw [error.ERR_INVALID_PARAM, "No such project '" + proj_id + "'"];
 
                     var is_admin = true;
 
-                    if (!g_lib.hasAdminPermProj(client, proj_id)) {
-                        if (!g_lib.hasManagerPermProj(client, proj_id)) {
-                            throw g_lib.ERR_PERM_DENIED;
+                    if (!permissions.hasAdminPermProj(client, proj_id)) {
+                        if (!permissions.hasManagerPermProj(client, proj_id)) {
+                            throw error.ERR_PERM_DENIED;
                         }
                         is_admin = false;
                     }
@@ -258,7 +260,7 @@ router
                             obj.desc != undefined ||
                             req.queryParams.admins != undefined
                         ) {
-                            throw g_lib.ERR_PERM_DENIED;
+                            throw error.ERR_PERM_DENIED;
                         }
                     }
 
@@ -280,7 +282,7 @@ router
                             uid = req.queryParams.admins[i];
                             if (uid == owner_id) continue;
                             if (!g_db._exists(uid))
-                                throw [g_lib.ERR_NOT_FOUND, "User, " + uid + ", not found"];
+                                throw [error.ERR_NOT_FOUND, "User, " + uid + ", not found"];
 
                             g_db.admin.save({
                                 _from: proj_id,
@@ -333,7 +335,7 @@ router
                             uid = req.queryParams.members[i];
                             if (uid == owner_id || proj.new.admins.indexOf(uid) != -1) continue;
                             if (!g_db._exists(uid))
-                                throw [g_lib.ERR_NOT_FOUND, "User, " + uid + ", not found"];
+                                throw [error.ERR_NOT_FOUND, "User, " + uid + ", not found"];
 
                             g_db.member.save({
                                 _from: mem_grp._id,
@@ -390,7 +392,7 @@ router
             const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
 
             if (!g_db.p.exists(req.queryParams.id))
-                throw [g_lib.ERR_INVALID_PARAM, "No such project '" + req.queryParams.id + "'"];
+                throw [error.ERR_INVALID_PARAM, "No such project '" + req.queryParams.id + "'"];
 
             var proj = g_db.p.document({
                 _id: req.queryParams.id,
@@ -525,7 +527,7 @@ router
 
         var user_id;
         if (req.queryParams.subject) {
-            g_lib.ensureAdminPermUser(client, req.queryParams.subject);
+            permissions.ensureAdminPermUser(client, req.queryParams.subject);
         } else user_id = client._id;
 
         if (req.queryParams.offset != undefined && req.queryParams.count != undefined) {
@@ -646,10 +648,10 @@ router
             else subj = client._id;
 
             if (!req.queryParams.id.startsWith("p/"))
-                throw [g_lib.ERR_INVALID_PARAM, "Invalid project ID: " + req.queryParams.id];
+                throw [error.ERR_INVALID_PARAM, "Invalid project ID: " + req.queryParams.id];
 
             if (!g_db._exists(req.queryParams.id))
-                throw [g_lib.ERR_NOT_FOUND, "Project, " + req.queryParams.id + ", not found"];
+                throw [error.ERR_NOT_FOUND, "Project, " + req.queryParams.id + ", not found"];
 
             var role = g_lib.getProjectRole(subj, req.queryParams.id);
 

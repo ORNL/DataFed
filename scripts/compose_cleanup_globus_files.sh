@@ -3,7 +3,7 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/..")
 
-source "${SOURCE}/dependency_versions.sh"
+source "${PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_versions.sh"
 
 # This script should be run after generating the .env file as it will pull
 # values from the .env file
@@ -58,8 +58,8 @@ export DATAFED_GLOBUS_DEPLOYMENT_KEY_PATH="$DATAFED_HOST_DEPLOYMENT_KEY_PATH"
 export DATAFED_GLOBUS_CRED_FILE_PATH="$DATAFED_HOST_CRED_FILE_PATH"
 
 if [ -f "$DATAFED_HOST_CRED_FILE_PATH" ]; then
-  export GCS_CLI_CLIENT_ID=$(jq -r .client <"${DATAFED_HOST_CRED_FILE_PATH}")
-  export GCS_CLI_CLIENT_SECRET=$(jq -r .secret <"${DATAFED_HOST_CRED_FILE_PATH}")
+  export GCS_CLI_CLIENT_ID=$(jq -r '.client // .setup.client' <"${DATAFED_HOST_CRED_FILE_PATH}")
+  export GCS_CLI_CLIENT_SECRET=$(jq -r '.secret // .setup.secret' <"${DATAFED_HOST_CRED_FILE_PATH}")
 fi
 
 if [ -f "$DATAFED_GLOBUS_DEPLOYMENT_KEY_PATH" ]; then

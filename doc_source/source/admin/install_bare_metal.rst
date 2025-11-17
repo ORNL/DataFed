@@ -41,6 +41,8 @@ Prior to building DataFed, the build environment must be properly configured as 
 Downloading DataFed::
 
     git clone https://github.com/ORNL/DataFed.git
+    cd DataFed
+    git submodule update --init --recursive
 
 Install packages required to build DataFed:
 
@@ -50,7 +52,7 @@ Install packages required to build DataFed:
 * libboost-all-dev
 * protobuf-compiler
 * libzmq3-dev
-* libssl-dev
+* libssl-dev (version 3.0 or higher)
 * libcurl4-openssl-dev
 * libglobus-common-dev
 * libfuse-dev
@@ -71,9 +73,9 @@ The npm packages needed primarily by the web server are:
 
 This can be done with a helper scripts these scripts are for ubuntu::
 
-    ./DataFed/scripts/install_core_dependencies.sh
-    ./DataFed/scripts/install_repo_dependencies.sh
-    ./DataFed/scripts/install_ws_dependencies.sh
+    ./DataFed/external/DataFedDependencies/scripts/install_core_dependencies.sh
+    ./DataFed/external/DataFedDependencies/scripts/install_repo_dependencies.sh
+    ./DataFed/external/DataFedDependencies/scripts/install_ws_dependencies.sh
 
 The next step is to enter configuration options that are listed in ./config/datafed.sh. To
 generate a template for this file you will first need to run::
@@ -86,7 +88,6 @@ of the configuration options:
 1. DATAFED_DEFAULT_LOG_PATH - Needed by core, repo, web services
 2. DATAFED_DATABASE_PASSWORD - Needed by core
 3. DATAFED_ZEROMQ_SESSION_SECRET - Needed by web server
-4. DATAFED_ZEROMQ_SYSTEM_SECRET - Needed by web server
 5. DATAFED_LEGO_EMAIL - Needed by web server
 6. DATAFED_WEB_KEY_PATH - Needed by web server
 7. DATAFED_WEB_CERT_PATH - Needed by web server
@@ -141,8 +142,8 @@ Example download/install of ArangoDB 3.12.4 for Ubuntu::
     sudo apt-get update
     sudo apt-get install arangodb3
 
-It should start automatically with an install but to run the arangodb service, you
-can also interact with it via systemctl::
+It should start automatically with an install but to run the arangodb service,
+you can also interact with it via systemctl::
 
     sudo systemctl start arangodb3.service
 
@@ -181,7 +182,8 @@ Building the compiling the core service::
     cmake --build build --parallel 6
     sudo cmake --build build --target install
 
-Example datafed-core.cfg file::
+Example datafed-core.cfg file, note you will need to swap http for https in the
+db-url if the Arango database is running with ssl.::
 
     port = 9100
     client-threads = 4

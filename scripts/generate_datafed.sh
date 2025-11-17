@@ -6,6 +6,8 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/..)
 
+${PROJECT_ROOT}/external/DataFedDependencies/scripts/generate_dependencies_config.sh
+
 CONFIG_FILE_NAME="datafed.sh"
 PATH_TO_CONFIG_DIR=$(realpath "$PROJECT_ROOT/config")
 

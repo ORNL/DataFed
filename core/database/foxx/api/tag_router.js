@@ -2,36 +2,53 @@
 
 const createRouter = require("@arangodb/foxx/router");
 const router = createRouter();
+const error = require("./lib/error_codes");
 const joi = require("joi");
 
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
+const logger = require("./lib/logger");
 
+const basePath = "tag";
 module.exports = router;
 
 //==================== TAG API FUNCTIONS
 
 router
     .post("/search", function (req, res) {
+        let client = null;
+        let result = null;
+        let tot = null;
         try {
+            client = req.queryParams.client
+                ? g_lib.getUserFromClientID(req.queryParams.client)
+                : null;
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/search",
+                status: "Started",
+                description: `Search for tags by name (${req.queryParams?.name?.trim()})`,
+            });
             var name = req.queryParams.name.trim();
             if (name.length < 3)
-                throw [g_lib.ERR_INVALID_PARAM, "Input is too short for tag search."];
+                throw [error.ERR_INVALID_PARAM, "Input is too short for tag search."];
 
-            var off = req.queryParams.offset ? req.queryParams.offset : 0,
-                cnt = req.queryParams.count ? req.queryParams.count : 50,
-                result = g_db._query(
-                    "for t in tagview search analyzer(t._key in tokens(@name,'tag_name'), 'tag_name') let s = BM25(t) sort s desc limit @off,@cnt return {name: t._key, count: t.count}",
-                    {
-                        name: name,
-                        off: off,
-                        cnt: cnt,
-                    },
-                    {
-                        fullCount: true,
-                    },
-                ),
-                tot = result.getExtra().stats.fullCount;
+            var off = req.queryParams.offset ? req.queryParams.offset : 0;
+            var cnt = req.queryParams.count ? req.queryParams.count : 50;
+            result = g_db._query(
+                "for t in tagview search analyzer(t._key in tokens(@name,'tag_name'), 'tag_name') let s = BM25(t) sort s desc limit @off,@cnt return {name: t._key, count: t.count}",
+                {
+                    name: name,
+                    off: off,
+                    cnt: cnt,
+                },
+                {
+                    fullCount: true,
+                },
+            );
+            tot = result.getExtra().stats.fullCount;
 
             result = result.toArray();
             result.push({
@@ -43,7 +60,34 @@ router
             });
 
             res.send(result);
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/search",
+                status: "Success",
+                description: `Search for tags by name(${req.queryParams?.name?.trim()})`,
+                extra: {
+                    requestedName: name,
+                    returnedCount: result?.length - 1, // subtract the paging object
+                    total_found: tot,
+                },
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/search",
+                status: "Failure",
+                description: `Search for tags by name(${req.queryParams?.name?.trim()})`,
+                extra: {
+                    requestedName: name,
+                    returnedCount: result?.length - 1, // subtract the paging object
+                    total_found: tot,
+                },
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -55,7 +99,21 @@ router
 
 router
     .post("/list/by_count", function (req, res) {
+        let client = null;
+        let tot = null;
         try {
+            client = req.queryParams.client
+                ? g_lib.getUserFromClientID(req.queryParams.client)
+                : null;
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/list/by_count",
+                status: "Started",
+                description: "List tags by count",
+            });
+
             g_db._executeTransaction({
                 collections: {
                     read: ["tag"],
@@ -75,7 +133,7 @@ router
                         },
                     );
 
-                    var tot = result.getExtra().stats.fullCount;
+                    tot = result.getExtra().stats.fullCount;
                     result = result.toArray();
                     result.push({
                         paging: {
@@ -86,9 +144,29 @@ router
                     });
 
                     res.send(result);
+                    logger.logRequestSuccess({
+                        client: client?._id,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "POST",
+                        routePath: basePath + "/list/by_count",
+                        status: "Success",
+                        description: "List tags by count",
+                        extra: { total_tags: tot },
+                    });
                 },
             });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/list/by_count",
+                status: "Failure",
+                description: "List tags by count",
+                extra: { total_tags: tot },
+                error: e,
+            });
+
             g_lib.handleException(e, res);
         }
     })

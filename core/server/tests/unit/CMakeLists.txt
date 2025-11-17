@@ -2,6 +2,7 @@
 foreach(PROG
     test_AuthMap
     test_AuthenticationManager
+    test_DatabaseAPI
 )
 
   file(GLOB ${PROG}_SOURCES ${PROG}*.cpp)

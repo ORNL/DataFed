@@ -1,4 +1,9 @@
 
+# Allow using legacy Boost find_package call.
+if(POLICY CMP0167)
+  cmake_policy(SET CMP0167 OLD)
+endif()
+
 function(find_boost_library)
   if ( DEFINED ENV{BOOST_INC} AND DEFINED ENV{BOOST_LIB} )
     message( "BOOST_INC:" $ENV{BOOST_INC} )

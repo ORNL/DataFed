@@ -6,8 +6,8 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/..")
 source "${PROJECT_ROOT}/config/datafed.sh"
-source "${SOURCE}/dependency_versions.sh"
-source "${SOURCE}/dependency_install_functions.sh"
+source "${PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_versions.sh"
+source "${PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_install_functions.sh"
 
 #NVM_DIR=/home/cades/.nvm
 #[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
