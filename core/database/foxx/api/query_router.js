@@ -66,8 +66,6 @@ router
 
                     g_lib.procInputParam(req.body, "title", false, obj);
 
-                    //console.log("qry/create filter:",obj.qry_filter);
-
                     var qry = g_db.q.save(obj, {
                         returnNew: true,
                     }).new;
@@ -124,7 +122,7 @@ router
                 qry_begin: joi.string().required(),
                 qry_end: joi.string().required(),
                 qry_filter: joi.string().allow("").required(),
-                params: joi.any().required(),
+                params: joi.object().required(),
                 limit: joi.number().integer().required(),
                 query: joi.any().required(),
             })
@@ -169,6 +167,7 @@ router
                     qry.qry_begin = req.body.qry_begin;
                     qry.qry_end = req.body.qry_end;
                     qry.qry_filter = req.body.qry_filter;
+
                     qry.params = req.body.params;
                     qry.limit = req.body.limit;
                     qry.query = req.body.query;
@@ -178,7 +177,6 @@ router
                         qry.params.cols = null;
                     }*/
 
-                    //console.log("qry/upd filter:",obj.qry_filter);
                     qry = g_db._update(qry._id, qry, {
                         mergeObjects: false,
                         returnNew: true,
@@ -231,7 +229,7 @@ router
                 qry_begin: joi.string().required(),
                 qry_end: joi.string().required(),
                 qry_filter: joi.string().allow("").required(),
-                params: joi.any().required(),
+                params: joi.object().required(),
                 limit: joi.number().integer().required(),
                 query: joi.any().required(),
             })
@@ -597,10 +595,6 @@ function execQuery(client, mode, published, orig_query) {
 
     qry += query.qry_end;
 
-    //console.log( "execqry" );
-    //console.log( "qry", qry );
-    //console.log( "params", query.params );
-
     // Enforce query paging limits
     if (query.params.cnt > g_lib.MAX_PAGE_SIZE) {
         query.params.cnt = g_lib.MAX_PAGE_SIZE;
@@ -725,7 +719,7 @@ router
 
             const query = {
                 ...req.body,
-                params: JSON.parse(req.body.params),
+                params: req.body.params,
             };
             results = execQuery(client, req.body.mode, req.body.published, query);
 
@@ -762,7 +756,7 @@ router
                 qry_begin: joi.string().required(),
                 qry_end: joi.string().required(),
                 qry_filter: joi.string().optional().allow(""),
-                params: joi.string().required(),
+                params: joi.object().required(),
                 limit: joi.number().integer().required(),
             })
             .required(),
