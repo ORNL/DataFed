@@ -14,7 +14,7 @@ import unittest
 # 4. Collection
 
 
-class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
+class TestDataFedPythonAPIQueryCRUD(unittest.TestCase):
     def setUp(self):
         path_of_file = os.path.abspath(__file__)
         current_folder = os.path.dirname(path_of_file)
@@ -245,7 +245,7 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
 if __name__ == "__main__":
     suite = unittest.TestSuite()
     # Add them in the order they should be executed
-    suite.addTest(TestDataFedPythonAPIRecordCRUD("test_record_create_delete"))
+    suite.addTest(TestDataFedPythonAPIQueryCRUD("test_query_create_delete"))
     runner = unittest.TextTestRunner()
     result = runner.run(suite)
     # wasSuccessful() return True which is not 0
