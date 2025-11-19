@@ -53,7 +53,7 @@ class TestDataFedPythonAPIQueryCRUD(unittest.TestCase):
         self._username = "datafed89"
         password = os.environ.get("DATAFED_USER89_PASSWORD")
 
-        self._timeout = int(os.environ.get('DATAFED_TEST_TIMEOUT_OVERRIDE', '1'));
+        self._timeout = int(os.environ.get('DATAFED_TEST_TIMEOUT_OVERRIDE', '1'))
         count = 0
         while True:
             try:
@@ -147,7 +147,6 @@ class TestDataFedPythonAPIQueryCRUD(unittest.TestCase):
             status = task_result[0].task[0].status
             count = count + 1
 
-
         parameters = {
             "testing_tempareture": 900000,
             "voltage": [1, 2, -4, 7.123],
@@ -158,15 +157,13 @@ class TestDataFedPythonAPIQueryCRUD(unittest.TestCase):
 
         title = "Adamantium"
         alias = "adamantium"
-        data_result = self._df_api.dataCreate(
+        self._df_api.dataCreate(
             title=title,
             alias=alias,
             metadata=json.dumps(parameters),
             tags=["material"],
             parent_id="root",
         )
-
-
 
     def test_query_create_delete(self):
 
@@ -175,12 +172,12 @@ class TestDataFedPythonAPIQueryCRUD(unittest.TestCase):
         print("Search query create")
         print(search_query)
 
-        query_result=self._df_api.queryExec(search_query[0].id)
+        query_result = self._df_api.queryExec(search_query[0].id)
         
         material = ""
         for model in query_result[0].item:
-          if model.alias.startswith("adamantium"):
-            material = model.alias
+            if model.alias.startswith("adamantium"):
+                material = model.alias
         
         print(f"Query found {material}")
 
@@ -188,10 +185,9 @@ class TestDataFedPythonAPIQueryCRUD(unittest.TestCase):
 
         self._df_api.queryDelete(search_query[0].id) 
 
-
     def tearDown(self):
 
-        task_result = self._df_api.dataDelete("krpytonite")
+        task_result = self._df_api.dataDelete("adamantium")
 
         status = task_result[0].task[0].status
         count = 0
@@ -199,7 +195,7 @@ class TestDataFedPythonAPIQueryCRUD(unittest.TestCase):
             if count > 20:
                 break
             time.sleep(self._timeout)
-            task_result = self._df_api.taskView(task_id)
+            task_result = self._df_api.taskView(task_result[0].task[0].id)
             status = task_result[0].task[0].status
             count = count + 1
        
