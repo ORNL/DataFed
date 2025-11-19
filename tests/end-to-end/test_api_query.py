@@ -120,7 +120,7 @@ class TestDataFedPythonAPIQueryCRUD(unittest.TestCase):
         # Will return a task
         result = self._df_api.repoAllocationCreate(
             repo_id=self._repo_id,
-            subject="datafed89",
+            subject=self._username,
             data_limit=1000000000,
             rec_limit=100,
         )
@@ -152,18 +152,21 @@ class TestDataFedPythonAPIQueryCRUD(unittest.TestCase):
             "voltage": [1, 2, -4, 7.123],
             "creator": "Lex Luther",
             "occupation": "super villan",
-            "equipment_serial_numbers": {"SEM": 14, "AFM": 9134},
+            "equipment_serial_numbers": {"SEM": 14, "AFM": 9134}
         }
 
         title = "Adamantium"
         alias = "adamantium"
-        self._df_api.dataCreate(
+        record = self._df_api.dataCreate(
             title=title,
             alias=alias,
             metadata=json.dumps(parameters),
             tags=["material"],
             parent_id="root",
         )
+
+        print("Created record")
+        print(record)
 
     def test_query_create_delete(self):
 
@@ -173,6 +176,8 @@ class TestDataFedPythonAPIQueryCRUD(unittest.TestCase):
         print(search_query)
 
         query_result = self._df_api.queryExec(search_query[0].id)
+        print("Query result")
+        print(query_result)
         
         material = ""
         for model in query_result[0].item:
@@ -183,59 +188,59 @@ class TestDataFedPythonAPIQueryCRUD(unittest.TestCase):
 
         self.assertEqual(material, "adamantium")
 
-        self._df_api.queryDelete(search_query[0].id) 
+#        self._df_api.queryDelete(search_query[0].id) 
 
-    def tearDown(self):
-
-        task_result = self._df_api.dataDelete("adamantium")
-
-        status = task_result[0].task[0].status
-        count = 0
-        while status < 3:
-            if count > 20:
-                break
-            time.sleep(self._timeout)
-            task_result = self._df_api.taskView(task_result[0].task[0].id)
-            status = task_result[0].task[0].status
-            count = count + 1
-       
-        print("Delete record result.")
-        print(task_result)
-
-        result = self._df_api.repoAllocationDelete(
-            repo_id=self._repo_id, subject="datafed89"
-        )
-
-        task_id = result[0].task[0].id
-
-        # Check the status of the task
-        task_result = self._df_api.taskView(task_id)
-
-        # If status is less than 3 it is in the works
-        status = task_result[0].task[0].status
-        count = 0
-        while status < 3:
-            if count > 2:
-                print(task_result)
-                self.fail(
-                    "Something went wrong task was unable to complete, attempt"
-                    " to delete an allocation after 3 seconds failed, make sure"
-                    " all services are running."
-                )
-                break
-            time.sleep(self._timeout)
-            task_result = self._df_api.taskView(task_id)
-            status = task_result[0].task[0].status
-            count = count + 1
-
-        print("Delete Allocations")
-        print(result)
-
-        repo_id = self._repo_form["id"]
-        if not repo_id.startswith("repo/"):
-            repo_id = "repo/" + repo_id
-        result = self._df_api.repoDelete(repo_id)
-        result = self._df_api.repoList(list_all=True)
+#    def tearDown(self):
+#
+#        task_result = self._df_api.dataDelete("adamantium")
+#
+#        status = task_result[0].task[0].status
+#        count = 0
+#        while status < 3:
+#            if count > 20:
+#                break
+#            time.sleep(self._timeout)
+#            task_result = self._df_api.taskView(task_result[0].task[0].id)
+#            status = task_result[0].task[0].status
+#            count = count + 1
+#       
+#        print("Delete record result.")
+#        print(task_result)
+#
+#        result = self._df_api.repoAllocationDelete(
+#            repo_id=self._repo_id, subject=self._username
+#        )
+#
+#        task_id = result[0].task[0].id
+#
+#        # Check the status of the task
+#        task_result = self._df_api.taskView(task_id)
+#
+#        # If status is less than 3 it is in the works
+#        status = task_result[0].task[0].status
+#        count = 0
+#        while status < 3:
+#            if count > 2:
+#                print(task_result)
+#                self.fail(
+#                    "Something went wrong task was unable to complete, attempt"
+#                    " to delete an allocation after 3 seconds failed, make sure"
+#                    " all services are running."
+#                )
+#                break
+#            time.sleep(self._timeout)
+#            task_result = self._df_api.taskView(task_id)
+#            status = task_result[0].task[0].status
+#            count = count + 1
+#
+#        print("Delete Allocations")
+#        print(result)
+#
+#        repo_id = self._repo_form["id"]
+#        if not repo_id.startswith("repo/"):
+#            repo_id = "repo/" + repo_id
+#        result = self._df_api.repoDelete(repo_id)
+#        result = self._df_api.repoList(list_all=True)
 
 
 if __name__ == "__main__":
