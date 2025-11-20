@@ -24,14 +24,14 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/gridftp",
                 status: "Started",
-                description: 
-                JSON.stringify({   message: "Checks authorization",
+                description: JSON.stringify({
+                    message: "Checks authorization",
                     repo: req.queryParams.repo,
                     file: req.queryParams.file,
                     act: req.queryParams.act,
-                })
+                }),
             });
-            
+
             // Client will contain the following information
             //
             // "_key" : "bob",
@@ -53,7 +53,7 @@ router
             let path_type = repo.pathType(req.queryParams.file);
 
             // If the provided path is not within the repo throw an error
-            if (path_type === PathType.UNKNOWN) { 
+            if (path_type === PathType.UNKNOWN) {
                 throw [
                     error.ERR_PERM_DENIED,
                     "Unknown path, or path is not consistent with supported repository folder hierarchy: " +
@@ -77,8 +77,8 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/gridftp",
                 status: "Success",
-                description: 
-                JSON.stringify({   message: "Checks authorization",
+                description: JSON.stringify({
+                    message: "Checks authorization",
                     repo: req.queryParams.repo,
                     file: req.queryParams.file,
                     act: req.queryParams.act,
@@ -95,8 +95,8 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/gridftp",
                 status: "Failure",
-                description: 
-                JSON.stringify({   message: "Checks authorization",
+                description: JSON.stringify({
+                    message: "Checks authorization",
                     repo: req.queryParams.repo,
                     file: req.queryParams.file,
                     act: req.queryParams.act,
