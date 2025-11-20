@@ -10,7 +10,7 @@ const permissions = require("./lib/permissions");
 const authzModule = require("./authz");
 const logger = require("./lib/logger");
 const { Repo, PathType } = require("./repo");
-const basePath = "";
+const basePath = "authz";
 module.exports = router;
 
 router
@@ -24,19 +24,14 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/gridftp",
                 status: "Started",
-                description: "Checks authorization",
+                description: 
+                JSON.stringify({   message: "Checks authorization",
+                    repo: req.queryParams.repo,
+                    file: req.queryParams.file,
+                    act: req.queryParams.act,
+                })
             });
-            console.log(
-                "/gridftp start authz client",
-                req.queryParams.client,
-                "repo",
-                req.queryParams.repo,
-                "file",
-                req.queryParams.file,
-                "act",
-                req.queryParams.act,
-            );
-
+            
             // Client will contain the following information
             //
             // "_key" : "bob",
@@ -52,31 +47,13 @@ router
             // "email" : "bobjones@gmail.com"
             client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
             if (!client) {
-                console.log(
-                    "AUTHZ act: " +
-                        req.queryParams.act +
-                        " client: " +
-                        +req.queryParams.client +
-                        " path " +
-                        req.queryParams.file +
-                        " FAILED",
-                );
                 throw [error.ERR_PERM_DENIED, "Unknown client: " + req.queryParams.client];
             }
             let repo = new Repo(req.queryParams.repo);
             let path_type = repo.pathType(req.queryParams.file);
 
             // If the provided path is not within the repo throw an error
-            if (path_type === PathType.UNKNOWN) {
-                console.log(
-                    "AUTHZ act: " +
-                        req.queryParams.act +
-                        " client: " +
-                        client._id +
-                        " path " +
-                        req.queryParams.file +
-                        " FAILED",
-                );
+            if (path_type === PathType.UNKNOWN) { 
                 throw [
                     error.ERR_PERM_DENIED,
                     "Unknown path, or path is not consistent with supported repository folder hierarchy: " +
@@ -94,22 +71,18 @@ router
             } else {
                 throw [error.ERR_INVALID_PARAM, "Invalid gridFTP action: ", req.queryParams.act];
             }
-            console.log(
-                "AUTHZ act: " +
-                    req.queryParams.act +
-                    " client: " +
-                    client._id +
-                    " path " +
-                    req.queryParams.file +
-                    " SUCCESS",
-            );
             logger.logRequestSuccess({
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/gridftp",
                 status: "Success",
-                description: "Checks authorization",
+                description: 
+                JSON.stringify({   message: "Checks authorization",
+                    repo: req.queryParams.repo,
+                    file: req.queryParams.file,
+                    act: req.queryParams.act,
+                }),
                 extra: {
                     id: client?._id,
                     is_admin: client?.is_admin,
@@ -122,7 +95,12 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/gridftp",
                 status: "Failure",
-                description: "Checks authorization",
+                description: 
+                JSON.stringify({   message: "Checks authorization",
+                    repo: req.queryParams.repo,
+                    file: req.queryParams.file,
+                    act: req.queryParams.act,
+                }),
                 extra: {
                     id: client?._id,
                     is_admin: client?.is_admin,
