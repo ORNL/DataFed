@@ -60,6 +60,8 @@ test.describe("DataFed UI password change", () => {
             await confirmPasswordInput.click();
             await confirmPasswordInput.fill("Terrible2s!!!");
             await saveButton.click();
+            // Make sure an error does not appear.
+            await expect(page.locator('text=Save Settings Error')).not.toBeVisible();
         });
     });
 });
