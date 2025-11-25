@@ -64,10 +64,10 @@ test.describe("DataFed UI password change", () => {
             // Unfortunately it take a while for the error to show up
             await page.waitForTimeout(15000);
 
-            await page.screenshot({ path: 'change-password-has-error.png', fullPage: true });
+            await page.screenshot({ path: "change-password-has-error.png", fullPage: true });
 
             // These WILL fail if error appears
-            await expect(page.getByText('Save Settings Error')).not.toBeVisible();
+            await expect(page.getByText("Save Settings Error")).not.toBeVisible();
         });
     });
 });
