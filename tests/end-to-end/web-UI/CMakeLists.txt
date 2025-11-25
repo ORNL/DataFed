@@ -8,7 +8,7 @@ configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/auth.setup.js"
   @ONLY
 )
-
+message("ENABLE END TO END!!!!!!!")
 #FIXTHIS
 # For E2E web ui test
 if(ENABLE_END_TO_END_WEB_TESTS)
