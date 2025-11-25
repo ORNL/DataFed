@@ -17,10 +17,20 @@ module.exports = router;
 router
     .post("/create", function (req, res) {
         var retry = 10;
-
+        client = null;
+        result = null;
         for (;;) {
             try {
-                var result = [];
+                client = g_lib.getUserFromClientID(req.queryParams.client);
+                logger.logRequestStarted({
+                    client: client?._id,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/create",
+                    status: "Started",
+                    description: "Create a new data collection",
+                });
+                result = [];
 
                 g_db._executeTransaction({
                     collections: {
@@ -28,7 +38,7 @@ router
                         write: ["c", "a", "alias", "owner", "item", "t", "top", "tag"],
                     },
                     action: function () {
-                        const client = g_lib.getUserFromClientID(req.queryParams.client);
+                        client = g_lib.getUserFromClientID(req.queryParams.client);
                         var owner = client,
                             parent_id;
 
@@ -171,8 +181,28 @@ router
                 res.send({
                     results: result,
                 });
+                logger.logRequestSuccess({
+                    client: client?._id,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/create",
+                    status: "Success",
+                    description: "Create a new data collection",
+                    extra: result
+                });
+
                 break;
             } catch (e) {
+                logger.logRequestFailure({
+                    client: client?._id,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/create",
+                    status: "Failure",
+                    description: "Create a new data collection",
+                    extra: result,
+                    error: e
+                });
                 if (--retry == 0 || !e.errorNum || e.errorNum != 1200) {
                     g_lib.handleException(e, res);
                 }
@@ -199,10 +229,21 @@ router
 router
     .post("/update", function (req, res) {
         var retry = 10;
-
+        let client = null;
+        let result = null;
         for (;;) {
             try {
-                var result = {
+                client = g_lib.getUserFromClientID(req.queryParams.client);
+                logger.logRequestStarted({
+                    client: client?._id,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST,
+                    routePath: basePath + "/update",
+                    status: "Started",
+                    description: "Update an existing collection",
+                });
+
+                result = {
                     results: [],
                     updates: [],
                 };
@@ -388,8 +429,27 @@ router
                 });
 
                 res.send(result);
+                logger.logRequestSuccess({
+                    client: client?._id,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/update",
+                    status: "Success",
+                    description: "Update an existing collection",
+                    extra: result
+                });
                 break;
             } catch (e) {
+                logger.logRequestFailure({
+                    client: client?._id,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/update",
+                    status: "Failure",
+                    description: "Update an existing collection",
+                    extra: result,
+                    error:e
+                });
                 if (--retry == 0 || !e.errorNum || e.errorNum != 1200) {
                     g_lib.handleException(e, res);
                 }
@@ -416,8 +476,19 @@ router
 
 router
     .get("/view", function (req, res) {
+        let client = null;
+        let result = null;
         try {
-            const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
+            client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
+            logger.logRequestStarted({
+                    client: client?._id,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/view",
+                    status: "Started",
+                    description: "View collection information by ID or alias",
+                    extra: result
+                });
 
             var coll_id = g_lib.resolveCollID(req.queryParams.id, client),
                 coll = g_db.c.document(coll_id),
@@ -446,7 +517,26 @@ router
             res.send({
                 results: [coll],
             });
+        logger.logRequestSuccess({
+            client: client?._id,
+            correlationId: req.headers["x-correlation-id"],
+            httpVerb: "POST",
+            routePath: basePath + "/view",
+            status: "Success",
+            description: "View collection information by ID or alias",
+            extra: result
+        });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/view",
+                status: "Failure",
+                description: "View collection information by ID or alias",
+                extra: result,
+                error: e
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -457,8 +547,18 @@ router
 
 router
     .get("/read", function (req, res) {
+        let client = null;
+        let result = null;
         try {
-            const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
+            client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
+            logger.logRequestStarted({
+                    client: client?._id,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "GET",
+                    routePath: basePath + "/read",
+                    status: "Started",
+                    description: "Read contents of a collection by ID or alias",
+            });
 
             var coll_id = g_lib.resolveCollID(req.queryParams.id, client),
                 coll = g_db.c.document(coll_id),
@@ -476,8 +576,7 @@ router
             }
 
             var qry =
-                    "for v in 1..1 outbound @coll item sort is_same_collection('c',v) DESC, v.title",
-                result,
+                    "for v in 1..1 outbound @coll item sort is_same_collection('c',v) DESC, v.title", 
                 params = {
                     coll: coll_id,
                 },
@@ -518,7 +617,27 @@ router
             }
 
             res.send(result);
+            logger.logRequestSuccess({
+                    client: client?._id,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "GET",
+                    routePath: basePath + "/read",
+                    status: "Success",
+                    description: "Read contents of a collection by ID or alias",
+                    extra:result
+            });
+
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/read",
+                status: "Failure",
+                description: "Read contents of a collection by ID or alias",
+                extra:result,
+                error: e
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -531,15 +650,25 @@ router
 
 router
     .get("/write", function (req, res) {
+        let client = null;
+        let loose_res = null;
         try {
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+                    client: client?._id,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "GET",
+                    routePath: basePath + "/write",
+                    status: "Started",
+                    description: "Add/remove items in a collection",
+            });
+
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "c", "uuid", "accn"],
                     write: ["item", "d"],
                 },
                 action: function () {
-                    const client = g_lib.getUserFromClientID(req.queryParams.client);
-
                     if (req.queryParams.add && req.queryParams.remove) {
                         throw [
                             error.ERR_INVALID_PARAM,
@@ -730,7 +859,7 @@ router
                     // 7. Re-link loose items to root
                     if (have_loose) {
                         var root_id = g_lib.getRootID(owner_id),
-                            rctxt = null,
+                            rctxt = null;
                             loose_res = [];
 
                         cres = g_db._query("for v in 1..1 outbound @coll item return v._id", {
@@ -795,7 +924,26 @@ router
                     }
                 },
             });
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/write",
+                status: "Success",
+                description: "Add/remove items in a collection",
+                extra:loose_res
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                    client: client?._id,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "GET",
+                    routePath: basePath + "/write",
+                    status: "Failure",
+                    description: "Add/remove items in a collection",
+                    extra:loose_res,
+                    error: e
+                });
             g_lib.handleException(e, res);
         }
     })
@@ -808,14 +956,26 @@ router
 
 router
     .get("/move", function (req, res) {
+        let client = null;
+        let item = null;
         try {
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/move",
+                status: "Started",
+                description: "Move items from source collection to destination collection",
+            });
+
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "c", "uuid", "accn"],
                     write: ["item", "d"],
                 },
                 action: function () {
-                    const client = g_lib.getUserFromClientID(req.queryParams.client);
+                    client = g_lib.getUserFromClientID(req.queryParams.client);
                     var src_id = g_lib.resolveCollID(req.queryParams.source, client),
                         src = g_db.c.document(src_id),
                         dst_id = g_lib.resolveCollID(req.queryParams.dest, client),
@@ -870,7 +1030,7 @@ router
                         chk_perm = true;
                     }
 
-                    var i, item;
+                    var i;
 
                     for (i in req.queryParams.items) {
                         // TODO - should aliases be resolved with client or owner ID?
@@ -954,7 +1114,26 @@ router
                     res.send({});
                 },
             });
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/move",
+                status: "Success",
+                description: "Move items from source collection to destination collection",
+                extra: item
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/move",
+                status: "Failure",
+                description: "Move items from source collection to destination collection",
+                extra: item,
+                error: e
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -967,14 +1146,25 @@ router
 
 router
     .get("/get_parents", function (req, res) {
+        let client = null;
+        let results = null;
         try {
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/get_parents",
+                status: "Started",
+                description: "Get parent collection(s) (path) of item",
+            });
+
             var item_id = g_lib.resolveID(req.queryParams.id, client);
 
             if (!item_id.startsWith("d/") && !item_id.startsWith("c/"))
                 throw [error.ERR_INVALID_PARAM, "ID is not a collection or record."];
 
-            var results = g_lib.getParents(item_id);
+            results = g_lib.getParents(item_id);
             if (req.queryParams.inclusive) {
                 var item;
                 if (item_id[0] == "c") item = g_db.c.document(item_id);
@@ -990,7 +1180,26 @@ router
                 }
             }
             res.send(results);
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/get_parents",
+                status: "Success",
+                description: "Get parent collection(s) (path) of item",
+                extra: results,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/get_parents",
+                status: "Failure",
+                description: "Get parent collection(s) (path) of item",
+                extra: results,
+                error: e
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -1002,8 +1211,18 @@ router
 
 router
     .get("/get_offset", function (req, res) {
+        let get_offset = null; 
         try {
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/get_parents",
+                status: "Started",
+                description: "Get offset to item in collection.",
+            });
+            client = g_lib.getUserFromClientID(req.queryParams.client);
             var coll_id = g_lib.resolveID(req.queryParams.id, client);
             var item_id = g_lib.resolveID(req.queryParams.item, client);
 
@@ -1037,6 +1256,15 @@ router
 
                 res.send({
                     offset: req.queryParams.page_sz * Math.floor(idx / req.queryParams.page_sz),
+                });
+                logger.logRequestSuccess({
+                    client: client?._id,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "GET",
+                    routePath: basePath + "/get_parents",
+                    status: "Success",
+                    description: "Get offset to item in collection.",
+                    extra: 
                 });
             }
         } catch (e) {
