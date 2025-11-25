@@ -6,10 +6,11 @@ const joi = require("joi");
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
 const error = require("./lib/error_codes");
-const permissions = require("./lib/permissions");
 const g_proc = require("./process");
 const g_tasks = require("./tasks");
 const { UserToken } = require("./lib/user_token");
+const logger = require("./lib/logger");
+const basePath = "data";
 
 module.exports = router;
 
@@ -17,7 +18,6 @@ module.exports = router;
 
 function recordCreate(client, record, result) {
     var owner_id, parent_id, repo_alloc, alias_key;
-
     //console.log("Create new data:",record.title);
 
     // TODO Need to verify parent exists
@@ -28,9 +28,9 @@ function recordCreate(client, record, result) {
             _from: parent_id,
         })._to;
         if (owner_id != client._id) {
-            if (!permissions.hasManagerPermProj(client, owner_id)) {
+            if (!g_lib.hasManagerPermProj(client, owner_id)) {
                 var parent_coll = g_db.c.document(parent_id);
-                if (!permissions.hasPermissions(client, parent_coll, permissions.PERM_CREATE)) {
+                if (!g_lib.hasPermissions(client, parent_coll, g_lib.PERM_CREATE)) {
                     throw error.ERR_PERM_DENIED;
                 }
             }
@@ -256,10 +256,20 @@ function recordCreate(client, record, result) {
 router
     .post("/create", function (req, res) {
         var retry = 10;
-
+        let result = null;
+        let client = null;
         for (;;) {
             try {
-                var result = {
+                client = g_lib.getUserFromClientID(req.queryParams.client);
+                logger.logRequestStarted({
+                    client: client,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/create",
+                    status: "Started",
+                    description: "Create a new data record",
+                });
+                result = {
                     results: [],
                 };
 
@@ -282,14 +292,34 @@ router
                         ],
                     },
                     action: function () {
-                        const client = g_lib.getUserFromClientID(req.queryParams.client);
+                        client = g_lib.getUserFromClientID(req.queryParams.client);
                         recordCreate(client, req.body, result);
                     },
                 });
 
                 res.send(result);
+                logger.logRequestSuccess({
+                    client: client,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/create",
+                    status: "Success",
+                    description: "Create a new data record",
+                    extra: result,
+                });
+
                 break;
             } catch (e) {
+                logger.logRequestFailure({
+                    client: client,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/create",
+                    status: "Failure",
+                    description: "Create a new data record",
+                    extra: result,
+                    error: e,
+                });
                 if (--retry == 0 || !e.errorNum || e.errorNum != 1200) {
                     g_lib.handleException(e, res);
                 }
@@ -331,10 +361,20 @@ router
 router
     .post("/create/batch", function (req, res) {
         var retry = 10;
-
+        let result = null;
+        let client = null;
         for (;;) {
             try {
-                var result = {
+                client = g_lib.getUserFromClientID(req.queryParams.client);
+                logger.logRequestStarted({
+                    client: client,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/create/batch",
+                    status: "Started",
+                    description: "Create a batch of new data records",
+                });
+                result = {
                     results: [],
                 };
 
@@ -359,7 +399,6 @@ router
                         ],
                     },
                     action: function () {
-                        const client = g_lib.getUserFromClientID(req.queryParams.client);
                         for (var i in req.body) {
                             recordCreate(client, req.body[i], result);
                         }
@@ -367,8 +406,28 @@ router
                 });
 
                 res.send(result);
+                logger.logRequestSuccess({
+                    client: client,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/create/batch",
+                    status: "Success",
+                    description: "Create a batch of new data records",
+                    extra: result,
+                });
+
                 break;
             } catch (e) {
+                logger.logRequestFailure({
+                    client: client,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/create/batch",
+                    status: "Failure",
+                    description: "Create a batch of new data records",
+                    extra: result,
+                    error: e,
+                });
                 if (--retry == 0 || !e.errorNum || e.errorNum != 1200) {
                     g_lib.handleException(e, res);
                 }
@@ -424,11 +483,11 @@ function recordUpdate(client, record, result) {
     var data_id = g_lib.resolveDataID(record.id, client);
     var data = g_db.d.document(data_id);
 
-    if (!permissions.hasAdminPermObject(client, data_id)) {
+    if (!g_lib.hasAdminPermObject(client, data_id)) {
         // Required permissions depend on which fields are being modified:
         // Metadata = PERM_WR_META, file_size = PERM_WR_DATA, all else = ADMIN
         var perms = 0;
-        if (record.md !== undefined) perms |= permissions.PERM_WR_META;
+        if (record.md !== undefined) perms |= g_lib.PERM_WR_META;
 
         if (
             record.title !== undefined ||
@@ -439,11 +498,10 @@ function recordUpdate(client, record, result) {
             (record.dep_add && record.dep_add.length) ||
             (record.dep_rem && record.dep_rem.length)
         ) {
-            perms |= permissions.PERM_WR_REC;
+            perms |= g_lib.PERM_WR_REC;
         }
 
-        if (data.locked || !permissions.hasPermissions(client, data, perms))
-            throw error.ERR_PERM_DENIED;
+        if (data.locked || !g_lib.hasPermissions(client, data, perms)) throw error.ERR_PERM_DENIED;
     }
 
     var owner_id = g_db.owner.firstExample({
@@ -762,12 +820,23 @@ function recordUpdate(client, record, result) {
 
 router
     .post("/update", function (req, res) {
+        let result = null;
+        let client = null; 
         try {
-            var result = {
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/update",
+                status: "Started",
+                description: "Update an existing data record",
+            });
+
+            result = {
                 results: [],
                 updates: new Set(),
             };
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
 
             g_db._executeTransaction({
                 collections: {
@@ -809,7 +878,27 @@ router
             result.updates = updates;
 
             res.send(result);
+            logger.logRequestSuccess({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/update",
+                status: "Success",
+                description: "Update an existing data record",
+                extra: result,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/update",
+                status: "Failure",
+                description: "Update an existing data record",
+                extra: result,
+                error: e,
+            });
+
             g_lib.handleException(e, res);
         }
     })
@@ -858,12 +947,23 @@ router
 
 router
     .post("/update/batch", function (req, res) {
+        let result = null;
+        let client = null;
         try {
-            var result = {
+            client = req.queryParams.client;
+            logger.logRequestStarted({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/update/batch",
+                status: "Started",
+                description: "Update a batch of existing data record",
+            });
+
+            result = {
                 results: [],
                 updates: new Set(),
             };
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
 
             g_db._executeTransaction({
                 collections: {
@@ -912,7 +1012,27 @@ router
             result.updates = updates;
 
             res.send(result);
+            logger.logRequestSuccess({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/update/batch",
+                status: "Success",
+                description: "Update a batch of existing data record",
+                extra: result,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/update/batch",
+                status: "Failure",
+                description: "Update a batch of existing data record",
+                extra: result,
+                error: e,
+            });
+
             g_lib.handleException(e, res);
         }
     })
@@ -969,13 +1089,23 @@ router
 
 router
     .post("/update/md_err_msg", function (req, res) {
+        let client = null;
         try {
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/update/md_err_msg",
+                status: "Started",
+                description: "Update data record schema validation error message",
+            });
+
             g_db._executeTransaction({
                 collections: {
                     write: ["d"],
                 },
                 action: function () {
-                    const client = g_lib.getUserFromClientID(req.queryParams.client);
                     var data_id = g_lib.resolveDataID(req.queryParams.id, client);
 
                     if (
@@ -998,7 +1128,26 @@ router
                     );
                 },
             });
+            logger.logRequestSuccess({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/update/md_err_msg",
+                status: "Success",
+                description: "Update data record schema validation error message",
+                extra: "undefined",
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/update/md_err_msg",
+                status: "Failure",
+                description: "Update data record schema validation error message",
+                extra: "undefined",
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -1013,11 +1162,23 @@ router
 router
     .post("/update/size", function (req, res) {
         var retry = 10;
+        let result = null;
+        let client = null;
 
         // Must do this in a retry loop in case of concurrent (non-put) updates
         for (;;) {
             try {
-                var result = [];
+                logger.logRequestStarted({
+                    client: client,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/update/size",
+                    status: "Started",
+                    description: "Update existing data record size",
+                    extra: "undefined",
+                });
+
+                result = [];
 
                 g_db._executeTransaction({
                     collections: {
@@ -1066,9 +1227,28 @@ router
                 });
 
                 res.send(result);
+                logger.logRequestSuccess({
+                    client: client,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/update/size",
+                    status: "Success",
+                    description: "Update existing data record size",
+                    extra: "undefined",
+                });
                 break;
             } catch (e) {
                 if (--retry == 0 || !e.errorNum || e.errorNum != 1200) {
+                    logger.logRequestFailure({
+                        client: client,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "POST",
+                        routePath: basePath + "/update/size",
+                        status: "Failure",
+                        description: "Update existing data record size",
+                        extra: "undefined",
+                        error: e,
+                    });
                     g_lib.handleException(e, res);
                 }
             }
@@ -1096,8 +1276,18 @@ router
 
 router
     .get("/view", function (req, res) {
+        let results = null;
+        let client = null;
         try {
-            const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
+            client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Started",
+                description: "Get data by ID or alias",
+            });
 
             var data_id = g_lib.resolveDataID(req.queryParams.id, client);
 
@@ -1108,20 +1298,17 @@ router
                 admin = false;
 
             if (client) {
-                admin = permissions.hasAdminPermObject(client, data_id);
+                admin = g_lib.hasAdminPermObject(client, data_id);
 
                 if (!admin) {
-                    var perms = permissions.getPermissions(
+                    var perms = g_lib.getPermissions(
                         client,
                         data,
-                        permissions.PERM_RD_REC | permissions.PERM_RD_META,
+                        g_lib.PERM_RD_REC | g_lib.PERM_RD_META,
                     );
-                    if (
-                        data.locked ||
-                        (perms & (permissions.PERM_RD_REC | permissions.PERM_RD_META)) == 0
-                    )
+                    if (data.locked || (perms & (g_lib.PERM_RD_REC | g_lib.PERM_RD_META)) == 0)
                         throw error.ERR_PERM_DENIED;
-                    if ((perms & permissions.PERM_RD_META) == 0) rem_md = true;
+                    if ((perms & g_lib.PERM_RD_META) == 0) rem_md = true;
                 }
             } else if (!g_lib.hasPublicRead(data_id)) {
                 throw error.ERR_PERM_DENIED;
@@ -1166,7 +1353,26 @@ router
             res.send({
                 results: [data],
             });
+            logger.logRequestSuccess({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Success",
+                description: "Get data by ID or alias",
+                extra: results,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Failure",
+                description: "Get data by ID or alias",
+                extra: results,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -1177,13 +1383,24 @@ router
 
 router
     .post("/export", function (req, res) {
+        let results = null;
+        let client = null;
         try {
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/export",
+                status: "Started",
+                description: "Export record metadata",
+            });
+
             g_db._executeTransaction({
                 collections: {
                     read: ["uuid", "accn", "d", "c", "item"],
                 },
                 action: function () {
-                    const client = g_lib.getUserFromClientID(req.queryParams.client);
                     var i,
                         id,
                         res_ids = [];
@@ -1195,8 +1412,8 @@ router
 
                     var ctxt = g_proc.preprocessItems(client, null, res_ids, g_lib.TT_DATA_EXPORT);
                     var data,
-                        ids = [],
-                        results = [];
+                        ids = [];
+                    result = [];
 
                     for (i in ctxt.glob_data) ids.push(ctxt.glob_data[i].id);
                     for (i in ctxt.http_data) ids.push(ctxt.http_data[i].id);
@@ -1222,9 +1439,28 @@ router
                     }
 
                     res.send(results);
+                    logger.logRequestSuccess({
+                        client: client,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "POST",
+                        routePath: basePath + "/export",
+                        status: "Success",
+                        description: "Export record metadata",
+                        extra: results,
+                    });
                 },
             });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/export",
+                status: "Failure",
+                description: "Export record metadata",
+                extra: results,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -1242,8 +1478,18 @@ router
 
 router
     .get("/dep/graph/get", function (req, res) {
+        let result = null;
+        let client = null;
         try {
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/dep/graph/get",
+                status: "Started",
+                description: "Get data dependency graph",
+            });
             var data_id = g_lib.resolveDataID(req.queryParams.id, client);
             var i,
                 j,
@@ -1255,10 +1501,9 @@ router
                 visited = [data_id],
                 cur = [[data_id, true]],
                 next = [],
-                result = [],
                 notes,
                 gen = 0;
-
+            result = [];
             // Get Ancestors
 
             //console.log("get ancestors");
@@ -1321,7 +1566,6 @@ router
                         });
                     }
                 }
-
                 cur = next;
                 next = [];
                 gen--;
@@ -1412,7 +1656,26 @@ router
             }
 
             res.send(result);
+            logger.logRequestSuccess({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/dep/graph/get",
+                status: "Success",
+                description: "Get data dependency graph",
+                extra: result,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/dep/graph/get",
+                status: "Failure",
+                description: "Get data dependency graph",
+                extra: result,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -1423,8 +1686,19 @@ router
 
 router
     .get("/lock", function (req, res) {
-        try {
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
+        let result = null;
+        let client = null;
+        try { 
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/lock",
+                status: "Started",
+                description: "Toggle data record lock",
+            });
+
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn", "a", "alias"],
@@ -1432,13 +1706,13 @@ router
                 },
                 action: function () {
                     var obj,
-                        i,
-                        result = [];
+                        i = [];
+                    result = [];
                     for (i in req.queryParams.ids) {
                         obj = g_lib.getObject(req.queryParams.ids[i], client);
 
-                        if (!permissions.hasAdminPermObject(client, obj._id)) {
-                            if (!permissions.hasPermissions(client, obj, permissions.PERM_LOCK))
+                        if (!g_lib.hasAdminPermObject(client, obj._id)) {
+                            if (!g_lib.hasPermissions(client, obj, g_lib.PERM_LOCK))
                                 throw error.ERR_PERM_DENIED;
                         }
                         g_db._update(
@@ -1459,9 +1733,28 @@ router
                         });
                     }
                     res.send(result);
+                    logger.logRequestSuccess({
+                        client: client,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "GET",
+                        routePath: basePath + "/lock",
+                        status: "Success",
+                        description: "Toggle data record lock",
+                        extra: result,
+                    });
                 },
             });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/lock",
+                status: "Failure",
+                description: "Toggle data record lock",
+                extra: result,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -1490,14 +1783,24 @@ router
  */
 router
     .get("/path", function (req, res) {
+        let path = null;
+        let client = null;
         try {
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/path",
+                status: "Started",
+                description: "Get raw data local path",
+            });
             var data_id = g_lib.resolveDataID(req.queryParams.id, client);
 
-            if (!permissions.hasAdminPermObject(client, data_id)) {
+            if (!g_lib.hasAdminPermObject(client, data_id)) {
                 var data = g_db.d.document(data_id);
-                var perms = permissions.getPermissions(client, data, permissions.PERM_RD_DATA);
-                if ((perms & permissions.PERM_RD_DATA) == 0) throw error.ERR_PERM_DENIED;
+                var perms = g_lib.getPermissions(client, data, g_lib.PERM_RD_DATA);
+                if ((perms & g_lib.PERM_RD_DATA) == 0) throw error.ERR_PERM_DENIED;
             }
 
             var loc = g_db.loc.firstExample({
@@ -1512,12 +1815,31 @@ router
                     "Can only access data from '" + repo.domain + "' domain",
                 ];
 
-            var path = g_lib.computeDataPath(loc, true);
+            path = g_lib.computeDataPath(loc, true);
             res.send({
                 path: path,
             });
+            logger.logRequestSuccess({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/path",
+                status: "Success",
+                description: "Get raw data local path",
+                extra: path,
+            });
             //res.send({ path: repo.exp_path + loc.path.substr( repo.path.length ) });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/path",
+                status: "Failure",
+                description: "Get raw data local path",
+                extra: path,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -1529,24 +1851,37 @@ router
 
 router
     .get("/list/by_alloc", function (req, res) {
+        let result = null;
+        let qry = null;
+        let doc = null;
+        let client = null;
         try {
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/list/by_alloc",
+                status: "Started",
+                description: "List data records by allocation",
+            });
+
             var owner_id;
 
             if (req.queryParams.subject) {
                 owner_id = req.queryParams.subject;
                 if (req.queryParams.subject.startsWith("u/")) {
-                    permissions.ensureAdminPermUser(client, owner_id);
+                    g_lib.ensureAdminPermUser(client, owner_id);
                 } else {
-                    permissions.ensureManagerPermProj(client, owner_id);
+                    g_lib.ensureManagerPermProj(client, owner_id);
                 }
             } else {
                 owner_id = client._id;
             }
 
-            var qry = "for v,e in 1..1 inbound @repo loc filter e.uid == @uid sort v.title",
+            ((qry = "for v,e in 1..1 inbound @repo loc filter e.uid == @uid sort v.title"),
                 result,
-                doc;
+                doc);
 
             if (req.queryParams.offset != undefined && req.queryParams.count != undefined) {
                 qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
@@ -1589,7 +1924,26 @@ router
             }
 
             res.send(result);
+            logger.logRequestSuccess({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/list/by_alloc",
+                status: "Success",
+                description: "List data records by allocation",
+                extra: result,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/list/by_alloc",
+                status: "Failure",
+                description: "List data records by allocation",
+                extra: result,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -1603,7 +1957,19 @@ router
 
 router
     .post("/get", function (req, res) {
+        let result = null;
+        let client = null;
         try {
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/get",
+                status: "Started",
+                description: "Get (download) data to Globus destination path",
+            });
+
             g_db._executeTransaction({
                 collections: {
                     read: ["uuid", "accn", "d", "c", "item"],
@@ -1611,7 +1977,6 @@ router
                     exclusive: ["task", "lock", "block"],
                 },
                 action: function () {
-                    const client = g_lib.getUserFromClientID(req.queryParams.client);
                     var id,
                         res_ids = [];
 
@@ -1643,7 +2008,7 @@ router
                         res_ids.push(id);
                     }
 
-                    var result = g_tasks.taskInitDataGet(
+                    result = g_tasks.taskInitDataGet(
                         client,
                         req.body.path,
                         req.body.encrypt,
@@ -1658,9 +2023,28 @@ router
                         g_lib.saveRecentGlobusPath(client, req.body.path, g_lib.TT_DATA_GET);
 
                     res.send(result);
+                    logger.logRequestSuccess({
+                        client: client,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "POST",
+                        routePath: basePath + "/get",
+                        status: "Success",
+                        description: "Get (download) data to Globus destination path",
+                        extra: result,
+                    });
                 },
             });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/get",
+                status: "Failure",
+                description: "Get (download) data to Globus destination path",
+                extra: result,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -1686,7 +2070,19 @@ router
 
 router
     .post("/put", function (req, res) {
+        let result = null;
+        let client = null;
         try {
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/put",
+                status: "Started",
+                description: "Put (upload) raw data to record",
+            });
+
             g_db._executeTransaction({
                 collections: {
                     read: ["uuid", "accn", "d", "c", "item"],
@@ -1694,7 +2090,6 @@ router
                     exclusive: ["task", "lock", "block"],
                 },
                 action: function () {
-                    const client = g_lib.getUserFromClientID(req.queryParams.client);
                     var res_ids = [];
 
                     if (!req.body.check && !req.body.path)
@@ -1730,7 +2125,7 @@ router
                         res_ids.push(g_lib.resolveDataID(req.body.id[i], client));
                     }
 
-                    var result = g_tasks.taskInitDataPut(
+                    result = g_tasks.taskInitDataPut(
                         client,
                         req.body.path,
                         req.body.encrypt,
@@ -1745,9 +2140,28 @@ router
                         g_lib.saveRecentGlobusPath(client, req.body.path, g_lib.TT_DATA_PUT);
 
                     res.send(result);
+                    logger.logRequestSuccess({
+                        client: client,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "POST",
+                        routePath: basePath + "/put",
+                        status: "Success",
+                        description: "Put (upload) raw data to record",
+                        extra: result,
+                    });
                 },
             });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/put",
+                status: "Failure",
+                description: "Put (upload) raw data to record",
+                extra: result,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -1773,14 +2187,25 @@ router
 
 router
     .post("/alloc_chg", function (req, res) {
+        let result = null;
+        let client = null;
         try {
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/alloc_chg",
+                status: "Started",
+                description: "Move raw data to a new allocation",
+            });
+
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn", "d", "c", "item"],
                     exclusive: ["task", "lock", "block"],
                 },
                 action: function () {
-                    const client = g_lib.getUserFromClientID(req.queryParams.client);
                     var id,
                         res_ids = [];
 
@@ -1789,7 +2214,7 @@ router
                         res_ids.push(id);
                     }
 
-                    var result = g_tasks.taskInitRecAllocChg(
+                    result = g_tasks.taskInitRecAllocChg(
                         client,
                         req.body.proj_id,
                         res_ids,
@@ -1798,9 +2223,28 @@ router
                     );
 
                     res.send(result);
+                    logger.logRequestSuccess({
+                        client: client,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "POST",
+                        routePath: basePath + "/alloc_chg",
+                        status: "Success",
+                        description: "Move raw data to a new allocation",
+                        extra: result,
+                    });
                 },
             });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/alloc_chg",
+                status: "Failure",
+                description: "Move raw data to a new allocation",
+                extra: result,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -1821,14 +2265,25 @@ router
 
 router
     .post("/owner_chg", function (req, res) {
+        let result = null;
+        let client = null;
         try {
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/owner_chg",
+                status: "Started",
+                description: "Move data records and raw data to a new owner/allocation",
+            });
+
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn", "d", "c", "item", "admin"],
                     exclusive: ["task", "lock", "block"],
                 },
                 action: function () {
-                    const client = g_lib.getUserFromClientID(req.queryParams.client);
                     var id,
                         res_ids = [];
 
@@ -1837,7 +2292,7 @@ router
                         res_ids.push(id);
                     }
                     var coll_id = g_lib.resolveDataCollID(req.body.coll_id, client);
-                    var result = g_tasks.taskInitRecOwnerChg(
+                    result = g_tasks.taskInitRecOwnerChg(
                         client,
                         res_ids,
                         coll_id,
@@ -1846,9 +2301,28 @@ router
                     );
 
                     res.send(result);
+                    logger.logRequestSuccess({
+                        client: client,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "POST",
+                        routePath: basePath + "/owner_chg",
+                        status: "Success",
+                        description: "Move data records and raw data to a new owner/allocation",
+                        extra: result,
+                    });
                 },
             });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/owner_chg",
+                status: "Failure",
+                description: "Move data records and raw data to a new owner/allocation",
+                extra: result,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -1872,9 +2346,20 @@ router
 router
     .post("/delete", function (req, res) {
         var retry = 10;
-
+        let result = null;
+        let client = null;
         for (;;) {
             try {
+                client = g_lib.getUserFromClientID(req.queryParams.client);
+                logger.logRequestStarted({
+                    client: client,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/delete",
+                    status: "Started",
+                    description: "Delete collections, data records and raw data",
+                });
+
                 g_db._executeTransaction({
                     collections: {
                         read: ["u", "uuid", "accn"],
@@ -1898,7 +2383,6 @@ router
                         exclusive: ["lock", "task", "block"],
                     },
                     action: function () {
-                        const client = g_lib.getUserFromClientID(req.queryParams.client);
                         var i,
                             id,
                             ids = [];
@@ -1908,14 +2392,33 @@ router
                             ids.push(id);
                         }
 
-                        var result = g_tasks.taskInitRecCollDelete(client, ids);
+                        result = g_tasks.taskInitRecCollDelete(client, ids);
 
                         res.send(result);
+                        logger.logRequestSuccess({
+                            client: client,
+                            correlationId: req.headers["x-correlation-id"],
+                            httpVerb: "POST",
+                            routePath: basePath + "/delete",
+                            status: "Success",
+                            description: "Delete collections, data records and raw data",
+                            extra: result,
+                        });
                     },
                 });
                 break;
             } catch (e) {
                 if (--retry == 0 || !e.errorNum || e.errorNum != 1200) {
+                    logger.logRequestFailure({
+                        client: client,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "POST",
+                        routePath: basePath + "/delete",
+                        status: "Failure",
+                        description: "Delete collections, data records and raw data",
+                        extra: result,
+                        error: e,
+                    });
                     g_lib.handleException(e, res);
                 }
             }
