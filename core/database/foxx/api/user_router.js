@@ -393,6 +393,7 @@ router
                     result = [user.new];
                 },
             });
+            res.send(result);
             logger.logRequestSuccess({
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
