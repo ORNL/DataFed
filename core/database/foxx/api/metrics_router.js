@@ -5,12 +5,23 @@ const router = createRouter();
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
 const joi = require("joi");
+const logger = require("./lib/logger");
 
 module.exports = router;
 
+const basePath = "metrics";
 router
     .post("/msg_count/update", function (req, res) {
+        const client = g_lib.getUserFromClientID(req.queryParams.client);
         try {
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/msg_count/update",
+                status: "Started",
+                description: "Update message metrics",
+            });
             var i,
                 u,
                 ts = req.body.timestamp,
@@ -33,7 +44,26 @@ router
                 };
                 g_db.metrics.save(obj);
             }
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/msg_count/update",
+                status: "Success",
+                description: "Update message metrics",
+                extra: obj,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/msg_count/update",
+                status: "Failure",
+                description: "Update message metrics",
+                extra: obj,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -43,7 +73,16 @@ router
 
 router
     .get("/msg_count", function (req, res) {
+        const client = g_lib.getUserFromClientID(req.queryParams.client);
         try {
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/msg_count",
+                status: "Started",
+                description: "Update message metrics",
+            });
             var par = {
                     now: Date.now() / 1000,
                     since: 60 * (req.queryParams.since ? req.queryParams.since : 60),
@@ -71,7 +110,26 @@ router
             }
 
             res.send(result);
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/msg_count",
+                status: "Success",
+                description: "Update message metrics",
+                extra: result,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/msg_count",
+                status: "Failure",
+                description: "Update message metrics",
+                extra: result,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -87,7 +145,19 @@ router
 
 router
     .get("/users/active", function (req, res) {
+        const client = req.queryParams.client
+            ? g_lib.getUserFromClientID(req.queryParams.client)
+            : null;
         try {
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/users/active",
+                status: "Started",
+                description: "Get recently active users from metrics",
+            });
+
             var cnt = {},
                 u,
                 r,
@@ -111,7 +181,27 @@ router
             }
 
             res.json(cnt);
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/users/active",
+                status: "Success",
+                description: "Get recently active users from metrics",
+                extra: cnt,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/users/active",
+                status: "Failure",
+                description: "Get recently active users from metrics",
+                extra: cnt,
+                error: e,
+            });
+
             g_lib.handleException(e, res);
         }
     })
@@ -125,7 +215,17 @@ router
 
 router
     .post("/purge", function (req, res) {
+        const client = g_lib.getUserFromClientID(req.queryParams.client);
         try {
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/purge",
+                status: "Started",
+                description: "Purge older metrics",
+            });
+
             g_db.metrics.save({
                 timestamp: Math.floor(Date.now() / 1000),
                 type: "purge",
@@ -135,7 +235,26 @@ router
             g_db._query("for i in metrics filter i.timestamp < @ts remove i in metrics", {
                 ts: req.queryParams.timestamp,
             });
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/purge",
+                status: "Success",
+                description: "Purge older metrics",
+                extra: "undefined",
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/purge",
+                status: "Failure",
+                description: "Purge older metrics",
+                extra: "undefined",
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
