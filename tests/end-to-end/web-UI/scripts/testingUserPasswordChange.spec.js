@@ -61,20 +61,13 @@ test.describe("DataFed UI password change", () => {
             await confirmPasswordInput.fill("Terrible2s!!!");
             await saveButton.click();
             // Make sure an error does not appear.
-            //const errorVisible = await page.locator('text=Save Settings Error').isVisible();
-            //expect(await page.locator('text=Save Settings Error').count()).toBe(0); 
-            //expect(await page.getByLabel('Save Settings Error').count()).toBe(0);
-            //expect(errorVisible).toBe(false);
             // Unfortunately it take a while for the error to show up
             await page.waitForTimeout(15000);
-            //const entirePageText = await page.locator('body').innerText();
 
             await page.screenshot({ path: 'change-password-has-error.png', fullPage: true });
 
             // These WILL fail if error appears
-            //expect(entirePageText).toContain('Save Settings Error');
             await expect(page.getByText('Save Settings Error')).not.toBeVisible();
-          
         });
     });
 });
