@@ -14,3 +14,51 @@ To use the python API you will need to build it
 cmake -S. -B build -DBUILD_PYTHON_CLIENT=ON
 cmake --build build --target pydatafed
 ```
+
+## Playwright
+
+On windows, it is recommended to run playwright directly on windows and not in
+a docker container or on wsl2. If you do take that approach you will likely 
+encounter compatibility problems, and will still need to stand up an XServer
+on the windows host.
+
+To run
+
+```bash
+npm install .
+npx playwright install
+npx playwright test
+```
+
+You can also use the playwright code generator to add additional tests.
+
+```bash
+npx playwright codegen
+```
+
+If you are running on linux you might be able to get away with running in a 
+docker image. 
+
+Below is a minimal dockerfile to build playwright with a few useful developer tools.
+
+```Dockerfile
+FROM mcr.microsoft.com/playwright:v1.45.1-noble
+
+# Install Chromium only
+WORKDIR /work
+RUN npx playwright install chromium --with-deps; npx playwright install
+RUN apt-get update && apt-get install -y ca-certificates bash vim && update-ca-certificates
+```
+
+Build it with.
+
+```bash
+docker build . -t playwright:latest
+```
+
+```bash
+docker run --rm   -v "$PWD:/work"  -w /work -e DATAFED_WEB_TEST_USERNAME="$DATAFED_WEB_TEST_USERNAME" -e DATAFED_WEB_TEST_PASSWORD="$DATAFED_WEB_TEST_PASSWORD" -e DATAFED_DOMAIN="$DATAFED_DOMAIN"  -e DISPLAY=host.docker.
+internal:0 playwright:latest npx -y playwright test
+```
+
+
