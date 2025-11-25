@@ -61,4 +61,29 @@ docker run --rm   -v "$PWD:/work"  -w /work -e DATAFED_WEB_TEST_USERNAME="$DATAF
 internal:0 playwright:latest npx -y playwright test
 ```
 
+NOTE: By default the web tests are setup to run in headless mode but if you 
+wish to see the web tests as they execute while debugging etc you will need
+to edit the configuration in playwright.config.js
+
+This might need to be specified in the following places
+```
+    projects: [
+        {
+            name: "chromium",
+            use: {
+                ...devices["Desktop Chrome"],
+                headless: false, // optional: run headed
+            },
+        },
+    ]
+```
+
+```
+    use: {
+        /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
+        trace: "on-first-retry",
+        headless: false,
+        screenshot: "only-on-failure",
+ 
+```
 
