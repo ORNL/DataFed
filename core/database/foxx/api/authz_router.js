@@ -8,23 +8,29 @@ const g_lib = require("./support");
 const error = require("./lib/error_codes");
 const permissions = require("./lib/permissions");
 const authzModule = require("./authz");
+const logger = require("./lib/logger");
 const { Repo, PathType } = require("./repo");
-
+const basePath = "authz";
 module.exports = router;
 
 router
     .get("/gridftp", function (req, res) {
+        let client = null;
         try {
-            console.log(
-                "/gridftp start authz client",
-                req.queryParams.client,
-                "repo",
-                req.queryParams.repo,
-                "file",
-                req.queryParams.file,
-                "act",
-                req.queryParams.act,
-            );
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/gridftp",
+                status: "Started",
+                description: JSON.stringify({
+                    message: "Checks authorization",
+                    repo: req.queryParams.repo,
+                    file: req.queryParams.file,
+                    act: req.queryParams.act,
+                }),
+            });
 
             // Client will contain the following information
             //
@@ -39,17 +45,8 @@ router
             // "max_sav_qry" : 20,
             // :
             // "email" : "bobjones@gmail.com"
-            const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
+            client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
             if (!client) {
-                console.log(
-                    "AUTHZ act: " +
-                        req.queryParams.act +
-                        " client: " +
-                        +req.queryParams.client +
-                        " path " +
-                        req.queryParams.file +
-                        " FAILED",
-                );
                 throw [error.ERR_PERM_DENIED, "Unknown client: " + req.queryParams.client];
             }
             let repo = new Repo(req.queryParams.repo);
@@ -57,15 +54,6 @@ router
 
             // If the provided path is not within the repo throw an error
             if (path_type === PathType.UNKNOWN) {
-                console.log(
-                    "AUTHZ act: " +
-                        req.queryParams.act +
-                        " client: " +
-                        client._id +
-                        " path " +
-                        req.queryParams.file +
-                        " FAILED",
-                );
                 throw [
                     error.ERR_PERM_DENIED,
                     "Unknown path, or path is not consistent with supported repository folder hierarchy: " +
@@ -83,16 +71,43 @@ router
             } else {
                 throw [error.ERR_INVALID_PARAM, "Invalid gridFTP action: ", req.queryParams.act];
             }
-            console.log(
-                "AUTHZ act: " +
-                    req.queryParams.act +
-                    " client: " +
-                    client._id +
-                    " path " +
-                    req.queryParams.file +
-                    " SUCCESS",
-            );
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/gridftp",
+                status: "Success",
+                description: JSON.stringify({
+                    message: "Checks authorization",
+                    repo: req.queryParams.repo,
+                    file: req.queryParams.file,
+                    act: req.queryParams.act,
+                }),
+                extra: {
+                    id: client?._id,
+                    is_admin: client?.is_admin,
+                },
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/gridftp",
+                status: "Failure",
+                description: JSON.stringify({
+                    message: "Checks authorization",
+                    repo: req.queryParams.repo,
+                    file: req.queryParams.file,
+                    act: req.queryParams.act,
+                }),
+                extra: {
+                    id: client?._id,
+                    is_admin: client?.is_admin,
+                },
+                error: e,
+            });
+
             g_lib.handleException(e, res);
         }
     })
@@ -113,12 +128,23 @@ router
 
 router
     .get("/perm/check", function (req, res) {
+        let client = null;
+        let result = null;
         try {
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/perm/check",
+                status: "Started",
+                description: "Checks client permissions for object",
+            });
+
             var perms = req.queryParams.perms ? req.queryParams.perms : permissions.PERM_ALL;
-            var obj,
-                result = true,
-                id = g_lib.resolveID(req.queryParams.id, client),
+            var obj;
+            result = true;
+            var id = g_lib.resolveID(req.queryParams.id, client),
                 ty = id[0];
 
             if (id[1] != "/") {
@@ -172,7 +198,26 @@ router
             res.send({
                 granted: result,
             });
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/perm/check",
+                status: "Success",
+                description: "Checks client permissions for object",
+                extra: result,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/perm/check",
+                status: "Failure",
+                description: "Checks client permissions for object",
+                extra: result,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -184,9 +229,20 @@ router
 
 router
     .get("/perm/get", function (req, res) {
+        let client = null;
+        let result = null;
         try {
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
-            var result = req.queryParams.perms ? req.queryParams.perms : permissions.PERM_ALL;
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/perm/get",
+                status: "Started",
+                description: "Gets client permissions for object",
+            });
+
+            result = req.queryParams.perms ? req.queryParams.perms : permissions.PERM_ALL;
             var obj,
                 id = g_lib.resolveID(req.queryParams.id, client),
                 ty = id[0];
@@ -220,7 +276,26 @@ router
             res.send({
                 granted: result,
             });
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/perm/get",
+                status: "Success",
+                description: "Gets client permissions for object",
+                extra: result,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/perm/get",
+                status: "Failure",
+                description: "Gets client permissions for object",
+                extra: result,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
