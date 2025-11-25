@@ -378,10 +378,11 @@ void receiveBody(IMessage &msg, Buffer &buffer, ProtoBufFactory &factory,
     if (frame_size > 0) {
 
       if (zmq_msg_size(&zmq_msg) != frame_size) {
+	size_t msg_size = zmq_msg_size(&zmq_msg);
         zmq_msg_close(&zmq_msg);
         EXCEPT_PARAM(1, "RCV Invalid message body received. Expected: "
                             << frame_size
-                            << ", got: " << zmq_msg_size(&zmq_msg));
+                            << ", got: " << msg_size);
       }
 
       copyToBuffer(buffer, zmq_msg_data(&zmq_msg), frame_size);
