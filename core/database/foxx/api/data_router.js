@@ -821,7 +821,7 @@ function recordUpdate(client, record, result) {
 router
     .post("/update", function (req, res) {
         let result = null;
-        let client = null; 
+        let client = null;
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
@@ -1688,7 +1688,7 @@ router
     .get("/lock", function (req, res) {
         let result = null;
         let client = null;
-        try { 
+        try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
                 client: client,
