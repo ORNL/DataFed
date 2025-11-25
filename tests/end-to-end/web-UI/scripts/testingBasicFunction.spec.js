@@ -8,13 +8,7 @@ test.describe("DataFed UI Navigation", () => {
             throw new Error("DATAFED_DOMAIN environment variable not set");
         }
 
-        await page.goto(`https://${domain}/`);
-
-        // Handle optional registration continuation
-        const continueReg = page.getByText("Continue Registration");
-        if (await continueReg.isVisible()) {
-            await continueReg.click();
-        }
+        await page.goto(`https://${domain}/ui/main`);
 
         // Verify main elements
         await expect(page.locator(".ui-icon").first()).toBeVisible();
@@ -29,7 +23,7 @@ test.describe("DataFed UI Navigation", () => {
             throw new Error("DATAFED_DOMAIN environment variable not set");
         }
 
-        await page.goto(`https://${domain}/`);
+        await page.goto(`https://${domain}/ui/main`);
 
         // Define tree items to expand
         const treeItems = [
@@ -43,7 +37,9 @@ test.describe("DataFed UI Navigation", () => {
 
         for (const item of treeItems) {
             const treeItem = page.getByRole("treeitem", { name: new RegExp(item) });
-            await treeItem.getByRole("button").click();
+            const button = treeItem.getByRole("button").first();
+            await expect(button).toBeVisible();
+            await button.click();
             // Add assertion that it expanded if needed
         }
     });
