@@ -9,7 +9,8 @@ const g_graph = require("@arangodb/general-graph")._graph("sdmsg");
 const g_lib = require("./support");
 const error = require("./lib/error_codes");
 const permissions = require("./lib/permissions");
-
+const logger = require("./lib/logger");
+const basePath = "col";
 module.exports = router;
 
 //===== COLLECTION API FUNCTIONS =====
@@ -17,8 +18,8 @@ module.exports = router;
 router
     .post("/create", function (req, res) {
         var retry = 10;
-        client = null;
-        result = null;
+        let client = null;
+        let result = null;
         for (;;) {
             try {
                 client = g_lib.getUserFromClientID(req.queryParams.client);
@@ -237,7 +238,7 @@ router
                 logger.logRequestStarted({
                     client: client?._id,
                     correlationId: req.headers["x-correlation-id"],
-                    httpVerb: "POST,
+                    httpVerb: "POST",
                     routePath: basePath + "/update",
                     status: "Started",
                     description: "Update an existing collection",
@@ -1264,10 +1265,20 @@ router
                     routePath: basePath + "/get_parents",
                     status: "Success",
                     description: "Get offset to item in collection.",
-                    extra: 
+                    extra: req.queryParams.page_sz * Math.floor(idx / req.queryParams.page_sz)
                 });
             }
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/get_parents",
+                status: "Failure",
+                description: "Get offset to item in collection.",
+                extra: req.queryParams.page_sz * Math.floor(idx / req.queryParams.page_sz),
+                error: e
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -1282,8 +1293,19 @@ router
 
 router
     .get("/published/list", function (req, res) {
+        let client = null;
+        let result = null;
         try {
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/published/list",
+                status: "Started",
+                description: "Get list of clients published collections.",
+            });
+
             var owner_id;
 
             if (req.queryParams.subject) {
@@ -1294,7 +1316,6 @@ router
 
             var qry =
                 "for v in 1..1 inbound @user owner filter is_same_collection('c',v) && v.public sort v.title";
-            var result;
 
             if (req.queryParams.offset != undefined && req.queryParams.count != undefined) {
                 qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
@@ -1326,7 +1347,27 @@ router
             }
 
             res.send(result);
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/published/list",
+                status: "Success",
+                description: "Get list of clients published collections.",
+                extra: result
+            });
+
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/published/list",
+                status: "Failure",
+                description: "Get list of clients published collections.",
+                extra: result,
+                error: e
+            });
             g_lib.handleException(e, res);
         }
     })
