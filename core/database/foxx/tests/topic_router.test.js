@@ -59,40 +59,39 @@ describe("unit_topic_router: the Foxx microservice topic_router /view endpoint",
         // assert
         expect(response.status).to.equal(200);
     });
-it("should successfully run the search route", () => {
-    // Create user
-    db.u.save({
-        _key: "fakeUser",
-        is_admin: true,
-    });
-
-    // Create ArangoSearch View (if missing)
-    if (!db._view("topicview")) {
-        db._createView("topicview", "arangosearch", {
-            links: {
-                t: {
-                    includeAllFields: true
-                }
-            }
+    it("should successfully run the search route", () => {
+        // Create user
+        db.u.save({
+            _key: "fakeUser",
+            is_admin: true,
         });
-    }
 
-    // Insert topic
-    db.t.save({
-        _key: "s1",
-        title: "Sample Topic"
+        // Create ArangoSearch View (if missing)
+        if (!db._view("topicview")) {
+            db._createView("topicview", "arangosearch", {
+                links: {
+                    t: {
+                        includeAllFields: true,
+                    },
+                },
+            });
+        }
+
+        // Insert topic
+        db.t.save({
+            _key: "s1",
+            title: "Sample Topic",
+        });
+
+        // Force view to update (ArangoSearch is async)
+        db._query("FOR d IN topicview SEARCH d.title == 'nothing' RETURN d");
+
+        const request_string = `${topic_base_url}/search?client=fakeUser&phrase=Sample`;
+
+        const response = request.get(request_string);
+
+        expect(response.status).to.equal(200);
     });
-
-    // Force view to update (ArangoSearch is async)
-    db._query("FOR d IN topicview SEARCH d.title == 'nothing' RETURN d");
-
-    const request_string =
-        `${topic_base_url}/search?client=fakeUser&phrase=Sample`;
-
-    const response = request.get(request_string);
-
-    expect(response.status).to.equal(200);
-});
 
     it("should list only top-level topics", () => {
         db.u.save({
@@ -100,27 +99,27 @@ it("should successfully run the search route", () => {
             is_admin: true,
         });
 
-    db.t.save({
-        _key: "t1",
-        title: "Alpha",
-        top: true,
-        admin: false,
-        coll_cnt: 1
-    });
+        db.t.save({
+            _key: "t1",
+            title: "Alpha",
+            top: true,
+            admin: false,
+            coll_cnt: 1,
+        });
 
-    db.t.save({
-        _key: "t2",
-        title: "Beta",
-        top: true,
-        admin: true,
-        coll_cnt: 5
-    });
+        db.t.save({
+            _key: "t2",
+            title: "Beta",
+            top: true,
+            admin: true,
+            coll_cnt: 5,
+        });
 
-    db.t.save({
-        _key: "child1",
-        title: "Child Should Not Appear",
-        top: false
-    });
+        db.t.save({
+            _key: "child1",
+            title: "Child Should Not Appear",
+            top: false,
+        });
 
         const url = `${topic_base_url}/list/topics?client=u/fakeUser`;
 
@@ -133,9 +132,9 @@ it("should successfully run the search route", () => {
         // last item is paging metadata
         const paging = body[body.length - 1].paging;
 
-        expect(paging.tot).to.equal(2);   // only Alpha + Beta
+        expect(paging.tot).to.equal(2); // only Alpha + Beta
 
-        const ids = body.slice(0, -1).map(x => x._id);
+        const ids = body.slice(0, -1).map((x) => x._id);
 
         expect(ids).to.include("t/t1");
         expect(ids).to.include("t/t2");
