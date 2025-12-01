@@ -9,15 +9,27 @@ const permissions = require("./lib/permissions");
 const g_db = require("@arangodb").db;
 const g_graph = require("@arangodb/general-graph")._graph("sdmsg");
 const g_lib = require("./support");
-
+const logger = require("./lib/logger");
+const basePath = "grp";
 module.exports = router;
 
 //========== GROUP API FUNCTIONS ==========
 
 router
     .get("/create", function (req, res) {
+        let client = null;
+        let result = null;
         try {
-            var result = [];
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/create",
+                status: "Started",
+                description: "Create a new group",
+            });
+            result = [];
 
             g_db._executeTransaction({
                 collections: {
@@ -25,7 +37,7 @@ router
                     write: ["g", "owner", "member"],
                 },
                 action: function () {
-                    const client = g_lib.getUserFromClientID(req.queryParams.client);
+                    client = g_lib.getUserFromClientID(req.queryParams.client);
                     var uid;
 
                     if (req.queryParams.proj) {
@@ -89,7 +101,26 @@ router
             });
 
             res.send(result);
+            logger.logRequestSuccess({
+            client: client?._id,
+            correlationId: req.headers["x-correlation-id"],
+            httpVerb: "GET",
+            routePath: basePath + "/create",
+            status: "Success",
+            description: "Create a new group",
+            extra: result
+            });
         } catch (e) {
+            logger.logRequestFailure({
+            client: client?._id,
+            correlationId: req.headers["x-correlation-id"],
+            httpVerb: "GET",
+            routePath: basePath + "/create",
+            status: "Failure",
+            description: "Create a new group",
+            extra: result,
+            error: e
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -104,8 +135,19 @@ router
 
 router
     .get("/update", function (req, res) {
+        let client = null;
+        let result = null;
         try {
-            var result = [];
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+            client: client?._id,
+            correlationId: req.headers["x-correlation-id"],
+            httpVerb: "GET",
+            routePath: basePath + "/update",
+            status: "Started",
+            description: "Updates an existing group",
+            });
+            result = [];
 
             g_db._executeTransaction({
                 collections: {
@@ -113,7 +155,7 @@ router
                     write: ["g", "owner", "member"],
                 },
                 action: function () {
-                    const client = g_lib.getUserFromClientID(req.queryParams.client);
+                    client = g_lib.getUserFromClientID(req.queryParams.client);
                     var group;
 
                     if (req.queryParams.proj) {
@@ -206,7 +248,28 @@ router
             });
 
             res.send(result);
+            logger.logRequestSuccess({
+            client: client?._id,
+            correlationId: req.headers["x-correlation-id"],
+            httpVerb: "GET",
+            routePath: basePath + "/update",
+            status: "Success",
+            description: "Updates an existing group",
+            extra: result
+            });
+
         } catch (e) {
+            logger.logRequestFailure({
+            client: client?._id,
+            correlationId: req.headers["x-correlation-id"],
+            httpVerb: "GET",
+            routePath: basePath + "/update",
+            status: "Failure",
+            description: "Updates an existing group",
+            extra: result,
+            error: e
+            });
+
             g_lib.handleException(e, res);
         }
     })
@@ -230,15 +293,27 @@ router
 
 router
     .get("/delete", function (req, res) {
+        let client = null;
+        let group = null;
         try {
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+            client: client?._id,
+            correlationId: req.headers["x-correlation-id"],
+            httpVerb: "GET",
+            routePath: basePath + "/delete",
+            status: "Started",
+            description: "Deletes an existing group",
+            });
+
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn", "owner", "admin"],
                     write: ["g", "owner", "member", "acl"],
                 },
                 action: function () {
-                    const client = g_lib.getUserFromClientID(req.queryParams.client);
-                    var group;
+                    client = g_lib.getUserFromClientID(req.queryParams.client);
+                    group;
 
                     if (req.queryParams.proj) {
                         var uid = req.queryParams.proj;
@@ -271,7 +346,26 @@ router
                     g_graph.g.remove(group._id);
                 },
             });
+        logger.logRequestSuccess({
+            client: client?._id,
+            correlationId: req.headers["x-correlation-id"],
+            httpVerb: "GET",
+            routePath: basePath + "/delete",
+            status: "Success",
+            description: "Deletes an existing group",
+            extra: {"Deleted group": group._id}
+        });
         } catch (e) {
+            logger.logRequestFailure({
+            client: client?._id,
+            correlationId: req.headers["x-correlation-id"],
+            httpVerb: "GET",
+            routePath: basePath + "/delete",
+            status: "Failure",
+            description: "Deletes an existing group",
+            extra: {"Deleted group": group?._id},
+            error: e
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -283,8 +377,19 @@ router
 
 router
     .get("/list", function (req, res) {
+        let client = null;
+        let groups = null;
         try {
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+            client: client?._id,
+            correlationId: req.headers["x-correlation-id"],
+            httpVerb: "GET",
+            routePath: basePath + "/list",
+            status: "Started",
+            description: "List groups",
+            });
+
             var owner_id;
 
             if (req.queryParams.proj) {
@@ -295,7 +400,7 @@ router
                 owner_id = client._id;
             }
 
-            var groups = g_db
+            groups = g_db
                 ._query(
                     "for v in 1..1 inbound @client owner filter IS_SAME_COLLECTION('g', v) return { uid: v.uid, gid: v.gid, title: v.title }",
                     {
@@ -303,9 +408,28 @@ router
                     },
                 )
                 .toArray();
-
             res.send(groups);
+            logger.logRequestSuccess({
+            client: client?._id,
+            correlationId: req.headers["x-correlation-id"],
+            httpVerb: "GET",
+            routePath: basePath + "/list",
+            status: "Success",
+            description: "List groups",
+            extra: groups
+            });
+
         } catch (e) {
+            res.send(groups);
+            logger.logRequestFailure({
+            client: client?._id,
+            correlationId: req.headers["x-correlation-id"],
+            httpVerb: "GET",
+            routePath: basePath + "/list",
+            status: "Failure",
+            description: "List groups",
+            extra: groups
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -316,8 +440,19 @@ router
 
 router
     .get("/view", function (req, res) {
+        let client = null;
+        let result = null;
         try {
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+            client: client?._id,
+            correlationId: req.headers["x-correlation-id"],
+            httpVerb: "GET",
+            routePath: basePath + "/view",
+            status: "Started",
+            description: "View group details",
+            });
+
             var group;
 
             if (req.queryParams.proj) {
@@ -340,7 +475,7 @@ router
                     throw [error.ERR_NOT_FOUND, "Group ID '" + req.queryParams.gid + "' not found"];
             }
 
-            var result = {
+            result = {
                 uid: group.uid,
                 gid: group.gid,
                 title: group.title,
@@ -352,7 +487,26 @@ router
                 })
                 .toArray();
             res.send([result]);
+            logger.logRequestSuccess({
+            client: client?._id,
+            correlationId: req.headers["x-correlation-id"],
+            httpVerb: "GET",
+            routePath: basePath + "/view",
+            status: "Successful",
+            description: "View group details",
+            extra: result
+            });
         } catch (e) {
+            logger.logRequestFailure({
+            client: client?._id,
+            correlationId: req.headers["x-correlation-id"],
+            httpVerb: "GET",
+            routePath: basePath + "/view",
+            status: "Failure",
+            description: "View group details",
+            extra: result,
+            error: e
+            });
             g_lib.handleException(e, res);
         }
     })
