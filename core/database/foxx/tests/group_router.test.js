@@ -36,13 +36,13 @@ describe("unit_group_router: test group router endpoints", () => {
             name_first: "Fake",
             name_last: "User",
             is_admin: true,
-            email: "fake@user.com"
+            email: "fake@user.com",
         });
 
         const url = `${group_base_url}/create?client=u/fakeUser&gid=testgroup&title=Test+Group`;
 
         const response = request.get(url, {
-            headers: { "x-correlation-id": "test-correlation-id" }
+            headers: { "x-correlation-id": "test-correlation-id" },
         });
 
         expect(response.status).to.equal(200);
@@ -54,7 +54,7 @@ describe("unit_group_router: test group router endpoints", () => {
         expect(body[0]).to.have.property("members");
         expect(body[0].members).to.be.an("array").that.is.empty;
     });
- 
+
     // ====================================================================
     // /list
     // ====================================================================
@@ -71,7 +71,7 @@ describe("unit_group_router: test group router endpoints", () => {
         const list = JSON.parse(response.body);
 
         expect(list.length).to.equal(2);
-        expect(list.map(g => g.gid)).to.have.members(["a", "b"]);
+        expect(list.map((g) => g.gid)).to.have.members(["a", "b"]);
     });
 
     // ====================================================================
@@ -82,7 +82,7 @@ describe("unit_group_router: test group router endpoints", () => {
         db.u.save({ _key: "fakeUser", _id: "u/fakeUser", is_admin: true });
 
         request.get(`${group_base_url}/create?client=u/fakeUser&gid=testgroup&title=A`);
-        
+
         const delUrl = `${group_base_url}/delete?client=u/fakeUser&gid=testgroup&title=A`;
         const response = request.get(delUrl);
 
@@ -110,7 +110,7 @@ describe("unit_group_router: test group router endpoints", () => {
 
         expect(body[0]).to.include({
             gid: "viewtest",
-            title: "Viewer"
+            title: "Viewer",
         });
     });
 
@@ -124,14 +124,14 @@ describe("unit_group_router: test group router endpoints", () => {
             uid: "u/fakeUser",
             gid: "updateMe",
             title: "OldTitle",
-            desc: "Old description"
+            desc: "Old description",
         });
         // Create
         request.get(`${group_base_url}/create?client=u/fakeUser&gid=updateMe&title=OldTitle`);
-        
+
         // Update title via endpoint
         const response = request.get(
-            `${group_base_url}/update?client=u/fakeUser&gid=updateMe&title=NewTitle`
+            `${group_base_url}/update?client=u/fakeUser&gid=updateMe&title=NewTitle`,
         );
 
         expect(response.status).to.equal(200);
