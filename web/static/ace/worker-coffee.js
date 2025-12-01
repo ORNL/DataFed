@@ -1646,7 +1646,6 @@
                                                                     for (
                                                                         i = this.tokens, n = 0;
                                                                         (r = i[n]);
-
                                                                     )
                                                                         n += t.call(this, r, n, i);
                                                                     return !0;
@@ -1668,7 +1667,6 @@
                                                                     for (
                                                                         h = this.tokens, o = 0;
                                                                         (c = h[n]);
-
                                                                     ) {
                                                                         if (
                                                                             0 === o &&
@@ -1914,7 +1912,6 @@
                                                                                         .generated) &&
                                                                                 ((c = this.tag(n)),
                                                                                 0 > t.call(v, c))));
-
                                                                     )
                                                                         (((s = this.tag(n)),
                                                                         0 <= t.call(a, s)) &&
@@ -2287,7 +2284,6 @@
                                                                                             (C() &&
                                                                                                 ":" !==
                                                                                                     H);
-
                                                                                         )
                                                                                             T()
                                                                                                 ? g()
@@ -2746,7 +2742,6 @@
                                                                                                 ? 1
                                                                                                 : 0;
                                                                                         C();
-
                                                                                     )
                                                                                         y(o + P);
                                                                                 return w(1);
@@ -2813,7 +2808,6 @@
                                                                                 u !== i.length &&
                                                                                 ((l = i[u][0]),
                                                                                 0 <= t.call(o, l));
-
                                                                             )
                                                                                 u++;
                                                                             if (
@@ -2852,7 +2846,6 @@
                                                                                 -1 !== s &&
                                                                                 ((u = i[s][0]),
                                                                                 0 <= t.call(o, u));
-
                                                                             )
                                                                                 s--;
                                                                             return -1 === s ||
@@ -2892,7 +2885,6 @@
                                                                                                     .length -
                                                                                                 1;
                                                                                         -1 !== a;
-
                                                                                     )
                                                                                         (!1 ===
                                                                                             e
@@ -2946,7 +2938,6 @@
                                                                                                     .length -
                                                                                                 1;
                                                                                         -1 !== a;
-
                                                                                     )
                                                                                         (!e
                                                                                             .comments[
@@ -3986,7 +3977,6 @@
                                                                     t = this.clean(t),
                                                                     s = 0;
                                                                 (this.chunk = t.slice(s));
-
                                                             ) {
                                                                 r =
                                                                     this.identifierToken() ||
@@ -4536,7 +4526,6 @@
                                                                             return n;
                                                                         })().join("#{}");
                                                                     (p = E.exec(u));
-
                                                                 )
                                                                     ((s = p[1]),
                                                                         (null === c ||
@@ -5377,7 +5366,6 @@
                                                                     (null == (i = this.ends[n])
                                                                         ? void 0
                                                                         : i.tag) || 0 < t--;
-
                                                             )
                                                                 n--;
                                                             return (
@@ -5558,7 +5546,6 @@
                                                                     n = s[--t],
                                                                     n[0] = "PARAM_END";
                                                                 (i = s[--t]);
-
                                                             )
                                                                 switch (i[0]) {
                                                                     case ")":
@@ -25711,7 +25698,6 @@
                                                                         o,
                                                                     )
                                                             );
-
                                                     )
                                                         i++;
                                                     return (
@@ -26488,7 +26474,6 @@
                                                                 for (
                                                                     t = this;
                                                                     t !== (t = t.unwrap());
-
                                                                 )
                                                                     continue;
                                                                 return t;
@@ -26767,7 +26752,6 @@
                                                                     for (
                                                                         r = this.expressions.length;
                                                                         r--;
-
                                                                     ) {
                                                                         ((n = this.expressions[r]),
                                                                             (this.expressions[r] =
@@ -26926,8 +26910,8 @@
                                                                                 this,
                                                                                 null,
                                                                                 null ==
-                                                                                (o =
-                                                                                    t.referencedVars)
+                                                                                    (o =
+                                                                                        t.referencedVars)
                                                                                     ? []
                                                                                     : o,
                                                                             ),
@@ -30954,7 +30938,6 @@
                                                                                         );
                                                                                 };
                                                                             (t = y[r]);
-
                                                                         )
                                                                             ((c =
                                                                                 this.addInitializerExpression(
@@ -31327,7 +31310,6 @@
                                                                         r instanceof Pt &&
                                                                         r.isString()
                                                                     );
-
                                                                 )
                                                                     if (r.hoisted) i++;
                                                                     else {
@@ -32965,7 +32947,8 @@
                                                                                               .properties[0]
                                                                                               .name
                                                                                         : new ct(
-                                                                                              s.unwrap().value,
+                                                                                              s.unwrap()
+                                                                                                  .value,
                                                                                           )),
                                                                                         (f =
                                                                                             c.unwrap() instanceof
@@ -34754,7 +34737,8 @@
                                                                                   ? r.expressions.unshift(
                                                                                         new D(
                                                                                             new ft(
-                                                                                                this.guard,
+                                                                                                this
+                                                                                                    .guard,
                                                                                             ).invert(),
                                                                                             new wt(
                                                                                                 "continue",
@@ -34764,7 +34748,8 @@
                                                                                   : this.guard &&
                                                                                     (r = f.wrap([
                                                                                         new D(
-                                                                                            this.guard,
+                                                                                            this
+                                                                                                .guard,
                                                                                             r,
                                                                                         ),
                                                                                     ]))),
@@ -34946,7 +34931,6 @@
                                                                         for (
                                                                             t = !0, n = this;
                                                                             n && n.operator;
-
                                                                         )
                                                                             (t &&
                                                                                 (t =
@@ -34960,7 +34944,6 @@
                                                                         for (
                                                                             n = this;
                                                                             n && n.operator;
-
                                                                         )
                                                                             ((n.invert = !n.invert),
                                                                                 (n.operator =
@@ -35671,7 +35654,8 @@
                                                                                     : void 0,
                                                                                 this.recovery.unshift(
                                                                                     new o(
-                                                                                        this.errorVariable,
+                                                                                        this
+                                                                                            .errorVariable,
                                                                                         u,
                                                                                     ),
                                                                                 ))
@@ -36629,7 +36613,8 @@
                                                                             ? s.expressions.unshift(
                                                                                   new D(
                                                                                       new ft(
-                                                                                          this.guard,
+                                                                                          this
+                                                                                              .guard,
                                                                                       ).invert(),
                                                                                       new wt(
                                                                                           "continue",
@@ -37370,7 +37355,6 @@
                                                     for (
                                                         var n;
                                                         !((n = this.columns[t]) || 0 >= t);
-
                                                     )
                                                         t--;
                                                     return n && [n.sourceLine, n.sourceColumn];
@@ -37422,7 +37406,6 @@
                                                                         (s = this.lines[r]) ||
                                                                         0 >= r
                                                                     );
-
                                                                 )
                                                                     r--;
                                                                 return s && s.sourceLocation(i);
@@ -37544,7 +37527,6 @@
                                                                         a = 0 > t ? 1 : 0,
                                                                         f = (_Mathabs(t) << 1) + a;
                                                                     f || !n;
-
                                                                 )
                                                                     ((u = f & s),
                                                                         (f >>= i),

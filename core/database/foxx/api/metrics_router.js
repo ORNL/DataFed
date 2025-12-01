@@ -218,7 +218,7 @@ router
         //const client = g_lib.getUserFromClientID(req.queryParams.client);
         try {
             logger.logRequestStarted({
-                client: "undef",//client?._id,
+                client: "undef", //client?._id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/purge",
@@ -236,7 +236,7 @@ router
                 ts: req.queryParams.timestamp,
             });
             logger.logRequestSuccess({
-                client: "undef",//client?._id,
+                client: "undef", //client?._id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/purge",
@@ -246,7 +246,7 @@ router
             });
         } catch (e) {
             logger.logRequestFailure({
-                client: "undef",//client?._id,
+                client: "undef", //client?._id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/purge",

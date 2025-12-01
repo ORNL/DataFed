@@ -93,127 +93,125 @@ describe("unit_metrics_router: /users/active endpoint", () => {
         const body = JSON.parse(response.body);
         expect(body).to.deep.equal({});
     });
-    
+
     it("POST /msg_count/update should succeed and write metrics", () => {
-    // create user explicitly
-    db.u.save({
-      _key: "fakeUser",
-      _id: "u/fakeUser",
-      name: "Fake",
-      email: "fake@example.com",
-      is_admin: true
+        // create user explicitly
+        db.u.save({
+            _key: "fakeUser",
+            _id: "u/fakeUser",
+            name: "Fake",
+            email: "fake@example.com",
+            is_admin: true,
+        });
+
+        const payload = {
+            timestamp: Math.floor(Date.now() / 1000),
+            total: 99,
+            uids: {
+                a: { tot: 5, msg: "hello" },
+                b: { tot: 7, msg: "yo" },
+            },
+        };
+
+        const res = request.post(`${metrics_base_url}/msg_count/update?client=u/fakeUser`, {
+            body: payload,
+            json: true,
+        });
+
+        expect(res.status).to.equal(204);
+
+        const docs = db.metrics.toArray();
+        expect(docs.length).to.equal(3); // total + 2 users
     });
 
-    const payload = {
-      timestamp: Math.floor(Date.now() / 1000),
-      total: 99,
-      uids: {
-        a: { tot: 5, msg: "hello" },
-        b: { tot: 7, msg: "yo" }
-      }
-    };
+    it("GET /msg_count should return items within default 60 minutes", () => {
+        // create user explicitly
+        db.u.save({
+            _key: "fakeUser",
+            _id: "u/fakeUser",
+            name: "Fake",
+            email: "fake@example.com",
+            is_admin: true,
+        });
 
-    const res = request.post(
-      `${metrics_base_url}/msg_count/update?client=u/fakeUser`,
-      { body: payload, json: true }
-    );
+        const now = Math.floor(Date.now() / 1000);
 
-    expect(res.status).to.equal(204);
+        // recent item (should return)
+        db.metrics.save({
+            timestamp: now,
+            type: "msgcnt_total",
+            total: 1,
+        });
 
-    const docs = db.metrics.toArray();
-    expect(docs.length).to.equal(3); // total + 2 users
-  });
+        // old item (should NOT return)
+        db.metrics.save({
+            timestamp: now - 60 * 60 * 2, // older than 60 min
+            type: "msgcnt_total",
+            total: 999,
+        });
 
-      it("GET /msg_count should return items within default 60 minutes", () => {
-    // create user explicitly
-    db.u.save({
-      _key: "fakeUser",
-      _id: "u/fakeUser",
-      name: "Fake",
-      email: "fake@example.com",
-      is_admin: true
+        const res = request.get(`${metrics_base_url}/msg_count?client=u/fakeUser`);
+
+        expect(res.status).to.equal(200);
+
+        const arr = JSON.parse(res.body);
+        expect(arr.length).to.equal(1);
+        expect(arr[0].total).to.equal(1);
     });
-
-    const now = Math.floor(Date.now() / 1000);
-
-    // recent item (should return)
-    db.metrics.save({
-      timestamp: now,
-      type: "msgcnt_total",
-      total: 1
-    });
-
-    // old item (should NOT return)
-    db.metrics.save({
-      timestamp: now - (60 * 60 * 2), // older than 60 min
-      type: "msgcnt_total",
-      total: 999
-    });
-
-    const res = request.get(
-      `${metrics_base_url}/msg_count?client=u/fakeUser`
-    );
-
-    expect(res.status).to.equal(200);
-
-    const arr = JSON.parse(res.body);
-    expect(arr.length).to.equal(1);
-    expect(arr[0].total).to.equal(1);
-  });
 
     it("GET /msg_count should filter by type and uid", () => {
-    // create user explicitly
-    db.u.save({
-      _key: "fakeUser",
-      _id: "u/fakeUser",
-      name: "Fake",
-      email: "fake@example.com",
-      is_admin: true
+        // create user explicitly
+        db.u.save({
+            _key: "fakeUser",
+            _id: "u/fakeUser",
+            name: "Fake",
+            email: "fake@example.com",
+            is_admin: true,
+        });
+
+        const ts = Math.floor(Date.now() / 1000);
+
+        db.metrics.save({
+            timestamp: ts,
+            type: "msgcnt_user",
+            uid: "u1",
+            total: 10,
+        });
+
+        db.metrics.save({
+            timestamp: ts,
+            type: "msgcnt_user",
+            uid: "u2",
+            total: 20,
+        });
+
+        const res = request.get(
+            `${metrics_base_url}/msg_count?client=u/fakeUser&type=msgcnt_user&uid=u2`,
+        );
+
+        expect(res.status).to.equal(200);
+
+        const arr = JSON.parse(res.body);
+        expect(arr.length).to.equal(1);
+        expect(arr[0].uid).to.equal("u2");
     });
 
-    const ts = Math.floor(Date.now() / 1000);
+    it("POST /purge should remove metrics older than timestamp", () => {
+        const now = Math.floor(Date.now() / 1000);
 
-    db.metrics.save({
-      timestamp: ts,
-      type: "msgcnt_user",
-      uid: "u1",
-      total: 10
+        db.metrics.save([
+            { timestamp: now - 1000, type: "msgcnt_total", total: 1 }, // should be removed
+            { timestamp: now, type: "msgcnt_total", total: 2 }, // should stay
+        ]);
+
+        const ts = now - 500;
+        const res = request.post(`${metrics_base_url}/purge?timestamp=${ts}`);
+
+        expect(res.status).to.equal(204);
+
+        const docs = db.metrics.toArray();
+        //Equals 2 due to writing the purge doc
+        expect(docs.length).to.equal(2);
+        expect(docs[0].total).to.equal(2);
     });
-
-    db.metrics.save({
-      timestamp: ts,
-      type: "msgcnt_user",
-      uid: "u2",
-      total: 20
-    });
-
-    const res = request.get(
-      `${metrics_base_url}/msg_count?client=u/fakeUser&type=msgcnt_user&uid=u2`
-    );
-
-    expect(res.status).to.equal(200);
-
-    const arr = JSON.parse(res.body);
-    expect(arr.length).to.equal(1);
-    expect(arr[0].uid).to.equal("u2");
-  });
-
-   it("POST /purge should remove metrics older than timestamp", () => {
-  const now = Math.floor(Date.now() / 1000);
-
-  db.metrics.save([
-    { timestamp: now - 1000, type: "msgcnt_total", total: 1 }, // should be removed
-    { timestamp: now, type: "msgcnt_total", total: 2 },        // should stay
-  ]);
-
-  const ts = now - 500;
-  const res = request.post(`${metrics_base_url}/purge?timestamp=${ts}`);
-
-  expect(res.status).to.equal(204);
-
-  const docs = db.metrics.toArray();
-  //Equals 2 due to writing the purge doc
-  expect(docs.length).to.equal(2);
-  expect(docs[0].total).to.equal(2);
-}); 
 });
