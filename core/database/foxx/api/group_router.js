@@ -102,24 +102,24 @@ router
 
             res.send(result);
             logger.logRequestSuccess({
-            client: client?._id,
-            correlationId: req.headers["x-correlation-id"],
-            httpVerb: "GET",
-            routePath: basePath + "/create",
-            status: "Success",
-            description: "Create a new group",
-            extra: result
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/create",
+                status: "Success",
+                description: "Create a new group",
+                extra: result,
             });
         } catch (e) {
             logger.logRequestFailure({
-            client: client?._id,
-            correlationId: req.headers["x-correlation-id"],
-            httpVerb: "GET",
-            routePath: basePath + "/create",
-            status: "Failure",
-            description: "Create a new group",
-            extra: result,
-            error: e
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/create",
+                status: "Failure",
+                description: "Create a new group",
+                extra: result,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -140,12 +140,12 @@ router
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
-            client: client?._id,
-            correlationId: req.headers["x-correlation-id"],
-            httpVerb: "GET",
-            routePath: basePath + "/update",
-            status: "Started",
-            description: "Updates an existing group",
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/update",
+                status: "Started",
+                description: "Updates an existing group",
             });
             result = [];
 
@@ -249,25 +249,24 @@ router
 
             res.send(result);
             logger.logRequestSuccess({
-            client: client?._id,
-            correlationId: req.headers["x-correlation-id"],
-            httpVerb: "GET",
-            routePath: basePath + "/update",
-            status: "Success",
-            description: "Updates an existing group",
-            extra: result
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/update",
+                status: "Success",
+                description: "Updates an existing group",
+                extra: result,
             });
-
         } catch (e) {
             logger.logRequestFailure({
-            client: client?._id,
-            correlationId: req.headers["x-correlation-id"],
-            httpVerb: "GET",
-            routePath: basePath + "/update",
-            status: "Failure",
-            description: "Updates an existing group",
-            extra: result,
-            error: e
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/update",
+                status: "Failure",
+                description: "Updates an existing group",
+                extra: result,
+                error: e,
             });
 
             g_lib.handleException(e, res);
@@ -298,12 +297,12 @@ router
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
-            client: client?._id,
-            correlationId: req.headers["x-correlation-id"],
-            httpVerb: "GET",
-            routePath: basePath + "/delete",
-            status: "Started",
-            description: "Deletes an existing group",
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/delete",
+                status: "Started",
+                description: "Deletes an existing group",
             });
 
             g_db._executeTransaction({
@@ -346,25 +345,25 @@ router
                     g_graph.g.remove(group._id);
                 },
             });
-        logger.logRequestSuccess({
-            client: client?._id,
-            correlationId: req.headers["x-correlation-id"],
-            httpVerb: "GET",
-            routePath: basePath + "/delete",
-            status: "Success",
-            description: "Deletes an existing group",
-            extra: {"Deleted group": group._id}
-        });
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/delete",
+                status: "Success",
+                description: "Deletes an existing group",
+                extra: { "Deleted group": group._id },
+            });
         } catch (e) {
             logger.logRequestFailure({
-            client: client?._id,
-            correlationId: req.headers["x-correlation-id"],
-            httpVerb: "GET",
-            routePath: basePath + "/delete",
-            status: "Failure",
-            description: "Deletes an existing group",
-            extra: {"Deleted group": group?._id},
-            error: e
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/delete",
+                status: "Failure",
+                description: "Deletes an existing group",
+                extra: { "Deleted group": group?._id },
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -382,12 +381,12 @@ router
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
-            client: client?._id,
-            correlationId: req.headers["x-correlation-id"],
-            httpVerb: "GET",
-            routePath: basePath + "/list",
-            status: "Started",
-            description: "List groups",
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/list",
+                status: "Started",
+                description: "List groups",
             });
 
             var owner_id;
@@ -410,25 +409,24 @@ router
                 .toArray();
             res.send(groups);
             logger.logRequestSuccess({
-            client: client?._id,
-            correlationId: req.headers["x-correlation-id"],
-            httpVerb: "GET",
-            routePath: basePath + "/list",
-            status: "Success",
-            description: "List groups",
-            extra: groups
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/list",
+                status: "Success",
+                description: "List groups",
+                extra: groups,
             });
-
         } catch (e) {
             res.send(groups);
             logger.logRequestFailure({
-            client: client?._id,
-            correlationId: req.headers["x-correlation-id"],
-            httpVerb: "GET",
-            routePath: basePath + "/list",
-            status: "Failure",
-            description: "List groups",
-            extra: groups
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/list",
+                status: "Failure",
+                description: "List groups",
+                extra: groups,
             });
             g_lib.handleException(e, res);
         }
@@ -445,12 +443,12 @@ router
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
-            client: client?._id,
-            correlationId: req.headers["x-correlation-id"],
-            httpVerb: "GET",
-            routePath: basePath + "/view",
-            status: "Started",
-            description: "View group details",
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Started",
+                description: "View group details",
             });
 
             var group;
@@ -488,24 +486,24 @@ router
                 .toArray();
             res.send([result]);
             logger.logRequestSuccess({
-            client: client?._id,
-            correlationId: req.headers["x-correlation-id"],
-            httpVerb: "GET",
-            routePath: basePath + "/view",
-            status: "Successful",
-            description: "View group details",
-            extra: result
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Successful",
+                description: "View group details",
+                extra: result,
             });
         } catch (e) {
             logger.logRequestFailure({
-            client: client?._id,
-            correlationId: req.headers["x-correlation-id"],
-            httpVerb: "GET",
-            routePath: basePath + "/view",
-            status: "Failure",
-            description: "View group details",
-            extra: result,
-            error: e
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Failure",
+                description: "View group details",
+                extra: result,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
