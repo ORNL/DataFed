@@ -17,7 +17,7 @@ router
             logger.logRequestStarted({
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
-                httpVerb: "GET",
+                httpVerb: "POST",
                 routePath: basePath + "/msg_count/update",
                 status: "Started",
                 description: "Update message metrics",
@@ -47,7 +47,7 @@ router
             logger.logRequestSuccess({
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
-                httpVerb: "GET",
+                httpVerb: "POST",
                 routePath: basePath + "/msg_count/update",
                 status: "Success",
                 description: "Update message metrics",
@@ -57,7 +57,7 @@ router
             logger.logRequestFailure({
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
-                httpVerb: "GET",
+                httpVerb: "POST",
                 routePath: basePath + "/msg_count/update",
                 status: "Failure",
                 description: "Update message metrics",
@@ -215,12 +215,12 @@ router
 
 router
     .post("/purge", function (req, res) {
-        const client = g_lib.getUserFromClientID(req.queryParams.client);
+        //const client = g_lib.getUserFromClientID(req.queryParams.client);
         try {
             logger.logRequestStarted({
-                client: client?._id,
+                client: "undef",//client?._id,
                 correlationId: req.headers["x-correlation-id"],
-                httpVerb: "GET",
+                httpVerb: "POST",
                 routePath: basePath + "/purge",
                 status: "Started",
                 description: "Purge older metrics",
@@ -236,9 +236,9 @@ router
                 ts: req.queryParams.timestamp,
             });
             logger.logRequestSuccess({
-                client: client?._id,
+                client: "undef",//client?._id,
                 correlationId: req.headers["x-correlation-id"],
-                httpVerb: "GET",
+                httpVerb: "POST",
                 routePath: basePath + "/purge",
                 status: "Success",
                 description: "Purge older metrics",
@@ -246,9 +246,9 @@ router
             });
         } catch (e) {
             logger.logRequestFailure({
-                client: client?._id,
+                client: "undef",//client?._id,
                 correlationId: req.headers["x-correlation-id"],
-                httpVerb: "GET",
+                httpVerb: "POST",
                 routePath: basePath + "/purge",
                 status: "Failure",
                 description: "Purge older metrics",
