@@ -150,7 +150,9 @@ router
         let client = null;
         let cnt = null;
         try {
-            client = req.queryParams.client ? g_lib.getUserFromClientID(req.queryParams.client) : null;
+            client = req.queryParams.client
+                ? g_lib.getUserFromClientID(req.queryParams.client)
+                : null;
             logger.logRequestStarted({
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
