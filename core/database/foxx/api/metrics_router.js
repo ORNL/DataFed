@@ -12,8 +12,9 @@ module.exports = router;
 const basePath = "metrics";
 router
     .post("/msg_count/update", function (req, res) {
-        const client = g_lib.getUserFromClientID(req.queryParams.client);
+        let client = null;
         try {
+            client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
@@ -73,8 +74,9 @@ router
 
 router
     .get("/msg_count", function (req, res) {
-        const client = g_lib.getUserFromClientID(req.queryParams.client);
+        let client = null;
         try {
+            client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
@@ -145,10 +147,10 @@ router
 
 router
     .get("/users/active", function (req, res) {
-        const client = req.queryParams.client
-            ? g_lib.getUserFromClientID(req.queryParams.client)
-            : null;
+        let client = null;
+        let cnt = null;
         try {
+            client = req.queryParams.client ? g_lib.getUserFromClientID(req.queryParams.client) : null;
             logger.logRequestStarted({
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
@@ -158,8 +160,8 @@ router
                 description: "Get recently active users from metrics",
             });
 
-            var cnt = {},
-                u,
+            cnt = {};
+            var u,
                 r,
                 qryres = g_db
                     ._query(
@@ -201,7 +203,6 @@ router
                 extra: cnt,
                 error: e,
             });
-
             g_lib.handleException(e, res);
         }
     })
@@ -215,10 +216,9 @@ router
 
 router
     .post("/purge", function (req, res) {
-        //const client = g_lib.getUserFromClientID(req.queryParams.client);
         try {
             logger.logRequestStarted({
-                client: "undef",//client?._id,
+                client: "undefined",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/purge",
@@ -236,7 +236,7 @@ router
                 ts: req.queryParams.timestamp,
             });
             logger.logRequestSuccess({
-                client: "undef",//client?._id,
+                client: "undefined",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/purge",
@@ -246,7 +246,7 @@ router
             });
         } catch (e) {
             logger.logRequestFailure({
-                client: "undef",//client?._id,
+                client: "undefined",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/purge",
