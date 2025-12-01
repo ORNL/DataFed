@@ -103,8 +103,10 @@ router
                 _id: result[0]._id,
                 uid: result[0].uid,
                 gid: result[0].gid,
-                title: result[0].title,
-                members: result[0].members || [],
+                title: (result[0].title || "").slice(0, 10),
+                members: Array.isArray(result[0].members)
+                    ? result[0].members.slice(-5)
+                    : []
             };
 
             res.send(result);
@@ -256,9 +258,11 @@ router
             });
             logExtra = {
                 gid: result[0].gid,
-                title: result[0].title,
-                description: result[0].desc,
-                members: result[0].members || [],
+                title: (result[0].title || "").slice(0, 10),
+                description: (result[0].desc || "").slice(0, 10),
+                members: Array.isArray(result[0].members)
+                    ? result[0].members.slice(-5)
+                    : []
             };
 
             res.send(result);
@@ -327,7 +331,6 @@ router
                 },
                 action: function () {
                     client = g_lib.getUserFromClientID(req.queryParams.client);
-                    group;
 
                     if (req.queryParams.proj) {
                         var uid = req.queryParams.proj;
@@ -366,8 +369,8 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/delete",
                 status: "Success",
-                description: "Deletes an existing group",
-                extra: { "Deleted group": group._id },
+                description: `Deletes an existing group: ${group?._id}`,
+                extra: "N/A",
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -376,8 +379,8 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/delete",
                 status: "Failure",
-                description: "Deletes an existing group",
-                extra: { "Deleted group": group?._id },
+                description: `Deletes an existing group: ${group?._id}`,
+                extra: "N/A",
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -393,6 +396,7 @@ router
     .get("/list", function (req, res) {
         let client = null;
         let groups = null;
+        let logExtra = null;
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
@@ -422,6 +426,10 @@ router
                     },
                 )
                 .toArray();
+
+            logExtra = {
+                totalGroups: groups.length,
+            };
             res.send(groups);
             logger.logRequestSuccess({
                 client: client?._id,
@@ -430,7 +438,7 @@ router
                 routePath: basePath + "/list",
                 status: "Success",
                 description: "List groups",
-                extra: groups,
+                extra: logExtra,
             });
         } catch (e) {
             res.send(groups);
@@ -441,7 +449,7 @@ router
                 routePath: basePath + "/list",
                 status: "Failure",
                 description: "List groups",
-                extra: groups,
+                extra: logExtra,
             });
             g_lib.handleException(e, res);
         }
@@ -501,10 +509,13 @@ router
                 .toArray();
             logExtra = {
                 gid: result.gid,
-                title: result.title,
-                members: result.members || [],
-            };
-
+                title: (result.title || "").slice(0, 10),
+                description: (result.desc || "").slice(0, 10),
+                members: Array.isArray(result.members)
+                    ? result.members.slice(-5)
+                    : []
+                };
+                
             res.send([result]);
 
             logger.logRequestSuccess({
