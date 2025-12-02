@@ -204,7 +204,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/perm/check",
                 status: "Success",
-                description: "Checks client permissions for object",
+                description: "Checks client permissions for object. OBJ ID:" + req.queryParams.id + ", Permissions: " + req.queryParams.perms,
                 extra: result,
             });
         } catch (e) {
@@ -214,7 +214,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/perm/check",
                 status: "Failure",
-                description: "Checks client permissions for object",
+                description: "Checks client permissions for object. OBJ ID:" + req.queryParams.id + ", Permissions: " + req.queryParams.perms,
                 extra: result,
                 error: e,
             });
@@ -239,7 +239,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/perm/get",
                 status: "Started",
-                description: "Gets client permissions for object",
+                description: "Gets client permissions for object. Permissions:" + req.queryParams.perms,
             });
 
             result = req.queryParams.perms ? req.queryParams.perms : permissions.PERM_ALL;
@@ -282,7 +282,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/perm/get",
                 status: "Success",
-                description: "Gets client permissions for object",
+                description: "Gets client permissions for object. Permissions:" + req.queryParams.perms,
                 extra: result,
             });
         } catch (e) {
@@ -292,7 +292,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/perm/get",
                 status: "Failure",
-                description: "Gets client permissions for object",
+                description: "Gets client permissions for object. Permissions:" + req.queryParams.perms,
                 extra: result,
                 error: e,
             });
