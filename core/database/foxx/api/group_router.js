@@ -272,7 +272,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/update",
                 status: "Success",
-                description: "Updates an existing group. GID:"  + req.queryParams.gid,
+                description: "Updates an existing group. GID:" + req.queryParams.gid,
                 extra: logExtra,
             });
         } catch (e) {
@@ -282,7 +282,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/update",
                 status: "Failure",
-                description: "Updates an existing group. GID:"  + req.queryParams.gid,
+                description: "Updates an existing group. GID:" + req.queryParams.gid,
                 extra: logExtra,
                 error: e,
             });
@@ -378,7 +378,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/delete",
                 status: "Failure",
-                description:  `Deletes an existing group: ${group?._id}, GID: ${req.queryParams.gid}`,
+                description: `Deletes an existing group: ${group?._id}, GID: ${req.queryParams.gid}`,
                 extra: "N/A",
                 error: e,
             });
@@ -519,7 +519,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/view",
                 status: "Successful",
-                description:  `View group details. GID: ${req.queryParams.gid}`,
+                description: `View group details. GID: ${req.queryParams.gid}`,
                 extra: logExtra,
             });
         } catch (e) {
