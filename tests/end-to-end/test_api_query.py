@@ -169,7 +169,7 @@ class TestDataFedPythonAPIQueryCRUD(unittest.TestCase):
         print(record)
 
         print("Response from dataView")
-        print(self._df_api.dataView(record[0].data.id))
+        print(self._df_api.dataView(record[0].data[0].id))
 
     def test_query_create_delete(self):
         search_query = self._df_api.queryCreate(title="Search for Adamantium", owner="u/" + self._username, coll=["root"], meta="md.creator == 'Lex Luther'")
