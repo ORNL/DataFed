@@ -81,7 +81,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/msg_count",
                 status: "Started",
-                description: "Update message metrics",
+                description: "Grab all message metrics",
             });
             var par = {
                     now: Date.now() / 1000,
@@ -116,8 +116,8 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/msg_count",
                 status: "Success",
-                description: "Update message metrics",
-                extra: result,
+                description: "Grab all message metrics",
+                extra: {count_msg_types: result.length},
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -126,8 +126,8 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/msg_count",
                 status: "Failure",
-                description: "Update message metrics",
-                extra: result,
+                description: "Grab all message metrics",
+                extra: {count_msg_types: result.length},
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -140,8 +140,8 @@ router
         "Return since last specified minutes ago (default 60)",
     )
     .queryParam("uid", joi.string().optional(), "User ID (default none)")
-    .summary("Update message metrics.")
-    .description("Update message metrics.");
+    .summary("Grab all message metrics.")
+    .description("Grab all message metrics.");
 
 router
     .get("/users/active", function (req, res) {
