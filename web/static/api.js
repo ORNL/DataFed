@@ -1022,7 +1022,7 @@ export function themeSave(a_theme, a_cb) {
 function generateState() {
     const array = new Uint8Array(16);
     window.crypto.getRandomValues(array);
-    return Array.from(array, b => b.toString(16).padStart(2, "0")).join("");
+    return Array.from(array, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 export function getGlobusConsentURL(
