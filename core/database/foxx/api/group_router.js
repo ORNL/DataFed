@@ -515,7 +515,6 @@ router
                     ? result.members.slice(-5)
                     : []
                 };
-                
             res.send([result]);
 
             logger.logRequestSuccess({
