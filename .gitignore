@@ -1,6 +1,6 @@
 /.idea/
 .venv/
-build
+/build/
 cmake/sodium_version
 cmake/curl_version
 cmake/zlib_version

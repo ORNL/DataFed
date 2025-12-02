@@ -56,5 +56,5 @@ check-python-client-image:
     stage: image-check
     variables:
         PROJECT: "datafed"
-        COMPONENT: "python-client"
+        COMPONENT: "python_client"
         BUILD_INTERMEDIATE: "FALSE"
