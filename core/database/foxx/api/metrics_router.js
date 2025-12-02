@@ -117,7 +117,7 @@ router
                 routePath: basePath + "/msg_count",
                 status: "Success",
                 description: "Grab all message metrics",
-                extra: {count_msg_types: result.length},
+                extra: { count_msg_types: result.length },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -127,7 +127,7 @@ router
                 routePath: basePath + "/msg_count",
                 status: "Failure",
                 description: "Grab all message metrics",
-                extra: {count_msg_types: result.length},
+                extra: { count_msg_types: result.length },
                 error: e,
             });
             g_lib.handleException(e, res);
