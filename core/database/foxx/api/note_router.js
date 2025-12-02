@@ -336,7 +336,11 @@ router
                         httpVerb: "POST",
                         routePath: basePath + "/comment/edit",
                         status: "Started",
-                        description: "Edit annotation comment " + req.queryParams.id + " Comment ID:" + req.queryParams.comment_idx,
+                        description:
+                            "Edit annotation comment " +
+                            req.queryParams.id +
+                            " Comment ID:" +
+                            req.queryParams.comment_idx,
                     });
 
                     if (!req.queryParams.id.startsWith("n/"))
@@ -383,7 +387,11 @@ router
                         httpVerb: "POST",
                         routePath: basePath + "/comment/edit",
                         status: "Success",
-                        description: "Edit annotation comment " + req.queryParams.id + " Comment ID:" + req.queryParams.comment_idx,
+                        description:
+                            "Edit annotation comment " +
+                            req.queryParams.id +
+                            " Comment ID:" +
+                            req.queryParams.comment_idx,
                         extra: {
                             title: note.new.title,
                             creator: note.new.creator,
@@ -399,7 +407,11 @@ router
                 httpVerb: "POST",
                 routePath: basePath + "/comment/edit",
                 status: "Failure",
-                description: "Edit an annotation comment " + req.queryParams.id + " Comment ID:" + req.queryParams.comment_idx,
+                description:
+                    "Edit an annotation comment " +
+                    req.queryParams.id +
+                    " Comment ID:" +
+                    req.queryParams.comment_idx,
                 extra: note.new,
                 error: e,
             });
@@ -638,7 +650,10 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/purge",
                 status: "Success",
-                description: "Purge old closed annotations older than " + req.queryParams.age_sec + "seconds.",
+                description:
+                    "Purge old closed annotations older than " +
+                    req.queryParams.age_sec +
+                    "seconds.",
                 extra: `Ids of purged notes: ${purgedIds.join(", ")}`,
             });
         } catch (e) {
@@ -648,7 +663,10 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/purge",
                 status: "Failure",
-                description: "Purge old closed annotations older than " + req.queryParams.age_sec + "seconds.",
+                description:
+                    "Purge old closed annotations older than " +
+                    req.queryParams.age_sec +
+                    "seconds.",
                 extra: { last_purged_note: id },
                 error: e,
             });
