@@ -12,11 +12,9 @@ module.exports = router;
 const basePath = "metrics";
 router
     .post("/msg_count/update", function (req, res) {
-        let client = null;
         try {
-            client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
-                client: client?._id,
+                client: "N/A",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/msg_count/update",
@@ -46,7 +44,7 @@ router
                 g_db.metrics.save(obj);
             }
             logger.logRequestSuccess({
-                client: client?._id,
+                client: "N/A",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/msg_count/update",
@@ -56,7 +54,7 @@ router
             });
         } catch (e) {
             logger.logRequestFailure({
-                client: client?._id,
+                client: "N/A",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/msg_count/update",
@@ -192,7 +190,7 @@ router
                 routePath: basePath + "/users/active",
                 status: "Success",
                 description: "Get recently active users from metrics",
-                extra: cnt,
+                extra: { total_active_users: Object.keys(cnt).length },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -202,7 +200,7 @@ router
                 routePath: basePath + "/users/active",
                 status: "Failure",
                 description: "Get recently active users from metrics",
-                extra: cnt,
+                extra: { total_active_users: Object.keys(cnt).length },
                 error: e,
             });
             g_lib.handleException(e, res);
