@@ -106,7 +106,7 @@ router
                 title: (result[0].title || "").slice(0, 10),
                 truncated_members: Array.isArray(result[0].members)
                     ? result[0].members.slice(-5)
-                    : []
+                    : [],
             };
 
             res.send(result);
@@ -262,7 +262,7 @@ router
                 description: (result[0].desc || "").slice(0, 10),
                 truncated_members: Array.isArray(result[0].members)
                     ? result[0].members.slice(-5)
-                    : []
+                    : [],
             };
 
             res.send(result);
@@ -511,10 +511,8 @@ router
                 gid: result.gid,
                 title: (result.title || "").slice(0, 10),
                 description: (result.desc || "").slice(0, 10),
-                truncated_members: Array.isArray(result.members)
-                    ? result.members.slice(-5)
-                    : []
-                };
+                truncated_members: Array.isArray(result.members) ? result.members.slice(-5) : [],
+            };
             res.send([result]);
 
             logger.logRequestSuccess({
