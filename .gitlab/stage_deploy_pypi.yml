@@ -1,0 +1,85 @@
+# GitLab CI configuration for deploying DataFed Python package to PyPI
+#
+# This job uses the pre-built python-client Docker image and deploys it to PyPI using twine.
+# The version numbers are automatically determined from cmake/Version.cmake during the build stage.
+#
+# Required GitLab CI/CD Variables:
+# - PYPI_USERNAME: PyPI username (or __token__ for API token auth)
+# - PYPI_PASSWORD: PyPI password or API token
+#
+# Optional Variables:
+# - DATAFED_PYPI_REPO: PyPI package name (defaults to "datafed")
+# - PYPI_PRERELEASE: If set to "true", append pre-release identifier (default: "true" for manual job)
+
+.deploy_pypi_base:
+    stage: deploy-pypi-package
+    before_script:
+        - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+        - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
+        - docker pull "${REGISTRY}/datafed/python-client-${BRANCH_LOWER}:latest"
+    script:
+        # Extract built distributions from the Docker image
+        - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+        - mkdir -p dist
+
+        # Extract packages
+        - docker run --rm -v "$(pwd)/dist:/output" "${REGISTRY}/datafed/python-client-${BRANCH_LOWER}:latest" sh -c "cp /dist/* /output/"
+
+        # If PYPI_PRERELEASE is true, rename packages to add pre-release identifier
+        - |
+            if [ "${PYPI_PRERELEASE:-true}" = "true" ]; then
+              echo "Adding pre-release identifier (rc${CI_PIPELINE_IID}) to package filenames for PyPI..."
+              cd dist
+              for file in *; do
+                if [ -f "$file" ]; then
+                  # Add rc${CI_PIPELINE_IID} before the file extension
+                  # Example: datafed-3.1.0.tar.gz -> datafed-3.1.0rc${CI_PIPELINE_IID}.tar.gz
+                  # Example: datafed-3.1.0-py3-none-any.whl -> datafed-3.1.0rc${CI_PIPELINE_IID}-py3-none-any.whl
+                  newname=$(echo "$file" | sed "s/\([0-9]\+\.[0-9]\+\.[0-9]\+\)\(-\|\.tar\.gz\|\.whl\)/\1rc${CI_PIPELINE_IID}\2/")
+                  if [ "$file" != "$newname" ]; then
+                    mv "$file" "$newname"
+                    echo "Renamed: $file -> $newname"
+                  fi
+                fi
+              done
+              cd ..
+            else
+              echo "Deploying as full release (no pre-release identifier)..."
+            fi
+
+        # Verify packages exist
+        - ls -lh dist/
+
+        # Upload to PyPI using twine from within the Docker image
+        - |
+            docker run --rm \
+              -v "$(pwd)/dist:/dist" \
+              -e PYPI_USERNAME="${PYPI_USERNAME}" \
+              -e PYPI_PASSWORD="${PYPI_PASSWORD}" \
+              -e DATAFED_PYPI_REPO="${DATAFED_PYPI_REPO:-datafed}" \
+              "${REGISTRY}/datafed/python-client-${BRANCH_LOWER}:latest" \
+              sh -c "twine upload --non-interactive --username \$PYPI_USERNAME --password \$PYPI_PASSWORD /dist/*"
+    artifacts:
+        paths:
+            - dist/
+        expire_in: 1 week
+    tags:
+        - docker
+
+# Manual deployment job - can be triggered via button in GitLab UI
+deploy:pypi:manual:
+    extends: .deploy_pypi_base
+    needs:
+        - job: run-python-client-build-job
+    when: manual
+    rules:
+        - when: manual
+
+# Automatic deployment on tags (optional - commented out by default)
+# Uncomment to enable automatic deployment when tags are pushed
+# deploy:pypi:tag:
+#     extends: .deploy_pypi_base
+#     needs:
+#         - job: run-python-client-build-job
+#     only:
+#         - tags
