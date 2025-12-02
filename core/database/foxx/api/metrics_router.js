@@ -103,7 +103,7 @@ router
             var qry = "for i in metrics filter " + filter + " sort i.timestamp return i",
                 r;
 
-            result = g_db._query(qry, par).toArray()
+            result = g_db._query(qry, par).toArray();
             for (var i in result) {
                 r = result[i];
                 delete r._rev;
