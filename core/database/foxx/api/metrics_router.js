@@ -73,6 +73,7 @@ router
 router
     .get("/msg_count", function (req, res) {
         let client = null;
+        let result = null;
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
@@ -100,9 +101,9 @@ router
             }
 
             var qry = "for i in metrics filter " + filter + " sort i.timestamp return i",
-                result = g_db._query(qry, par).toArray(),
                 r;
 
+            result = g_db._query(qry, par).toArray()
             for (var i in result) {
                 r = result[i];
                 delete r._rev;
