@@ -155,7 +155,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/update",
                 status: "Started",
-                description: "Updates an existing group",
+                description: "Updates an existing group. GID:" + req.queryParams.gid,
             });
             var result = [];
 
@@ -257,7 +257,6 @@ router
                 },
             });
             logExtra = {
-                gid: result[0].gid,
                 title: (result[0].title || "").slice(0, 10),
                 description: (result[0].desc || "").slice(0, 10),
                 truncated_members: Array.isArray(result[0].members)
@@ -273,7 +272,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/update",
                 status: "Success",
-                description: "Updates an existing group",
+                description: "Updates an existing group. GID:"  + req.queryParams.gid,
                 extra: logExtra,
             });
         } catch (e) {
@@ -283,7 +282,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/update",
                 status: "Failure",
-                description: "Updates an existing group",
+                description: "Updates an existing group. GID:"  + req.queryParams.gid,
                 extra: logExtra,
                 error: e,
             });
@@ -321,7 +320,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/delete",
                 status: "Started",
-                description: "Deletes an existing group",
+                description: "Deletes an existing group. GID:" + req.queryParams.gid,
             });
 
             g_db._executeTransaction({
@@ -369,7 +368,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/delete",
                 status: "Success",
-                description: `Deletes an existing group: ${group?._id}`,
+                description: `Deletes an existing group: ${group?._id}, GID: ${req.queryParams.gid}`,
                 extra: "N/A",
             });
         } catch (e) {
@@ -379,7 +378,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/delete",
                 status: "Failure",
-                description: `Deletes an existing group: ${group?._id}`,
+                description:  `Deletes an existing group: ${group?._id}, GID: ${req.queryParams.gid}`,
                 extra: "N/A",
                 error: e,
             });
@@ -471,7 +470,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/view",
                 status: "Started",
-                description: "View group details",
+                description: `View group details. GID: ${req.queryParams.gid}`,
             });
 
             var group;
@@ -508,7 +507,6 @@ router
                 })
                 .toArray();
             logExtra = {
-                gid: result.gid,
                 title: (result.title || "").slice(0, 10),
                 description: (result.desc || "").slice(0, 10),
                 truncated_members: Array.isArray(result.members) ? result.members.slice(-5) : [],
@@ -521,7 +519,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/view",
                 status: "Successful",
-                description: "View group details",
+                description:  `View group details. GID: ${req.queryParams.gid}`,
                 extra: logExtra,
             });
         } catch (e) {
@@ -531,7 +529,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/view",
                 status: "Failure",
-                description: "View group details",
+                description: `View group details. GID: ${req.queryParams.gid}`,
                 extra: logExtra,
                 error: e,
             });
