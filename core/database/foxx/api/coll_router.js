@@ -478,7 +478,7 @@ router
 router
     .get("/view", function (req, res) {
         let client = null;
-        let result = null;
+        let coll = null;
         try {
             client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
             logger.logRequestStarted({
@@ -488,13 +488,12 @@ router
                     routePath: basePath + "/view",
                     status: "Started",
                     description: "View collection information by ID or alias",
-                    extra: result
                 });
 
             var coll_id = g_lib.resolveCollID(req.queryParams.id, client),
-                coll = g_db.c.document(coll_id),
                 admin = false;
 
+            coll = g_db.c.document(coll_id);
             if (client) {
                 admin = permissions.hasAdminPermObject(client, coll_id);
 
@@ -525,7 +524,7 @@ router
             routePath: basePath + "/view",
             status: "Success",
             description: "View collection information by ID or alias",
-            extra: result
+            extra: coll
         });
         } catch (e) {
             logger.logRequestFailure({
@@ -535,7 +534,7 @@ router
                 routePath: basePath + "/view",
                 status: "Failure",
                 description: "View collection information by ID or alias",
-                extra: result,
+                extra: coll,
                 error: e
             });
             g_lib.handleException(e, res);
@@ -1213,6 +1212,7 @@ router
 router
     .get("/get_offset", function (req, res) {
         let get_offset = null; 
+        let client = null
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
