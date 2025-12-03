@@ -189,7 +189,7 @@ router
                     routePath: basePath + "/create",
                     status: "Success",
                     description: "Create a new data collection",
-                    extra: result
+                    extra: result,
                 });
 
                 break;
@@ -202,7 +202,7 @@ router
                     status: "Failure",
                     description: "Create a new data collection",
                     extra: result,
-                    error: e
+                    error: e,
                 });
                 if (--retry == 0 || !e.errorNum || e.errorNum != 1200) {
                     g_lib.handleException(e, res);
@@ -437,7 +437,7 @@ router
                     routePath: basePath + "/update",
                     status: "Success",
                     description: "Update an existing collection",
-                    extra: result
+                    extra: result,
                 });
                 break;
             } catch (e) {
@@ -449,7 +449,7 @@ router
                     status: "Failure",
                     description: "Update an existing collection",
                     extra: result,
-                    error:e
+                    error: e,
                 });
                 if (--retry == 0 || !e.errorNum || e.errorNum != 1200) {
                     g_lib.handleException(e, res);
@@ -482,13 +482,13 @@ router
         try {
             client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
             logger.logRequestStarted({
-                    client: client?._id,
-                    correlationId: req.headers["x-correlation-id"],
-                    httpVerb: "POST",
-                    routePath: basePath + "/view",
-                    status: "Started",
-                    description: "View collection information by ID or alias",
-                });
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/view",
+                status: "Started",
+                description: "View collection information by ID or alias",
+            });
 
             var coll_id = g_lib.resolveCollID(req.queryParams.id, client),
                 admin = false;
@@ -517,15 +517,15 @@ router
             res.send({
                 results: [coll],
             });
-        logger.logRequestSuccess({
-            client: client?._id,
-            correlationId: req.headers["x-correlation-id"],
-            httpVerb: "POST",
-            routePath: basePath + "/view",
-            status: "Success",
-            description: "View collection information by ID or alias",
-            extra: coll
-        });
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/view",
+                status: "Success",
+                description: "View collection information by ID or alias",
+                extra: coll,
+            });
         } catch (e) {
             logger.logRequestFailure({
                 client: client?._id,
@@ -535,7 +535,7 @@ router
                 status: "Failure",
                 description: "View collection information by ID or alias",
                 extra: coll,
-                error: e
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -552,12 +552,12 @@ router
         try {
             client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
             logger.logRequestStarted({
-                    client: client?._id,
-                    correlationId: req.headers["x-correlation-id"],
-                    httpVerb: "GET",
-                    routePath: basePath + "/read",
-                    status: "Started",
-                    description: "Read contents of a collection by ID or alias",
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/read",
+                status: "Started",
+                description: "Read contents of a collection by ID or alias",
             });
 
             var coll_id = g_lib.resolveCollID(req.queryParams.id, client),
@@ -576,7 +576,7 @@ router
             }
 
             var qry =
-                    "for v in 1..1 outbound @coll item sort is_same_collection('c',v) DESC, v.title", 
+                    "for v in 1..1 outbound @coll item sort is_same_collection('c',v) DESC, v.title",
                 params = {
                     coll: coll_id,
                 },
@@ -618,15 +618,14 @@ router
 
             res.send(result);
             logger.logRequestSuccess({
-                    client: client?._id,
-                    correlationId: req.headers["x-correlation-id"],
-                    httpVerb: "GET",
-                    routePath: basePath + "/read",
-                    status: "Success",
-                    description: "Read contents of a collection by ID or alias",
-                    extra:result
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/read",
+                status: "Success",
+                description: "Read contents of a collection by ID or alias",
+                extra: result,
             });
-
         } catch (e) {
             logger.logRequestFailure({
                 client: client?._id,
@@ -635,8 +634,8 @@ router
                 routePath: basePath + "/read",
                 status: "Failure",
                 description: "Read contents of a collection by ID or alias",
-                extra:result,
-                error: e
+                extra: result,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -655,12 +654,12 @@ router
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
-                    client: client?._id,
-                    correlationId: req.headers["x-correlation-id"],
-                    httpVerb: "GET",
-                    routePath: basePath + "/write",
-                    status: "Started",
-                    description: "Add/remove items in a collection",
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/write",
+                status: "Started",
+                description: "Add/remove items in a collection",
             });
 
             g_db._executeTransaction({
@@ -860,7 +859,7 @@ router
                     if (have_loose) {
                         var root_id = g_lib.getRootID(owner_id),
                             rctxt = null;
-                            loose_res = [];
+                        loose_res = [];
 
                         cres = g_db._query("for v in 1..1 outbound @coll item return v._id", {
                             coll: root_id,
@@ -931,19 +930,19 @@ router
                 routePath: basePath + "/write",
                 status: "Success",
                 description: "Add/remove items in a collection",
-                extra:loose_res
+                extra: loose_res,
             });
         } catch (e) {
             logger.logRequestFailure({
-                    client: client?._id,
-                    correlationId: req.headers["x-correlation-id"],
-                    httpVerb: "GET",
-                    routePath: basePath + "/write",
-                    status: "Failure",
-                    description: "Add/remove items in a collection",
-                    extra:loose_res,
-                    error: e
-                });
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/write",
+                status: "Failure",
+                description: "Add/remove items in a collection",
+                extra: loose_res,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -1121,7 +1120,7 @@ router
                 routePath: basePath + "/move",
                 status: "Success",
                 description: "Move items from source collection to destination collection",
-                extra: item
+                extra: item,
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -1132,7 +1131,7 @@ router
                 status: "Failure",
                 description: "Move items from source collection to destination collection",
                 extra: item,
-                error: e
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -1198,7 +1197,7 @@ router
                 status: "Failure",
                 description: "Get parent collection(s) (path) of item",
                 extra: results,
-                error: e
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -1211,8 +1210,8 @@ router
 
 router
     .get("/get_offset", function (req, res) {
-        let get_offset = null; 
-        let client = null
+        let get_offset = null;
+        let client = null;
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
@@ -1265,7 +1264,7 @@ router
                     routePath: basePath + "/get_parents",
                     status: "Success",
                     description: "Get offset to item in collection.",
-                    extra: req.queryParams.page_sz * Math.floor(idx / req.queryParams.page_sz)
+                    extra: req.queryParams.page_sz * Math.floor(idx / req.queryParams.page_sz),
                 });
             }
         } catch (e) {
@@ -1277,7 +1276,7 @@ router
                 status: "Failure",
                 description: "Get offset to item in collection.",
                 extra: req.queryParams.page_sz * Math.floor(idx / req.queryParams.page_sz),
-                error: e
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -1354,9 +1353,8 @@ router
                 routePath: basePath + "/published/list",
                 status: "Success",
                 description: "Get list of clients published collections.",
-                extra: result
+                extra: result,
             });
-
         } catch (e) {
             logger.logRequestFailure({
                 client: client?._id,
@@ -1366,7 +1364,7 @@ router
                 status: "Failure",
                 description: "Get list of clients published collections.",
                 extra: result,
-                error: e
+                error: e,
             });
             g_lib.handleException(e, res);
         }
