@@ -16,7 +16,9 @@ module.exports = router;
 
 router
     .get("/list/topics", function (req, res) {
-        let client = req.queryParams.client ? g_lib.getUserFromClientID(req.queryParams.client) : undefined;
+        let client = req.queryParams.client
+            ? g_lib.getUserFromClientID(req.queryParams.client)
+            : undefined;
         let result = null;
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
@@ -107,7 +109,9 @@ router
 
 router
     .get("/view", function (req, res) {
-        let client = req.queryParams.client ? g_lib.getUserFromClientID(req.queryParams.client) : undefined;
+        let client = req.queryParams.client
+            ? g_lib.getUserFromClientID(req.queryParams.client)
+            : undefined;
         let topic_extra = undefined;
         try {
             logger.logRequestStarted({
@@ -130,9 +134,9 @@ router
                 id: req.queryParams.id,
                 title: topic.title,
                 creator: topic.creator,
-                coll_cnt: topic.coll_cnt
+                coll_cnt: topic.coll_cnt,
             };
-            
+
             logger.logRequestSuccess({
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
@@ -163,18 +167,20 @@ router
 
 router
     .get("/search", function (req, res) {
-        let client = req.queryParams.client ? g_lib.getUserFromClientID(req.queryParams.client) : undefined;
+        let client = req.queryParams.client
+            ? g_lib.getUserFromClientID(req.queryParams.client)
+            : undefined;
         let result = null;
         const phrase = req.queryParams.phrase;
         const shortPhrase = phrase.length > 10 ? phrase.slice(0, 10) + "..." : phrase;
-        try { 
+        try {
             logger.logRequestStarted({
-            client: client?._id,
-            correlationId: req.headers["x-correlation-id"],
-            httpVerb: "GET",
-            routePath: basePath + "/search",
-            status: "Started",
-            description: `Search topics. Search Phrase: ${shortPhrase}`,
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/search",
+                status: "Started",
+                description: `Search topics. Search Phrase: ${shortPhrase}`,
             });
 
             var tokens = req.queryParams.phrase.match(/(?:[^\s"]+|"[^"]*")+/g),
@@ -189,7 +195,7 @@ router
                 path,
                 op = false;
 
-                result = [];
+            result = [];
             if (tokens.length == 0) throw [error.ERR_INVALID_PARAM, "Invalid topic search phrase."];
 
             it = 0;
