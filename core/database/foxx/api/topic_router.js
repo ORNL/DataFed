@@ -157,7 +157,7 @@ router
         }
     })
     .queryParam("client", joi.string().optional(), "Client ID")
-    .queryParam("id", joi.string().optional(), "ID of topic to view")
+    .queryParam("id", joi.string().required(), "ID of topic to view")
     .summary("View topic")
     .description("View a topic.");
 
