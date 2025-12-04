@@ -254,7 +254,7 @@ router
                 routePath: basePath + "/search",
                 status: "Success",
                 description: `Search topics. Search Phrase: ${shortPhrase}`,
-                extra: {numOfResults:result.length},
+                extra: { numOfResults: result.length },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -264,7 +264,7 @@ router
                 routePath: basePath + "/search",
                 status: "Failure",
                 description: `Search topics. Search Phrase: ${shortPhrase}`,
-                extra: {numOfResults: result.length},
+                extra: { numOfResults: result.length },
                 error: e,
             });
             g_lib.handleException(e, res);
