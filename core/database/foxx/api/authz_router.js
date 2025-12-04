@@ -16,6 +16,7 @@ module.exports = router;
 router
     .get("/gridftp", function (req, res) {
         let client = null;
+        let description = `Check authorization to ${req.queryParams.act} ${req.queryParams.file} on ${req.queryParams.repo} `;
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
@@ -24,12 +25,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/gridftp",
                 status: "Started",
-                description: JSON.stringify({
-                    message: "Checks authorization",
-                    repo: req.queryParams.repo,
-                    file: req.queryParams.file,
-                    act: req.queryParams.act,
-                }),
+                description: description,
             });
 
             // Client will contain the following information
@@ -77,12 +73,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/gridftp",
                 status: "Success",
-                description: JSON.stringify({
-                    message: "Checks authorization",
-                    repo: req.queryParams.repo,
-                    file: req.queryParams.file,
-                    act: req.queryParams.act,
-                }),
+                description: description,
                 extra: {
                     id: client?._id,
                     is_admin: client?.is_admin,
@@ -95,12 +86,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/gridftp",
                 status: "Failure",
-                description: JSON.stringify({
-                    message: "Checks authorization",
-                    repo: req.queryParams.repo,
-                    file: req.queryParams.file,
-                    act: req.queryParams.act,
-                }),
+                description: description,
                 extra: {
                     id: client?._id,
                     is_admin: client?.is_admin,
