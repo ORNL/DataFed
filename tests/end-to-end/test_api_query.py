@@ -177,14 +177,20 @@ class TestDataFedPythonAPIQueryCRUD(unittest.TestCase):
         print("Search query create")
         print(search_query)
 
-        query_result = self._df_api.queryExec(search_query[0].id)
-        print("Query result")
-        print(query_result)
-        
+        count = 0
         material = ""
-        for model in query_result[0].item:
-            if model.alias.startswith("adamantium"):
-                material = model.alias
+        while material == "":
+
+            query_result = self._df_api.queryExec(search_query[0].id)
+            print("Query result")
+            print(query_result)
+            if count > 3:
+                break
+
+            for model in query_result[0].item:
+                if model.alias.startswith("adamantium"):
+                    material = model.alias
+            time.sleep(self._timeout)
         
         print(f"Query found {material}")
 
