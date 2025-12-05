@@ -316,6 +316,7 @@ router
     .get("/update", function (req, res) {
         let client = null;
         let result = null;
+        let extra_log_info = null;
         try {
             g_db._executeTransaction({
                 collections: {
@@ -391,6 +392,21 @@ router
                     delete user.new.refresh;
 
                     result = [user.new];
+
+                    const {
+                      is_admin,
+                      max_coll,
+                      max_proj,
+                      max_sav_qry
+                    } = user.new;
+
+                    extra_log_info = {
+                      is_admin,
+                      max_coll,
+                      max_proj,
+                      max_sav_qry
+                    };
+
                 },
             });
             res.send(result);
@@ -401,7 +417,7 @@ router
                 routePath: basePath + "/update",
                 status: "Success",
                 description: "Update user information",
-                extra: result,
+                extra: extra_log_info,
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -411,7 +427,7 @@ router
                 routePath: basePath + "/update",
                 status: "Failure",
                 description: "Update user information",
-                extra: result,
+                extra: extra_log_info,
                 error: e,
             });
             g_lib.handleException(e, res);
