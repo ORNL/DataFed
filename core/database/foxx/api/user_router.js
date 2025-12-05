@@ -1148,43 +1148,44 @@ router
 
 router
     .get("/token/get/expiring", function (req, res) {
-        let user = null;
-        let result = null;
+        let extra_log_info = [];
+        const desc = `User access tokens expiring in ${req.queryParams.expires_in} seconds`;
         try {
             logger.logRequestStarted({
-                client: user?._id,
+                client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/token/get/expiring",
                 status: "Started",
-                description: "Getting expiring user access token",
+                description: desc,
             });
 
-            results = g_db._query(
+            const results = g_db._query(
                 "for i in u filter i.expiration != Null && i.expiration < @exp return {id:i._id,access:i.access,refresh:i.refresh,expiration:i.expiration}",
                 {
                     exp: Math.floor(Date.now() / 1000) + req.queryParams.expires_in,
                 },
             );
             res.send(results);
+            extra_log_info = results.toArray();
             logger.logRequestSuccess({
-                client: client?._id,
+                client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/token/get/expiring",
                 status: "Success",
-                description: "Getting expiring user access token",
-                extra: results,
+                description: desc,
+                extra: { expiring_token_count: extra_log_info.length },
             });
         } catch (e) {
             logger.logRequestFailure({
-                client: client?._id,
+                client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/token/get/expiring",
                 status: "Failure",
-                description: "Getting expiring user access token",
-                extra: result,
+                description: desc,
+                extra: { expiring_token_count: extra_log_info.length },
                 error: e,
             });
             g_lib.handleException(e, res);
