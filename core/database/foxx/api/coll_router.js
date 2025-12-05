@@ -183,7 +183,7 @@ router
                     results: result,
                 });
 
-                const item = result[0];  // the newly created collection
+                const item = result[0]; // the newly created collection
 
                 log_extra = {
                     owner: item.owner,
@@ -192,7 +192,7 @@ router
                     desc: item.desc,
                     tags: item.tags,
                     parent_id: item.parent_id,
-                }
+                };
                 logger.logRequestSuccess({
                     client: client?._id,
                     correlationId: req.headers["x-correlation-id"],
@@ -445,7 +445,6 @@ router
                     results: result.results.map(({ ut, ...rest }) => rest),
                     updates: result.updates.map(({ ut, ...rest }) => rest),
                 };
-
 
                 logger.logRequestSuccess({
                     client: client?._id,
