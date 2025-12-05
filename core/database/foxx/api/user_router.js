@@ -393,20 +393,14 @@ router
 
                     result = [user.new];
 
-                    const {
-                      is_admin,
-                      max_coll,
-                      max_proj,
-                      max_sav_qry
-                    } = user.new;
+                    const { is_admin, max_coll, max_proj, max_sav_qry } = user.new;
 
                     extra_log_info = {
-                      is_admin,
-                      max_coll,
-                      max_proj,
-                      max_sav_qry
+                        is_admin,
+                        max_coll,
+                        max_proj,
+                        max_sav_qry,
                     };
-
                 },
             });
             res.send(result);
