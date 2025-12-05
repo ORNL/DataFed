@@ -19,7 +19,7 @@ router
     .post("/create", function (req, res) {
         var retry = 10;
         let client = null;
-        let result = null;
+        let log_extra = null;
         for (;;) {
             try {
                 client = g_lib.getUserFromClientID(req.queryParams.client);
@@ -31,7 +31,7 @@ router
                     status: "Started",
                     description: "Create a new data collection",
                 });
-                result = [];
+                var result = [];
 
                 g_db._executeTransaction({
                     collections: {
@@ -182,6 +182,17 @@ router
                 res.send({
                     results: result,
                 });
+
+                const item = result[0];  // the newly created collection
+
+                log_extra = {
+                    owner: item.owner,
+                    creator: item.creator,
+                    title: item.title,
+                    desc: item.desc,
+                    tags: item.tags,
+                    parent_id: item.parent_id,
+                }
                 logger.logRequestSuccess({
                     client: client?._id,
                     correlationId: req.headers["x-correlation-id"],
@@ -189,9 +200,8 @@ router
                     routePath: basePath + "/create",
                     status: "Success",
                     description: "Create a new data collection",
-                    extra: result,
+                    extra: log_extra,
                 });
-
                 break;
             } catch (e) {
                 logger.logRequestFailure({
@@ -201,7 +211,7 @@ router
                     routePath: basePath + "/create",
                     status: "Failure",
                     description: "Create a new data collection",
-                    extra: result,
+                    extra: log_extra,
                     error: e,
                 });
                 if (--retry == 0 || !e.errorNum || e.errorNum != 1200) {
@@ -231,7 +241,7 @@ router
     .post("/update", function (req, res) {
         var retry = 10;
         let client = null;
-        let result = null;
+        let extra_log = null;
         for (;;) {
             try {
                 client = g_lib.getUserFromClientID(req.queryParams.client);
@@ -244,7 +254,7 @@ router
                     description: "Update an existing collection",
                 });
 
-                result = {
+                var result = {
                     results: [],
                     updates: [],
                 };
@@ -430,6 +440,13 @@ router
                 });
 
                 res.send(result);
+
+                extra_log = {
+                    results: result.results.map(({ ut, ...rest }) => rest),
+                    updates: result.updates.map(({ ut, ...rest }) => rest),
+                };
+
+
                 logger.logRequestSuccess({
                     client: client?._id,
                     correlationId: req.headers["x-correlation-id"],
@@ -437,7 +454,7 @@ router
                     routePath: basePath + "/update",
                     status: "Success",
                     description: "Update an existing collection",
-                    extra: result,
+                    extra: extra_log,
                 });
                 break;
             } catch (e) {
@@ -448,7 +465,7 @@ router
                     routePath: basePath + "/update",
                     status: "Failure",
                     description: "Update an existing collection",
-                    extra: result,
+                    extra: extra_log,
                     error: e,
                 });
                 if (--retry == 0 || !e.errorNum || e.errorNum != 1200) {
