@@ -1541,9 +1541,9 @@ router
                 routePath: basePath + "/delete",
                 status: "Success",
                 description: `Remove existing user entry: ${user_id}`,
-                extra:  {
-                            subject: req.query?.subject ?? null,
-                        }, 
+                extra: {
+                    subject: req.query?.subject ?? null,
+                },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -1554,8 +1554,8 @@ router
                 status: "Failure",
                 description: `Remove existing user entry: ${user_id}`,
                 extra: {
-                            subject: req.query?.subject ?? null,
-                        }, 
+                    subject: req.query?.subject ?? null,
+                },
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -1608,7 +1608,9 @@ router
                         client: client._id,
                     }),
                 );
-                extra_log = g_db._query("for v in 1..1 outbound @client ident return v._key", { client: client._id });
+                extra_log = g_db._query("for v in 1..1 outbound @client ident return v._key", {
+                    client: client._id,
+                });
                 logger.logRequestSuccess({
                     client: client?._id,
                     correlationId: req.headers["x-correlation-id"],
@@ -1616,7 +1618,7 @@ router
                     routePath: basePath + "/ident/list",
                     status: "Success",
                     description: `List user linked IDs.`,
-                    extra: {NumOfIds: extra_log}
+                    extra: { NumOfIds: extra_log },
                 });
             }
         } catch (e) {
@@ -1627,7 +1629,7 @@ router
                 routePath: basePath + "/ident/list",
                 status: "Failure",
                 description: `List user linked IDs.`,
-                extra: {NumOfIds: extra_log},
+                extra: { NumOfIds: extra_log },
                 error: e,
             });
             g_lib.handleException(e, res);
