@@ -49,7 +49,6 @@ router
                 routePath: basePath + "/authn/password",
                 status: "Success",
                 description: "Authenticating user via password",
-                extra: "undefined",
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -59,7 +58,6 @@ router
                 routePath: basePath + "/authn/password",
                 status: "Failure",
                 description: "Authenticating user via password",
-                extra: "undefined",
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -100,7 +98,6 @@ router
                 routePath: basePath + "/authn/token",
                 status: "Success",
                 description: "Authenticating user via access token",
-                extra: "undefined",
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -110,7 +107,6 @@ router
                 routePath: basePath + "/authn/token",
                 status: "Failure",
                 description: "Authenticating user via access token",
-                extra: "undefined",
                 error: e,
             });
 
@@ -540,7 +536,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/find/by_name_uid",
                 status: "Success",
-                description: "Find users matching partial name and/or uid",
+                description: `Find users matching partial name and/or uid: ${name_uid}`,
                 extra: result,
             });
         } catch (e) {
@@ -550,7 +546,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/find/by_name_uid",
                 status: "Failure",
-                description: "Find users matching partial name and/or uid",
+                description: `Find users matching partial name and/or uid: ${name_uid}`,
                 extra: result,
                 error: e,
             });
@@ -612,7 +608,6 @@ router
                 routePath: basePath + "/keys/set",
                 status: "Success",
                 description: "Set user public and private keys",
-                extra: "undefined",
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -622,7 +617,6 @@ router
                 routePath: basePath + "/keys/set",
                 status: "Failure",
                 description: "Set user public and private keys",
-                extra: "undefined",
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -682,7 +676,6 @@ router
                 routePath: basePath + "/keys/clear",
                 status: "Success",
                 description: "Clear user public and private keys",
-                extra: "undefined",
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -692,7 +685,6 @@ router
                 routePath: basePath + "/keys/clear",
                 status: "Failure",
                 description: "Clear user public and private keys",
-                extra: "undefined",
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -742,7 +734,6 @@ router
                     routePath: basePath + "/keys/get",
                     status: "Success",
                     description: "Get user public and private keys",
-                    extra: "undefined",
                 });
             } else {
                 res.send([
@@ -759,7 +750,6 @@ router
                     routePath: basePath + "/keys/get",
                     status: "Success",
                     description: "Get user public and private keys",
-                    extra: "undefined",
                 });
             }
         } catch (e) {
@@ -770,7 +760,6 @@ router
                 routePath: basePath + "/keys/get",
                 status: "Failure",
                 description: "Get user public and private keys",
-                extra: "undefined",
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -971,7 +960,6 @@ router
                 routePath: basePath + "/token/set",
                 status: "Failure",
                 description: "Setting user tokens",
-                extra: "undefined",
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -1067,7 +1055,6 @@ router
                 routePath: basePath + "/token/get",
                 status: "Failure",
                 description: "Getting user tokens",
-                extra: "undefined",
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -1123,7 +1110,6 @@ router
                 routePath: basePath + "/token/get/access",
                 status: "Success",
                 description: "Getting User Access Token",
-                extra: "undefined",
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -1133,7 +1119,6 @@ router
                 routePath: basePath + "/token/get/access",
                 status: "Failure",
                 description: "Getting User Access Token",
-                extra: "undefined",
                 error: e,
             });
 
@@ -1555,8 +1540,10 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/delete",
                 status: "Success",
-                description: "Remove existing user entry",
-                extra: user_id,
+                description: `Remove existing user entry: ${user_id}`,
+                extra:  {
+                            subject: req.query?.subject ?? null,
+                        }, 
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -1565,8 +1552,10 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/delete",
                 status: "Failure",
-                description: "Remove existing user entry",
-                extra: user_id,
+                description: `Remove existing user entry: ${user_id}`,
+                extra: {
+                            subject: req.query?.subject ?? null,
+                        }, 
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -1580,6 +1569,7 @@ router
 router
     .get("/ident/list", function (req, res) {
         let client = null;
+        let extra_log = null;
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
@@ -1618,13 +1608,15 @@ router
                         client: client._id,
                     }),
                 );
+                extra_log = g_db._query("for v in 1..1 outbound @client ident return v._key", { client: client._id });
                 logger.logRequestSuccess({
                     client: client?._id,
                     correlationId: req.headers["x-correlation-id"],
                     httpVerb: "GET",
                     routePath: basePath + "/ident/list",
                     status: "Success",
-                    description: "List user linked IDs",
+                    description: `List user linked IDs.`,
+                    extra: {NumOfIds: extra_log}
                 });
             }
         } catch (e) {
@@ -1634,7 +1626,8 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/ident/list",
                 status: "Failure",
-                description: "List user linked IDs",
+                description: `List user linked IDs.`,
+                extra: {NumOfIds: extra_log},
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -1830,8 +1823,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/ident/remove",
                 status: "Success",
-                description: "Remove linked identity from user account",
-                extra: req.queryParams.ident,
+                description: `Remove linked identity ${req.queryParams.ident} from user account.`,
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -1840,8 +1832,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/ident/remove",
                 status: "Failure",
-                description: "Remove linked identity from user account",
-                extra: req.queryParams.ident,
+                description: `Remove linked identity ${req.queryParams.ident} from user account.`,
                 error: e,
             });
             g_lib.handleException(e, res);
