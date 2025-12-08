@@ -16,48 +16,50 @@
     before_script:
         - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
         - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
-        - docker pull "${REGISTRY}/datafed/python-client-${BRANCH_LOWER}:latest"
     script:
-        # Extract built distributions from the Docker image
         - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+        - DOWNSTREAM_SHA=$( git submodule status ./external/DataFedDependencies/ | awk '{print $1}' )
+        - DOWNSTREAM_SHA=${DOWNSTREAM_SHA#-}
         - mkdir -p dist
 
-        # Extract packages
-        - docker run --rm -v "$(pwd)/dist:/output" "${REGISTRY}/datafed/python-client-${BRANCH_LOWER}:latest" sh -c "cp /dist/* /output/"
-
-        # If PYPI_PRERELEASE is true, rename packages to add pre-release identifier
+        # If PYPI_PRERELEASE is true, rebuild package with pre-release version
         - |
             if [ "${PYPI_PRERELEASE:-true}" = "true" ]; then
-              echo "Adding pre-release identifier (rc${CI_PIPELINE_IID}) to package filenames for PyPI..."
-              cd dist
-              for file in *; do
-                if [ -f "$file" ]; then
-                  # Add rc${CI_PIPELINE_IID} before the file extension
-                  # Example: datafed-3.1.0.tar.gz -> datafed-3.1.0rc${CI_PIPELINE_IID}.tar.gz
-                  # Example: datafed-3.1.0-py3-none-any.whl -> datafed-3.1.0rc${CI_PIPELINE_IID}-py3-none-any.whl
-                  newname=$(echo "$file" | sed "s/\([0-9]\+\.[0-9]\+\.[0-9]\+\)\(-\|\.tar\.gz\|\.whl\)/\1rc${CI_PIPELINE_IID}\2/")
-                  if [ "$file" != "$newname" ]; then
-                    mv "$file" "$newname"
-                    echo "Renamed: $file -> $newname"
-                  fi
-                fi
-              done
-              cd ..
+              echo "Building package with pre-release identifier (rc${CI_PIPELINE_IID})..."
+
+              # Modify Version.cmake to add pre-release identifier
+              sed -i "s/set(DATAFED_PYTHON_CLIENT_RELEASE_TYPE \"\")/set(DATAFED_PYTHON_CLIENT_RELEASE_TYPE \"rc\")/" cmake/Version.cmake
+              sed -i "s/set(DATAFED_PYTHON_CLIENT_PRE_RELEASE_IDENTIFER \"\")/set(DATAFED_PYTHON_CLIENT_PRE_RELEASE_IDENTIFER \"${CI_PIPELINE_IID}\")/" cmake/Version.cmake
+
+              # Build with pre-release version using existing Dockerfile
+              docker build \
+                --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies:$DOWNSTREAM_SHA" \
+                -f python/datafed_pkg/docker/Dockerfile \
+                -t datafed-python-client-prerelease:latest \
+                .
+
+              # Extract packages
+              docker run --rm -v "$(pwd)/dist:/output" datafed-python-client-prerelease:latest sh -c "cp /dist/* /output/"
+
+              # Restore Version.cmake to original state
+              git checkout cmake/Version.cmake
             else
-              echo "Deploying as full release (no pre-release identifier)..."
+              echo "Deploying as full release (using pre-built image)..."
+              docker pull "${REGISTRY}/datafed/python_client-${BRANCH_LOWER}:latest"
+              docker run --rm -v "$(pwd)/dist:/output" "${REGISTRY}/datafed/python_client-${BRANCH_LOWER}:latest" sh -c "cp /dist/* /output/"
             fi
 
         # Verify packages exist
         - ls -lh dist/
 
-        # Upload to PyPI using twine from within the Docker image
+        # Upload to PyPI using twine
         - |
             docker run --rm \
               -v "$(pwd)/dist:/dist" \
               -e PYPI_USERNAME="${PYPI_USERNAME}" \
               -e PYPI_PASSWORD="${PYPI_PASSWORD}" \
               -e DATAFED_PYPI_REPO="${DATAFED_PYPI_REPO:-datafed}" \
-              "${REGISTRY}/datafed/python-client-${BRANCH_LOWER}:latest" \
+              "${REGISTRY}/datafed/python_client-${BRANCH_LOWER}:latest" \
               sh -c "twine upload --non-interactive --username \$PYPI_USERNAME --password \$PYPI_PASSWORD /dist/*"
     artifacts:
         paths:
