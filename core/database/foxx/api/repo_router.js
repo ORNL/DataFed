@@ -47,9 +47,17 @@ function validateAndNormalizeRepoPath(obj) {
 router
     .get("/list", function (req, res) {
         var client;
+        logger.logRequestStarted({
+            client: req.queryParams?.client,
+            correlationId: req.headers["x-correlation-id"],
+            httpVerb: "GET",
+            routePath: basePath + "/list",
+            status: "Started",
+            description: "List repo servers administered by client",
+        });
         if (req.queryParams.client) {
             client = g_lib.getUserFromClientID(req.queryParams.client);
-
+            
             if (req.queryParams.all && !client.is_admin) {
                 throw error.ERR_PERM_DENIED;
             }
@@ -95,6 +103,16 @@ router
         }
 
         res.send(result);
+        logger.logRequestSuccess({
+            client: req.queryParams?.client,
+            correlationId: req.headers["x-correlation-id"],
+            httpVerb: "GET",
+            routePath: basePath + "/list",
+            status: "Started",
+            description: "List repo servers administered by client",
+            extra: result
+        });
+
     })
     .queryParam("client", joi.string().allow("").optional(), "Client ID")
     .queryParam("details", joi.boolean().optional(), "Show additional record details")
@@ -106,8 +124,17 @@ router
 
 router
     .get("/view", function (req, res) {
+        let repo = null;
         try {
-            var repo = g_db.repo.document(req.queryParams.id);
+            logger.logRequestStarted({
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Started",
+                description: `View repo server record: ${req.queryParams.id}`,
+            });
+
+            repo = g_db.repo.document(req.queryParams.id);
 
             repo.admins = [];
             var admins = g_db.admin
@@ -122,7 +149,24 @@ router
             delete repo._rev;
 
             res.send([repo]);
+            logger.logRequestSuccess({
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Success",
+                description: `View repo server record: ${req.queryParams.id}`,
+                extra:repo,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Failure",
+                description: `View repo server record: ${req.queryParams.id}`,
+                extra:repo,
+                error: e
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -132,7 +176,17 @@ router
 
 router
     .post("/create", function (req, res) {
+        let repo_doc = null;
         try {
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/create",
+                status: "Started",
+                description: `Create a server record: ${req.queryParams.id}`,
+            });
+
             g_db._executeTransaction({
                 collections: {
                     read: ["u"],
@@ -185,7 +239,27 @@ router
                     res.send([repo_doc]);
                 },
             });
+            logger.logRequestSuccess({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/create",
+                status: "Success",
+                description: `Create a server record: ${req.queryParams.id}`,
+                extra: repo_doc
+            });
+
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/create",
+                status: "Failure",
+                description: `Create a server record: ${req.queryParams.id}`,
+                extra: repo_doc,
+                error: e
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -215,7 +289,16 @@ router
 
 router
     .post("/update", function (req, res) {
+        let repo.new = null;
         try {
+            logger.logRequestStarted({
+                client: req.queryParams.client, 
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/update",
+                status: "Started",
+                description: `Update a repo server record: ${req.queryParams.id}`,
+            });
             g_db._executeTransaction({
                 collections: {
                     read: ["u"],
@@ -294,7 +377,27 @@ router
                     res.send([repo.new]);
                 },
             });
+            logger.logRequestSuccess({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/update",
+                status: "Success",
+                description: `Update a repo server record: ${req.queryParams.id}`,
+                extra: repo.new
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/update",
+                status: "Failure",
+                description: `Update a repo server record: ${req.queryParams.id}`,
+                extra: repo.new,
+                error: e
+            });
+
             g_lib.handleException(e, res);
         }
     })
@@ -323,6 +426,15 @@ router
 router
     .get("/delete", function (req, res) {
         try {
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/delete",
+                status: "Started",
+                description: `Delete a repo server record: ${req.queryParams.id}`,
+            });
+
             g_db._executeTransaction({
                 collections: {
                     read: ["lock"],
@@ -372,7 +484,24 @@ router
                     graph.repo.remove(req.queryParams.id);
                 },
             });
+        logger.logRequestSuccess({
+            client: req.queryParams.client,
+            correlationId: req.headers["x-correlation-id"],
+            httpVerb: "GET",
+            routePath: basePath + "/delete",
+            status: "Success",
+            description: `Delete a repo server record: ${req.queryParams.id}`,
+        });
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/delete",
+                status: "Failure",
+                description: `Delete a repo server record: ${req.queryParams.id}`,
+                error: e
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -393,6 +522,15 @@ router
  */
 router
     .get("/calc_size", function (req, res) {
+        logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/calc_size",
+                status: "Started",
+                description: `Calculate per-repo sizes for specified data records and collections: ${req.queryParams.items.length}`,
+            });
+
         g_lib.getUserFromClientID(req.queryParams.client);
 
         // TODO Check permissions
@@ -411,6 +549,14 @@ router
         }
 
         res.send(result);
+        logger.logRequestSuccess({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/calc_size",
+                status: "Success",
+                description: `Calculate per-repo sizes for specified data records and collections: ${req.queryParams.items.length}`,
+        });
     })
     .queryParam("client", joi.string().required(), "Client ID")
     .queryParam(
@@ -462,6 +608,14 @@ function calcSize(a_item, a_recurse, a_depth, a_visited, a_result) {
 
 router
     .get("/alloc/list/by_repo", function (req, res) {
+        logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/alloc/list/by_repo",
+                status: "Started",
+                description: `List all allocations for a repo: ${req.queryParams.repo}`,
+        });
         var client = g_lib.getUserFromClientID(req.queryParams.client);
         var repo = g_db.repo.document(req.queryParams.repo);
 
@@ -477,6 +631,14 @@ router
             .toArray();
 
         res.send(result);
+        logger.logRequestSuccess({
+            client: req.queryParams.client,
+            correlationId: req.headers["x-correlation-id"],
+            httpVerb: "GET",
+            routePath: basePath + "/alloc/list/by_repo",
+            status: "Success",
+            description: `List all allocations for a repo: ${req.queryParams.repo}`,
+        });
     })
     .queryParam("client", joi.string().required(), "Client ID")
     .queryParam("repo", joi.string().required(), "Repo ID")
@@ -485,6 +647,14 @@ router
 
 router
     .get("/alloc/list/by_owner", function (req, res) {
+        logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/alloc/list/by_owner",
+                status: "Started",
+                description: `List owner's repo allocations: ${req.queryParams.owner}`,
+        });
         var obj,
             result = g_db.alloc
                 .byExample({
@@ -511,6 +681,14 @@ router
         }
 
         res.send(result);
+        logger.logRequestSuccess({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/alloc/list/by_owner",
+                status: "Success",
+                description: `List owner's repo allocations: ${req.queryParams.owner}`,
+        });
     })
     .queryParam("owner", joi.string().required(), "Owner ID (user or project)")
     .queryParam("stats", joi.boolean().optional(), "Include statistics")
@@ -519,6 +697,14 @@ router
 
 router
     .get("/alloc/list/by_object", function (req, res) {
+        logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/alloc/list/by_object",
+                status: "Started",
+                description: `List object repo allocations: ${req.queryParams.object}`,
+        });
         var client = g_lib.getUserFromClientID(req.queryParams.client);
         var obj_id = g_lib.resolveID(req.queryParams.object, client);
         var owner_id = g_db.owner.firstExample({
@@ -546,6 +732,14 @@ router
         }
 
         res.send(result);
+        logger.logRequestSuccess({
+            client: req.queryParams.client,
+            correlationId: req.headers["x-correlation-id"],
+            httpVerb: "GET",
+            routePath: basePath + "/alloc/list/by_object",
+            status: "Success",
+            description: `List object repo allocations: ${req.queryParams.object}`,
+        });
     })
     .queryParam("client", joi.string().required(), "Client ID")
     .queryParam("object", joi.string().required(), "Object ID (data or collection ID or alias)")
@@ -554,7 +748,16 @@ router
 
 router
     .get("/alloc/view", function (req, res) {
+        let result = null;
         try {
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/alloc/view",
+                status: "Started",
+                description: `View allocation details: ${req.queryParams.repo}`,
+            });
             var owner_id,
                 client = g_lib.getUserFromClientID(req.queryParams.client);
 
@@ -571,8 +774,8 @@ router
                 owner_id = client._id;
             }
 
-            var obj,
-                result = g_db.alloc
+            var obj;
+            result = g_db.alloc
                     .byExample({
                         _from: owner_id,
                         _to: req.queryParams.repo,
@@ -592,7 +795,26 @@ router
             }
 
             res.send(result);
+            logger.logRequestSuccess({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/alloc/view",
+                status: "Success",
+                description: `View allocation details: ${req.queryParams.repo}`,
+                extra: result
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/alloc/view",
+                status: "Failure",
+                description: `View allocation details: ${req.queryParams.repo}`,
+                extra: result,
+                error: e
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -659,12 +881,40 @@ function getAllocStats(a_repo, a_subject) {
 
 router
     .get("/alloc/stats", function (req, res) {
+        let result = null;
         try {
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/alloc/stats",
+                status: "Started",
+                description: `View allocation statistics: ${req.queryParams.repo}`,
+            });
             var client = g_lib.getUserFromClientID(req.queryParams.client);
             permissions.ensureAdminPermRepo(client, req.queryParams.repo);
-            var result = getAllocStats(req.queryParams.repo, req.queryParams.subject);
+            result = getAllocStats(req.queryParams.repo, req.queryParams.subject);
             res.send(result);
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/alloc/stats",
+                status: "Success",
+                description: `View allocation statistics: ${req.queryParams.repo}`,
+                extra: result
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/alloc/stats",
+                status: "Failure",
+                description: `View allocation statistics: ${req.queryParams.repo}`,
+                extra: result,
+                error: e
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -676,7 +926,17 @@ router
 
 router
     .get("/alloc/create", function (req, res) {
+        let result = null;
         try {
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/alloc/create",
+                status: "Started",
+                description: `Create user/projects repo allocation: ${req.queryParams.repo}`,
+            });
+
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn", "repo", "admin"],
@@ -700,9 +960,28 @@ router
                     );
 
                     res.send(result);
+                    logger.logRequestSuccess({
+                        client: req.queryParams.client,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "GET",
+                        routePath: basePath + "/alloc/create",
+                        status: "Success",
+                        description: `Create user/projects repo allocation: ${req.queryParams.repo}`,
+                        extra: result
+                    });
                 },
             });
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/alloc/create",
+                status: "Failure",
+                description: `Create user/projects repo allocation: ${req.queryParams.repo}`,
+                extra: result,
+                error: e
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -727,6 +1006,16 @@ router
 router
     .get("/alloc/delete", function (req, res) {
         try {
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/alloc/delete",
+                status: "Started",
+                description: `Delete user/projects repo allocation: ${req.queryParams.repo}`,
+                extra: result
+            });
+
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn", "repo", "admin"],
@@ -750,7 +1039,26 @@ router
                     res.send(result);
                 },
             });
+            logger.logRequestSuccess({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/alloc/delete",
+                status: "Success",
+                description: `Delete user/projects repo allocation: ${req.queryParams.repo}`,
+                extra: result
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/alloc/delete",
+                status: "Failure",
+                description: `Delete user/projects repo allocation: ${req.queryParams.repo}`,
+                extra: result,
+                error: e
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -765,6 +1073,14 @@ router
 router
     .get("/alloc/set", function (req, res) {
         try {
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/alloc/set",
+                status: "Started",
+                description: `Set user/projects repo allocation: ${req.queryParams.repo}`,
+            });
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn", "repo", "admin"],
@@ -806,7 +1122,24 @@ router
                     });
                 },
             });
+            logger.logRequestSuccess({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/alloc/set",
+                status: "Success",
+                description: `Set user/projects repo allocation: ${req.queryParams.repo}`,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/alloc/set",
+                status: "Failure",
+                description: `Set user/projects repo allocation: ${req.queryParams.repo}`,
+                error: e
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -829,6 +1162,14 @@ router
 router
     .get("/alloc/set/default", function (req, res) {
         try {
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/alloc/set/default",
+                status: "Started",
+                description: `Set user/projects repo allocation as default: ${req.queryParams.repo}`,
+            });
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn", "repo", "admin"],
@@ -888,7 +1229,24 @@ router
                     }
                 },
             });
+            logger.logRequestSuccess({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/alloc/set/default",
+                status: "Success",
+                description: `Set user/projects repo allocation as default: ${req.queryParams.repo}`,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/alloc/set/default",
+                status: "Failure",
+                description: `Set user/projects repo allocation as default: ${req.queryParams.repo}`,
+                error: e
+            });
             g_lib.handleException(e, res);
         }
     })
