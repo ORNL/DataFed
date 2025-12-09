@@ -9,13 +9,17 @@
 # Optional Variables (with defaults):
 # - PYPI_USERNAME: PyPI username (default: "__token__" for API token auth)
 # - PYPI_PRERELEASE: If "true", append pre-release identifier (default: "true")
+# - PYPI_REPOSITORY_URL: PyPI repository URL (default: "https://upload.pypi.org/legacy/" for production PyPI)
+#                        Use "https://test.pypi.org/legacy/" for TestPyPI
 # - DATAFED_PYPI_REPO: PyPI package name (default: "datafed")
+#                      Use a different name like "datafed-dev" to upload to a different package on PyPI
 
 .deploy_pypi_base:
     stage: deploy-pypi-package
     variables:
         PYPI_USERNAME: "__token__"
         PYPI_PRERELEASE: "true"
+        PYPI_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
         DATAFED_PYPI_REPO: "datafed"
     before_script:
         - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
@@ -38,6 +42,7 @@
         - |
             docker build \
               --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies:$DOWNSTREAM_SHA" \
+              --build-arg DATAFED_PYPI_REPO="${DATAFED_PYPI_REPO}" \
               -f python/datafed_pkg/docker/Dockerfile \
               -t datafed-python-client-deploy:latest \
               .
@@ -60,9 +65,9 @@
               -v "$(pwd)/dist:/dist" \
               -e PYPI_USERNAME="${PYPI_USERNAME}" \
               -e PYPI_PASSWORD="${PYPI_PASSWORD}" \
-              -e DATAFED_PYPI_REPO="${DATAFED_PYPI_REPO}" \
+              -e PYPI_REPOSITORY_URL="${PYPI_REPOSITORY_URL}" \
               datafed-python-client-deploy:latest \
-              sh -c "twine upload --non-interactive --username \$PYPI_USERNAME --password \$PYPI_PASSWORD /dist/*"
+              sh -c "twine upload --non-interactive --repository-url \$PYPI_REPOSITORY_URL --username \$PYPI_USERNAME --password \$PYPI_PASSWORD /dist/*"
     artifacts:
         paths:
             - dist/
