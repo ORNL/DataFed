@@ -28,37 +28,37 @@ echo "Using dependencies SHA: ${DEPENDENCIES_SHA}"
 # Determine dependencies image source
 DEPENDENCIES_IMAGE=""
 if [ -n "${REGISTRY:-}" ]; then
-    # CI environment - pull from registry
-    echo ""
-    echo "Registry detected: ${REGISTRY}"
-    DEPENDENCIES_IMAGE="${REGISTRY}/datafed/dependencies:${DEPENDENCIES_SHA}"
+  # CI environment - pull from registry
+  echo ""
+  echo "Registry detected: ${REGISTRY}"
+  DEPENDENCIES_IMAGE="${REGISTRY}/datafed/dependencies:${DEPENDENCIES_SHA}"
 
-    if [ -n "${HARBOR_USER:-}" ] && [ -n "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN:-}" ]; then
-        echo "Logging in to registry..."
-        docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
-    fi
+  if [ -n "${HARBOR_USER:-}" ] && [ -n "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN:-}" ]; then
+    echo "Logging in to registry..."
+    docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
+  fi
 
-    echo "Pulling dependencies image from registry..."
-    docker pull "${DEPENDENCIES_IMAGE}"
+  echo "Pulling dependencies image from registry..."
+  docker pull "${DEPENDENCIES_IMAGE}"
 else
-    # Local development - build or use local image
-    echo ""
-    echo "No registry specified - using local development mode"
-    DEPENDENCIES_IMAGE="datafed-dependencies:${DEPENDENCIES_SHA}"
+  # Local development - build or use local image
+  echo ""
+  echo "No registry specified - using local development mode"
+  DEPENDENCIES_IMAGE="datafed-dependencies:${DEPENDENCIES_SHA}"
 
-    echo "Checking for dependencies image..."
-    if ! docker image inspect datafed-dependencies:latest >/dev/null 2>&1; then
-        echo "Dependencies image not found locally. Building dependencies image..."
-        "${PROJECT_ROOT}/external/DataFedDependencies/scripts/build_image.sh"
-        # Tag with SHA for consistency
-        docker tag datafed-dependencies:latest "${DEPENDENCIES_IMAGE}"
-    else
-        echo "Dependencies image found: datafed-dependencies:latest"
-        # Ensure SHA-tagged version exists
-        if ! docker image inspect "${DEPENDENCIES_IMAGE}" >/dev/null 2>&1; then
-            docker tag datafed-dependencies:latest "${DEPENDENCIES_IMAGE}"
-        fi
+  echo "Checking for dependencies image..."
+  if ! docker image inspect datafed-dependencies:latest >/dev/null 2>&1; then
+    echo "Dependencies image not found locally. Building dependencies image..."
+    "${PROJECT_ROOT}/external/DataFedDependencies/scripts/build_image.sh"
+    # Tag with SHA for consistency
+    docker tag datafed-dependencies:latest "${DEPENDENCIES_IMAGE}"
+  else
+    echo "Dependencies image found: datafed-dependencies:latest"
+    # Ensure SHA-tagged version exists
+    if ! docker image inspect "${DEPENDENCIES_IMAGE}" >/dev/null 2>&1; then
+      docker tag datafed-dependencies:latest "${DEPENDENCIES_IMAGE}"
     fi
+  fi
 fi
 
 # Build the Python client Docker image
@@ -95,4 +95,3 @@ echo "  pip install twine"
 echo "  twine upload ${OUTPUT_DIR}/*"
 
 exit 0
-
