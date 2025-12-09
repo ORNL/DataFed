@@ -8,6 +8,8 @@ const error = require("./lib/error_codes");
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
 const g_graph = require("@arangodb/general-graph")._graph("sdmsg");
+const logger = require("./lib/logger");
+const basePath = "schema";
 
 module.exports = router;
 
@@ -78,7 +80,16 @@ function _resolveDeps(a_sch_id, a_refs) {
 
 router
     .post("/create", function (req, res) {
+        let sch = null;
         try {
+            logger.logRequestStarted({
+                client: req.queryParams?.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/create",
+                status: "Started",
+                description: "Create schema",
+            });
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn"],
@@ -115,7 +126,7 @@ router
                     g_lib.procInputParam(req.body, "_sch_id", false, obj);
                     g_lib.procInputParam(req.body, "desc", false, obj);
 
-                    var sch = g_db.sch.save(obj, {
+                    sch = g_db.sch.save(obj, {
                         returnNew: true,
                     }).new;
 
@@ -129,7 +140,26 @@ router
                     res.send([sch]);
                 },
             });
+            logger.logRequestSuccess({
+                client: req.queryParams?.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/create",
+                status: "Success",
+                description: "Create schema",
+                extra: sch,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams?.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/create",
+                status: "Failure",
+                description: "Create schema",
+                extra: sch,
+                error: e
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -151,7 +181,17 @@ router
 
 router
     .post("/update", function (req, res) {
+        let sch_new = null;
         try {
+            logger.logRequestStarted({
+                client: req.queryParams?.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/update",
+                status: "Started",
+                description: "Update schema",
+            });
+
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn"],
@@ -243,7 +283,7 @@ router
                         obj.def = req.body.def;
                     }
 
-                    var sch_new = g_db.sch.update(sch_old._id, obj, {
+                    sch_new = g_db.sch.update(sch_old._id, obj, {
                         returnNew: true,
                         mergeObjects: false,
                         keepNull: false,
@@ -259,7 +299,26 @@ router
                     res.send([sch_new]);
                 },
             });
+            logger.logRequestSuccess({
+                client: req.queryParams?.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/update",
+                status: "Success",
+                description: "Update schema",
+                extra: sch_new
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams?.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/update",
+                status: "Failure",
+                description: "Update schema",
+                extra: sch_new,
+                error: e
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -282,7 +341,17 @@ router
 
 router
     .post("/revise", function (req, res) {
+        let sch_new = null;
         try {
+            logger.logRequestStarted({
+                client: req.queryParams?.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/revise",
+                status: "Started",
+                description: "Revise schema",
+            });
+
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn"],
@@ -364,7 +433,7 @@ router
                     delete sch._key;
                     delete sch._rev;
 
-                    var sch_new = g_db.sch.save(sch, {
+                    sch_new = g_db.sch.save(sch, {
                         returnNew: true,
                     }).new;
 
@@ -384,7 +453,27 @@ router
                     res.send([sch_new]);
                 },
             });
+            logger.logRequestSuccess({
+                client: req.queryParams?.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/revise",
+                status: "Success",
+                description: "Revise schema",
+                extra: sch_new
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams?.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/revise",
+                status: "Failure",
+                description: "Revise schema",
+                extra: sch_new,
+                error: e
+            });
+
             g_lib.handleException(e, res);
         }
     })
@@ -406,7 +495,17 @@ router
 
 router
     .post("/delete", function (req, res) {
+        let sch_old = null;
         try {
+            logger.logRequestStarted({
+                client: req.queryParams?.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/delete",
+                status: "Started",
+                description: `Delete schema. ID: ${req.queryParams.id}`,
+            });
+
             const client = g_lib.getUserFromClientID(req.queryParams.client);
             var idx = req.queryParams.id.indexOf(":");
             if (idx < 0) {
@@ -457,7 +556,25 @@ router
             }
 
             g_graph.sch.remove(sch_old._id);
+            logger.logRequestSuccess({
+                client: req.queryParams?.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/delete",
+                status: "Success",
+                description: `Delete schema. ID: ${req.queryParams.id}`,
+                extra: sch_old._id
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams?.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/delete",
+                status: "Failure",
+                description: `Delete schema. ID: ${req.queryParams.id}`,
+                extra: sch_old._id
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -468,14 +585,23 @@ router
 
 router
     .get("/view", function (req, res) {
+        let sch = null;
         try {
+            logger.logRequestStarted({
+                client: req.queryParams?.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Started",
+                description: `View schema. ID: ${req.queryParams.id}`,
+            });
             const client = g_lib.getUserFromClientID(req.queryParams.client);
             var idx = req.queryParams.id.indexOf(":");
             if (idx < 0) {
                 throw [error.ERR_INVALID_PARAM, "Schema ID missing version number suffix."];
             }
             var sch_id = req.queryParams.id.substr(0, idx),
-                sch_ver = parseInt(req.queryParams.id.substr(idx + 1)),
+                sch_ver = parseInt(req.queryParams.id.substr(idx + 1));
                 sch = g_db.sch.firstExample({
                     id: sch_id,
                     ver: sch_ver,
@@ -515,7 +641,26 @@ router
             fixSchOwnNm(sch);
 
             res.send([sch]);
+            logger.logRequestSuccess({
+                client: req.queryParams?.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Success",
+                description: `View schema. ID: ${req.queryParams.id}`,
+                extra: sch
+            });
+
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams?.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Failure",
+                description: `View schema. ID: ${req.queryParams.id}`,
+                extra: sch
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -527,11 +672,20 @@ router
 
 router
     .get("/search", function (req, res) {
+        let result = null;
         try {
+            logger.logRequestStarted({
+                client: req.queryParams?.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/search",
+                status: "Started",
+                description: `Search schema. ID: ${req.queryParams.id}`,
+            });
+
             const client = g_lib.getUserFromClientID(req.queryParams.client);
             var qry,
                 par = {},
-                result,
                 off = 0,
                 cnt = 50,
                 doc;
@@ -629,7 +783,26 @@ router
             });
 
             res.send(result);
+            logger.logRequestSuccess({
+                client: req.queryParams?.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/search",
+                status: "Success",
+                description: `Search schema. ID: ${req.queryParams.id}`,
+                extra: result
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams?.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/search",
+                status: "Failure",
+                description: `Search schema. ID: ${req.queryParams.id}`,
+                extra: result,
+                error: e
+            });
             g_lib.handleException(e, res);
         }
     })
