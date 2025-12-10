@@ -1590,8 +1590,8 @@ router
                 permissions.ensureAdminPermUser(client, subject._id);
 
                 var result = g_db._query("for v in 1..1 outbound @client ident return v._key", {
-                        client: subject._id,
-                    });
+                    client: subject._id,
+                });
                 extra_log = result.toArray();
                 res.send(result);
                 logger.logRequestSuccess({
@@ -1605,8 +1605,8 @@ router
                 });
             } else {
                 var result = g_db._query("for v in 1..1 outbound @client ident return v._key", {
-                        client: client._id,
-                    });
+                    client: client._id,
+                });
                 res.send(result);
                 extra_log = result.toArray();
                 logger.logRequestSuccess({
