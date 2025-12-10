@@ -491,12 +491,12 @@ router
         try {
             name = req.queryParams.name_uid.trim();
             logger.logRequestStarted({
-                client: name,
+                client: "N/A",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/find/by_name_uid",
                 status: "Started",
-                description: "Find users matching partial name and/or uid",
+                description: `Find users matching partial name and/or uid: ${name}`,
             });
 
             if (name.length < 2)
@@ -536,7 +536,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/find/by_name_uid",
                 status: "Success",
-                description: `Find users matching partial name and/or uid: ${name_uid}`,
+                description: `Find users matching partial name and/or uid: ${name}`,
                 extra: result,
             });
         } catch (e) {
@@ -546,7 +546,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/find/by_name_uid",
                 status: "Failure",
-                description: `Find users matching partial name and/or uid: ${name_uid}`,
+                description: `Find users matching partial name and/or uid: ${name}`,
                 extra: result,
                 error: e,
             });
@@ -1542,7 +1542,7 @@ router
                 status: "Success",
                 description: `Remove existing user entry: ${user_id}`,
                 extra: {
-                    subject: req.query?.subject ?? null,
+                    subject: req.queryParams?.subject ?? null,
                 },
             });
         } catch (e) {
@@ -1554,7 +1554,7 @@ router
                 status: "Failure",
                 description: `Remove existing user entry: ${user_id}`,
                 extra: {
-                    subject: req.query?.subject ?? null,
+                    subject: req.queryParams?.subject ?? null,
                 },
                 error: e,
             });
@@ -1589,11 +1589,11 @@ router
                 const subject = g_db.u.document(req.queryParams.subject);
                 permissions.ensureAdminPermUser(client, subject._id);
 
-                res.send(
-                    g_db._query("for v in 1..1 outbound @client ident return v._key", {
+                var result = g_db._query("for v in 1..1 outbound @client ident return v._key", {
                         client: subject._id,
-                    }),
-                );
+                    });
+                extra_log = result.toArray();
+                res.send(result);
                 logger.logRequestSuccess({
                     client: client?._id,
                     correlationId: req.headers["x-correlation-id"],
@@ -1601,16 +1601,14 @@ router
                     routePath: basePath + "/ident/list",
                     status: "Success",
                     description: "List user linked IDs",
+                    extra: { NumOfIds: extra_log.length },
                 });
             } else {
-                res.send(
-                    g_db._query("for v in 1..1 outbound @client ident return v._key", {
+                var result = g_db._query("for v in 1..1 outbound @client ident return v._key", {
                         client: client._id,
-                    }),
-                );
-                extra_log = g_db._query("for v in 1..1 outbound @client ident return v._key", {
-                    client: client._id,
-                });
+                    });
+                res.send(result);
+                extra_log = result.toArray();
                 logger.logRequestSuccess({
                     client: client?._id,
                     correlationId: req.headers["x-correlation-id"],
@@ -1618,7 +1616,7 @@ router
                     routePath: basePath + "/ident/list",
                     status: "Success",
                     description: `List user linked IDs.`,
-                    extra: { NumOfIds: extra_log },
+                    extra: { NumOfIds: extra_log.length },
                 });
             }
         } catch (e) {
@@ -1629,7 +1627,7 @@ router
                 routePath: basePath + "/ident/list",
                 status: "Failure",
                 description: `List user linked IDs.`,
-                extra: { NumOfIds: extra_log },
+                extra: { NumOfIds: extra_log.length },
                 error: e,
             });
             g_lib.handleException(e, res);
