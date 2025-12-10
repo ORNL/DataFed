@@ -46,7 +46,7 @@ describe("unit_config_router: test /msg/daily route", () => {
         db.config.save({
             _key: "msg_daily",
             message: "Hello world!",
-            customFlag: true
+            customFlag: true,
         });
 
         const url = `${config_base_url}/msg/daily`;
@@ -62,8 +62,7 @@ describe("unit_config_router: test /msg/daily route", () => {
         // The route strips _id, _key, _rev
         expect(body).to.deep.equal({
             message: "Hello world!",
-            customFlag: true
+            customFlag: true,
         });
     });
 });
-

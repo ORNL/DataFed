@@ -12,7 +12,7 @@ router
     .get("/msg/daily", function (req, res) {
         let msg = null;
         try {
-             logger.logRequestStarted({
+            logger.logRequestStarted({
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/msg/daily",
@@ -21,8 +21,8 @@ router
             });
             msg = {};
             var key = {
-                    _key: "msg_daily",
-                };
+                _key: "msg_daily",
+            };
 
             if (g_db.config.exists(key)) {
                 msg = g_db.config.document(key);
@@ -39,7 +39,7 @@ router
                 routePath: basePath + "/msg/daily",
                 status: "Success",
                 description: "Get message of the day",
-                extra: msg
+                extra: msg,
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -49,7 +49,7 @@ router
                 status: "Failure",
                 description: "Get message of the day",
                 extra: msg,
-                error: e
+                error: e,
             });
 
             g_lib.handleException(e, res);
