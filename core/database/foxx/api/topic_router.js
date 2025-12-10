@@ -7,17 +7,32 @@ const error = require("./lib/error_codes");
 
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
+const logger = require("./lib/logger");
 
+const basePath = "topic";
 module.exports = router;
 
 //==================== TOPIC API FUNCTIONS
 
 router
     .get("/list/topics", function (req, res) {
+        let client = req.queryParams.client
+            ? g_lib.getUserFromClientID(req.queryParams.client)
+            : undefined;
+        let result = null;
         try {
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/list/topics",
+                status: "Started",
+                description: "List topics",
+            });
+
             var qry,
                 par = {},
-                result,
                 off = 0,
                 cnt = 50;
 
@@ -58,7 +73,30 @@ router
             });
 
             res.send(result);
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/list/topics",
+                status: "Success",
+                description: "List topics",
+                extra: {
+                    topicCount: Array.isArray(result) ? result.length : undefined,
+                },
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/list/topics",
+                status: "Failure",
+                description: "List topics",
+                extra: {
+                    topicCount: Array.isArray(result) ? result.length : undefined,
+                },
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -71,38 +109,92 @@ router
 
 router
     .get("/view", function (req, res) {
+        let client = req.queryParams.client
+            ? g_lib.getUserFromClientID(req.queryParams.client)
+            : undefined;
+        let topic_extra = undefined;
         try {
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Started",
+                description: `View topic. ID: ${req.queryParams.id}`,
+            });
+
             if (!g_db.t.exists(req.queryParams.id))
                 throw [error.ERR_NOT_FOUND, "Topic, " + req.queryParams.id + ", not found"];
 
             var topic = g_db.t.document(req.queryParams.id);
 
             res.send([topic]);
+
+            topic_extra = {
+                title: topic.title,
+                creator: topic.creator,
+                coll_cnt: topic.coll_cnt,
+            };
+
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Success",
+                description: `View topic. ID: ${req.queryParams.id}`,
+                extra: topic_extra,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Failure",
+                description: `View topic. ID: ${req.queryParams.id}`,
+                extra: topic_extra,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
     .queryParam("client", joi.string().optional(), "Client ID")
-    .queryParam("id", joi.string().optional(), "ID of topic to view")
+    .queryParam("id", joi.string().required(), "ID of topic to view")
     .summary("View topic")
     .description("View a topic.");
 
 router
     .get("/search", function (req, res) {
+        let client = req.queryParams.client
+            ? g_lib.getUserFromClientID(req.queryParams.client)
+            : undefined;
+        let result = null;
+        const phrase = req.queryParams.phrase;
+        const shortPhrase = phrase.length > 10 ? phrase.slice(0, 10) + "..." : phrase;
         try {
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/search",
+                status: "Started",
+                description: `Search topics. Search Phrase: ${shortPhrase}`,
+            });
+
             var tokens = req.queryParams.phrase.match(/(?:[^\s"]+|"[^"]*")+/g),
                 qry = "for i in topicview search analyzer((",
                 params = {},
                 i,
                 p,
                 qry_res,
-                result = [],
                 item,
                 it,
                 topic,
                 path,
                 op = false;
 
+            result = [];
             if (tokens.length == 0) throw [error.ERR_INVALID_PARAM, "Invalid topic search phrase."];
 
             it = 0;
@@ -154,7 +246,26 @@ router
             }
 
             res.send(result);
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/search",
+                status: "Success",
+                description: `Search topics. Search Phrase: ${shortPhrase}`,
+                extra: { numOfResults: result.length },
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/search",
+                status: "Failure",
+                description: `Search topics. Search Phrase: ${shortPhrase}`,
+                extra: { numOfResults: result.length },
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
