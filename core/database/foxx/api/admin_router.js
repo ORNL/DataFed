@@ -17,6 +17,7 @@ router
     .get("/ping", function (req, res) {
         try {
             logger.logRequestStarted({
+                client: "N/A",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/ping",
@@ -27,19 +28,23 @@ router
                 status: 1,
             });
             logger.logRequestSuccess({
+                client: "N/A",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/ping",
                 status: "Success",
                 description: "Ping DB server",
+                extra: "N/A"
             });
         } catch (e) {
             logger.logRequestFailure({
+                client: "N/A",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/ping",
                 status: "Failure",
                 description: "Ping DB server",
+                extra: "N/A",
                 error: e
             });
             g_lib.handleException(e, res);
@@ -53,6 +58,7 @@ router
         let result = null;
         try {
             logger.logRequestStarted({
+                client: "N/A",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/test",
@@ -76,21 +82,23 @@ router
                 time: (t2 - t1) / 1000,
             });
             logger.logRequestSuccess({
+                client: "N/A",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/test",
                 status: "Success",
                 description: "Do perf test",
-                extra: result
+                extra: "N/A"
             });
         } catch (e) {
             logger.logRequestFailure({
+                client: "N/A",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/test",
                 status: "Failure",
                 description: "Do perf test",
-                extra: result,
+                extra: "N/A",
                 error: e
             });
             g_lib.handleException(e, res);
@@ -106,6 +114,7 @@ router
         let result = null;
         try {
             logger.logRequestStarted({
+                client: "N/A",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/check",
@@ -339,21 +348,23 @@ router
 
             res.send(result);
             logger.logRequestSuccess({
+                client: "N/A",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/check",
                 status: "Success",
                 description: "Database integrity check",
-                extra: result
+                extra: "N/A"
             });
         } catch (e) {
             logger.logRequestFailure({
+                client: "N/A",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/check",
                 status: "Failure",
                 description: "Database integrity check",
-                extra: result,
+                extra: "N/A",
                 error: e
             });
             g_lib.handleException(e, res);
