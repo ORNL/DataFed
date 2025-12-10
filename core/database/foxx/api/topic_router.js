@@ -120,7 +120,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/view",
                 status: "Started",
-                description: `View topic. ID:${req.queryParams.id}`,
+                description: `View topic. ID: ${req.queryParams.id}`,
             });
 
             if (!g_db.t.exists(req.queryParams.id))
@@ -142,7 +142,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/view",
                 status: "Success",
-                description: `View topic. ID:${req.queryParams.id}`,
+                description: `View topic. ID: ${req.queryParams.id}`,
                 extra: topic_extra,
             });
         } catch (e) {
@@ -152,7 +152,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/view",
                 status: "Failure",
-                description: `View topic. ID:${req.queryParams.id}`,
+                description: `View topic. ID: ${req.queryParams.id}`,
                 extra: topic_extra,
                 error: e,
             });
