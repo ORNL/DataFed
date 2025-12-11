@@ -8,6 +8,14 @@ const { baseUrl } = module.context;
 const acl_base_url = `${baseUrl}/acl`;
 
 describe("unit_acl_router: test /update route", () => {
+    after(function () {
+        const collections =  ["member","u", "c", "d", "acl", "owner", "g"];
+        collections.forEach((name) => {
+            let col = db._collection(name);
+            if (col) col.truncate();
+        });
+    });
+
     beforeEach(() => {
         // Ensure necessary collections exist
         const collections = ["u", "c", "d", "acl", "owner", "g"];
