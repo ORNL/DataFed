@@ -85,6 +85,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/test",
                 status: "Success",
+                extra: { execution_time_seconds: (t2 - t1) / 1000 },
                 description: "Do perf test",
             });
         } catch (e) {
@@ -95,6 +96,7 @@ router
                 routePath: basePath + "/test",
                 status: "Failure",
                 description: "Do perf test",
+                extra: { execution_time_seconds: (t2 - t1) / 1000 },
                 error: e,
             });
             g_lib.handleException(e, res);
