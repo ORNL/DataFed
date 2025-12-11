@@ -39,7 +39,7 @@ router
                 routePath: basePath + "/msg/daily",
                 status: "Success",
                 description: "Get message of the day",
-                extra: (msg.text || "").substring(0, 10),
+                extra: (msg.msg || "").substring(0, 10),
             });
         } catch (e) {
             logger.logRequestFailure({
