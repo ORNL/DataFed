@@ -396,7 +396,7 @@ router
                 routePath: basePath + "/shared/list/items",
                 status: "Success",
                 description: `Lists data and collections shared with client/subject by owner. Owner ID:${req.queryParams.owner}`,
-                extra:{ NumOfShares: shares.length},
+                extra: { NumOfShares: shares.length },
             });
         } catch (e) {
             logger.logRequestFailure({
