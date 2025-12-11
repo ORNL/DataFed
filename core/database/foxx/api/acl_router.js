@@ -203,7 +203,7 @@ router
                 routePath: basePath + "/authn/password",
                 status: "Success",
                 description: `Update ACL(s) on a data record or collection. ID: ${req.queryParams.id}`,
-                extra: result
+                extra: result,
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -214,7 +214,7 @@ router
                 status: "Success",
                 description: `Update ACL(s) on a data record or collection. ID: ${req.queryParams.id}`,
                 extra: result,
-                error: e
+                error: e,
             });
 
             g_lib.handleException(e, res);
@@ -285,7 +285,7 @@ router
                 status: "Failure",
                 description: `View current ACL on an object. ID: ${req.queryParams.id}`,
                 extra: { NumOfRules: rules.length },
-                error: e
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -332,7 +332,7 @@ router
                 routePath: basePath + "/shared/list",
                 status: "Failure",
                 description: `List users/projects that have shared data or collections with client/subject.`,
-                error: e
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -368,17 +368,16 @@ router
                 owner_id = g_lib.getUserFromClientID(req.queryParams.owner)._id;
             }
 
-            var i,
-                share;
-                shares = g_db
-                    ._query(
-                        "for v in 1..2 inbound @client member, acl filter v.owner == @owner return {id:v._id,title:v.title,alias:v.alias,owner:v.owner,creator:v.creator,md_err:v.md_err,external:v.external,locked:v.locked}",
-                        {
-                            client: client._id,
-                            owner: owner_id,
-                        },
-                    )
-                    .toArray();
+            var i, share;
+            shares = g_db
+                ._query(
+                    "for v in 1..2 inbound @client member, acl filter v.owner == @owner return {id:v._id,title:v.title,alias:v.alias,owner:v.owner,creator:v.creator,md_err:v.md_err,external:v.external,locked:v.locked}",
+                    {
+                        client: client._id,
+                        owner: owner_id,
+                    },
+                )
+                .toArray();
 
             for (i in shares) {
                 share = shares[i];
@@ -390,14 +389,14 @@ router
             } else {
                 res.send(dedupShares(client, shares));
             }
-        logger.logRequestSuccess({
+            logger.logRequestSuccess({
                 client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/shared/list/items",
                 status: "Success",
                 description: `Lists data and collections shared with client/subject by owner. Owner ID:${req.queryParams.owner}`,
-                extra: shares
+                extra: shares,
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -408,7 +407,7 @@ router
                 status: "Failure",
                 description: `Lists data and collections shared with client/subject by owner. Owner ID:${req.queryParams.owner}`,
                 extra: shares,
-                error: e
+                error: e,
             });
 
             g_lib.handleException(e, res);
