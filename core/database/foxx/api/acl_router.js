@@ -7,6 +7,8 @@ const g_db = require("@arangodb").db;
 const g_lib = require("./support");
 const error = require("./lib/error_codes");
 const permissions = require("./lib/permissions");
+const logger = require("./lib/logger");
+const basePath = "acl";
 
 module.exports = router;
 
@@ -22,7 +24,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/update",
                 status: "Started",
-                description: `Update ACL(s) on a data record or collection. ID: ${req.queryParam.id}`,
+                description: `Update ACL(s) on a data record or collection. ID: ${req.queryParams.id}`,
             });
             result = [];
 
@@ -200,7 +202,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/authn/password",
                 status: "Success",
-                description: `Update ACL(s) on a data record or collection. ID: ${req.queryParam.id}`,
+                description: `Update ACL(s) on a data record or collection. ID: ${req.queryParams.id}`,
                 extra: result
             });
         } catch (e) {
@@ -210,7 +212,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/authn/password",
                 status: "Success",
-                description: `Update ACL(s) on a data record or collection. ID: ${req.queryParam.id}`,
+                description: `Update ACL(s) on a data record or collection. ID: ${req.queryParams.id}`,
                 extra: result,
                 error: e
             });
@@ -240,7 +242,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/view",
                 status: "Started",
-                description: `"View current ACL on an object. ID: ${req.queryParam.id}`,
+                description: `View current ACL on an object. ID: ${req.queryParams.id}`,
             });
 
             const client = g_lib.getUserFromClientID(req.queryParams.client);
@@ -271,8 +273,8 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/view",
                 status: "Success",
-                description: `"View current ACL on an object. ID: ${req.queryParam.id}`,
-                extra: rules
+                description: `View current ACL on an object. ID: ${req.queryParams.id}`,
+                extra: { NumOfRules: rules.length },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -281,8 +283,8 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/view",
                 status: "Failure",
-                description: `"View current ACL on an object. ID: ${req.queryParam.id}`,
-                extra: rules,
+                description: `View current ACL on an object. ID: ${req.queryParams.id}`,
+                extra: { NumOfRules: rules.length },
                 error: e
             });
             g_lib.handleException(e, res);
@@ -405,7 +407,8 @@ router
                 routePath: basePath + "/shared/list/items",
                 status: "Failure",
                 description: `Lists data and collections shared with client/subject by owner. Owner ID:${req.queryParams.owner}`,
-                extra: shares
+                extra: shares,
+                error: e
             });
 
             g_lib.handleException(e, res);
