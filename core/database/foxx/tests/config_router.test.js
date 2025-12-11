@@ -45,7 +45,7 @@ describe("unit_config_router: test /msg/daily route", () => {
         // arrange: insert a config entry
         db.config.save({
             _key: "msg_daily",
-            message: "Hello world!",
+            msg: "Hello world!",
             customFlag: true,
         });
 
