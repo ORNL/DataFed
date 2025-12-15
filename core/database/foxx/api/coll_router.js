@@ -1201,7 +1201,7 @@ router
                 routePath: basePath + "/get_parents",
                 status: "Success",
                 description: "Get parent collection(s) (path) of item",
-                extra: {NumOfParentColls: results},
+                extra: { NumOfParentColls: results },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -1211,7 +1211,7 @@ router
                 routePath: basePath + "/get_parents",
                 status: "Failure",
                 description: "Get parent collection(s) (path) of item",
-                extra: {NumOfParentColls: results},
+                extra: { NumOfParentColls: results },
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -1368,7 +1368,7 @@ router
                 routePath: basePath + "/published/list",
                 status: "Success",
                 description: "Get list of clients published collections.",
-                extra: { total: result._countTotal},
+                extra: { total: result._countTotal },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -1378,7 +1378,7 @@ router
                 routePath: basePath + "/published/list",
                 status: "Failure",
                 description: "Get list of clients published collections.",
-                extra: { total: result._countTotal},
+                extra: { total: result._countTotal },
                 error: e,
             });
             g_lib.handleException(e, res);
