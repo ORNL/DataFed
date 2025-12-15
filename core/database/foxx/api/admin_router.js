@@ -34,6 +34,7 @@ router
                 routePath: basePath + "/ping",
                 status: "Success",
                 description: "Ping DB server",
+                extra: "N/A",
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -43,6 +44,7 @@ router
                 routePath: basePath + "/ping",
                 status: "Failure",
                 description: "Ping DB server",
+                extra: "N/A",
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -352,6 +354,7 @@ router
                 routePath: basePath + "/check",
                 status: "Success",
                 description: "Database integrity check",
+                extra: "N/A",
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -361,6 +364,7 @@ router
                 routePath: basePath + "/check",
                 status: "Failure",
                 description: "Database integrity check",
+                extra: "N/A",
                 error: e,
             });
             g_lib.handleException(e, res);
