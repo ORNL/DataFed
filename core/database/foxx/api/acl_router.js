@@ -295,15 +295,15 @@ router
     .summary("View current ACL on an object")
     .description("View current ACL on an object (data record or collection)");
 router
-    .get("/shared/list", function (req, res) { 
+    .get("/shared/list", function (req, res) {
         let result = null;
         try {
             const client = g_lib.getUserFromClientID(req.queryParams.client);
             result = g_lib.getACLOwnersBySubject(
-                    client._id,
-                    req.queryParams.inc_users,
-                    req.queryParams.inc_projects,
-                );
+                client._id,
+                req.queryParams.inc_users,
+                req.queryParams.inc_projects,
+            );
 
             logger.logRequestStarted({
                 client: req.queryParams.client,
@@ -311,7 +311,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/shared/list",
                 status: "Started",
-                description: `List users/projects that have shared data or collections with client/subject. Users:${req.queryParams.inc_users}; Projects:${req.queryParams.inc_projects}`, 
+                description: `List users/projects that have shared data or collections with client/subject. Users:${req.queryParams.inc_users}; Projects:${req.queryParams.inc_projects}`,
             });
             res.send(result);
             logger.logRequestSuccess({
@@ -321,7 +321,7 @@ router
                 routePath: basePath + "/shared/list",
                 status: "Success",
                 description: `List users/projects that have shared data or collections with client/subject. Users:${req.queryParams.inc_users}; Projects:${req.queryParams.inc_projects}`,
-                extra: { NumOfUsersAndProjs: result.length }
+                extra: { NumOfUsersAndProjs: result.length },
             });
         } catch (e) {
             logger.logRequestFailure({
