@@ -311,7 +311,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/shared/list",
                 status: "Started",
-                description: `List users/projects that have shared data or collections with client/subject. Users:${req.queryParams.inc_users}; Projects:${req.queryParams.inc_projects}`,
+                description: `List users/projects that have shared data or collections with client/subject. Users: ${req.queryParams.inc_users}; Projects: ${req.queryParams.inc_projects}`,
             });
             res.send(result);
             logger.logRequestSuccess({
@@ -320,7 +320,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/shared/list",
                 status: "Success",
-                description: `List users/projects that have shared data or collections with client/subject. Users:${req.queryParams.inc_users}; Projects:${req.queryParams.inc_projects}`,
+                description: `List users/projects that have shared data or collections with client/subject. Users: ${req.queryParams.inc_users}; Projects: ${req.queryParams.inc_projects}`,
                 extra: { NumOfUsersAndProjs: result.length },
             });
         } catch (e) {
@@ -330,7 +330,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/shared/list",
                 status: "Failure",
-                description: `List users/projects that have shared data or collections with client/subject. Users:${req.queryParams.inc_users}; Projects:${req.queryParams.inc_projects}`,
+                description: `List users/projects that have shared data or collections with client/subject. Users: ${req.queryParams.inc_users}; Projects: ${req.queryParams.inc_projects}`,
                 extra: { NumOfUsersAndProjs: result.length },
                 error: e,
             });
