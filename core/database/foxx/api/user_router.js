@@ -1569,7 +1569,7 @@ router
 router
     .get("/ident/list", function (req, res) {
         let client = null;
-        let extra_log = null;
+        let extra_log = [];
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
