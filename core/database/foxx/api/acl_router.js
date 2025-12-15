@@ -294,35 +294,34 @@ router
     .queryParam("id", joi.string().required(), "ID or alias of data record or collection")
     .summary("View current ACL on an object")
     .description("View current ACL on an object (data record or collection)");
-
 router
-    .get("/shared/list", function (req, res) {
+    .get("/shared/list", function (req, res) { 
+        let result = null;
         try {
+            const client = g_lib.getUserFromClientID(req.queryParams.client);
+            result = g_lib.getACLOwnersBySubject(
+                    client._id,
+                    req.queryParams.inc_users,
+                    req.queryParams.inc_projects,
+                );
+
             logger.logRequestStarted({
                 client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/shared/list",
                 status: "Started",
-                description: `List users/projects that have shared data or collections with client/subject.`,
+                description: `List users/projects that have shared data or collections with client/subject. Users:${req.queryParams.inc_users}; Projects:${req.queryParams.inc_projects}`, 
             });
-
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
-
-            res.send(
-                g_lib.getACLOwnersBySubject(
-                    client._id,
-                    req.queryParams.inc_users,
-                    req.queryParams.inc_projects,
-                ),
-            );
+            res.send(result);
             logger.logRequestSuccess({
                 client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/shared/list",
                 status: "Success",
-                description: `List users/projects that have shared data or collections with client/subject.`,
+                description: `List users/projects that have shared data or collections with client/subject. Users:${req.queryParams.inc_users}; Projects:${req.queryParams.inc_projects}`,
+                extra: { NumOfUsersAndProjs: result.length }
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -331,7 +330,8 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/shared/list",
                 status: "Failure",
-                description: `List users/projects that have shared data or collections with client/subject.`,
+                description: `List users/projects that have shared data or collections with client/subject. Users:${req.queryParams.inc_users}; Projects:${req.queryParams.inc_projects}`,
+                extra: { NumOfUsersAndProjs: result.length },
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -345,7 +345,7 @@ router
 
 router
     .get("/shared/list/items", function (req, res) {
-        let shares = null;
+        let shares = [];
         try {
             logger.logRequestStarted({
                 client: req.queryParams.client,
@@ -353,7 +353,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/shared/list/items",
                 status: "Started",
-                description: `Lists data and collections shared with client/subject by owner. Owner ID:${req.queryParams.owner}`,
+                description: `Lists data and collections shared with client/subject by owner. Owner ID: ${req.queryParams.owner}`,
             });
             const client = g_lib.getUserFromClientID(req.queryParams.client);
             var owner_id;
@@ -395,7 +395,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/shared/list/items",
                 status: "Success",
-                description: `Lists data and collections shared with client/subject by owner. Owner ID:${req.queryParams.owner}`,
+                description: `Lists data and collections shared with client/subject by owner. Owner ID: ${req.queryParams.owner}`,
                 extra: { NumOfShares: shares.length },
             });
         } catch (e) {
@@ -405,7 +405,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/shared/list/items",
                 status: "Failure",
-                description: `Lists data and collections shared with client/subject by owner. Owner ID:${req.queryParams.owner}`,
+                description: `Lists data and collections shared with client/subject by owner. Owner ID: ${req.queryParams.owner}`,
                 extra: { NumOfShares: shares.length },
                 error: e,
             });
