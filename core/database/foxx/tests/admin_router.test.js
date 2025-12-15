@@ -12,7 +12,7 @@ const admin_base_url = `${baseUrl}/admin`;
 describe("unit_admin_router: the Foxx microservice admin_router /ping endpoint", () => {
     // Clean up any collections if needed (this router doesn't use any)
     after(function () {
-        const collections = ["u", "test_collection"];
+        const collections = ["u", "test_collection", "d"];
         collections.forEach((name) => {
             let col = db._collection(name);
             if (col) col.truncate();
@@ -21,7 +21,7 @@ describe("unit_admin_router: the Foxx microservice admin_router /ping endpoint",
 
     beforeEach(() => {
         // no collections used, but keeping consistency with your example
-        const collections = ["u", "test_collection"];
+        const collections = ["u", "test_collection", "d"];
         collections.forEach((name) => {
             let col = db._collection(name);
             if (col) {
