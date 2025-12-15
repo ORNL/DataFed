@@ -251,7 +251,7 @@ router
                     httpVerb: "POST",
                     routePath: basePath + "/update",
                     status: "Started",
-                    description: "Update an existing collection",
+                    description: `Update an existing collection. ID:${req.body.id}`,
                 });
 
                 var result = {
@@ -442,7 +442,6 @@ router
                 res.send(result);
 
                 extra_log = {
-                    results: result.results.map(({ ut, ...rest }) => rest),
                     updates: result.updates.map(({ ut, ...rest }) => rest),
                 };
 
@@ -452,7 +451,7 @@ router
                     httpVerb: "POST",
                     routePath: basePath + "/update",
                     status: "Success",
-                    description: "Update an existing collection",
+                    description: `Update an existing collection. ID:${req.body.id}`,
                     extra: extra_log,
                 });
                 break;
@@ -463,7 +462,7 @@ router
                     httpVerb: "POST",
                     routePath: basePath + "/update",
                     status: "Failure",
-                    description: "Update an existing collection",
+                    description: `Update an existing collection. ID:${req.body.id}`,
                     extra: extra_log,
                     error: e,
                 });
@@ -1202,7 +1201,7 @@ router
                 routePath: basePath + "/get_parents",
                 status: "Success",
                 description: "Get parent collection(s) (path) of item",
-                extra: results,
+                extra: {NumOfParentColls: results},
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -1212,7 +1211,7 @@ router
                 routePath: basePath + "/get_parents",
                 status: "Failure",
                 description: "Get parent collection(s) (path) of item",
-                extra: results,
+                extra: {NumOfParentColls: results},
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -1369,7 +1368,7 @@ router
                 routePath: basePath + "/published/list",
                 status: "Success",
                 description: "Get list of clients published collections.",
-                extra: result,
+                extra: { total: result._countTotal},
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -1379,7 +1378,7 @@ router
                 routePath: basePath + "/published/list",
                 status: "Failure",
                 description: "Get list of clients published collections.",
-                extra: result,
+                extra: { total: result._countTotal},
                 error: e,
             });
             g_lib.handleException(e, res);
