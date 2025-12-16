@@ -99,7 +99,7 @@ router
                 routePath: basePath + "/authn/token",
                 status: "Success",
                 description: "Authenticating user via access token",
-                extra: "N/A"
+                extra: "N/A",
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -316,14 +316,14 @@ router
         let result = null;
         let sub = req.queryParams.subject ? req.queryParams.subject : req.queryParams.client;
         try {
-                logger.logRequestStarted({
-                    client: req.queryParams.client,
-                    correlationId: req.headers["x-correlation-id"],
-                    httpVerb: "GET",
-                    routePath: basePath + "/update",
-                    status: "Started",
-                    description: `Update user information. Subject: ${sub}`,
-               });
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/update",
+                status: "Started",
+                description: `Update user information. Subject: ${sub}`,
+            });
 
             g_db._executeTransaction({
                 collections: {
@@ -333,7 +333,7 @@ router
                 action: function () {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
                     var user_id;
-                    
+
                     if (req.queryParams.subject) {
                         user_id = req.queryParams.subject;
                         if (!g_db.u.exists(user_id))
@@ -612,7 +612,7 @@ router
                 routePath: basePath + "/keys/set",
                 status: "Success",
                 description: `Set user public and private keys. Subject: ${sub}`,
-                extra: "N/A"
+                extra: "N/A",
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -639,14 +639,14 @@ router
     .get("/keys/clear", function (req, res) {
         let sub = req.queryParams.subject ? req.queryParams.subject : req.queryParams.client;
         try {
-                logger.logRequestStarted({
-                    client: req.queryParams.client,
-                    correlationId: req.headers["x-correlation-id"],
-                    httpVerb: "GET",
-                    routePath: basePath + "/keys/clear",
-                    status: "Started",
-                    description: `Clear user public and private keys. Subject: ${sub}`,
-                });
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/keys/clear",
+                status: "Started",
+                description: `Clear user public and private keys. Subject: ${sub}`,
+            });
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn"],
@@ -654,7 +654,7 @@ router
                 },
                 action: function () {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
-                    
+
                     var user_id;
 
                     if (req.queryParams.subject) {
@@ -682,7 +682,7 @@ router
                 routePath: basePath + "/keys/clear",
                 status: "Success",
                 description: `Clear user public and private keys. Subject: ${sub}`,
-                extra: "N/A"
+                extra: "N/A",
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -758,7 +758,7 @@ router
                     routePath: basePath + "/keys/get",
                     status: "Success",
                     description: `Get user public and private keys. ${sub}`,
-                    extra: "N/A"
+                    extra: "N/A",
                 });
             }
         } catch (e) {
@@ -835,14 +835,13 @@ router
             });
 
             g_db._executeTransaction({
-            collections: {
+                collections: {
                     read: ["u", "uuid", "accn", "globus_coll"],
                     write: ["u", "globus_coll", "globus_token"],
                 },
                 action: function () {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
 
-                    
                     var user_id;
                     let user_doc;
 
@@ -1058,7 +1057,7 @@ router
                 routePath: basePath + "/token/get",
                 status: "Success",
                 description: `Getting user token. Subject: ${sub}`,
-                extra: "N/A"
+                extra: "N/A",
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -1124,7 +1123,7 @@ router
                 routePath: basePath + "/token/get/access",
                 status: "Success",
                 description: `Getting User Access Token. Subject: ${sub}`,
-                extra: "N/A"
+                extra: "N/A",
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -1453,14 +1452,14 @@ router
     .get("/delete", function (req, res) {
         let user_id = null;
         try {
-                logger.logRequestStarted({
-                    client: req.queryParams.client,
-                    correlationId: req.headers["x-correlation-id"],
-                    httpVerb: "GET",
-                    routePath: basePath + "/delete",
-                    status: "Started",
-                    description: `Remove existing user entry: ${user_id}, Subject: ${sub}`,
-                });
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/delete",
+                status: "Started",
+                description: `Remove existing user entry: ${user_id}, Subject: ${sub}`,
+            });
 
             g_db._executeTransaction({
                 collections: {
@@ -1487,7 +1486,7 @@ router
                 },
                 action: function () {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
-                    
+
                     if (req.queryParams.subject) {
                         user_id = req.queryParams.subject;
                         if (!g_db.u.exists(user_id))
@@ -1650,13 +1649,13 @@ router
         let sub = req.queryParams.subject ? req.queryParams.subject : req.queryParams.client;
         try {
             logger.logRequestStarted({
-                        client: req.queryParams.client,
-                        correlationId: req.headers["x-correlation-id"],
-                        httpVerb: "GET",
-                        routePath: basePath + "/ident/add",
-                        status: "Started",
-                        description: `Add new linked identity. Subject: ${sub}`,
-                    });
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/ident/add",
+                status: "Started",
+                description: `Add new linked identity. Subject: ${sub}`,
+            });
 
             g_db._executeTransaction({
                 collections: {
@@ -1666,7 +1665,7 @@ router
                 action: function () {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
                     var id;
-                    
+
                     if (g_lib.isUUID(req.queryParams.ident)) {
                         if (
                             g_db._exists({
@@ -1796,14 +1795,14 @@ router
 router
     .get("/ident/remove", function (req, res) {
         try {
-                logger.logRequestStarted({
-                        client: req.queryParams.client,
-                        correlationId: req.headers["x-correlation-id"],
-                        httpVerb: "GET",
-                        routePath: basePath + "/ident/remove",
-                        status: "Started",
-                        description: `Remove linked identity ${req.queryParams.ident} from user account.`,
-                    });
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/ident/remove",
+                status: "Started",
+                description: `Remove linked identity ${req.queryParams.ident} from user account.`,
+            });
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "admin"],
