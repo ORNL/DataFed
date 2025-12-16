@@ -738,7 +738,7 @@ router
                 status: "Success",
                 description: "Execute published data search query",
                 extra: {
-                            count: Array.isArray(results) ? results.length : undefined,
+                    count: Array.isArray(results) ? results.length : undefined,
                 },
             });
         } catch (e) {
@@ -750,7 +750,7 @@ router
                 status: "Failure",
                 description: "Execute published data search query",
                 extra: {
-                        count: Array.isArray(results) ? results.length : undefined,
+                    count: Array.isArray(results) ? results.length : undefined,
                 },
                 error: e,
             });
