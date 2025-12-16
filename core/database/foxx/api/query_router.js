@@ -737,7 +737,7 @@ router
                 routePath: basePath + "/exec/direct",
                 status: "Success",
                 description: "Execute published data search query",
-                extra: results,
+                extra: {count: Array.isArray(results) ? results.length : undefined},
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -747,7 +747,7 @@ router
                 routePath: basePath + "/exec/direct",
                 status: "Failure",
                 description: "Execute published data search query",
-                extra: results,
+                extra: {count: Array.isArray(results) ? results.length : undefined},
                 error: e,
             });
             g_lib.handleException(e, res);
