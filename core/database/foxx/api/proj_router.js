@@ -525,7 +525,7 @@ router
                 routePath: basePath + "/view",
                 status: "Success",
                 description: `View project information. ID:${req.queryParams.id}`,
-                result = proj
+                result: proj
             });
 
         } catch (e) {
