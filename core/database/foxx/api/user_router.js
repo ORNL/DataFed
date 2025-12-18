@@ -21,8 +21,9 @@ module.exports = router;
 
 router
     .get("/authn/password", function (req, res) {
+        let client = null;
         try {
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
+            client = g_lib.getUserFromClientID(req.queryParams.client);
             const is_verified = auth.verify(client.password, req.queryParams.pw);
             if (is_verified === false) {
                 throw error.ERR_AUTHN_FAILED;
@@ -47,7 +48,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/authn/password",
                 status: "Success",
-                extra: "N/A",
+                extra: `Resolved Client: ${client}`,
                 description: "Authenticating user via password",
             });
         } catch (e) {
@@ -58,7 +59,7 @@ router
                 routePath: basePath + "/authn/password",
                 status: "Failure",
                 description: "Authenticating user via password",
-                extra: "N/A",
+                extra: `Resolved Client: ${client}`,
                 error: e,
             });
             g_lib.handleException(e, res);
