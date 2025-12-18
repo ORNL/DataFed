@@ -166,7 +166,7 @@ router
                     id: sch.id,
                     desc: sch.desc,
                 },
-                error: e
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -314,7 +314,7 @@ router
                 routePath: basePath + "/update",
                 status: "Success",
                 description: "Update schema",
-                extra: sch_new
+                extra: sch_new,
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -325,7 +325,7 @@ router
                 status: "Failure",
                 description: "Update schema",
                 extra: sch_new,
-                error: e
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -468,12 +468,12 @@ router
                 routePath: basePath + "/revise",
                 status: "Success",
                 description: "Revise schema",
-                    extra: {
-        own_id: sch_new.own_id,
-        own_nm: sch_new.own_nm,
-        id: sch_new.id,
-        desc: sch_new.desc,
-    },
+                extra: {
+                    own_id: sch_new.own_id,
+                    own_nm: sch_new.own_nm,
+                    id: sch_new.id,
+                    desc: sch_new.desc,
+                },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -483,13 +483,13 @@ router
                 routePath: basePath + "/revise",
                 status: "Failure",
                 description: "Revise schema",
-                    extra: {
-        own_id: sch_new.own_id,
-        own_nm: sch_new.own_nm,
-        id: sch_new.id,
-        desc: sch_new.desc,
-    },
-                error: e
+                extra: {
+                    own_id: sch_new.own_id,
+                    own_nm: sch_new.own_nm,
+                    id: sch_new.id,
+                    desc: sch_new.desc,
+                },
+                error: e,
             });
 
             g_lib.handleException(e, res);
@@ -531,11 +531,11 @@ router
             }
             var sch_id = req.queryParams.id.substr(0, idx),
                 sch_ver = parseInt(req.queryParams.id.substr(idx + 1));
-            
+
             sch_old = g_db.sch.firstExample({
-                    id: sch_id,
-                    ver: sch_ver,
-                });
+                id: sch_id,
+                ver: sch_ver,
+            });
 
             if (!sch_old)
                 throw [error.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found."];
@@ -582,7 +582,7 @@ router
                 routePath: basePath + "/delete",
                 status: "Success",
                 description: `Delete schema. ID: ${req.queryParams.id}`,
-                extra: sch_old._id
+                extra: sch_old._id,
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -592,7 +592,7 @@ router
                 routePath: basePath + "/delete",
                 status: "Failure",
                 description: `Delete schema. ID: ${req.queryParams.id}`,
-                extra: sch_old._id
+                extra: sch_old._id,
             });
             g_lib.handleException(e, res);
         }
@@ -621,10 +621,10 @@ router
             }
             var sch_id = req.queryParams.id.substr(0, idx),
                 sch_ver = parseInt(req.queryParams.id.substr(idx + 1));
-                sch = g_db.sch.firstExample({
-                    id: sch_id,
-                    ver: sch_ver,
-                });
+            sch = g_db.sch.firstExample({
+                id: sch_id,
+                ver: sch_ver,
+            });
 
             if (!sch) throw [error.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found."];
 
@@ -674,7 +674,6 @@ router
                     desc: sch.desc,
                 },
             });
-
         } catch (e) {
             logger.logRequestFailure({
                 client: req.queryParams?.client,
@@ -683,7 +682,7 @@ router
                 routePath: basePath + "/view",
                 status: "Failure",
                 description: `View schema. ID: ${req.queryParams.id}`,
-                extra: sch
+                extra: sch,
             });
             g_lib.handleException(e, res);
         }
@@ -806,7 +805,7 @@ router
                 },
             });
 
-            const first = result.find(r => r.own_id);
+            const first = result.find((r) => r.own_id);
             res.send(result);
             logger.logRequestSuccess({
                 client: req.queryParams?.client,
@@ -815,10 +814,7 @@ router
                 routePath: basePath + "/search",
                 status: "Success",
                 description: `Search schema.`,
-                extra:first
-    ? { own_id: first.own_id, own_nm: first.own_nm }
-    : {},
-
+                extra: first ? { own_id: first.own_id, own_nm: first.own_nm } : {},
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -829,7 +825,7 @@ router
                 status: "Failure",
                 description: `Search schema.`,
                 extra: result,
-                error: e
+                error: e,
             });
             g_lib.handleException(e, res);
         }
