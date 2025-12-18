@@ -147,7 +147,11 @@ router
                 routePath: basePath + "/create",
                 status: "Success",
                 description: "Create schema",
-                extra: sch,
+                extra: {
+                    own_id: sch.own_id,
+                    id: sch.id,
+                    desc: sch.desc,
+                },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -157,7 +161,11 @@ router
                 routePath: basePath + "/create",
                 status: "Failure",
                 description: "Create schema",
-                extra: sch,
+                extra: {
+                    own_id: sch.own_id,
+                    id: sch.id,
+                    desc: sch.desc,
+                },
                 error: e
             });
             g_lib.handleException(e, res);
@@ -460,7 +468,12 @@ router
                 routePath: basePath + "/revise",
                 status: "Success",
                 description: "Revise schema",
-                extra: sch_new
+                    extra: {
+        own_id: sch_new.own_id,
+        own_nm: sch_new.own_nm,
+        id: sch_new.id,
+        desc: sch_new.desc,
+    },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -470,7 +483,12 @@ router
                 routePath: basePath + "/revise",
                 status: "Failure",
                 description: "Revise schema",
-                extra: sch_new,
+                    extra: {
+        own_id: sch_new.own_id,
+        own_nm: sch_new.own_nm,
+        id: sch_new.id,
+        desc: sch_new.desc,
+    },
                 error: e
             });
 
@@ -512,8 +530,9 @@ router
                 throw [error.ERR_INVALID_PARAM, "Schema ID missing version number suffix."];
             }
             var sch_id = req.queryParams.id.substr(0, idx),
-                sch_ver = parseInt(req.queryParams.id.substr(idx + 1)),
-                sch_old = g_db.sch.firstExample({
+                sch_ver = parseInt(req.queryParams.id.substr(idx + 1));
+            
+            sch_old = g_db.sch.firstExample({
                     id: sch_id,
                     ver: sch_ver,
                 });
@@ -648,7 +667,12 @@ router
                 routePath: basePath + "/view",
                 status: "Success",
                 description: `View schema. ID: ${req.queryParams.id}`,
-                extra: sch
+                extra: {
+                    own_id: sch.own_id,
+                    own_nm: sch.own_nm,
+                    id: sch.id,
+                    desc: sch.desc,
+                },
             });
 
         } catch (e) {
@@ -680,7 +704,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/search",
                 status: "Started",
-                description: `Search schema. ID: ${req.queryParams.id}`,
+                description: `Search schema.`,
             });
 
             const client = g_lib.getUserFromClientID(req.queryParams.client);
@@ -782,6 +806,7 @@ router
                 },
             });
 
+            const first = result.find(r => r.own_id);
             res.send(result);
             logger.logRequestSuccess({
                 client: req.queryParams?.client,
@@ -789,8 +814,11 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/search",
                 status: "Success",
-                description: `Search schema. ID: ${req.queryParams.id}`,
-                extra: result
+                description: `Search schema.`,
+                extra:first
+    ? { own_id: first.own_id, own_nm: first.own_nm }
+    : {},
+
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -799,7 +827,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/search",
                 status: "Failure",
-                description: `Search schema. ID: ${req.queryParams.id}`,
+                description: `Search schema.`,
                 extra: result,
                 error: e
             });
