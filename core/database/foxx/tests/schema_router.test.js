@@ -8,223 +8,222 @@ const { db } = require("@arangodb");
 const schema_base_url = `${baseUrl}/schema`;
 
 describe("simple test for schema/create", () => {
+    before(() => {
+        // Ensure the required collections exist and are empty
+        const collections = ["u", "sch", "sch_dep"];
+        collections.forEach((name) => {
+            const col = db._collection(name);
+            if (col) col.truncate();
+            else db._create(name);
+        });
 
-  before(() => {
-    // Ensure the required collections exist and are empty
-    const collections = ["u", "sch", "sch_dep"];
-    collections.forEach((name) => {
-      const col = db._collection(name);
-      if (col) col.truncate();
-      else db._create(name);
+        // Add a fake user
+        db.u.save({
+            _key: "fakeUser",
+            _id: "u/fakeUser",
+            name: "Fake User",
+            is_admin: true,
+        });
     });
 
-    // Add a fake user
-    db.u.save({
-      _key: "fakeUser",
-      _id: "u/fakeUser",
-      name: "Fake User",
-      is_admin: true
-    });
-  });
+    it("unit_schema_router: should successfully create a schema", () => {
+        const body = {
+            id: "test_schema_1",
+            desc: "A simple test schema",
+            def: {
+                properties: {
+                    field1: { type: "string" },
+                },
+            },
+            pub: true,
+            sys: false,
+        };
 
-  it("unit_schema_router: should successfully create a schema", () => {
-    const body = {
-      id: "test_schema_1",
-      desc: "A simple test schema",
-      def: {
-        properties: {
-          field1: { type: "string" }
-        }
-      },
-      pub: true,
-      sys: false
-    };
+        const response = request.post(`${schema_base_url}/create?client=u/fakeUser`, {
+            body: JSON.stringify(body),
+            headers: { "Content-Type": "application/json" },
+        });
 
-    const response = request.post(`${schema_base_url}/create?client=u/fakeUser`, {
-      body: JSON.stringify(body),
-      headers: { "Content-Type": "application/json" }
-    });
+        expect(response.status).to.equal(200);
 
-    expect(response.status).to.equal(200);
-
-    const result = JSON.parse(response.body);
-    expect(result).to.be.an("array");
-    expect(result[0].def).to.deep.equal(body.def);
-    expect(result[0].own_nm).to.equal("Fake"); // matches fixSchOwnNm logic
-  });
-
-it("unit_schema_router: should successfully update a schema and return only own_id, id, and desc", () => {
-    const clientId = "u/fakeUser";
-    const schemaIdWithVersion = "test_schema_1:0";
-
-    const body = {
-        desc: "Updated schema description",
-        def: {
-            properties: { field1: { type: "string" } }
-        },
-        pub: true
-    };
-
-    const response = request.post(`${schema_base_url}/update?client=${clientId}&id=${schemaIdWithVersion}`, {
-        body: JSON.stringify(body),
-        headers: { "Content-Type": "application/json" }
+        const result = JSON.parse(response.body);
+        expect(result).to.be.an("array");
+        expect(result[0].def).to.deep.equal(body.def);
+        expect(result[0].own_nm).to.equal("Fake"); // matches fixSchOwnNm logic
     });
 
-    expect(response.status).to.equal(200);
+    it("unit_schema_router: should successfully update a schema and return only own_id, id, and desc", () => {
+        const clientId = "u/fakeUser";
+        const schemaIdWithVersion = "test_schema_1:0";
 
-    const result = JSON.parse(response.body);
-    expect(result).to.be.an("array").with.lengthOf(1);
-    const schema = result[0];
+        const body = {
+            desc: "Updated schema description",
+            def: {
+                properties: { field1: { type: "string" } },
+            },
+            pub: true,
+        };
 
-    // Only validate the fields you care about
-    expect(schema).to.have.property("own_id", clientId);
-    expect(schema).to.have.property("id", "test_schema_1");
-    expect(schema).to.have.property("desc", "Updated schema description");
+        const response = request.post(
+            `${schema_base_url}/update?client=${clientId}&id=${schemaIdWithVersion}`,
+            {
+                body: JSON.stringify(body),
+                headers: { "Content-Type": "application/json" },
+            },
+        );
 
-    // Ensure internal fields are removed
-    expect(schema).to.not.have.property("_id");
-    expect(schema).to.not.have.property("_key");
-    expect(schema).to.not.have.property("_rev");
-});
+        expect(response.status).to.equal(200);
 
-it("unit_schema_router: should successfully revise a schema and create a new version", () => {
-  const clientId = "u/fakeUser";
-  const schemaIdWithVersion = "test_schema_1:0";
+        const result = JSON.parse(response.body);
+        expect(result).to.be.an("array").with.lengthOf(1);
+        const schema = result[0];
 
-  const body = {
-    desc: "Revised schema description",
-    def: {
-      properties: {
-        field1: { type: "string" },
-        field2: { type: "number" }
-      }
-    },
-    pub: true
-  };
+        // Only validate the fields you care about
+        expect(schema).to.have.property("own_id", clientId);
+        expect(schema).to.have.property("id", "test_schema_1");
+        expect(schema).to.have.property("desc", "Updated schema description");
 
-  const response = request.post(
-    `${schema_base_url}/revise?client=${clientId}&id=${schemaIdWithVersion}`,
-    {
-      body: JSON.stringify(body),
-      headers: { "Content-Type": "application/json" }
-    }
-  );
+        // Ensure internal fields are removed
+        expect(schema).to.not.have.property("_id");
+        expect(schema).to.not.have.property("_key");
+        expect(schema).to.not.have.property("_rev");
+    });
 
-  expect(response.status).to.equal(200);
+    it("unit_schema_router: should successfully revise a schema and create a new version", () => {
+        const clientId = "u/fakeUser";
+        const schemaIdWithVersion = "test_schema_1:0";
 
-  const result = JSON.parse(response.body);
-  expect(result).to.be.an("array").with.lengthOf(1);
+        const body = {
+            desc: "Revised schema description",
+            def: {
+                properties: {
+                    field1: { type: "string" },
+                    field2: { type: "number" },
+                },
+            },
+            pub: true,
+        };
 
-  const schema = result[0];
+        const response = request.post(
+            `${schema_base_url}/revise?client=${clientId}&id=${schemaIdWithVersion}`,
+            {
+                body: JSON.stringify(body),
+                headers: { "Content-Type": "application/json" },
+            },
+        );
 
-  // New revision should increment version
-  expect(schema).to.have.property("ver", 1);
+        expect(response.status).to.equal(200);
 
-  // ID remains the same
-  expect(schema).to.have.property("id", "test_schema_1");
+        const result = JSON.parse(response.body);
+        expect(result).to.be.an("array").with.lengthOf(1);
 
-  // Updated fields
-  expect(schema).to.have.property("desc", "Revised schema description");
-  expect(schema.def).to.deep.equal(body.def);
+        const schema = result[0];
 
-  // Ownership should still be correct
-  expect(schema).to.have.property("own_id", clientId);
+        // New revision should increment version
+        expect(schema).to.have.property("ver", 1);
 
-  // Internal Arango fields must be stripped
-  expect(schema).to.not.have.property("_id");
-  expect(schema).to.not.have.property("_key");
-  expect(schema).to.not.have.property("_rev");
-});
+        // ID remains the same
+        expect(schema).to.have.property("id", "test_schema_1");
 
-it("unit_schema_router: should successfully delete the latest schema revision", () => {
-  const clientId = "u/fakeUser";
+        // Updated fields
+        expect(schema).to.have.property("desc", "Revised schema description");
+        expect(schema.def).to.deep.equal(body.def);
 
-  // After revise, the latest version should be :1
-  const schemaIdWithVersion = "test_schema_1:1";
+        // Ownership should still be correct
+        expect(schema).to.have.property("own_id", clientId);
 
-  const response = request.post(
-    `${schema_base_url}/delete?client=${clientId}&id=${schemaIdWithVersion}`
-  );
+        // Internal Arango fields must be stripped
+        expect(schema).to.not.have.property("_id");
+        expect(schema).to.not.have.property("_key");
+        expect(schema).to.not.have.property("_rev");
+    });
 
-  expect(response.status).to.equal(204);
+    it("unit_schema_router: should successfully delete the latest schema revision", () => {
+        const clientId = "u/fakeUser";
 
-  // Verify schema is actually gone
-  const deleted = db.sch.firstExample({
-    id: "test_schema_1",
-    ver: 1
-  });
+        // After revise, the latest version should be :1
+        const schemaIdWithVersion = "test_schema_1:1";
 
-  expect(deleted).to.equal(null);
-});
+        const response = request.post(
+            `${schema_base_url}/delete?client=${clientId}&id=${schemaIdWithVersion}`,
+        );
 
-it("unit_schema_router: should successfully view a schema by id and version", () => {
-  const clientId = "u/fakeUser";
-  const schemaIdWithVersion = "test_schema_1:0";
+        expect(response.status).to.equal(204);
 
-  const response = request.get(
-    `${schema_base_url}/view?client=${clientId}&id=${schemaIdWithVersion}`
-  );
+        // Verify schema is actually gone
+        const deleted = db.sch.firstExample({
+            id: "test_schema_1",
+            ver: 1,
+        });
 
-  expect(response.status).to.equal(200);
+        expect(deleted).to.equal(null);
+    });
 
-  const result = JSON.parse(response.body);
-  expect(result).to.be.an("array").with.lengthOf(1);
+    it("unit_schema_router: should successfully view a schema by id and version", () => {
+        const clientId = "u/fakeUser";
+        const schemaIdWithVersion = "test_schema_1:0";
 
-  const schema = result[0];
+        const response = request.get(
+            `${schema_base_url}/view?client=${clientId}&id=${schemaIdWithVersion}`,
+        );
 
-  // Basic identity
-  expect(schema).to.have.property("id", "test_schema_1");
-  expect(schema).to.have.property("ver", 0);
+        expect(response.status).to.equal(200);
 
-  // Ownership and visibility
-  expect(schema).to.have.property("own_id", clientId);
-  expect(schema).to.have.property("pub", true);
+        const result = JSON.parse(response.body);
+        expect(result).to.be.an("array").with.lengthOf(1);
 
-  // Schema definition exists
-  expect(schema).to.have.property("def");
-  expect(schema.def).to.have.property("properties");
+        const schema = result[0];
 
-  // Derived fields
-  expect(schema).to.have.property("depr").that.is.a("boolean");
-  expect(schema).to.have.property("uses").that.is.an("array");
-  expect(schema).to.have.property("used_by").that.is.an("array");
+        // Basic identity
+        expect(schema).to.have.property("id", "test_schema_1");
+        expect(schema).to.have.property("ver", 0);
 
-  // Internal Arango fields must not leak
-  expect(schema).to.not.have.property("_id");
-  expect(schema).to.not.have.property("_key");
-  expect(schema).to.not.have.property("_rev");
-});
+        // Ownership and visibility
+        expect(schema).to.have.property("own_id", clientId);
+        expect(schema).to.have.property("pub", true);
 
-it("unit_schema_router: should successfully search schemas", () => {
-  const clientId = "u/fakeUser";
+        // Schema definition exists
+        expect(schema).to.have.property("def");
+        expect(schema.def).to.have.property("properties");
 
-  const response = request.get(
-    `${schema_base_url}/search?client=${clientId}`
-  );
+        // Derived fields
+        expect(schema).to.have.property("depr").that.is.a("boolean");
+        expect(schema).to.have.property("uses").that.is.an("array");
+        expect(schema).to.have.property("used_by").that.is.an("array");
 
-  expect(response.status).to.equal(200);
+        // Internal Arango fields must not leak
+        expect(schema).to.not.have.property("_id");
+        expect(schema).to.not.have.property("_key");
+        expect(schema).to.not.have.property("_rev");
+    });
 
-  const result = JSON.parse(response.body);
-  expect(result).to.be.an("array");
-  expect(result.length).to.be.greaterThan(0);
+    it("unit_schema_router: should successfully search schemas", () => {
+        const clientId = "u/fakeUser";
 
-  // Last element must be paging info
-  const paging = result[result.length - 1];
-  expect(paging).to.have.property("paging");
-  expect(paging.paging).to.have.property("off");
-  expect(paging.paging).to.have.property("cnt");
-  expect(paging.paging).to.have.property("tot");
+        const response = request.get(`${schema_base_url}/search?client=${clientId}`);
 
-  // Validate at least one schema result
-  const schema = result[0];
+        expect(response.status).to.equal(200);
 
-  expect(schema).to.have.property("ver");
-  expect(schema).to.have.property("pub");
-  expect(schema).to.have.property("own_id");
-  expect(schema).to.have.property("own_nm");
+        const result = JSON.parse(response.body);
+        expect(result).to.be.an("array");
+        expect(result.length).to.be.greaterThan(0);
 
-  // Internal _id is allowed internally but not required to be exposed further
-  // (search explicitly returns _id internally for ref detection)
-});
+        // Last element must be paging info
+        const paging = result[result.length - 1];
+        expect(paging).to.have.property("paging");
+        expect(paging.paging).to.have.property("off");
+        expect(paging.paging).to.have.property("cnt");
+        expect(paging.paging).to.have.property("tot");
 
+        // Validate at least one schema result
+        const schema = result[0];
+
+        expect(schema).to.have.property("ver");
+        expect(schema).to.have.property("pub");
+        expect(schema).to.have.property("own_id");
+        expect(schema).to.have.property("own_nm");
+
+        // Internal _id is allowed internally but not required to be exposed further
+        // (search explicitly returns _id internally for ref detection)
+    });
 });
