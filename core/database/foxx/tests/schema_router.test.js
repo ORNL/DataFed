@@ -95,6 +95,27 @@ describe("schema router", () => {
     expect(schema).to.have.property("id", "test_schema_1");
   });
 
+  it("unit_schema_router: should search schemas", () => {
+    const response = request.get(
+      `${schema_base_url}/search?client=u/fakeUser`
+    );
+
+    expect(response.status).to.equal(200);
+
+    const result = JSON.parse(response.body);
+    expect(result).to.be.an("array");
+
+    const paging = result[result.length - 1];
+    expect(paging).to.have.property("paging");
+
+    const schemas = result.filter(r => !r.paging);
+    if (schemas.length) {
+      expect(schemas[0]).to.have.property("ver");
+      expect(schemas[0]).to.have.property("own_id");
+      expect(schemas[0]).to.have.property("own_nm");
+    }
+  });
+
   it("unit_schema_router: should delete latest schema revision", () => {
     const response = request.post(
       `${schema_base_url}/delete?client=u/fakeUser&id=test_schema_1:1`
@@ -119,24 +140,4 @@ describe("schema router", () => {
     expect(schema).to.have.property("own_id", "u/fakeUser");
   });
 
-  it("unit_schema_router: should search schemas", () => {
-    const response = request.get(
-      `${schema_base_url}/search?client=u/fakeUser`
-    );
-
-    expect(response.status).to.equal(200);
-
-    const result = JSON.parse(response.body);
-    expect(result).to.be.an("array");
-
-    const paging = result[result.length - 1];
-    expect(paging).to.have.property("paging");
-
-    const schemas = result.filter(r => !r.paging);
-    if (schemas.length) {
-      expect(schemas[0]).to.have.property("ver");
-      expect(schemas[0]).to.have.property("own_id");
-      expect(schemas[0]).to.have.property("own_nm");
-    }
-  });
 });
