@@ -1198,7 +1198,7 @@ router
     .get("/view", function (req, res) {
         let sub = req.queryParams.subject ? req.queryParams.subject : req.queryParams.client;
         try {
-            client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
+            const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
             logger.logRequestStarted({
                 client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
