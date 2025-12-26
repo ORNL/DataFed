@@ -945,7 +945,9 @@ router
                 routePath: basePath + "/write",
                 status: "Success",
                 description: "Add/remove items in a collection",
-                extra: loose_res,
+                extra: {    addedCount: req.queryParams.add?.length || 0,
+                            removedCount: req.queryParams.remove?.length || 0,
+                            looseCount: loose_res ? loose_res.length : 0},
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -955,7 +957,9 @@ router
                 routePath: basePath + "/write",
                 status: "Failure",
                 description: "Add/remove items in a collection",
-                extra: loose_res,
+                extra: {    addedCount: req.queryParams.add?.length || 0,
+                            removedCount: req.queryParams.remove?.length || 0,
+                            looseCount: loose_res ? loose_res.length : 0},
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -971,7 +975,10 @@ router
 router
     .get("/move", function (req, res) {
         let client = null;
-        let item = null;
+        const itemCount = Array.isArray(req.queryParams.items)
+                        ? req.queryParams.items.length
+                        : 0;
+
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
@@ -980,7 +987,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/move",
                 status: "Started",
-                description: "Move items from source collection to destination collection",
+                description: `Move items from source collection: ${req.queryParams.source} to destination collection: ${req.queryParams.dest}`,
             });
 
             g_db._executeTransaction({
@@ -1044,7 +1051,7 @@ router
                         chk_perm = true;
                     }
 
-                    var i;
+                    var i, item;
 
                     for (i in req.queryParams.items) {
                         // TODO - should aliases be resolved with client or owner ID?
@@ -1134,8 +1141,8 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/move",
                 status: "Success",
-                description: "Move items from source collection to destination collection",
-                extra: item,
+                description: `Move items from source collection: ${req.queryParams.source} to destination collection: ${req.queryParams.dest}`,
+                extra: { movedCount: itemCount }
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -1144,8 +1151,8 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/move",
                 status: "Failure",
-                description: "Move items from source collection to destination collection",
-                extra: item,
+                description: `Move items from source collection: ${req.queryParams.source} to destination collection: ${req.queryParams.dest}`,
+                extra: { movedCount: itemCount },
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -1170,7 +1177,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/get_parents",
                 status: "Started",
-                description: "Get parent collection(s) (path) of item",
+                description: `Get parent collection(s) (path) of item. ID: ${req.queryParams.id}`,
             });
 
             var item_id = g_lib.resolveID(req.queryParams.id, client);
@@ -1200,8 +1207,8 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/get_parents",
                 status: "Success",
-                description: "Get parent collection(s) (path) of item",
-                extra: { NumOfParentColls: results },
+                description: `Get parent collection(s) (path) of item. ID: ${req.queryParams.id}`,
+                extra: { NumOfParentColls: results.length },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -1210,8 +1217,8 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/get_parents",
                 status: "Failure",
-                description: "Get parent collection(s) (path) of item",
-                extra: { NumOfParentColls: results },
+                description: `Get parent collection(s) (path) of item. ID: ${req.queryParams.id}`,
+                extra: { NumOfParentColls: results.length },
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -1233,7 +1240,7 @@ router
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
-                routePath: basePath + "/get_parents",
+                routePath: basePath + "/get_offset",
                 status: "Started",
                 description: "Get offset to item in collection.",
             });
@@ -1276,10 +1283,10 @@ router
                     client: client?._id,
                     correlationId: req.headers["x-correlation-id"],
                     httpVerb: "GET",
-                    routePath: basePath + "/get_parents",
+                    routePath: basePath + "/get_offset",
                     status: "Success",
                     description: "Get offset to item in collection.",
-                    extra: req.queryParams.page_sz * Math.floor(idx / req.queryParams.page_sz),
+                    extra: { offset: req.queryParams.page_sz * Math.floor(idx / req.queryParams.page_sz)},
                 });
             }
         } catch (e) {
@@ -1287,10 +1294,10 @@ router
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
-                routePath: basePath + "/get_parents",
+                routePath: basePath + "/get_offset",
                 status: "Failure",
                 description: "Get offset to item in collection.",
-                extra: req.queryParams.page_sz * Math.floor(idx / req.queryParams.page_sz),
+                extra: { offset: req.queryParams.page_sz * Math.floor(idx / req.queryParams.page_sz)},
                 error: e,
             });
             g_lib.handleException(e, res);
