@@ -945,9 +945,11 @@ router
                 routePath: basePath + "/write",
                 status: "Success",
                 description: "Add/remove items in a collection",
-                extra: {    addedCount: req.queryParams.add?.length || 0,
-                            removedCount: req.queryParams.remove?.length || 0,
-                            looseCount: loose_res ? loose_res.length : 0},
+                extra: {
+                    addedCount: req.queryParams.add?.length || 0,
+                    removedCount: req.queryParams.remove?.length || 0,
+                    looseCount: loose_res ? loose_res.length : 0,
+                },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -957,9 +959,11 @@ router
                 routePath: basePath + "/write",
                 status: "Failure",
                 description: "Add/remove items in a collection",
-                extra: {    addedCount: req.queryParams.add?.length || 0,
-                            removedCount: req.queryParams.remove?.length || 0,
-                            looseCount: loose_res ? loose_res.length : 0},
+                extra: {
+                    addedCount: req.queryParams.add?.length || 0,
+                    removedCount: req.queryParams.remove?.length || 0,
+                    looseCount: loose_res ? loose_res.length : 0,
+                },
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -975,9 +979,7 @@ router
 router
     .get("/move", function (req, res) {
         let client = null;
-        const itemCount = Array.isArray(req.queryParams.items)
-                        ? req.queryParams.items.length
-                        : 0;
+        const itemCount = Array.isArray(req.queryParams.items) ? req.queryParams.items.length : 0;
 
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
@@ -1142,7 +1144,7 @@ router
                 routePath: basePath + "/move",
                 status: "Success",
                 description: `Move items from source collection: ${req.queryParams.source} to destination collection: ${req.queryParams.dest}`,
-                extra: { movedCount: itemCount }
+                extra: { movedCount: itemCount },
             });
         } catch (e) {
             logger.logRequestFailure({
