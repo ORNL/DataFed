@@ -1242,7 +1242,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/get_offset",
                 status: "Started",
-                description: "Get offset to item in collection.",
+                description: `Get offset to item in collection. ID: ${req.queryParams.id}; Item ID: ${req.queryParams.item}; Page Size: ${req.queryParams.page_sz}`,
             });
             client = g_lib.getUserFromClientID(req.queryParams.client);
             var coll_id = g_lib.resolveID(req.queryParams.id, client);
@@ -1285,7 +1285,7 @@ router
                     httpVerb: "GET",
                     routePath: basePath + "/get_offset",
                     status: "Success",
-                    description: "Get offset to item in collection.",
+                    description: `Get offset to item in collection. ID: ${req.queryParams.id}; Item ID: ${req.queryParams.item}; Page Size: ${req.queryParams.page_sz}`,
                     extra: { offset: req.queryParams.page_sz * Math.floor(idx / req.queryParams.page_sz)},
                 });
             }
@@ -1296,7 +1296,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/get_offset",
                 status: "Failure",
-                description: "Get offset to item in collection.",
+                description: `Get offset to item in collection. ID: ${req.queryParams.id}; Item ID: ${req.queryParams.item}; Page Size: ${req.queryParams.page_sz}`,
                 extra: { offset: req.queryParams.page_sz * Math.floor(idx / req.queryParams.page_sz)},
                 error: e,
             });
