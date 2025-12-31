@@ -12,6 +12,9 @@ const g_db = require("@arangodb").db;
 const g_lib = require("./support");
 const g_tasks = require("./tasks");
 
+const logger = require("./lib/logger");
+const basePath = "repo";
+
 module.exports = router;
 
 function validateAndNormalizeRepoPath(obj) {
@@ -110,7 +113,7 @@ router
             routePath: basePath + "/list",
             status: "Started",
             description: "List repo servers administered by client",
-            extra: result
+            extra: {NumOfRepoServers: result.length}
         });
 
     })
@@ -289,7 +292,7 @@ router
 
 router
     .post("/update", function (req, res) {
-        let repo.new = null;
+        let repo = null;
         try {
             logger.logRequestStarted({
                 client: req.queryParams.client, 
@@ -375,6 +378,8 @@ router
                     delete repo.new._rev;
 
                     res.send([repo.new]);
+
+
                 },
             });
             logger.logRequestSuccess({
@@ -384,7 +389,7 @@ router
                 routePath: basePath + "/update",
                 status: "Success",
                 description: `Update a repo server record: ${req.queryParams.id}`,
-                extra: repo.new
+                extra: repo?.new
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -394,7 +399,7 @@ router
                 routePath: basePath + "/update",
                 status: "Failure",
                 description: `Update a repo server record: ${req.queryParams.id}`,
-                extra: repo.new,
+                extra: repo?.new,
                 error: e
             });
 
@@ -967,7 +972,14 @@ router
                         routePath: basePath + "/alloc/create",
                         status: "Success",
                         description: `Create user/projects repo allocation: ${req.queryParams.repo}`,
-                        extra: result
+                        extra: {
+        task_id: result.task._id,
+        repo: result.task.state.repo_id,
+        subject: result.task.state.subject,
+        data_limit: result.task.state.data_limit,
+        rec_limit: result.task.state.rec_limit,
+        status: "queued"
+    }
                     });
                 },
             });
@@ -979,7 +991,14 @@ router
                 routePath: basePath + "/alloc/create",
                 status: "Failure",
                 description: `Create user/projects repo allocation: ${req.queryParams.repo}`,
-                extra: result,
+                extra: {
+        task_id: result.task._id,
+        repo: result.task.state.repo_id,
+        subject: result.task.state.subject,
+        data_limit: result.task.state.data_limit,
+        rec_limit: result.task.state.rec_limit,
+        status: "queued"
+    },
                 error: e
             });
             g_lib.handleException(e, res);
@@ -1005,6 +1024,7 @@ router
 
 router
     .get("/alloc/delete", function (req, res) {
+        let result = null;
         try {
             logger.logRequestStarted({
                 client: req.queryParams.client,
@@ -1013,7 +1033,6 @@ router
                 routePath: basePath + "/alloc/delete",
                 status: "Started",
                 description: `Delete user/projects repo allocation: ${req.queryParams.repo}`,
-                extra: result
             });
 
             g_db._executeTransaction({
@@ -1030,7 +1049,7 @@ router
                         subject_id = req.queryParams.subject;
                     else subject_id = g_lib.getUserFromClientID(req.queryParams.subject)._id;
 
-                    var result = g_tasks.taskInitAllocDelete(
+                    result = g_tasks.taskInitAllocDelete(
                         client,
                         req.queryParams.repo,
                         subject_id,
