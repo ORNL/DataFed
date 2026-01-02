@@ -144,96 +144,93 @@ describe("unit_proj_router: test project create endpoint", () => {
         });
         expect(membersGroup).to.exist;
     });
-it("should update project metadata and membership when client is project admin", () => {
-    // ------------------------------------------------------------------
-    // arrange
-    // ------------------------------------------------------------------
+    it("should update project metadata and membership when client is project admin", () => {
+        // ------------------------------------------------------------------
+        // arrange
+        // ------------------------------------------------------------------
 
-    // users
-    db.u.save({ _key: "proj_admin", is_admin: false });
-    db.u.save({ _key: "new_admin", is_admin: false });
-    db.u.save({ _key: "member1", is_admin: false });
+        // users
+        db.u.save({ _key: "proj_admin", is_admin: false });
+        db.u.save({ _key: "new_admin", is_admin: false });
+        db.u.save({ _key: "member1", is_admin: false });
 
-    // project
-    db.p.save({
-        _key: "myproject",
-        title: "Old Title",
-        desc: "Old description",
-        ct: 1,
-        ut: 1,
-        owner: "u/proj_admin",
+        // project
+        db.p.save({
+            _key: "myproject",
+            title: "Old Title",
+            desc: "Old description",
+            ct: 1,
+            ut: 1,
+            owner: "u/proj_admin",
+        });
+
+        // owner edge
+        db.owner.save({
+            _from: "p/myproject",
+            _to: "u/proj_admin",
+        });
+
+        // members group (MUST match create logic exactly)
+        const memGrp = db.g.save({
+            uid: "p/myproject",
+            gid: "members",
+            title: "Project Members",
+            desc: "Use to set baseline project member permissions.",
+        });
+
+        // ownership edge: group -> project
+        db.owner.save({
+            _from: memGrp._id,
+            _to: "p/myproject",
+        });
+
+        // existing admin edge
+        db.admin.save({
+            _from: "p/myproject",
+            _to: "u/proj_admin",
+        });
+
+        const url =
+            `${proj_base_url}/update` +
+            `?client=u/proj_admin` +
+            `&id=p/myproject` +
+            `&title=New+Title` +
+            `&desc=New+description`;
+
+        // ------------------------------------------------------------------
+        // act
+        // ------------------------------------------------------------------
+
+        const response = request.get(url, {
+            headers: { "x-correlation-id": "test-proj-update" },
+        });
+
+        // ------------------------------------------------------------------
+        // assert
+        // ------------------------------------------------------------------
+
+        expect(response.status).to.equal(200);
+
+        const body = JSON.parse(response.body);
+        expect(body).to.be.an("array").with.lengthOf(1);
+
+        const proj = body[0];
+        // core fields updated
+        expect(proj).to.have.property("id", "p/myproject");
+        expect(proj).to.have.property("title", "New Title");
+        expect(proj).to.have.property("desc", "New description");
+
+        // admins unchanged
+        expect(proj.admins).to.have.members(["u/proj_admin"]);
+
+        // members unchanged
+        expect(proj.members).to.be.an("array").that.is.empty;
+
+        // project document updated in DB
+        const storedProj = db.p.document("p/myproject");
+        expect(storedProj.title).to.equal("New Title");
+        expect(storedProj.desc).to.equal("New description");
     });
-
-    // owner edge
-    db.owner.save({
-        _from: "p/myproject",
-        _to: "u/proj_admin",
-    });
-
-    // members group (MUST match create logic exactly)
-const memGrp = db.g.save({
-    uid: "p/myproject",
-    gid: "members",
-    title: "Project Members",
-    desc: "Use to set baseline project member permissions.",
-});
-
-// ownership edge: group -> project
-db.owner.save({
-    _from: memGrp._id,
-    _to: "p/myproject",
-});
-
-    // existing admin edge
-    db.admin.save({
-        _from: "p/myproject",
-        _to: "u/proj_admin",
-    });
-
-
-const url =
-    `${proj_base_url}/update` +
-    `?client=u/proj_admin` +
-    `&id=p/myproject` +
-    `&title=New+Title` +
-    `&desc=New+description`;
-
-    // ------------------------------------------------------------------
-    // act
-    // ------------------------------------------------------------------
-
-    const response = request.get(url, {
-        headers: { "x-correlation-id": "test-proj-update" },
-    });
-
-    // ------------------------------------------------------------------
-    // assert
-    // ------------------------------------------------------------------
-
-    expect(response.status).to.equal(200);
-
-    const body = JSON.parse(response.body);
-    expect(body).to.be.an("array").with.lengthOf(1);
-
-    const proj = body[0];
-// core fields updated
-expect(proj).to.have.property("id", "p/myproject");
-expect(proj).to.have.property("title", "New Title");
-expect(proj).to.have.property("desc", "New description");
-
-// admins unchanged
-expect(proj.admins).to.have.members(["u/proj_admin"]);
-
-// members unchanged
-expect(proj.members).to.be.an("array").that.is.empty;
-
-// project document updated in DB
-const storedProj = db.p.document("p/myproject");
-expect(storedProj.title).to.equal("New Title");
-expect(storedProj.desc).to.equal("New description");
-
-
-});
 
     it("should return project info including admins and members", () => {
         // --- arrange ---
@@ -242,30 +239,35 @@ expect(storedProj.desc).to.equal("New description");
         db.u.save({ _key: "member1" });
 
         // create project
-        db.p.save({ _key: "myproject", title: "Test Project", desc: "Test description", owner: "u/proj_admin" });
+        db.p.save({
+            _key: "myproject",
+            title: "Test Project",
+            desc: "Test description",
+            owner: "u/proj_admin",
+        });
 
         // admin edge
         db.admin.save({ _from: "p/myproject", _to: "u/proj_admin" });
 
-       // members group
-const memGrp = db.g.save({
-    uid: "p/myproject",
-    gid: "members",
-    title: "Project Members",
-    desc: "Use to set baseline project member permissions.",
-});
+        // members group
+        const memGrp = db.g.save({
+            uid: "p/myproject",
+            gid: "members",
+            title: "Project Members",
+            desc: "Use to set baseline project member permissions.",
+        });
 
-// ownership edge: group -> project
-db.owner.save({
-    _from: memGrp._id,
-    _to: "p/myproject",
-});
+        // ownership edge: group -> project
+        db.owner.save({
+            _from: memGrp._id,
+            _to: "p/myproject",
+        });
 
-// member edge: group -> user
-db.member.save({
-    _from: memGrp._id,
-    _to: "u/member1",
-});
+        // member edge: group -> user
+        db.member.save({
+            _from: memGrp._id,
+            _to: "u/member1",
+        });
 
         // --- act ---
         const url = `${proj_base_url}/view?client=u/proj_admin&id=p/myproject`;
@@ -292,281 +294,274 @@ db.member.save({
         expect(proj).to.have.property("allocs").that.is.an("array");
     });
 
-it("should return a list of projects for a client including ownership, admin, and member roles", () => {
-    // ------------------------------------------------------------------
-    // Arrange: setup users and projects
-    // ------------------------------------------------------------------
-    db.u.save({ _key: "proj_owner", is_admin: false });
-    db.u.save({ _key: "proj_admin", is_admin: false });
-    db.u.save({ _key: "proj_member", is_admin: false });
+    it("should return a list of projects for a client including ownership, admin, and member roles", () => {
+        // ------------------------------------------------------------------
+        // Arrange: setup users and projects
+        // ------------------------------------------------------------------
+        db.u.save({ _key: "proj_owner", is_admin: false });
+        db.u.save({ _key: "proj_admin", is_admin: false });
+        db.u.save({ _key: "proj_member", is_admin: false });
 
-    // Project 1: owned by proj_owner
-    db.p.save({
-        _key: "proj1",
-        title: "Project One",
-        desc: "First project",
-        ct: 1,
-        ut: 1,
-        owner: "u/proj_owner"
+        // Project 1: owned by proj_owner
+        db.p.save({
+            _key: "proj1",
+            title: "Project One",
+            desc: "First project",
+            ct: 1,
+            ut: 1,
+            owner: "u/proj_owner",
+        });
+        db.owner.save({ _from: "p/proj1", _to: "u/proj_owner" });
+
+        // Project 2: admin by proj_owner
+        db.p.save({
+            _key: "proj2",
+            title: "Project Two",
+            desc: "Second project",
+            ct: 1,
+            ut: 1,
+            owner: "u/proj_admin",
+        });
+        db.admin.save({ _from: "p/proj2", _to: "u/proj_owner" });
+
+        // Project 3: member role for proj_owner
+        db.p.save({
+            _key: "proj3",
+            title: "Project Three",
+            desc: "Third project",
+            ct: 1,
+            ut: 1,
+            owner: "u/proj_admin",
+        });
+
+        const membersGroup = db.g.save({
+            uid: "p/proj3",
+            gid: "members",
+            title: "Project Three Members",
+            desc: "Member group for proj3",
+        });
+
+        db.owner.save({ _from: membersGroup._id, _to: "p/proj3" });
+        db.member.save({ _from: membersGroup._id, _to: "u/proj_owner" });
+
+        // ------------------------------------------------------------------
+        // Act: call the /list route
+        // ------------------------------------------------------------------
+        const url =
+            `${proj_base_url}/list` +
+            `?client=u/proj_owner` +
+            `&as_owner=true&as_admin=true&as_member=true`;
+
+        const response = request.get(url, {
+            headers: { "x-correlation-id": "test-proj-list" },
+        });
+
+        // ------------------------------------------------------------------
+        // Assert
+        // ------------------------------------------------------------------
+        expect(response.status).to.equal(200);
+
+        const body = JSON.parse(response.body);
+        const ids = body.map((p) => p.id);
+
+        expect(ids).to.include.members(["p/proj1", "p/proj2", "p/proj3"]);
     });
-    db.owner.save({ _from: "p/proj1", _to: "u/proj_owner" });
 
-    // Project 2: admin by proj_owner
-    db.p.save({
-        _key: "proj2",
-        title: "Project Two",
-        desc: "Second project",
-        ct: 1,
-        ut: 1,
-        owner: "u/proj_admin"
+    it("should search projects using a provided AQL query", () => {
+        // ------------------------------------------------------------------
+        // Arrange
+        // ------------------------------------------------------------------
+        db.u.save({ _key: "search_user", is_admin: false });
+
+        db.p.save({
+            _key: "search_proj1",
+            title: "Alpha Project",
+            desc: "First searchable project",
+            ct: 1,
+            ut: 1,
+            owner: "u/search_user",
+        });
+
+        db.p.save({
+            _key: "search_proj2",
+            title: "Beta Project",
+            desc: "Second searchable project",
+            ct: 1,
+            ut: 1,
+            owner: "u/search_user",
+        });
+
+        // AQL query passed directly to /search
+        const aql = "FOR p IN p FILTER p.title LIKE '%Project%' RETURN p._id";
+
+        const url =
+            `${proj_base_url}/search` +
+            `?client=u/search_user` +
+            `&query=${encodeURIComponent(aql)}`;
+
+        // ------------------------------------------------------------------
+        // Act
+        // ------------------------------------------------------------------
+        const response = request.get(url, {
+            headers: { "x-correlation-id": "test-proj-search" },
+        });
+
+        // ------------------------------------------------------------------
+        // Assert
+        // ------------------------------------------------------------------
+        expect(response.status).to.equal(200);
+
+        const body = JSON.parse(response.body);
+
+        expect(body).to.be.an("array");
+        expect(body).to.include.members(["p/search_proj1", "p/search_proj2"]);
     });
-    db.admin.save({ _from: "p/proj2", _to: "u/proj_owner" });
 
-    // Project 3: member role for proj_owner
-    db.p.save({
-        _key: "proj3",
-        title: "Project Three",
-        desc: "Third project",
-        ct: 1,
-        ut: 1,
-        owner: "u/proj_admin"
+    it("should enqueue a project delete task when client is authorized", () => {
+        // ------------------------------------------------------------------
+        // Arrange
+        // ------------------------------------------------------------------
+        db.u.save({ _key: "delete_admin", is_admin: true });
+
+        db.p.save({
+            _key: "delete_proj1",
+            title: "Delete Me",
+            desc: "Project to be deleted",
+            ct: 1,
+            ut: 1,
+            owner: "u/delete_admin",
+        });
+
+        db.owner.save({
+            _from: "p/delete_proj1",
+            _to: "u/delete_admin",
+        });
+
+        db.admin.save({
+            _from: "p/delete_proj1",
+            _to: "u/delete_admin",
+        });
+
+        const url = `${proj_base_url}/delete?client=u/delete_admin`;
+
+        // ------------------------------------------------------------------
+        // Act
+        // ------------------------------------------------------------------
+        const response = request.post(url, {
+            headers: {
+                "content-type": "application/json",
+                "x-correlation-id": "test-proj-delete",
+            },
+            body: JSON.stringify({
+                ids: ["p/delete_proj1"],
+            }),
+        });
+
+        // ------------------------------------------------------------------
+        // Assert
+        // ------------------------------------------------------------------
+        expect(response.status).to.equal(200);
+
+        // Response body is allowed to be null
+        const body = JSON.parse(response.body);
+        expect(body).to.exist;
+        expect(body).to.be.an("object");
+        expect(body).to.have.property("task");
+
+        // Delete is async — project still exists immediately
+        expect(db.p.exists("p/delete_proj1")).to.exist;
     });
 
-    const membersGroup = db.g.save({
-        uid: "p/proj3",
-        gid: "members",
-        title: "Project Three Members",
-        desc: "Member group for proj3"
-    });
+    it("should return the correct project role for client or subject", () => {
+        // ------------------------------------------------------------------
+        // arrange
+        // ------------------------------------------------------------------
 
-    db.owner.save({ _from: membersGroup._id, _to: "p/proj3" });
-    db.member.save({ _from: membersGroup._id, _to: "u/proj_owner" });
+        db.u.save({ _key: "proj_owner", is_admin: false });
+        db.u.save({ _key: "proj_admin", is_admin: false });
+        db.u.save({ _key: "proj_member", is_admin: false });
 
-    // ------------------------------------------------------------------
-    // Act: call the /list route
-    // ------------------------------------------------------------------
-    const url = `${proj_base_url}/list` +
+        db.p.save({
+            _key: "role_proj",
+            title: "Role Test Project",
+            owner: "u/proj_owner",
+            ct: 1,
+            ut: 1,
+        });
+
+        // owner edge
+        db.owner.save({
+            _from: "p/role_proj",
+            _to: "u/proj_owner",
+        });
+
+        // admin edge
+        db.admin.save({
+            _from: "p/role_proj",
+            _to: "u/proj_admin",
+        });
+
+        // members group
+        const memGrp = db.g.save({
+            uid: "p/role_proj",
+            gid: "members",
+            title: "Project Members",
+            desc: "Members group",
+        });
+
+        db.owner.save({
+            _from: memGrp._id,
+            _to: "p/role_proj",
+        });
+
+        db.member.save({
+            _from: memGrp._id,
+            _to: "u/proj_member",
+        });
+
+        // ------------------------------------------------------------------
+        // OWNER
+        // ------------------------------------------------------------------
+
+        let response = request.get(
+            `${proj_base_url}/get_role` + `?client=u/proj_owner` + `&id=p/role_proj`,
+            { headers: { "x-correlation-id": "test-proj-get-role-owner" } },
+        );
+
+        expect(response.status).to.equal(200);
+        let body = JSON.parse(response.body);
+        expect(body.role).to.equal(3); // owner
+
+        // ------------------------------------------------------------------
+        // ADMIN (subject)
+        // ------------------------------------------------------------------
+
+        response = request.get(
+            `${proj_base_url}/get_role` +
                 `?client=u/proj_owner` +
-                `&as_owner=true&as_admin=true&as_member=true`;
+                `&subject=u/proj_admin` +
+                `&id=p/role_proj`,
+            { headers: { "x-correlation-id": "test-proj-get-role-admin" } },
+        );
 
-    const response = request.get(url, {
-        headers: { "x-correlation-id": "test-proj-list" },
+        expect(response.status).to.equal(200);
+        body = JSON.parse(response.body);
+        expect(body.role).to.equal(2); // admin
+
+        // ------------------------------------------------------------------
+        // MEMBER (subject)
+        // ------------------------------------------------------------------
+
+        response = request.get(
+            `${proj_base_url}/get_role` +
+                `?client=u/proj_owner` +
+                `&subject=u/proj_member` +
+                `&id=p/role_proj`,
+            { headers: { "x-correlation-id": "test-proj-get-role-member" } },
+        );
+
+        expect(response.status).to.equal(200);
+        body = JSON.parse(response.body);
+        expect(body.role).to.equal(1); // member
     });
-
-    // ------------------------------------------------------------------
-    // Assert
-    // ------------------------------------------------------------------
-    expect(response.status).to.equal(200);
-
-    const body = JSON.parse(response.body);
-    const ids = body.map(p => p.id);
-
-    expect(ids).to.include.members(["p/proj1", "p/proj2", "p/proj3"]);
-});
-
-it("should search projects using a provided AQL query", () => {
-    // ------------------------------------------------------------------
-    // Arrange
-    // ------------------------------------------------------------------
-    db.u.save({ _key: "search_user", is_admin: false });
-
-    db.p.save({
-        _key: "search_proj1",
-        title: "Alpha Project",
-        desc: "First searchable project",
-        ct: 1,
-        ut: 1,
-        owner: "u/search_user",
-    });
-
-    db.p.save({
-        _key: "search_proj2",
-        title: "Beta Project",
-        desc: "Second searchable project",
-        ct: 1,
-        ut: 1,
-        owner: "u/search_user",
-    });
-
-    // AQL query passed directly to /search
-    const aql =
-        "FOR p IN p FILTER p.title LIKE '%Project%' RETURN p._id";
-
-    const url =
-        `${proj_base_url}/search` +
-        `?client=u/search_user` +
-        `&query=${encodeURIComponent(aql)}`;
-
-    // ------------------------------------------------------------------
-    // Act
-    // ------------------------------------------------------------------
-    const response = request.get(url, {
-        headers: { "x-correlation-id": "test-proj-search" },
-    });
-
-    // ------------------------------------------------------------------
-    // Assert
-    // ------------------------------------------------------------------
-    expect(response.status).to.equal(200);
-
-    const body = JSON.parse(response.body);
-
-    expect(body).to.be.an("array");
-    expect(body).to.include.members([
-        "p/search_proj1",
-        "p/search_proj2",
-    ]);
-});
-
-it("should enqueue a project delete task when client is authorized", () => {
-    // ------------------------------------------------------------------
-    // Arrange
-    // ------------------------------------------------------------------
-    db.u.save({ _key: "delete_admin", is_admin: true });
-
-    db.p.save({
-        _key: "delete_proj1",
-        title: "Delete Me",
-        desc: "Project to be deleted",
-        ct: 1,
-        ut: 1,
-        owner: "u/delete_admin",
-    });
-
-    db.owner.save({
-        _from: "p/delete_proj1",
-        _to: "u/delete_admin",
-    });
-
-    db.admin.save({
-        _from: "p/delete_proj1",
-        _to: "u/delete_admin",
-    });
-
-    const url = `${proj_base_url}/delete?client=u/delete_admin`;
-
-    // ------------------------------------------------------------------
-    // Act
-    // ------------------------------------------------------------------
-    const response = request.post(url, {
-        headers: {
-            "content-type": "application/json",
-            "x-correlation-id": "test-proj-delete",
-        },
-        body: JSON.stringify({
-            ids: ["p/delete_proj1"],
-        }),
-    });
-
-    // ------------------------------------------------------------------
-    // Assert
-    // ------------------------------------------------------------------
-    expect(response.status).to.equal(200);
-
-    // Response body is allowed to be null
-    const body = JSON.parse(response.body);
-    expect(body).to.exist;
-expect(body).to.be.an("object");
-expect(body).to.have.property("task");
-
-
-    // Delete is async — project still exists immediately
-    expect(db.p.exists("p/delete_proj1")).to.exist;
-});
-
-it("should return the correct project role for client or subject", () => {
-    // ------------------------------------------------------------------
-    // arrange
-    // ------------------------------------------------------------------
-
-    db.u.save({ _key: "proj_owner", is_admin: false });
-    db.u.save({ _key: "proj_admin", is_admin: false });
-    db.u.save({ _key: "proj_member", is_admin: false });
-
-    db.p.save({
-        _key: "role_proj",
-        title: "Role Test Project",
-        owner: "u/proj_owner",
-        ct: 1,
-        ut: 1,
-    });
-
-    // owner edge
-    db.owner.save({
-        _from: "p/role_proj",
-        _to: "u/proj_owner",
-    });
-
-    // admin edge
-    db.admin.save({
-        _from: "p/role_proj",
-        _to: "u/proj_admin",
-    });
-
-    // members group
-    const memGrp = db.g.save({
-        uid: "p/role_proj",
-        gid: "members",
-        title: "Project Members",
-        desc: "Members group",
-    });
-
-    db.owner.save({
-        _from: memGrp._id,
-        _to: "p/role_proj",
-    });
-
-    db.member.save({
-        _from: memGrp._id,
-        _to: "u/proj_member",
-    });
-
-    // ------------------------------------------------------------------
-    // OWNER
-    // ------------------------------------------------------------------
-
-    let response = request.get(
-        `${proj_base_url}/get_role` +
-            `?client=u/proj_owner` +
-            `&id=p/role_proj`,
-        { headers: { "x-correlation-id": "test-proj-get-role-owner" } },
-    );
-
-    expect(response.status).to.equal(200);
-    let body = JSON.parse(response.body);
-    expect(body.role).to.equal(3); // owner
-
-    // ------------------------------------------------------------------
-    // ADMIN (subject)
-    // ------------------------------------------------------------------
-
-    response = request.get(
-        `${proj_base_url}/get_role` +
-            `?client=u/proj_owner` +
-            `&subject=u/proj_admin` +
-            `&id=p/role_proj`,
-        { headers: { "x-correlation-id": "test-proj-get-role-admin" } },
-    );
-
-    expect(response.status).to.equal(200);
-    body = JSON.parse(response.body);
-    expect(body.role).to.equal(2); // admin
-
-    // ------------------------------------------------------------------
-    // MEMBER (subject)
-    // ------------------------------------------------------------------
-
-    response = request.get(
-        `${proj_base_url}/get_role` +
-            `?client=u/proj_owner` +
-            `&subject=u/proj_member` +
-            `&id=p/role_proj`,
-        { headers: { "x-correlation-id": "test-proj-get-role-member" } },
-    );
-
-    expect(response.status).to.equal(200);
-    body = JSON.parse(response.body);
-    expect(body.role).to.equal(1); // member
-});
-
 });
