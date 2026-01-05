@@ -188,10 +188,10 @@ router
                 log_extra = {
                     owner: item.owner,
                     creator: item.creator,
-                    title: item.title,
-                    desc: item.desc,
-                    tags: item.tags,
+                    title: item.title?.substring(0, 20),
+                    tags: Array.isArray(item.tags) ? item.tags.slice(0, 10) : [],
                     parent_id: item.parent_id,
+                    id: item.id,
                 };
                 logger.logRequestSuccess({
                     client: client?._id,
@@ -251,7 +251,7 @@ router
                     httpVerb: "POST",
                     routePath: basePath + "/update",
                     status: "Started",
-                    description: `Update an existing collection. ID:${req.body.id}`,
+                    description: `Update an existing collection. ID: ${req.body.id}`,
                 });
 
                 var result = {
@@ -451,7 +451,7 @@ router
                     httpVerb: "POST",
                     routePath: basePath + "/update",
                     status: "Success",
-                    description: `Update an existing collection. ID:${req.body.id}`,
+                    description: `Update an existing collection. ID: ${req.body.id}`,
                     extra: extra_log,
                 });
                 break;
@@ -462,7 +462,7 @@ router
                     httpVerb: "POST",
                     routePath: basePath + "/update",
                     status: "Failure",
-                    description: `Update an existing collection. ID:${req.body.id}`,
+                    description: `Update an existing collection. ID: ${req.body.id}`,
                     extra: extra_log,
                     error: e,
                 });
@@ -502,7 +502,7 @@ router
                 httpVerb: "POST",
                 routePath: basePath + "/view",
                 status: "Started",
-                description: "View collection information by ID or alias",
+                description: `View collection information by ID or alias. ID: ${req.queryParams.id}`,
             });
 
             var coll_id = g_lib.resolveCollID(req.queryParams.id, client),
@@ -538,7 +538,7 @@ router
                 httpVerb: "POST",
                 routePath: basePath + "/view",
                 status: "Success",
-                description: "View collection information by ID or alias",
+                description: `View collection information by ID or alias. ID: ${req.queryParams.id}`,
                 extra: coll,
             });
         } catch (e) {
@@ -548,7 +548,7 @@ router
                 httpVerb: "POST",
                 routePath: basePath + "/view",
                 status: "Failure",
-                description: "View collection information by ID or alias",
+                description: `View collection information by ID or alias. ID: ${req.queryParams.id}`,
                 extra: coll,
                 error: e,
             });
@@ -572,7 +572,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/read",
                 status: "Started",
-                description: "Read contents of a collection by ID or alias",
+                description: `Read contents of a collection by ID or alias. ID: ${req.queryParams.id}`,
             });
 
             var coll_id = g_lib.resolveCollID(req.queryParams.id, client),
@@ -638,7 +638,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/read",
                 status: "Success",
-                description: "Read contents of a collection by ID or alias",
+                description: `Read contents of a collection by ID or alias. ID: ${req.queryParams.id}`,
                 extra: result,
             });
         } catch (e) {
@@ -648,8 +648,8 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/read",
                 status: "Failure",
-                description: "Read contents of a collection by ID or alias",
                 extra: result,
+                description: `Read contents of a collection by ID or alias. ID: ${req.queryParams.id}`,
                 error: e,
             });
             g_lib.handleException(e, res);
