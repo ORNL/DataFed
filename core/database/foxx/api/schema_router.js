@@ -88,7 +88,7 @@ router
                 httpVerb: "POST",
                 routePath: basePath + "/create",
                 status: "Started",
-                description: "Create schema",
+                description: `Create schema. ID: ${req.body.id}`,
             });
             g_db._executeTransaction({
                 collections: {
@@ -146,11 +146,12 @@ router
                 httpVerb: "POST",
                 routePath: basePath + "/create",
                 status: "Success",
-                description: "Create schema",
+                description: `Create schema. ID: ${req.body.id}`,
                 extra: {
-                    own_id: sch.own_id,
-                    id: sch.id,
-                    desc: sch.desc,
+                    sch_id: sch?.id,
+                    own_id: sch?.own_id,
+                    pub: req.body.pub,
+                    sys: req.body.sys,
                 },
             });
         } catch (e) {
@@ -160,13 +161,14 @@ router
                 httpVerb: "POST",
                 routePath: basePath + "/create",
                 status: "Failure",
-                description: "Create schema",
+                description: `Create schema. ID: ${req.body.id}`,
                 extra: {
-                    own_id: sch.own_id,
-                    id: sch.id,
-                    desc: sch.desc,
+                    sch_id: sch?.id,
+                    own_id: sch?.own_id,
+                    pub: req.body.pub,
+                    sys: req.body.sys,
                 },
-                error: e,
+               error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -313,8 +315,15 @@ router
                 httpVerb: "POST",
                 routePath: basePath + "/update",
                 status: "Success",
-                description: "Update schema",
-                extra: sch_new,
+                description: `Update scheme. ID: ${req.body.id}`,
+                extra: {
+                        id: sch_new.id,
+                        own_id: sch_new.own_id,
+                        pub: sch_new.pub,
+                        sys: req.body?.sys ?? false,
+                        ver: sch_new.ver,
+                    },
+
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -323,8 +332,14 @@ router
                 httpVerb: "POST",
                 routePath: basePath + "/update",
                 status: "Failure",
-                description: "Update schema",
-                extra: sch_new,
+                description: `Update schema. ID: ${req.body.id}`,
+                extra: {
+                        id: sch_new.id,
+                        own_id: sch_new.own_id,
+                        pub: sch_new.pub,
+                        sys: req.body?.sys ?? false,
+                        ver: sch_new.ver,
+                    },
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -357,7 +372,7 @@ router
                 httpVerb: "POST",
                 routePath: basePath + "/revise",
                 status: "Started",
-                description: "Revise schema",
+                description: `Revise schema. ID: ${req.queryParams.id}`,
             });
 
             g_db._executeTransaction({
@@ -467,7 +482,7 @@ router
                 httpVerb: "POST",
                 routePath: basePath + "/revise",
                 status: "Success",
-                description: "Revise schema",
+                description: `Revise schema. ID: ${req.queryParams.id}`,
                 extra: {
                     own_id: sch_new.own_id,
                     own_nm: sch_new.own_nm,
@@ -482,7 +497,7 @@ router
                 httpVerb: "POST",
                 routePath: basePath + "/revise",
                 status: "Failure",
-                description: "Revise schema",
+                description: `Revise schema. ID: ${req.queryParams.id}`,
                 extra: {
                     own_id: sch_new.own_id,
                     own_nm: sch_new.own_nm,
@@ -671,7 +686,6 @@ router
                     own_id: sch.own_id,
                     own_nm: sch.own_nm,
                     id: sch.id,
-                    desc: sch.desc,
                 },
             });
         } catch (e) {
