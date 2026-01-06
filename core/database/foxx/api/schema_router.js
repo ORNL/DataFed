@@ -168,7 +168,7 @@ router
                     pub: req.body.pub,
                     sys: req.body.sys,
                 },
-               error: e,
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -317,13 +317,12 @@ router
                 status: "Success",
                 description: `Update scheme. ID: ${req.body.id}`,
                 extra: {
-                        id: sch_new.id,
-                        own_id: sch_new.own_id,
-                        pub: sch_new.pub,
-                        sys: req.body?.sys ?? false,
-                        ver: sch_new.ver,
-                    },
-
+                    id: sch_new.id,
+                    own_id: sch_new.own_id,
+                    pub: sch_new.pub,
+                    sys: req.body?.sys ?? false,
+                    ver: sch_new.ver,
+                },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -334,12 +333,12 @@ router
                 status: "Failure",
                 description: `Update schema. ID: ${req.body.id}`,
                 extra: {
-                        id: sch_new.id,
-                        own_id: sch_new.own_id,
-                        pub: sch_new.pub,
-                        sys: req.body?.sys ?? false,
-                        ver: sch_new.ver,
-                    },
+                    id: sch_new.id,
+                    own_id: sch_new.own_id,
+                    pub: sch_new.pub,
+                    sys: req.body?.sys ?? false,
+                    ver: sch_new.ver,
+                },
                 error: e,
             });
             g_lib.handleException(e, res);
