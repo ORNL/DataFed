@@ -217,8 +217,7 @@ router
                 status: "Success",
                 description: `Create new projects. Project ID: ${req.queryParams.id}`,
             });
-            if(req.queryParams.admins?.length)
-            {
+            if (req.queryParams.admins?.length) {
                 logger.logRequestSuccess({
                     client: req.queryParams.client,
                     correlationId: req.headers["x-correlation-id"],
@@ -227,10 +226,8 @@ router
                     status: "Success",
                     description: `Admins added: ${req.queryParams.admins}`,
                 });
- 
             }
-            if(req.queryParams.members?.length)
-            {
+            if (req.queryParams.members?.length) {
                 logger.logRequestSuccess({
                     client: req.queryParams.client,
                     correlationId: req.headers["x-correlation-id"],
@@ -433,16 +430,16 @@ router
                 routePath: basePath + "/update",
                 status: "Success",
                 description: `Update project information. Project ID: ${req.queryParams.id}`,
-                extra: {owner: proj.new?.owner,
-                        title: proj.new?.title
-                            ? proj.new?.title.length > 15
-                    ? proj.new?.title.slice(0, 15) + "…"
+                extra: {
+                    owner: proj.new?.owner,
+                    title: proj.new?.title
+                        ? proj.new?.title.length > 15
+                            ? proj.new?.title.slice(0, 15) + "…"
                             : proj.new?.title
-                            : undefined,
-                        },
+                        : undefined,
+                },
             });
-            if(req.queryParams.admins?.length)
-            {
+            if (req.queryParams.admins?.length) {
                 logger.logRequestSuccess({
                     client: req.queryParams.client,
                     correlationId: req.headers["x-correlation-id"],
@@ -451,10 +448,8 @@ router
                     status: "Success",
                     description: `Admins added: ${req.queryParams.admins}`,
                 });
- 
             }
-            if(req.queryParams.members?.length)
-            {
+            if (req.queryParams.members?.length) {
                 logger.logRequestSuccess({
                     client: req.queryParams.client,
                     correlationId: req.headers["x-correlation-id"],
@@ -464,7 +459,6 @@ router
                     description: `Members added: ${req.queryParams.members}`,
                 });
             }
-
         } catch (e) {
             logger.logRequestFailure({
                 client: req.queryParams.client,
@@ -473,13 +467,14 @@ router
                 routePath: basePath + "/update",
                 status: "Failure",
                 description: `Update project information. Project ID: ${req.queryParams.id}`,
-                extra: {owner: proj.new?.owner,
-                        title: proj.new?.title
-                            ? proj.new?.title.length > 15
+                extra: {
+                    owner: proj.new?.owner,
+                    title: proj.new?.title
+                        ? proj.new?.title.length > 15
                             ? proj.new?.title.slice(0, 15) + "…"
                             : proj.new?.title
-                            : undefined,
-                        },
+                        : undefined,
+                },
 
                 error: e,
             });
@@ -892,7 +887,7 @@ router
                 routePath: basePath + "/get_role",
                 status: "Success",
                 description: `Get client/subject project role. ID: ${req.queryParams.id}`,
-                extra: { role: role},
+                extra: { role: role },
             });
         } catch (e) {
             logger.logRequestSuccess({
@@ -902,7 +897,7 @@ router
                 routePath: basePath + "/get_role",
                 status: "Success",
                 description: `Get client/subject project role. ID: ${req.queryParams.id}`,
-                extra: { role: role},
+                extra: { role: role },
                 error: e,
             });
             g_lib.handleException(e, res);
