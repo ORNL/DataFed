@@ -487,7 +487,7 @@ router
                     own_nm: sch_new.own_nm,
                     id: sch_new.id,
                     pub: req.body.pub,
-                    sys: req.body.sys
+                    sys: req.body.sys,
                 },
             });
         } catch (e) {
@@ -503,7 +503,7 @@ router
                     own_nm: sch_new.own_nm,
                     id: sch_new.id,
                     pub: req.body.pub,
-                    sys: req.body.sys
+                    sys: req.body.sys,
                 },
                 error: e,
             });
@@ -688,7 +688,7 @@ router
                     own_nm: sch.own_nm,
                     id: sch.id,
                     pub: sch.pub,
-                    sys: sch.sys
+                    sys: sch.sys,
                 },
             });
         } catch (e) {
@@ -699,11 +699,10 @@ router
                 routePath: basePath + "/view",
                 status: "Failure",
                 description: `View schema. Schema ID: ${req.queryParams.id}`,
-                extra: 
-                {
+                extra: {
                     pub: sch.pub,
-                    sys: sch.sys 
-                }
+                    sys: sch.sys,
+                },
             });
             g_lib.handleException(e, res);
         }
