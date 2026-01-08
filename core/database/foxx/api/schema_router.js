@@ -199,7 +199,7 @@ router
                 httpVerb: "POST",
                 routePath: basePath + "/update",
                 status: "Started",
-                description: "Update schema",
+                description: `Update schema. Schema ID: ${req.queryParams.id}`,
             });
 
             g_db._executeTransaction({
@@ -315,7 +315,7 @@ router
                 httpVerb: "POST",
                 routePath: basePath + "/update",
                 status: "Success",
-                description: `Update scheme. ID: ${req.body.id}`,
+                description: `Update scheme. Schema ID: ${req.queryParams.id}`,
                 extra: {
                     id: sch_new.id,
                     own_id: sch_new.own_id,
@@ -331,7 +331,7 @@ router
                 httpVerb: "POST",
                 routePath: basePath + "/update",
                 status: "Failure",
-                description: `Update schema. ID: ${req.body.id}`,
+                description: `Update schema. Schema ID: ${req.queryParams.id}`,
                 extra: {
                     id: sch_new.id,
                     own_id: sch_new.own_id,
@@ -371,7 +371,7 @@ router
                 httpVerb: "POST",
                 routePath: basePath + "/revise",
                 status: "Started",
-                description: `Revise schema. ID: ${req.queryParams.id}`,
+                description: `Revise schema. Schema ID: ${req.queryParams.id}`,
             });
 
             g_db._executeTransaction({
@@ -481,12 +481,13 @@ router
                 httpVerb: "POST",
                 routePath: basePath + "/revise",
                 status: "Success",
-                description: `Revise schema. ID: ${req.queryParams.id}`,
+                description: `Revise schema. Schema ID: ${req.queryParams.id}`,
                 extra: {
                     own_id: sch_new.own_id,
                     own_nm: sch_new.own_nm,
                     id: sch_new.id,
-                    desc: sch_new.desc,
+                    pub: req.body.pub,
+                    sys: req.body.sys
                 },
             });
         } catch (e) {
@@ -496,12 +497,13 @@ router
                 httpVerb: "POST",
                 routePath: basePath + "/revise",
                 status: "Failure",
-                description: `Revise schema. ID: ${req.queryParams.id}`,
+                description: `Revise schema. Schema ID: ${req.queryParams.id}`,
                 extra: {
                     own_id: sch_new.own_id,
                     own_nm: sch_new.own_nm,
                     id: sch_new.id,
-                    desc: sch_new.desc,
+                    pub: req.body.pub,
+                    sys: req.body.sys
                 },
                 error: e,
             });
@@ -535,7 +537,7 @@ router
                 httpVerb: "POST",
                 routePath: basePath + "/delete",
                 status: "Started",
-                description: `Delete schema. ID: ${req.queryParams.id}`,
+                description: `Delete schema. Schema ID: ${req.queryParams.id}`,
             });
 
             const client = g_lib.getUserFromClientID(req.queryParams.client);
@@ -595,7 +597,7 @@ router
                 httpVerb: "POST",
                 routePath: basePath + "/delete",
                 status: "Success",
-                description: `Delete schema. ID: ${req.queryParams.id}`,
+                description: `Delete schema. Schema ID: ${req.queryParams.id}`,
                 extra: sch_old._id,
             });
         } catch (e) {
@@ -605,7 +607,7 @@ router
                 httpVerb: "POST",
                 routePath: basePath + "/delete",
                 status: "Failure",
-                description: `Delete schema. ID: ${req.queryParams.id}`,
+                description: `Delete schema. Schema ID: ${req.queryParams.id}`,
                 extra: sch_old._id,
             });
             g_lib.handleException(e, res);
@@ -626,7 +628,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/view",
                 status: "Started",
-                description: `View schema. ID: ${req.queryParams.id}`,
+                description: `View schema. Schema ID: ${req.queryParams.id}`,
             });
             const client = g_lib.getUserFromClientID(req.queryParams.client);
             var idx = req.queryParams.id.indexOf(":");
@@ -680,11 +682,13 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/view",
                 status: "Success",
-                description: `View schema. ID: ${req.queryParams.id}`,
+                description: `View schema. Schema ID: ${req.queryParams.id}`,
                 extra: {
                     own_id: sch.own_id,
                     own_nm: sch.own_nm,
                     id: sch.id,
+                    pub: sch.pub,
+                    sys: sch.sys
                 },
             });
         } catch (e) {
@@ -694,8 +698,12 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/view",
                 status: "Failure",
-                description: `View schema. ID: ${req.queryParams.id}`,
-                extra: sch,
+                description: `View schema. Schema ID: ${req.queryParams.id}`,
+                extra: 
+                {
+                    pub: sch.pub,
+                    sys: sch.sys 
+                }
             });
             g_lib.handleException(e, res);
         }
