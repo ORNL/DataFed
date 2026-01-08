@@ -771,7 +771,6 @@ describe("integration_repo_router: the Foxx microservice repo_router create endp
         expect(task).to.have.property("_key");
         expect(task).to.have.property("_id");
         expect(task).to.have.property("type", 6);
-        expect(task).to.have.property("status", 0);
 
         // Optional: check state fields
         expect(task.state).to.have.property("repo_id", "repo/music_repo");

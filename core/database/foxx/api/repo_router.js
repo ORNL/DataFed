@@ -111,7 +111,7 @@ router
             correlationId: req.headers["x-correlation-id"],
             httpVerb: "GET",
             routePath: basePath + "/list",
-            status: "Started",
+            status: "Success",
             description: "List repo servers administered by client",
             extra: { NumOfRepoServers: result.length },
         });
@@ -157,7 +157,12 @@ router
                 routePath: basePath + "/view",
                 status: "Success",
                 description: `View repo server record: ${req.queryParams.id}`,
-                extra: repo,
+                extra: 
+                {
+                    type: repo.type,
+                    capacity: repo.capacity,
+                    admins: repo.admins
+                },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -166,7 +171,12 @@ router
                 routePath: basePath + "/view",
                 status: "Failure",
                 description: `View repo server record: ${req.queryParams.id}`,
-                extra: repo,
+                extra: 
+                {
+                    type: repo.type,
+                    capacity: repo.capacity,
+                    admins: repo.admins
+                },
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -248,7 +258,11 @@ router
                 routePath: basePath + "/create",
                 status: "Success",
                 description: `Create a server record: ${req.queryParams.id}`,
-                extra: repo_doc,
+                extra: {
+                    type: repo_doc.type,
+                    capacity: repo_doc.capacity,
+                    admins: repo_doc.admins
+                },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -258,7 +272,12 @@ router
                 routePath: basePath + "/create",
                 status: "Failure",
                 description: `Create a server record: ${req.queryParams.id}`,
-                extra: repo_doc,
+                extra:                 
+                {
+                    type: repo_doc.type,
+                    capacity: repo_doc.capacity,
+                    admins: repo_doc.admins
+                },
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -385,7 +404,10 @@ router
                 routePath: basePath + "/update",
                 status: "Success",
                 description: `Update a repo server record: ${req.queryParams.id}`,
-                extra: repo?.new,
+                extra: {
+                    capacity: req.queryParam.capacity,
+                    admins: req.queryParams.admins
+                },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -395,7 +417,10 @@ router
                 routePath: basePath + "/update",
                 status: "Failure",
                 description: `Update a repo server record: ${req.queryParams.id}`,
-                extra: repo?.new,
+                extra: {
+                    capacity: req.queryParam.capacity,
+                    admins: req.queryParams.admins
+                },
                 error: e,
             });
 
@@ -935,7 +960,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/alloc/create",
                 status: "Started",
-                description: `Create user/projects repo allocation: ${req.queryParams.repo}`,
+                description: `Create user/projects repo allocation: ${req.queryParams.repo}. Subject: ${req.queryParams.subject}`,
             });
 
             g_db._executeTransaction({
@@ -967,11 +992,10 @@ router
                         httpVerb: "GET",
                         routePath: basePath + "/alloc/create",
                         status: "Success",
-                        description: `Create user/projects repo allocation: ${req.queryParams.repo}`,
+                        description: `Create user/projects repo allocation: ${req.queryParams.repo}. Subject: ${req.queryParams.subject}`,
                         extra: {
                             task_id: result.task._id,
                             repo: result.task.state.repo_id,
-                            subject: result.task.state.subject,
                             data_limit: result.task.state.data_limit,
                             rec_limit: result.task.state.rec_limit,
                             status: "queued",
@@ -986,11 +1010,10 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/alloc/create",
                 status: "Failure",
-                description: `Create user/projects repo allocation: ${req.queryParams.repo}`,
+                description: `Create user/projects repo allocation: ${req.queryParams.repo}. Subject: ${req.queryParams.subject}`,
                 extra: {
                     task_id: result.task._id,
                     repo: result.task.state.repo_id,
-                    subject: result.task.state.subject,
                     data_limit: result.task.state.data_limit,
                     rec_limit: result.task.state.rec_limit,
                     status: "queued",
@@ -1028,7 +1051,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/alloc/delete",
                 status: "Started",
-                description: `Delete user/projects repo allocation: ${req.queryParams.repo}`,
+                description: `Delete user/projects repo allocation: ${req.queryParams.repo}. Subject: ${req.queryParams.subject}`,
             });
 
             g_db._executeTransaction({
@@ -1056,7 +1079,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/alloc/delete",
                 status: "Success",
-                description: `Delete user/projects repo allocation: ${req.queryParams.repo}`,
+                description: `Delete user/projects repo allocation: ${req.queryParams.repo}. Subject: ${req.queryParams.subject}`,
                 extra: result,
             });
         } catch (e) {
@@ -1066,7 +1089,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/alloc/delete",
                 status: "Failure",
-                description: `Delete user/projects repo allocation: ${req.queryParams.repo}`,
+                description: `Delete user/projects repo allocation: ${req.queryParams.repo}. Subject: ${req.queryParams.subject}`,
                 extra: result,
                 error: e,
             });
@@ -1090,7 +1113,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/alloc/set",
                 status: "Started",
-                description: `Set user/projects repo allocation: ${req.queryParams.repo}`,
+                description: `Set user/projects repo allocation: ${req.queryParams.repo}. Subject: ${req.queryParams.subject}`,
             });
             g_db._executeTransaction({
                 collections: {
@@ -1139,7 +1162,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/alloc/set",
                 status: "Success",
-                description: `Set user/projects repo allocation: ${req.queryParams.repo}`,
+                description: `Set user/projects repo allocation: ${req.queryParams.repo}. Subject: ${req.queryParams.subject}`,
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -1148,7 +1171,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/alloc/set",
                 status: "Failure",
-                description: `Set user/projects repo allocation: ${req.queryParams.repo}`,
+                description: `Set user/projects repo allocation: ${req.queryParams.repo}. Subject: ${req.queryParams.subject}`,
                 error: e,
             });
             g_lib.handleException(e, res);
