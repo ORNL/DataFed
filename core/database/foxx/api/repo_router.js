@@ -157,11 +157,10 @@ router
                 routePath: basePath + "/view",
                 status: "Success",
                 description: `View repo server record: ${req.queryParams.id}`,
-                extra: 
-                {
+                extra: {
                     type: repo.type,
                     capacity: repo.capacity,
-                    admins: repo.admins
+                    admins: repo.admins,
                 },
             });
         } catch (e) {
@@ -171,11 +170,10 @@ router
                 routePath: basePath + "/view",
                 status: "Failure",
                 description: `View repo server record: ${req.queryParams.id}`,
-                extra: 
-                {
+                extra: {
                     type: repo.type,
                     capacity: repo.capacity,
-                    admins: repo.admins
+                    admins: repo.admins,
                 },
                 error: e,
             });
