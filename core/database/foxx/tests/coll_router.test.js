@@ -125,6 +125,22 @@ describe("unit_coll_router: /col/create endpoint", () => {
         expect(created).to.have.property("parent_id", "c/root1");
     });
 
+    it("should NOT crash if collection creation fails before result is built", () => {
+    const body = {
+        title: "Broken Collection",
+        parent: "c/doesNotExist",
+    };
+
+    const response = request.post(`${baseUrl}/col/create?client=client1`, {
+        json: true,
+        body,
+    });
+
+    // Should return controlled error, not logging crash
+    expect(response.status).to.not.equal(500);
+    expect(response.json).to.have.property("error");
+});
+
     it("should update an existing collection", () => {
         db.c.save({
             _key: "coll1",
@@ -166,6 +182,21 @@ describe("unit_coll_router: /col/create endpoint", () => {
         expect(updated.desc).to.equal("New Desc");
         expect(updated.tags).to.deep.equal(["x", "y"]);
     });
+
+it("should NOT crash when updating a non-existent collection", () => {
+    const body = {
+        id: "c/missing",
+        title: "Nope",
+    };
+
+    const response = request.post(`${baseUrl}/col/update?client=client1`, {
+        json: true,
+        body,
+    });
+
+    expect(response.status).to.not.equal(500);
+    expect(response.json).to.have.property("error");
+});
 
     it("should view an existing collection", () => {
         //
@@ -258,6 +289,24 @@ describe("unit_coll_router: /col/create endpoint", () => {
         expect(child).to.exist;
         expect(child.title).to.equal("Child");
     });
+
+it("should NOT crash when user lacks permission to read collection", () => {
+    // Create collection owned by someone else
+    db.c.save({
+        _key: "privateColl",
+        owner: "u/other",
+        creator: "u/other",
+        title: "Private",
+    });
+
+    const response = request.get(
+        `${baseUrl}/col/read?client=client1&id=c/privateColl`,
+        { json: true },
+    );
+
+    expect(response.status).to.not.equal(500);
+    expect(response.json).to.have.property("error");
+});
 
     it("should add an item to a collection", () => {
         //
@@ -439,6 +488,45 @@ describe("unit_coll_router: /col/create endpoint", () => {
         // Item 5 is in second page, offset should be 3
         expect(response.json).to.have.property("offset", 3);
     });
+
+    it("should NOT crash if item is not found when getting offset", () => {
+    // --- FIXTURE ---
+    db.c.save({
+        _key: "collOffsetFail",
+        owner: "u/client1",
+        creator: "u/client1",
+        title: "Offset Test",
+    });
+    db.owner.save({ _from: "c/collOffsetFail", _to: "u/client1" });
+
+    // No items added at all
+
+    const response = request.get(
+        `${baseUrl}/col/get_offset?client=client1&id=c/collOffsetFail&item=d/doesNotExist&page_sz=5`,
+        { json: true },
+    );
+
+    // Should return a controlled error, NOT a 500 crash
+    expect(response.status).to.not.equal(500);
+    expect(response.json).to.have.property("error");
+});
+it("should NOT crash if page_sz is invalid in get_offset", () => {
+    db.c.save({
+        _key: "collBadPage",
+        owner: "u/client1",
+        creator: "u/client1",
+        title: "Bad Page",
+    });
+    db.owner.save({ _from: "c/collBadPage", _to: "u/client1" });
+
+    const response = request.get(
+        `${baseUrl}/col/get_offset?client=client1&id=c/collBadPage&item=d/item1&page_sz=0`,
+        { json: true },
+    );
+
+    expect(response.status).to.not.equal(500);
+});
+
 
     it("should return a list of published collections for a client", () => {
         const clientId = "client1";

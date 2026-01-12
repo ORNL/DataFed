@@ -499,7 +499,7 @@ router
             logger.logRequestStarted({
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
-                httpVerb: "POST",
+                httpVerb: "GET",
                 routePath: basePath + "/view",
                 status: "Started",
                 description: `View collection information by ID or alias. ID: ${req.queryParams.id}`,
@@ -535,7 +535,7 @@ router
             logger.logRequestSuccess({
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
-                httpVerb: "POST",
+                httpVerb: "GET",
                 routePath: basePath + "/view",
                 status: "Success",
                 description: `View collection information by ID or alias. ID: ${req.queryParams.id}`,
@@ -545,7 +545,7 @@ router
             logger.logRequestFailure({
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
-                httpVerb: "POST",
+                httpVerb: "GET",
                 routePath: basePath + "/view",
                 status: "Failure",
                 description: `View collection information by ID or alias. ID: ${req.queryParams.id}`,
@@ -1236,6 +1236,7 @@ router
     .get("/get_offset", function (req, res) {
         let get_offset = null;
         let client = null;
+        let idx = null;
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
@@ -1268,7 +1269,7 @@ router
                     offset: 0,
                 });
             else {
-                var idx = ids.indexOf(item_id);
+                idx = ids.indexOf(item_id);
                 if (idx < 0)
                     throw [
                         error.ERR_NOT_FOUND,
