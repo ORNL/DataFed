@@ -232,7 +232,7 @@ router
                     }
 
                     const repo = Repositories.createRepositoryByType(obj).raiseIfError();
-                    const repo_doc = repo.save().raiseIfError();
+                    repo_doc = repo.save().raiseIfError();
 
                     for (const adminId of req.body.admins) {
                         if (!g_db._exists(adminId))
@@ -259,9 +259,9 @@ router
                 status: "Success",
                 description: `Create a server record: ${req.queryParams.id}`,
                 extra: {
-                    type: repo_doc.type,
-                    capacity: repo_doc.capacity,
-                    admins: repo_doc.admins
+                    type: repo_doc?.type,
+                    capacity: repo_doc?.capacity,
+                    admins: repo_doc?.admins
                 },
             });
         } catch (e) {
@@ -274,9 +274,9 @@ router
                 description: `Create a server record: ${req.queryParams.id}`,
                 extra:                 
                 {
-                    type: repo_doc.type,
-                    capacity: repo_doc.capacity,
-                    admins: repo_doc.admins
+                    type: repo_doc?.type,
+                    capacity: repo_doc?.capacity,
+                    admins: repo_doc?.admins
                 },
                 error: e,
             });
@@ -405,7 +405,7 @@ router
                 status: "Success",
                 description: `Update a repo server record: ${req.queryParams.id}`,
                 extra: {
-                    capacity: req.queryParam.capacity,
+                    capacity: req.queryParams.capacity,
                     admins: req.queryParams.admins
                 },
             });
@@ -418,7 +418,7 @@ router
                 status: "Failure",
                 description: `Update a repo server record: ${req.queryParams.id}`,
                 extra: {
-                    capacity: req.queryParam.capacity,
+                    capacity: req.queryParams.capacity,
                     admins: req.queryParams.admins
                 },
                 error: e,
@@ -1012,10 +1012,10 @@ router
                 status: "Failure",
                 description: `Create user/projects repo allocation: ${req.queryParams.repo}. Subject: ${req.queryParams.subject}`,
                 extra: {
-                    task_id: result.task._id,
-                    repo: result.task.state.repo_id,
-                    data_limit: result.task.state.data_limit,
-                    rec_limit: result.task.state.rec_limit,
+                    task_id: result?.task?._id,
+                    repo: result?.task?.state?.repo_id,
+                    data_limit: result?.task?.state?.data_limit,
+                    rec_limit: result?.task?.state?.rec_limit,
                     status: "queued",
                 },
                 error: e,
