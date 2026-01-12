@@ -259,7 +259,7 @@ router
                 extra: {
                     type: repo_doc?.type,
                     capacity: repo_doc?.capacity,
-                    admins: repo_doc?.admins
+                    admins: repo_doc?.admins,
                 },
             });
         } catch (e) {
@@ -270,11 +270,10 @@ router
                 routePath: basePath + "/create",
                 status: "Failure",
                 description: `Create a server record: ${req.queryParams.id}`,
-                extra:                 
-                {
+                extra: {
                     type: repo_doc?.type,
                     capacity: repo_doc?.capacity,
-                    admins: repo_doc?.admins
+                    admins: repo_doc?.admins,
                 },
                 error: e,
             });
@@ -404,7 +403,7 @@ router
                 description: `Update a repo server record: ${req.queryParams.id}`,
                 extra: {
                     capacity: req.queryParams.capacity,
-                    admins: req.queryParams.admins
+                    admins: req.queryParams.admins,
                 },
             });
         } catch (e) {
@@ -417,7 +416,7 @@ router
                 description: `Update a repo server record: ${req.queryParams.id}`,
                 extra: {
                     capacity: req.queryParams.capacity,
-                    admins: req.queryParams.admins
+                    admins: req.queryParams.admins,
                 },
                 error: e,
             });
