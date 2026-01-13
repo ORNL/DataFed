@@ -751,7 +751,8 @@ router
         let result = null;
         let extra_log = null;
         const rawQuery = typeof req.queryParams.query === "string" ? req.queryParams.query : "";
-        const safeQuerySnippet = rawQuery.length > 200 ? rawQuery.slice(0, 200) + "…[truncated]" : rawQuery;
+        const safeQuerySnippet =
+            rawQuery.length > 200 ? rawQuery.slice(0, 200) + "…[truncated]" : rawQuery;
         try {
             logger.logRequestStarted({
                 client: req.queryParams.client,
@@ -767,14 +768,14 @@ router
             result = g_db._query(req.queryParams.query, {});
             res.send(result);
             extra_log = {
-                    documents: result._documents ? result._documents.slice(0, 10) : [], // first 10 IDs only
-                    countTotal: result?._countTotal,
-                    countQuery: result?._countQuery,
-                    skip: result?._skip,
-                    limit: result?._limit,
-                    cached: result?._cached,
-                };
- 
+                documents: result._documents ? result._documents.slice(0, 10) : [], // first 10 IDs only
+                countTotal: result?._countTotal,
+                countQuery: result?._countQuery,
+                skip: result?._skip,
+                limit: result?._limit,
+                cached: result?._cached,
+            };
+
             logger.logRequestSuccess({
                 client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
@@ -793,7 +794,7 @@ router
                 status: "Failure",
                 description: `Find all projects that match query: ${safeQuerySnippet}`,
                 extra: extra_log,
-                error: e
+                error: e,
             });
             g_lib.handleException(e, res);
         }

@@ -565,7 +565,6 @@ describe("unit_proj_router: test project create endpoint", () => {
         expect(body.role).to.equal(1); // member
     });
 
-
     it("should handle malformed AQL for /prj/search without crashing and return an error response", () => {
         // ------------------------------------------------------------------
         // Arrange
