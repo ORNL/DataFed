@@ -315,7 +315,7 @@ router
                 httpVerb: "POST",
                 routePath: basePath + "/update",
                 status: "Success",
-                description: `Update scheme. Schema ID: ${req.queryParams.id}`,
+                description: `Update schema. Schema ID: ${req.queryParams.id}`,
                 extra: {
                     id: sch_new.id,
                     own_id: sch_new.own_id,
@@ -598,7 +598,7 @@ router
                 routePath: basePath + "/delete",
                 status: "Success",
                 description: `Delete schema. Schema ID: ${req.queryParams.id}`,
-                extra: sch_old._id,
+                extra: {"deleted":sch_old._id},
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -608,7 +608,7 @@ router
                 routePath: basePath + "/delete",
                 status: "Failure",
                 description: `Delete schema. Schema ID: ${req.queryParams.id}`,
-                extra: sch_old._id,
+                extra: {"deleted":sch_old._id,}
             });
             g_lib.handleException(e, res);
         }
