@@ -442,7 +442,16 @@ router
                 res.send(result);
 
                 extra_log = {
-                    updates: result.updates.map(({ ut, ...rest }) => rest),
+                    updates: result.updates.map(({ ut, title, desc, ...rest }) => ({
+                            ...rest,
+                            title:  title?.length > 15
+                            ? title.slice(0, 15) + "..."
+                            : title,
+                            desc: 
+                                desc?.length > 15
+                                ? desc.slice(0, 15) + "..."
+                                : desc,
+                    })),
                 };
 
                 logger.logRequestSuccess({
@@ -455,7 +464,7 @@ router
                     extra: extra_log,
                 });
                 break;
-            } catch (e) {
+                } catch (e) {
                 logger.logRequestFailure({
                     client: client?._id,
                     correlationId: req.headers["x-correlation-id"],
@@ -494,6 +503,7 @@ router
     .get("/view", function (req, res) {
         let client = null;
         let coll = null;
+        let extra_log = null;
         try {
             client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
             logger.logRequestStarted({
@@ -532,6 +542,19 @@ router
             res.send({
                 results: [coll],
             });
+
+            extra_log = {
+            ...coll,
+            title:
+                coll.title.length > 15
+                ? coll.title.slice(0, 15) + "..."
+                : coll.title,
+            desc:
+                coll.desc.length > 15
+                ? coll.desc.slice(0, 15) + "..."
+                : coll.desc,
+            };
+
             logger.logRequestSuccess({
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
@@ -539,7 +562,7 @@ router
                 routePath: basePath + "/view",
                 status: "Success",
                 description: `View collection information by ID or alias. ID: ${req.queryParams.id}`,
-                extra: coll,
+                extra: extra_log,
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -549,7 +572,7 @@ router
                 routePath: basePath + "/view",
                 status: "Failure",
                 description: `View collection information by ID or alias. ID: ${req.queryParams.id}`,
-                extra: coll,
+                extra: extra_log,
                 error: e,
             });
             g_lib.handleException(e, res);
