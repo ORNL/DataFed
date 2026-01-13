@@ -598,7 +598,7 @@ router
                 routePath: basePath + "/delete",
                 status: "Success",
                 description: `Delete schema. Schema ID: ${req.queryParams.id}`,
-                extra: {"deleted":sch_old._id},
+                extra: { deleted: sch_old._id },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -608,7 +608,7 @@ router
                 routePath: basePath + "/delete",
                 status: "Failure",
                 description: `Delete schema. Schema ID: ${req.queryParams.id}`,
-                extra: {"deleted":sch_old._id,}
+                extra: { deleted: sch_old._id },
             });
             g_lib.handleException(e, res);
         }
