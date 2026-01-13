@@ -564,4 +564,39 @@ describe("unit_proj_router: test project create endpoint", () => {
         body = JSON.parse(response.body);
         expect(body.role).to.equal(1); // member
     });
+
+
+    it("should handle malformed AQL for /prj/search without crashing and return an error response", () => {
+        // ------------------------------------------------------------------
+        // Arrange
+        // ------------------------------------------------------------------
+        db.u.save({ _key: "search_user_malformed", is_admin: false });
+
+        const client = "search_user_malformed";
+
+        // Intentionally malformed AQL (missing RETURN and invalid syntax)
+        const malformedBody = {
+            client,
+            aql: "FOR p IN p FILTER p.title == @title INVALID_SYNTAX",
+            bindVars: {
+                title: "Alpha Project",
+            },
+        };
+
+        // ------------------------------------------------------------------
+        // Act
+        // ------------------------------------------------------------------
+        const response = request.get("/prj/search", malformedBody);
+
+        // ------------------------------------------------------------------
+        // Assert
+        // ------------------------------------------------------------------
+        // Expect a 400-series error (bad request / invalid query) and a JSON error payload
+        expect(response.status).to.be.within(400, 499);
+
+        const body = JSON.parse(response.body);
+        expect(body).to.have.property("error", true);
+        expect(body).to.have.property("code");
+        expect(body).to.have.property("errorMessage");
+    });
 });

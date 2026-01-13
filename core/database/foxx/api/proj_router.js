@@ -748,6 +748,10 @@ router
 
 router
     .get("/search", function (req, res) {
+        let result = null;
+        let extra_log = null;
+        const rawQuery = typeof req.queryParams.query === "string" ? req.queryParams.query : "";
+        const safeQuerySnippet = rawQuery.length > 200 ? rawQuery.slice(0, 200) + "…[truncated]" : rawQuery;
         try {
             logger.logRequestStarted({
                 client: req.queryParams.client,
@@ -755,19 +759,30 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/search",
                 status: "Started",
-                description: `Find all projects that match query: ${req.queryParams.query}`,
+                description: `Find all projects that match query: ${safeQuerySnippet}`,
             });
 
             g_lib.getUserFromClientID(req.queryParams.client);
 
-            res.send(g_db._query(req.queryParams.query, {}));
+            result = g_db._query(req.queryParams.query, {});
+            res.send(result);
+            extra_log = {
+                    documents: result._documents ? result._documents.slice(0, 10) : [], // first 10 IDs only
+                    countTotal: result?._countTotal,
+                    countQuery: result?._countQuery,
+                    skip: result?._skip,
+                    limit: result?._limit,
+                    cached: result?._cached,
+                };
+ 
             logger.logRequestSuccess({
                 client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/search",
                 status: "Success",
-                description: `Find all projects that match query: ${req.queryParams.query}`,
+                description: `Find all projects that match query: ${safeQuerySnippet}`,
+                extra: extra_log,
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -776,7 +791,9 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/search",
                 status: "Failure",
-                description: `Find all projects that match query: ${req.queryParams.query}`,
+                description: `Find all projects that match query: ${safeQuerySnippet}`,
+                extra: extra_log,
+                error: e
             });
             g_lib.handleException(e, res);
         }
