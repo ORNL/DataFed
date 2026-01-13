@@ -443,14 +443,9 @@ router
 
                 extra_log = {
                     updates: result.updates.map(({ ut, title, desc, ...rest }) => ({
-                            ...rest,
-                            title:  title?.length > 15
-                            ? title.slice(0, 15) + "..."
-                            : title,
-                            desc: 
-                                desc?.length > 15
-                                ? desc.slice(0, 15) + "..."
-                                : desc,
+                        ...rest,
+                        title: title?.length > 15 ? title.slice(0, 15) + "..." : title,
+                        desc: desc?.length > 15 ? desc.slice(0, 15) + "..." : desc,
                     })),
                 };
 
@@ -464,7 +459,7 @@ router
                     extra: extra_log,
                 });
                 break;
-                } catch (e) {
+            } catch (e) {
                 logger.logRequestFailure({
                     client: client?._id,
                     correlationId: req.headers["x-correlation-id"],
@@ -544,15 +539,9 @@ router
             });
 
             extra_log = {
-            ...coll,
-            title:
-                coll.title.length > 15
-                ? coll.title.slice(0, 15) + "..."
-                : coll.title,
-            desc:
-                coll.desc.length > 15
-                ? coll.desc.slice(0, 15) + "..."
-                : coll.desc,
+                ...coll,
+                title: coll.title.length > 15 ? coll.title.slice(0, 15) + "..." : coll.title,
+                desc: coll.desc.length > 15 ? coll.desc.slice(0, 15) + "..." : coll.desc,
             };
 
             logger.logRequestSuccess({
