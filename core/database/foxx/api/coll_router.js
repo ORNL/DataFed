@@ -540,8 +540,8 @@ router
 
             extra_log = {
                 ...coll,
-                title: coll.title.length > 15 ? coll.title.slice(0, 15) + "..." : coll.title,
-                desc: coll.desc.length > 15 ? coll.desc.slice(0, 15) + "..." : coll.desc,
+                title: coll?.title.length > 15 ? coll?.title.slice(0, 15) + "..." : coll?.title,
+                desc: coll?.desc.length > 15 ? coll?.desc.slice(0, 15) + "..." : coll?.desc,
             };
 
             logger.logRequestSuccess({
@@ -960,7 +960,7 @@ router
                 extra: {
                     addedCount: req.queryParams.add?.length || 0,
                     removedCount: req.queryParams.remove?.length || 0,
-                    looseCount: loose_res ? loose_res.length : 0,
+                    looseCount: loose_res ? loose_res?.length : 0,
                 },
             });
         } catch (e) {
@@ -974,7 +974,7 @@ router
                 extra: {
                     addedCount: req.queryParams.add?.length || 0,
                     removedCount: req.queryParams.remove?.length || 0,
-                    looseCount: loose_res ? loose_res.length : 0,
+                    looseCount: loose_res ? loose_res?.length : 0,
                 },
                 error: e,
             });
@@ -1222,7 +1222,7 @@ router
                 routePath: basePath + "/get_parents",
                 status: "Success",
                 description: `Get parent collection(s) (path) of item. ID: ${req.queryParams.id}`,
-                extra: { NumOfParentColls: results.length },
+                extra: { NumOfParentColls: results?.length },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -1232,7 +1232,7 @@ router
                 routePath: basePath + "/get_parents",
                 status: "Failure",
                 description: `Get parent collection(s) (path) of item. ID: ${req.queryParams.id}`,
-                extra: { NumOfParentColls: results.length },
+                extra: { NumOfParentColls: results?.length },
                 error: e,
             });
             g_lib.handleException(e, res);

@@ -125,6 +125,22 @@ describe("unit_coll_router: /col/create endpoint", () => {
         expect(created).to.have.property("parent_id", "c/root1");
     });
 
+    it("should NOT crash if collection creation fails before result is built", () => {
+        const body = {
+            title: "Broken Collection",
+            parent: "c/doesNotExist",
+        };
+
+        const response = request.post(`${baseUrl}/col/create?client=client1`, {
+            json: true,
+            body,
+        });
+
+        // Should return controlled error, not logging crash
+        expect(response.status).to.not.equal(500);
+        expect(response.json).to.have.property("error");
+    });
+
     it("should update an existing collection", () => {
         db.c.save({
             _key: "coll1",
@@ -573,4 +589,4 @@ describe("unit_coll_router: /col/create endpoint", () => {
         const pagingInfo = paged.pop().paging;
         expect(pagingInfo).to.deep.equal({ off: offset, cnt: count, tot: 3 });
     });
-});
+}); 
