@@ -540,8 +540,8 @@ router
 
             extra_log = {
                 ...coll,
-                title: coll?.title.length > 15 ? coll?.title.slice(0, 15) + "..." : coll?.title,
-                desc: coll?.desc.length > 15 ? coll?.desc.slice(0, 15) + "..." : coll?.desc,
+                title: coll?.title?.length > 15 ? coll.title.slice(0, 15) + "..." : coll?.title,
+                desc: coll?.desc?.length > 15 ? coll.desc.slice(0, 15) + "..." : coll?.desc,
             };
 
             logger.logRequestSuccess({
