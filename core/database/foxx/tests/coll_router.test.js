@@ -125,7 +125,6 @@ describe("unit_coll_router: /col/create endpoint", () => {
         expect(created).to.have.property("parent_id", "c/root1");
     });
 
-
     it("should update an existing collection", () => {
         db.c.save({
             _key: "coll1",
