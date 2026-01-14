@@ -9,6 +9,8 @@ const g_lib = require("./support");
 const error = require("./lib/error_codes");
 const permissions = require("./lib/permissions");
 const g_tasks = require("./tasks");
+const logger = require("./lib/logger");
+const basePath = "prj";
 
 module.exports = router;
 
@@ -16,8 +18,16 @@ module.exports = router;
 
 router
     .get("/create", function (req, res) {
+        let result = null;
         try {
-            var result;
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/create",
+                status: "Started",
+                description: `Create new projects. Project ID: ${req.queryParams.id}`,
+            });
 
             g_db._executeTransaction({
                 collections: {
@@ -199,7 +209,44 @@ router
             });
 
             res.send(result);
+            logger.logRequestSuccess({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/create",
+                status: "Success",
+                description: `Create new projects. Project ID: ${req.queryParams.id}`,
+            });
+            if (req.queryParams.admins?.length) {
+                logger.logRequestSuccess({
+                    client: req.queryParams.client,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "GET",
+                    routePath: basePath + "/create",
+                    status: "Success",
+                    description: `Admins added: ${req.queryParams.admins}`,
+                });
+            }
+            if (req.queryParams.members?.length) {
+                logger.logRequestSuccess({
+                    client: req.queryParams.client,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "GET",
+                    routePath: basePath + "/create",
+                    status: "Success",
+                    description: `Members added: ${req.queryParams.members}`,
+                });
+            }
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/create",
+                status: "Failure",
+                description: `Create new projects. Project ID: ${req.queryParams.id}`,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -218,8 +265,17 @@ router
 
 router
     .get("/update", function (req, res) {
+        let proj = null;
+        let result = null;
         try {
-            var result;
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/update",
+                status: "Started",
+                description: `Update project information. Project ID: ${req.queryParams.id}`,
+            });
 
             g_db._executeTransaction({
                 collections: {
@@ -264,7 +320,7 @@ router
                         }
                     }
 
-                    var proj = g_db._update(proj_id, obj, {
+                    proj = g_db._update(proj_id, obj, {
                         keepNull: false,
                         returnNew: true,
                     });
@@ -367,7 +423,61 @@ router
             });
 
             res.send(result);
+            logger.logRequestSuccess({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/update",
+                status: "Success",
+                description: `Update project information. Project ID: ${req.queryParams.id}`,
+                extra: {
+                    owner: proj.new?.owner,
+                    title: proj.new?.title
+                        ? proj.new?.title.length > 15
+                            ? proj.new?.title.slice(0, 15) + "…"
+                            : proj.new?.title
+                        : undefined,
+                },
+            });
+            if (req.queryParams.admins?.length) {
+                logger.logRequestSuccess({
+                    client: req.queryParams.client,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "GET",
+                    routePath: basePath + "/update",
+                    status: "Success",
+                    description: `Admins added: ${req.queryParams.admins}`,
+                });
+            }
+            if (req.queryParams.members?.length) {
+                logger.logRequestSuccess({
+                    client: req.queryParams.client,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "GET",
+                    routePath: basePath + "/update",
+                    status: "Success",
+                    description: `Members added: ${req.queryParams.members}`,
+                });
+            }
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/update",
+                status: "Failure",
+                description: `Update project information. Project ID: ${req.queryParams.id}`,
+                extra: {
+                    owner: proj.new?.owner,
+                    title: proj.new?.title
+                        ? proj.new?.title.length > 15
+                            ? proj.new?.title.slice(0, 15) + "…"
+                            : proj.new?.title
+                        : undefined,
+                },
+
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -386,7 +496,17 @@ router
 
 router
     .get("/view", function (req, res) {
+        let proj = null;
         try {
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Started",
+                description: `View project information. ID: ${req.queryParams.id}`,
+            });
+
             // TODO Enforce view permission
 
             const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
@@ -394,7 +514,7 @@ router
             if (!g_db.p.exists(req.queryParams.id))
                 throw [error.ERR_INVALID_PARAM, "No such project '" + req.queryParams.id + "'"];
 
-            var proj = g_db.p.document({
+            proj = g_db.p.document({
                 _id: req.queryParams.id,
             });
 
@@ -451,7 +571,26 @@ router
             delete proj._rev;
 
             res.send([proj]);
+            logger.logRequestSuccess({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Success",
+                description: `View project information. ID: ${req.queryParams.id}`,
+                result: proj,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Failure",
+                description: `View project information. ID: ${req.queryParams.id}`,
+                extra: proj,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -462,6 +601,15 @@ router
 
 router
     .get("/list", function (req, res) {
+        logger.logRequestStarted({
+            client: req.queryParams.client,
+            correlationId: req.headers["x-correlation-id"],
+            httpVerb: "GET",
+            routePath: basePath + "/list",
+            status: "Started",
+            description: `List projects`,
+        });
+
         const client = g_lib.getUserFromClientID(req.queryParams.client);
         var qry,
             result,
@@ -570,6 +718,15 @@ router
 
         //res.send( g_db._query( qry, { user: client._id }));
         res.send(result);
+        logger.logRequestSuccess({
+            client: req.queryParams.client,
+            correlationId: req.headers["x-correlation-id"],
+            httpVerb: "GET",
+            routePath: basePath + "/list",
+            status: "Success",
+            description: `List projects`,
+            extra: { NumOfProjs: tot },
+        });
     })
     .queryParam("client", joi.string().required(), "Client ID")
     .queryParam("subject", joi.string().optional(), "Subject (user) ID")
@@ -591,11 +748,54 @@ router
 
 router
     .get("/search", function (req, res) {
+        let result = null;
+        let extra_log = null;
+        const rawQuery = typeof req.queryParams.query === "string" ? req.queryParams.query : "";
+        const safeQuerySnippet =
+            rawQuery.length > 200 ? rawQuery.slice(0, 200) + "…[truncated]" : rawQuery;
         try {
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/search",
+                status: "Started",
+                description: `Find all projects that match query: ${safeQuerySnippet}`,
+            });
+
             g_lib.getUserFromClientID(req.queryParams.client);
 
-            res.send(g_db._query(req.queryParams.query, {}));
+            result = g_db._query(req.queryParams.query, {});
+            res.send(result);
+            extra_log = {
+                documents: result._documents ? result._documents.slice(0, 10) : [], // first 10 IDs only
+                countTotal: result?._countTotal,
+                countQuery: result?._countQuery,
+                skip: result?._skip,
+                limit: result?._limit,
+                cached: result?._cached,
+            };
+
+            logger.logRequestSuccess({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/search",
+                status: "Success",
+                description: `Find all projects that match query: ${safeQuerySnippet}`,
+                extra: extra_log,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/search",
+                status: "Failure",
+                description: `Find all projects that match query: ${safeQuerySnippet}`,
+                extra: extra_log,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -606,7 +806,17 @@ router
 
 router
     .post("/delete", function (req, res) {
+        let result = null;
         try {
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/delete",
+                status: "Started",
+                description: `Delete project(s) and all associated data records and raw data. IDs: ${req.body.ids}`,
+            });
+
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn", "p", "alloc"],
@@ -621,7 +831,26 @@ router
                     res.send(result);
                 },
             });
+            logger.logRequestSuccess({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/delete",
+                status: "Success",
+                description: `Delete project(s) and all associated data records and raw data. IDs: ${req.body.ids}`,
+                extra: result,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/delete",
+                status: "Failure",
+                description: `Delete project(s) and all associated data records and raw data. IDs: ${req.body.ids}`,
+                extra: result,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -639,7 +868,17 @@ router
 
 router
     .get("/get_role", function (req, res) {
+        let role = null;
         try {
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/get_role",
+                status: "Started",
+                description: `Get client/subject project role. ID: ${req.queryParams.id}`,
+            });
+
             const client = g_lib.getUserFromClientID(req.queryParams.client);
             var subj;
 
@@ -653,12 +892,32 @@ router
             if (!g_db._exists(req.queryParams.id))
                 throw [error.ERR_NOT_FOUND, "Project, " + req.queryParams.id + ", not found"];
 
-            var role = g_lib.getProjectRole(subj, req.queryParams.id);
+            role = g_lib.getProjectRole(subj, req.queryParams.id);
 
             res.send({
                 role: role,
             });
+
+            logger.logRequestSuccess({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/get_role",
+                status: "Success",
+                description: `Get client/subject project role. ID: ${req.queryParams.id}`,
+                extra: { role: role },
+            });
         } catch (e) {
+            logger.logRequestSuccess({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/get_role",
+                status: "Success",
+                description: `Get client/subject project role. ID: ${req.queryParams.id}`,
+                extra: { role: role },
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
