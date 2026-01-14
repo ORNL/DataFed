@@ -589,4 +589,4 @@ describe("unit_coll_router: /col/create endpoint", () => {
         const pagingInfo = paged.pop().paging;
         expect(pagingInfo).to.deep.equal({ off: offset, cnt: count, tot: 3 });
     });
-}); 
+});
