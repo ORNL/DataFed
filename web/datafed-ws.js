@@ -624,7 +624,7 @@ the registration page.
                                     // Note: context/optional params for arbitrary input
                                     const token_context = {
                                         // passed values are mutable
-                                        resource_server: client_token.data.resource_sever,
+                                        resource_server: client_token.data.resource_server,
                                         collection_id: a_req.session.collection_id,
                                         scope: xfr_token.scope,
                                     };
