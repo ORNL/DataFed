@@ -315,9 +315,7 @@ function storeCollectionId(req, res, next) {
         logger.info(
             "storeCollectionId",
             getCurrentLineNumber(),
-            "DEBUG: Storing Collection ID: " +
-                req.query.collection_id +
-                " to session.",
+            "DEBUG: Storing Collection ID: " + req.query.collection_id + " to session.",
         );
         req.session.save((err) => {
             if (err) {
@@ -665,7 +663,8 @@ the registration page.
                                     logger.info(
                                         "/ui/authn",
                                         getCurrentLineNumber(),
-                                        "DEBUG: Token Context Constructed: " + JSON.stringify(token_context),
+                                        "DEBUG: Token Context Constructed: " +
+                                            JSON.stringify(token_context),
                                     );
                                     try {
                                         const optional_data =
@@ -674,7 +673,8 @@ the registration page.
                                         logger.info(
                                             "/ui/authn",
                                             getCurrentLineNumber(),
-                                            "DEBUG: Optional Data Constructed: " + JSON.stringify(optional_data),
+                                            "DEBUG: Optional Data Constructed: " +
+                                                JSON.stringify(optional_data),
                                         );
 
                                         // Refresh Globus access & refresh tokens to Core/DB
@@ -719,16 +719,6 @@ the registration page.
                                             getCurrentLineNumber(),
                                             "DEBUG: Exception in token handling: " + err,
                                         );
-                                        delete a_req.session.collection_id;
-                                        a_resp.redirect(redirect_path);
-                                    }
-                                                // TODO Account may be disable from SDMS (active = false)
-                                                a_resp.redirect(redirect_path);
-                                            },
-                                        );
-                                    } catch (err) {
-                                        redirect_path = "/ui/error";
-                                        logger.error("/ui/authn", getCurrentLineNumber(), err);
                                         delete a_req.session.collection_id;
                                         a_resp.redirect(redirect_path);
                                     }
