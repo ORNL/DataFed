@@ -181,24 +181,24 @@ describe("unit_query_router: the Foxx microservice qry_router endpoints", () => 
             _key: "fakeCol",
             _id: "col/fakeCol",
             title: "fakeCol",
-            desc: "This is a fake col"
-            }
+            desc: "This is a fake col",
+        };
 
         db.u.save(fakeUser);
-        
+
         // Save the query and the edge between the query and the user
         var request_string = `${qry_base_url}/exec/direct?client=u/fakeUser&owner=u/fakeUser&cols=c/fakeCol&cnt=1&off=0`;
         var body = {
             qry_begin: "FOR i in fake filter i.owner == @owner ",
             qry_end: " sort @off,@cnt RETURN distinct i",
             qry_filter: "",
-            params: "{ \"cnt\": 1, \"off\": 0, \"owner\": \"u/fakeUser\"}",
+            params: '{ "cnt": 1, "off": 0, "owner": "u/fakeUser"}',
             limit: 10,
             mode: 1,
             published: false,
         };
 
-// act
+        // act
         var response = request.post(request_string, {
             json: true,
             body: body,
@@ -209,5 +209,5 @@ describe("unit_query_router: the Foxx microservice qry_router endpoints", () => 
 
         // Assert
         expect(response.status).to.equal(200);
-});
+    });
 });
