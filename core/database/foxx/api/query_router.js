@@ -242,6 +242,7 @@ router
 router
     .get("/view", function (req, res) {
         let qry = undefined;
+        let client = null;
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({

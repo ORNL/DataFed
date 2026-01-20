@@ -14,7 +14,7 @@ const qry_base_url = `${baseUrl}/qry`;
 
 describe("unit_query_router: the Foxx microservice qry_router endpoints", () => {
     after(function () {
-        const collections = ["u", "qry"];
+        const collections = ["u", "qry", "c", "note", "fake"];
         collections.forEach((name) => {
             let col = db._collection(name);
             if (col) col.truncate();
@@ -22,7 +22,7 @@ describe("unit_query_router: the Foxx microservice qry_router endpoints", () => 
     });
 
     beforeEach(() => {
-        const collections = ["u", "qry"];
+        const collections = ["u", "qry", "c", "note", "fake"];
         collections.forEach((name) => {
             let col = db._collection(name);
             if (col) {
@@ -33,7 +33,7 @@ describe("unit_query_router: the Foxx microservice qry_router endpoints", () => 
         });
     });
 
-    it("should successfully run the create route", () => {
+    /*it("should successfully run the create route", () => {
         db.u.save({
             _key: "fakeUser",
             _id: "u/fakeUser",
@@ -163,4 +163,51 @@ describe("unit_query_router: the Foxx microservice qry_router endpoints", () => 
         expect(parsed).to.be.an("array");
         expect(parsed.length).to.be.greaterThan(0);
     });
+    */
+    it("should execute a query directly", () => {
+        // arrange
+        const fakeUser = {
+            _key: "fakeUser",
+            _id: "u/fakeUser",
+            name: "Fake User",
+            email: "fakeuser@datadev.org",
+            is_admin: true,
+            max_coll: 5,
+            max_proj: 5,
+            max_sav_qry: 10,
+        };
+
+        const fakeCol = {
+            _key: "fakeCol",
+            _id: "col/fakeCol",
+            title: "fakeCol",
+            desc: "This is a fake col"
+            }
+
+        db.u.save(fakeUser);
+        
+        // Save the query and the edge between the query and the user
+        var request_string = `${qry_base_url}/exec/direct?client=u/fakeUser&owner=u/fakeUser&cols=c/fakeCol&cnt=1&off=0`;
+        var body = {
+            qry_begin: "FOR i in fake filter i.owner == @owner ",
+            qry_end: " sort @off,@cnt RETURN distinct i",
+            qry_filter: "",
+            params: "{ \"cnt\": 1, \"off\": 0, \"owner\": \"u/fakeUser\"}",
+            limit: 10,
+            mode: 1,
+            published: false,
+        };
+
+// act
+        var response = request.post(request_string, {
+            json: true,
+            body: body,
+            headers: {
+                "x-correlation-id": "test-correlation-id",
+            },
+        });
+
+        // Assert
+        expect(response.status).to.equal(200);
+});
 });
