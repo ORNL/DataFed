@@ -623,6 +623,10 @@ module.exports = (function () {
         // Client ID can be an SDMS uname (xxxxx...), a UUID (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx), or an account (domain.uname)
         // UUID are defined by length and format, accounts have a "." (and known domains), SDMS unames have no "." or "-" characters
 
+        if (!a_client_id) {
+            throw [error.ERR_INVALID_PARAM, "Client ID must be provided"];
+        }
+
         var params;
         console.log("getUserFromClient id: ", a_client_id);
 

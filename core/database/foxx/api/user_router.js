@@ -1890,10 +1890,9 @@ router
 
 router
     .get("/ep/get", function (req, res) {
+        let client = null;
         let first = null;
         try {
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
-            first = client?.eps.length ? client?.eps[0] : undefined;
             logger.logRequestStarted({
                 client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
@@ -1902,6 +1901,8 @@ router
                 status: "Started",
                 description: "Get recent end-points",
             });
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            first = client.eps && client.eps.length ? client.eps[0] : undefined;
 
             res.send(client.eps ? client.eps : []);
             logger.logRequestSuccess({
@@ -1911,7 +1912,7 @@ router
                 routePath: basePath + "/ep/get",
                 status: "Success",
                 description: "Get recent end-points",
-                extra: { most_recent: first, count: client?.eps?.length },
+                extra: { most_recent: first, count: client.eps ? client.eps.length : 0 },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -1921,7 +1922,7 @@ router
                 routePath: basePath + "/ep/get",
                 status: "Failure",
                 description: "Get recent end-points",
-                extra: { most_recent: first, count: client?.eps?.length },
+                extra: { most_recent: first, count: client && client.eps ? client.eps.length : 0 },
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -1933,8 +1934,8 @@ router
 
 router
     .get("/ep/set", function (req, res) {
+        let client = null;
         try {
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
                 client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
@@ -1943,6 +1944,7 @@ router
                 status: "Started",
                 description: "Set recent end-points",
             });
+            client = g_lib.getUserFromClientID(req.queryParams.client);
             g_db._update(
                 client._id,
                 {
@@ -1969,7 +1971,7 @@ router
                 routePath: basePath + "/ep/set",
                 status: "Failure",
                 description: "Set recent end-points",
-                extra: client.eps,
+                extra: client && client.eps ? client.eps : undefined,
                 error: e,
             });
             g_lib.handleException(e, res);

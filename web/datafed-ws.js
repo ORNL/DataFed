@@ -623,6 +623,16 @@ the registration page.
                                         );
                                     }
                                     let username = reply.user[0]?.uid?.replace(/^u\//, "");
+                                    if (!username) {
+                                        logger.error(
+                                            "/ui/authn",
+                                            getCurrentLineNumber(),
+                                            "Error: User identity found but UID is missing or invalid.",
+                                            reply.user,
+                                        );
+                                        a_resp.redirect("/ui/error");
+                                        return;
+                                    }
                                     logger.info(
                                         "/ui/authn",
                                         getCurrentLineNumber(),
