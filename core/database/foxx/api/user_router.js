@@ -902,16 +902,32 @@ router
                                 ); // TODO: the call site and function and docs will need to be updated if changes are made to assumed data
                             // GLOBUS_TRANSFER parse currently assumes uuid and scopes exist
                             let globus_collection;
+
+                            console.log(
+                                "DEBUG: GLOBUS_TRANSFER - Starting token set. Collection Search Key:",
+                                collection_search_key,
+                                "Scopes:",
+                                scopes,
+                            );
+
                             if (
                                 g_db.globus_coll.exists({
                                     _key: collection_search_key,
                                 })
                             ) {
+                                console.log(
+                                    "DEBUG: Collection exists. Fetching document for key:",
+                                    collection_search_key,
+                                );
                                 globus_collection = g_db.globus_coll.document({
                                     _key: collection_search_key,
                                 });
                             } else {
-                                globus_collection = g_db.globus_coll.save({
+                                console.log(
+                                    "DEBUG: Collection does not exist. Creating new collection for key:",
+                                    collection_search_key,
+                                );
+                                const meta = g_db.globus_coll.save({
                                     _key: collection_search_key,
                                     name: "Newly Inserted Collection",
                                     description: "The collection description",
@@ -922,7 +938,43 @@ router
                                     type: "mapped", // mapped/guest TODO: to be pulled from token data on follow-up ticket
                                     ha_enabled: false, // boolean - TODO: to be pulled from token data on follow-up ticket
                                 });
+                                console.log("DEBUG: Collection created. Metadata:", meta);
+                                globus_collection = g_db.globus_coll.document(meta);
                             }
+                            
+                            console.log(
+                                "DEBUG: Globus Collection Object:",
+                                globus_collection,
+                            );
+
+                            const token_key =
+                                globus_collection._key + "_" + token_type + "_" + user_doc._key;
+                            
+                            const dependent_scopes_val = scopes || globus_collection.required_scopes;
+                            console.log("DEBUG: Calculated dependent_scopes:", dependent_scopes_val);
+
+                            const token_doc = {
+                                _key: token_key,
+                                _from: user_id,
+                                _to: globus_collection._id,
+                                type: token_type,
+                                dependent_scopes: dependent_scopes_val,
+                                request_time: Math.floor(Date.now() / 1000),
+                                last_used: Math.floor(Date.now() / 1000),
+                                status:
+                                    obj.expiration > Math.floor(Date.now() / 1000)
+                                        ? "active"
+                                        : "inactive",
+                                ...obj,
+                            };
+
+                            console.log("DEBUG: Saving Token Document:", token_doc);
+
+                            const token_doc_upsert = g_db.globus_token.insert(token_doc, {
+                                overwriteMode: "replace",
+                            });
+                            console.log("DEBUG: Token Insert Result:", token_doc_upsert);
+                            break;
 
                             const token_key =
                                 globus_collection._key + "_" + token_type + "_" + user_doc._key;

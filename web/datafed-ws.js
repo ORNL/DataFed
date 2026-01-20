@@ -312,8 +312,33 @@ function storeCollectionId(req, res, next) {
         req.session.collection_id = req.query.collection_id;
         // TODO: assuming collection is specifically mapped and not HA/other variants
         req.session.collection_type = "mapped";
+        logger.info(
+            "storeCollectionId",
+            getCurrentLineNumber(),
+            "DEBUG: Storing Collection ID: " +
+                req.query.collection_id +
+                " to session.",
+        );
+        req.session.save((err) => {
+            if (err) {
+                logger.error(
+                    "storeCollectionId",
+                    getCurrentLineNumber(),
+                    "DEBUG: Session save error:",
+                    err,
+                );
+            } else {
+                logger.info(
+                    "storeCollectionId",
+                    getCurrentLineNumber(),
+                    "DEBUG: Session saved successfully.",
+                );
+            }
+            next();
+        });
+    } else {
+        next();
     }
-    next();
 }
 
 app.use(cookieParser(g_session_secret));
@@ -619,6 +644,15 @@ the registration page.
                                     a_req.session.uid = username;
                                     a_req.session.reg = true;
 
+                                    logger.info(
+                                        "/ui/authn",
+                                        getCurrentLineNumber(),
+                                        "DEBUG: Session Updated. UID: " +
+                                            username +
+                                            ", CollectionID: " +
+                                            a_req.session.collection_id,
+                                    );
+
                                     let redirect_path = "/ui/main";
 
                                     // Note: context/optional params for arbitrary input
@@ -628,13 +662,29 @@ the registration page.
                                         collection_id: a_req.session.collection_id,
                                         scope: xfr_token.scope,
                                     };
+                                    logger.info(
+                                        "/ui/authn",
+                                        getCurrentLineNumber(),
+                                        "DEBUG: Token Context Constructed: " + JSON.stringify(token_context),
+                                    );
                                     try {
                                         const optional_data =
                                             token_handler.constructOptionalData(token_context);
 
+                                        logger.info(
+                                            "/ui/authn",
+                                            getCurrentLineNumber(),
+                                            "DEBUG: Optional Data Constructed: " + JSON.stringify(optional_data),
+                                        );
+
                                         // Refresh Globus access & refresh tokens to Core/DB
                                         // NOTE: core services seem entirely in charge of refreshing tokens once they are set (ClientWorker.cpp).
                                         // This should only be triggered when new tokens are coming in, like when a token expires or a transfer token is created.
+                                        logger.info(
+                                            "/ui/authn",
+                                            getCurrentLineNumber(),
+                                            "DEBUG: Calling setAccessToken...",
+                                        );
                                         setAccessToken(
                                             a_req.session.uid,
                                             xfr_token.access_token,
@@ -647,10 +697,31 @@ the registration page.
                                                     logger.error(
                                                         "/ui/authn",
                                                         getCurrentLineNumber(),
-                                                        err,
+                                                        "DEBUG: setAccessToken Failed: " + err,
                                                     );
                                                     delete a_req.session.collection_id;
+                                                } else {
+                                                    logger.info(
+                                                        "/ui/authn",
+                                                        getCurrentLineNumber(),
+                                                        "DEBUG: setAccessToken Success. Redirecting to " +
+                                                            redirect_path,
+                                                    );
                                                 }
+                                                // TODO Account may be disable from SDMS (active = false)
+                                                a_resp.redirect(redirect_path);
+                                            },
+                                        );
+                                    } catch (err) {
+                                        redirect_path = "/ui/error";
+                                        logger.error(
+                                            "/ui/authn",
+                                            getCurrentLineNumber(),
+                                            "DEBUG: Exception in token handling: " + err,
+                                        );
+                                        delete a_req.session.collection_id;
+                                        a_resp.redirect(redirect_path);
+                                    }
                                                 // TODO Account may be disable from SDMS (active = false)
                                                 a_resp.redirect(redirect_path);
                                             },
