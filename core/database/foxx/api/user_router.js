@@ -941,17 +941,18 @@ router
                                 console.log("DEBUG: Collection created. Metadata:", meta);
                                 globus_collection = g_db.globus_coll.document(meta);
                             }
-                            
-                            console.log(
-                                "DEBUG: Globus Collection Object:",
-                                globus_collection,
-                            );
+
+                            console.log("DEBUG: Globus Collection Object:", globus_collection);
 
                             const token_key =
                                 globus_collection._key + "_" + token_type + "_" + user_doc._key;
-                            
-                            const dependent_scopes_val = scopes || globus_collection.required_scopes;
-                            console.log("DEBUG: Calculated dependent_scopes:", dependent_scopes_val);
+
+                            const dependent_scopes_val =
+                                scopes || globus_collection.required_scopes;
+                            console.log(
+                                "DEBUG: Calculated dependent_scopes:",
+                                dependent_scopes_val,
+                            );
 
                             const token_doc = {
                                 _key: token_key,
@@ -975,7 +976,6 @@ router
                             });
                             console.log("DEBUG: Token Insert Result:", token_doc_upsert);
                             break;
-
                         }
                         case g_lib.AccessTokenType.GLOBUS_DEFAULT: {
                             // Existing logic, default actions
