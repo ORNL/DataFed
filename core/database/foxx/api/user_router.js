@@ -931,7 +931,7 @@ router
                                 _from: user_id, // the uid field
                                 _to: globus_collection._id,
                                 type: token_type,
-                                dependent_scopes: scopes,
+                                dependent_scopes: scopes || globus_collection.required_scopes,
                                 request_time: Math.floor(Date.now() / 1000),
                                 last_used: Math.floor(Date.now() / 1000),
                                 status:

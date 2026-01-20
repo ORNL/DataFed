@@ -641,15 +641,26 @@ the registration page.
                                             xfr_token.refresh_token,
                                             xfr_token.expires_in,
                                             optional_data,
+                                            (err) => {
+                                                if (err) {
+                                                    redirect_path = "/ui/error";
+                                                    logger.error(
+                                                        "/ui/authn",
+                                                        getCurrentLineNumber(),
+                                                        err,
+                                                    );
+                                                    delete a_req.session.collection_id;
+                                                }
+                                                // TODO Account may be disable from SDMS (active = false)
+                                                a_resp.redirect(redirect_path);
+                                            },
                                         );
                                     } catch (err) {
                                         redirect_path = "/ui/error";
                                         logger.error("/ui/authn", getCurrentLineNumber(), err);
                                         delete a_req.session.collection_id;
+                                        a_resp.redirect(redirect_path);
                                     }
-
-                                    // TODO Account may be disable from SDMS (active = false)
-                                    a_resp.redirect(redirect_path);
                                 }
                             },
                         );
@@ -751,25 +762,32 @@ app.get("/api/usr/register", (a_req, a_resp) => {
                             a_req.session.acc_tok,
                             a_req.session.ref_tok,
                             a_req.session.acc_tok_ttl,
+                            {},
+                            (err) => {
+                                if (err) {
+                                    logger.error("/api/usr/register", getCurrentLineNumber(), err);
+                                    a_resp.status(500).send("Registration failed during token set");
+                                    return;
+                                }
+                                // Remove data not needed for active session
+                                delete a_req.session.name;
+                                delete a_req.session.email;
+                                delete a_req.session.uuids;
+                                delete a_req.session.acc_tok;
+                                delete a_req.session.acc_tok_ttl;
+                                delete a_req.session.ref_tok;
+                                delete a_req.session.uuids;
+
+                                // Set session as registered user
+                                a_req.session.reg = true;
+
+                                a_resp.send(reply);
+                            },
                         );
                     } catch (err) {
                         logger.error("/api/usr/register", getCurrentLineNumber(), err);
                         throw err;
-                    } finally {
-                        // Remove data not needed for active session
-                        delete a_req.session.name;
-                        delete a_req.session.email;
-                        delete a_req.session.uuids;
-                        delete a_req.session.acc_tok;
-                        delete a_req.session.acc_tok_ttl;
-                        delete a_req.session.ref_tok;
-                        delete a_req.session.uuids;
                     }
-
-                    // Set session as registered user
-                    a_req.session.reg = true;
-
-                    a_resp.send(reply);
                 }
             },
         );
@@ -2005,7 +2023,14 @@ app.get("/ui/theme/save", (a_req, a_resp) => {
  *
  * @throws Error - When a reply is not received from sendMessageDirect
  */
-function setAccessToken(a_uid, a_acc_tok, a_ref_tok, a_expires_sec, token_optional_params = {}) {
+function setAccessToken(
+    a_uid,
+    a_acc_tok,
+    a_ref_tok,
+    a_expires_sec,
+    token_optional_params = {},
+    a_cb = null,
+) {
     logger.info(
         setAccessToken.name,
         getCurrentLineNumber(),
@@ -2019,8 +2044,13 @@ function setAccessToken(a_uid, a_acc_tok, a_ref_tok, a_expires_sec, token_option
         // Should be an AckReply
         if (!reply) {
             logger.error("setAccessToken", getCurrentLineNumber(), "failed.");
+            if (a_cb) {
+                a_cb(new Error("setAccessToken failed"));
+                return;
+            }
             throw new Error("setAccessToken failed");
         }
+        if (a_cb) a_cb(null, reply);
     });
 }
 
