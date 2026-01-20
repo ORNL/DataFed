@@ -901,10 +901,16 @@ router
                                     other_token_data,
                                 ); // TODO: the call site and function and docs will need to be updated if changes are made to assumed data
                             // GLOBUS_TRANSFER parse currently assumes uuid and scopes exist
-                            let globus_collection = g_db.globus_coll.exists({
-                                _key: collection_search_key,
-                            });
-                            if (!globus_collection) {
+                            let globus_collection;
+                            if (
+                                g_db.globus_coll.exists({
+                                    _key: collection_search_key,
+                                })
+                            ) {
+                                globus_collection = g_db.globus_coll.document({
+                                    _key: collection_search_key,
+                                });
+                            } else {
                                 globus_collection = g_db.globus_coll.save({
                                     _key: collection_search_key,
                                     name: "Newly Inserted Collection",
