@@ -976,27 +976,6 @@ router
                             console.log("DEBUG: Token Insert Result:", token_doc_upsert);
                             break;
 
-                            const token_key =
-                                globus_collection._key + "_" + token_type + "_" + user_doc._key;
-                            const token_doc = {
-                                _key: token_key,
-                                _from: user_id, // the uid field
-                                _to: globus_collection._id,
-                                type: token_type,
-                                dependent_scopes: scopes || globus_collection.required_scopes,
-                                request_time: Math.floor(Date.now() / 1000),
-                                last_used: Math.floor(Date.now() / 1000),
-                                status:
-                                    obj.expiration > Math.floor(Date.now() / 1000)
-                                        ? "active"
-                                        : "inactive",
-                                ...obj,
-                            };
-
-                            const token_doc_upsert = g_db.globus_token.insert(token_doc, {
-                                overwriteMode: "replace", // TODO: perhaps use 'update' and specify values for true upsert.
-                            });
-                            break;
                         }
                         case g_lib.AccessTokenType.GLOBUS_DEFAULT: {
                             // Existing logic, default actions
