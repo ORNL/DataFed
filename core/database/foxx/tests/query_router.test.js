@@ -163,7 +163,7 @@ describe("unit_query_router: the Foxx microservice qry_router endpoints", () => 
         expect(parsed).to.be.an("array");
         expect(parsed.length).to.be.greaterThan(0);
     });
-    
+
     it("should execute a query directly", () => {
         // arrange
         const fakeUser = {
