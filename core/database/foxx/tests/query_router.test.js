@@ -33,7 +33,7 @@ describe("unit_query_router: the Foxx microservice qry_router endpoints", () => 
         });
     });
 
-    /*it("should successfully run the create route", () => {
+    it("should successfully run the create route", () => {
         db.u.save({
             _key: "fakeUser",
             _id: "u/fakeUser",
@@ -163,7 +163,7 @@ describe("unit_query_router: the Foxx microservice qry_router endpoints", () => 
         expect(parsed).to.be.an("array");
         expect(parsed.length).to.be.greaterThan(0);
     });
-    */
+    
     it("should execute a query directly", () => {
         // arrange
         const fakeUser = {

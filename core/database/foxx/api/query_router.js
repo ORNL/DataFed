@@ -649,7 +649,7 @@ router
     .get("/exec", function (req, res) {
         let results = undefined;
         try {
-            var client = g_lib.getUserFromClientID(req.queryParams.client);
+            let client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
                 client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
