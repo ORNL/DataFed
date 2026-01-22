@@ -89,7 +89,7 @@ Server::~Server() {
 }
 
 void Server::loadKeys(const std::string &a_cred_dir) {
-  string fname = a_cred_dir + "mock-datafed-core-key.pub";
+  string fname = a_cred_dir + "datafed-mock-core-key.pub";
   ifstream inf(fname.c_str());
   if (!inf.is_open() || !inf.good()) {
     EXCEPT_PARAM(1, std::string("Could not open public key file: ") + fname);
@@ -97,7 +97,7 @@ void Server::loadKeys(const std::string &a_cred_dir) {
   inf >> m_pub_key;
   inf.close();
 
-  fname = a_cred_dir + "mock-datafed-core-key.priv";
+  fname = a_cred_dir + "datafed-mock-core-key.priv";
   inf.open(fname.c_str());
   if (!inf.is_open() || !inf.good())
     EXCEPT_PARAM(1, std::string("Could not open private key file: ") + fname);

@@ -77,9 +77,9 @@
             fi
             if [ "$FORCE_BUILD" == "TRUE" ]
             then
-              cp .gitlab/build/force_build_${COMPONENT}_image.yml ${COMPONENT}_image.yml
+              cp .gitlab/build/force_build_${COMPONENT//-/_}_image.yml ${COMPONENT//-/_}_image.yml
             else
-              cp .gitlab/build/build_${COMPONENT}_image.yml ${COMPONENT}_image.yml
+              cp .gitlab/build/build_${COMPONENT//-/_}_image.yml ${COMPONENT//-/_}_image.yml
             fi
             echo "REGISTRY=${REGISTRY}" >> build.env
             echo "HARBOR_USER=${HARBOR_USER}" >> build.env
@@ -87,7 +87,7 @@
             sed -i 's/\(HARBOR_USER=.*\)\$/\1$$/g' build.env
     artifacts:
         paths:
-            - ${COMPONENT}_image.yml
+            - ${COMPONENT//-/_}_image.yml
         reports:
             dotenv: build.env
 

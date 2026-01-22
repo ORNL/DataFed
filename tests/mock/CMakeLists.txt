@@ -17,7 +17,7 @@ foreach(PROG
   # public key is visble
 	add_test(NAME mock_liveness_${PROG} 
     COMMAND ${CMAKE_CURRENT_BINARY_DIR}/mock_liveness_${PROG} 
-      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/tests/mock_core
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/tests/mock_core/source
 	)
   set_tests_properties(mock_liveness_${PROG} PROPERTIES FIXTURES_REQUIRED FIX_MOCK)
 

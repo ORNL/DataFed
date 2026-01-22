@@ -2,7 +2,10 @@
 // Local include
 #include "AuthenticationManager.hpp"
 
+#include "MockGlobals.hpp"
+
 // Common includes
+#include "common/DynaLog.hpp"
 #include "common/TraceException.hpp"
 
 // Standard includes
@@ -23,6 +26,12 @@ AuthenticationManager::AuthenticationManager(
   for (const auto &purge_int : m_purge_interval) {
     m_next_purge[purge_int.first] = time(0) + purge_int.second;
   }
+
+  // Mocking adding dummy values for formerly authenticated users.
+  // This user will be assumed to be authenticated.
+  m_auth_mapper.addKey(PublicKeyType::SESSION,
+                       MockGlobals::test_user_public_key,
+                       MockGlobals::authenticated_test_user);
 }
 
 AuthenticationManager &
@@ -80,12 +89,19 @@ void AuthenticationManager::incrementKeyAccessCounter(
 bool AuthenticationManager::hasKey(const std::string &public_key) const {
   std::lock_guard<std::mutex> lock(m_lock);
   if (m_auth_mapper.hasKey(PublicKeyType::TRANSIENT, public_key)) {
+    DL_INFO(m_log_context,
+            "TRANSIENT key is found to be authenticated " << public_key)
     return true;
   } else if (m_auth_mapper.hasKey(PublicKeyType::SESSION, public_key)) {
+    DL_INFO(m_log_context,
+            "SESSION key is found to be authenticated " << public_key)
     return true;
   } else if (m_auth_mapper.hasKey(PublicKeyType::PERSISTENT, public_key)) {
+    DL_INFO(m_log_context,
+            "PERSISTENT key is found to be authenticated " << public_key)
     return true;
   }
+  DL_INFO(m_log_context, "Key is not authenticated " << public_key)
   return false;
 }
 

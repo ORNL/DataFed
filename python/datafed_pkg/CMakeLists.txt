@@ -33,6 +33,7 @@ foreach(file ${ScriptFiles})
 endforeach()
 
 add_subdirectory( datafed )
+add_subdirectory( tests/integration )
 
 add_custom_target( pydatafed )
 add_dependencies( pydatafed pydatafed_src)
