@@ -3,6 +3,7 @@ import * as util from "./util.js";
 import * as settings from "./settings.js";
 import { TransferMode } from "./models/transfer-model.js";
 import { EndpointModel } from "./models/endpoint-model.js";
+import { randomBytes } from 'crypto';
 
 export function _asyncGet(a_url, a_raw_json_data, a_callback, a_timeout) {
     $.ajax({
@@ -1020,9 +1021,7 @@ export function themeSave(a_theme, a_cb) {
 }
 
 function generateState() {
-    const array = new Uint8Array(16);
-    window.crypto.getRandomValues(array);
-    return Array.from(array, (b) => b.toString(16).padStart(2, "0")).join("");
+    return randomBytes(16).toString('hex');
 }
 
 export function getGlobusConsentURL(
