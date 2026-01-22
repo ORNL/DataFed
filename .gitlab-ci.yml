@@ -26,6 +26,7 @@ include:
     - local: .gitlab/stage_test.yml
     - local: .gitlab/stage_unit.yml
     - local: .gitlab/end_to_end.yml
+    - local: .gitlab/stage_deploy_pypi.yml
 
 stages:
     - pipeline-serialize

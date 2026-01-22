@@ -1,0 +1,92 @@
+# GitLab CI configuration for deploying DataFed Python package to PyPI
+#
+# This job builds the Python package fresh and deploys it to PyPI using twine.
+# The version numbers are automatically determined from cmake/Version.cmake.
+#
+# Required GitLab CI/CD Variables:
+# - PYPI_PASSWORD: PyPI password or API token
+#
+# Optional Variables (with defaults):
+# - PYPI_USERNAME: PyPI username (default: "__token__" for API token auth)
+# - PYPI_PRERELEASE: If "true", append pre-release identifier (default: "true")
+# - PYPI_REPOSITORY_URL: PyPI repository URL (default: "https://upload.pypi.org/legacy/" for production PyPI)
+#                        Use "https://test.pypi.org/legacy/" for TestPyPI
+# - DATAFED_PYPI_REPO: PyPI package name (default: "datafed")
+#                      Use a different name like "datafed-dev" to upload to a different package on PyPI
+
+.deploy_pypi_base:
+    stage: deploy-pypi-package
+    variables:
+        PYPI_USERNAME: "__token__"
+        PYPI_PRERELEASE: "true"
+        PYPI_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
+        DATAFED_PYPI_REPO: "datafed"
+    before_script:
+        - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
+    script:
+        - DOWNSTREAM_SHA=$( git submodule status ./external/DataFedDependencies/ | awk '{print $1}' )
+        - DOWNSTREAM_SHA=${DOWNSTREAM_SHA#-}
+        - mkdir -p dist
+
+        # Modify Version.cmake to add pre-release identifier if needed
+        - |
+            if [ "${PYPI_PRERELEASE}" = "true" ]; then
+              echo "Building package with pre-release identifier (rc${CI_PIPELINE_IID})..."
+              sed -i "s/set(DATAFED_PYTHON_CLIENT_RELEASE_TYPE \"\")/set(DATAFED_PYTHON_CLIENT_RELEASE_TYPE \"rc\")/" cmake/Version.cmake
+              sed -i "s/set(DATAFED_PYTHON_CLIENT_PRE_RELEASE_IDENTIFER \"\")/set(DATAFED_PYTHON_CLIENT_PRE_RELEASE_IDENTIFER \"${CI_PIPELINE_IID}\")/" cmake/Version.cmake
+            else
+              echo "Building package as full release..."
+            fi
+
+        # Build the Python package using existing Dockerfile
+        - |
+            docker build \
+              --build-arg DEPENDENCIES="${REGISTRY}/datafed/dependencies:$DOWNSTREAM_SHA" \
+              --build-arg DATAFED_PYPI_REPO="${DATAFED_PYPI_REPO}" \
+              -f python/datafed_pkg/docker/Dockerfile \
+              -t datafed-python-client-deploy:latest \
+              .
+
+        # Extract packages
+        - docker run --rm -v "$(pwd)/dist:/output" datafed-python-client-deploy:latest sh -c "cp /dist/* /output/"
+
+        # Restore Version.cmake to original state if modified
+        - |
+            if [ "${PYPI_PRERELEASE}" = "true" ]; then
+              git checkout cmake/Version.cmake
+            fi
+
+        # Verify packages exist
+        - ls -lh dist/
+
+        # Upload to PyPI using twine
+        - |
+            docker run --rm \
+              -v "$(pwd)/dist:/dist" \
+              -e PYPI_USERNAME="${PYPI_USERNAME}" \
+              -e PYPI_PASSWORD="${PYPI_PASSWORD}" \
+              -e PYPI_REPOSITORY_URL="${PYPI_REPOSITORY_URL}" \
+              datafed-python-client-deploy:latest \
+              sh -c "twine upload --non-interactive --repository-url \$PYPI_REPOSITORY_URL --username \$PYPI_USERNAME --password \$PYPI_PASSWORD /dist/*"
+    artifacts:
+        paths:
+            - dist/
+        expire_in: 1 week
+    tags:
+        - docker
+
+# Manual deployment job - can be triggered via button in GitLab UI
+deploy:pypi:manual:
+    extends: .deploy_pypi_base
+    when: manual
+    rules:
+        - when: manual
+
+# Automatic deployment on tags (optional - commented out by default)
+# Uncomment to enable automatic deployment when tags are pushed
+# deploy:pypi:tag:
+#     extends: .deploy_pypi_base
+#     needs:
+#         - job: run-python-client-build-job
+#     only:
+#         - tags

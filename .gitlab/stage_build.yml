@@ -102,3 +102,19 @@ run-foxx-build-job:
         REGISTRY: "${REGISTRY}"
         HARBOR_USER: "${HARBOR_USER}"
         HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
+
+run-python-client-build-job:
+    needs:
+        - job: run-build-dependencies
+        - job: check-python-client-image
+          artifacts: true
+    stage: build
+    trigger:
+        include:
+            - artifact: python_client_image.yml
+              job: check-python-client-image
+        strategy: depend
+    variables:
+        REGISTRY: "${REGISTRY}"
+        HARBOR_USER: "${HARBOR_USER}"
+        HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN: "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"

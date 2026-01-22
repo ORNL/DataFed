@@ -50,3 +50,11 @@ check-foxx-image:
         PROJECT: "datafed"
         COMPONENT: "foxx"
         BUILD_INTERMEDIATE: "FALSE"
+
+check-python-client-image:
+    extends: .image_check
+    stage: image-check
+    variables:
+        PROJECT: "datafed"
+        COMPONENT: "python_client"
+        BUILD_INTERMEDIATE: "FALSE"
