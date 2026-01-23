@@ -117,7 +117,6 @@ $(document).ready(function () {
                                 }
                             } else {
                                 console.log("Restored selection:", selectedPath);
-                            }
                             } else {
                                 console.log("Restored selection:", selectedPath);
                             }
