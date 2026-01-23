@@ -82,58 +82,6 @@ $(document).ready(function () {
                         });
                     }
                 }
-
-                if (tmpl_data.restore_state.endpoint_browser) {
-                    import("/components/endpoint-browse/index.js").then((module) => {
-                        const { endpoint, path, mode } = tmpl_data.restore_state.endpoint_browser;
-                        module.show(endpoint, path, mode, (selectedPath) => {
-                            // Update parent dialog if open
-                            if (parentState?.type === "d_new_edit") {
-                                const new_data_dlg = $("#d_new_edit");
-                                if (new_data_dlg.length && new_data_dlg.dialog("isOpen")) {
-                                    new_data_dlg.find("#source_file").val(selectedPath);
-                                }
-                            } else if (parentState?.type === "transfer") {
-                                // Update path in transfer dialog
-                                const transfer_dlg_content =
-                                    $("#records").closest(".ui-dialog-content");
-                                if (
-                                    transfer_dlg_content.length &&
-                                    transfer_dlg_content.dialog("isOpen")
-                                ) {
-                                    const controller = transfer_dlg_content.data("controller");
-                                    const epName =
-                                        endpoint.canonical_name || endpoint.name || endpoint.id;
-
-                                    if (controller && epName) {
-                                        // Update controller state to match the browsed endpoint
-                                        if (
-                                            !controller.endpointManager.state.currentEndpoint ||
-                                            controller.endpointManager.state.currentEndpoint.id !==
-                                                endpoint.id
-                                        ) {
-                                            controller.endpointManager.state.currentEndpoint = {
-                                                ...endpoint,
-                                                name: epName,
-                                            };
-                                        }
-                                    }
-
-                                    // Construct full path
-                                    // Browse callback returns path with leading slash usually
-                                    let newVal = selectedPath;
-                                    if (epName && !selectedPath.startsWith(epName)) {
-                                        newVal = epName + selectedPath;
-                                    }
-
-                                    transfer_dlg_content.find("#path").val(newVal).trigger("input");
-                                }
-                            } else {
-                                console.log("Restored selection:", selectedPath);
-                            }
-                        });
-                    });
-                }
             }
 
             util.setStatusText("DataFed Ready");
