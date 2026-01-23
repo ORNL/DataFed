@@ -328,6 +328,8 @@ class EndpointBrowser {
 
                     // Check if "New Data Record" dialog is open and save its state
                     const new_data_dlg = $("#d_new_edit");
+                    const transfer_dlg_content = $("#records").closest(".ui-dialog-content");
+
                     if (new_data_dlg.length && new_data_dlg.dialog("isOpen")) {
                         const metadata_editor = ace.edit(new_data_dlg.find("#md")[0]);
                         stateObj.parent_dialog = {
@@ -342,6 +344,18 @@ class EndpointBrowser {
                                 parentId: new_data_dlg.find("#coll").val(),
                             },
                         };
+                    } else if (
+                        transfer_dlg_content.length &&
+                        transfer_dlg_content.dialog("isOpen")
+                    ) {
+                        const controller = transfer_dlg_content.data("controller");
+                        if (controller) {
+                            stateObj.parent_dialog = {
+                                type: "transfer",
+                                mode: controller.model.mode,
+                                records: controller.ids,
+                            };
+                        }
                     }
 
                     const state = JSON.stringify(stateObj);

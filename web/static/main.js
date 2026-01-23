@@ -62,23 +62,50 @@ $(document).ready(function () {
             browser_tab.init();
 
             if (tmpl_data.restore_state) {
-                if (
-                    tmpl_data.restore_state.parent_dialog &&
-                    tmpl_data.restore_state.parent_dialog.type === "d_new_edit"
-                ) {
-                    import("/dlg_data_new_edit.js").then((module) => {
-                        const { mode, data } = tmpl_data.restore_state.parent_dialog;
-                        module.show(mode, data, data.parentId);
-                    });
+                const parentState = tmpl_data.restore_state.parent_dialog;
+
+                if (parentState) {
+                    if (parentState.type === "d_new_edit") {
+                        import("/dlg_data_new_edit.js").then((module) => {
+                            const { mode, data } = parentState;
+                            module.show(mode, data, data.parentId);
+                        });
+                    } else if (parentState.type === "transfer") {
+                        import("/components/transfer/index.js").then((module) => {
+                            const { mode, records } = parentState;
+                            // Re-open transfer dialog
+                            module.transferDialog.show(mode, records, () => {
+                                // Default callback if needed, usually this refreshes view
+                                // but we might not have context.
+                                console.log("Restored transfer dialog completed");
+                            });
+                        });
+                    }
                 }
 
                 if (tmpl_data.restore_state.endpoint_browser) {
                     import("/components/endpoint-browse/index.js").then((module) => {
                         const { endpoint, path, mode } = tmpl_data.restore_state.endpoint_browser;
                         module.show(endpoint, path, mode, (selectedPath) => {
-                            const new_data_dlg = $("#d_new_edit");
-                            if (new_data_dlg.length && new_data_dlg.dialog("isOpen")) {
-                                new_data_dlg.find("#source_file").val(selectedPath);
+                            // Update parent dialog if open
+                            if (parentState?.type === "d_new_edit") {
+                                const new_data_dlg = $("#d_new_edit");
+                                if (new_data_dlg.length && new_data_dlg.dialog("isOpen")) {
+                                    new_data_dlg.find("#source_file").val(selectedPath);
+                                }
+                            } else if (parentState?.type === "transfer") {
+                                // Update path in transfer dialog
+                                const transfer_dlg_content = $("#records").closest(
+                                    ".ui-dialog-content",
+                                );
+                                if (
+                                    transfer_dlg_content.length &&
+                                    transfer_dlg_content.dialog("isOpen")
+                                ) {
+                                    transfer_dlg_content.find("#path").val(selectedPath);
+                                    // Trigger input event to update browse logic if needed
+                                    // But typically just setting value is enough for user confirmation
+                                }
                             } else {
                                 console.log("Restored selection:", selectedPath);
                             }
