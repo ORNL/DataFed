@@ -689,7 +689,7 @@ the registration page.
                                     logger.info(
                                         "/ui/authn",
                                         getCurrentLineNumber(),
-                                        "DEBUG: Session Updated. UID: " +
+                                        "Session Updated. UID: " +
                                             username +
                                             ", CollectionID: " +
                                             a_req.session.collection_id,
@@ -704,31 +704,13 @@ the registration page.
                                         collection_id: a_req.session.collection_id,
                                         scope: xfr_token.scope,
                                     };
-                                    logger.info(
-                                        "/ui/authn",
-                                        getCurrentLineNumber(),
-                                        "DEBUG: Token Context Constructed: " +
-                                            JSON.stringify(token_context),
-                                    );
                                     try {
                                         const optional_data =
                                             token_handler.constructOptionalData(token_context);
 
-                                        logger.info(
-                                            "/ui/authn",
-                                            getCurrentLineNumber(),
-                                            "DEBUG: Optional Data Constructed: " +
-                                                JSON.stringify(optional_data),
-                                        );
-
                                         // Refresh Globus access & refresh tokens to Core/DB
                                         // NOTE: core services seem entirely in charge of refreshing tokens once they are set (ClientWorker.cpp).
                                         // This should only be triggered when new tokens are coming in, like when a token expires or a transfer token is created.
-                                        logger.info(
-                                            "/ui/authn",
-                                            getCurrentLineNumber(),
-                                            "DEBUG: Calling setAccessToken...",
-                                        );
                                         setAccessToken(
                                             a_req.session.uid,
                                             xfr_token.access_token,
@@ -741,14 +723,14 @@ the registration page.
                                                     logger.error(
                                                         "/ui/authn",
                                                         getCurrentLineNumber(),
-                                                        "DEBUG: setAccessToken Failed: " + err,
+                                                        "setAccessToken Failed: " + err,
                                                     );
                                                     delete a_req.session.collection_id;
                                                 } else {
                                                     logger.info(
                                                         "/ui/authn",
                                                         getCurrentLineNumber(),
-                                                        "DEBUG: setAccessToken Success. Redirecting to " +
+                                                        "setAccessToken Success. Redirecting to " +
                                                             redirect_path,
                                                     );
                                                 }
@@ -761,7 +743,7 @@ the registration page.
                                         logger.error(
                                             "/ui/authn",
                                             getCurrentLineNumber(),
-                                            "DEBUG: Exception in token handling: " + err,
+                                            "Exception in token handling: " + err,
                                         );
                                         delete a_req.session.collection_id;
                                         a_resp.redirect(redirect_path);

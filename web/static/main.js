@@ -77,7 +77,6 @@ $(document).ready(function () {
                             module.transferDialog.show(mode, records, () => {
                                 // Default callback if needed, usually this refreshes view
                                 // but we might not have context.
-                                console.log("Restored transfer dialog completed");
                             });
                         });
                     }
