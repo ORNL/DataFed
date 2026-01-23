@@ -103,16 +103,15 @@ $(document).ready(function () {
                                 ) {
                                     const currentVal = transfer_dlg_content.find("#path").val();
                                     const prefix =
-                                        endpoint.name &&
-                                        currentVal.startsWith(endpoint.name)
+                                        endpoint.name && currentVal.startsWith(endpoint.name)
                                             ? endpoint.name
                                             : "";
-                                    
+
                                     let newVal = selectedPath;
                                     if (prefix && !selectedPath.startsWith(prefix)) {
-                                         newVal = prefix + selectedPath;
+                                        newVal = prefix + selectedPath;
                                     }
-                                    
+
                                     transfer_dlg_content.find("#path").val(newVal);
                                 }
                             } else {
