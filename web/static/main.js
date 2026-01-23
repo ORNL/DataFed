@@ -95,9 +95,8 @@ $(document).ready(function () {
                                 }
                             } else if (parentState?.type === "transfer") {
                                 // Update path in transfer dialog
-                                const transfer_dlg_content = $("#records").closest(
-                                    ".ui-dialog-content",
-                                );
+                                const transfer_dlg_content =
+                                    $("#records").closest(".ui-dialog-content");
                                 if (
                                     transfer_dlg_content.length &&
                                     transfer_dlg_content.dialog("isOpen")
