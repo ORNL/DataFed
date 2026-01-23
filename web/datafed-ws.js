@@ -670,11 +670,6 @@ the registration page.
                                                 state_obj.restore_state
                                             ) {
                                                 a_req.session.restore_state = state_obj;
-                                                logger.info(
-                                                    "/ui/authn",
-                                                    getCurrentLineNumber(),
-                                                    "Restorable state found and saved to session.",
-                                                );
                                             }
                                         } catch (e) {
                                             // State was not JSON or valid, ignore
@@ -685,15 +680,6 @@ the registration page.
                                             );
                                         }
                                     }
-
-                                    logger.info(
-                                        "/ui/authn",
-                                        getCurrentLineNumber(),
-                                        "Session Updated. UID: " +
-                                            username +
-                                            ", CollectionID: " +
-                                            a_req.session.collection_id,
-                                    );
 
                                     let redirect_path = "/ui/main";
 
@@ -726,13 +712,6 @@ the registration page.
                                                         "setAccessToken Failed: " + err,
                                                     );
                                                     delete a_req.session.collection_id;
-                                                } else {
-                                                    logger.info(
-                                                        "/ui/authn",
-                                                        getCurrentLineNumber(),
-                                                        "setAccessToken Success. Redirecting to " +
-                                                            redirect_path,
-                                                    );
                                                 }
                                                 // TODO Account may be disable from SDMS (active = false)
                                                 a_resp.redirect(redirect_path);

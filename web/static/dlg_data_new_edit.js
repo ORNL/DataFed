@@ -147,7 +147,6 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
         }
 
         api.metadataValidate(sch_id, jsoned.getValue(), function (ok, data) {
-            //console.log("val res:", ok, data );
             if (ok) {
                 if (data.errors) {
                     $("#md_err_msg", frame).text(data.errors).show();

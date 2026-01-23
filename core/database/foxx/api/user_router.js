@@ -903,30 +903,15 @@ router
                             // GLOBUS_TRANSFER parse currently assumes uuid and scopes exist
                             let globus_collection;
 
-                            console.log(
-                                "DEBUG: GLOBUS_TRANSFER - Starting token set. Collection Search Key:",
-                                collection_search_key,
-                                "Scopes:",
-                                scopes,
-                            );
-
                             if (
                                 g_db.globus_coll.exists({
                                     _key: collection_search_key,
                                 })
                             ) {
-                                console.log(
-                                    "DEBUG: Collection exists. Fetching document for key:",
-                                    collection_search_key,
-                                );
                                 globus_collection = g_db.globus_coll.document({
                                     _key: collection_search_key,
                                 });
                             } else {
-                                console.log(
-                                    "DEBUG: Collection does not exist. Creating new collection for key:",
-                                    collection_search_key,
-                                );
                                 const meta = g_db.globus_coll.save({
                                     _key: collection_search_key,
                                     name: "Newly Inserted Collection",
@@ -938,21 +923,14 @@ router
                                     type: "mapped", // mapped/guest TODO: to be pulled from token data on follow-up ticket
                                     ha_enabled: false, // boolean - TODO: to be pulled from token data on follow-up ticket
                                 });
-                                console.log("DEBUG: Collection created. Metadata:", meta);
                                 globus_collection = g_db.globus_coll.document(meta);
                             }
-
-                            console.log("DEBUG: Globus Collection Object:", globus_collection);
 
                             const token_key =
                                 globus_collection._key + "_" + token_type + "_" + user_doc._key;
 
                             const dependent_scopes_val =
                                 scopes || globus_collection.required_scopes;
-                            console.log(
-                                "DEBUG: Calculated dependent_scopes:",
-                                dependent_scopes_val,
-                            );
 
                             const token_doc = {
                                 _key: token_key,
@@ -969,12 +947,9 @@ router
                                 ...obj,
                             };
 
-                            console.log("DEBUG: Saving Token Document:", token_doc);
-
                             const token_doc_upsert = g_db.globus_token.insert(token_doc, {
                                 overwriteMode: "replace",
                             });
-                            console.log("DEBUG: Token Insert Result:", token_doc_upsert);
                             break;
                         }
                         case g_lib.AccessTokenType.GLOBUS_DEFAULT: {
