@@ -101,10 +101,23 @@ $(document).ready(function () {
                                     transfer_dlg_content.length &&
                                     transfer_dlg_content.dialog("isOpen")
                                 ) {
-                                    transfer_dlg_content.find("#path").val(selectedPath);
-                                    // Trigger input event to update browse logic if needed
-                                    // But typically just setting value is enough for user confirmation
+                                    const currentVal = transfer_dlg_content.find("#path").val();
+                                    const prefix =
+                                        endpoint.name &&
+                                        currentVal.startsWith(endpoint.name)
+                                            ? endpoint.name
+                                            : "";
+                                    
+                                    let newVal = selectedPath;
+                                    if (prefix && !selectedPath.startsWith(prefix)) {
+                                         newVal = prefix + selectedPath;
+                                    }
+                                    
+                                    transfer_dlg_content.find("#path").val(newVal);
                                 }
+                            } else {
+                                console.log("Restored selection:", selectedPath);
+                            }
                             } else {
                                 console.log("Restored selection:", selectedPath);
                             }
