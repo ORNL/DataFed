@@ -101,18 +101,32 @@ $(document).ready(function () {
                                     transfer_dlg_content.length &&
                                     transfer_dlg_content.dialog("isOpen")
                                 ) {
-                                    const currentVal = transfer_dlg_content.find("#path").val();
-                                    const prefix =
-                                        endpoint.name && currentVal.startsWith(endpoint.name)
-                                            ? endpoint.name
-                                            : "";
+                                    const controller = transfer_dlg_content.data("controller");
+                                    const epName =
+                                        endpoint.canonical_name || endpoint.name || endpoint.id;
 
-                                    let newVal = selectedPath;
-                                    if (prefix && !selectedPath.startsWith(prefix)) {
-                                        newVal = prefix + selectedPath;
+                                    if (controller && epName) {
+                                        // Update controller state to match the browsed endpoint
+                                        if (
+                                            !controller.endpointManager.state.currentEndpoint ||
+                                            controller.endpointManager.state.currentEndpoint.id !==
+                                                endpoint.id
+                                        ) {
+                                            controller.endpointManager.state.currentEndpoint = {
+                                                ...endpoint,
+                                                name: epName,
+                                            };
+                                        }
                                     }
 
-                                    transfer_dlg_content.find("#path").val(newVal);
+                                    // Construct full path
+                                    // Browse callback returns path with leading slash usually
+                                    let newVal = selectedPath;
+                                    if (epName && !selectedPath.startsWith(epName)) {
+                                        newVal = epName + selectedPath;
+                                    }
+
+                                    transfer_dlg_content.find("#path").val(newVal).trigger("input");
                                 }
                             } else {
                                 console.log("Restored selection:", selectedPath);
