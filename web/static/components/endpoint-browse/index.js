@@ -317,12 +317,22 @@ class EndpointBrowser {
                             error.data.authorization_parameters.session_required_single_domain;
                     }
 
+                    // Serialize current state for restoration after consent flow
+                    const state = JSON.stringify({
+                        endpoint_browser: {
+                            endpoint: this.props.endpoint.rawData,
+                            path: this.state.path,
+                            mode: this.props.mode,
+                        },
+                    });
+
                     api.getGlobusConsentURL(
                         (_, data) => resolve(data),
                         this.props.endpoint.id,
                         error.data.required_scopes,
                         false, // refresh_tokens
                         queryParams,
+                        state,
                     );
                 });
                 title = `<span class='ui-state-error'>Consent/Login Required: Please <a href="${data.consent_url}">login with required identity</a>.</span>`;

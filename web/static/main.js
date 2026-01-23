@@ -61,6 +61,16 @@ $(document).ready(function () {
 
             browser_tab.init();
 
+            // Restore state if present
+            if (tmpl_data.restore_state && tmpl_data.restore_state.endpoint_browser) {
+                import("/components/endpoint-browse/index.js").then((module) => {
+                    const { endpoint, path, mode } = tmpl_data.restore_state.endpoint_browser;
+                    module.show(endpoint, path, mode, (selectedPath) => {
+                        console.log("Restored selection:", selectedPath);
+                    });
+                });
+            }
+
             util.setStatusText("DataFed Ready");
         } else {
             dialogs.dlgAlert("System Error", "Unable to access user record");

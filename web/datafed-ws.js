@@ -412,12 +412,21 @@ app.get("/ui/main", (a_req, a_resp) => {
         const nonce = crypto.randomBytes(16).toString("base64");
         a_resp.locals.nonce = nonce;
         a_resp.setHeader("Content-Security-Policy", `script-src 'nonce-${nonce}'`);
+
+        // Extract restore_state from session if present
+        let restore_state = null;
+        if (a_req.session.restore_state) {
+            restore_state = JSON.stringify(a_req.session.restore_state);
+            delete a_req.session.restore_state;
+        }
+
         a_resp.render("main", {
             nonce: a_resp.locals.nonce,
             user_uid: a_req.session.uid,
             theme: theme,
             version: g_version,
             test_mode: g_test,
+            restore_state: restore_state,
             ...g_google_analytics,
         });
     } else {
@@ -651,6 +660,31 @@ the registration page.
                                     // Store only data needed for active session
                                     a_req.session.uid = username;
                                     a_req.session.reg = true;
+
+                                    if (a_req.query.state) {
+                                        try {
+                                            const state_obj = JSON.parse(a_req.query.state);
+                                            // Validate state structure to prevent arbitrary session pollution
+                                            if (
+                                                state_obj.endpoint_browser ||
+                                                state_obj.restore_state
+                                            ) {
+                                                a_req.session.restore_state = state_obj;
+                                                logger.info(
+                                                    "/ui/authn",
+                                                    getCurrentLineNumber(),
+                                                    "Restorable state found and saved to session.",
+                                                );
+                                            }
+                                        } catch (e) {
+                                            // State was not JSON or valid, ignore
+                                            logger.warning(
+                                                "/ui/authn",
+                                                getCurrentLineNumber(),
+                                                "Failed to parse state parameter: " + e,
+                                            );
+                                        }
+                                    }
 
                                     logger.info(
                                         "/ui/authn",
