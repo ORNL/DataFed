@@ -302,15 +302,30 @@ class EndpointBrowser {
         let title;
         // Generate consent URL for consent required errors
         if (error instanceof ApiError) {
-            if (error.code === "ConsentRequired" || error.data?.needs_consent === true) {
+            // Check for explicit consent requirement OR permission denied with auth parameters (530)
+            if (
+                error.code === "ConsentRequired" ||
+                error.data?.needs_consent === true ||
+                (error.data?.code === "permission_denied" &&
+                    error.data?.authorization_parameters?.session_required_single_domain)
+            ) {
                 const data = await new Promise((resolve) => {
+                    // Extract query params from authorization_parameters if available
+                    const queryParams = {};
+                    if (error.data?.authorization_parameters?.session_required_single_domain) {
+                        queryParams.session_required_single_domain =
+                            error.data.authorization_parameters.session_required_single_domain;
+                    }
+
                     api.getGlobusConsentURL(
                         (_, data) => resolve(data),
                         this.props.endpoint.id,
                         error.data.required_scopes,
+                        false, // refresh_tokens
+                        queryParams,
                     );
                 });
-                title = `<span class='ui-state-error'>Consent Required: Please provide <a href="${data.consent_url}">consent</a>.</span>`;
+                title = `<span class='ui-state-error'>Consent/Login Required: Please <a href="${data.consent_url}">login with required identity</a>.</span>`;
             } else {
                 title = `<span class='ui-state-error'>Error: ${
                     error.data.message || "Unknown API error"

@@ -1665,7 +1665,19 @@ app.post("/api/cat/search", (a_req, a_resp) => {
 });
 
 app.get("/api/globus/consent_url", storeCollectionId, (a_req, a_resp) => {
-    const { requested_scopes, state, refresh_tokens, query_params } = a_req.query;
+    let { requested_scopes, state, refresh_tokens, query_params } = a_req.query;
+
+    if (typeof query_params === "string") {
+        try {
+            query_params = JSON.parse(query_params);
+        } catch (e) {
+            logger.error(
+                "/api/globus/consent_url",
+                getCurrentLineNumber(),
+                "Failed to parse query_params: " + e,
+            );
+        }
+    }
 
     const consent_url = generateConsentURL(
         g_oauth_credentials.clientId,
