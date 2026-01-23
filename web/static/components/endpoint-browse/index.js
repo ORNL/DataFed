@@ -318,13 +318,33 @@ class EndpointBrowser {
                     }
 
                     // Serialize current state for restoration after consent flow
-                    const state = JSON.stringify({
+                    const stateObj = {
                         endpoint_browser: {
                             endpoint: this.props.endpoint.rawData,
                             path: this.state.path,
                             mode: this.props.mode,
                         },
-                    });
+                    };
+
+                    // Check if "New Data Record" dialog is open and save its state
+                    const new_data_dlg = $("#d_new_edit");
+                    if (new_data_dlg.length && new_data_dlg.dialog("isOpen")) {
+                        const metadata_editor = ace.edit(new_data_dlg.find("#md")[0]);
+                        stateObj.parent_dialog = {
+                            type: "d_new_edit",
+                            mode: 0, // DLG_DATA_MODE_NEW
+                            data: {
+                                title: new_data_dlg.find("#title").val(),
+                                alias: new_data_dlg.find("#alias").val(),
+                                desc: new_data_dlg.find("#desc").val(),
+                                metadata: metadata_editor ? metadata_editor.getValue() : "",
+                                // Use parentId for the collection
+                                parentId: new_data_dlg.find("#coll").val(),
+                            },
+                        };
+                    }
+
+                    const state = JSON.stringify(stateObj);
 
                     api.getGlobusConsentURL(
                         (_, data) => resolve(data),

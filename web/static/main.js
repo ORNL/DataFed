@@ -61,14 +61,30 @@ $(document).ready(function () {
 
             browser_tab.init();
 
-            // Restore state if present
-            if (tmpl_data.restore_state && tmpl_data.restore_state.endpoint_browser) {
-                import("/components/endpoint-browse/index.js").then((module) => {
-                    const { endpoint, path, mode } = tmpl_data.restore_state.endpoint_browser;
-                    module.show(endpoint, path, mode, (selectedPath) => {
-                        console.log("Restored selection:", selectedPath);
+            if (tmpl_data.restore_state) {
+                if (
+                    tmpl_data.restore_state.parent_dialog &&
+                    tmpl_data.restore_state.parent_dialog.type === "d_new_edit"
+                ) {
+                    import("/dlg_data_new_edit.js").then((module) => {
+                        const { mode, data } = tmpl_data.restore_state.parent_dialog;
+                        module.show(mode, data, data.parentId);
                     });
-                });
+                }
+
+                if (tmpl_data.restore_state.endpoint_browser) {
+                    import("/components/endpoint-browse/index.js").then((module) => {
+                        const { endpoint, path, mode } = tmpl_data.restore_state.endpoint_browser;
+                        module.show(endpoint, path, mode, (selectedPath) => {
+                            const new_data_dlg = $("#d_new_edit");
+                            if (new_data_dlg.length && new_data_dlg.dialog("isOpen")) {
+                                new_data_dlg.find("#source_file").val(selectedPath);
+                            } else {
+                                console.log("Restored selection:", selectedPath);
+                            }
+                        });
+                    });
+                }
             }
 
             util.setStatusText("DataFed Ready");
