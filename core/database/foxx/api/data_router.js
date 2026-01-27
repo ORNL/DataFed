@@ -308,7 +308,7 @@ router
                     description: "Create a new data record",
                     extra: {
                         id: result?.results[0]?.id,
-                        count: result?.results.length
+                        count: result?.results.length,
                     },
                 });
 
@@ -321,10 +321,9 @@ router
                     routePath: basePath + "/create",
                     status: "Failure",
                     description: "Create a new data record",
-                    extra: 
-                    {
+                    extra: {
                         id: result?.results[0]?.id,
-                        count: result?.results.length
+                        count: result?.results.length,
                     },
                     error: e,
                 });
@@ -1703,7 +1702,7 @@ router
                 routePath: basePath + "/dep/graph/get",
                 status: "Success",
                 description: `Get data dependency graph. ID: ${req.queryParams.id}`,
-                extra: {count: result.length}
+                extra: { count: result.length },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -1713,8 +1712,8 @@ router
                 routePath: basePath + "/dep/graph/get",
                 status: "Failure",
                 description: `Get data dependency graph. ID: ${req.queryParams.id}`,
-                extra: {count: result.length},
-                error: e
+                extra: { count: result.length },
+                error: e,
             });
 
             g_lib.handleException(e, res);
@@ -1869,7 +1868,7 @@ router
                 routePath: basePath + "/path",
                 status: "Success",
                 description: `Get raw data local path. IDs: ${req.queryParams.id}; Domain: ${req.queryParams.domain}`,
-                extra: {path: path}
+                extra: { path: path },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -1879,8 +1878,8 @@ router
                 routePath: basePath + "/path",
                 status: "Failure",
                 description: `Get raw data local path. IDs: ${req.queryParams.id}; Domain: ${req.queryParams.domain}`,
-                extra: {path: path},
-                error: e
+                extra: { path: path },
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -1970,7 +1969,7 @@ router
                 routePath: basePath + "/list/by_alloc",
                 status: "Success",
                 description: `List data records by allocation. repo: ${req.queryParams.repo}`,
-                extra: {count: req.queryParams?.count},
+                extra: { count: req.queryParams?.count },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -1980,8 +1979,8 @@ router
                 routePath: basePath + "/list/by_alloc",
                 status: "Failure",
                 description: `List data records by allocation. repo: ${req.queryParams.repo}`,
-                extra: {count: req.queryParams?.count},
-                error: e
+                extra: { count: req.queryParams?.count },
+                error: e,
             });
 
             g_lib.handleException(e, res);
