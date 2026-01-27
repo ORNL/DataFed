@@ -310,7 +310,7 @@ router
                     status: "Success",
                     description: "Create a new data record",
                     extra: {
-                        currentId: result?.results[0]?.id,
+                        id: result?.results[0]?.id,
                         count: result?.results.length
                     },
                 });
@@ -326,7 +326,7 @@ router
                     description: "Create a new data record",
                     extra: 
                     {
-                        currentId: result?.results[0]?.id,
+                        id: result?.results[0]?.id,
                         count: result?.results.length
                     },
                     error: e,
@@ -1063,7 +1063,7 @@ router
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/update/batch",
-                status: "Success",
+                status: "Failure",
                 description: `Update a batch of existing data record. RecordIDs: ${displayIds}`,
                 extra:
                 {
@@ -1535,6 +1535,7 @@ router
 
 router
     .get("/dep/graph/get", function (req, res) {
+        let result = null;
         try {
             logger.logRequestStarted({
                 client: req.queryParams.client,
@@ -1557,10 +1558,10 @@ router
                 visited = [data_id],
                 cur = [[data_id, true]],
                 next = [],
-                result = [],
                 notes,
                 gen = 0;
 
+            result = [];
             // Get Ancestors
 
             //console.log("get ancestors");
@@ -1721,7 +1722,7 @@ router
                 routePath: basePath + "/dep/graph/get",
                 status: "Success",
                 description: `Get data dependency graph. ID: ${req.queryParams.id}`,
-                extra: "N/A"
+                extra: {count: result.length}
             });
 
         } catch (e) {
@@ -1732,7 +1733,7 @@ router
                 routePath: basePath + "/dep/graph/get",
                 status: "Failure",
                 description: `Get data dependency graph. ID: ${req.queryParams.id}`,
-                extra: "N/A",
+                extra: {count: result.length},
                 error: e
             });
 
@@ -1807,12 +1808,12 @@ router
                 extra: {count: idCount}
             });
         } catch (e) {
-            logger.logRequestSuccess({
+            logger.logRequestFailure({
                 client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/lock",
-                status: "Success",
+                status: "Failure",
                 description: `Toggle data record lock. IDs: ${idSummary}, Lock: ${req.queryParams.lock}`,
                 extra: {count: idCount},
                 error: e
@@ -1888,7 +1889,7 @@ router
                 routePath: basePath + "/path",
                 status: "Success",
                 description: `Get raw data local path. IDs: ${req.queryParams.id}; Domain: ${req.queryParams.domain}`,
-                extra: "N/A"
+                extra: {path: path}
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -1898,7 +1899,7 @@ router
                 routePath: basePath + "/path",
                 status: "Failure",
                 description: `Get raw data local path. IDs: ${req.queryParams.id}; Domain: ${req.queryParams.domain}`,
-                extra: "N/A",
+                extra: {path: path},
                 error: e
             });
             g_lib.handleException(e, res);
@@ -1912,6 +1913,7 @@ router
 
 router
     .get("/list/by_alloc", function (req, res) {
+        let result = null;
         try {
             logger.logRequestStarted({
                 client: req.queryParams.client,
@@ -1937,7 +1939,6 @@ router
             }
 
             var qry = "for v,e in 1..1 inbound @repo loc filter e.uid == @uid sort v.title",
-                result,
                 doc;
 
             if (req.queryParams.offset != undefined && req.queryParams.count != undefined) {
@@ -1990,7 +1991,7 @@ router
                 routePath: basePath + "/list/by_alloc",
                 status: "Success",
                 description: `List data records by allocation. repo: ${req.queryParams.repo}`,
-                extra: "N/A"
+                extra: {count: req.queryParams?.count},
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -2000,7 +2001,7 @@ router
                 routePath: basePath + "/list/by_alloc",
                 status: "Failure",
                 description: `List data records by allocation. repo: ${req.queryParams.repo}`,
-                extra: "N/A",
+                extra: {count: req.queryParams?.count},
                 error: e
             });
 
@@ -2385,12 +2386,12 @@ router
                 extra: { IDs:id_preview, count:id_count}
             });
         } catch (e) {
-            logger.logRequestStarted({
+            logger.logRequestFailure({
                 client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "POST",
                 routePath: basePath + "/owner_chg",
-                status: "Started",
+                status: "Failure",
                 description: `Move data records and raw data to a new owner/allocation. Coll ID: ${req.body.coll_id}`,
                 extra: { IDs:id_preview, count:id_count},
                 error: e
