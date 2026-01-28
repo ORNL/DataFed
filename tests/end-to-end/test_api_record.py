@@ -176,8 +176,13 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
 
         # May not work depending on traffic
         esnet_uuid = "ece400da-0182-4777-91d6-27a1808f8371"
+        endpoint_uuid = os.environ.get('DATAFED_TEST_GLOBUS_ENDPOINT', esnet_uuid)
+        test_file_path_on_endpoint = os.environ.get('DATAFED_TEST_GLOBUS_ENDPOINT_FILE', "/1M.dat")
 
-        put_task = self._df_api.dataPut(new_alias, esnet_uuid + "/1M.dat")
+        if not test_file_path_on_endpoint.startswith("/"):
+            test_file_path_on_endpoint = "/" + test_file_path_on_endpoint
+
+        put_task = self._df_api.dataPut(new_alias, endpoint_uuid + test_file_path_on_endpoint)
 
         task_id = put_task[0].task.id
 
