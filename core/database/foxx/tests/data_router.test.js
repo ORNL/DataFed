@@ -9,7 +9,7 @@ const data_base_url = `${baseUrl}/dat`;
 
 after(function () {
     // clean up all collections used in the test
-    const collections = ["u", "d", "c", "repo", "alloc", "loc", "owner"];
+    const collections = ["u", "d", "c", "repo", "alloc", "loc", "owner", "alias", "item", "dep"]; 
     collections.forEach((name) => {
         let col = db._collection(name);
         if (col) col.truncate();
@@ -18,7 +18,7 @@ after(function () {
 
 describe("unit_data_router: the Foxx microservice data_router create/ endpoint", () => {
     beforeEach(() => {
-        const collections = ["u", "d", "c", "repo", "alloc", "loc", "owner", "alias", "item"];
+        const collections = ["u", "d", "c", "repo", "alloc", "loc", "owner", "alias", "item", "dep"];
         collections.forEach((name) => {
             let col = db._collection(name);
             if (col)
