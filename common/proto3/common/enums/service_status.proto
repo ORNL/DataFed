@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package sdms;
+
+option cc_enable_arenas = true;
+
+enum ServiceStatus {
+    SERVICE_STATUS_NORMAL = 0;
+    SERVICE_STATUS_DEGRADED = 1;
+    SERVICE_STATUS_FAILED = 2;
+    SERVICE_STATUS_OFFLINE = 3;
+}

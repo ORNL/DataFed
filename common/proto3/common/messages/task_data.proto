@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package sdms;
+
+import "enums/task_type.proto";
+import "enums/task_status.proto";
+
+option cc_enable_arenas = true;
+
+message TaskData {
+    string id = 1;
+    TaskType type = 2;
+    TaskStatus status = 3;
+    string client = 4;
+    uint32 step = 5;
+    uint32 steps = 6;
+    string msg = 7;
+    uint32 ct = 8;
+    uint32 ut = 9;
+    string source = 10;
+    string dest = 11;
+}

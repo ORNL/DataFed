@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package sdms;
+
+import "messages/record_data_location.proto";
+
+option cc_enable_arenas = true;
+
+message RepoDataDeleteRequest {
+    repeated RecordDataLocation loc = 1;
+}

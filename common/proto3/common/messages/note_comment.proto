@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package sdms;
+
+import "enums/note_type.proto";
+import "enums/note_state.proto";
+
+option cc_enable_arenas = true;
+
+message NoteComment {
+    string user = 1;
+    uint32 time = 2;
+    string comment = 3;
+    NoteType type = 4;
+    NoteState state = 5;
+}

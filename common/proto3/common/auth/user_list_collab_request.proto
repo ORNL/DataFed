@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package sdms;
+
+option cc_enable_arenas = true;
+
+message UserListCollabRequest {
+    uint32 offset = 1;
+    uint32 count = 2;
+}

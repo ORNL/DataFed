@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package sdms;
+
+import "messages/task_data.proto";
+
+option cc_enable_arenas = true;
+
+message RecordAllocChangeReply {
+    uint32 act_cnt = 1;
+    uint64 act_size = 2;
+    uint32 tot_cnt = 3;
+    uint64 data_limit = 4;
+    uint64 data_size = 5;
+    uint32 rec_limit = 6;
+    uint32 rec_count = 7;
+    TaskData task = 8;
+}

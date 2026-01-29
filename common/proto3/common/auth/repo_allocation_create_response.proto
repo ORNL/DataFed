@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package sdms;
+
+import "enums/execution_method.proto";
+import "messages/task_data.proto";
+import "messages/alloc_data.proto";
+
+option cc_enable_arenas = true;
+
+message RepoAllocationCreateResponse {
+    ExecutionMethod execution_method = 1;
+    TaskData task = 2;
+    AllocData result = 3;
+}

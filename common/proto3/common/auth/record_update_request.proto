@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package sdms;
+
+import "messages/dependency_spec_data.proto";
+
+option cc_enable_arenas = true;
+
+message RecordUpdateRequest {
+    string id = 1;
+    string title = 2;
+    string desc = 3;
+    repeated string tags = 4;
+    bool tags_clear = 5;
+    string alias = 6;
+    string metadata = 7;
+    bool mdset = 8;
+    string sch_id = 9;
+    bool sch_enforce = 10;
+    string source = 11;
+    string ext = 12;
+    bool ext_auto = 13;
+    repeated DependencySpecData dep_add = 16;
+    repeated DependencySpecData dep_rem = 17;
+}

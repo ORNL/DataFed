@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package sdms;
+
+import "enums/project_role.proto";
+
+option cc_enable_arenas = true;
+
+message ProjectGetRoleReply {
+    ProjectRole role = 1;
+}

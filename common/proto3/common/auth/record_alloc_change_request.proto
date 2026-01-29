@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package sdms;
+
+option cc_enable_arenas = true;
+
+message RecordAllocChangeRequest {
+    repeated string id = 1;
+    string repo_id = 2;
+    string proj_id = 3;
+    bool check = 4;
+}

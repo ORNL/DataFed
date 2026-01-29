@@ -1,0 +1,396 @@
+// Envelope message wrapping all DataFed protocol messages
+// Use has_*() methods in C++ to check which message type is present
+//
+// Example C++ usage:
+//   sdms::Envelope env;
+//   if (env.has_version_request()) {
+//       // Handle version request
+//   } else if (env.has_record_create_request()) {
+//       // Handle record creation
+//       auto& req = env.record_create_request();
+//   }
+
+syntax = "proto3";
+
+package sdms;
+
+option cc_enable_arenas = true;
+
+// Anonymous messages
+import "anon/ack_reply.proto";
+import "anon/nack_reply.proto";
+import "anon/version_request.proto";
+import "anon/version_reply.proto";
+import "anon/get_auth_status_request.proto";
+import "anon/authenticate_by_password_request.proto";
+import "anon/authenticate_by_token_request.proto";
+import "anon/auth_status_reply.proto";
+import "anon/daily_message_request.proto";
+import "anon/daily_message_reply.proto";
+
+// Auth - Credentials
+import "auth/generate_credentials_request.proto";
+import "auth/revoke_credentials_request.proto";
+import "auth/generate_credentials_reply.proto";
+
+// Auth - Permissions
+import "auth/check_perms_request.proto";
+import "auth/check_perms_reply.proto";
+import "auth/get_perms_request.proto";
+import "auth/get_perms_reply.proto";
+
+// Auth - User
+import "auth/user_view_request.proto";
+import "auth/user_data_reply.proto";
+import "auth/user_set_access_token_request.proto";
+import "auth/user_get_access_token_request.proto";
+import "auth/user_access_token_reply.proto";
+import "auth/user_create_request.proto";
+import "auth/user_find_by_uuids_request.proto";
+import "auth/user_find_by_name_uid_request.proto";
+import "auth/user_update_request.proto";
+import "auth/user_list_all_request.proto";
+import "auth/user_list_collab_request.proto";
+import "auth/user_get_recent_ep_request.proto";
+import "auth/user_get_recent_ep_reply.proto";
+import "auth/user_set_recent_ep_request.proto";
+
+// Auth - General
+import "auth/listing_reply.proto";
+
+// Auth - Record
+import "auth/record_list_by_alloc_request.proto";
+import "auth/record_view_request.proto";
+import "auth/record_data_reply.proto";
+import "auth/record_create_request.proto";
+import "auth/record_create_batch_request.proto";
+import "auth/record_update_request.proto";
+import "auth/record_update_batch_request.proto";
+import "auth/record_export_request.proto";
+import "auth/record_export_reply.proto";
+import "auth/record_lock_request.proto";
+import "auth/record_delete_request.proto";
+import "auth/record_get_dependency_graph_request.proto";
+import "auth/record_alloc_change_request.proto";
+import "auth/record_alloc_change_reply.proto";
+import "auth/record_owner_change_request.proto";
+import "auth/record_owner_change_reply.proto";
+
+// Auth - Data
+import "auth/data_get_request.proto";
+import "auth/data_put_request.proto";
+import "auth/data_get_reply.proto";
+import "auth/data_put_reply.proto";
+import "auth/data_delete_request.proto";
+import "auth/data_path_request.proto";
+import "auth/data_path_reply.proto";
+
+// Auth - Search
+import "auth/search_request.proto";
+
+// Auth - Collection
+import "auth/coll_view_request.proto";
+import "auth/coll_data_reply.proto";
+import "auth/coll_read_request.proto";
+import "auth/coll_create_request.proto";
+import "auth/coll_update_request.proto";
+import "auth/coll_delete_request.proto";
+import "auth/coll_write_request.proto";
+import "auth/coll_move_request.proto";
+import "auth/coll_get_parents_request.proto";
+import "auth/coll_path_reply.proto";
+import "auth/coll_get_offset_request.proto";
+import "auth/coll_get_offset_reply.proto";
+import "auth/coll_list_published_request.proto";
+
+// Auth - Group
+import "auth/group_create_request.proto";
+import "auth/group_update_request.proto";
+import "auth/group_data_reply.proto";
+import "auth/group_delete_request.proto";
+import "auth/group_list_request.proto";
+import "auth/group_view_request.proto";
+
+// Auth - ACL
+import "auth/acl_view_request.proto";
+import "auth/acl_update_request.proto";
+import "auth/acl_shared_list_request.proto";
+import "auth/acl_shared_list_items_request.proto";
+import "auth/acl_data_reply.proto";
+
+// Auth - Project
+import "auth/project_view_request.proto";
+import "auth/project_data_reply.proto";
+import "auth/project_create_request.proto";
+import "auth/project_update_request.proto";
+import "auth/project_delete_request.proto";
+import "auth/project_list_request.proto";
+import "auth/project_search_request.proto";
+import "auth/project_get_role_request.proto";
+import "auth/project_get_role_reply.proto";
+
+// Auth - Repository
+import "auth/repo_data_delete_request.proto";
+import "auth/repo_data_get_size_request.proto";
+import "auth/repo_data_size_reply.proto";
+import "auth/repo_path_create_request.proto";
+import "auth/repo_path_delete_request.proto";
+import "auth/repo_list_request.proto";
+import "auth/repo_view_request.proto";
+import "auth/repo_create_request.proto";
+import "auth/repo_update_request.proto";
+import "auth/repo_delete_request.proto";
+import "auth/repo_data_reply.proto";
+import "auth/repo_calc_size_request.proto";
+import "auth/repo_calc_size_reply.proto";
+import "auth/repo_list_allocations_request.proto";
+import "auth/repo_list_subject_allocations_request.proto";
+import "auth/repo_list_object_allocations_request.proto";
+import "auth/repo_view_allocation_request.proto";
+import "auth/repo_allocations_reply.proto";
+import "auth/repo_allocation_stats_request.proto";
+import "auth/repo_allocation_stats_reply.proto";
+import "auth/repo_allocation_create_request.proto";
+import "auth/repo_allocation_create_response.proto";
+import "auth/repo_allocation_set_request.proto";
+import "auth/repo_allocation_set_default_request.proto";
+import "auth/repo_allocation_delete_request.proto";
+import "auth/repo_authz_request.proto";
+
+// Auth - Query
+import "auth/query_create_request.proto";
+import "auth/query_update_request.proto";
+import "auth/query_delete_request.proto";
+import "auth/query_list_request.proto";
+import "auth/query_view_request.proto";
+import "auth/query_exec_request.proto";
+import "auth/query_data_reply.proto";
+
+// Auth - Note
+import "auth/note_list_by_subject_request.proto";
+import "auth/note_view_request.proto";
+import "auth/note_create_request.proto";
+import "auth/note_update_request.proto";
+import "auth/note_comment_edit_request.proto";
+import "auth/note_data_reply.proto";
+
+// Auth - Task
+import "auth/task_view_request.proto";
+import "auth/task_list_request.proto";
+import "auth/task_data_reply.proto";
+
+// Auth - Tag
+import "auth/tag_search_request.proto";
+import "auth/tag_list_by_count_request.proto";
+import "auth/tag_data_reply.proto";
+
+// Auth - Schema
+import "auth/metadata_validate_request.proto";
+import "auth/metadata_validate_reply.proto";
+import "auth/schema_view_request.proto";
+import "auth/schema_search_request.proto";
+import "auth/schema_data_reply.proto";
+import "auth/schema_create_request.proto";
+import "auth/schema_update_request.proto";
+import "auth/schema_revise_request.proto";
+import "auth/schema_delete_request.proto";
+
+// Auth - Topic
+import "auth/topic_list_topics_request.proto";
+import "auth/topic_view_request.proto";
+import "auth/topic_search_request.proto";
+import "auth/topic_data_reply.proto";
+
+// Envelope message containing all possible request/reply types
+// Each field is optional - use has_*() to check which is set
+message Envelope {
+    // Message metadata
+    string msg_id = 1;      // Unique message ID for correlation
+    string context = 2;     // Optional context/correlation data
+    uint32 timestamp = 3;   // Message timestamp (Unix epoch)
+    
+    // Anonymous messages (10-29)
+    AckReply ack_reply = 10;
+    NackReply nack_reply = 11;
+    VersionRequest version_request = 12;
+    VersionReply version_reply = 13;
+    GetAuthStatusRequest get_auth_status_request = 14;
+    AuthenticateByPasswordRequest authenticate_by_password_request = 15;
+    AuthenticateByTokenRequest authenticate_by_token_request = 16;
+    AuthStatusReply auth_status_reply = 17;
+    DailyMessageRequest daily_message_request = 18;
+    DailyMessageReply daily_message_reply = 19;
+    
+    // Credentials (100-109)
+    GenerateCredentialsRequest generate_credentials_request = 100;
+    RevokeCredentialsRequest revoke_credentials_request = 101;
+    GenerateCredentialsReply generate_credentials_reply = 102;
+    
+    // Permissions (110-119)
+    CheckPermsRequest check_perms_request = 110;
+    CheckPermsReply check_perms_reply = 111;
+    GetPermsRequest get_perms_request = 112;
+    GetPermsReply get_perms_reply = 113;
+    
+    // User (120-149)
+    UserViewRequest user_view_request = 120;
+    UserDataReply user_data_reply = 121;
+    UserSetAccessTokenRequest user_set_access_token_request = 122;
+    UserGetAccessTokenRequest user_get_access_token_request = 123;
+    UserAccessTokenReply user_access_token_reply = 124;
+    UserCreateRequest user_create_request = 125;
+    UserFindByUUIDsRequest user_find_by_uuids_request = 126;
+    UserFindByNameUIDRequest user_find_by_name_uid_request = 127;
+    UserUpdateRequest user_update_request = 128;
+    UserListAllRequest user_list_all_request = 129;
+    UserListCollabRequest user_list_collab_request = 130;
+    UserGetRecentEPRequest user_get_recent_ep_request = 131;
+    UserGetRecentEPReply user_get_recent_ep_reply = 132;
+    UserSetRecentEPRequest user_set_recent_ep_request = 133;
+    
+    // General (150-159)
+    ListingReply listing_reply = 150;
+    
+    // Record (200-249)
+    RecordListByAllocRequest record_list_by_alloc_request = 200;
+    RecordViewRequest record_view_request = 201;
+    RecordDataReply record_data_reply = 202;
+    RecordCreateRequest record_create_request = 203;
+    RecordCreateBatchRequest record_create_batch_request = 204;
+    RecordUpdateRequest record_update_request = 205;
+    RecordUpdateBatchRequest record_update_batch_request = 206;
+    RecordExportRequest record_export_request = 207;
+    RecordExportReply record_export_reply = 208;
+    RecordLockRequest record_lock_request = 209;
+    RecordDeleteRequest record_delete_request = 210;
+    RecordGetDependencyGraphRequest record_get_dependency_graph_request = 211;
+    RecordAllocChangeRequest record_alloc_change_request = 212;
+    RecordAllocChangeReply record_alloc_change_reply = 213;
+    RecordOwnerChangeRequest record_owner_change_request = 214;
+    RecordOwnerChangeReply record_owner_change_reply = 215;
+    
+    // Data (250-269)
+    DataGetRequest data_get_request = 250;
+    DataPutRequest data_put_request = 251;
+    DataGetReply data_get_reply = 252;
+    DataPutReply data_put_reply = 253;
+    DataDeleteRequest data_delete_request = 254;
+    DataPathRequest data_path_request = 255;
+    DataPathReply data_path_reply = 256;
+    
+    // Search (270-279)
+    SearchRequest search_request = 270;
+    
+    // Collection (300-349)
+    CollViewRequest coll_view_request = 300;
+    CollDataReply coll_data_reply = 301;
+    CollReadRequest coll_read_request = 302;
+    CollCreateRequest coll_create_request = 303;
+    CollUpdateRequest coll_update_request = 304;
+    CollDeleteRequest coll_delete_request = 305;
+    CollWriteRequest coll_write_request = 306;
+    CollMoveRequest coll_move_request = 307;
+    CollGetParentsRequest coll_get_parents_request = 308;
+    CollPathReply coll_path_reply = 309;
+    CollGetOffsetRequest coll_get_offset_request = 310;
+    CollGetOffsetReply coll_get_offset_reply = 311;
+    CollListPublishedRequest coll_list_published_request = 312;
+    
+    // Group (350-369)
+    GroupCreateRequest group_create_request = 350;
+    GroupUpdateRequest group_update_request = 351;
+    GroupDataReply group_data_reply = 352;
+    GroupDeleteRequest group_delete_request = 353;
+    GroupListRequest group_list_request = 354;
+    GroupViewRequest group_view_request = 355;
+    
+    // ACL (370-389)
+    ACLViewRequest acl_view_request = 370;
+    ACLUpdateRequest acl_update_request = 371;
+    ACLSharedListRequest acl_shared_list_request = 372;
+    ACLSharedListItemsRequest acl_shared_list_items_request = 373;
+    ACLDataReply acl_data_reply = 374;
+    
+    // Project (400-429)
+    ProjectViewRequest project_view_request = 400;
+    ProjectDataReply project_data_reply = 401;
+    ProjectCreateRequest project_create_request = 402;
+    ProjectUpdateRequest project_update_request = 403;
+    ProjectDeleteRequest project_delete_request = 404;
+    ProjectListRequest project_list_request = 405;
+    ProjectSearchRequest project_search_request = 406;
+    ProjectGetRoleRequest project_get_role_request = 407;
+    ProjectGetRoleReply project_get_role_reply = 408;
+    
+    // Repository (450-519)
+    RepoDataDeleteRequest repo_data_delete_request = 450;
+    RepoDataGetSizeRequest repo_data_get_size_request = 451;
+    RepoDataSizeReply repo_data_size_reply = 452;
+    RepoPathCreateRequest repo_path_create_request = 453;
+    RepoPathDeleteRequest repo_path_delete_request = 454;
+    RepoListRequest repo_list_request = 455;
+    RepoViewRequest repo_view_request = 456;
+    RepoCreateRequest repo_create_request = 457;
+    RepoUpdateRequest repo_update_request = 458;
+    RepoDeleteRequest repo_delete_request = 459;
+    RepoDataReply repo_data_reply = 460;
+    RepoCalcSizeRequest repo_calc_size_request = 461;
+    RepoCalcSizeReply repo_calc_size_reply = 462;
+    RepoListAllocationsRequest repo_list_allocations_request = 463;
+    RepoListSubjectAllocationsRequest repo_list_subject_allocations_request = 464;
+    RepoListObjectAllocationsRequest repo_list_object_allocations_request = 465;
+    RepoViewAllocationRequest repo_view_allocation_request = 466;
+    RepoAllocationsReply repo_allocations_reply = 467;
+    RepoAllocationStatsRequest repo_allocation_stats_request = 468;
+    RepoAllocationStatsReply repo_allocation_stats_reply = 469;
+    RepoAllocationCreateRequest repo_allocation_create_request = 470;
+    RepoAllocationCreateResponse repo_allocation_create_response = 471;
+    RepoAllocationSetRequest repo_allocation_set_request = 472;
+    RepoAllocationSetDefaultRequest repo_allocation_set_default_request = 473;
+    RepoAllocationDeleteRequest repo_allocation_delete_request = 474;
+    RepoAuthzRequest repo_authz_request = 475;
+    
+    // Query (520-539)
+    QueryCreateRequest query_create_request = 520;
+    QueryUpdateRequest query_update_request = 521;
+    QueryDeleteRequest query_delete_request = 522;
+    QueryListRequest query_list_request = 523;
+    QueryViewRequest query_view_request = 524;
+    QueryExecRequest query_exec_request = 525;
+    QueryDataReply query_data_reply = 526;
+    
+    // Note (540-559)
+    NoteListBySubjectRequest note_list_by_subject_request = 540;
+    NoteViewRequest note_view_request = 541;
+    NoteCreateRequest note_create_request = 542;
+    NoteUpdateRequest note_update_request = 543;
+    NoteCommentEditRequest note_comment_edit_request = 544;
+    NoteDataReply note_data_reply = 545;
+    
+    // Task (560-579)
+    TaskViewRequest task_view_request = 560;
+    TaskListRequest task_list_request = 561;
+    TaskDataReply task_data_reply = 562;
+    
+    // Tag (580-599)
+    TagSearchRequest tag_search_request = 580;
+    TagListByCountRequest tag_list_by_count_request = 581;
+    TagDataReply tag_data_reply = 582;
+    
+    // Schema (600-629)
+    MetadataValidateRequest metadata_validate_request = 600;
+    MetadataValidateReply metadata_validate_reply = 601;
+    SchemaViewRequest schema_view_request = 602;
+    SchemaSearchRequest schema_search_request = 603;
+    SchemaDataReply schema_data_reply = 604;
+    SchemaCreateRequest schema_create_request = 605;
+    SchemaUpdateRequest schema_update_request = 606;
+    SchemaReviseRequest schema_revise_request = 607;
+    SchemaDeleteRequest schema_delete_request = 608;
+    
+    // Topic (630-649)
+    TopicListTopicsRequest topic_list_topics_request = 630;
+    TopicViewRequest topic_view_request = 631;
+    TopicSearchRequest topic_search_request = 632;
+    TopicDataReply topic_data_reply = 633;
+}

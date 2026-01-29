@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package sdms;
+
+option cc_enable_arenas = true;
+
+message RecordDataSize {
+    string id = 1;
+    double size = 2;
+}

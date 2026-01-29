@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package sdms;
+
+option cc_enable_arenas = true;
+
+message GroupUpdateRequest {
+    string uid = 1;
+    string gid = 2;
+    string title = 3;
+    string desc = 4;
+    repeated string add_uid = 5;
+    repeated string rem_uid = 6;
+}

@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package sdms;
+
+import "enums/dependency_type.proto";
+import "enums/dependency_dir.proto";
+
+option cc_enable_arenas = true;
+
+message DependencyData {
+    string id = 1;
+    string alias = 2;
+    uint32 notes = 3;
+    DependencyType type = 4;
+    DependencyDir dir = 5;
+}

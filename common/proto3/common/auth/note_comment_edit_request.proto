@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package sdms;
+
+option cc_enable_arenas = true;
+
+message NoteCommentEditRequest {
+    string id = 1;
+    uint32 comment_idx = 2;
+    string comment = 3;
+}

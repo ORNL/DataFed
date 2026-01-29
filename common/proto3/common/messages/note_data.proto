@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package sdms;
+
+import "enums/note_type.proto";
+import "enums/note_state.proto";
+import "messages/note_comment.proto";
+
+option cc_enable_arenas = true;
+
+message NoteData {
+    string id = 1;
+    NoteType type = 2;
+    NoteState state = 3;
+    string subject_id = 4;
+    string title = 5;
+    repeated NoteComment comment = 6;
+    uint32 ct = 7;
+    uint32 ut = 8;
+    string parent_id = 9;
+    bool has_child = 10;
+}

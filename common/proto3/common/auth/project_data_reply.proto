@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package sdms;
+
+import "messages/project_data.proto";
+
+option cc_enable_arenas = true;
+
+message ProjectDataReply {
+    repeated ProjectData proj = 1;
+}

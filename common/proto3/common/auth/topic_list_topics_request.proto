@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package sdms;
+
+option cc_enable_arenas = true;
+
+message TopicListTopicsRequest {
+    string topic_id = 1;
+    uint32 offset = 2;
+    uint32 count = 3;
+}

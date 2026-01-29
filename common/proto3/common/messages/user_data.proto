@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package sdms;
+
+import "messages/alloc_data.proto";
+
+option cc_enable_arenas = true;
+
+message UserData {
+    string uid = 1;
+    string name_last = 2;
+    string name_first = 3;
+    string email = 4;
+    string options = 5;
+    bool is_admin = 6;
+    bool is_repo_admin = 7;
+    repeated string ident = 8;
+    repeated AllocData alloc = 9;
+}

@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package sdms;
+
+option cc_enable_arenas = true;
+
+message TopicData {
+    string id = 1;
+    string title = 2;
+    repeated TopicData path = 3;
+    string desc = 4;
+    string creator = 5;
+    bool admin = 6;
+    uint32 coll_cnt = 7;
+}

@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package sdms;
+
+import "enums/error_code.proto";
+
+option cc_enable_arenas = true;
+
+// Error response
+message NackReply {
+    ErrorCode err_code = 1;
+    string err_msg = 2;
+}

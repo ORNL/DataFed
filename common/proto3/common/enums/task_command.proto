@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package sdms;
+
+option cc_enable_arenas = true;
+
+enum TaskCommand {
+    TASK_COMMAND_STOP = 0;
+    TASK_COMMAND_RAW_DATA_TRANSFER = 1;
+    TASK_COMMAND_RAW_DATA_DELETE = 2;
+    TASK_COMMAND_RAW_DATA_UPDATE_SIZE = 3;
+    TASK_COMMAND_ALLOC_CREATE = 4;
+    TASK_COMMAND_ALLOC_DELETE = 5;
+}

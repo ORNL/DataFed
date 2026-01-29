@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package sdms;
+
+import "messages/alloc_stats_data.proto";
+
+option cc_enable_arenas = true;
+
+message RepoAllocationStatsReply {
+    AllocStatsData alloc = 1;
+}

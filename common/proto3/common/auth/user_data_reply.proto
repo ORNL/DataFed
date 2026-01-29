@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package sdms;
+
+import "messages/user_data.proto";
+
+option cc_enable_arenas = true;
+
+message UserDataReply {
+    repeated UserData user = 1;
+    uint32 offset = 2;
+    uint32 count = 3;
+    uint32 total = 4;
+}

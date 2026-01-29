@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package sdms;
+
+option cc_enable_arenas = true;
+
+message RepoListSubjectAllocationsRequest {
+    string subject = 1;
+    bool stats = 2;
+}
