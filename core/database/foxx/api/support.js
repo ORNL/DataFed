@@ -401,7 +401,6 @@ module.exports = (function () {
     };*/
 
     obj.handleException = function (e, res) {
-        console.log("Service exception:", e);
 
         if (obj.isInteger(e) && e >= 0 && e < error.ERR_COUNT) {
             res.throw(error.ERR_INFO[e][0], error.ERR_INFO[e][1]);
@@ -528,8 +527,6 @@ module.exports = (function () {
         for (var i in potential_uuids) {
             uuids.push("uuid/" + potential_uuids[i]);
         }
-        console.log("resolveUUIDsToID");
-        console.log("uuids: ", uuids);
         var result = obj.db
             ._query("for i in ident filter i._to in @ids return distinct document(i._from)", {
                 ids: uuids,
@@ -564,8 +561,6 @@ module.exports = (function () {
         for (var i in potential_uuids) {
             uuids.push("uuid/" + potential_uuids[i]);
         }
-        console.log("resolveUUIDsToID_noexcept");
-        console.log("uuids: ", uuids);
         var result = obj.db
             ._query("for i in ident filter i._to in @ids return distinct document(i._from)", {
                 ids: uuids,
@@ -578,7 +573,6 @@ module.exports = (function () {
         var first_uuid = result[0]._id;
         // Next we need to make sure the provided ids are all the same if there is more than one
         for (var i = 1; i < result.length; i++) {
-            console.log("resolveUUID comparing " + first_uuid + " with " + result[i]);
             if (first_uuid != result[i]._id) {
                 return;
             }
@@ -648,7 +642,6 @@ module.exports = (function () {
             // determine the UUID, if they are not, then we will throw an error for now,
             var unambiguous_id = obj.resolveUUIDsToID(a_client_id);
             if (!unambiguous_id) {
-                console.log("Undefined");
                 return;
             }
             //params = { 'id': unambiguous_id };
@@ -705,7 +698,6 @@ module.exports = (function () {
             // determine the UUID, if they are not, then we will throw an error for now,
             var unambiguous_id = obj.resolveUUIDsToID_noexcept(a_client_id);
             if (!unambiguous_id) {
-                console.log("Undefined");
                 return;
             }
             //params = { 'id': unambiguous_id };
@@ -734,8 +726,6 @@ module.exports = (function () {
     };
 
     obj.findUserFromUUIDs = function (a_uuids) {
-        console.log("findUserFromUUIDs");
-        console.log("a_uuids: ", a_uuids);
         var result = obj.db
             ._query("for i in ident filter i._to in @ids return distinct document(i._from)", {
                 ids: a_uuids,
@@ -1669,7 +1659,6 @@ module.exports = (function () {
     };
 
     obj.hasPublicRead = function (a_id) {
-        console.log("Has public read a_id is ", a_id);
         // Check for local topic on collections
         if (a_id.startsWith("c/")) {
             var col = obj.db.c.document(a_id);
