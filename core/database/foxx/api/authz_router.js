@@ -277,7 +277,8 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/perm/get",
                 status: "Success",
-                description: "Gets client permissions for object. Permissions:" + req.queryParams.perms,
+                description:
+                    "Gets client permissions for object. Permissions:" + req.queryParams.perms,
                 extra: `Object ID: ${req.queryParams.id}`,
             });
         } catch (e) {
@@ -287,7 +288,8 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/perm/get",
                 status: "Failure",
-                description:"Gets client permissions for object. Permissions:" + req.queryParams.perms,
+                description:
+                    "Gets client permissions for object. Permissions:" + req.queryParams.perms,
                 extra: `Object ID: ${req.queryParams.id}`,
                 error: e,
             });

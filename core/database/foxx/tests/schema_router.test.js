@@ -25,12 +25,12 @@ describe("schema router", () => {
     });
 
     after(function () {
-    const collections = ["u", "sch", "sch_dep"];
-    collections.forEach((name) => {
-        const col = g_db._collection(name);
-        if (col) col.truncate();
+        const collections = ["u", "sch", "sch_dep"];
+        collections.forEach((name) => {
+            const col = g_db._collection(name);
+            if (col) col.truncate();
+        });
     });
-});
 
     it("unit_schema_router: should create a schema", () => {
         const body = {

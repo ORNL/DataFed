@@ -614,7 +614,10 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/purge",
                 status: "Started",
-                description: "Purge old closed annotations older than " + req.queryParams.age_sec + " seconds",
+                description:
+                    "Purge old closed annotations older than " +
+                    req.queryParams.age_sec +
+                    " seconds",
             });
 
             g_db._executeTransaction({
