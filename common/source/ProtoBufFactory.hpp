@@ -7,8 +7,9 @@
 #include "common/TraceException.hpp"
 
 // Local protobuf includes
-#include "common/SDMS_Anon.pb.h"
-#include "common/SDMS_Auth.pb.h"
+#include "common/envelope.pb.h"
+//#include "common/SDMS_Anon.pb.h"
+//#include "common/SDMS_Auth.pb.h"
 
 // Standard includes
 #include <memory>

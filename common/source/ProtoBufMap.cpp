@@ -1,8 +1,9 @@
 
 // Local public includes
 #include "common/ProtoBufMap.hpp"
-#include "common/SDMS_Anon.pb.h"
-#include "common/SDMS_Auth.pb.h"
+#include "common/envelope.pb.h"
+//#include "common/SDMS_Anon.pb.h"
+//#include "common/SDMS_Auth.pb.h"
 #include "common/TraceException.hpp"
 
 // Third party includes

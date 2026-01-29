@@ -117,20 +117,22 @@ endif()
 
 
 if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON OR BUILD_PYTHON_CLIENT OR BUILD_WEB_SERVER) 
-  configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/common/proto/common/Version.proto.in"
-    "${CMAKE_CURRENT_SOURCE_DIR}/common/proto/common/Version.proto"
-    @ONLY)
 
+  
   # Create file glob here because need to be made visible here as well
-  file( GLOB ProtoFiles "${PROJECT_SOURCE_DIR}/common/proto/common/*.proto" )
+  #file( GLOB ProtoFiles "${PROJECT_SOURCE_DIR}/common/proto/common/*.proto" )
+  file(GLOB_RECURSE ProtoFiles "${PROJECT_SOURCE_DIR}/common/proto3/common/*.proto")
   include(./cmake/Protobuf.cmake)
 endif()
 
 
 if( BUILD_WEB_SERVER )
   include(./cmake/Web.cmake)
-  file(COPY ${ProtoFiles} DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/web/")
+
+  file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/common/proto/common/" 
+     DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/web/proto/")
+
+  #file(COPY ${ProtoFiles} DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/web/")
 
   if( ENABLE_UNIT_TESTS )
     add_test(NAME unit_tests_web COMMAND "${DEPENDENCY_INSTALL_PATH}/nvm/versions/node/${LOCAL_NODE_VERSION}/bin/npm" "test")

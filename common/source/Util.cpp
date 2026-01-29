@@ -1,6 +1,6 @@
 // Local public includes
 #include "common/Util.hpp"
-#include "common/SDMS.pb.h"
+//#include "common/SDMS.pb.h"
 #include "common/TraceException.hpp"
 
 // Third party includes
