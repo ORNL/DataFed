@@ -218,6 +218,29 @@ describe("unit_authz_router: the Foxx microservice authz_router", () => {
         g_db.repo.truncate();
     });
 
+    after(() => {
+    [
+        "u",
+        "ident",
+        "uuid",
+        "acl",
+        "item",
+        "c",
+        "g",
+        "p",
+        "owner",
+        "member",
+        "d",
+        "alloc",
+        "loc",
+        "repo",
+    ].forEach((name) => {
+        const col = g_db._collection(name);
+        if (col) col.truncate();
+    });
+});
+
+
     it("unit_authz_router: gridftp create action with user record and valid file path.", () => {
         defaultWorkingSetup();
         const request_string =
