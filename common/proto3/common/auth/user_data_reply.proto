@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package sdms;
+package SDMS;
 
 import "messages/user_data.proto";
 

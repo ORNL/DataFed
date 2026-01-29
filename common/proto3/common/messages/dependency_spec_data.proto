@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package sdms;
+package SDMS;
 
 import "enums/dependency_type.proto";
 

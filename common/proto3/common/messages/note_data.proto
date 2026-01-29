@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package sdms;
+package SDMS;
 
 import "enums/note_type.proto";
 import "enums/note_state.proto";

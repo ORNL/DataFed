@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package sdms;
+package SDMS;
 
 import "messages/alloc_data.proto";
 import "messages/task_data.proto";

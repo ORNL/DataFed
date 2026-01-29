@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package sdms;
+package SDMS;
 
 import "messages/dependency_spec_data.proto";
 

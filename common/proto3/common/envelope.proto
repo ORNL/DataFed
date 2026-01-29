@@ -12,7 +12,7 @@
 
 syntax = "proto3";
 
-package sdms;
+package SDMS;
 
 option cc_enable_arenas = true;
 
