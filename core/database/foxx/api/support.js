@@ -624,7 +624,6 @@ module.exports = (function () {
         // UUID are defined by length and format, accounts have a "." (and known domains), SDMS unames have no "." or "-" characters
 
         var params;
-        console.log("getUserFromClient id: ", a_client_id);
 
         if (a_client_id.startsWith("u/")) {
             if (!obj.db.u.exists(a_client_id)) {
