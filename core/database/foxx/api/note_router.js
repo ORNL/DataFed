@@ -614,7 +614,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/purge",
                 status: "Started",
-                description: "Purge old closed annotations older than " + req.queryParams.age_sec,
+                description: "Purge old closed annotations older than " + req.queryParams.age_sec + " seconds",
             });
 
             g_db._executeTransaction({
@@ -653,7 +653,7 @@ router
                 description:
                     "Purge old closed annotations older than " +
                     req.queryParams.age_sec +
-                    "seconds.",
+                    " seconds.",
                 extra: `Ids of purged notes: ${purgedIds.join(", ")}`,
             });
         } catch (e) {
@@ -666,7 +666,7 @@ router
                 description:
                     "Purge old closed annotations older than " +
                     req.queryParams.age_sec +
-                    "seconds.",
+                    " seconds.",
                 extra: { last_purged_note: id },
                 error: e,
             });
