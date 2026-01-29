@@ -22,6 +22,13 @@ describe("integration_repo_router: the Foxx microservice repo_router create endp
         });
     });
 
+    after(function () {
+    const collections = ["repo", "d", "alloc", "loc", "admin", "g", "p", "u"];
+    collections.forEach((name) => {
+        const col = g_db._collection(name);
+        if (col) col.truncate();
+        });
+    });
     const user_params = {
         id: "u/shredder",
         key: "shredder",
