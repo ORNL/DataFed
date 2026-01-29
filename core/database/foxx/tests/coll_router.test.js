@@ -96,7 +96,7 @@ describe("unit_coll_router: /col/create endpoint", () => {
             "u",
             "d",
         ];
-                collections.forEach((name) => {
+        collections.forEach((name) => {
             let col = db._collection(name);
             if (col) col.truncate();
         });

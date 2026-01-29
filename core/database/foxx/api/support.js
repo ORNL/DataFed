@@ -401,7 +401,6 @@ module.exports = (function () {
     };*/
 
     obj.handleException = function (e, res) {
-
         if (obj.isInteger(e) && e >= 0 && e < error.ERR_COUNT) {
             res.throw(error.ERR_INFO[e][0], error.ERR_INFO[e][1]);
         } else if (Array.isArray(e)) {
