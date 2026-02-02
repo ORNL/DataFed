@@ -2098,6 +2098,7 @@ app.get("/ui/theme/save", (a_req, a_resp) => {
  * @param {string} a_ref_tok - Refresh token for access token
  * @param {number} a_expires_sec - Time until expiration of access token
  * @param {OptionalData} [token_optional_params] - Optional params for DataFed to process access token accordingly
+ * @param {RequestCallback} [a_cb] - Optional callback function
  *
  * @throws Error - When a reply is not received from sendMessageDirect
  */
