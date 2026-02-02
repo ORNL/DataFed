@@ -835,14 +835,6 @@ app.get("/api/usr/register", (a_req, a_resp) => {
                                     a_resp.status(500).send("Registration failed during token set");
                                     return;
                                 }
-                                // Remove data not needed for active session
-                                delete a_req.session.name;
-                                delete a_req.session.email;
-                                delete a_req.session.uuids;
-                                delete a_req.session.acc_tok;
-                                delete a_req.session.acc_tok_ttl;
-                                delete a_req.session.ref_tok;
-                                delete a_req.session.uuids;
 
                                 // Set session as registered user
                                 a_req.session.reg = true;
@@ -853,6 +845,15 @@ app.get("/api/usr/register", (a_req, a_resp) => {
                     } catch (err) {
                         logger.error("/api/usr/register", getCurrentLineNumber(), err);
                         throw err;
+                    } finally {
+                        // Remove data not needed for active session
+                        delete a_req.session.name;
+                        delete a_req.session.email;
+                        delete a_req.session.uuids;
+                        delete a_req.session.acc_tok;
+                        delete a_req.session.acc_tok_ttl;
+                        delete a_req.session.ref_tok;
+                        delete a_req.session.uuids;
                     }
                 }
             },
