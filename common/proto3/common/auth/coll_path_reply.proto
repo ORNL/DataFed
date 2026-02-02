@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package SDMS;
+
+import "messages/path_data.proto";
+
+option cc_enable_arenas = true;
+
+message CollPathReply {
+    repeated PathData path = 1;
+}

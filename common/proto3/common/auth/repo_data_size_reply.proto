@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package SDMS;
+
+import "messages/record_data_size.proto";
+
+option cc_enable_arenas = true;
+
+message RepoDataSizeReply {
+    repeated RecordDataSize size = 1;
+}

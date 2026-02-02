@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package SDMS;
+
+import "messages/group_data.proto";
+
+option cc_enable_arenas = true;
+
+message GroupCreateRequest {
+    GroupData group = 1;
+}

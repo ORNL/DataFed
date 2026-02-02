@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+message DataPathRequest {
+    string id = 1;
+    string domain = 2;
+}

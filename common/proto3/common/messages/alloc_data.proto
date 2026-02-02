@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package SDMS;
+
+import "messages/alloc_stats_data.proto";
+
+option cc_enable_arenas = true;
+
+message AllocData {
+    string repo = 1;
+    uint64 data_limit = 2;
+    uint64 data_size = 3;
+    uint32 rec_limit = 4;
+    uint32 rec_count = 5;
+    string path = 6;
+    string id = 7;
+    bool is_def = 8;
+    AllocStatsData stats = 9;
+    string repo_type = 10;
+}
