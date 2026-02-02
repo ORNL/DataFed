@@ -496,7 +496,6 @@ router
                     var alloc = g_db._query("for v in 1..1 inbound @repo alloc return {id:v._id}", {
                         repo: req.queryParams.id,
                     });
-                    console.log(alloc);
                     if (alloc.hasNext())
                         throw [
                             error.ERR_IN_USE,

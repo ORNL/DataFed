@@ -387,7 +387,6 @@ var tasks_func = (function () {
     };
 
     obj.taskRunDataGet = function (a_task) {
-        console.log("taskRunDataGet");
 
         var reply,
             state = a_task.state;

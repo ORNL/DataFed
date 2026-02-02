@@ -27,7 +27,7 @@ describe("schema router", () => {
     after(function () {
         const collections = ["u", "sch", "sch_dep"];
         collections.forEach((name) => {
-            const col = g_db._collection(name);
+            const col = db._collection(name);
             if (col) col.truncate();
         });
     });
