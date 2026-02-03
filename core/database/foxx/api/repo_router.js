@@ -194,7 +194,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/create",
                 status: "Started",
-                description: `Create a server record: ${req.queryParams.id}`,
+                description: `Create a server record: ${req.body.id}`,
             });
 
             g_db._executeTransaction({
@@ -255,7 +255,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/create",
                 status: "Success",
-                description: `Create a server record: ${req.queryParams.id}`,
+                description: `Create a server record: ${req.body.id}`,
                 extra: {
                     type: repo_doc?.type,
                     capacity: repo_doc?.capacity,
@@ -269,7 +269,7 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/create",
                 status: "Failure",
-                description: `Create a server record: ${req.queryParams.id}`,
+                description: `Create a server record: ${req.body.id}`,
                 extra: {
                     type: repo_doc?.type,
                     capacity: repo_doc?.capacity,
