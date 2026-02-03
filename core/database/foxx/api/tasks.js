@@ -24,7 +24,6 @@ var tasks_func = (function () {
         a_data_limit,
         a_rec_limit,
     ) {
-
         // Check if repo and subject exist
         if (!g_db._exists(a_repo_id))
             throw [error.ERR_NOT_FOUND, "Repo, '" + a_repo_id + "', does not exist"];
@@ -105,7 +104,6 @@ var tasks_func = (function () {
     };
 
     obj.taskRunAllocCreate = function (a_task) {
-
         var reply,
             state = a_task.state;
 
@@ -154,7 +152,6 @@ var tasks_func = (function () {
     // ----------------------- ALLOC DELETE ----------------------------
 
     obj.taskInitAllocDelete = function (a_client, a_repo_id, a_subject_id) {
-
         if (!g_db._exists(a_repo_id))
             throw [error.ERR_NOT_FOUND, "Repo, '" + a_repo_id + "', does not exist"];
 
@@ -244,7 +241,6 @@ var tasks_func = (function () {
     };
 
     obj.taskRunAllocDelete = function (a_task) {
-
         var reply,
             state = a_task.state;
 
@@ -301,7 +297,6 @@ var tasks_func = (function () {
         is_collection_token_required = false,
         collection_info = {},
     ) {
-
         var result = g_proc.preprocessItems(a_client, null, a_res_ids, g_lib.TT_DATA_GET);
 
         if (result.glob_data.length + result.ext_data.length > 0 && !a_check) {
@@ -482,7 +477,6 @@ var tasks_func = (function () {
         is_collection_token_required = false,
         collection_info = {},
     ) {
-
         var result = g_proc.preprocessItems(a_client, null, a_res_ids, g_lib.TT_DATA_PUT);
 
         if (result.glob_data.length > 0 && !a_check) {
@@ -682,7 +676,6 @@ var tasks_func = (function () {
     involved allocations. Unmanaged records do not use allocations and are ignored.
     */
     obj.taskInitRecAllocChg = function (a_client, a_proj_id, a_res_ids, a_dst_repo_id, a_check) {
-
         // Verify that client is owner, or has admin permission to project owner
         var owner_id;
 
@@ -776,7 +769,6 @@ var tasks_func = (function () {
     };
 
     obj.taskRunRecAllocChg = function (a_task) {
-
         var reply,
             state = a_task.state,
             params,
@@ -1139,7 +1131,6 @@ var tasks_func = (function () {
     };
 
     obj.taskRunRecOwnerChg = function (a_task) {
-
         var reply,
             state = a_task.state,
             params,
@@ -1359,7 +1350,6 @@ var tasks_func = (function () {
     };
 
     obj.taskInitRecCollDelete = function (a_client, a_ids) {
-
         var result = g_proc.preprocessItems(a_client, null, a_ids, g_lib.TT_REC_DEL);
 
         if (result.has_pub) {
@@ -1433,7 +1423,6 @@ var tasks_func = (function () {
     };
 
     obj.taskRunRecCollDelete = function (a_task) {
-
         var i,
             reply,
             state = a_task.state,
@@ -1607,7 +1596,6 @@ var tasks_func = (function () {
     };
 
     obj.taskRunProjDelete = function (a_task) {
-
         var reply,
             state = a_task.state;
 
@@ -1872,7 +1860,6 @@ var tasks_func = (function () {
             a_new_owner - new owner (w/ remote indicates dst allocation)
             xfr_docs - chunked per source repo and max data transfer size
         */
-
 
         var fnames,
             i,
