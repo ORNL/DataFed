@@ -11,7 +11,7 @@ const repo_base_url = `${baseUrl}/repo`;
 // NOTE: describe block strings are compared against test specification during test call, not file name
 describe("integration_repo_router: the Foxx microservice repo_router create endpoint", () => {
     beforeEach(() => {
-        const collections = ["repo", "d", "alloc", "loc", "repo", "admin", "g", "p", "u"];
+        const collections = ["repo", "d", "alloc", "loc", "admin", "g", "p", "u"];
         collections.forEach((name) => {
             let col = g_db._collection(name);
             if (col) {
@@ -22,6 +22,13 @@ describe("integration_repo_router: the Foxx microservice repo_router create endp
         });
     });
 
+    after(function () {
+        const collections = ["repo", "d", "alloc", "loc", "admin", "g", "p", "u"];
+        collections.forEach((name) => {
+            const col = g_db._collection(name);
+            if (col) col.truncate();
+        });
+    });
     const user_params = {
         id: "u/shredder",
         key: "shredder",

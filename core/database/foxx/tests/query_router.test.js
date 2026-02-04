@@ -157,7 +157,6 @@ describe("unit_query_router: the Foxx microservice qry_router endpoints", () => 
         });
 
         var parsed = JSON.parse(response.body);
-        console.log("Response body:", response.body);
         // assert
         expect(response.status).to.equal(200);
         expect(parsed).to.be.an("array");
