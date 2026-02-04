@@ -279,7 +279,7 @@ router
                 status: "Success",
                 description:
                     "Gets client permissions for object. Permissions:" + req.queryParams.perms,
-                extra: result,
+                extra: `Object ID: ${req.queryParams.id}`,
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -290,7 +290,7 @@ router
                 status: "Failure",
                 description:
                     "Gets client permissions for object. Permissions:" + req.queryParams.perms,
-                extra: result,
+                extra: `Object ID: ${req.queryParams.id}`,
                 error: e,
             });
             g_lib.handleException(e, res);

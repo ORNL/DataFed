@@ -11,7 +11,7 @@ function logRequestSuccess({
     extra,
 }) {
     // helper to pad fields
-    const pad = (label, value, length = 20) =>
+    const pad = (label, value, length = 10) =>
         `${label}: ${value || "unknown"}`.padEnd(length, " ");
 
     console.info(
@@ -42,7 +42,7 @@ function logRequestFailure({
     error,
 }) {
     // helper to pad fields
-    const pad = (label, value, length = 20) =>
+    const pad = (label, value, length = 10) =>
         `${label}: ${value || "unknown"}`.padEnd(length, " ");
     //PUT IF STATEMENT
     if (g_lib.isInteger(error) || Array.isArray(error)) {
@@ -88,7 +88,7 @@ function logRequestFailure({
 
 function logRequestStarted({ client, correlationId, httpVerb, routePath, status, description }) {
     // helper to pad fields
-    const pad = (label, value, length = 20) =>
+    const pad = (label, value, length = 10) =>
         `${label}: ${value || "unknown"}`.padEnd(length, " ");
 
     console.info(
