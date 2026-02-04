@@ -12,8 +12,7 @@
 #include "common/ProtocolTypes.hpp"
 
 // Proto file includes
-#include "common/SDMS.pb.h"
-#include "common/SDMS_Anon.pb.h"
+#include "common/envelope.pb.h"
 
 // Standard includes
 #include <iostream>
@@ -138,11 +137,10 @@ BOOST_AUTO_TEST_CASE(testing_CommunicatorFactory) {
     msg_from_client->set(MessageAttribute::ID, id);
     msg_from_client->set(MessageAttribute::KEY, key);
 
-    auto auth_by_token_req =
-        std::make_unique<Anon::AuthenticateByTokenRequest>();
-    auth_by_token_req->set_token(token);
+    auto envelope = std::make_unique<SDMS::Envelope>();
+    envelope->mutable_authenticate_by_token_request()->set_token(token);
 
-    msg_from_client->setPayload(std::move(auth_by_token_req));
+    msg_from_client->setPayload(std::move(envelope));
 
     client->send(*msg_from_client);
   }
@@ -178,10 +176,11 @@ BOOST_AUTO_TEST_CASE(testing_CommunicatorFactory) {
 
     auto google_msg_ptr =
         std::get<::google::protobuf::Message *>(response.message->getPayload());
-    Anon::AuthenticateByTokenRequest *payload =
-        dynamic_cast<Anon::AuthenticateByTokenRequest *>(google_msg_ptr);
+    SDMS::Envelope * envelope = dynamic_cast<SDMS::Envelope *>(google_msg_ptr);
 
-    BOOST_CHECK(payload->token().compare(token) == 0);
+    BOOST_CHECK(envelope->has_authenticate_by_token_request());
+    BOOST_CHECK(envelope->authenticate_by_token_request().token().compare(token) == 0);
+    //BOOST_CHECK(payload->token().compare(token) == 0);
   }
 }
 
@@ -268,11 +267,10 @@ BOOST_AUTO_TEST_CASE(testing_CommunicatorFactorySecure) {
     msg_from_client->set(MessageAttribute::ID, id);
     msg_from_client->set(MessageAttribute::KEY, key);
 
-    auto auth_by_token_req =
-        std::make_unique<Anon::AuthenticateByTokenRequest>();
-    auth_by_token_req->set_token(token);
+    auto envelope = std::make_unique<SDMS::Envelope>();
+    envelope->mutable_authenticate_by_token_request()->set_token(token);
 
-    msg_from_client->setPayload(std::move(auth_by_token_req));
+    msg_from_client->setPayload(std::move(envelope));
 
     client->send(*msg_from_client);
   }
@@ -308,10 +306,11 @@ BOOST_AUTO_TEST_CASE(testing_CommunicatorFactorySecure) {
 
     auto google_msg_ptr =
         std::get<::google::protobuf::Message *>(response.message->getPayload());
-    Anon::AuthenticateByTokenRequest *payload =
-        dynamic_cast<Anon::AuthenticateByTokenRequest *>(google_msg_ptr);
+    SDMS::Envelope *envelope =
+        dynamic_cast<SDMS::Envelope *>(google_msg_ptr);
 
-    BOOST_CHECK(payload->token().compare(token) == 0);
+    BOOST_CHECK(envelope->has_authenticate_by_token_request());
+    BOOST_CHECK(envelope->authenticate_by_token_request().token().compare(token) == 0);
   }
 
   { // Client send an empty payload i.e. an ack
@@ -320,9 +319,10 @@ BOOST_AUTO_TEST_CASE(testing_CommunicatorFactorySecure) {
     msg_from_client->set(MessageAttribute::ID, id);
     msg_from_client->set(MessageAttribute::KEY, key);
 
-    auto ack_reply = std::make_unique<Anon::AckReply>();
+    auto envelope = std::make_unique<SDMS::Envelope>();
+    envelope->mutable_ack_reply();
 
-    msg_from_client->setPayload(std::move(ack_reply));
+    msg_from_client->setPayload(std::move(envelope));
 
     client->send(*msg_from_client);
   }
@@ -358,7 +358,9 @@ BOOST_AUTO_TEST_CASE(testing_CommunicatorFactorySecure) {
 
     auto google_msg_ptr =
         std::get<::google::protobuf::Message *>(response.message->getPayload());
-    dynamic_cast<Anon::AckReply *>(google_msg_ptr);
+    SDMS::Envelope *envelope =
+        dynamic_cast<SDMS::Envelope *>(google_msg_ptr);
+    BOOST_CHECK(envelope->has_ack_reply());
   }
 }
 
@@ -454,10 +456,10 @@ BOOST_AUTO_TEST_CASE(testing_CommunicatorFactoryReply) {
   msg_from_client->set(MessageAttribute::ID, id);
   msg_from_client->set(MessageAttribute::KEY, key);
 
-  auto auth_by_token_req = std::make_unique<Anon::AuthenticateByTokenRequest>();
-  auth_by_token_req->set_token(token);
+  auto envelope = std::make_unique<SDMS::Envelope>();
+  envelope->mutable_authenticate_by_token_request()->set_token(token);
 
-  msg_from_client->setPayload(std::move(auth_by_token_req));
+  msg_from_client->setPayload(std::move(envelope));
 
   client->send(*msg_from_client);
   // Client send
@@ -494,23 +496,26 @@ BOOST_AUTO_TEST_CASE(testing_CommunicatorFactoryReply) {
 
   auto google_msg_ptr =
       std::get<::google::protobuf::Message *>(response.message->getPayload());
-  Anon::AuthenticateByTokenRequest *payload =
-      dynamic_cast<Anon::AuthenticateByTokenRequest *>(google_msg_ptr);
+  
+  SDMS::Envelope *recv_envelope =
+      dynamic_cast<SDMS::Envelope *>(google_msg_ptr);
 
-  BOOST_CHECK(payload->token().compare(token) == 0);
+  BOOST_CHECK(recv_envelope->has_authenticate_by_token_request());
+  BOOST_CHECK(recv_envelope->authenticate_by_token_request().token().compare(token) == 0);
   // Server receive
 
   // Server send
   auto nack_msg = msg_factory.createResponseEnvelope(*response.message);
 
   // Create Google proto message
-  auto nack_reply = std::make_unique<Anon::NackReply>();
-  nack_reply->set_err_code(ErrorCode::ID_SERVICE_ERROR);
+  auto nack_envelope = std::make_unique<SDMS::Envelope>();
+  auto nack_reply = nack_envelope->mutable_nack_reply();
+  nack_reply->set_err_code(ErrorCode::SERVICE_ERROR);
   std::string error_msg = "testing_no_error";
   nack_reply->set_err_msg(error_msg);
 
   // Place google proto message in IMessage
-  nack_msg->setPayload(std::move(nack_reply));
+  nack_msg->setPayload(std::move(nack_envelope));
 
   server->send(*nack_msg);
   // Server send
@@ -530,11 +535,12 @@ BOOST_AUTO_TEST_CASE(testing_CommunicatorFactoryReply) {
 
   auto response_google_msg_ptr = std::get<::google::protobuf::Message *>(
       response_client.message->getPayload());
-  Anon::NackReply *response_payload =
-      dynamic_cast<Anon::NackReply *>(response_google_msg_ptr);
+  SDMS::Envelope *response_envelope =
+      dynamic_cast<SDMS::Envelope *>(response_google_msg_ptr);
 
-  BOOST_CHECK(response_payload->err_code() == ErrorCode::ID_SERVICE_ERROR);
-  BOOST_CHECK(response_payload->err_msg().compare(error_msg) == 0);
+  BOOST_CHECK(response_envelope->has_nack_reply());
+  BOOST_CHECK(response_envelope->nack_reply().err_code() == ErrorCode::SERVICE_ERROR);
+  BOOST_CHECK(response_envelope->nack_reply().err_msg().compare(error_msg) == 0);
 
   // Client receive
   /************************CLIENT END****************/

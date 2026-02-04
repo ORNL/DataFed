@@ -386,7 +386,9 @@ void receiveBody(IMessage &msg, Buffer &buffer, ProtoBufFactory &factory,
 
       copyToBuffer(buffer, zmq_msg_data(&zmq_msg), frame_size);
       uint16_t desc_type = std::get<uint16_t>(msg.get(MSG_TYPE));
-      std::unique_ptr<proto::Message> payload = factory.create(desc_type);
+      std::unique_ptr<proto::Message> payload = std::make_unique<SDMS::Envelope>();
+        
+        //factory.create(desc_type);
       if (payload == nullptr) {
         zmq_msg_close(&zmq_msg);
         EXCEPT(1, "No payload was assigned something is wrong");

@@ -19,8 +19,7 @@
 #include "common/SocketOptions.hpp"
 
 // Proto file includes
-#include "common/SDMS_Anon.pb.h"
-#include "common/SDMS_Auth.pb.h"
+#include "common/envelope.pb.h"  // Changed
 
 // Standard includes
 #include <memory>
@@ -250,10 +249,11 @@ BOOST_AUTO_TEST_CASE(testing_Proxy) {
     msg_from_client->set(MessageAttribute::ID, id);
     msg_from_client->set(MessageAttribute::KEY, key);
     msg_from_client->set(constants::message::google::CONTEXT, context);
-    auto auth_by_token_req =
-        std::make_unique<Anon::AuthenticateByTokenRequest>();
-    auth_by_token_req->set_token(token);
-    msg_from_client->setPayload(std::move(auth_by_token_req));
+    
+    // Changed: wrap in envelope
+    auto envelope = std::make_unique<SDMS::Envelope>();
+    envelope->mutable_authenticate_by_token_request()->set_token(token);
+    msg_from_client->setPayload(std::move(envelope));
     client->send(*msg_from_client);
   } // Client send
 
@@ -467,10 +467,11 @@ BOOST_AUTO_TEST_CASE(testing_Proxy2) {
         msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
     msg_from_client->set(MessageAttribute::ID, id);
     msg_from_client->set(MessageAttribute::KEY, key);
-    auto auth_by_token_req =
-        std::make_unique<Anon::AuthenticateByTokenRequest>();
-    auth_by_token_req->set_token(token);
-    msg_from_client->setPayload(std::move(auth_by_token_req));
+    
+    // Changed: wrap in envelope
+    auto envelope = std::make_unique<SDMS::Envelope>();
+    envelope->mutable_authenticate_by_token_request()->set_token(token);
+    msg_from_client->setPayload(std::move(envelope));
     client->send(*msg_from_client);
   } // Client Send
 
@@ -503,12 +504,15 @@ BOOST_AUTO_TEST_CASE(testing_Proxy2) {
     // clients, Use require because we don't want the proxy to continue to run
     BOOST_REQUIRE(routes.size() == 2);
 
+    // Changed: cast to Envelope, access inner message
     auto google_msg =
         std::get<::google::protobuf::Message *>(response.message->getPayload());
-    auto new_auth_by_pass_req =
-        dynamic_cast<SDMS::Anon::AuthenticateByTokenRequest *>(google_msg);
+    auto recv_envelope =
+        dynamic_cast<SDMS::Envelope *>(google_msg);
 
-    BOOST_CHECK(new_auth_by_pass_req->token().compare(token) == 0);
+    BOOST_REQUIRE(recv_envelope != nullptr);  // Fail fast if null
+    BOOST_CHECK(recv_envelope->has_authenticate_by_token_request());
+    BOOST_CHECK(recv_envelope->authenticate_by_token_request().token().compare(token) == 0);
 
   } // Server receive
   proxy_thread->join();
@@ -766,9 +770,11 @@ BOOST_AUTO_TEST_CASE(testing_ProxyChain) {
       msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
   msg_from_client->set(MessageAttribute::ID, id);
   msg_from_client->set(MessageAttribute::KEY, key);
-  auto auth_by_token_req = std::make_unique<Anon::AuthenticateByTokenRequest>();
-  auth_by_token_req->set_token(token);
-  msg_from_client->setPayload(std::move(auth_by_token_req));
+  
+  // Changed: wrap in envelope
+  auto envelope = std::make_unique<SDMS::Envelope>();
+  envelope->mutable_authenticate_by_token_request()->set_token(token);
+  msg_from_client->setPayload(std::move(envelope));
   client->send(*msg_from_client);
 
   { // Server receive
@@ -804,24 +810,29 @@ BOOST_AUTO_TEST_CASE(testing_ProxyChain) {
     // clients, Use require because we don't want the proxy to continue to run
     BOOST_REQUIRE(routes.size() == 3);
 
+    // Changed: cast to Envelope, access inner message
     auto google_msg =
         std::get<::google::protobuf::Message *>(response.message->getPayload());
-    auto new_auth_by_pass_req =
-        dynamic_cast<SDMS::Anon::AuthenticateByTokenRequest *>(google_msg);
+    auto recv_envelope =
+        dynamic_cast<SDMS::Envelope *>(google_msg);
 
-    BOOST_CHECK(new_auth_by_pass_req->token().compare(token) == 0);
+    BOOST_REQUIRE(recv_envelope != nullptr);  // Fail fast if null
+    BOOST_CHECK(recv_envelope->has_authenticate_by_token_request());
+    BOOST_CHECK(recv_envelope->authenticate_by_token_request().token().compare(token) == 0);
 
     // Now we are going to turn the message around and send a response back
     // from the "overlord" server to the client "minion" via two hops through
     // the proxy chain
     auto return_msg = msg_factory.createResponseEnvelope(*response.message);
-    // We will just pass a nack reply because it is easy
-    auto nack_reply = std::make_unique<Anon::NackReply>();
-    nack_reply->set_err_code(ErrorCode::ID_SERVICE_ERROR);
+    
+    // Changed: wrap in envelope
+    auto nack_envelope = std::make_unique<SDMS::Envelope>();
+    auto* nack_reply = nack_envelope->mutable_nack_reply();
+    nack_reply->set_err_code(ErrorCode::SERVICE_ERROR);
     nack_reply->set_err_msg(error_msg);
 
     // Place google proto message in IMessage
-    return_msg->setPayload(std::move(nack_reply));
+    return_msg->setPayload(std::move(nack_envelope));
     server->send(*return_msg);
   }
 
@@ -832,13 +843,15 @@ BOOST_AUTO_TEST_CASE(testing_ProxyChain) {
   // At this point there should be no routes
   BOOST_CHECK(msg_from_server.message->getRoutes().size() == 0);
 
+  // Changed: cast to Envelope, access inner message
   auto response_google_msg_ptr = std::get<::google::protobuf::Message *>(
       msg_from_server.message->getPayload());
-  Anon::NackReply *response_payload =
-      dynamic_cast<Anon::NackReply *>(response_google_msg_ptr);
+  SDMS::Envelope *response_envelope =
+      dynamic_cast<SDMS::Envelope *>(response_google_msg_ptr);
 
-  BOOST_CHECK(response_payload->err_code() == ErrorCode::ID_SERVICE_ERROR);
-  BOOST_CHECK(response_payload->err_msg().compare(error_msg) == 0);
+  BOOST_CHECK(response_envelope->has_nack_reply());
+  BOOST_CHECK(response_envelope->nack_reply().err_code() == ErrorCode::SERVICE_ERROR);
+  BOOST_CHECK(response_envelope->nack_reply().err_msg().compare(error_msg) == 0);
 
   proxy_thread->join();
   proxy_thread2->join();
@@ -1014,10 +1027,11 @@ BOOST_AUTO_TEST_CASE(testing_Proxy_with_PERSISTENT_proxy_client) {
         msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
     msg_from_client->set(MessageAttribute::ID, id);
     msg_from_client->set(MessageAttribute::KEY, key);
-    auto auth_by_token_req =
-        std::make_unique<Anon::AuthenticateByTokenRequest>();
-    auth_by_token_req->set_token(token);
-    msg_from_client->setPayload(std::move(auth_by_token_req));
+    
+    // Changed: wrap in envelope
+    auto envelope = std::make_unique<SDMS::Envelope>();
+    envelope->mutable_authenticate_by_token_request()->set_token(token);
+    msg_from_client->setPayload(std::move(envelope));
     client->send(*msg_from_client);
   } // Client Send
 
@@ -1050,12 +1064,14 @@ BOOST_AUTO_TEST_CASE(testing_Proxy_with_PERSISTENT_proxy_client) {
     // clients, Use require because we don't want the proxy to continue to run
     BOOST_REQUIRE(routes.size() == 2);
 
+    // Changed: cast to Envelope, access inner message
     auto google_msg =
         std::get<::google::protobuf::Message *>(response.message->getPayload());
-    auto new_auth_by_pass_req =
-        dynamic_cast<SDMS::Anon::AuthenticateByTokenRequest *>(google_msg);
-
-    BOOST_CHECK(new_auth_by_pass_req->token().compare(token) == 0);
+    auto recv_envelope =
+        dynamic_cast<SDMS::Envelope *>(google_msg);
+    BOOST_REQUIRE(recv_envelope != nullptr);  // Fail fast if null
+    BOOST_CHECK(recv_envelope->has_authenticate_by_token_request());
+    BOOST_CHECK(recv_envelope->authenticate_by_token_request().token().compare(token) == 0);
 
   } // Server receive
   proxy_thread->join();

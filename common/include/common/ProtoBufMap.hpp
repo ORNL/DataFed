@@ -5,6 +5,8 @@
 // Public common includes
 #include "IMessageMapper.hpp"
 
+//#include "common/envelope.pb.h"
+
 // Third party includes
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/message.h>
@@ -28,21 +30,24 @@ private:
   FileDescriptorMap m_file_descriptor_map;
   DescriptorMap m_descriptor_map;
   MsgTypeMap m_msg_type_map;
-  std::unordered_map<MessageProtocol, uint16_t> m_protocol_ids;
+  //std::unordered_map<MessageProtocol, uint16_t> m_protocol_ids;
 
 public:
   ProtoBufMap();
 
   const ::google::protobuf::Descriptor *
   getDescriptorType(uint16_t message_type) const;
-  bool exists(uint16_t message_type) const {
-    return m_descriptor_map.count(message_type) > 0;
-  }
-  uint16_t getMessageType(::google::protobuf::Message &);
+  bool exists(uint16_t message_type) const;
+//  {
+//    return m_descriptor_map.count(message_type) > 0;
+//  }
+  //uint16_t getMessageType(::google::protobuf::Message &);
+  uint16_t getMessageType(const ::google::protobuf::Message& msg) const;
   std::string toString(uint16_t MessageType) const;
-  virtual uint16_t getMessageType(uint8_t a_proto_id,
-                                  const std::string &a_message_name) final;
-  virtual uint8_t getProtocolID(MessageProtocol) const final;
+  virtual uint16_t getMessageType(const std::string& message_name) const final;
+  //virtual uint16_t getMessageType(uint8_t a_proto_id,
+  //                                const std::string &a_message_name) final;
+  //virtual uint8_t getProtocolID(MessageProtocol) const final;
 };
 } // namespace SDMS
 

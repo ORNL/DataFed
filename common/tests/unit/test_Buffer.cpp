@@ -11,6 +11,9 @@
 // Local public includes
 #include "common/ProtoBufMap.hpp"
 
+// Proto file includes
+#include "common/envelope.pb.h"
+
 // Standard includes
 #include <iostream>
 
@@ -111,9 +114,10 @@ BOOST_AUTO_TEST_CASE(testing_Buffer_non_trivial2) {
 BOOST_AUTO_TEST_CASE(testing_Buffer_googleprotobuf_repo_create_request) {
 
   ProtoBufMap proto_map;
-  ProtoBufFactory proto_factory;
 
-  SDMS::Auth::RepoCreateRequest repo_create_req;
+  // Create envelope with inner message
+  SDMS::Envelope envelope;
+  auto* repo_create_req = envelope.mutable_repo_create_request();
 
   const std::string id = "bonanza";
   const std::string title = "All you can eat.";
@@ -124,114 +128,119 @@ BOOST_AUTO_TEST_CASE(testing_Buffer_googleprotobuf_repo_create_request) {
   uint64_t capacity = 0;
   const std::string type = "globus";
 
-  repo_create_req.set_id(id);
-  repo_create_req.set_title(title);
-  repo_create_req.set_path(path);
-  repo_create_req.set_address(address);
-  repo_create_req.set_endpoint(endpoint);
-  repo_create_req.set_pub_key(pub_key);
-  repo_create_req.set_capacity(capacity);
-  repo_create_req.set_type(type);
+  repo_create_req->set_id(id);
+  repo_create_req->set_title(title);
+  repo_create_req->set_path(path);
+  repo_create_req->set_address(address);
+  repo_create_req->set_endpoint(endpoint);
+  repo_create_req->set_pub_key(pub_key);
+  repo_create_req->set_capacity(capacity);
+  repo_create_req->set_type(type);
 
-  BOOST_CHECK(repo_create_req.id().compare(id) == 0);
-  BOOST_CHECK(repo_create_req.title().compare(title) == 0);
-  BOOST_CHECK(repo_create_req.path().compare(path) == 0);
-  BOOST_CHECK(repo_create_req.address().compare(address) == 0);
-  BOOST_CHECK(repo_create_req.endpoint().compare(endpoint) == 0);
-  BOOST_CHECK(repo_create_req.pub_key().compare(pub_key) == 0);
-  BOOST_CHECK(repo_create_req.capacity() == capacity);
-  BOOST_CHECK(repo_create_req.type().compare(type) == 0);
+  BOOST_CHECK(repo_create_req->id().compare(id) == 0);
+  BOOST_CHECK(repo_create_req->title().compare(title) == 0);
+  BOOST_CHECK(repo_create_req->path().compare(path) == 0);
+  BOOST_CHECK(repo_create_req->address().compare(address) == 0);
+  BOOST_CHECK(repo_create_req->endpoint().compare(endpoint) == 0);
+  BOOST_CHECK(repo_create_req->pub_key().compare(pub_key) == 0);
+  BOOST_CHECK(repo_create_req->capacity() == capacity);
+  BOOST_CHECK(repo_create_req->type().compare(type) == 0);
 
   Buffer buffer;
   std::cout << "Calling Copy to buffer" << std::endl;
-  size_t size = repo_create_req.ByteSizeLong();
-  copyToBuffer(buffer, &repo_create_req, size);
+  size_t size = envelope.ByteSizeLong();
+  copyToBuffer(buffer, &envelope, size);
 
   BOOST_CHECK(buffer.size() == buffer.capacity());
-  BOOST_CHECK(buffer.size() == repo_create_req.ByteSizeLong());
+  BOOST_CHECK(buffer.size() == envelope.ByteSizeLong());
 
-  // Create a new message and copy the buffer into it
-  uint16_t msg_type = proto_map.getMessageType(repo_create_req);
-  std::unique_ptr<::google::protobuf::Message> new_msg =
-      proto_factory.create(msg_type);
+  // Always deserialize into Envelope
+  SDMS::Envelope new_envelope;
+  copyFromBuffer(&new_envelope, buffer);
 
-  copyFromBuffer(new_msg.get(), buffer);
+  // Verify message type matches
+  uint16_t original_msg_type = proto_map.getMessageType(envelope);
+  uint16_t new_msg_type = proto_map.getMessageType(new_envelope);
+  BOOST_CHECK(original_msg_type == new_msg_type);
 
-  auto new_repo_create_req =
-      dynamic_cast<SDMS::Auth::RepoCreateRequest *>(new_msg.get());
+  // Access inner message through envelope
+  BOOST_CHECK(new_envelope.has_repo_create_request());
+  const auto& new_repo_create_req = new_envelope.repo_create_request();
 
-  BOOST_CHECK(new_repo_create_req->id().compare(id) == 0);
-  BOOST_CHECK(new_repo_create_req->title().compare(title) == 0);
-  BOOST_CHECK(new_repo_create_req->path().compare(path) == 0);
-  BOOST_CHECK(new_repo_create_req->address().compare(address) == 0);
-  BOOST_CHECK(new_repo_create_req->endpoint().compare(endpoint) == 0);
-  BOOST_CHECK(new_repo_create_req->pub_key().compare(pub_key) == 0);
-  BOOST_CHECK(new_repo_create_req->capacity() == capacity);
-  BOOST_CHECK(new_repo_create_req->type().compare(type) == 0);
-
-
+  BOOST_CHECK(new_repo_create_req.id().compare(id) == 0);
+  BOOST_CHECK(new_repo_create_req.title().compare(title) == 0);
+  BOOST_CHECK(new_repo_create_req.path().compare(path) == 0);
+  BOOST_CHECK(new_repo_create_req.address().compare(address) == 0);
+  BOOST_CHECK(new_repo_create_req.endpoint().compare(endpoint) == 0);
+  BOOST_CHECK(new_repo_create_req.pub_key().compare(pub_key) == 0);
+  BOOST_CHECK(new_repo_create_req.capacity() == capacity);
+  BOOST_CHECK(new_repo_create_req.type().compare(type) == 0);
 }
 
 BOOST_AUTO_TEST_CASE(testing_Buffer_googleprotobuf) {
 
   ProtoBufMap proto_map;
-  ProtoBufFactory proto_factory;
 
-  SDMS::Anon::AuthenticateByPasswordRequest auth_by_pass_req;
+  SDMS::Envelope envelope;
+  auto* auth_by_pass_req = envelope.mutable_authenticate_by_password_request();
 
   const std::string uid = "tonystark";
   const std::string password = "skeleton_key";
-  auth_by_pass_req.set_uid(uid);
-  auth_by_pass_req.set_password(password);
+  auth_by_pass_req->set_uid(uid);
+  auth_by_pass_req->set_password(password);
 
-  BOOST_CHECK(auth_by_pass_req.uid().compare(uid) == 0);
-  BOOST_CHECK(auth_by_pass_req.password().compare(password) == 0);
+  BOOST_CHECK(auth_by_pass_req->uid().compare(uid) == 0);
+  BOOST_CHECK(auth_by_pass_req->password().compare(password) == 0);
 
   Buffer buffer;
   std::cout << "Calling Copy to buffer" << std::endl;
-  size_t size = auth_by_pass_req.ByteSizeLong();
-  copyToBuffer(buffer, &auth_by_pass_req, size);
+  size_t size = envelope.ByteSizeLong();
+  copyToBuffer(buffer, &envelope, size);
 
   BOOST_CHECK(buffer.size() == buffer.capacity());
-  BOOST_CHECK(buffer.size() == auth_by_pass_req.ByteSizeLong());
+  BOOST_CHECK(buffer.size() == envelope.ByteSizeLong());
 
-  // Create a new message and copy the buffer into it
-  uint16_t msg_type = proto_map.getMessageType(auth_by_pass_req);
-  std::unique_ptr<::google::protobuf::Message> new_msg =
-      proto_factory.create(msg_type);
+  // Always deserialize into Envelope
+  SDMS::Envelope new_envelope;
+  copyFromBuffer(&new_envelope, buffer);
 
-  copyFromBuffer(new_msg.get(), buffer);
+  // Verify message type matches
+  uint16_t original_msg_type = proto_map.getMessageType(envelope);
+  uint16_t new_msg_type = proto_map.getMessageType(new_envelope);
+  BOOST_CHECK(original_msg_type == new_msg_type);
 
-  auto new_auth_by_pass_req =
-      dynamic_cast<SDMS::Anon::AuthenticateByPasswordRequest *>(new_msg.get());
-
-  BOOST_CHECK(new_auth_by_pass_req->password().compare(password) == 0);
-  BOOST_CHECK(new_auth_by_pass_req->uid().compare(uid) == 0);
+  // Access inner message through envelope
+  BOOST_CHECK(new_envelope.has_authenticate_by_password_request());
+  BOOST_CHECK(new_envelope.authenticate_by_password_request().password().compare(password) == 0);
+  BOOST_CHECK(new_envelope.authenticate_by_password_request().uid().compare(uid) == 0);
 }
 
 BOOST_AUTO_TEST_CASE(testing_Buffer_googleprotobuf_empty_payload) {
 
   ProtoBufMap proto_map;
-  ProtoBufFactory proto_factory;
 
-  SDMS::Anon::AckReply ack_reply;
+  SDMS::Envelope envelope;
+  envelope.mutable_ack_reply();  // Sets the ack_reply field (empty message)
 
   Buffer buffer;
   std::cout << "Calling Copy to buffer" << std::endl;
-  size_t size = ack_reply.ByteSizeLong();
-  copyToBuffer(buffer, &ack_reply, size);
+  size_t size = envelope.ByteSizeLong();
+  copyToBuffer(buffer, &envelope, size);
 
   BOOST_CHECK(buffer.size() == buffer.capacity());
-  BOOST_CHECK(buffer.size() == ack_reply.ByteSizeLong());
+  BOOST_CHECK(buffer.size() == envelope.ByteSizeLong());
 
-  // Create a new message and copy the buffer into it
-  uint16_t msg_type = proto_map.getMessageType(ack_reply);
-  std::unique_ptr<::google::protobuf::Message> new_msg =
-      proto_factory.create(msg_type);
+  // Always deserialize into Envelope
+  SDMS::Envelope new_envelope;
+  copyFromBuffer(&new_envelope, buffer);
 
-  copyFromBuffer(new_msg.get(), buffer);
+  // Verify message type matches
+  uint16_t original_msg_type = proto_map.getMessageType(envelope);
+  uint16_t new_msg_type = proto_map.getMessageType(new_envelope);
+  BOOST_CHECK(original_msg_type == new_msg_type);
 
-  auto new_auth_by_pass_req =
-      dynamic_cast<SDMS::Anon::AckReply *>(new_msg.get());
+  // Verify inner message is set
+  BOOST_CHECK(new_envelope.has_ack_reply());
 }
+
 BOOST_AUTO_TEST_SUITE_END()

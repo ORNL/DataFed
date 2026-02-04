@@ -9,7 +9,7 @@
 #include "common/ProtoBufMap.hpp"
 
 // Proto file includes
-#include "common/SDMS_Anon.pb.h"
+#include "common/envelope.pb.h"
 
 using namespace SDMS;
 
@@ -39,14 +39,19 @@ BOOST_AUTO_TEST_CASE(testing_MessageFactory) {
   message->set(MessageAttribute::KEY, key);
   message->set(MessageAttribute::STATE, MessageState::REQUEST);
   message->set(constants::message::google::CONTEXT, context);
-  auto auth_by_token_req = std::make_unique<Anon::AuthenticateByTokenRequest>();
+
+//  auto auth_by_token_req = std::make_unique<Anon::AuthenticateByTokenRequest>();
+  // Changed: Create envelope and populate inner message
+  auto envelope = std::make_unique<SDMS::Envelope>();
   std::string token = "golden_chest";
-  auth_by_token_req->set_token(token);
+  envelope->mutable_authenticate_by_token_request()->set_token(token);
+
+  //auth_by_token_req->set_token(token);
 
   ProtoBufMap proto_map;
-  uint16_t protobuf_msg_type = proto_map.getMessageType(*auth_by_token_req);
+  uint16_t protobuf_msg_type = proto_map.getMessageType(*envelope);
 
-  message->setPayload(std::move(auth_by_token_req));
+  message->setPayload(std::move(envelope));
 
   std::string route = "MtOlympia";
   message->addRoute(route);

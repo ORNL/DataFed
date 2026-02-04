@@ -12,7 +12,7 @@
 #include "common/ProtoBufMap.hpp"
 
 // Proto file includes
-#include "common/SDMS_Anon.pb.h"
+#include "common/envelope.pb.h"
 
 // Standard includes
 #include <iostream>
@@ -87,16 +87,18 @@ BOOST_AUTO_TEST_CASE(testing_FrameFactory) {
 
   ProtoBufMap proto_map;
 
-  SDMS::Anon::AuthenticateByPasswordRequest auth_by_pass_req;
+  SDMS::Envelope envelope;
+  auto* auth_by_pass_req = envelope.mutable_authenticate_by_password_request();
+
   const std::string uid = "tonystark";
   const std::string password = "skeleton_key";
-  auth_by_pass_req.set_uid(uid);
-  auth_by_pass_req.set_password(password);
+  auth_by_pass_req->set_uid(uid);        // Changed: . to ->
+  auth_by_pass_req->set_password(password);  // Changed: . to ->
 
-  size_t expected_size = auth_by_pass_req.ByteSizeLong();
-  size_t expected_msg_type = proto_map.getMessageType(auth_by_pass_req);
+  size_t expected_size = envelope.ByteSizeLong();  // Changed: use envelope
+  size_t expected_msg_type = proto_map.getMessageType(envelope);  // Changed: use envelope
 
-  Frame frame = factory.create(auth_by_pass_req, proto_map);
+  Frame frame = factory.create(envelope, proto_map);  // Changed: use envelope
 
   BOOST_CHECK(frame.size == expected_size);
   BOOST_CHECK(frame.getMsgType() == expected_msg_type);
@@ -134,13 +136,15 @@ BOOST_AUTO_TEST_CASE(testing_FrameFactory2) {
   ProtoBufMap proto_map;
 
   auto msg = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
-  auto auth_by_token_req = std::make_unique<Anon::AuthenticateByTokenRequest>();
-  auth_by_token_req->set_token("magic_token");
+
+  // Create envelope, populate inner message
+  auto envelope = std::make_unique<SDMS::Envelope>();
+  envelope->mutable_authenticate_by_token_request()->set_token("magic_token");
 
   Frame frame_from_protocol_msg =
-      frame_factory.create(*auth_by_token_req, proto_map);
+      frame_factory.create(*envelope, proto_map);
 
-  msg->setPayload(std::move(auth_by_token_req));
+  msg->setPayload(std::move(envelope));
 
   Frame frame_IMessage = frame_factory.create(*msg);
 
