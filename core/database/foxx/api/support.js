@@ -1109,7 +1109,6 @@ module.exports = (function () {
     obj.getCollCategoryTags = function (a_coll_id) {
         var coll = obj.db.c.document(a_coll_id),
             ctx = obj.catalogCalcParCtxt(coll, {});
-
         if (ctx.pub) return Array.from(ctx.tags);
     };
 
