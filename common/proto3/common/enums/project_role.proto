@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+enum ProjectRole {
+    PROJECT_ROLE_NO_ROLE = 0;
+    PROJECT_ROLE_MEMBER = 1;
+    PROJECT_ROLE_MANAGER = 2;
+    PROJECT_ROLE_ADMIN = 3;
+}

@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+message RepoListRequest {
+    bool details = 1;
+    bool all = 2;
+}

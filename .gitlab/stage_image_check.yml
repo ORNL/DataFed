@@ -10,6 +10,7 @@ check-ws-image:
         COMPONENT: "ws"
         BUILD_INTERMEDIATE: "TRUE"
         INTERMEDIATE_LAYER_NAME: "build"
+        WATCHED_PATHS: "docker scripts web cmake common/proto .gitlab-ci.yml CMakeLists.txt"
 
 check-core-image:
     extends: .image_check
@@ -18,6 +19,7 @@ check-core-image:
         PROJECT: "datafed"
         COMPONENT: "core"
         BUILD_INTERMEDIATE: "FALSE"
+        WATCHED_PATHS: "docker scripts core common CMakeLists.txt cmake .gitlab-ci.yml"
 
 check-repo-image:
     extends: .image_check
@@ -26,14 +28,16 @@ check-repo-image:
         PROJECT: "datafed"
         COMPONENT: "repo"
         BUILD_INTERMEDIATE: "FALSE"
+        WATCHED_PATHS: "docker scripts common/proto .gitlab-ci.yml CMakeLists.txt cmake repository/CMakeLists.txt repository/server"
 
 check-gcs-base-image:
     extends: .image_check
     stage: image-check
     variables:
         PROJECT: "datafed"
-        COMPONENT: "gcs_base"
+        COMPONENT: "gcs-base"
         BUILD_INTERMEDIATE: "FALSE"
+        WATCHED_PATHS: "docker scripts common .gitlab-ci.yml CMakeLists.txt cmake"
 
 check-gcs-image:
     extends: .image_check
@@ -42,6 +46,7 @@ check-gcs-image:
         PROJECT: "datafed"
         COMPONENT: "gcs"
         BUILD_INTERMEDIATE: "FALSE"
+        WATCHED_PATHS: "docker scripts common .gitlab-ci.yml .gitlab/build/build_gcs_base_image.sh .gitlab/build/build_gcs_image.sh .gitlab/stage_build_base.sh external/globus-connect-server CMakeLists.txt cmake repository/docker/entrypoint_authz.sh repository/docker/Dockerfile.gcs repository/CMakeLists.txt repository/gridftp"
 
 check-foxx-image:
     extends: .image_check
@@ -50,3 +55,4 @@ check-foxx-image:
         PROJECT: "datafed"
         COMPONENT: "foxx"
         BUILD_INTERMEDIATE: "FALSE"
+        WATCHED_PATHS: "docker scripts cmake core/database core/CMakeLists.txt common/proto .gitlab-ci.yml .gitlab CMakeLists.txt"

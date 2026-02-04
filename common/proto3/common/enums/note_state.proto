@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+enum NoteState {
+    NOTE_STATE_CLOSED = 0;
+    NOTE_STATE_OPEN = 1;
+    NOTE_STATE_ACTIVE = 2;
+}

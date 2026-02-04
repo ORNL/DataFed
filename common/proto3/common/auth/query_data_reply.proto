@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package SDMS;
+
+import "auth/search_request.proto";
+
+option cc_enable_arenas = true;
+
+message QueryDataReply {
+    string id = 1;
+    string title = 2;
+    string owner = 4;
+    uint32 ct = 5;
+    uint32 ut = 6;
+    SearchRequest query = 7;
+}

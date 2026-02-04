@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+message RepoCreateRequest {
+    string id = 1;
+    string title = 2;
+    string desc = 3;
+    string domain = 5;
+    string path = 6;
+    string exp_path = 7;
+    string address = 8;
+    string endpoint = 9;
+    string pub_key = 10;
+    uint64 capacity = 11;
+    repeated string admin = 12;
+    string type = 13;
+}
