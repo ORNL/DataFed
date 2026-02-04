@@ -157,7 +157,7 @@
             sed -i 's/\(HARBOR_USER=.*\)\$/\1$$/g' build.env
     artifacts:
         paths:
-            - ${COMPONENT}_image.yml
+            - "*_image.yml"
         reports:
             dotenv: build.env
 
