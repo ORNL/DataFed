@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package SDMS;
+
+import "messages/alloc_data.proto";
+
+option cc_enable_arenas = true;
+
+message ProjectData {
+    string id = 1;
+    string title = 2;
+    string desc = 3;
+    string owner = 4;
+    uint32 ct = 5;
+    uint32 ut = 6;
+    repeated string admin = 7;
+    repeated string member = 8;
+    repeated AllocData alloc = 9;
+}

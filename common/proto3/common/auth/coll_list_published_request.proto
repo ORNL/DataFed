@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+message CollListPublishedRequest {
+    string subject = 1;
+    uint32 offset = 2;
+    uint32 count = 3;
+}

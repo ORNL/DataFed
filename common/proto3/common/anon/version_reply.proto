@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+message VersionReply {
+    uint32 release_year = 1;
+    uint32 release_month = 2;
+    uint32 release_day = 3;
+    uint32 release_hour = 4;
+    uint32 release_minute = 5;
+    uint32 api_major = 6;
+    uint32 api_minor = 7;
+    uint32 api_patch = 8;
+    uint32 component_major = 9;
+    uint32 component_minor = 10;
+    uint32 component_patch = 11;
+}

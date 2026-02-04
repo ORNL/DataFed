@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+message SchemaReviseRequest {
+    string id = 1;
+    string desc = 2;
+    bool pub = 3;
+    bool sys = 4;
+    string def = 5;
+}

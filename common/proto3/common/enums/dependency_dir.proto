@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+enum DependencyDir {
+    DEPENDENCY_DIR_IN = 0;
+    DEPENDENCY_DIR_OUT = 1;
+}
