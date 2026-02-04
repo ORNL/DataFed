@@ -132,7 +132,6 @@ describe("unit_data_router: the Foxx microservice data_router create/ endpoint",
         const body = typeof res.body === "string" ? JSON.parse(res.body) : res.body;
 
         const recordId = body.results[0].id;
-        console.log("Created record ID:", recordId);
 
         //UPDATING EXISTING RECORD
         res = request.post(`${data_base_url}/update?client=fakeUser`, {
