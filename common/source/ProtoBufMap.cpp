@@ -2,8 +2,6 @@
 // Local public includes
 #include "common/ProtoBufMap.hpp"
 #include "common/envelope.pb.h"
-//#include "common/SDMS_Anon.pb.h"
-//#include "common/SDMS_Auth.pb.h"
 #include "common/TraceException.hpp"
 
 // Third party includes
@@ -15,21 +13,6 @@ namespace proto = ::google::protobuf;
 namespace SDMS {
 
 ProtoBufMap::ProtoBufMap() {}
-
-//uint16_t ProtoBufMap::getMessageType(const sdms::Envelope& env) const {
-//    const auto* reflection = env.GetReflection();
-//    const auto* descriptor = env.GetDescriptor();
-//
-//    for (int i = 0; i < descriptor->field_count(); ++i) {
-//        const auto* field = descriptor->field(i);
-//        if (field->type() == proto::FieldDescriptor::TYPE_MESSAGE) {
-//            if (reflection->HasField(env, field)) {
-//                return static_cast<uint16_t>(field->number());
-//            }
-//        }
-//    }
-//    return 0;
-//}
 
 uint16_t ProtoBufMap::getMessageType(const ::google::protobuf::Message& msg) const {
     // If it's an Envelope, use the envelope method
@@ -48,8 +31,6 @@ uint16_t ProtoBufMap::getMessageType(const ::google::protobuf::Message& msg) con
       }
     }
 
-
-    //       return getMessageType(*env);
   }
     
     // Otherwise, look up by message type name

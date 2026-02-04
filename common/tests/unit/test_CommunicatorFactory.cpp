@@ -180,7 +180,6 @@ BOOST_AUTO_TEST_CASE(testing_CommunicatorFactory) {
 
     BOOST_CHECK(envelope->has_authenticate_by_token_request());
     BOOST_CHECK(envelope->authenticate_by_token_request().token().compare(token) == 0);
-    //BOOST_CHECK(payload->token().compare(token) == 0);
   }
 }
 

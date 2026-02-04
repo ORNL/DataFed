@@ -23,10 +23,6 @@ public:
 
 public:
   virtual uint16_t getMessageType(const std::string& message_name) const = 0;
-  //virtual uint16_t getMessageType(uint8_t a_proto_id,
-  //                                const std::string &a_message_name) = 0;
-
-//  virtual uint8_t getProtocolID(MessageProtocol) const = 0;
 };
 } // namespace SDMS
 
