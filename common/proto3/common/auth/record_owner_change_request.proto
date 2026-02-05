@@ -7,7 +7,7 @@ option cc_enable_arenas = true;
 message RecordOwnerChangeRequest {
     repeated string id = 1;
     string coll_id = 2;
-    string repo_id = 3;
+    optional string repo_id = 3;
     string proj_id = 4;
-    bool check = 5;
+    optional bool check = 5;
 }

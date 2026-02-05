@@ -5,7 +5,7 @@ package SDMS;
 option cc_enable_arenas = true;
 
 message TopicListTopicsRequest {
-    string topic_id = 1;
-    uint32 offset = 2;
-    uint32 count = 3;
+    optional string topic_id = 1;
+    optional uint32 offset = 2;
+    optional uint32 count = 3;
 }

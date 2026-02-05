@@ -6,5 +6,5 @@ option cc_enable_arenas = true;
 
 message SchemaViewRequest {
     string id = 1;
-    bool resolve = 2;
+    optional bool resolve = 2;
 }

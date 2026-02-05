@@ -8,10 +8,10 @@ option cc_enable_arenas = true;
 
 message DataPutRequest {
     string id = 1;
-    string path = 2;
-    Encryption encrypt = 3;
-    string ext = 4;
-    bool check = 5;
-    string collection_id = 6;
-    string collection_type = 7;
+    optional string path = 2;
+    optional Encryption encrypt = 3;
+    optional string ext = 4;
+    optional bool check = 5;
+    optional string collection_id = 6;
+    optional string collection_type = 7;
 }

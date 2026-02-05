@@ -5,6 +5,6 @@ package SDMS;
 option cc_enable_arenas = true;
 
 message ACLSharedListRequest {
-    bool inc_users = 2;
-    bool inc_projects = 3;
+    optional bool inc_users = 2;
+    optional bool inc_projects = 3;
 }

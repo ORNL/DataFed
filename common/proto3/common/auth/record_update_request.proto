@@ -8,18 +8,18 @@ option cc_enable_arenas = true;
 
 message RecordUpdateRequest {
     string id = 1;
-    string title = 2;
-    string desc = 3;
+    optional string title = 2;
+    optional string desc = 3;
     repeated string tags = 4;
-    bool tags_clear = 5;
-    string alias = 6;
-    string metadata = 7;
-    bool mdset = 8;
-    string sch_id = 9;
-    bool sch_enforce = 10;
-    string source = 11;
-    string ext = 12;
-    bool ext_auto = 13;
+    optional bool tags_clear = 5;
+    optional string alias = 6;
+    optional string metadata = 7;
+    optional bool mdset = 8;
+    optional string sch_id = 9;
+    optional bool sch_enforce = 10;
+    optional string source = 11;
+    optional string ext = 12;
+    optional bool ext_auto = 13;
     repeated DependencySpecData dep_add = 16;
     repeated DependencySpecData dep_rem = 17;
 }

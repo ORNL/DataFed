@@ -5,6 +5,6 @@ package SDMS;
 option cc_enable_arenas = true;
 
 message RepoListSubjectAllocationsRequest {
-    string subject = 1;
-    bool stats = 2;
+    optional string subject = 1;
+    optional bool stats = 2;
 }

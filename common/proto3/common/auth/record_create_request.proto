@@ -8,17 +8,17 @@ option cc_enable_arenas = true;
 
 message RecordCreateRequest {
     string title = 1;
-    string desc = 2;
+    optional string desc = 2;
     repeated string tags = 3;
-    string alias = 4;
-    string metadata = 5;
-    string parent_id = 6;
-    bool external = 7;
-    string source = 8;
-    string repo_id = 9;
-    string ext = 10;
-    bool ext_auto = 11;
+    optional string alias = 4;
+    optional string metadata = 5;
+    optional string parent_id = 6;
+    optional bool external = 7;
+    optional string source = 8;
+    optional string repo_id = 9;
+    optional string ext = 10;
+    optional bool ext_auto = 11;
     repeated DependencySpecData deps = 12;
-    string sch_id = 13;
-    bool sch_enforce = 14;
+    optional string sch_id = 13;
+    optional bool sch_enforce = 14;
 }

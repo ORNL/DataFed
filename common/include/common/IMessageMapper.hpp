@@ -23,6 +23,7 @@ public:
 
 public:
   virtual uint16_t getMessageType(const std::string& message_name) const = 0;
+  virtual bool requiresAuth(const std::string& msg_type) const = 0;
 };
 } // namespace SDMS
 

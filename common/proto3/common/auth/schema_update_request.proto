@@ -6,9 +6,9 @@ option cc_enable_arenas = true;
 
 message SchemaUpdateRequest {
     string id = 1;
-    string id_new = 2;
-    string desc = 3;
-    bool pub = 4;
-    bool sys = 5;
-    string def = 6;
+    optional string id_new = 2;
+    optional string desc = 3;
+    optional bool pub = 4;
+    optional bool sys = 5;
+    optional string def = 6;
 }

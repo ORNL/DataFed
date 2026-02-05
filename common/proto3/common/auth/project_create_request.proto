@@ -7,7 +7,7 @@ option cc_enable_arenas = true;
 message ProjectCreateRequest {
     string id = 1;
     string title = 2;
-    string desc = 3;
+    optional string desc = 3;
     repeated string admin = 4;
     repeated string member = 5;
 }

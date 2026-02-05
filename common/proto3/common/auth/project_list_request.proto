@@ -7,12 +7,12 @@ import "enums/sort_option.proto";
 option cc_enable_arenas = true;
 
 message ProjectListRequest {
-    string subject = 1;
-    bool as_owner = 2;
-    bool as_admin = 3;
-    bool as_member = 4;
-    SortOption sort = 5;
-    bool sort_rev = 6;
-    uint32 offset = 7;
-    uint32 count = 8;
+    optional string subject = 1;
+    optional bool as_owner = 2;
+    optional bool as_admin = 3;
+    optional bool as_member = 4;
+    optional SortOption sort = 5;
+    optional bool sort_rev = 6;
+    optional uint32 offset = 7;
+    optional uint32 count = 8;
 }

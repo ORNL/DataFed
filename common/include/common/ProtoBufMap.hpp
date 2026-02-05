@@ -46,6 +46,17 @@ public:
 
   std::unique_ptr<::google::protobuf::Message>
   unwrapFromEnvelope(SDMS::Envelope& envelope) const;
+
+  // Check if message type requires authentication
+  virtual bool requiresAuth(const std::string& msg_type) const final {
+    static const std::unordered_set<std::string> anon_types = {
+      "AckReply", "NackReply", "VersionRequest", "VersionReply",
+      "GetAuthStatusRequest", "AuthenticateByPasswordRequest",
+      "AuthenticateByTokenRequest", "AuthStatusReply",
+      "DailyMessageRequest", "DailyMessageReply"
+    };
+    return anon_types.count(msg_type) == 0;
+  }
 };
 } // namespace SDMS
 

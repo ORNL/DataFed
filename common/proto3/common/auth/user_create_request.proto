@@ -6,10 +6,10 @@ option cc_enable_arenas = true;
 
 message UserCreateRequest {
     string uid = 1;
-    string password = 2;
+    optional string password = 2;
     string name = 3;
     string email = 4;
     repeated string uuid = 5;
-    string options = 6;
+    optional string options = 6;
     string secret = 7;
 }

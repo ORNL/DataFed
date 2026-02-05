@@ -6,5 +6,5 @@ option cc_enable_arenas = true;
 
 message RepoViewAllocationRequest {
     string repo = 1;
-    string subject = 2;
+    optional string subject = 2;
 }
