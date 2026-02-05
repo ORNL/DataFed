@@ -15,10 +15,7 @@
 #include "common/Util.hpp"
 
 // Proto includes
-#include "common/SDMS.pb.h"
-#include "common/SDMS_Anon.pb.h"
-#include "common/SDMS_Auth.pb.h"
-#include "common/Version.pb.h"
+#include "common/envelope.pb.h"
 
 // Standard includes
 #include <any>
@@ -33,8 +30,6 @@
   ((_T1.tv_sec - _T0.tv_sec) + ((_T1.tv_nsec - _T0.tv_nsec) / 1.0e9))
 
 using namespace std;
-using namespace SDMS::Anon;
-using namespace SDMS::Auth;
 
 namespace {
 std::string randomAlphaNumericCode() {
@@ -212,22 +207,22 @@ void Server::checkServerVersion() {
                        << ver_reply->api_patch() << ")");
       }
       bool new_release_available = false;
-      if (ver_reply->release_year() > Version::DATAFED_RELEASE_YEAR) {
+      if (ver_reply->release_year() > release::YEAR) {
         new_release_available = true;
-      } else if (ver_reply->release_year() == Version::DATAFED_RELEASE_YEAR) {
-        if (ver_reply->release_month() > Version::DATAFED_RELEASE_MONTH) {
+      } else if (ver_reply->release_year() == release::YEAR) {
+        if (ver_reply->release_month() > release::MONTH) {
           new_release_available = true;
         } else if (ver_reply->release_month() ==
-                   Version::DATAFED_RELEASE_MONTH) {
-          if (ver_reply->release_day() > Version::DATAFED_RELEASE_DAY) {
+                   release::MONTH) {
+          if (ver_reply->release_day() > release::DAY) {
             new_release_available = true;
-          } else if (ver_reply->release_day() == Version::DATAFED_RELEASE_DAY) {
-            if (ver_reply->release_hour() > Version::DATAFED_RELEASE_HOUR) {
+          } else if (ver_reply->release_day() == release::DAY) {
+            if (ver_reply->release_hour() > release::HOUR) {
               new_release_available = true;
             } else if (ver_reply->release_hour() ==
-                       Version::DATAFED_RELEASE_HOUR) {
+                       release::HOUR) {
               if (ver_reply->release_minute() >
-                  Version::DATAFED_RELEASE_MINUTE) {
+                  release::MINUTE) {
                 new_release_available = true;
               }
             }
