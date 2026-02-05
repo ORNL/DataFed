@@ -11,8 +11,12 @@
 #include "common/ICommunicator.hpp"
 #include "common/IMessage.hpp"
 #include "common/MessageFactory.hpp"
-#include "common/SDMS.pb.h"
+#include "common/envelope.pb.h"
 #include "common/SocketOptions.hpp"
+#include "common/enums/task_command.pb.h"
+#include "common/enums/encryption.pb.h"
+#include "common/enums/task_type.pb.h"
+#include "common/enums/access_token_type.pb.h"
 
 // Standard includes
 #include "common/TraceException.hpp"
@@ -40,11 +44,11 @@ TaskWorker::TaskWorker(ITaskMgr &a_mgr, uint32_t a_worker_id,
   m_thread = std::make_unique<std::thread>(&TaskWorker::workerThread, this,
                                            log_context);
 
-  m_execute[TC_RAW_DATA_TRANSFER] = &cmdRawDataTransfer;
-  m_execute[TC_RAW_DATA_DELETE] = &cmdRawDataDelete;
-  m_execute[TC_RAW_DATA_UPDATE_SIZE] = &cmdRawDataUpdateSize;
-  m_execute[TC_ALLOC_CREATE] = &cmdAllocCreate;
-  m_execute[TC_ALLOC_DELETE] = &cmdAllocDelete;
+  m_execute[::SDMS::TC_RAW_DATA_TRANSFER] = &cmdRawDataTransfer;
+  m_execute[::SDMS::TC_RAW_DATA_DELETE] = &cmdRawDataDelete;
+  m_execute[::SDMS::TC_RAW_DATA_UPDATE_SIZE] = &cmdRawDataUpdateSize;
+  m_execute[::SDMS::TC_ALLOC_CREATE] = &cmdAllocCreate;
+  m_execute[::SDMS::TC_ALLOC_DELETE] = &cmdAllocDelete;
 }
 
 TaskWorker::~TaskWorker() {
@@ -101,7 +105,7 @@ void TaskWorker::workerThread(LogContext log_context) {
 
         if (obj.has("step")) {
           step = obj.asNumber();
-        } else if (cmd != TC_STOP) {
+        } else if (cmd != SDMS::TC_STOP) {
           EXCEPT(1, "Reply missing step value");
         }
 
@@ -111,7 +115,7 @@ void TaskWorker::workerThread(LogContext log_context) {
                    "TASK_ID: " << m_task->task_id << ", Step: " << step);
           response = m_execute[cmd](*this, params, log_context);
 
-        } else if (cmd == TC_STOP) {
+        } else if (cmd == SDMS::TC_STOP) {
           DL_DEBUG(log_context, "TASK_ID: " << m_task->task_id
                                             << ", STOP at step: " << step);
           m_mgr.newTasks(params, log_context);
@@ -344,7 +348,7 @@ ICommunicator::Response TaskWorker::cmdRawDataDelete(TaskWorker &me,
     auto message_req = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
 
     auto del_req =
-        std::make_unique<Auth::RepoDataDeleteRequest>(); //     del_req;
+        std::make_unique<SDMS::RepoDataDeleteRequest>(); //     del_req;
     for (; i < j; i++, id++) {
       RecordDataLocation *loc = del_req->add_loc();
       loc->set_id(id->asString());
@@ -371,7 +375,7 @@ TaskWorker::cmdRawDataUpdateSize(TaskWorker &me, const Value &a_task_params,
   const string &repo_id = obj.getString("repo_id");
   const string &path = obj.getString("repo_path");
   const Value::Array &ids = obj.getArray("ids");
-  auto size_req = std::make_unique<Auth::RepoDataGetSizeRequest>(); //   sz_req;
+  auto size_req = std::make_unique<SDMS::RepoDataGetSizeRequest>(); //   sz_req;
   // RecordDataLocation *            loc;
 
   MessageFactory msg_factory;
@@ -399,7 +403,7 @@ TaskWorker::cmdRawDataUpdateSize(TaskWorker &me, const Value &a_task_params,
     }
     auto proto_msg =
         std::get<google::protobuf::Message *>(response.message->getPayload());
-    auto size_reply = dynamic_cast<Auth::RepoDataSizeReply *>(proto_msg);
+    auto size_reply = dynamic_cast<SDMS::RepoDataSizeReply *>(proto_msg);
     if (size_reply != 0) {
       if (size_reply->size_size() != (int)ids.size()) {
         DL_ERROR(log_context,
@@ -433,7 +437,7 @@ ICommunicator::Response TaskWorker::cmdAllocCreate(TaskWorker &me,
   MessageFactory msg_factory;
   auto message = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
 
-  auto req = std::make_unique<Auth::RepoPathCreateRequest>();
+  auto req = std::make_unique<SDMS::RepoPathCreateRequest>();
   req->set_path(path);
   message->setPayload(std::move(req));
 
@@ -455,7 +459,7 @@ ICommunicator::Response TaskWorker::cmdAllocDelete(TaskWorker &me,
   MessageFactory msg_factory;
   auto message = msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
 
-  auto req = std::make_unique<Auth::RepoPathDeleteRequest>();
+  auto req = std::make_unique<SDMS::RepoPathDeleteRequest>();
   req->set_path(path);
   message->setPayload(std::move(req));
   log_context.correlation_id =
@@ -653,7 +657,7 @@ TaskWorker::repoSendRecv(const string &a_repo_id,
 
     auto proto_msg =
         std::get<google::protobuf::Message *>(response.message->getPayload());
-    auto nack = dynamic_cast<Anon::NackReply *>(proto_msg);
+    auto nack = dynamic_cast<SDMS::NackReply *>(proto_msg);
     if (nack != 0) {
       ErrorCode code = nack->err_code();
       string msg =

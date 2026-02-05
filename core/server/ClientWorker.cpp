@@ -1,4 +1,3 @@
-
 // Local DataFed includes
 #include "ClientWorker.hpp"
 #include "TaskMgr.hpp"
@@ -14,10 +13,7 @@
 #include "common/libjson.hpp"
 
 // Proto files
-#include "common/SDMS.pb.h"
-#include "common/SDMS_Anon.pb.h"
-#include "common/SDMS_Auth.pb.h"
-#include "common/Version.pb.h"
+#include "common/envelope.pb.h"
 
 // Third party includes
 #include <boost/tokenizer.hpp>
@@ -29,9 +25,6 @@
 using namespace std;
 
 namespace SDMS {
-
-using namespace SDMS::Anon;
-using namespace SDMS::Auth;
 
 namespace Core {
 
@@ -81,20 +74,19 @@ void ClientWorker::wait() {
   }
 }
 
-#define SET_MSG_HANDLER(proto_id, msg, func)                                   \
-  m_msg_handlers[m_msg_mapper->getMessageType(proto_id, #msg)] = func
-#define SET_MSG_HANDLER_DB(proto_id, rq, rp, func)                             \
-  m_msg_handlers[m_msg_mapper->getMessageType(proto_id, #rq)] =                \
+#define SET_MSG_HANDLER(msg, func)                                             \
+  m_msg_handlers[m_msg_mapper->getMessageType(#msg)] = func
+#define SET_MSG_HANDLER_DB(rq, rp, func)                                       \
+  m_msg_handlers[m_msg_mapper->getMessageType(#rq)] =                          \
       &ClientWorker::dbPassThrough<rq, rp, &DatabaseAPI::func>
 
 /**
  * This method configures message handling by creating a map from message type
- * to handler function. There are currently two protocol levels: anonymous and
- * authenticated. Each is supported by a Google protobuf interface (in
- * /common/proto). Most requests can be handled directly by the DB (via
- * DatabaseAPI class), but some require local processing. This method maps the
- * two classes of requests using the macros SET_MSG_HANDLER (for local) and
- * SET_MSG_HANDLER_DB (for DB only).
+ * (envelope field number) to handler function. Message types are identified
+ * by their field number in the Envelope proto message. Most requests can be
+ * handled directly by the DB (via DatabaseAPI class), but some require local
+ * processing. This method maps the two classes of requests using the macros
+ * SET_MSG_HANDLER (for local) and SET_MSG_HANDLER_DB (for DB only).
  */
 void ClientWorker::setupMsgHandlers() {
   static std::atomic_flag lock = ATOMIC_FLAG_INIT;
@@ -105,192 +97,158 @@ void ClientWorker::setupMsgHandlers() {
     return;
 
   try {
-    // Register and setup handlers for the Anonymous interface
-
-    uint8_t proto_id = m_msg_mapper->getProtocolID(
-        MessageProtocol::GOOGLE_ANONONYMOUS); // REG_PROTO( SDMS::Anon );
-    // Requests that require the server to take action
-    SET_MSG_HANDLER(proto_id, VersionRequest,
-                    &ClientWorker::procVersionRequest);
-    SET_MSG_HANDLER(proto_id, AuthenticateByPasswordRequest,
+    // Anonymous interface handlers
+    SET_MSG_HANDLER(VersionRequest, &ClientWorker::procVersionRequest);
+    SET_MSG_HANDLER(AuthenticateByPasswordRequest,
                     &ClientWorker::procAuthenticateByPasswordRequest);
-    SET_MSG_HANDLER(proto_id, AuthenticateByTokenRequest,
+    SET_MSG_HANDLER(AuthenticateByTokenRequest,
                     &ClientWorker::procAuthenticateByTokenRequest);
-    SET_MSG_HANDLER(proto_id, GetAuthStatusRequest,
+    SET_MSG_HANDLER(GetAuthStatusRequest,
                     &ClientWorker::procGetAuthStatusRequest);
+    SET_MSG_HANDLER_DB(DailyMessageRequest, DailyMessageReply, dailyMessage);
 
-    // Requests that can be handled by DB client directly
-    SET_MSG_HANDLER_DB(proto_id, DailyMessageRequest, DailyMessageReply,
-                       dailyMessage);
-
-    // Register and setup handlers for the Authenticated interface
-    proto_id = m_msg_mapper->getProtocolID(MessageProtocol::GOOGLE_AUTHORIZED);
-
-    // Requests that require the server to take action
-    SET_MSG_HANDLER(proto_id, GenerateCredentialsRequest,
+    // Authenticated interface handlers
+    SET_MSG_HANDLER(GenerateCredentialsRequest,
                     &ClientWorker::procGenerateCredentialsRequest);
-    SET_MSG_HANDLER(proto_id, RevokeCredentialsRequest,
+    SET_MSG_HANDLER(RevokeCredentialsRequest,
                     &ClientWorker::procRevokeCredentialsRequest);
-    SET_MSG_HANDLER(proto_id, DataGetRequest,
-                    &ClientWorker::procDataGetRequest);
-    SET_MSG_HANDLER(proto_id, DataPutRequest,
-                    &ClientWorker::procDataPutRequest);
-    SET_MSG_HANDLER(proto_id, RecordCreateRequest,
+    SET_MSG_HANDLER(DataGetRequest, &ClientWorker::procDataGetRequest);
+    SET_MSG_HANDLER(DataPutRequest, &ClientWorker::procDataPutRequest);
+    SET_MSG_HANDLER(RecordCreateRequest,
                     &ClientWorker::procRecordCreateRequest);
-    SET_MSG_HANDLER(proto_id, RecordUpdateRequest,
+    SET_MSG_HANDLER(RecordUpdateRequest,
                     &ClientWorker::procRecordUpdateRequest);
-    SET_MSG_HANDLER(proto_id, RecordUpdateBatchRequest,
+    SET_MSG_HANDLER(RecordUpdateBatchRequest,
                     &ClientWorker::procRecordUpdateBatchRequest);
-    SET_MSG_HANDLER(proto_id, RecordDeleteRequest,
+    SET_MSG_HANDLER(RecordDeleteRequest,
                     &ClientWorker::procRecordDeleteRequest);
-    SET_MSG_HANDLER(proto_id, RecordAllocChangeRequest,
+    SET_MSG_HANDLER(RecordAllocChangeRequest,
                     &ClientWorker::procRecordAllocChangeRequest);
-    SET_MSG_HANDLER(proto_id, RecordOwnerChangeRequest,
+    SET_MSG_HANDLER(RecordOwnerChangeRequest,
                     &ClientWorker::procRecordOwnerChangeRequest);
-    SET_MSG_HANDLER(proto_id, ProjectSearchRequest,
+    SET_MSG_HANDLER(ProjectSearchRequest,
                     &ClientWorker::procProjectSearchRequest);
-    SET_MSG_HANDLER(proto_id, CollDeleteRequest,
+    SET_MSG_HANDLER(CollDeleteRequest,
                     &ClientWorker::procCollectionDeleteRequest);
-    SET_MSG_HANDLER(proto_id, ProjectDeleteRequest,
+    SET_MSG_HANDLER(ProjectDeleteRequest,
                     &ClientWorker::procProjectDeleteRequest);
-    SET_MSG_HANDLER(proto_id, RepoAuthzRequest,
-                    &ClientWorker::procRepoAuthzRequest);
-    SET_MSG_HANDLER(proto_id, RepoAllocationCreateRequest,
+    SET_MSG_HANDLER(RepoAuthzRequest, &ClientWorker::procRepoAuthzRequest);
+    SET_MSG_HANDLER(RepoAllocationCreateRequest,
                     &ClientWorker::procRepoAllocationCreateRequest);
-    SET_MSG_HANDLER(proto_id, RepoAllocationDeleteRequest,
+    SET_MSG_HANDLER(RepoAllocationDeleteRequest,
                     &ClientWorker::procRepoAllocationDeleteRequest);
-    SET_MSG_HANDLER(proto_id, UserGetAccessTokenRequest,
+    SET_MSG_HANDLER(UserGetAccessTokenRequest,
                     &ClientWorker::procUserGetAccessTokenRequest);
-    SET_MSG_HANDLER(proto_id, SchemaCreateRequest,
+    SET_MSG_HANDLER(SchemaCreateRequest,
                     &ClientWorker::procSchemaCreateRequest);
-    SET_MSG_HANDLER(proto_id, SchemaReviseRequest,
+    SET_MSG_HANDLER(SchemaReviseRequest,
                     &ClientWorker::procSchemaReviseRequest);
-    SET_MSG_HANDLER(proto_id, SchemaUpdateRequest,
+    SET_MSG_HANDLER(SchemaUpdateRequest,
                     &ClientWorker::procSchemaUpdateRequest);
-    SET_MSG_HANDLER(proto_id, MetadataValidateRequest,
+    SET_MSG_HANDLER(MetadataValidateRequest,
                     &ClientWorker::procMetadataValidateRequest);
 
     // Requires updating repo cache
-    SET_MSG_HANDLER(proto_id, RepoCreateRequest, &ClientWorker::procRepoCreate);
-    SET_MSG_HANDLER(proto_id, RepoUpdateRequest, &ClientWorker::procRepoUpdate);
-    SET_MSG_HANDLER(proto_id, RepoDeleteRequest, &ClientWorker::procRepoDelete);
+    SET_MSG_HANDLER(RepoCreateRequest, &ClientWorker::procRepoCreate);
+    SET_MSG_HANDLER(RepoUpdateRequest, &ClientWorker::procRepoUpdate);
+    SET_MSG_HANDLER(RepoDeleteRequest, &ClientWorker::procRepoDelete);
 
     // Requests that can be handled by DB client directly
-    SET_MSG_HANDLER_DB(proto_id, CheckPermsRequest, CheckPermsReply,
-                       checkPerms);
-    SET_MSG_HANDLER_DB(proto_id, GetPermsRequest, GetPermsReply, getPerms);
-    SET_MSG_HANDLER_DB(proto_id, UserViewRequest, UserDataReply, userView);
-    SET_MSG_HANDLER_DB(proto_id, UserSetAccessTokenRequest, AckReply,
+    SET_MSG_HANDLER_DB(CheckPermsRequest, CheckPermsReply, checkPerms);
+    SET_MSG_HANDLER_DB(GetPermsRequest, GetPermsReply, getPerms);
+    SET_MSG_HANDLER_DB(UserViewRequest, UserDataReply, userView);
+    SET_MSG_HANDLER_DB(UserSetAccessTokenRequest, AckReply,
                        userSetAccessToken);
-    SET_MSG_HANDLER_DB(proto_id, UserCreateRequest, UserDataReply, userCreate);
-    SET_MSG_HANDLER_DB(proto_id, UserUpdateRequest, UserDataReply, userUpdate);
-    SET_MSG_HANDLER_DB(proto_id, UserListAllRequest, UserDataReply,
-                       userListAll);
-    SET_MSG_HANDLER_DB(proto_id, UserListCollabRequest, UserDataReply,
-                       userListCollab);
-    SET_MSG_HANDLER_DB(proto_id, UserFindByUUIDsRequest, UserDataReply,
+    SET_MSG_HANDLER_DB(UserCreateRequest, UserDataReply, userCreate);
+    SET_MSG_HANDLER_DB(UserUpdateRequest, UserDataReply, userUpdate);
+    SET_MSG_HANDLER_DB(UserListAllRequest, UserDataReply, userListAll);
+    SET_MSG_HANDLER_DB(UserListCollabRequest, UserDataReply, userListCollab);
+    SET_MSG_HANDLER_DB(UserFindByUUIDsRequest, UserDataReply,
                        userFindByUUIDs);
-    SET_MSG_HANDLER_DB(proto_id, UserFindByNameUIDRequest, UserDataReply,
+    SET_MSG_HANDLER_DB(UserFindByNameUIDRequest, UserDataReply,
                        userFindByNameUID);
-    SET_MSG_HANDLER_DB(proto_id, UserGetRecentEPRequest, UserGetRecentEPReply,
+    SET_MSG_HANDLER_DB(UserGetRecentEPRequest, UserGetRecentEPReply,
                        userGetRecentEP);
-    SET_MSG_HANDLER_DB(proto_id, UserSetRecentEPRequest, AckReply,
-                       userSetRecentEP);
-    SET_MSG_HANDLER_DB(proto_id, ProjectViewRequest, ProjectDataReply,
-                       projView);
-    SET_MSG_HANDLER_DB(proto_id, ProjectCreateRequest, ProjectDataReply,
-                       projCreate);
-    SET_MSG_HANDLER_DB(proto_id, ProjectUpdateRequest, ProjectDataReply,
-                       projUpdate);
-    SET_MSG_HANDLER_DB(proto_id, ProjectListRequest, ListingReply, projList);
-    SET_MSG_HANDLER_DB(proto_id, ProjectGetRoleRequest, ProjectGetRoleReply,
+    SET_MSG_HANDLER_DB(UserSetRecentEPRequest, AckReply, userSetRecentEP);
+    SET_MSG_HANDLER_DB(ProjectViewRequest, ProjectDataReply, projView);
+    SET_MSG_HANDLER_DB(ProjectCreateRequest, ProjectDataReply, projCreate);
+    SET_MSG_HANDLER_DB(ProjectUpdateRequest, ProjectDataReply, projUpdate);
+    SET_MSG_HANDLER_DB(ProjectListRequest, ListingReply, projList);
+    SET_MSG_HANDLER_DB(ProjectGetRoleRequest, ProjectGetRoleReply,
                        projGetRole);
-    SET_MSG_HANDLER_DB(proto_id, RecordViewRequest, RecordDataReply,
-                       recordView);
-    SET_MSG_HANDLER_DB(proto_id, RecordCreateBatchRequest, RecordDataReply,
+    SET_MSG_HANDLER_DB(RecordViewRequest, RecordDataReply, recordView);
+    SET_MSG_HANDLER_DB(RecordCreateBatchRequest, RecordDataReply,
                        recordCreateBatch);
-    SET_MSG_HANDLER_DB(proto_id, RecordExportRequest, RecordExportReply,
-                       recordExport);
-    SET_MSG_HANDLER_DB(proto_id, RecordLockRequest, ListingReply, recordLock);
-    SET_MSG_HANDLER_DB(proto_id, RecordListByAllocRequest, ListingReply,
+    SET_MSG_HANDLER_DB(RecordExportRequest, RecordExportReply, recordExport);
+    SET_MSG_HANDLER_DB(RecordLockRequest, ListingReply, recordLock);
+    SET_MSG_HANDLER_DB(RecordListByAllocRequest, ListingReply,
                        recordListByAlloc);
-    SET_MSG_HANDLER_DB(proto_id, RecordGetDependencyGraphRequest, ListingReply,
+    SET_MSG_HANDLER_DB(RecordGetDependencyGraphRequest, ListingReply,
                        recordGetDependencyGraph);
-    SET_MSG_HANDLER_DB(proto_id, SearchRequest, ListingReply, generalSearch);
-    SET_MSG_HANDLER_DB(proto_id, DataPathRequest, DataPathReply, dataPath);
-    SET_MSG_HANDLER_DB(proto_id, CollViewRequest, CollDataReply, collView);
-    SET_MSG_HANDLER_DB(proto_id, CollReadRequest, ListingReply, collRead);
-    SET_MSG_HANDLER_DB(proto_id, CollListPublishedRequest, ListingReply,
+    SET_MSG_HANDLER_DB(SearchRequest, ListingReply, generalSearch);
+    SET_MSG_HANDLER_DB(DataPathRequest, DataPathReply, dataPath);
+    SET_MSG_HANDLER_DB(CollViewRequest, CollDataReply, collView);
+    SET_MSG_HANDLER_DB(CollReadRequest, ListingReply, collRead);
+    SET_MSG_HANDLER_DB(CollListPublishedRequest, ListingReply,
                        collListPublished);
-    SET_MSG_HANDLER_DB(proto_id, CollCreateRequest, CollDataReply, collCreate);
-    SET_MSG_HANDLER_DB(proto_id, CollUpdateRequest, CollDataReply, collUpdate);
-    SET_MSG_HANDLER_DB(proto_id, CollWriteRequest, ListingReply, collWrite);
-    SET_MSG_HANDLER_DB(proto_id, CollMoveRequest, AckReply, collMove);
-    SET_MSG_HANDLER_DB(proto_id, CollGetParentsRequest, CollPathReply,
-                       collGetParents);
-    SET_MSG_HANDLER_DB(proto_id, CollGetOffsetRequest, CollGetOffsetReply,
+    SET_MSG_HANDLER_DB(CollCreateRequest, CollDataReply, collCreate);
+    SET_MSG_HANDLER_DB(CollUpdateRequest, CollDataReply, collUpdate);
+    SET_MSG_HANDLER_DB(CollWriteRequest, ListingReply, collWrite);
+    SET_MSG_HANDLER_DB(CollMoveRequest, AckReply, collMove);
+    SET_MSG_HANDLER_DB(CollGetParentsRequest, CollPathReply, collGetParents);
+    SET_MSG_HANDLER_DB(CollGetOffsetRequest, CollGetOffsetReply,
                        collGetOffset);
-    SET_MSG_HANDLER_DB(proto_id, QueryListRequest, ListingReply, queryList);
-    SET_MSG_HANDLER_DB(proto_id, QueryViewRequest, QueryDataReply, queryView);
-    SET_MSG_HANDLER_DB(proto_id, QueryExecRequest, ListingReply, queryExec);
-    SET_MSG_HANDLER_DB(proto_id, QueryCreateRequest, QueryDataReply,
-                       queryCreate);
-    SET_MSG_HANDLER_DB(proto_id, QueryUpdateRequest, QueryDataReply,
-                       queryUpdate);
-    SET_MSG_HANDLER_DB(proto_id, QueryDeleteRequest, AckReply, queryDelete);
-    SET_MSG_HANDLER_DB(proto_id, NoteViewRequest, NoteDataReply, noteView);
-    SET_MSG_HANDLER_DB(proto_id, NoteListBySubjectRequest, NoteDataReply,
+    SET_MSG_HANDLER_DB(QueryListRequest, ListingReply, queryList);
+    SET_MSG_HANDLER_DB(QueryViewRequest, QueryDataReply, queryView);
+    SET_MSG_HANDLER_DB(QueryExecRequest, ListingReply, queryExec);
+    SET_MSG_HANDLER_DB(QueryCreateRequest, QueryDataReply, queryCreate);
+    SET_MSG_HANDLER_DB(QueryUpdateRequest, QueryDataReply, queryUpdate);
+    SET_MSG_HANDLER_DB(QueryDeleteRequest, AckReply, queryDelete);
+    SET_MSG_HANDLER_DB(NoteViewRequest, NoteDataReply, noteView);
+    SET_MSG_HANDLER_DB(NoteListBySubjectRequest, NoteDataReply,
                        noteListBySubject);
-    SET_MSG_HANDLER_DB(proto_id, NoteCreateRequest, NoteDataReply, noteCreate);
-    SET_MSG_HANDLER_DB(proto_id, NoteUpdateRequest, NoteDataReply, noteUpdate);
-    SET_MSG_HANDLER_DB(proto_id, NoteCommentEditRequest, NoteDataReply,
+    SET_MSG_HANDLER_DB(NoteCreateRequest, NoteDataReply, noteCreate);
+    SET_MSG_HANDLER_DB(NoteUpdateRequest, NoteDataReply, noteUpdate);
+    SET_MSG_HANDLER_DB(NoteCommentEditRequest, NoteDataReply,
                        noteCommentEdit);
-    SET_MSG_HANDLER_DB(proto_id, TaskListRequest, TaskDataReply, taskList);
-    SET_MSG_HANDLER_DB(proto_id, TaskViewRequest, TaskDataReply, taskView);
-    SET_MSG_HANDLER_DB(proto_id, ACLViewRequest, ACLDataReply, aclView);
-    SET_MSG_HANDLER_DB(proto_id, ACLUpdateRequest, ACLDataReply, aclUpdate);
-    SET_MSG_HANDLER_DB(proto_id, ACLSharedListRequest, ListingReply,
-                       aclSharedList);
-    SET_MSG_HANDLER_DB(proto_id, ACLSharedListItemsRequest, ListingReply,
+    SET_MSG_HANDLER_DB(TaskListRequest, TaskDataReply, taskList);
+    SET_MSG_HANDLER_DB(TaskViewRequest, TaskDataReply, taskView);
+    SET_MSG_HANDLER_DB(ACLViewRequest, ACLDataReply, aclView);
+    SET_MSG_HANDLER_DB(ACLUpdateRequest, ACLDataReply, aclUpdate);
+    SET_MSG_HANDLER_DB(ACLSharedListRequest, ListingReply, aclSharedList);
+    SET_MSG_HANDLER_DB(ACLSharedListItemsRequest, ListingReply,
                        aclSharedListItems);
-    SET_MSG_HANDLER_DB(proto_id, GroupCreateRequest, GroupDataReply,
-                       groupCreate);
-    SET_MSG_HANDLER_DB(proto_id, GroupUpdateRequest, GroupDataReply,
-                       groupUpdate);
-    SET_MSG_HANDLER_DB(proto_id, GroupDeleteRequest, AckReply, groupDelete);
-    SET_MSG_HANDLER_DB(proto_id, GroupListRequest, GroupDataReply, groupList);
-    SET_MSG_HANDLER_DB(proto_id, GroupViewRequest, GroupDataReply, groupView);
-    SET_MSG_HANDLER_DB(proto_id, RepoListRequest, RepoDataReply, repoList);
-    SET_MSG_HANDLER_DB(proto_id, RepoViewRequest, RepoDataReply, repoView);
-    SET_MSG_HANDLER_DB(proto_id, RepoCalcSizeRequest, RepoCalcSizeReply,
-                       repoCalcSize);
-    SET_MSG_HANDLER_DB(proto_id, RepoListAllocationsRequest,
-                       RepoAllocationsReply, repoListAllocations);
-    SET_MSG_HANDLER_DB(proto_id, RepoListSubjectAllocationsRequest,
+    SET_MSG_HANDLER_DB(GroupCreateRequest, GroupDataReply, groupCreate);
+    SET_MSG_HANDLER_DB(GroupUpdateRequest, GroupDataReply, groupUpdate);
+    SET_MSG_HANDLER_DB(GroupDeleteRequest, AckReply, groupDelete);
+    SET_MSG_HANDLER_DB(GroupListRequest, GroupDataReply, groupList);
+    SET_MSG_HANDLER_DB(GroupViewRequest, GroupDataReply, groupView);
+    SET_MSG_HANDLER_DB(RepoListRequest, RepoDataReply, repoList);
+    SET_MSG_HANDLER_DB(RepoViewRequest, RepoDataReply, repoView);
+    SET_MSG_HANDLER_DB(RepoCalcSizeRequest, RepoCalcSizeReply, repoCalcSize);
+    SET_MSG_HANDLER_DB(RepoListAllocationsRequest, RepoAllocationsReply,
+                       repoListAllocations);
+    SET_MSG_HANDLER_DB(RepoListSubjectAllocationsRequest,
                        RepoAllocationsReply, repoListSubjectAllocations);
-    SET_MSG_HANDLER_DB(proto_id, RepoListObjectAllocationsRequest,
+    SET_MSG_HANDLER_DB(RepoListObjectAllocationsRequest,
                        RepoAllocationsReply, repoListObjectAllocations);
-    SET_MSG_HANDLER_DB(proto_id, RepoViewAllocationRequest,
-                       RepoAllocationsReply, repoViewAllocation);
-    SET_MSG_HANDLER_DB(proto_id, RepoAllocationSetRequest, AckReply,
+    SET_MSG_HANDLER_DB(RepoViewAllocationRequest, RepoAllocationsReply,
+                       repoViewAllocation);
+    SET_MSG_HANDLER_DB(RepoAllocationSetRequest, AckReply,
                        repoAllocationSet);
-    SET_MSG_HANDLER_DB(proto_id, RepoAllocationSetDefaultRequest, AckReply,
+    SET_MSG_HANDLER_DB(RepoAllocationSetDefaultRequest, AckReply,
                        repoAllocationSetDefault);
-    SET_MSG_HANDLER_DB(proto_id, RepoAllocationStatsRequest,
-                       RepoAllocationStatsReply, repoAllocationStats);
-    SET_MSG_HANDLER_DB(proto_id, SchemaSearchRequest, SchemaDataReply,
-                       schemaSearch);
-    SET_MSG_HANDLER_DB(proto_id, SchemaViewRequest, SchemaDataReply,
-                       schemaView);
-    SET_MSG_HANDLER_DB(proto_id, SchemaDeleteRequest, AckReply, schemaDelete);
-    SET_MSG_HANDLER_DB(proto_id, TagSearchRequest, TagDataReply, tagSearch);
-    SET_MSG_HANDLER_DB(proto_id, TagListByCountRequest, TagDataReply,
-                       tagListByCount);
-    SET_MSG_HANDLER_DB(proto_id, TopicListTopicsRequest, TopicDataReply,
+    SET_MSG_HANDLER_DB(RepoAllocationStatsRequest, RepoAllocationStatsReply,
+                       repoAllocationStats);
+    SET_MSG_HANDLER_DB(SchemaSearchRequest, SchemaDataReply, schemaSearch);
+    SET_MSG_HANDLER_DB(SchemaViewRequest, SchemaDataReply, schemaView);
+    SET_MSG_HANDLER_DB(SchemaDeleteRequest, AckReply, schemaDelete);
+    SET_MSG_HANDLER_DB(TagSearchRequest, TagDataReply, tagSearch);
+    SET_MSG_HANDLER_DB(TagListByCountRequest, TagDataReply, tagListByCount);
+    SET_MSG_HANDLER_DB(TopicListTopicsRequest, TopicDataReply,
                        topicListTopics);
-    SET_MSG_HANDLER_DB(proto_id, TopicViewRequest, TopicDataReply, topicView);
-    SET_MSG_HANDLER_DB(proto_id, TopicSearchRequest, TopicDataReply,
-                       topicSearch);
+    SET_MSG_HANDLER_DB(TopicViewRequest, TopicDataReply, topicView);
+    SET_MSG_HANDLER_DB(TopicSearchRequest, TopicDataReply, topicSearch);
   } catch (TraceException &e) {
     DL_ERROR(m_log_context, "exception: " << e.toString());
     throw;
@@ -335,7 +293,7 @@ void ClientWorker::workerThread(LogContext log_context) {
   }();
 
   ProtoBufMap proto_map;
-  uint16_t task_list_msg_type = proto_map.getMessageType(2, "TaskListRequest");
+  uint16_t task_list_msg_type = proto_map.getMessageType("TaskListRequest");
 
   DL_DEBUG(log_context, "W" << m_tid << " m_run " << m_run);
 
@@ -368,7 +326,7 @@ void ClientWorker::workerThread(LogContext log_context) {
                                             << " [" << uid << "]");
         }
 
-        if (uid.compare("anon") == 0 && msg_type > 0x1FF) {
+        if (uid.compare("anon") == 0 && proto_map.requiresAuth(proto_map.toString(msg_type))) {
           DL_WARNING(message_log_context,
                      "W" << m_tid
                          << " unauthorized access attempt from anon user");
@@ -376,8 +334,8 @@ void ClientWorker::workerThread(LogContext log_context) {
 
           // I know this is not great... allocating memory here slow
           // This will need to be fixed
-          auto nack = std::make_unique<Anon::NackReply>();
-          nack->set_err_code(ID_AUTHN_REQUIRED);
+          auto nack = std::make_unique<SDMS::NackReply>();
+          nack->set_err_code(AUTHN_REQUIRED);
           nack->set_err_msg("Authentication required");
           response_msg->setPayload(std::move(nack));
           client->send(*response_msg);
@@ -471,7 +429,7 @@ void ClientWorker::workerThread(LogContext log_context) {
     if (send_reply) {                                                          \
       auto msg_reply = m_msg_factory.createResponseEnvelope(*msg_request);     \
       auto nack = std::make_unique<NackReply>();                               \
-      nack->set_err_code(ID_INTERNAL_ERROR);                                   \
+      nack->set_err_code(INTERNAL_ERROR);                                   \
       nack->set_err_msg(e.what());                                             \
       msg_reply->setPayload(std::move(nack));                                  \
       return msg_reply;                                                        \
@@ -483,7 +441,7 @@ void ClientWorker::workerThread(LogContext log_context) {
     if (send_reply) {                                                          \
       auto msg_reply = m_msg_factory.createResponseEnvelope(*msg_request);     \
       auto nack = std::make_unique<NackReply>();                               \
-      nack->set_err_code(ID_INTERNAL_ERROR);                                   \
+      nack->set_err_code(INTERNAL_ERROR);                                   \
       nack->set_err_msg("Unknown exception type");                             \
       msg_reply->setPayload(std::move(nack));                                  \
       return msg_reply;                                                        \
@@ -502,7 +460,7 @@ void ClientWorker::workerThread(LogContext log_context) {
                                  "unregistered msg type).");                   \
     auto msg_reply = m_msg_factory.createResponseEnvelope(*msg_request);       \
     auto nack = std::make_unique<NackReply>();                                 \
-    nack->set_err_code(ID_BAD_REQUEST);                                        \
+    nack->set_err_code(BAD_REQUEST);                                        \
     nack->set_err_msg(                                                         \
         "Message parse failed (malformed or unregistered msg type)");          \
     msg_reply->setPayload(std::move(nack));                                    \
@@ -587,15 +545,15 @@ ClientWorker::procVersionRequest(const std::string &a_uid,
   (void)a_uid;
   DL_TRACE(log_context, "Version request");
 
-  reply.set_release_year(DATAFED_RELEASE_YEAR);
-  reply.set_release_month(DATAFED_RELEASE_MONTH);
-  reply.set_release_day(DATAFED_RELEASE_DAY);
-  reply.set_release_hour(DATAFED_RELEASE_HOUR);
-  reply.set_release_minute(DATAFED_RELEASE_MINUTE);
+  reply.set_release_year(  release::YEAR);
+  reply.set_release_month( release::MONTH);
+  reply.set_release_day(   release::DAY);
+  reply.set_release_hour(  release::HOUR);
+  reply.set_release_minute(release::MINUTE);
 
-  reply.set_api_major(DATAFED_COMMON_PROTOCOL_API_MAJOR);
-  reply.set_api_minor(DATAFED_COMMON_PROTOCOL_API_MINOR);
-  reply.set_api_patch(DATAFED_COMMON_PROTOCOL_API_PATCH);
+  reply.set_api_major(protocol::version::MAJOR);
+  reply.set_api_minor(protocol::version::MINOR);
+  reply.set_api_patch(protocol::version::PATCH);
 
   reply.set_component_major(core::version::MAJOR);
   reply.set_component_minor(core::version::MINOR);
@@ -692,7 +650,7 @@ std::unique_ptr<IMessage> ClientWorker::procGenerateCredentialsRequest(
     char secret_key[41];
 
     if (zmq_curve_keypair(public_key, secret_key) != 0)
-      EXCEPT_PARAM(ID_SERVICE_ERROR,
+      EXCEPT_PARAM(SERVICE_ERROR,
                    "Key generation failed: " << zmq_strerror(errno));
 
     pub_key = public_key;
