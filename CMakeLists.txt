@@ -128,8 +128,8 @@ endif()
 if( BUILD_WEB_SERVER )
   include(./cmake/Web.cmake)
 
-  file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/common/proto/common/" 
-     DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/web/proto/")
+  file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/common/proto3/common/" 
+     DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/web/proto3/")
 
   if( ENABLE_UNIT_TESTS )
     add_test(NAME unit_tests_web COMMAND "${DEPENDENCY_INSTALL_PATH}/nvm/versions/node/${LOCAL_NODE_VERSION}/bin/npm" "test")
