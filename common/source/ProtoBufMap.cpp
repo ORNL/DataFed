@@ -16,6 +16,12 @@ ProtoBufMap::ProtoBufMap() {}
 
 std::unique_ptr<SDMS::Envelope>
 ProtoBufMap::wrapInEnvelope(const proto::Message& inner) const {
+    // If already an Envelope, return a copy — no double-wrapping
+    const auto* env = dynamic_cast<const SDMS::Envelope*>(&inner);
+    if (env) {
+        return std::make_unique<SDMS::Envelope>(*env);
+    }
+
     uint16_t field_number = getMessageType(inner);
     auto envelope = std::make_unique<SDMS::Envelope>();
     const auto* field_desc =

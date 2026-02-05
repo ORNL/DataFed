@@ -218,7 +218,7 @@ BOOST_AUTO_TEST_CASE(testing_ProxyBasicZMQ) {
                                   log_context1);
 
               std::chrono::duration<double> duration =
-                  std::chrono::milliseconds(2000);
+                  std::chrono::milliseconds(1000);
               proxy.setRunDuration(duration);
               proxy.run();
 
@@ -261,7 +261,7 @@ BOOST_AUTO_TEST_CASE(testing_ProxyBasicZMQ) {
       ICommunicator::Response response =
           server->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
 
-      std::chrono::duration<double> duration = std::chrono::milliseconds(800);
+      std::chrono::duration<double> duration = std::chrono::milliseconds(400);
       auto end_time = std::chrono::steady_clock::now() + duration;
       while (response.time_out and
              end_time > std::chrono::steady_clock::now()) {

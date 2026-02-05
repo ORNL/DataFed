@@ -228,7 +228,7 @@ BOOST_AUTO_TEST_CASE(testing_Proxy) {
                         std::move(incoming_operators), log_context_proxy);
 
             std::chrono::duration<double> duration =
-                std::chrono::milliseconds(2000);
+                std::chrono::milliseconds(1000);
             proxy.setRunDuration(duration);
             proxy.run();
 
@@ -448,7 +448,7 @@ BOOST_AUTO_TEST_CASE(testing_Proxy2) {
                         log_context_proxy_middle);
 
             std::chrono::duration<double> duration =
-                std::chrono::milliseconds(800);
+                std::chrono::milliseconds(400);
             proxy.setRunDuration(duration);
             proxy.run();
 
