@@ -4,9 +4,12 @@
 
 // Local public includes
 #include "common/DynaLog.hpp"
-#include "common/SDMS.pb.h"
+#include "common/envelope.pb.h"
 #include "common/TraceException.hpp"
 #include "common/Util.hpp"
+#include "common/envelope.pb.h"
+#include "common/enums/access_token_type.pb.h"
+#include "common/enums/search_mode.pb.h" 
 
 // Third party includes
 #include <boost/algorithm/string.hpp>
@@ -26,7 +29,6 @@ using namespace std;
 namespace SDMS {
 namespace Core {
 
-using namespace SDMS::Auth;
 using namespace libjson;
 
 #define TRANSLATE_BEGIN() try {
@@ -44,7 +46,7 @@ DatabaseAPI::DatabaseAPI(const std::string &a_db_url,
     : m_client(0), m_db_url(a_db_url) {
   m_curl = curl_easy_init();
   if (!m_curl)
-    EXCEPT(ID_INTERNAL_ERROR, "libcurl init failed");
+    EXCEPT(INTERNAL_ERROR, "libcurl init failed");
 
   setClient("");
 
@@ -146,7 +148,7 @@ long DatabaseAPI::dbGet(const char *a_url_path,
         a_result.fromString(res_json);
       } catch (libjson::ParseError &e) {
         DL_DEBUG(log_context, "PARSE [" << res_json << "]");
-        EXCEPT_PARAM(ID_SERVICE_ERROR,
+        EXCEPT_PARAM(SERVICE_ERROR,
                      "Invalid JSON returned from DB: " << e.toString());
       }
     }
@@ -155,14 +157,14 @@ long DatabaseAPI::dbGet(const char *a_url_path,
       return http_code;
     } else {
       if (res_json.size() && a_result.asObject().has("errorMessage")) {
-        EXCEPT_PARAM(ID_BAD_REQUEST, a_result.asObject().asString());
+        EXCEPT_PARAM(BAD_REQUEST, a_result.asObject().asString());
       } else {
-        EXCEPT_PARAM(ID_BAD_REQUEST, "SDMS DB service call failed. Code: "
+        EXCEPT_PARAM(BAD_REQUEST, "SDMS DB service call failed. Code: "
                                          << http_code << ", err: " << error);
       }
     }
   } else {
-    EXCEPT_PARAM(ID_SERVICE_ERROR, "SDMS DB interface failed. error: "
+    EXCEPT_PARAM(SERVICE_ERROR, "SDMS DB interface failed. error: "
                                        << error << ", "
                                        << curl_easy_strerror(res));
   }
@@ -237,7 +239,7 @@ long DatabaseAPI::dbPost(const char *a_url_path,
         a_result.fromString(res_json);
       } catch (libjson::ParseError &e) {
         DL_DEBUG(log_context, "PARSE [" << res_json << "]");
-        EXCEPT_PARAM(ID_SERVICE_ERROR,
+        EXCEPT_PARAM(SERVICE_ERROR,
                      "Invalid JSON returned from DB: " << e.toString());
       }
     }
@@ -250,14 +252,14 @@ long DatabaseAPI::dbPost(const char *a_url_path,
                                                << (a_body ? *a_body : "")
                                                << "]");
 
-        EXCEPT_PARAM(ID_BAD_REQUEST, a_result.asObject().asString());
+        EXCEPT_PARAM(BAD_REQUEST, a_result.asObject().asString());
       } else {
-        EXCEPT_PARAM(ID_BAD_REQUEST, "SDMS DB service call failed. Code: "
+        EXCEPT_PARAM(BAD_REQUEST, "SDMS DB service call failed. Code: "
                                          << http_code << ", err: " << error);
       }
     }
   } else {
-    EXCEPT_PARAM(ID_SERVICE_ERROR, "SDMS DB interface failed. error: "
+    EXCEPT_PARAM(SERVICE_ERROR, "SDMS DB interface failed. error: "
                                        << error << ", "
                                        << curl_easy_strerror(res));
   }
@@ -270,7 +272,7 @@ void DatabaseAPI::serverPing(LogContext log_context) {
 }
 
 void DatabaseAPI::clientAuthenticateByPassword(const std::string &a_password,
-                                               Anon::AuthStatusReply &a_reply,
+                                               SDMS::AuthStatusReply &a_reply,
                                                LogContext log_context) {
   Value result;
 
@@ -279,7 +281,7 @@ void DatabaseAPI::clientAuthenticateByPassword(const std::string &a_password,
 }
 
 void DatabaseAPI::clientAuthenticateByToken(const std::string &a_token,
-                                            Anon::AuthStatusReply &a_reply,
+                                            SDMS::AuthStatusReply &a_reply,
                                             LogContext log_context) {
   Value result;
 
@@ -287,7 +289,7 @@ void DatabaseAPI::clientAuthenticateByToken(const std::string &a_token,
   setAuthStatus(a_reply, result);
 }
 
-void DatabaseAPI::setAuthStatus(Anon::AuthStatusReply &a_reply,
+void DatabaseAPI::setAuthStatus(SDMS::AuthStatusReply &a_reply,
                                 const Value &a_result) {
   const Value::Object &obj = a_result.asObject();
   a_reply.set_uid(obj.getString("uid"));
@@ -386,7 +388,7 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
       {"access", a_acc_tok},
       {"refresh", a_ref_tok},
       {"expires_in", to_string(a_expires_in)}};
-  if (token_type != SDMS::AccessTokenType::ACCESS_SENTINEL) {
+  if (token_type != SDMS::AccessTokenType::TOKEN_UNSPECIFIED) {
     params.push_back({"type", to_string(token_type)});
   }
   if (!other_token_data.empty()) {
@@ -406,7 +408,7 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_access_token,
 }
 
 void DatabaseAPI::userSetAccessToken(
-    const Auth::UserSetAccessTokenRequest &a_request, Anon::AckReply &a_reply,
+    const SDMS::UserSetAccessTokenRequest &a_request, SDMS::AckReply &a_reply,
     LogContext log_context) {
   (void)a_reply;
   userSetAccessToken(a_request.access(), a_request.expires_in(),
@@ -451,8 +453,8 @@ void DatabaseAPI::purgeTransferRecords(size_t age) {
   dbGetRaw(url, result);
 }
 
-void DatabaseAPI::userCreate(const Auth::UserCreateRequest &a_request,
-                             Auth::UserDataReply &a_reply,
+void DatabaseAPI::userCreate(const SDMS::UserCreateRequest &a_request,
+                             SDMS::UserDataReply &a_reply,
                              LogContext log_context) {
   DL_DEBUG(log_context,
            "DataFed user create - uid: " << a_request.uid()
@@ -488,8 +490,8 @@ void DatabaseAPI::userCreate(const Auth::UserCreateRequest &a_request,
   setUserData(a_reply, result, log_context);
 }
 
-void DatabaseAPI::userView(const Auth::UserViewRequest &a_request,
-                           Auth::UserDataReply &a_reply,
+void DatabaseAPI::userView(const SDMS::UserViewRequest &a_request,
+                           SDMS::UserDataReply &a_reply,
                            LogContext log_context) {
   vector<pair<string, string>> params;
   params.push_back({"subject", a_request.uid()});
@@ -503,7 +505,7 @@ void DatabaseAPI::userView(const Auth::UserViewRequest &a_request,
 }
 
 void DatabaseAPI::userUpdate(const UserUpdateRequest &a_request,
-                             Auth::UserDataReply &a_reply,
+                             SDMS::UserDataReply &a_reply,
                              LogContext log_context) {
   Value result;
 
@@ -522,7 +524,7 @@ void DatabaseAPI::userUpdate(const UserUpdateRequest &a_request,
 }
 
 void DatabaseAPI::userListAll(const UserListAllRequest &a_request,
-                              Auth::UserDataReply &a_reply,
+                              SDMS::UserDataReply &a_reply,
                               LogContext log_context) {
   vector<pair<string, string>> params;
   if (a_request.has_offset() && a_request.has_count()) {
@@ -537,7 +539,7 @@ void DatabaseAPI::userListAll(const UserListAllRequest &a_request,
 }
 
 void DatabaseAPI::userListCollab(const UserListCollabRequest &a_request,
-                                 Auth::UserDataReply &a_reply,
+                                 SDMS::UserDataReply &a_reply,
                                  LogContext log_context) {
   Value result;
   vector<pair<string, string>> params;
@@ -550,8 +552,8 @@ void DatabaseAPI::userListCollab(const UserListCollabRequest &a_request,
   setUserData(a_reply, result, log_context);
 }
 
-void DatabaseAPI::userFindByUUIDs(const Auth::UserFindByUUIDsRequest &a_request,
-                                  Auth::UserDataReply &a_reply,
+void DatabaseAPI::userFindByUUIDs(const SDMS::UserFindByUUIDsRequest &a_request,
+                                  SDMS::UserDataReply &a_reply,
                                   LogContext log_context) {
   string uuids = "[";
 
@@ -570,8 +572,8 @@ void DatabaseAPI::userFindByUUIDs(const Auth::UserFindByUUIDsRequest &a_request,
 }
 
 void DatabaseAPI::userFindByNameUID(
-    const Auth::UserFindByNameUIDRequest &a_request,
-    Auth::UserDataReply &a_reply, LogContext log_context) {
+    const SDMS::UserFindByNameUIDRequest &a_request,
+    SDMS::UserDataReply &a_reply, LogContext log_context) {
   Value result;
   vector<pair<string, string>> params;
   params.push_back({"name_uid", a_request.name_uid()});
@@ -585,8 +587,8 @@ void DatabaseAPI::userFindByNameUID(
   setUserData(a_reply, result, log_context);
 }
 
-void DatabaseAPI::userGetRecentEP(const Auth::UserGetRecentEPRequest &a_request,
-                                  Auth::UserGetRecentEPReply &a_reply,
+void DatabaseAPI::userGetRecentEP(const SDMS::UserGetRecentEPRequest &a_request,
+                                  SDMS::UserGetRecentEPReply &a_reply,
                                   LogContext log_context) {
   (void)a_request;
   Value result;
@@ -604,8 +606,8 @@ void DatabaseAPI::userGetRecentEP(const Auth::UserGetRecentEPRequest &a_request,
   TRANSLATE_END(result, log_context)
 }
 
-void DatabaseAPI::userSetRecentEP(const Auth::UserSetRecentEPRequest &a_request,
-                                  Anon::AckReply &a_reply,
+void DatabaseAPI::userSetRecentEP(const SDMS::UserSetRecentEPRequest &a_request,
+                                  SDMS::AckReply &a_reply,
                                   LogContext log_context) {
   (void)a_reply;
   Value result;
@@ -621,7 +623,7 @@ void DatabaseAPI::userSetRecentEP(const Auth::UserSetRecentEPRequest &a_request,
   dbGet("usr/ep/set", {{"eps", eps}}, result, log_context);
 }
 
-void DatabaseAPI::setUserData(Auth::UserDataReply &a_reply,
+void DatabaseAPI::setUserData(SDMS::UserDataReply &a_reply,
                               const Value &a_result, LogContext log_context) {
   UserData *user;
   Value::ArrayConstIter k;
@@ -676,8 +678,8 @@ void DatabaseAPI::setUserData(Auth::UserDataReply &a_reply,
   TRANSLATE_END(a_result, log_context)
 }
 
-void DatabaseAPI::projCreate(const Auth::ProjectCreateRequest &a_request,
-                             Auth::ProjectDataReply &a_reply,
+void DatabaseAPI::projCreate(const SDMS::ProjectCreateRequest &a_request,
+                             SDMS::ProjectDataReply &a_reply,
                              LogContext log_context) {
   Value result;
   vector<pair<string, string>> params;
@@ -715,8 +717,8 @@ void DatabaseAPI::projCreate(const Auth::ProjectCreateRequest &a_request,
   setProjectData(a_reply, result, log_context);
 }
 
-void DatabaseAPI::projUpdate(const Auth::ProjectUpdateRequest &a_request,
-                             Auth::ProjectDataReply &a_reply,
+void DatabaseAPI::projUpdate(const SDMS::ProjectUpdateRequest &a_request,
+                             SDMS::ProjectDataReply &a_reply,
                              LogContext log_context) {
   Value result;
   vector<pair<string, string>> params;
@@ -756,8 +758,8 @@ void DatabaseAPI::projUpdate(const Auth::ProjectUpdateRequest &a_request,
   setProjectData(a_reply, result, log_context);
 }
 
-void DatabaseAPI::projView(const Auth::ProjectViewRequest &a_request,
-                           Auth::ProjectDataReply &a_reply,
+void DatabaseAPI::projView(const SDMS::ProjectViewRequest &a_request,
+                           SDMS::ProjectDataReply &a_reply,
                            LogContext log_context) {
   Value result;
   dbGet("prj/view", {{"id", a_request.id()}}, result, log_context);
@@ -765,8 +767,8 @@ void DatabaseAPI::projView(const Auth::ProjectViewRequest &a_request,
   setProjectData(a_reply, result, log_context);
 }
 
-void DatabaseAPI::projList(const Auth::ProjectListRequest &a_request,
-                           Auth::ListingReply &a_reply,
+void DatabaseAPI::projList(const SDMS::ProjectListRequest &a_request,
+                           SDMS::ListingReply &a_reply,
                            LogContext log_context) {
   Value result;
   vector<pair<string, string>> params;
@@ -792,8 +794,8 @@ void DatabaseAPI::projList(const Auth::ProjectListRequest &a_request,
   setListingDataReply(a_reply, result, log_context);
 }
 
-void DatabaseAPI::projGetRole(const Auth::ProjectGetRoleRequest &a_request,
-                              Auth::ProjectGetRoleReply &a_reply,
+void DatabaseAPI::projGetRole(const SDMS::ProjectGetRoleRequest &a_request,
+                              SDMS::ProjectGetRoleReply &a_reply,
                               LogContext log_context) {
   Value result;
   vector<pair<string, string>> params;
@@ -808,7 +810,7 @@ void DatabaseAPI::projGetRole(const Auth::ProjectGetRoleRequest &a_request,
 }
 
 void DatabaseAPI::projSearch(const std::string &a_query,
-                             Auth::ProjectDataReply &a_reply,
+                             SDMS::ProjectDataReply &a_reply,
                              LogContext log_context) {
   Value result;
 
@@ -817,7 +819,7 @@ void DatabaseAPI::projSearch(const std::string &a_query,
   setProjectData(a_reply, result, log_context);
 }
 
-void DatabaseAPI::setProjectData(Auth::ProjectDataReply &a_reply,
+void DatabaseAPI::setProjectData(SDMS::ProjectDataReply &a_reply,
                                  const Value &a_result,
                                  LogContext log_context) {
   ProjectData *proj;
@@ -872,8 +874,8 @@ void DatabaseAPI::setProjectData(Auth::ProjectDataReply &a_reply,
 }
 
 void DatabaseAPI::recordListByAlloc(
-    const Auth::RecordListByAllocRequest &a_request,
-    Auth::ListingReply &a_reply, LogContext log_context) {
+    const SDMS::RecordListByAllocRequest &a_request,
+    SDMS::ListingReply &a_reply, LogContext log_context) {
   Value result;
   vector<pair<string, string>> params;
   params.push_back({"repo", a_request.repo()});
@@ -888,8 +890,8 @@ void DatabaseAPI::recordListByAlloc(
   setListingDataReply(a_reply, result, log_context);
 }
 
-void DatabaseAPI::recordView(const Auth::RecordViewRequest &a_request,
-                             Auth::RecordDataReply &a_reply,
+void DatabaseAPI::recordView(const SDMS::RecordViewRequest &a_request,
+                             SDMS::RecordDataReply &a_reply,
                              LogContext log_context) {
   Value result;
 
@@ -898,8 +900,8 @@ void DatabaseAPI::recordView(const Auth::RecordViewRequest &a_request,
   setRecordData(a_reply, result, log_context);
 }
 
-void DatabaseAPI::recordCreate(const Auth::RecordCreateRequest &a_request,
-                               Auth::RecordDataReply &a_reply,
+void DatabaseAPI::recordCreate(const SDMS::RecordCreateRequest &a_request,
+                               SDMS::RecordDataReply &a_reply,
                                LogContext log_context) {
   Value result;
   nlohmann::json payload;
@@ -968,8 +970,8 @@ void DatabaseAPI::recordCreate(const Auth::RecordCreateRequest &a_request,
 }
 
 void DatabaseAPI::recordCreateBatch(
-    const Auth::RecordCreateBatchRequest &a_request,
-    Auth::RecordDataReply &a_reply, LogContext log_context) {
+    const SDMS::RecordCreateBatchRequest &a_request,
+    SDMS::RecordDataReply &a_reply, LogContext log_context) {
   Value result;
 
   dbPost("dat/create/batch", {}, &a_request.records(), result, log_context);
@@ -977,8 +979,8 @@ void DatabaseAPI::recordCreateBatch(
   setRecordData(a_reply, result, log_context);
 }
 
-void DatabaseAPI::recordUpdate(const Auth::RecordUpdateRequest &a_request,
-                               Auth::RecordDataReply &a_reply,
+void DatabaseAPI::recordUpdate(const SDMS::RecordUpdateRequest &a_request,
+                               SDMS::RecordDataReply &a_reply,
                                libjson::Value &result, LogContext log_context) {
   nlohmann::json payload;
   payload["id"] = a_request.id();
@@ -1051,8 +1053,8 @@ void DatabaseAPI::recordUpdate(const Auth::RecordUpdateRequest &a_request,
 }
 
 void DatabaseAPI::recordUpdateBatch(
-    const Auth::RecordUpdateBatchRequest &a_request,
-    Auth::RecordDataReply &a_reply, libjson::Value &result,
+    const SDMS::RecordUpdateBatchRequest &a_request,
+    SDMS::RecordDataReply &a_reply, libjson::Value &result,
     LogContext log_context) {
   // "records" field is a JSON document - send directly to DB
   dbPost("dat/update/batch", {}, &a_request.records(), result, log_context);
@@ -1060,7 +1062,7 @@ void DatabaseAPI::recordUpdateBatch(
   setRecordData(a_reply, result, log_context);
 }
 
-void DatabaseAPI::recordUpdateSize(const Auth::RepoDataSizeReply &a_size_rep,
+void DatabaseAPI::recordUpdateSize(const SDMS::RepoDataSizeReply &a_size_rep,
                                    LogContext log_context) {
   libjson::Value result;
 
@@ -1091,8 +1093,8 @@ void DatabaseAPI::recordUpdateSchemaError(const std::string &a_rec_id,
          log_context);
 }
 
-void DatabaseAPI::recordExport(const Auth::RecordExportRequest &a_request,
-                               Auth::RecordExportReply &a_reply,
+void DatabaseAPI::recordExport(const SDMS::RecordExportRequest &a_request,
+                               SDMS::RecordExportReply &a_reply,
                                LogContext log_context) {
   Value result;
 
@@ -1117,8 +1119,8 @@ void DatabaseAPI::recordExport(const Auth::RecordExportRequest &a_request,
   TRANSLATE_END(result, log_context)
 }
 
-void DatabaseAPI::recordLock(const Auth::RecordLockRequest &a_request,
-                             Auth::ListingReply &a_reply,
+void DatabaseAPI::recordLock(const SDMS::RecordLockRequest &a_request,
+                             SDMS::ListingReply &a_reply,
                              LogContext log_context) {
   Value result;
   string ids;
@@ -1143,8 +1145,8 @@ void DatabaseAPI::recordLock(const Auth::RecordLockRequest &a_request,
 }
 
 void DatabaseAPI::recordGetDependencyGraph(
-    const Auth::RecordGetDependencyGraphRequest &a_request,
-    Auth::ListingReply &a_reply, LogContext log_context) {
+    const SDMS::RecordGetDependencyGraphRequest &a_request,
+    SDMS::ListingReply &a_reply, LogContext log_context) {
   Value result;
 
   dbGet("dat/dep/graph/get", {{"id", a_request.id()}}, result, log_context);
@@ -1152,7 +1154,7 @@ void DatabaseAPI::recordGetDependencyGraph(
   setListingDataReply(a_reply, result, log_context);
 }
 
-void DatabaseAPI::setRecordData(Auth::RecordDataReply &a_reply,
+void DatabaseAPI::setRecordData(SDMS::RecordDataReply &a_reply,
                                 const Value &a_result, LogContext log_context) {
   RecordData *rec;
   DependencyData *deps;
@@ -1268,8 +1270,8 @@ void DatabaseAPI::setRecordData(Auth::RecordDataReply &a_reply,
   TRANSLATE_END(a_result, log_context)
 }
 
-void DatabaseAPI::dataPath(const Auth::DataPathRequest &a_request,
-                           Auth::DataPathReply &a_reply,
+void DatabaseAPI::dataPath(const SDMS::DataPathRequest &a_request,
+                           SDMS::DataPathReply &a_reply,
                            LogContext log_context) {
   Value result;
 
@@ -1293,8 +1295,8 @@ void DatabaseAPI::dataPath(const Auth::DataPathRequest &a_request,
  * depending on scope. The DB relies on either tha "dataview" or "collview"
  * Arango search views for execution of the query.
  */
-void DatabaseAPI::generalSearch(const Auth::SearchRequest &a_request,
-                                Auth::ListingReply &a_reply,
+void DatabaseAPI::generalSearch(const SDMS::SearchRequest &a_request,
+                                SDMS::ListingReply &a_reply,
                                 LogContext log_context) {
   Value result;
   string qry_begin, qry_end, qry_filter, params;
@@ -1321,8 +1323,8 @@ void DatabaseAPI::generalSearch(const Auth::SearchRequest &a_request,
 }
 
 void DatabaseAPI::collListPublished(
-    const Auth::CollListPublishedRequest &a_request,
-    Auth::ListingReply &a_reply, LogContext log_context) {
+    const SDMS::CollListPublishedRequest &a_request,
+    SDMS::ListingReply &a_reply, LogContext log_context) {
   Value result;
   vector<pair<string, string>> params;
 
@@ -1338,8 +1340,8 @@ void DatabaseAPI::collListPublished(
   setListingDataReply(a_reply, result, log_context);
 }
 
-void DatabaseAPI::collCreate(const Auth::CollCreateRequest &a_request,
-                             Auth::CollDataReply &a_reply,
+void DatabaseAPI::collCreate(const SDMS::CollCreateRequest &a_request,
+                             SDMS::CollDataReply &a_reply,
                              LogContext log_context) {
   Value result;
   nlohmann::json payload;
@@ -1376,8 +1378,8 @@ void DatabaseAPI::collCreate(const Auth::CollCreateRequest &a_request,
   setCollData(a_reply, result, log_context);
 }
 
-void DatabaseAPI::collUpdate(const Auth::CollUpdateRequest &a_request,
-                             Auth::CollDataReply &a_reply,
+void DatabaseAPI::collUpdate(const SDMS::CollUpdateRequest &a_request,
+                             SDMS::CollDataReply &a_reply,
                              LogContext log_context) {
   Value result;
   nlohmann::json payload;
@@ -1414,8 +1416,8 @@ void DatabaseAPI::collUpdate(const Auth::CollUpdateRequest &a_request,
   setCollData(a_reply, result, log_context);
 }
 
-void DatabaseAPI::collView(const Auth::CollViewRequest &a_request,
-                           Auth::CollDataReply &a_reply,
+void DatabaseAPI::collView(const SDMS::CollViewRequest &a_request,
+                           SDMS::CollDataReply &a_reply,
                            LogContext log_context) {
   Value result;
 
@@ -1424,8 +1426,8 @@ void DatabaseAPI::collView(const Auth::CollViewRequest &a_request,
   setCollData(a_reply, result, log_context);
 }
 
-void DatabaseAPI::collRead(const Auth::CollReadRequest &a_request,
-                           Auth::ListingReply &a_reply,
+void DatabaseAPI::collRead(const SDMS::CollReadRequest &a_request,
+                           SDMS::ListingReply &a_reply,
                            LogContext log_context) {
   Value result;
   vector<pair<string, string>> params;
@@ -1440,8 +1442,8 @@ void DatabaseAPI::collRead(const Auth::CollReadRequest &a_request,
   setListingDataReply(a_reply, result, log_context);
 }
 
-void DatabaseAPI::collWrite(const Auth::CollWriteRequest &a_request,
-                            Auth::ListingReply &a_reply,
+void DatabaseAPI::collWrite(const SDMS::CollWriteRequest &a_request,
+                            SDMS::ListingReply &a_reply,
                             LogContext log_context) {
   string add_list, rem_list;
   vector<pair<string, string>> params;
@@ -1479,8 +1481,8 @@ void DatabaseAPI::collWrite(const Auth::CollWriteRequest &a_request,
   setListingDataReply(a_reply, result, log_context);
 }
 
-void DatabaseAPI::collMove(const Auth::CollMoveRequest &a_request,
-                           Anon::AckReply &a_reply, LogContext log_context) {
+void DatabaseAPI::collMove(const SDMS::CollMoveRequest &a_request,
+                           SDMS::AckReply &a_reply, LogContext log_context) {
   (void)a_reply;
 
   if (a_request.item_size() == 0)
@@ -1504,8 +1506,8 @@ void DatabaseAPI::collMove(const Auth::CollMoveRequest &a_request,
         result, log_context);
 }
 
-void DatabaseAPI::collGetParents(const Auth::CollGetParentsRequest &a_request,
-                                 Auth::CollPathReply &a_reply,
+void DatabaseAPI::collGetParents(const SDMS::CollGetParentsRequest &a_request,
+                                 SDMS::CollPathReply &a_reply,
                                  LogContext log_context) {
   Value result;
   vector<pair<string, string>> params;
@@ -1518,8 +1520,8 @@ void DatabaseAPI::collGetParents(const Auth::CollGetParentsRequest &a_request,
   setCollPathData(a_reply, result, log_context);
 }
 
-void DatabaseAPI::collGetOffset(const Auth::CollGetOffsetRequest &a_request,
-                                Auth::CollGetOffsetReply &a_reply,
+void DatabaseAPI::collGetOffset(const SDMS::CollGetOffsetRequest &a_request,
+                                SDMS::CollGetOffsetReply &a_reply,
                                 LogContext log_context) {
   Value result;
 
@@ -1534,7 +1536,7 @@ void DatabaseAPI::collGetOffset(const Auth::CollGetOffsetRequest &a_request,
   a_reply.set_offset(result.asObject().getNumber("offset"));
 }
 
-void DatabaseAPI::setCollData(Auth::CollDataReply &a_reply,
+void DatabaseAPI::setCollData(SDMS::CollDataReply &a_reply,
                               const libjson::Value &a_result,
                               LogContext log_context) {
   CollData *coll;
@@ -1637,7 +1639,7 @@ void DatabaseAPI::setCollPathData(CollPathReply &a_reply,
   TRANSLATE_END(a_result, log_context)
 }
 
-void DatabaseAPI::setListingDataReply(Auth::ListingReply &a_reply,
+void DatabaseAPI::setListingDataReply(SDMS::ListingReply &a_reply,
                                       const libjson::Value &a_result,
                                       LogContext log_context) {
   Value::ObjectConstIter j;
@@ -1730,8 +1732,8 @@ void DatabaseAPI::setListingData(ListingData *a_item,
   }
 }
 
-void DatabaseAPI::queryList(const Auth::QueryListRequest &a_request,
-                            Auth::ListingReply &a_reply,
+void DatabaseAPI::queryList(const SDMS::QueryListRequest &a_request,
+                            SDMS::ListingReply &a_reply,
                             LogContext log_context) {
   Value result;
   vector<pair<string, string>> params;
@@ -1745,8 +1747,8 @@ void DatabaseAPI::queryList(const Auth::QueryListRequest &a_request,
   setListingDataReply(a_reply, result, log_context);
 }
 
-void DatabaseAPI::queryCreate(const Auth::QueryCreateRequest &a_request,
-                              Auth::QueryDataReply &a_reply,
+void DatabaseAPI::queryCreate(const SDMS::QueryCreateRequest &a_request,
+                              SDMS::QueryDataReply &a_reply,
                               LogContext log_context) {
   Value result;
   // vector<pair<string,string>> params;
@@ -1783,8 +1785,8 @@ void DatabaseAPI::queryCreate(const Auth::QueryCreateRequest &a_request,
   setQueryData(a_reply, result, log_context);
 }
 
-void DatabaseAPI::queryUpdate(const Auth::QueryUpdateRequest &a_request,
-                              Auth::QueryDataReply &a_reply,
+void DatabaseAPI::queryUpdate(const SDMS::QueryUpdateRequest &a_request,
+                              SDMS::QueryDataReply &a_reply,
                               LogContext log_context) {
   Value result;
   nlohmann::json payload;
@@ -1827,8 +1829,8 @@ void DatabaseAPI::queryUpdate(const Auth::QueryUpdateRequest &a_request,
 }
 
 // DatabaseAPI::queryDelete( const std::string & a_id )
-void DatabaseAPI::queryDelete(const Auth::QueryDeleteRequest &a_request,
-                              Anon::AckReply &a_reply, LogContext log_context) {
+void DatabaseAPI::queryDelete(const SDMS::QueryDeleteRequest &a_request,
+                              SDMS::AckReply &a_reply, LogContext log_context) {
   (void)a_reply;
   Value result;
   string ids = "[";
@@ -1844,8 +1846,8 @@ void DatabaseAPI::queryDelete(const Auth::QueryDeleteRequest &a_request,
   dbGet("qry/delete", {{"ids", ids}}, result, log_context);
 }
 
-void DatabaseAPI::queryView(const Auth::QueryViewRequest &a_request,
-                            Auth::QueryDataReply &a_reply,
+void DatabaseAPI::queryView(const SDMS::QueryViewRequest &a_request,
+                            SDMS::QueryDataReply &a_reply,
                             LogContext log_context) {
   Value result;
 
@@ -1854,8 +1856,8 @@ void DatabaseAPI::queryView(const Auth::QueryViewRequest &a_request,
   setQueryData(a_reply, result, log_context);
 }
 
-void DatabaseAPI::queryExec(const Auth::QueryExecRequest &a_request,
-                            Auth::ListingReply &a_reply,
+void DatabaseAPI::queryExec(const SDMS::QueryExecRequest &a_request,
+                            SDMS::ListingReply &a_reply,
                             LogContext log_context) {
   Value result;
   vector<pair<string, string>> params;
@@ -1893,8 +1895,8 @@ void DatabaseAPI::setQueryData(QueryDataReply &a_reply,
   TRANSLATE_END(a_result, log_context)
 }
 
-void DatabaseAPI::aclView(const Auth::ACLViewRequest &a_request,
-                          Auth::ACLDataReply &a_reply, LogContext log_context) {
+void DatabaseAPI::aclView(const SDMS::ACLViewRequest &a_request,
+                          SDMS::ACLDataReply &a_reply, LogContext log_context) {
   libjson::Value result;
 
   dbGet("acl/view", {{"id", a_request.id()}}, result, log_context);
@@ -1902,8 +1904,8 @@ void DatabaseAPI::aclView(const Auth::ACLViewRequest &a_request,
   setACLData(a_reply, result, log_context);
 }
 
-void DatabaseAPI::aclUpdate(const Auth::ACLUpdateRequest &a_request,
-                            Auth::ACLDataReply &a_reply,
+void DatabaseAPI::aclUpdate(const SDMS::ACLUpdateRequest &a_request,
+                            SDMS::ACLDataReply &a_reply,
                             LogContext log_context) {
   Value result;
   vector<pair<string, string>> params;
@@ -1916,8 +1918,8 @@ void DatabaseAPI::aclUpdate(const Auth::ACLUpdateRequest &a_request,
   setACLData(a_reply, result, log_context);
 }
 
-void DatabaseAPI::aclSharedList(const Auth::ACLSharedListRequest &a_request,
-                                Auth::ListingReply &a_reply,
+void DatabaseAPI::aclSharedList(const SDMS::ACLSharedListRequest &a_request,
+                                SDMS::ListingReply &a_reply,
                                 LogContext log_context) {
   Value result;
   vector<pair<string, string>> params;
@@ -1934,8 +1936,8 @@ void DatabaseAPI::aclSharedList(const Auth::ACLSharedListRequest &a_request,
 }
 
 void DatabaseAPI::aclSharedListItems(
-    const Auth::ACLSharedListItemsRequest &a_request,
-    Auth::ListingReply &a_reply, LogContext log_context) {
+    const SDMS::ACLSharedListItemsRequest &a_request,
+    SDMS::ListingReply &a_reply, LogContext log_context) {
   Value result;
   vector<pair<string, string>> params;
 
@@ -1971,8 +1973,8 @@ void DatabaseAPI::setACLData(ACLDataReply &a_reply,
   TRANSLATE_END(a_result, log_context)
 }
 
-void DatabaseAPI::groupCreate(const Auth::GroupCreateRequest &a_request,
-                              Auth::GroupDataReply &a_reply,
+void DatabaseAPI::groupCreate(const SDMS::GroupCreateRequest &a_request,
+                              SDMS::GroupDataReply &a_reply,
                               LogContext log_context) {
   Value result;
 
@@ -2000,8 +2002,8 @@ void DatabaseAPI::groupCreate(const Auth::GroupCreateRequest &a_request,
   setGroupData(a_reply, result, log_context);
 }
 
-void DatabaseAPI::groupUpdate(const Auth::GroupUpdateRequest &a_request,
-                              Auth::GroupDataReply &a_reply,
+void DatabaseAPI::groupUpdate(const SDMS::GroupUpdateRequest &a_request,
+                              SDMS::GroupDataReply &a_reply,
                               LogContext log_context) {
   Value result;
 
@@ -2039,8 +2041,8 @@ void DatabaseAPI::groupUpdate(const Auth::GroupUpdateRequest &a_request,
   setGroupData(a_reply, result, log_context);
 }
 
-void DatabaseAPI::groupDelete(const Auth::GroupDeleteRequest &a_request,
-                              Anon::AckReply &a_reply, LogContext log_context) {
+void DatabaseAPI::groupDelete(const SDMS::GroupDeleteRequest &a_request,
+                              SDMS::AckReply &a_reply, LogContext log_context) {
   (void)a_reply;
   Value result;
 
@@ -2052,8 +2054,8 @@ void DatabaseAPI::groupDelete(const Auth::GroupDeleteRequest &a_request,
   dbGet("grp/delete", params, result, log_context);
 }
 
-void DatabaseAPI::groupList(const Auth::GroupListRequest &a_request,
-                            Auth::GroupDataReply &a_reply,
+void DatabaseAPI::groupList(const SDMS::GroupListRequest &a_request,
+                            SDMS::GroupDataReply &a_reply,
                             LogContext log_context) {
   (void)a_request;
 
@@ -2067,8 +2069,8 @@ void DatabaseAPI::groupList(const Auth::GroupListRequest &a_request,
   setGroupData(a_reply, result, log_context);
 }
 
-void DatabaseAPI::groupView(const Auth::GroupViewRequest &a_request,
-                            Auth::GroupDataReply &a_reply,
+void DatabaseAPI::groupView(const SDMS::GroupViewRequest &a_request,
+                            SDMS::GroupDataReply &a_reply,
                             LogContext log_context) {
   Value result;
   vector<pair<string, string>> params;
@@ -2117,8 +2119,8 @@ void DatabaseAPI::setGroupData(GroupDataReply &a_reply,
   TRANSLATE_END(a_result, log_context)
 }
 
-void DatabaseAPI::repoList(const Auth::RepoListRequest &a_request,
-                           Auth::RepoDataReply &a_reply,
+void DatabaseAPI::repoList(const SDMS::RepoListRequest &a_request,
+                           SDMS::RepoDataReply &a_reply,
                            LogContext log_context) {
   Value result;
 
@@ -2158,8 +2160,8 @@ void DatabaseAPI::repoView(std::vector<RepoData> &a_repos,
   }
 }
 
-void DatabaseAPI::repoView(const Auth::RepoViewRequest &a_request,
-                           Auth::RepoDataReply &a_reply,
+void DatabaseAPI::repoView(const SDMS::RepoViewRequest &a_request,
+                           SDMS::RepoDataReply &a_reply,
                            LogContext log_context) {
   Value result;
 
@@ -2169,8 +2171,8 @@ void DatabaseAPI::repoView(const Auth::RepoViewRequest &a_request,
   setRepoData(&a_reply, temp, result, log_context);
 }
 
-void DatabaseAPI::repoCreate(const Auth::RepoCreateRequest &a_request,
-                             Auth::RepoDataReply &a_reply,
+void DatabaseAPI::repoCreate(const SDMS::RepoCreateRequest &a_request,
+                             SDMS::RepoDataReply &a_reply,
                              LogContext log_context) {
   Value result;
 
@@ -2189,13 +2191,13 @@ void DatabaseAPI::repoCreate(const Auth::RepoCreateRequest &a_request,
   };
   
   // List of optional fields to check
-  add_if_present(&Auth::RepoCreateRequest::has_path,     &Auth::RepoCreateRequest::path,     "path");
-  add_if_present(&Auth::RepoCreateRequest::has_pub_key,  &Auth::RepoCreateRequest::pub_key,  "pub_key");
-  add_if_present(&Auth::RepoCreateRequest::has_address,  &Auth::RepoCreateRequest::address,  "address");
-  add_if_present(&Auth::RepoCreateRequest::has_endpoint, &Auth::RepoCreateRequest::endpoint, "endpoint");
-  add_if_present(&Auth::RepoCreateRequest::has_desc,     &Auth::RepoCreateRequest::desc,     "desc");
-  add_if_present(&Auth::RepoCreateRequest::has_domain,   &Auth::RepoCreateRequest::domain,   "domain");
-  add_if_present(&Auth::RepoCreateRequest::has_exp_path, &Auth::RepoCreateRequest::exp_path, "exp_path");
+  add_if_present(&SDMS::RepoCreateRequest::has_path,     &SDMS::RepoCreateRequest::path,     "path");
+  add_if_present(&SDMS::RepoCreateRequest::has_pub_key,  &SDMS::RepoCreateRequest::pub_key,  "pub_key");
+  add_if_present(&SDMS::RepoCreateRequest::has_address,  &SDMS::RepoCreateRequest::address,  "address");
+  add_if_present(&SDMS::RepoCreateRequest::has_endpoint, &SDMS::RepoCreateRequest::endpoint, "endpoint");
+  add_if_present(&SDMS::RepoCreateRequest::has_desc,     &SDMS::RepoCreateRequest::desc,     "desc");
+  add_if_present(&SDMS::RepoCreateRequest::has_domain,   &SDMS::RepoCreateRequest::domain,   "domain");
+  add_if_present(&SDMS::RepoCreateRequest::has_exp_path, &SDMS::RepoCreateRequest::exp_path, "exp_path");
 
   if (a_request.admin_size() > 0) {
     nlohmann::json admins = nlohmann::json::array();
@@ -2212,8 +2214,8 @@ void DatabaseAPI::repoCreate(const Auth::RepoCreateRequest &a_request,
   setRepoData(&a_reply, temp, result, log_context);
 }
 
-void DatabaseAPI::repoUpdate(const Auth::RepoUpdateRequest &a_request,
-                             Auth::RepoDataReply &a_reply,
+void DatabaseAPI::repoUpdate(const SDMS::RepoUpdateRequest &a_request,
+                             SDMS::RepoDataReply &a_reply,
                              LogContext log_context) {
   Value result;
   nlohmann::json payload;
@@ -2260,16 +2262,16 @@ void DatabaseAPI::repoUpdate(const Auth::RepoUpdateRequest &a_request,
   setRepoData(&a_reply, temp, result, log_context);
 }
 
-void DatabaseAPI::repoDelete(const Auth::RepoDeleteRequest &a_request,
-                             Anon::AckReply &a_reply, LogContext log_context) {
+void DatabaseAPI::repoDelete(const SDMS::RepoDeleteRequest &a_request,
+                             SDMS::AckReply &a_reply, LogContext log_context) {
   (void)a_reply;
   Value result;
 
   dbGet("repo/delete", {{"id", a_request.id()}}, result, log_context);
 }
 
-void DatabaseAPI::repoCalcSize(const Auth::RepoCalcSizeRequest &a_request,
-                               Auth::RepoCalcSizeReply &a_reply,
+void DatabaseAPI::repoCalcSize(const SDMS::RepoCalcSizeRequest &a_request,
+                               SDMS::RepoCalcSizeReply &a_reply,
                                LogContext log_context) {
   Value result;
 
@@ -2298,7 +2300,7 @@ void DatabaseAPI::repoCalcSize(const Auth::RepoCalcSizeRequest &a_request,
   TRANSLATE_END(result, log_context)
 }
 
-void DatabaseAPI::setRepoData(Auth::RepoDataReply *a_reply,
+void DatabaseAPI::setRepoData(SDMS::RepoDataReply *a_reply,
                               std::vector<RepoData> &a_repos,
                               const libjson::Value &a_result,
                               LogContext log_context) {
@@ -2371,8 +2373,8 @@ void DatabaseAPI::setRepoData(Auth::RepoDataReply *a_reply,
 }
 
 void DatabaseAPI::repoListAllocations(
-    const Auth::RepoListAllocationsRequest &a_request,
-    Auth::RepoAllocationsReply &a_reply, LogContext log_context) {
+    const SDMS::RepoListAllocationsRequest &a_request,
+    SDMS::RepoAllocationsReply &a_reply, LogContext log_context) {
   Value result;
 
   dbGet("repo/alloc/list/by_repo", {{"repo", a_request.id()}}, result,
@@ -2382,8 +2384,8 @@ void DatabaseAPI::repoListAllocations(
 }
 
 void DatabaseAPI::repoListSubjectAllocations(
-    const Auth::RepoListSubjectAllocationsRequest &a_request,
-    Auth::RepoAllocationsReply &a_reply, LogContext log_context) {
+    const SDMS::RepoListSubjectAllocationsRequest &a_request,
+    SDMS::RepoAllocationsReply &a_reply, LogContext log_context) {
   Value result;
   vector<pair<string, string>> params;
   if (a_request.has_subject())
@@ -2399,8 +2401,8 @@ void DatabaseAPI::repoListSubjectAllocations(
 }
 
 void DatabaseAPI::repoListObjectAllocations(
-    const Auth::RepoListObjectAllocationsRequest &a_request,
-    Auth::RepoAllocationsReply &a_reply, LogContext log_context) {
+    const SDMS::RepoListObjectAllocationsRequest &a_request,
+    SDMS::RepoAllocationsReply &a_reply, LogContext log_context) {
   Value result;
 
   dbGet("repo/alloc/list/by_object", {{"object", a_request.id()}}, result,
@@ -2409,7 +2411,7 @@ void DatabaseAPI::repoListObjectAllocations(
   setAllocData(a_reply, result, log_context);
 }
 
-void DatabaseAPI::setAllocData(Auth::RepoAllocationsReply &a_reply,
+void DatabaseAPI::setAllocData(SDMS::RepoAllocationsReply &a_reply,
                                const libjson::Value &a_result,
                                LogContext log_context) {
   TRANSLATE_BEGIN()
@@ -2444,8 +2446,8 @@ void DatabaseAPI::setAllocData(AllocData *a_alloc,
 }
 
 void DatabaseAPI::repoViewAllocation(
-    const Auth::RepoViewAllocationRequest &a_request,
-    Auth::RepoAllocationsReply &a_reply, LogContext log_context) {
+    const SDMS::RepoViewAllocationRequest &a_request,
+    SDMS::RepoAllocationsReply &a_reply, LogContext log_context) {
   Value result;
   vector<pair<string, string>> params;
   params.push_back({"repo", a_request.repo()});
@@ -2458,8 +2460,8 @@ void DatabaseAPI::repoViewAllocation(
 }
 
 void DatabaseAPI::repoAllocationStats(
-    const Auth::RepoAllocationStatsRequest &a_request,
-    Auth::RepoAllocationStatsReply &a_reply, LogContext log_context) {
+    const SDMS::RepoAllocationStatsRequest &a_request,
+    SDMS::RepoAllocationStatsReply &a_reply, LogContext log_context) {
   Value result;
   vector<pair<string, string>> params;
   params.push_back({"repo", a_request.repo()});
@@ -2496,7 +2498,7 @@ void DatabaseAPI::setAllocStatsData(AllocStatsData &a_stats,
 }
 
 void DatabaseAPI::repoAllocationSet(
-    const Auth::RepoAllocationSetRequest &a_request, Anon::AckReply &a_reply,
+    const SDMS::RepoAllocationSetRequest &a_request, SDMS::AckReply &a_reply,
     LogContext log_context) {
   (void)a_reply;
   Value result;
@@ -2510,8 +2512,8 @@ void DatabaseAPI::repoAllocationSet(
 }
 
 void DatabaseAPI::repoAllocationSetDefault(
-    const Auth::RepoAllocationSetDefaultRequest &a_request,
-    Anon::AckReply &a_reply, LogContext log_context) {
+    const SDMS::RepoAllocationSetDefaultRequest &a_request,
+    SDMS::AckReply &a_reply, LogContext log_context) {
   (void)a_reply;
 
   Value result;
@@ -2556,8 +2558,8 @@ void DatabaseAPI::getPerms(const GetPermsRequest &a_request,
   TRANSLATE_END(result, log_context)
 }
 
-void DatabaseAPI::repoAuthz(const Auth::RepoAuthzRequest &a_request,
-                            Anon::AckReply &a_reply, LogContext log_context) {
+void DatabaseAPI::repoAuthz(const SDMS::RepoAuthzRequest &a_request,
+                            SDMS::AckReply &a_reply, LogContext log_context) {
   (void)a_reply;
   Value result;
 
@@ -2571,8 +2573,8 @@ void DatabaseAPI::repoAuthz(const Auth::RepoAuthzRequest &a_request,
         result, log_context);
 }
 
-void DatabaseAPI::topicListTopics(const Auth::TopicListTopicsRequest &a_request,
-                                  Auth::TopicDataReply &a_reply,
+void DatabaseAPI::topicListTopics(const SDMS::TopicListTopicsRequest &a_request,
+                                  SDMS::TopicDataReply &a_reply,
                                   LogContext log_context) {
   Value result;
   vector<pair<string, string>> params;
@@ -2588,8 +2590,8 @@ void DatabaseAPI::topicListTopics(const Auth::TopicListTopicsRequest &a_request,
   setTopicDataReply(a_reply, result, log_context);
 }
 
-void DatabaseAPI::topicView(const Auth::TopicViewRequest &a_request,
-                            Auth::TopicDataReply &a_reply,
+void DatabaseAPI::topicView(const SDMS::TopicViewRequest &a_request,
+                            SDMS::TopicDataReply &a_reply,
                             LogContext log_context) {
   Value result;
 
@@ -2598,8 +2600,8 @@ void DatabaseAPI::topicView(const Auth::TopicViewRequest &a_request,
   setTopicDataReply(a_reply, result, log_context);
 }
 
-void DatabaseAPI::topicSearch(const Auth::TopicSearchRequest &a_request,
-                              Auth::TopicDataReply &a_reply,
+void DatabaseAPI::topicSearch(const SDMS::TopicSearchRequest &a_request,
+                              SDMS::TopicDataReply &a_reply,
                               LogContext log_context) {
   Value result;
 
@@ -2608,7 +2610,7 @@ void DatabaseAPI::topicSearch(const Auth::TopicSearchRequest &a_request,
   setTopicDataReply(a_reply, result, log_context);
 }
 
-void DatabaseAPI::setTopicDataReply(Auth::TopicDataReply &a_reply,
+void DatabaseAPI::setTopicDataReply(SDMS::TopicDataReply &a_reply,
                                     const libjson::Value &a_result,
                                     LogContext log_context) {
   TRANSLATE_BEGIN()
@@ -2659,7 +2661,7 @@ void DatabaseAPI::setTopicDataReply(Auth::TopicDataReply &a_reply,
 }
 
 void DatabaseAPI::noteCreate(const NoteCreateRequest &a_request,
-                             Auth::NoteDataReply &a_reply,
+                             SDMS::NoteDataReply &a_reply,
                              LogContext log_context) {
   DL_DEBUG(log_context, "NoteCreate");
 
@@ -2677,7 +2679,7 @@ void DatabaseAPI::noteCreate(const NoteCreateRequest &a_request,
 }
 
 void DatabaseAPI::noteUpdate(const NoteUpdateRequest &a_request,
-                             Auth::NoteDataReply &a_reply,
+                             SDMS::NoteDataReply &a_reply,
                              LogContext log_context) {
   DL_DEBUG(log_context, "NoteUpdate");
 
@@ -2697,8 +2699,8 @@ void DatabaseAPI::noteUpdate(const NoteUpdateRequest &a_request,
   setNoteDataReply(a_reply, result, log_context);
 }
 
-void DatabaseAPI::noteCommentEdit(const Auth::NoteCommentEditRequest &a_request,
-                                  Auth::NoteDataReply &a_reply,
+void DatabaseAPI::noteCommentEdit(const SDMS::NoteCommentEditRequest &a_request,
+                                  SDMS::NoteDataReply &a_reply,
                                   LogContext log_context) {
   Value result;
   vector<pair<string, string>> params;
@@ -2711,8 +2713,8 @@ void DatabaseAPI::noteCommentEdit(const Auth::NoteCommentEditRequest &a_request,
   setNoteDataReply(a_reply, result, log_context);
 }
 
-void DatabaseAPI::noteView(const Auth::NoteViewRequest &a_request,
-                           Auth::NoteDataReply &a_reply,
+void DatabaseAPI::noteView(const SDMS::NoteViewRequest &a_request,
+                           SDMS::NoteDataReply &a_reply,
                            LogContext log_context) {
   Value result;
 
@@ -2722,8 +2724,8 @@ void DatabaseAPI::noteView(const Auth::NoteViewRequest &a_request,
 }
 
 void DatabaseAPI::noteListBySubject(
-    const Auth::NoteListBySubjectRequest &a_request,
-    Auth::NoteDataReply &a_reply, LogContext log_context) {
+    const SDMS::NoteListBySubjectRequest &a_request,
+    SDMS::NoteDataReply &a_reply, LogContext log_context) {
   Value result;
 
   dbGet("note/list/by_subject", {{"subject", a_request.subject()}}, result,
@@ -2738,7 +2740,7 @@ void DatabaseAPI::notePurge(uint32_t a_age_sec, LogContext log_context) {
   dbGet("note/purge", {{"age_sec", to_string(a_age_sec)}}, result, log_context);
 }
 
-void DatabaseAPI::setNoteDataReply(Auth::NoteDataReply &a_reply,
+void DatabaseAPI::setNoteDataReply(SDMS::NoteDataReply &a_reply,
                                    const libjson::Value &a_result,
                                    LogContext log_context) {
   Value::ArrayConstIter i;
@@ -2803,8 +2805,8 @@ void DatabaseAPI::setNoteData(NoteData *a_note,
   }
 }
 
-void DatabaseAPI::tagSearch(const Auth::TagSearchRequest &a_request,
-                            Auth::TagDataReply &a_reply,
+void DatabaseAPI::tagSearch(const SDMS::TagSearchRequest &a_request,
+                            SDMS::TagDataReply &a_reply,
                             LogContext log_context) {
   Value result;
   vector<pair<string, string>> params;
@@ -2821,8 +2823,8 @@ void DatabaseAPI::tagSearch(const Auth::TagSearchRequest &a_request,
   setTagDataReply(a_reply, result, log_context);
 }
 
-void DatabaseAPI::tagListByCount(const Auth::TagListByCountRequest &a_request,
-                                 Auth::TagDataReply &a_reply,
+void DatabaseAPI::tagListByCount(const SDMS::TagListByCountRequest &a_request,
+                                 SDMS::TagDataReply &a_reply,
                                  LogContext log_context) {
   Value result;
   vector<pair<string, string>> params;
@@ -2837,7 +2839,7 @@ void DatabaseAPI::tagListByCount(const Auth::TagListByCountRequest &a_request,
   setTagDataReply(a_reply, result, log_context);
 }
 
-void DatabaseAPI::setTagDataReply(Auth::TagDataReply &a_reply,
+void DatabaseAPI::setTagDataReply(SDMS::TagDataReply &a_reply,
                                   const Value &a_result,
                                   LogContext log_context) {
   Value::ObjectConstIter j;
@@ -2871,8 +2873,8 @@ void DatabaseAPI::setTagData(TagData *a_tag,
   a_tag->set_count(a_obj.getNumber("count"));
 }
 
-void DatabaseAPI::schemaSearch(const Auth::SchemaSearchRequest &a_request,
-                               Auth::SchemaDataReply &a_reply,
+void DatabaseAPI::schemaSearch(const SDMS::SchemaSearchRequest &a_request,
+                               SDMS::SchemaDataReply &a_reply,
                                LogContext log_context) {
   libjson::Value result;
   vector<pair<string, string>> params;
@@ -2896,8 +2898,8 @@ void DatabaseAPI::schemaSearch(const Auth::SchemaSearchRequest &a_request,
   setSchemaDataReply(a_reply, result, log_context);
 }
 
-void DatabaseAPI::schemaView(const Auth::SchemaViewRequest &a_request,
-                             Auth::SchemaDataReply &a_reply,
+void DatabaseAPI::schemaView(const SDMS::SchemaViewRequest &a_request,
+                             SDMS::SchemaDataReply &a_reply,
                              LogContext log_context) {
   libjson::Value result;
   vector<pair<string, string>> params;
@@ -2910,7 +2912,7 @@ void DatabaseAPI::schemaView(const Auth::SchemaViewRequest &a_request,
   setSchemaDataReply(a_reply, result, log_context);
 }
 
-void DatabaseAPI::schemaCreate(const Auth::SchemaCreateRequest &a_request,
+void DatabaseAPI::schemaCreate(const SDMS::SchemaCreateRequest &a_request,
                                LogContext log_context) {
   libjson::Value result;
 
@@ -2926,7 +2928,7 @@ void DatabaseAPI::schemaCreate(const Auth::SchemaCreateRequest &a_request,
   dbPost("schema/create", {}, &body, result, log_context);
 }
 
-void DatabaseAPI::schemaRevise(const Auth::SchemaReviseRequest &a_request,
+void DatabaseAPI::schemaRevise(const SDMS::SchemaReviseRequest &a_request,
                                LogContext log_context) {
   libjson::Value result;
 
@@ -2952,7 +2954,7 @@ void DatabaseAPI::schemaRevise(const Auth::SchemaReviseRequest &a_request,
   dbPost("schema/revise", {{"id", a_request.id()}}, &body, result, log_context);
 }
 
-void DatabaseAPI::schemaUpdate(const Auth::SchemaUpdateRequest &a_request,
+void DatabaseAPI::schemaUpdate(const SDMS::SchemaUpdateRequest &a_request,
                                LogContext log_context) {
   libjson::Value result;
 
@@ -2981,8 +2983,8 @@ void DatabaseAPI::schemaUpdate(const Auth::SchemaUpdateRequest &a_request,
   dbPost("schema/update", {{"id", a_request.id()}}, &body, result, log_context);
 }
 
-void DatabaseAPI::schemaDelete(const Auth::SchemaDeleteRequest &a_request,
-                               Anon::AckReply &a_reply,
+void DatabaseAPI::schemaDelete(const SDMS::SchemaDeleteRequest &a_request,
+                               SDMS::AckReply &a_reply,
                                LogContext log_context) {
   (void)a_reply;
   libjson::Value result;
@@ -2990,7 +2992,7 @@ void DatabaseAPI::schemaDelete(const Auth::SchemaDeleteRequest &a_request,
   dbPost("schema/delete", {{"id", a_request.id()}}, 0, result, log_context);
 }
 
-void DatabaseAPI::setSchemaDataReply(Auth::SchemaDataReply &a_reply,
+void DatabaseAPI::setSchemaDataReply(SDMS::SchemaDataReply &a_reply,
                                      const libjson::Value &a_result,
                                      LogContext log_context) {
   Value::ObjectConstIter j;
@@ -3078,8 +3080,8 @@ void DatabaseAPI::schemaView(const std::string &a_id, libjson::Value &a_result,
   dbGet("schema/view", {{"id", a_id}}, a_result, log_context);
 }
 
-void DatabaseAPI::dailyMessage(const Anon::DailyMessageRequest &a_request,
-                               Anon::DailyMessageReply &a_reply,
+void DatabaseAPI::dailyMessage(const SDMS::DailyMessageRequest &a_request,
+                               SDMS::DailyMessageReply &a_reply,
                                LogContext log_context) {
   (void)a_request; // Not used
   libjson::Value result;
@@ -3129,8 +3131,8 @@ void DatabaseAPI::taskAbort(const std::string &a_task_id,
          log_context);
 }
 
-void DatabaseAPI::taskInitDataGet(const Auth::DataGetRequest &a_request,
-                                  Auth::DataGetReply &a_reply,
+void DatabaseAPI::taskInitDataGet(const SDMS::DataGetRequest &a_request,
+                                  SDMS::DataGetReply &a_reply,
                                   libjson::Value &a_result,
                                   LogContext log_context) {
   nlohmann::json payload;
@@ -3172,7 +3174,7 @@ void DatabaseAPI::taskInitDataGet(const Auth::DataGetRequest &a_request,
   setDataGetReply(a_reply, a_result, log_context);
 }
 
-void DatabaseAPI::setDataGetReply(Auth::DataGetReply &a_reply,
+void DatabaseAPI::setDataGetReply(SDMS::DataGetReply &a_reply,
                                   const libjson::Value &a_result,
                                   LogContext log_context) {
   Value::ObjectIter t;
@@ -3203,8 +3205,8 @@ void DatabaseAPI::setDataGetReply(Auth::DataGetReply &a_reply,
   TRANSLATE_END(a_result, log_context)
 }
 
-void DatabaseAPI::taskInitDataPut(const Auth::DataPutRequest &a_request,
-                                  Auth::DataPutReply &a_reply,
+void DatabaseAPI::taskInitDataPut(const SDMS::DataPutRequest &a_request,
+                                  SDMS::DataPutReply &a_reply,
                                   libjson::Value &a_result,
                                   LogContext log_context) {
   nlohmann::json payload;
@@ -3240,7 +3242,7 @@ void DatabaseAPI::taskInitDataPut(const Auth::DataPutRequest &a_request,
   setDataPutReply(a_reply, a_result, log_context);
 }
 
-void DatabaseAPI::setDataPutReply(Auth::DataPutReply &a_reply,
+void DatabaseAPI::setDataPutReply(SDMS::DataPutReply &a_reply,
                                   const libjson::Value &a_result,
                                   LogContext log_context) {
   Value::ObjectIter t;
@@ -3252,7 +3254,7 @@ void DatabaseAPI::setDataPutReply(Auth::DataPutReply &a_reply,
   Value::ArrayConstIter j;
 
   if (!obj.has("glob_data") || obj.value().size() != 1)
-    EXCEPT_PARAM(ID_BAD_REQUEST, "Invalid or missing upload target");
+    EXCEPT_PARAM(BAD_REQUEST, "Invalid or missing upload target");
 
   const Value::Array &arr = obj.asArray();
   const Value::Object &rec = arr.begin()->asObject();
@@ -3289,8 +3291,8 @@ void DatabaseAPI::taskInitRecordCollectionDelete(
 }
 
 void DatabaseAPI::taskInitRecordAllocChange(
-    const Auth::RecordAllocChangeRequest &a_request,
-    Auth::RecordAllocChangeReply &a_reply, libjson::Value &a_result,
+    const SDMS::RecordAllocChangeRequest &a_request,
+    SDMS::RecordAllocChangeReply &a_reply, libjson::Value &a_result,
     LogContext log_context) {
   nlohmann::json payload;
   nlohmann::json ids = nlohmann::json::array();
@@ -3329,8 +3331,8 @@ void DatabaseAPI::taskInitRecordAllocChange(
 }
 
 void DatabaseAPI::taskInitRecordOwnerChange(
-    const Auth::RecordOwnerChangeRequest &a_request,
-    Auth::RecordOwnerChangeReply &a_reply, libjson::Value &a_result,
+    const SDMS::RecordOwnerChangeRequest &a_request,
+    SDMS::RecordOwnerChangeReply &a_reply, libjson::Value &a_result,
     LogContext log_context) {
   nlohmann::json payload;
   nlohmann::json ids = nlohmann::json::array();
@@ -3374,7 +3376,7 @@ void DatabaseAPI::taskInitRecordOwnerChange(
 }
 
 void DatabaseAPI::taskInitProjectDelete(
-    const Auth::ProjectDeleteRequest &a_request, Auth::TaskDataReply &a_reply,
+    const SDMS::ProjectDeleteRequest &a_request, SDMS::TaskDataReply &a_reply,
     libjson::Value &a_result, LogContext log_context) {
   nlohmann::json payload;
   nlohmann::json ids = nlohmann::json::array();
@@ -3392,8 +3394,8 @@ void DatabaseAPI::taskInitProjectDelete(
 }
 
 void DatabaseAPI::taskInitRepoAllocationCreate(
-    const Auth::RepoAllocationCreateRequest &a_request,
-    Auth::TaskDataReply &a_reply, libjson::Value &a_result,
+    const SDMS::RepoAllocationCreateRequest &a_request,
+    SDMS::TaskDataReply &a_reply, libjson::Value &a_result,
     LogContext log_context) {
   dbGet("repo/alloc/create",
         {{"subject", a_request.subject()},
@@ -3406,8 +3408,8 @@ void DatabaseAPI::taskInitRepoAllocationCreate(
 }
 
 void DatabaseAPI::taskInitRepoAllocationDelete(
-    const Auth::RepoAllocationDeleteRequest &a_request,
-    Auth::TaskDataReply &a_reply, libjson::Value &a_result,
+    const SDMS::RepoAllocationDeleteRequest &a_request,
+    SDMS::TaskDataReply &a_reply, libjson::Value &a_result,
     LogContext log_context) {
   dbGet("repo/alloc/delete",
         {{"subject", a_request.subject()}, {"repo", a_request.repo()}},
@@ -3516,7 +3518,7 @@ void DatabaseAPI::setTaskData(TaskData *a_task,
  * method removes tasks that are nor in READY status from the original JSON
  * input - this is to.
  */
-void DatabaseAPI::setTaskDataReply(Auth::TaskDataReply &a_reply,
+void DatabaseAPI::setTaskDataReply(SDMS::TaskDataReply &a_reply,
                                    const libjson::Value &a_result,
                                    LogContext log_context) {
   TRANSLATE_BEGIN()
@@ -3536,7 +3538,7 @@ void DatabaseAPI::setTaskDataReply(Auth::TaskDataReply &a_reply,
  *
  * JSON contains an array of task objects containing task fields.
  */
-void DatabaseAPI::setTaskDataReplyArray(Auth::TaskDataReply &a_reply,
+void DatabaseAPI::setTaskDataReplyArray(SDMS::TaskDataReply &a_reply,
                                         const libjson::Value &a_result,
                                         LogContext log_context) {
   TRANSLATE_BEGIN()
@@ -3596,8 +3598,8 @@ void DatabaseAPI::taskFinalize(const std::string &a_task_id, bool a_succeeded,
   dbPost("task/finalize", params, 0, a_result, log_context);
 }
 
-void DatabaseAPI::taskList(const Auth::TaskListRequest &a_request,
-                           Auth::TaskDataReply &a_reply,
+void DatabaseAPI::taskList(const SDMS::TaskListRequest &a_request,
+                           SDMS::TaskDataReply &a_reply,
                            LogContext log_context) {
   vector<pair<string, string>> params;
 
@@ -3629,8 +3631,8 @@ void DatabaseAPI::taskList(const Auth::TaskListRequest &a_request,
   setTaskDataReplyArray(a_reply, result, log_context);
 }
 
-void DatabaseAPI::taskView(const Auth::TaskViewRequest &a_request,
-                           Auth::TaskDataReply &a_reply,
+void DatabaseAPI::taskView(const SDMS::TaskViewRequest &a_request,
+                           SDMS::TaskDataReply &a_reply,
                            LogContext log_context) {
   libjson::Value result;
 
@@ -3790,13 +3792,13 @@ void DatabaseAPI::metricsPurge(uint32_t a_timestamp, LogContext log_context) {
          log_context);
 }
 
-uint32_t DatabaseAPI::parseSearchRequest(const Auth::SearchRequest &a_request,
+uint32_t DatabaseAPI::parseSearchRequest(const SDMS::SearchRequest &a_request,
                                          std::string &a_qry_begin,
                                          std::string &a_qry_end,
                                          std::string &a_qry_filter,
                                          std::string &a_params,
                                          LogContext log_context) {
-  string view = (a_request.mode() == SM_DATA ? "dataview" : "collview");
+  string view = (a_request.mode() == SDMS::SM_DATA ? "dataview" : "collview");
 
   if (a_request.has_published() && a_request.published()) {
     a_qry_begin = string("for i in ") + view + " search i.public == true";
@@ -3860,7 +3862,7 @@ uint32_t DatabaseAPI::parseSearchRequest(const Auth::SearchRequest &a_request,
   }
 
   // Data-only search options
-  if (a_request.mode() == SM_DATA) {
+  if (a_request.mode() == SDMS::SM_DATA) {
     if (a_request.has_sch_id() > 0) {
       a_qry_begin += " and i.sch_id == @sch";
       a_params += ",\"sch_id\":\"" + a_request.sch_id() + "\"";
@@ -3937,7 +3939,7 @@ uint32_t DatabaseAPI::parseSearchRequest(const Auth::SearchRequest &a_request,
       string(" return distinct "
              "{_id:i._id,title:i.title,'desc':i['desc'],owner:i.owner,owner_"
              "name:name,alias:i.alias") +
-      (a_request.mode() == SM_DATA ? ",size:i.size,md_err:i.md_err" : "") + "}";
+      (a_request.mode() == SDMS::SM_DATA ? ",size:i.size,md_err:i.md_err" : "") + "}";
 
   a_qry_begin = a_qry_begin;
   a_qry_end = a_qry_end;
