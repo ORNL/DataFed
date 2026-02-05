@@ -13,8 +13,7 @@
 
 import zmq
 from . import Version_pb2
-from . import SDMS_Anon_pb2 as anon
-from . import SDMS_Auth_pb2 as auth
+from . import envelope_pb2 as proto
 from . import Connection
 from . import VERSION
 
@@ -166,8 +165,7 @@ class API:
             server_host, server_port, _server_pub_key, _client_pub_key, _client_priv_key
         )
 
-        self._conn.registerProtocol(anon)
-        self._conn.registerProtocol(auth)
+        self._conn.registerEnvelope(proto)
 
         # Make a request to pypi
         package_name = "datafed"  # Replace with the package name you want to check
@@ -191,7 +189,7 @@ class API:
                         self.new_client_avail = latest_version_on_pypi
 
         # Check for compatible protocol versions
-        reply, mt = self.sendRecv(anon.VersionRequest(), 10000)
+        reply, mt = self.sendRecv(proto.VersionRequest(), 10000)
         if reply is None:
             raise Exception(
                 "Timeout waiting for server connection. Make sure"
@@ -223,7 +221,7 @@ class API:
             self.manualAuthByToken(client_token)
         else:
             # Check if server authenticated based on keys
-            reply, mt = self.sendRecv(anon.GetAuthStatusRequest(), 10000)
+            reply, mt = self.sendRecv(proto.GetAuthStatusRequest(), 10000)
             self._auth = reply.auth
             self._uid = reply.uid
 
@@ -263,7 +261,7 @@ class API:
     # @exception Exception: On communication timeout or authentication failure.
     #
     def manualAuthByPassword(self, uid, password):
-        msg = anon.AuthenticateByPasswordRequest()
+        msg = proto.AuthenticateByPasswordRequest()
         msg.uid = uid
         msg.password = password
         a, b = self.sendRecv(msg)
@@ -272,7 +270,7 @@ class API:
         self._conn.reset()
 
         # Test auth status
-        reply, mt = self.sendRecv(anon.GetAuthStatusRequest())
+        reply, mt = self.sendRecv(proto.GetAuthStatusRequest())
         if not reply.auth:
             raise Exception("Password authentication failed.")
 
@@ -280,7 +278,7 @@ class API:
         self._uid = reply.uid
 
     def manualAuthByToken(self, token):
-        msg = anon.AuthenticateByTokenRequest()
+        msg = proto.AuthenticateByTokenRequest()
         msg.token = token
         self.sendRecv(msg)
 
@@ -288,7 +286,7 @@ class API:
         self._conn.reset()
 
         # Test auth status
-        reply, mt = self.sendRecv(anon.GetAuthStatusRequest())
+        reply, mt = self.sendRecv(proto.GetAuthStatusRequest())
 
         if not reply.auth:
             raise Exception("Token authentication failed")
@@ -332,7 +330,7 @@ class API:
 
     def getDailyMessage(self):
         # Get daily message, if set
-        reply, mt = self.sendRecv(anon.DailyMessageRequest(), 10000)
+        reply, mt = self.sendRecv(proto.DailyMessageRequest(), 10000)
         if reply is None:
             raise Exception("Timeout waiting for server connection.")
 
