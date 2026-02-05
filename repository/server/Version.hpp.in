@@ -10,6 +10,22 @@ namespace SDMS {
       constexpr int PATCH = @DATAFED_REPO_PATCH@;
     }
   }
+
+  namespace protocol {
+    namespace version {
+      constexpr int MAJOR = @DATAFED_COMMON_PROTOCOL_API_MAJOR@;
+      constexpr int MINOR = @DATAFED_COMMON_PROTOCOL_API_MINOR@;
+      constexpr int PATCH = @DATAFED_COMMON_PROTOCOL_API_PATCH@;
+    }
+  }
+
+  namespace release {
+    constexpr int YEAR = @DATAFED_RELEASE_YEAR@;
+    constexpr int MONTH = @DATAFED_RELEASE_MONTH@;
+    constexpr int DAY = @DATAFED_RELEASE_DAY@;
+    constexpr int HOUR = @DATAFED_RELEASE_HOUR@;
+    constexpr int MINUTE = @DATAFED_RELEASE_MINUTE@;
+  }
 }
 
 #endif // REPO_VERSION_HPP
