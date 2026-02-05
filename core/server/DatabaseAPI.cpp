@@ -7,7 +7,6 @@
 #include "common/envelope.pb.h"
 #include "common/TraceException.hpp"
 #include "common/Util.hpp"
-#include "common/envelope.pb.h"
 #include "common/enums/access_token_type.pb.h"
 #include "common/enums/search_mode.pb.h" 
 
