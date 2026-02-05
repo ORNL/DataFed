@@ -42,8 +42,6 @@ namespace message {
 namespace google {
 /// Supported dynamic arguments
 const std::string FRAME_SIZE = "frame_size";
-const std::string PROTO_ID = "proto_id";
-const std::string MSG_ID = "msg_id";
 const std::string MSG_TYPE = "msg_type";
 const std::string CONTEXT = "context";
 } // namespace google

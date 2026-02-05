@@ -39,16 +39,14 @@ BOOST_AUTO_TEST_CASE(testing_MessageFactory) {
   message->set(MessageAttribute::KEY, key);
   message->set(MessageAttribute::STATE, MessageState::REQUEST);
   message->set(constants::message::google::CONTEXT, context);
-
-  // Changed: Create envelope and populate inner message
-  auto envelope = std::make_unique<SDMS::Envelope>();
+  auto auth_by_token_req = std::make_unique<SDMS::AuthenticateByTokenRequest>();
   std::string token = "golden_chest";
-  envelope->mutable_authenticate_by_token_request()->set_token(token);
+  auth_by_token_req->set_token(token);
 
   ProtoBufMap proto_map;
-  uint16_t protobuf_msg_type = proto_map.getMessageType(*envelope);
+  uint16_t protobuf_msg_type = proto_map.getMessageType(*auth_by_token_req);
 
-  message->setPayload(std::move(envelope));
+  message->setPayload(std::move(auth_by_token_req));
 
   std::string route = "MtOlympia";
   message->addRoute(route);

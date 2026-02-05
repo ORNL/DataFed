@@ -4,6 +4,7 @@
 
 // Public common includes
 #include "IMessageMapper.hpp"
+#include "common/envelope.pb.h"
 
 // Third party includes
 #include <google/protobuf/descriptor.h>
@@ -38,6 +39,13 @@ public:
   uint16_t getMessageType(const ::google::protobuf::Message& msg) const;
   std::string toString(uint16_t MessageType) const;
   virtual uint16_t getMessageType(const std::string& message_name) const final;
+  
+  // Envelope wrap/unwrap for wire boundary
+  std::unique_ptr<SDMS::Envelope>
+  wrapInEnvelope(const ::google::protobuf::Message& inner) const;
+
+  std::unique_ptr<::google::protobuf::Message>
+  unwrapFromEnvelope(SDMS::Envelope& envelope) const;
 };
 } // namespace SDMS
 

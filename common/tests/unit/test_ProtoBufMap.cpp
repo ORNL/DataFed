@@ -1,4 +1,5 @@
 #define BOOST_TEST_MAIN
+
 #define BOOST_TEST_MODULE protobuffactory
 #include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>
@@ -8,9 +9,6 @@
 
 // Local public includes
 #include "common/ProtoBufMap.hpp"
-
-// Proto file includes
-#include "common/envelope.pb.h"  // Changed
 
 // Standard includes
 #include <iostream>
@@ -33,27 +31,18 @@ BOOST_AUTO_TEST_CASE(testing_ProtoBufFactory) {
   ProtoBufMap proto_map;
   ProtoBufFactory proto_factory;
 
-  // Changed: wrap in envelope
-  SDMS::Envelope envelope;
-  envelope.mutable_version_request();
-
-  uint16_t msg_type = proto_map.getMessageType(envelope);
+  SDMS::VersionRequest version_request;
+  uint16_t msg_type = proto_map.getMessageType(version_request);
   auto msg = proto_factory.create(msg_type);
-
   std::cout << "VersionRequest msg_type of VersionRequest, " << msg_type
             << " and " << proto_map.getMessageType(*msg) << std::endl;
 }
 
 BOOST_AUTO_TEST_CASE(testing_ProtoBufMap_toString) {
   ProtoBufMap proto_map;
-
-  // Changed: wrap in envelope
-  SDMS::Envelope envelope;
-  envelope.mutable_version_request();
-
-  uint16_t msg_type = proto_map.getMessageType(envelope);
+  SDMS::VersionRequest version_request;
+  uint16_t msg_type = proto_map.getMessageType(version_request);
   auto name = proto_map.toString(msg_type);
-
   BOOST_CHECK(name.compare("VersionRequest") == 0);
 }
 

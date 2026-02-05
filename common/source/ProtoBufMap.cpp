@@ -14,6 +14,39 @@ namespace SDMS {
 
 ProtoBufMap::ProtoBufMap() {}
 
+std::unique_ptr<SDMS::Envelope>
+ProtoBufMap::wrapInEnvelope(const proto::Message& inner) const {
+    uint16_t field_number = getMessageType(inner);
+    auto envelope = std::make_unique<SDMS::Envelope>();
+    const auto* field_desc =
+        envelope->GetDescriptor()->FindFieldByNumber(field_number);
+    if (!field_desc) {
+        EXCEPT_PARAM(EC_INVALID_PARAM,
+                     "Cannot wrap message in envelope: no field number "
+                         << field_number << " for type "
+                         << inner.GetDescriptor()->name());
+    }
+    envelope->GetReflection()
+        ->MutableMessage(envelope.get(), field_desc)
+        ->CopyFrom(inner);
+    return envelope;
+}
+
+std::unique_ptr<proto::Message>
+ProtoBufMap::unwrapFromEnvelope(SDMS::Envelope& envelope) const {
+    uint16_t msg_type = getMessageType(envelope);
+    const auto* field_desc =
+        envelope.GetDescriptor()->FindFieldByNumber(msg_type);
+    if (!field_desc) {
+        EXCEPT_PARAM(EC_INVALID_PARAM,
+                     "Cannot unwrap envelope: unknown field number "
+                         << msg_type);
+    }
+    // ReleaseMessage transfers ownership out of the envelope
+    return std::unique_ptr<proto::Message>(
+        envelope.GetReflection()->ReleaseMessage(&envelope, field_desc));
+}
+
 uint16_t ProtoBufMap::getMessageType(const ::google::protobuf::Message& msg) const {
     // If it's an Envelope, use the envelope method
   const SDMS::Envelope* env = dynamic_cast<const SDMS::Envelope*>(&msg);
