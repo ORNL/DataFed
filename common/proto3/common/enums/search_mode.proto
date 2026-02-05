@@ -5,6 +5,6 @@ package SDMS;
 option cc_enable_arenas = true;
 
 enum SearchMode {
-    SEARCH_MODE_DATA = 0;
-    SEARCH_MODE_COLLECTION = 1;
+    SM_DATA = 0;
+    SM_COLLECTION = 1;
 }

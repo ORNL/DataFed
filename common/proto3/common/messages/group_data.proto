@@ -7,7 +7,7 @@ option cc_enable_arenas = true;
 message GroupData {
     string uid = 1;
     string gid = 2;
-    string title = 3;
-    string desc = 4;
+    optional string title = 3;
+    optional string desc = 4;
     repeated string member = 5;
 }
