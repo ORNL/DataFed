@@ -8,8 +8,6 @@
 #include "ITaskWorker.hpp"
 
 // Local public includes
-#include "common/SDMS.pb.h"
-#include "common/SDMS_Auth.pb.h"
 #include "common/libjson.hpp"
 
 // Standard includes
