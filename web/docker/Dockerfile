@@ -39,7 +39,7 @@ COPY ./scripts/generate_ws_config.sh  ${BUILD_DIR}/scripts/
 COPY ./scripts/install_ws.sh          ${BUILD_DIR}/scripts/
 COPY ./scripts/export_dependency_version.sh ${BUILD_DIR}/scripts/
 COPY ./cmake                          ${BUILD_DIR}/cmake
-COPY ./common/proto                   ${BUILD_DIR}/common/proto
+COPY ./common/proto3                   ${BUILD_DIR}/common/proto3
 COPY ./web                            ${BUILD_DIR}/web
 
 RUN ${DATAFED_DEPENDENCIES_ROOT}/scripts/generate_dependencies_config.sh && \
