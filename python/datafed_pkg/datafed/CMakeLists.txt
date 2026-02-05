@@ -7,7 +7,7 @@ foreach(file ${SrcFiles})
 endforeach()
 
 # Collect proto files from the new 1-1-1 directory structure
-file( GLOB_RECURSE ProtoFiles ${DataFed_SOURCE_DIR}/common/proto/common/*.proto )
+file( GLOB_RECURSE ProtoFiles ${DataFed_SOURCE_DIR}/common/proto3/common/*.proto )
 
 # OBJECT - is needed because we don't want to compile to a binary
 # because we are dealing with python
@@ -16,7 +16,7 @@ add_library(protobuf-target-py OBJECT ${ProtoFiles})
 protobuf_generate(
     LANGUAGE python
     TARGET protobuf-target-py
-    IMPORT_DIRS "${DataFed_SOURCE_DIR}/common/proto/common"
+    IMPORT_DIRS "${DataFed_SOURCE_DIR}/common/proto3/common"
     OUT_VAR protobuf-generated-files-py
     PROTOC_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}"
   )
