@@ -2072,7 +2072,9 @@ function sendMessage(a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon) {
                 getCurrentLineNumber(),
                 "MsgType is: " +
                     msg_info.field_id +
-                    " (" + a_msg_name + ")" +
+                    " (" +
+                    a_msg_name +
+                    ")" +
                     " Writing ctx to frame, " +
                     ctx +
                     " buffer size " +
@@ -2094,7 +2096,9 @@ function sendMessage(a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon) {
                 getCurrentLineNumber(),
                 "MsgType is: " +
                     msg_info.field_id +
-                    " (" + a_msg_name + ")" +
+                    " (" +
+                    a_msg_name +
+                    ")" +
                     " Writing ctx to frame, " +
                     ctx +
                     " buffer size " +
@@ -2142,7 +2146,9 @@ function sendMessageDirect(a_msg_name, a_client, a_msg_data, a_cb) {
                 getCurrentLineNumber(),
                 "MsgType is: " +
                     msg_info.field_id +
-                    " (" + a_msg_name + ")" +
+                    " (" +
+                    a_msg_name +
+                    ")" +
                     " Direct Writing ctx to frame, " +
                     ctx +
                     " buffer size " +
@@ -2164,7 +2170,9 @@ function sendMessageDirect(a_msg_name, a_client, a_msg_data, a_cb) {
                 getCurrentLineNumber(),
                 "MsgType is: " +
                     msg_info.field_id +
-                    " (" + a_msg_name + ")" +
+                    " (" +
+                    a_msg_name +
+                    ")" +
                     " Direct Writing ctx to frame, " +
                     ctx +
                     " buffer size " +
@@ -2207,9 +2215,9 @@ function processEnvelope(root) {
         }
 
         var entry = {
-            type: msgType,          // protobufjs Type for encode/decode
+            type: msgType, // protobufjs Type for encode/decode
             field_name: field.name, // envelope oneof field name
-            field_id: field.id,     // envelope field number = msg_type in frame
+            field_id: field.id, // envelope field number = msg_type in frame
         };
 
         g_msg_by_id[field.id] = entry;
@@ -2310,7 +2318,10 @@ g_core_sock.on(
                     logger.error(
                         "g_core_sock.on",
                         getCurrentLineNumber(),
-                        "ERROR: envelope decode failed: " + err + " correlation_id: " + correlation_id,
+                        "ERROR: envelope decode failed: " +
+                            err +
+                            " correlation_id: " +
+                            correlation_id,
                     );
                 }
             } else {
