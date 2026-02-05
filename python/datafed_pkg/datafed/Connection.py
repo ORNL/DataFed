@@ -6,13 +6,11 @@
 # unserialized, and custom framing is generated to efficiently convey message
 # type, size, and a re-association context value.
 #
-# The Google protobuf library does not provide a mechanism for identifying
-# message types numerically (only by string), so a build-time custom tool
-# (pyproto_add_msg_idx.py) is used to generate the mappings from message
-# names to message index (and vice versa) and appends this information as
-# dictionaries to the compiled proto files (xxxx_pb2.py). The
-# registerProtocol() method then loads uses this information to create
-# consistent message type framing for python send/recv methods.
+# Message type identification is derived at runtime from the Envelope proto
+# message's field descriptors. Each message type has a stable field number
+# in the Envelope, which serves as its wire-format type ID. This replaces
+# the previous build-time pyproto_add_msg_idx.py hack that assigned type
+# IDs based on message declaration order within proto files.
 
 from google.protobuf.message_factory import GetMessageClass
 import logging
@@ -116,19 +114,60 @@ class Connection:
             self._zmq_ctxt.destroy()
 
     ##
-    # @brief Register a protobuf module
+    # @brief Register message types from the Envelope proto message
+    #
+    # This method derives message type mappings at runtime by inspecting the
+    # Envelope message's field descriptors. Each field in the Envelope that
+    # wraps a message type has a stable field number, which becomes the
+    # message type ID used in wire framing. This replaces the old
+    # registerProtocol() approach that relied on build-time generated
+    # _msg_name_to_type / _msg_type_to_name dicts.
+    #
+    # @param envelope_module - The compiled envelope_pb2 module
+    # @param envelope_class_name - Name of the envelope message (default: "Envelope")
+    #
+    def registerEnvelope(self, envelope_module, envelope_class_name="Envelope"):
+        envelope_class = getattr(envelope_module, envelope_class_name)
+        envelope_desc = envelope_class.DESCRIPTOR
+
+        for field in envelope_desc.fields:
+            if field.message_type is None:
+                # Skip non-message fields (e.g. scalars) if any exist
+                continue
+
+            msg_type = field.number
+            desc = field.message_type
+
+            self._msg_desc_by_type[msg_type] = desc
+            self._msg_desc_by_name[desc.name] = desc
+            self._msg_type_by_desc[desc] = msg_type
+
+        self._logger.debug(
+            "Registered %d message types from %s",
+            len(self._msg_desc_by_type),
+            envelope_class_name,
+        )
+
+    ##
+    # @brief Register a protobuf module (DEPRECATED - use registerEnvelope)
     #
     # This method registers an imported protobuf module (_pb2 file) for use
     # with the Connection class. Registration is required for proper message
     # framing and serialization.
     #
+    # This relies on build-time generated _msg_name_to_type dicts appended
+    # to _pb2 files by pyproto_add_msg_idx.py. Prefer registerEnvelope()
+    # which derives mappings from envelope field numbers at runtime.
+    #
     # @param msg_module - Protobuf module (imported *_pb2 module)
     #
     def registerProtocol(self, msg_module):
-        # Message descriptors are stored by name created by protobuf compiler
-        # A custom post-proc tool generates and appends _msg_name_to_type with
-        # defined DataFed-sepcific numer message types
-
+        import warnings
+        warnings.warn(
+            "registerProtocol() is deprecated, use registerEnvelope() instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         for name, desc in sorted(msg_module.DESCRIPTOR.message_types_by_name.items()):
             msg_t = msg_module._msg_name_to_type[name]
             self._msg_desc_by_type[msg_t] = desc
