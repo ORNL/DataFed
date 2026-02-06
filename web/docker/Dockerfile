@@ -39,7 +39,7 @@ COPY ./scripts/generate_ws_config.sh  ${BUILD_DIR}/scripts/
 COPY ./scripts/install_ws.sh          ${BUILD_DIR}/scripts/
 COPY ./scripts/export_dependency_version.sh ${BUILD_DIR}/scripts/
 COPY ./cmake                          ${BUILD_DIR}/cmake
-COPY ./common/proto3                   ${BUILD_DIR}/common/proto3
+COPY ./common/proto3                  ${BUILD_DIR}/common/proto3
 COPY ./web                            ${BUILD_DIR}/web
 
 RUN ${DATAFED_DEPENDENCIES_ROOT}/scripts/generate_dependencies_config.sh && \
@@ -83,6 +83,7 @@ WORKDIR ${DATAFED_DIR}
 
 USER datafed
 
+RUN mkdir -p ${DATAFED_DEFAULT_LOG_PATH}; chown root:datafed ${DATAFED_DEFAULT_LOG_PATH}; chmod -R g+rw ${DATAFED_DEFAULT_LOG_PATH}
 COPY --from=ws-build --chown=datafed:root ${DATAFED_DEPENDENCIES_ROOT}/scripts/  {DATAFED_DEPENDENCIES_ROOT}/scripts/
 
 COPY --chown=datafed:root ./scripts/generate_datafed.sh             ${BUILD_DIR}/scripts/generate_datafed.sh
@@ -97,7 +98,7 @@ COPY --from=ws-build --chown=datafed:root ${DATAFED_DEPENDENCIES_ROOT}/scripts $
 COPY --from=ws-build --chown=datafed:root ${DATAFED_INSTALL_PATH}/web ${DATAFED_INSTALL_PATH}/web
 COPY --from=ws-build --chown=datafed:root /usr/bin/curl /usr/bin/curl
 
-WORKDIR ${BUILD_DIR}
+WORKDIR ${BUILD_DIR}/web
 
 USER root
 

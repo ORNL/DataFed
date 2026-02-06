@@ -15,7 +15,7 @@ if (process.argv.length != 3) {
     throw "Invalid arguments, usage: datafed-ws config-file";
 }
 
-import web_version from "./version.js";
+import version from "./version.js";
 import express from "express"; // For REST api
 import session from "express-session";
 import sanitizeHtml from "sanitize-html";
@@ -145,6 +145,26 @@ class Logger {
 }
 
 const logger = new Logger(LogLevel.INFO);
+
+g_ver_release_year =   version.DATAFED_RELEASE_YEAR;
+g_ver_release_month =  version.DATAFED_RELEASE_MONTH;
+g_ver_release_day =    version.DATAFED_RELEASE_DAY;
+g_ver_release_hour =   version.DATAFED_RELEASE_HOUR;
+g_ver_release_minute = version.DATAFED_RELEASE_MINUTE;
+
+g_version =
+    g_ver_release_year +
+    "." +
+    g_ver_release_month +
+    "." +
+    g_ver_release_day +
+    "." +
+    g_ver_release_hour +
+    "." +
+    g_ver_release_minute;
+
+if (--g_ready_start == 0) startServer();
+
 
 function getCurrentLineNumber() {
     const stackTrace = new Error().stack;
@@ -2231,34 +2251,12 @@ function processEnvelope(root) {
     );
 }
 
-protobuf.load("Version.proto", function (err, root) {
-    if (err) throw err;
+var protobufRoot = new protobuf.Root();
+protobufRoot.resolvePath = function(origin, target) {
+    return "proto3/" + target;
+};
 
-    var msg = root.lookupEnum("Version");
-    if (!msg) throw "Missing Version enum in Version.Anon proto file";
-
-    g_ver_release_year = msg.values.DATAFED_RELEASE_YEAR;
-    g_ver_release_month = msg.values.DATAFED_RELEASE_MONTH;
-    g_ver_release_day = msg.values.DATAFED_RELEASE_DAY;
-    g_ver_release_hour = msg.values.DATAFED_RELEASE_HOUR;
-    g_ver_release_minute = msg.values.DATAFED_RELEASE_MINUTE;
-
-    g_version =
-        g_ver_release_year +
-        "." +
-        g_ver_release_month +
-        "." +
-        g_ver_release_day +
-        "." +
-        g_ver_release_hour +
-        "." +
-        g_ver_release_minute;
-
-    logger.info("protobuf.load", getCurrentLineNumber(), "Running Version: " + g_version);
-    if (--g_ready_start == 0) startServer();
-});
-
-protobuf.load("proto3/envelope.proto", function (err, root) {
+protobufRoot.load("envelope.proto", function (err, root) {
     if (err) throw err;
 
     root.resolveAll();
