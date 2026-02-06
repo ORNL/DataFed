@@ -12,7 +12,6 @@
 
 
 import zmq
-from . import Version_pb2
 from . import envelope_pb2 as proto
 from . import Connection
 from . import VERSION
@@ -196,7 +195,7 @@ class API:
                 "the right ports are open."
             )
 
-        if reply.api_major != Version_pb2.DATAFED_COMMON_PROTOCOL_API_MAJOR:
+        if reply.api_major != VERSION.DATAFED_COMMON_PROTOCOL_API_MAJOR:
             error_msg = (
                 "Incompatible server api detected {}.{}.{}, you are running "
                 "{}.{}.{} consider "
@@ -204,9 +203,9 @@ class API:
                     reply.api_major,
                     reply.api_minor,
                     reply.api_patch,
-                    Version_pb2.DATAFED_COMMON_PROTOCOL_API_MAJOR,
-                    Version_pb2.DATAFED_COMMON_PROTOCOL_API_MINOR,
-                    Version_pb2.DATAFED_COMMON_PROTOCOL_API_PATCH,
+                    VERSION.DATAFED_COMMON_PROTOCOL_API_MAJOR,
+                    VERSION.DATAFED_COMMON_PROTOCOL_API_MINOR,
+                    VERSION.DATAFED_COMMON_PROTOCOL_API_PATCH,
                 )
             )
             if self.new_client_avail:
