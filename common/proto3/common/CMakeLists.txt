@@ -1,5 +1,14 @@
 cmake_minimum_required(VERSION 3.17.0)
 
+# Collect proto files from the new 1-1-1 structure
+file(GLOB_RECURSE ProtoFiles
+    "${CMAKE_CURRENT_SOURCE_DIR}/enums/*.proto"
+    "${CMAKE_CURRENT_SOURCE_DIR}/messages/*.proto"
+    "${CMAKE_CURRENT_SOURCE_DIR}/anon/*.proto"
+    "${CMAKE_CURRENT_SOURCE_DIR}/auth/*.proto"
+    "${CMAKE_CURRENT_SOURCE_DIR}/envelope.proto"
+)
+
 # Generate C++ from protos
 protobuf_generate(
     LANGUAGE cpp
