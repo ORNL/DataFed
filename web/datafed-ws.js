@@ -146,10 +146,10 @@ class Logger {
 
 const logger = new Logger(LogLevel.INFO);
 
-g_ver_release_year =   version.DATAFED_RELEASE_YEAR;
-g_ver_release_month =  version.DATAFED_RELEASE_MONTH;
-g_ver_release_day =    version.DATAFED_RELEASE_DAY;
-g_ver_release_hour =   version.DATAFED_RELEASE_HOUR;
+g_ver_release_year = version.DATAFED_RELEASE_YEAR;
+g_ver_release_month = version.DATAFED_RELEASE_MONTH;
+g_ver_release_day = version.DATAFED_RELEASE_DAY;
+g_ver_release_hour = version.DATAFED_RELEASE_HOUR;
 g_ver_release_minute = version.DATAFED_RELEASE_MINUTE;
 
 g_version =
@@ -2252,7 +2252,7 @@ function processEnvelope(root) {
 
 var protobufRoot = new protobuf.Root();
 
-protobufRoot.resolvePath = function(origin, target) {
+protobufRoot.resolvePath = function (origin, target) {
     return "proto3/" + target;
 };
 
