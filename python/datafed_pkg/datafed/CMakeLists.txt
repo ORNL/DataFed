@@ -38,8 +38,14 @@ set(PROTO_SUBDIRS anon auth enums messages)
 add_custom_command(TARGET pydatafed_src POST_BUILD
     COMMAND find ${CMAKE_CURRENT_BINARY_DIR} -name "*_pb2.py" -exec
         sed -i -r
-        -e "s:^from (anon|auth|enums|messages) import:from .\\1 import:g"
-        -e "s:^from (anon|auth|enums|messages)\\.:from .\\1.:g"
+        -e "s:^from anon import:from .anon import:g"
+        -e "s:^from anon\\.:from .anon.:g"
+        -e "s:^from auth import:from .auth import:g"
+        -e "s:^from auth\\.:from .auth.:g"
+        -e "s:^from enums import:from .enums import:g"
+        -e "s:^from enums\\.:from .enums.:g"
+        -e "s:^from messages import:from .messages import:g"
+        -e "s:^from messages\\.:from .messages.:g"
         -e "s:^import ([a-zA-Z0-9_]*_pb2):from . import \\1:g"
         {} +
     COMMENT "Rewriting protobuf imports to relative"
