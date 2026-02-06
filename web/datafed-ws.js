@@ -146,10 +146,10 @@ class Logger {
 
 const logger = new Logger(LogLevel.INFO);
 
-g_ver_release_year = version.DATAFED_RELEASE_YEAR;
-g_ver_release_month = version.DATAFED_RELEASE_MONTH;
-g_ver_release_day = version.DATAFED_RELEASE_DAY;
-g_ver_release_hour = version.DATAFED_RELEASE_HOUR;
+g_ver_release_year =   version.DATAFED_RELEASE_YEAR;
+g_ver_release_month =  version.DATAFED_RELEASE_MONTH;
+g_ver_release_day =    version.DATAFED_RELEASE_DAY;
+g_ver_release_hour =   version.DATAFED_RELEASE_HOUR;
 g_ver_release_minute = version.DATAFED_RELEASE_MINUTE;
 
 g_version =
@@ -2251,38 +2251,12 @@ function processEnvelope(root) {
 }
 
 var protobufRoot = new protobuf.Root();
-protobufRoot.resolvePath = function (origin, target) {
+
+protobufRoot.resolvePath = function(origin, target) {
     return "proto3/" + target;
 };
 
 protobufRoot.load("envelope.proto", function (err, root) {
-    if (err) throw err;
-
-    var msg = root.lookupEnum("Version");
-    if (!msg) throw "Missing Version enum in Version.Anon proto file";
-
-    g_ver_release_year = msg.values.DATAFED_RELEASE_YEAR;
-    g_ver_release_month = msg.values.DATAFED_RELEASE_MONTH;
-    g_ver_release_day = msg.values.DATAFED_RELEASE_DAY;
-    g_ver_release_hour = msg.values.DATAFED_RELEASE_HOUR;
-    g_ver_release_minute = msg.values.DATAFED_RELEASE_MINUTE;
-
-    g_version =
-        g_ver_release_year +
-        "." +
-        g_ver_release_month +
-        "." +
-        g_ver_release_day +
-        "." +
-        g_ver_release_hour +
-        "." +
-        g_ver_release_minute;
-
-    logger.info("protobuf.load", getCurrentLineNumber(), "Running Version: " + g_version);
-    if (--g_ready_start == 0) startServer();
-});
-
-protobuf.load("proto3/envelope.proto", function (err, root) {
     if (err) throw err;
 
     root.resolveAll();
