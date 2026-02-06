@@ -2,7 +2,7 @@
 
 import getpass
 import datafed.CommandLib
-import datafed.SDMS_Auth_pb2 as auth
+import datafed.envelope_pb2 as sdms
 
 
 opts = {}
@@ -15,7 +15,7 @@ api = datafed.CommandLib.API(opts)
 
 api.loginByPassword(uid, password)
 
-msg = auth.UserCreateRequest()
+msg = sdms.UserCreateRequest()
 msg.uid = "newuser"
 msg.password = "temptemp"
 msg.name = "New User"
