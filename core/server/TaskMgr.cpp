@@ -7,9 +7,9 @@
 
 // Local public includes
 #include "common/DynaLog.hpp"
-#include "common/SDMS.pb.h"
 #include "common/TraceException.hpp"
 #include "common/libjson.hpp"
+#include "common/envelope.pb.h"
 
 // Standard includes
 #include <algorithm>

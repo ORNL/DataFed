@@ -34,6 +34,13 @@ public:
   }
 };
 
+struct GlobalProtobufTeardown {
+    ~GlobalProtobufTeardown() {
+        // This is the teardown function that runs once at the end
+        google::protobuf::ShutdownProtobufLibrary();
+    }
+};
+
 struct CurlGlobalFixture {
   CurlGlobalFixture() { curl_global_init(CURL_GLOBAL_DEFAULT); }
 
@@ -42,6 +49,9 @@ struct CurlGlobalFixture {
 
 // Register fixture to run once per test module
 BOOST_TEST_GLOBAL_CONFIGURATION(CurlGlobalFixture);
+
+// Declare a global fixture instance
+BOOST_GLOBAL_FIXTURE(GlobalProtobufTeardown);
 
 const std::string url("https://localhost:8529");
 const std::string user("bob");
