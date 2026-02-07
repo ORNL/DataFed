@@ -35,29 +35,12 @@ set(PROTO_SUBDIRS anon auth enums messages)
 #   from .anon import ack_reply_pb2 as ...
 #   from .enums import error_code_pb2 as ...
 #   from . import envelope_pb2 as ...
+
+# Create the import fixup script
 add_custom_command(TARGET pydatafed_src POST_BUILD
-    COMMAND find ${CMAKE_CURRENT_BINARY_DIR} -name "*_pb2.py" -exec
-        sed -i -r
-        -e "s:^from anon import:from .anon import:g"
-        -e "s:^from anon\\.:from .anon.:g"
-        -e "s:^from auth import:from .auth import:g"
-        -e "s:^from auth\\.:from .auth.:g"
-        -e "s:^from enums import:from .enums import:g"
-        -e "s:^from enums\\.:from .enums.:g"
-        -e "s:^from messages import:from .messages import:g"
-        -e "s:^from messages\\.:from .messages.:g"
-        -e "s:^import ([a-zA-Z0-9_]*_pb2):from . import \\1:g"
-        {} +
+	COMMAND sh ${DataFed_SOURCE_DIR}/python/datafed_pkg/scripts/fix_proto_imports.sh  ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Rewriting protobuf imports to relative"
 )
-
-# Ensure __init__.py exists in each generated subdirectory
-foreach(subdir ${PROTO_SUBDIRS})
-    add_custom_command(TARGET pydatafed_src POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/${subdir}
-        COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/${subdir}/__init__.py
-    )
-endforeach()
 
 # Copy generated files back to source tree for testing
 add_custom_target(pydatafed_proto_src DEPENDS pydatafed_src)
