@@ -15,7 +15,7 @@ if (process.argv.length != 3) {
     throw "Invalid arguments, usage: datafed-ws config-file";
 }
 
-import web_version from "./version.js";
+import version from "./version.js";
 import express from "express"; // For REST api
 import session from "express-session";
 import sanitizeHtml from "sanitize-html";
@@ -55,6 +55,7 @@ var g_host,
     g_test,
     g_msg_by_id = {},
     g_msg_by_name = {},
+    g_envelope_type,
     g_core_sock = zmq.socket("dealer"),
     g_core_serv_addr,
     g_globus_auth,
@@ -64,7 +65,7 @@ var g_host,
     g_ctx_next = 0,
     g_client_id,
     g_client_secret,
-    g_ready_start = 4,
+    g_ready_start = 3,
     g_version,
     g_ver_release_year,
     g_ver_release_month,
@@ -144,6 +145,25 @@ class Logger {
 }
 
 const logger = new Logger(LogLevel.INFO);
+
+g_ver_release_year = version.DATAFED_RELEASE_YEAR;
+g_ver_release_month = version.DATAFED_RELEASE_MONTH;
+g_ver_release_day = version.DATAFED_RELEASE_DAY;
+g_ver_release_hour = version.DATAFED_RELEASE_HOUR;
+g_ver_release_minute = version.DATAFED_RELEASE_MINUTE;
+
+g_version =
+    g_ver_release_year +
+    "." +
+    g_ver_release_month +
+    "." +
+    g_ver_release_day +
+    "." +
+    g_ver_release_hour +
+    "." +
+    g_ver_release_minute;
+
+if (--g_ready_start == 0) startServer();
 
 function getCurrentLineNumber() {
     const stackTrace = new Error().stack;
@@ -1108,23 +1128,6 @@ app.get("/api/dat/lock", (a_req, a_resp) => {
     );
 });
 
-app.get("/api/dat/lock/toggle", (a_req, a_resp) => {
-    sendMessage("RecordLockToggleRequest", { id: a_req.query.id }, a_req, a_resp, function (reply) {
-        a_resp.send(reply);
-    });
-});
-
-app.get("/api/dat/copy", (a_req, a_resp) => {
-    var params = {
-        sourceId: a_req.query.src,
-        destId: a_req.query.dst,
-    };
-
-    sendMessage("DataCopyRequest", params, a_req, a_resp, function (reply) {
-        a_resp.send(reply);
-    });
-});
-
 app.get("/api/dat/delete", (a_req, a_resp) => {
     sendMessage(
         "RecordDeleteRequest",
@@ -1209,18 +1212,6 @@ app.get("/api/dat/put", (a_req, a_resp) => {
     sendMessage("DataPutRequest", par, a_req, a_resp, function (reply) {
         a_resp.send(reply);
     });
-});
-
-app.get("/api/dat/dep/get", (a_req, a_resp) => {
-    sendMessage(
-        "RecordGetDependenciesRequest",
-        { id: a_req.query.ids },
-        a_req,
-        a_resp,
-        function (reply) {
-            a_resp.send(reply);
-        },
-    );
 });
 
 app.get("/api/dat/dep/graph/get", (a_req, a_resp) => {
@@ -1569,12 +1560,6 @@ app.get("/api/col/published/list", (a_req, a_resp) => {
     });
 });
 
-app.post("/api/cat/search", (a_req, a_resp) => {
-    sendMessage("CatalogSearchRequest", a_req.body, a_req, a_resp, function (reply) {
-        a_resp.send(reply);
-    });
-});
-
 app.get("/api/globus/consent_url", storeCollectionId, (a_req, a_resp) => {
     const { requested_scopes, state, refresh_tokens, query_params } = a_req.query;
 
@@ -1588,12 +1573,6 @@ app.get("/api/globus/consent_url", storeCollectionId, (a_req, a_resp) => {
     );
 
     a_resp.json({ consent_url });
-});
-
-app.post("/api/col/pub/search/data", (a_req, a_resp) => {
-    sendMessage("RecordSearchPublishedRequest", a_req.body, a_req, a_resp, function (reply) {
-        a_resp.send(reply);
-    });
 });
 
 app.get("/api/repo/list", (a_req, a_resp) => {
@@ -1768,18 +1747,6 @@ app.get("/api/top/list/topics", (a_req, a_resp) => {
     }
 
     sendMessage("TopicListTopicsRequest", par, a_req, a_resp, function (reply) {
-        a_resp.json(reply);
-    });
-});
-
-app.get("/api/top/list/coll", (a_req, a_resp) => {
-    var par = { topicId: a_req.query.id };
-    if (a_req.query.offset != undefined && a_req.query.count != undefined) {
-        par.offset = a_req.query.offset;
-        par.count = a_req.query.count;
-    }
-
-    sendMessage("TopicListCollectionsRequest", par, a_req, a_resp, function (reply) {
         a_resp.json(reply);
     });
 });
@@ -2065,15 +2032,17 @@ function sendMessage(a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon) {
     a_resp.setHeader("Content-Type", "application/json");
 
     allocRequestContext(a_resp, function (ctx) {
-        var msg = g_msg_by_name[a_msg_name];
-        if (!msg) throw "Invalid message type: " + a_msg_name;
+        var msg_info = g_msg_by_name[a_msg_name];
+        if (!msg_info) throw "Invalid message type: " + a_msg_name;
 
-        var msg_buf = msg.encode(a_msg_data).finish();
+        // Wrap inner message data in an Envelope (matches C++ sendBody wrapInEnvelope)
+        var envelope_data = {};
+        envelope_data[msg_info.field_name] = a_msg_data;
+        var msg_buf = g_envelope_type.encode(envelope_data).finish();
 
         var frame = Buffer.alloc(8);
         frame.writeUInt32BE(msg_buf.length, 0);
-        frame.writeUInt8(msg._pid, 4);
-        frame.writeUInt8(msg._mid, 5);
+        frame.writeUInt16BE(msg_info.field_id, 4);
         frame.writeUInt16BE(ctx, 6);
 
         g_ctx[ctx] = function (a_reply) {
@@ -2121,7 +2090,10 @@ function sendMessage(a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon) {
                 sendMessage.name,
                 getCurrentLineNumber(),
                 "MsgType is: " +
-                    msg._msg_type +
+                    msg_info.field_id +
+                    " (" +
+                    a_msg_name +
+                    ")" +
                     " Writing ctx to frame, " +
                     ctx +
                     " buffer size " +
@@ -2142,7 +2114,10 @@ function sendMessage(a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon) {
                 sendMessage.name,
                 getCurrentLineNumber(),
                 "MsgType is: " +
-                    msg._msg_type +
+                    msg_info.field_id +
+                    " (" +
+                    a_msg_name +
+                    ")" +
                     " Writing ctx to frame, " +
                     ctx +
                     " buffer size " +
@@ -2154,17 +2129,19 @@ function sendMessage(a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon) {
 }
 
 function sendMessageDirect(a_msg_name, a_client, a_msg_data, a_cb) {
-    var msg = g_msg_by_name[a_msg_name];
-    if (!msg) throw "Invalid message type: " + a_msg_name;
+    var msg_info = g_msg_by_name[a_msg_name];
+    if (!msg_info) throw "Invalid message type: " + a_msg_name;
 
     allocRequestContext(null, function (ctx) {
-        var msg_buf = msg.encode(a_msg_data).finish();
+        // Wrap inner message data in an Envelope (matches C++ sendBody wrapInEnvelope)
+        var envelope_data = {};
+        envelope_data[msg_info.field_name] = a_msg_data;
+        var msg_buf = g_envelope_type.encode(envelope_data).finish();
 
         var frame = Buffer.alloc(8);
         // A protobuf message doesn't have to have a payload
         frame.writeUInt32BE(msg_buf.length, 0);
-        frame.writeUInt8(msg._pid, 4);
-        frame.writeUInt8(msg._mid, 5);
+        frame.writeUInt16BE(msg_info.field_id, 4);
         frame.writeUInt16BE(ctx, 6);
 
         g_ctx[ctx] = a_cb;
@@ -2187,7 +2164,10 @@ function sendMessageDirect(a_msg_name, a_client, a_msg_data, a_cb) {
                 sendMessageDirect.name,
                 getCurrentLineNumber(),
                 "MsgType is: " +
-                    msg._msg_type +
+                    msg_info.field_id +
+                    " (" +
+                    a_msg_name +
+                    ")" +
                     " Direct Writing ctx to frame, " +
                     ctx +
                     " buffer size " +
@@ -2208,7 +2188,10 @@ function sendMessageDirect(a_msg_name, a_client, a_msg_data, a_cb) {
                 sendMessageDirect.name,
                 getCurrentLineNumber(),
                 "MsgType is: " +
-                    msg._msg_type +
+                    msg_info.field_id +
+                    " (" +
+                    a_msg_name +
+                    ")" +
                     " Direct Writing ctx to frame, " +
                     ctx +
                     " buffer size " +
@@ -2219,71 +2202,65 @@ function sendMessageDirect(a_msg_name, a_client, a_msg_data, a_cb) {
     });
 }
 
-function processProtoFile(msg) {
-    //var mlist = msg.parent.order;
-    var i,
-        msg_list = [];
-    for (i in msg.parent.nested) msg_list.push(msg.parent.nested[i]);
+/**
+ * Processes the proto3 Envelope message to build message type maps.
+ *
+ * Instead of the old proto2 approach that derived message types from Protocol enum IDs
+ * and file ordering (pid << 8 | mid), this uses the envelope's oneof field numbers
+ * as stable message type identifiers.
+ *
+ * Each map entry stores:
+ *   - type:       the protobufjs Type (for encode/decode of the inner message)
+ *   - field_name: the envelope oneof field name (e.g. "version_request")
+ *   - field_id:   the envelope field number (used as msg_type in the frame)
+ *
+ * @param {protobuf.Root} root - The loaded protobuf root containing SDMS.Envelope
+ */
+function processEnvelope(root) {
+    g_envelope_type = root.lookupType("SDMS.Envelope");
+    var payloadOneof = g_envelope_type.oneofs.payload;
 
-    //msg_list.sort();
+    if (!payloadOneof) throw "Missing 'payload' oneof in SDMS.Envelope";
 
-    var pid = msg.values.ID;
+    payloadOneof.fieldsArray.forEach(function (field) {
+        var msgType = field.resolvedType;
+        if (!msgType) {
+            logger.warning(
+                processEnvelope.name,
+                getCurrentLineNumber(),
+                "Unresolved type for envelope field: " + field.name,
+            );
+            return;
+        }
 
-    for (i = 1; i < msg_list.length; i++) {
-        msg = msg_list[i];
-        msg._pid = pid;
-        msg._mid = i - 1;
-        msg._msg_type = (pid << 8) | (i - 1);
+        var entry = {
+            type: msgType, // protobufjs Type for encode/decode
+            field_name: field.name, // envelope oneof field name
+            field_id: field.id, // envelope field number = msg_type in frame
+        };
 
-        g_msg_by_id[msg._msg_type] = msg;
-        g_msg_by_name[msg.name] = msg;
-    }
+        g_msg_by_id[field.id] = entry;
+        g_msg_by_name[msgType.name] = entry;
+    });
+
+    logger.info(
+        processEnvelope.name,
+        getCurrentLineNumber(),
+        "Loaded " + Object.keys(g_msg_by_id).length + " message types from envelope",
+    );
 }
 
-protobuf.load("Version.proto", function (err, root) {
+var protobufRoot = new protobuf.Root();
+
+protobufRoot.resolvePath = function (origin, target) {
+    return "proto3/" + target;
+};
+
+protobufRoot.load("envelope.proto", function (err, root) {
     if (err) throw err;
 
-    var msg = root.lookupEnum("Version");
-    if (!msg) throw "Missing Version enum in Version.Anon proto file";
-
-    g_ver_release_year = msg.values.DATAFED_RELEASE_YEAR;
-    g_ver_release_month = msg.values.DATAFED_RELEASE_MONTH;
-    g_ver_release_day = msg.values.DATAFED_RELEASE_DAY;
-    g_ver_release_hour = msg.values.DATAFED_RELEASE_HOUR;
-    g_ver_release_minute = msg.values.DATAFED_RELEASE_MINUTE;
-
-    g_version =
-        g_ver_release_year +
-        "." +
-        g_ver_release_month +
-        "." +
-        g_ver_release_day +
-        "." +
-        g_ver_release_hour +
-        "." +
-        g_ver_release_minute;
-
-    logger.info("protobuf.load", getCurrentLineNumber(), "Running Version: " + g_version);
-    if (--g_ready_start == 0) startServer();
-});
-
-protobuf.load("SDMS_Anon.proto", function (err, root) {
-    if (err) throw err;
-
-    var msg = root.lookupEnum("SDMS.Anon.Protocol");
-    if (!msg) throw "Missing Protocol enum in SDMS.Anon proto file";
-
-    processProtoFile(msg);
-    if (--g_ready_start == 0) startServer();
-});
-
-protobuf.load("SDMS_Auth.proto", function (err, root) {
-    if (err) throw err;
-
-    var msg = root.lookupEnum("SDMS.Auth.Protocol");
-    if (!msg) throw "Missing Protocol enum in SDMS.Auth proto file";
-
-    processProtoFile(msg);
+    root.resolveAll();
+    processEnvelope(root);
     if (--g_ready_start == 0) startServer();
 });
 
@@ -2304,20 +2281,34 @@ g_core_sock.on(
         var mtype = (frame.readUInt8(4) << 8) | frame.readUInt8(5);
         var ctx = frame.readUInt16BE(6);
 
-        var msg_class = g_msg_by_id[mtype];
+        var msg_info = g_msg_by_id[mtype];
         var msg;
+        var msg_name = msg_info ? msg_info.type.name : "unknown(" + mtype + ")";
 
-        if (msg_class) {
+        if (msg_info) {
             // Only try to decode if there is a payload
             if (msg_buf && msg_buf.length) {
                 try {
-                    // This is unserializing the protocol message
-                    msg = msg_class.decode(msg_buf);
+                    // Decode as Envelope (matches C++ receiveBody unwrapFromEnvelope)
+                    var envelope = g_envelope_type.decode(msg_buf);
+                    var which_field = envelope.payload; // oneof discriminator: field name that is set
+                    if (which_field) {
+                        msg = envelope[which_field];
+                        msg_name = which_field;
+                    } else {
+                        logger.warning(
+                            "g_core_sock.on",
+                            getCurrentLineNumber(),
+                            "Envelope decoded but no payload field set, correlation_id: " +
+                                correlation_id,
+                        );
+                        msg = msg_info.type.create({});
+                    }
                     if (!msg) {
                         logger.error(
                             "g_core_sock.on",
                             getCurrentLineNumber(),
-                            "ERROR: msg decode failed: no reason, correlation_id: " +
+                            "ERROR: envelope decode produced null msg, correlation_id: " +
                                 correlation_id,
                         );
                     }
@@ -2325,11 +2316,15 @@ g_core_sock.on(
                     logger.error(
                         "g_core_sock.on",
                         getCurrentLineNumber(),
-                        "ERROR: msg decode failed: " + err + " correlation_id: " + correlation_id,
+                        "ERROR: envelope decode failed: " +
+                            err +
+                            " correlation_id: " +
+                            correlation_id,
                     );
                 }
             } else {
-                msg = msg_class;
+                // No payload body - create empty message instance
+                msg = msg_info.type.create({});
             }
         } else {
             logger.error(
@@ -2345,7 +2340,7 @@ g_core_sock.on(
             logger.info(
                 "g_core_sock.on",
                 getCurrentLineNumber(),
-                "freed ctx: " + ctx + " for msg: " + msg_class.name,
+                "freed ctx: " + ctx + " for msg: " + msg_name,
                 correlation_id,
             );
             g_ctx_next = ctx;
@@ -2360,7 +2355,7 @@ g_core_sock.on(
                     " - msg type: " +
                     mtype +
                     ", name: " +
-                    msg_class.name +
+                    msg_name +
                     " correlation_id: " +
                     correlation_id,
             );
