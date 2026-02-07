@@ -14,10 +14,9 @@ import json as jsonlib
 import time
 import pathlib
 import requests
-from . import envelope_pb2 as sdms
 from . import MessageLib
 from . import Config
-
+from . import envelope_pb2 as sdms
 
 class API:
     """
