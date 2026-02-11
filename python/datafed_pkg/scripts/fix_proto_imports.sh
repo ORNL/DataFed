@@ -1,6 +1,52 @@
 #!/bin/sh
 set -e
 
+# What this script does
+#
+# protoc --python_out
+#
+# generates _pb2.py files with absolute imports based on the proto import
+# paths. For example, if envelope.proto imports anon/auth_by_token.proto, the
+# generated envelope_pb2.py will contain:
+#
+# python from anon import auth_by_token_pb2
+#
+
+# This works if you run Python from the exact output directory, but breaks when
+# the generated code is consumed as a Python package (which is how DataFed uses
+# it). Python's package system requires relative imports for intra-package
+# references:
+#
+# File at package level
+#
+# from .anon import auth_by_token_pb2
+#
+# File at root
+#
+# from ..anon import auth_by_token_pb2
+#
+# file in a subdirectory protoc
+# has no option to emit relative imports. This is a well-known, long-standing
+# limitation (protocolbuffers/protobuf#1491).  The script does three things:
+# 
+# 1. Rewrites imports to be relative. It finds every _pb2.py file, determines
+# whether it lives at the package root or in a subdirectory (e.g., anon/,
+# auth/), and rewrites bare absolute imports (from anon import ...) to the
+# correct relative form (.anon for root-level files, ..anon for files one level
+# deep).
+# 2. Creates __init__.py files in each subdirectory (anon/, auth/, enums/,
+# messages/) so Python recognizes them as subpackages.  Appends re-exports to
+# envelope_pb2.py for backward compatibility. The existing Python client
+# (Connection.py) uses getattr(envelope_module, ClassName) to dynamically look
+# up message classes by name on the envelope module.
+#
+# Under the old single-file
+# proto2 layout, all message classes lived directly in envelope_pb2.py. Now
+# that messages are split across subpackages, this dynamic lookup would break.
+# The wildcard re-exports (from .anon.auth_by_token_pb2 import *, etc.) restore
+# the flat namespace on envelope_pb2 so existing code continues to work without
+# modification.
+
 PROTO_DIR="$1"
 ROOT_DIR="${2:-$1}"
 
