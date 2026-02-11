@@ -7,8 +7,7 @@
 #include "common/DynaLog.hpp"
 #include "common/TraceException.hpp"
 #include "common/Util.hpp"
-// messaging version
-#include "common/Version.pb.h"
+#include "Version.hpp"
 
 // Third party includes
 #include <boost/program_options.hpp>
@@ -105,13 +104,13 @@ int main(int a_argc, char **a_argv) {
       }
 
       if (opt_map.count("version")) {
-        cout << "Release Version: " << DATAFED_RELEASE_YEAR << "."
-             << DATAFED_RELEASE_MONTH << "." << DATAFED_RELEASE_DAY << "."
-             << DATAFED_RELEASE_HOUR << "." << DATAFED_RELEASE_MINUTE
+        cout << "Release Version: " << release::YEAR << "."
+             << release::MONTH << "." << release::DAY << "."
+             << release::HOUR << "." << release::MINUTE
              << std::endl;
-        cout << "Messaging API: " << DATAFED_COMMON_PROTOCOL_API_MAJOR << "."
-             << DATAFED_COMMON_PROTOCOL_API_MINOR << "."
-             << DATAFED_COMMON_PROTOCOL_API_PATCH << endl;
+        cout << "Messaging API: " << protocol::version::MAJOR << "."
+             << protocol::version::MINOR << "."
+             << protocol::version::PATCH << endl;
         cout << "Core Server: " << core::version::MAJOR << "."
              << core::version::MINOR << "." << core::version::PATCH << endl;
         return 0;
@@ -120,7 +119,7 @@ int main(int a_argc, char **a_argv) {
       if (cfg_file.size()) {
         ifstream optfile(cfg_file.c_str());
         if (!optfile.is_open())
-          EXCEPT_PARAM(ID_CLIENT_ERROR,
+          EXCEPT_PARAM(CLIENT_ERROR,
                        "Could not open config file: " << cfg_file);
 
         po::store(po::parse_config_file(optfile, opts, false), opt_map);

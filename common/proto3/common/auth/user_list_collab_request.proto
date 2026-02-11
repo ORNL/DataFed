@@ -5,6 +5,6 @@ package SDMS;
 option cc_enable_arenas = true;
 
 message UserListCollabRequest {
-    uint32 offset = 1;
-    uint32 count = 2;
+    optional uint32 offset = 1;
+    optional uint32 count = 2;
 }

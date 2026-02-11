@@ -6,5 +6,5 @@ option cc_enable_arenas = true;
 
 message CollGetParentsRequest {
     string id = 1;
-    bool inclusive = 2;
+    optional bool inclusive = 2;
 }

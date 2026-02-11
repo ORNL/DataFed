@@ -5,14 +5,14 @@ package SDMS;
 option cc_enable_arenas = true;
 
 enum TaskType {
-    TASK_TYPE_DATA_GET = 0;
-    TASK_TYPE_DATA_PUT = 1;
-    TASK_TYPE_DATA_DEL = 2;
-    TASK_TYPE_REC_CHG_ALLOC = 3;
-    TASK_TYPE_REC_CHG_OWNER = 4;
-    TASK_TYPE_REC_DEL = 5;
-    TASK_TYPE_ALLOC_CREATE = 6;
-    TASK_TYPE_ALLOC_DEL = 7;
-    TASK_TYPE_USER_DEL = 8;
-    TASK_TYPE_PROJ_DEL = 9;
+    TT_DATA_GET = 0;
+    TT_DATA_PUT = 1;
+    TT_DATA_DEL = 2;
+    TT_REC_CHG_ALLOC = 3;
+    TT_REC_CHG_OWNER = 4;
+    TT_REC_DEL = 5;
+    TT_ALLOC_CREATE = 6;
+    TT_ALLOC_DEL = 7;
+    TT_USER_DEL = 8;
+    TT_PROJ_DEL = 9;
 }

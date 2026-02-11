@@ -9,5 +9,5 @@ option cc_enable_arenas = true;
 // Error response
 message NackReply {
     ErrorCode err_code = 1;
-    string err_msg = 2;
+    optional string err_msg = 2;
 }

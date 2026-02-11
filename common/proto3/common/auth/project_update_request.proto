@@ -6,8 +6,8 @@ option cc_enable_arenas = true;
 
 message ProjectUpdateRequest {
     string id = 1;
-    string title = 2;
-    string desc = 3;
+    optional string title = 2;
+    optional string desc = 3;
     bool admin_set = 4;
     repeated string admin = 5;
     bool member_set = 6;

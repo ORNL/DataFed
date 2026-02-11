@@ -6,5 +6,5 @@ option cc_enable_arenas = true;
 
 message ACLUpdateRequest {
     string id = 1;
-    string rules = 2;
+    optional string rules = 2;
 }

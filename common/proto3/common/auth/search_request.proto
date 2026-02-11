@@ -9,21 +9,21 @@ option cc_enable_arenas = true;
 
 message SearchRequest {
     SearchMode mode = 1;
-    bool published = 2;
-    string id = 3;
-    string text = 4;
+    optional bool published = 2;
+    optional string id = 3;
+    optional string text = 4;
     repeated string tags = 5;
     repeated string cat_tags = 6;
-    uint32 from = 7;
-    uint32 to = 8;
-    string owner = 9;
-    string creator = 10;
+    optional uint32 from = 7;
+    optional uint32 to = 8;
+    optional string owner = 9;
+    optional string creator = 10;
     repeated string coll = 11;
-    string sch_id = 12;
-    string meta = 13;
-    bool meta_err = 14;
-    SortOption sort = 15;
-    bool sort_rev = 16;
-    uint32 offset = 17;
-    uint32 count = 18;
+    optional string sch_id = 12;
+    optional string meta = 13;
+    optional bool meta_err = 14;
+    optional SortOption sort = 15;
+    optional bool sort_rev = 16;
+    optional uint32 offset = 17;
+    optional uint32 count = 18;
 }

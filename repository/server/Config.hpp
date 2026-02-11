@@ -5,11 +5,9 @@
 // Common public includes
 #include "common/ICredentials.hpp"
 
-// Proto includes
-#include "common/SDMS.pb.h"
-
 // Standard includes
 #include <map>
+#include <memory>
 #include <stdint.h>
 #include <string>
 

@@ -6,5 +6,5 @@ option cc_enable_arenas = true;
 
 message UserViewRequest {
     string uid = 1;
-    bool details = 2;
+    optional bool details = 2;
 }

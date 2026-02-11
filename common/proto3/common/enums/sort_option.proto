@@ -5,10 +5,10 @@ package SDMS;
 option cc_enable_arenas = true;
 
 enum SortOption {
-    SORT_OPTION_ID = 0;
-    SORT_OPTION_TITLE = 1;
-    SORT_OPTION_OWNER = 2;
-    SORT_OPTION_TIME_CREATE = 3;
-    SORT_OPTION_TIME_UPDATE = 4;
-    SORT_OPTION_RELEVANCE = 5;
+    SORT_ID = 0;
+    SORT_TITLE = 1;
+    SORT_OWNER = 2;
+    SORT_TIME_CREATE = 3;
+    SORT_TIME_UPDATE = 4;
+    SORT_RELEVANCE = 5;
 }

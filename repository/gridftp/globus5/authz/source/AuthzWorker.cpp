@@ -14,11 +14,8 @@
 #include "common/TraceException.hpp"
 #include "common/Util.hpp"
 
-// Protobuf includes
-#include "common/SDMS.pb.h"
-#include "common/SDMS_Anon.pb.h"
-#include "common/SDMS_Auth.pb.h"
-#include "common/Version.pb.h"
+// Proto files
+#include "common/envelope.pb.h"
 
 // Standard includes
 #include <algorithm>
@@ -28,9 +25,8 @@
 #include <string>
 #include <syslog.h>
 
+using namespace SDMS;
 using namespace std;
-using namespace SDMS::Anon;
-using namespace SDMS::Auth;
 
 namespace {
 
@@ -507,7 +503,7 @@ int AuthzWorker::processResponse(ICommunicator::Response &response) {
 
     auto payload =
         std::get<google::protobuf::Message *>(response.message->getPayload());
-    Anon::NackReply *nack = dynamic_cast<Anon::NackReply *>(payload);
+    NackReply *nack = dynamic_cast<NackReply *>(payload);
     if (!nack) {
       return 0;
     } else {
@@ -581,7 +577,7 @@ int AuthzWorker::checkAuth(char *client_id, char *path, char *action) {
     return 0;
   }
 
-  auto auth_req = std::make_unique<Auth::RepoAuthzRequest>();
+  auto auth_req = std::make_unique<RepoAuthzRequest>();
 
   auth_req->set_repo(m_config->repo_id);
   auth_req->set_client(client_id);
@@ -619,19 +615,19 @@ const char *getVersion() {
 
 const char *getAPIVersion() {
   static std::string ver_str =
-      std::to_string(DATAFED_COMMON_PROTOCOL_API_MAJOR) + "." +
-      std::to_string(DATAFED_COMMON_PROTOCOL_API_MINOR) + "." +
-      std::to_string(DATAFED_COMMON_PROTOCOL_API_PATCH);
+      std::to_string(protocol::version::MAJOR) + "." +
+      std::to_string(protocol::version::MINOR) + "." +
+      std::to_string(protocol::version::PATCH);
 
   return ver_str.c_str();
 }
 
 const char *getReleaseVersion() {
-  static std::string ver_str = std::to_string(DATAFED_RELEASE_YEAR) + "." +
-                               std::to_string(DATAFED_RELEASE_MONTH) + "." +
-                               std::to_string(DATAFED_RELEASE_DAY) + "." +
-                               std::to_string(DATAFED_RELEASE_HOUR) + "." +
-                               std::to_string(DATAFED_RELEASE_MINUTE);
+  static std::string ver_str = std::to_string(release::YEAR) + "." +
+                               std::to_string(release::MONTH) + "." +
+                               std::to_string(release::DAY) + "." +
+                               std::to_string(release::HOUR) + "." +
+                               std::to_string(release::MINUTE);
 
   return ver_str.c_str();
 }

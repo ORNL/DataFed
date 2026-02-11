@@ -6,7 +6,7 @@ option cc_enable_arenas = true;
 
 message UserUpdateRequest {
     string uid = 1;
-    string email = 2;
-    string password = 3;
-    string options = 4;
+    optional string email = 2;
+    optional string password = 3;
+    optional string options = 4;
 }

@@ -5,7 +5,7 @@ package SDMS;
 option cc_enable_arenas = true;
 
 enum Encryption {
-    ENCRYPTION_NONE = 0;
-    ENCRYPTION_AVAIL = 1;
-    ENCRYPTION_FORCE = 2;
+    ENCRYPT_NONE = 0;
+    ENCRYPT_AVAIL = 1;
+    ENCRYPT_FORCE = 2;
 }

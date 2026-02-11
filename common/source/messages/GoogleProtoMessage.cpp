@@ -21,8 +21,6 @@ namespace SDMS {
 
 GoogleProtoMessage::GoogleProtoMessage() {
   m_dyn_attributes[constants::message::google::FRAME_SIZE] = (uint32_t)0;
-  m_dyn_attributes[constants::message::google::PROTO_ID] = (uint8_t)0;
-  m_dyn_attributes[constants::message::google::MSG_ID] = (uint8_t)0;
   m_dyn_attributes[constants::message::google::MSG_TYPE] = (uint16_t)0;
   m_dyn_attributes[constants::message::google::CONTEXT] = (uint16_t)0;
 
@@ -42,25 +40,30 @@ bool GoogleProtoMessage::exists(const std::string &attribute_type) const {
 /**
  * Setters
  **/
+
 void GoogleProtoMessage::setPayload(
     std::variant<std::unique_ptr<::google::protobuf::Message>, std::string>
         payload) {
   if (std::holds_alternative<std::unique_ptr<::google::protobuf::Message>>(
           payload)) {
-    // Because the frame depends on the payload, the frame needs to be created
-    // here
+    auto &inner =
+        std::get<std::unique_ptr<::google::protobuf::Message>>(payload);
+
+    // msg_type come from the inner message's
+    // envelope field number — this is already correct
     FrameFactory frame_factory;
-    Frame frame = frame_factory.create(
-        *std::get<std::unique_ptr<::google::protobuf::Message>>(payload),
-        m_proto_map);
+    Frame frame = frame_factory.create(*inner, m_proto_map);
+
+    // FRAME_SIZE must reflect what goes on the wire: the Envelope,
+    // not the inner message
+    auto temp_envelope = m_proto_map.wrapInEnvelope(*inner);
+    frame.size = static_cast<uint32_t>(temp_envelope->ByteSizeLong());
+
     m_dyn_attributes[constants::message::google::FRAME_SIZE] = frame.size;
-    m_dyn_attributes[constants::message::google::PROTO_ID] = frame.proto_id;
-    m_dyn_attributes[constants::message::google::MSG_ID] = frame.msg_id;
-    m_dyn_attributes[constants::message::google::MSG_TYPE] = frame.getMsgType();
-    // Do not overload the context because this is not associated with the
-    // message payload but with the response
-    m_payload = std::move(
-        std::get<std::unique_ptr<::google::protobuf::Message>>(payload));
+    m_dyn_attributes[constants::message::google::MSG_TYPE] = frame.msg_type;
+
+    // Store the INNER message, not the envelope
+    m_payload = std::move(inner);
   } else {
     EXCEPT(1, "Attempt to add unsupported payload to GoogleProtoMessage.");
   }

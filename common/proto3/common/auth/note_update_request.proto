@@ -10,7 +10,7 @@ option cc_enable_arenas = true;
 message NoteUpdateRequest {
     string id = 1;
     string comment = 2;
-    NoteType new_type = 3;
-    NoteState new_state = 4;
-    string new_title = 5;
+    optional NoteType new_type = 3;
+    optional NoteState new_state = 4;
+    optional string new_title = 5;
 }
