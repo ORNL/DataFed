@@ -28,7 +28,7 @@ set -e
 # file in a subdirectory protoc
 # has no option to emit relative imports. This is a well-known, long-standing
 # limitation (protocolbuffers/protobuf#1491).  The script does three things:
-# 
+#
 # 1. Rewrites imports to be relative. It finds every _pb2.py file, determines
 # whether it lives at the package root or in a subdirectory (e.g., anon/,
 # auth/), and rewrites bare absolute imports (from anon import ...) to the
