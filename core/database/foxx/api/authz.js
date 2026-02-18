@@ -5,6 +5,8 @@ const path = require("path");
 const Record = require("./record");
 const pathModule = require("./posix_path");
 const g_lib = require("./support");
+const error = require("./lib/error_codes");
+const permissions = require("./lib/permissions");
 const { Repo, PathType } = require("./repo");
 
 module.exports = (function () {
@@ -36,26 +38,26 @@ module.exports = (function () {
         const data_id = "d/" + a_data_key;
         // If the user is not an admin of the object we will need
         // to check if the user has the write authorization
-        if (g_lib.hasAdminPermObject(a_client, data_id)) {
+        if (permissions.hasAdminPermObject(a_client, data_id)) {
             return true;
         }
         let data = g_db.d.document(data_id);
         // Grab the data item
-        if (g_lib.hasPermissions(a_client, data, a_perm)) {
+        if (permissions.hasPermissions(a_client, data, a_perm)) {
             return true;
         }
         return false;
     };
 
     obj.readRecord = function (client, path) {
-        const permission = g_lib.PERM_RD_DATA;
+        const permission = permissions.PERM_RD_DATA;
         const path_components = pathModule.splitPOSIXPath(path);
         const data_key = path_components.at(-1);
         let record = new Record(data_key);
         if (!record.exists()) {
             // Return not found error for non-existent records
             console.log("AUTHZ act: read client: " + client._id + " path " + path + " NOT_FOUND");
-            throw [g_lib.ERR_NOT_FOUND, "Record not found: " + path];
+            throw [error.ERR_NOT_FOUND, "Record not found: " + path];
         }
 
         // Special case - allow unknown client to read a publicly accessible record
@@ -64,14 +66,14 @@ module.exports = (function () {
             if (!g_lib.hasPublicRead(record.id())) {
                 console.log("AUTHZ act: read" + " unknown client " + " path " + path + " FAILED");
                 throw [
-                    g_lib.ERR_PERM_DENIED,
+                    error.ERR_PERM_DENIED,
                     "Unknown client does not have read permissions on " + path,
                 ];
             }
         } else if (!obj.isRecordActionAuthorized(client, data_key, permission)) {
             console.log("AUTHZ act: read" + " client: " + client._id + " path " + path + " FAILED");
             throw [
-                g_lib.ERR_PERM_DENIED,
+                error.ERR_PERM_DENIED,
                 "Client " + client._id + " does not have read permissions on " + path,
             ];
         }
@@ -83,15 +85,15 @@ module.exports = (function () {
     };
 
     obj.none = function (client, path) {
-        const permission = g_lib.PERM_NONE;
+        const permission = permissions.PERM_NONE;
     };
 
     obj.denied = function (client, path) {
-        throw g_lib.ERR_PERM_DENIED;
+        throw error.ERR_PERM_DENIED;
     };
 
     obj.createRecord = function (client, path) {
-        const permission = g_lib.PERM_WR_DATA;
+        const permission = permissions.PERM_WR_DATA;
         const path_components = pathModule.splitPOSIXPath(path);
         const data_key = path_components.at(-1);
 
@@ -100,7 +102,7 @@ module.exports = (function () {
                 "AUTHZ act: create" + " client: " + client._id + " path " + path + " FAILED",
             );
             throw [
-                g_lib.ERR_PERM_DENIED,
+                error.ERR_PERM_DENIED,
                 "Unknown client does not have create permissions on " + path,
             ];
         } else if (!obj.isRecordActionAuthorized(client, data_key, permission)) {
@@ -108,7 +110,7 @@ module.exports = (function () {
                 "AUTHZ act: create" + " client: " + client._id + " path " + path + " FAILED",
             );
             throw [
-                g_lib.ERR_PERM_DENIED,
+                error.ERR_PERM_DENIED,
                 "Client " + client._id + " does not have create permissions on " + path,
             ];
         }
@@ -119,7 +121,7 @@ module.exports = (function () {
         if (!record.exists()) {
             // If the record does not exist then the path would not be consistent.
             console.log("AUTHZ act: create client: " + client._id + " path " + path + " FAILED");
-            throw [g_lib.ERR_PERM_DENIED, "Invalid record specified: " + path];
+            throw [error.ERR_PERM_DENIED, "Invalid record specified: " + path];
         }
 
         // This will tell us if the proposed path is consistent with what we expect

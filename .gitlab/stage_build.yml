@@ -1,7 +1,7 @@
 ---
 run-ws-build-job:
     needs:
-        - job: build-dependencies
+        - job: run-build-dependencies
         - job: build-runtime
         - job: check-ws-image
           artifacts: true
@@ -20,7 +20,7 @@ run-core-build-job:
     needs:
         - job: build-runtime
         - job: check-core-image
-        - job: build-dependencies
+        - job: run-build-dependencies
           artifacts: true
     stage: build
     trigger:
@@ -35,7 +35,7 @@ run-core-build-job:
 
 run-repo-build-job:
     needs:
-        - job: build-dependencies
+        - job: run-build-dependencies
         - job: build-runtime
         - job: check-repo-image
           artifacts: true
@@ -52,7 +52,7 @@ run-repo-build-job:
 
 run-gcs-base-build-job:
     needs:
-        - job: build-dependencies
+        - job: run-build-dependencies
         - job: build-runtime
         - job: check-gcs-base-image
           artifacts: true
@@ -70,7 +70,7 @@ run-gcs-base-build-job:
 
 run-gcs-build-job:
     needs:
-        - job: build-dependencies
+        - job: run-build-dependencies
         - job: build-runtime
         - job: run-gcs-base-build-job
         - job: check-gcs-image
@@ -88,7 +88,7 @@ run-gcs-build-job:
 
 run-foxx-build-job:
     needs:
-        - job: build-dependencies
+        - job: run-build-dependencies
         - job: build-runtime
         - job: check-foxx-image
           artifacts: true

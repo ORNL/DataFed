@@ -178,9 +178,9 @@ Prior to building DataFed, the build environment must be properly configured as 
 <li><p>client-oauth2</p></li>
 </ul>
 <p>This can be done with a helper scripts these scripts are for ubuntu:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>./DataFed/scripts/install_core_dependencies.sh
-./DataFed/scripts/install_repo_dependencies.sh
-./DataFed/scripts/install_ws_dependencies.sh
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>./DataFed/external/DataFedDependencies/scripts/install_core_dependencies.sh
+./DataFed/external/DataFedDependencies/scripts/install_repo_dependencies.sh
+./DataFed/external/DataFedDependencies/scripts/install_ws_dependencies.sh
 </pre></div>
 </div>
 <p>The next step is to enter configuration options that are listed in ./config/datafed.sh. To
@@ -194,7 +194,6 @@ of the configuration options:</p>
 <li><p>DATAFED_DEFAULT_LOG_PATH - Needed by core, repo, web services</p></li>
 <li><p>DATAFED_DATABASE_PASSWORD - Needed by core</p></li>
 <li><p>DATAFED_ZEROMQ_SESSION_SECRET - Needed by web server</p></li>
-<li><p>DATAFED_ZEROMQ_SYSTEM_SECRET - Needed by web server</p></li>
 <li><p>DATAFED_LEGO_EMAIL - Needed by web server</p></li>
 <li><p>DATAFED_WEB_KEY_PATH - Needed by web server</p></li>
 <li><p>DATAFED_WEB_CERT_PATH - Needed by web server</p></li>

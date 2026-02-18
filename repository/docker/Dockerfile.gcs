@@ -11,6 +11,7 @@ ARG                           NVM_DIR="$DATAFED_DIR/.nvm"
 ARG                           NVM_INC="$DATAFED_DIR/.nvm/versions/node/v13.14.0/include/node"
 ARG                           NVM_BIN="$DATAFED_DIR/.nvm/versions/node/v13.14.0/bin"
 ARG                           LIB_DIR="/usr/local/lib"
+ARG         DATAFED_DEPENDENCIES_ROOT="$BUILD_DIR/external/DataFedDependencies"
 
 FROM ${DEPENDENCIES} AS dependencies
 
@@ -18,6 +19,7 @@ ARG DATAFED_DIR
 ARG BUILD_DIR
 ARG DATAFED_INSTALL_PATH
 ARG DATAFED_DEPENDENCIES_INSTALL_PATH
+ARG DATAFED_DEPENDENCIES_ROOT
 ARG LIB_DIR
 
 ENV DATAFED_DEPENDENCIES_INSTALL_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH"
@@ -30,10 +32,14 @@ ENV                         BUILD_DIR="$BUILD_DIR"
 ENV                           LIB_DIR="$LIB_DIR"
 ENV          DATAFED_GLOBUS_REPO_USER="datafed"
 ENV          DATAFED_DEFAULT_LOG_PATH="$DATAFED_INSTALL_PATH/logs"
+ENV         DATAFED_DEPENDENCIES_ROOT="$DATAFED_DEPENDENCIES_ROOT"
 
-COPY --chown=datafed:root ./scripts/dependency_versions.sh            ${BUILD_DIR}/scripts/
+RUN mkdir -p ${DATAFED_DEPENDENCIES_ROOT}/scripts/ && \
+        mv ./scripts/dependency_versions.sh          ${DATAFED_DEPENDENCIES_ROOT}/scripts/ && \
+        mv ./scripts/utils.sh                        ${DATAFED_DEPENDENCIES_ROOT}/scripts/ && \
+        mv ./scripts/generate_dependencies_config.sh ${DATAFED_DEPENDENCIES_ROOT}/scripts/
+
 COPY --chown=datafed:root ./scripts/generate_authz_config.sh          ${BUILD_DIR}/scripts/generate_authz_config.sh
-COPY --chown=datafed:root ./scripts/utils.sh                          ${BUILD_DIR}/scripts/utils.sh
 COPY --chown=datafed:root ./CMakeLists.txt                            ${BUILD_DIR}
 COPY --chown=datafed:root ./cmake                                     ${BUILD_DIR}/cmake
 COPY --chown=datafed:root ./repository/CMakeLists.txt                 ${BUILD_DIR}/repository/CMakeLists.txt
@@ -48,10 +54,13 @@ COPY --chown=datafed:root ./scripts/generate_gsi-authz_config.sh      ${BUILD_DI
 COPY --chown=datafed:root ./scripts/globus/create_guest_collection.py ${BUILD_DIR}/scripts/globus/create_guest_collection.py
 COPY --chown=datafed:root ./scripts/globus/utils.py                   ${BUILD_DIR}/scripts/globus/utils.py
 COPY --chown=datafed:root ./scripts/globus/__init__.py                ${BUILD_DIR}/scripts/globus/__init__.py
+COPY --chown=datafed:root ./scripts/generate_datafed.sh               ${BUILD_DIR}/scripts/
 
+RUN ${BUILD_DIR}/scripts/generate_datafed.sh
 RUN ${BUILD_DIR}/scripts/generate_gsi-authz_config.sh
 # Don't build with syslog the container does not seem to support syslog
-RUN ${BUILD_DIR}/scripts/generate_authz_config.sh &&  \
+RUN ${DATAFED_DEPENDENCIES_ROOT}/scripts/generate_dependencies_config.sh &&  \
+  ${BUILD_DIR}/scripts/generate_authz_config.sh &&  \
   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake -S. -B build  \
   -DBUILD_REPO_SERVER=False         \
   -DBUILD_AUTHZ_TESTS=True          \
@@ -61,8 +70,9 @@ RUN ${BUILD_DIR}/scripts/generate_authz_config.sh &&  \
   -DBUILD_WEB_SERVER=False          \
   -DBUILD_DOCS=False                \
   -DBUILD_PYTHON_CLIENT=False       \
-  -DBUILD_FOXX=False
-RUN  ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build -j 8
+  -DBUILD_FOXX=False                \
+  -DENABLE_INTEGRATION_TESTS=False
+RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build -j 8
 RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build --target install
 
 FROM ${GCS_IMAGE}
@@ -71,6 +81,7 @@ ARG DATAFED_DIR
 ARG BUILD_DIR
 ARG DATAFED_INSTALL_PATH
 ARG DATAFED_DEPENDENCIES_INSTALL_PATH
+ARG DATAFED_DEPENDENCIES_ROOT
 ARG LIB_DIR
 
 ENV DATAFED_DEPENDENCIES_INSTALL_PATH="$DATAFED_DEPENDENCIES_INSTALL_PATH"
@@ -83,6 +94,7 @@ ENV                         BUILD_DIR="$BUILD_DIR"
 ENV                           LIB_DIR="$LIB_DIR"
 ENV          DATAFED_GLOBUS_REPO_USER="datafed"
 ENV          DATAFED_DEFAULT_LOG_PATH="$DATAFED_INSTALL_PATH/logs"
+ENV         DATAFED_DEPENDENCIES_ROOT="$DATAFED_DEPENDENCIES_ROOT"
 # Value needed so tput command doesn't crash
 ENV                              TERM="xterm"
 ENV                    DATAFED_GCS_IP=""
@@ -96,12 +108,13 @@ RUN mkdir -p ${DATAFED_INSTALL_PATH}/authz
 RUN mkdir -p /mnt/datafed
 
 # This is necessary for curl, which is used the entrypoint script
-COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libssl.so   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libssl.so
-COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libssl.so.1.1   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libssl.so.1.1
-COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libcrypto.so   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libcrypto.so
-COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libcrypto.so.1.1   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib/libcrypto.so.1.1
+COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib64/libssl.so   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib64/libssl.so
+COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib64/libssl.so.3   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib64/libssl.so.3
+COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib64/libcrypto.so   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib64/libcrypto.so
+COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib64/libcrypto.so.3   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/lib64/libcrypto.so.3
 COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/python   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/python
 COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/python3.9   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/python3.9
+COPY --from=dependencies --chown=datafed:root ${DATAFED_DEPENDENCIES_ROOT}/scripts/ ${DATAFED_DEPENDENCIES_ROOT}/scripts/
 
 # Needed for tests
 COPY --from=dependencies ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake   ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake
@@ -119,15 +132,7 @@ RUN adduser --disabled-password --gecos "" datafed
 
 RUN echo "#!/bin/bash\n\$@" > /usr/bin/sudo && chmod +x /usr/bin/sudo
 
-COPY ./scripts/generate_datafed.sh             ${BUILD_DIR}/scripts/
-COPY ./scripts/dependency_versions.sh          ${BUILD_DIR}/scripts/
-COPY ./scripts/utils.sh                        ${BUILD_DIR}/scripts/utils.sh
-
-RUN ${BUILD_DIR}/scripts/generate_datafed.sh
-
-COPY --chown=datafed:root ./scripts/dependency_versions.sh            ${BUILD_DIR}/scripts/
 COPY --chown=datafed:root ./scripts/generate_authz_config.sh          ${BUILD_DIR}/scripts/generate_authz_config.sh
-COPY --chown=datafed:root ./scripts/utils.sh                          ${BUILD_DIR}/scripts/utils.sh
 COPY --chown=datafed:root ./CMakeLists.txt                            ${BUILD_DIR}
 COPY --chown=datafed:root ./cmake                                     ${BUILD_DIR}/cmake
 COPY --chown=datafed:root ./repository/CMakeLists.txt                 ${BUILD_DIR}/repository/CMakeLists.txt
@@ -150,6 +155,9 @@ RUN apt update
 RUN apt-get install wget jq bind9-host build-essential -y
 RUN apt-get reinstall globus-connect-server54 libsqlite3-dev -y
 
+COPY --chown=datafed:root ./scripts/generate_datafed.sh               ${BUILD_DIR}/scripts/
+
+RUN ${BUILD_DIR}/scripts/generate_datafed.sh
 RUN ${BUILD_DIR}/scripts/generate_gsi-authz_config.sh
 # Don't build with syslog the container does not seem to support syslog
 
@@ -167,7 +175,7 @@ COPY --chown=datafed:root ./repository/docker/entrypoint_authz.sh ${BUILD_DIR}/r
 
 USER root
 
-ENV LD_LIBRARY_PATH=/opt/datafed/dependencies/lib/
+ENV LD_LIBRARY_PATH=/opt/datafed/dependencies/lib/:/opt/datafed/dependencies/lib64/
 
 # Remove --client-id from command because it was deprecated
 RUN sed -i '/--client-id/d' /entrypoint.sh

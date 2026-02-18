@@ -1,51 +1,102 @@
-const { chromium } = require('playwright');
-const path = require('path');
-const process = require('process');
+const { chromium } = require("playwright");
+const path = require("path");
+const process = require("process");
 
-console.log("******Inside Setup file******");
+console.log("INFO - ******Inside Setup file******");
 
 module.exports = async function () {
     // if a playwright page object doesn't exist, create one
     const browser = await chromium.launch({
-        args: ['--ignore-certificate-errors'],
-        timeout: 30000,
+        args: ["--ignore-certificate-errors"],
+        headless: true,
     });
-    // const context = await browser.newContext({
-    //     ignoreHTTPSErrors: true,
-    // });
 
-    const page = await browser.newPage();  
-    console.log("new page object created");
-    
-    // Go to the website and login through globus using a tester account
-    await page.goto('https://@DATAFED_DOMAIN@/ui/welcome');//TESTING
-    if (await page.getByRole('button', { name: 'Log In / Register' }).isVisible()) {
-        await page.getByRole('button', { name: 'Log In / Register' }).click();
-        if (page.getByRole('link', { name: 'Globus globus' }).isVisible()) {
-            page.getByRole('button', { name: 'Globus ID to sign in' }).click();
-            if (page.getByLabel('Username @globusid.org').isEditable()) {
-                // changes the username and password in the .env file if needed
-                await page.getByLabel('Username @globusid.org').fill(process.env.DATAFED_WEB_TEST_USERNAME);
-                await page.getByLabel('Password').fill(process.env.DATAFED_WEB_TEST_PASSWORD);
-                await page.click('button[type="submit"]');
-                await page.waitForURL('https://@DATAFED_DOMAIN@/ui/main')
-                console.log("******PAST LOGIN******");
-                await page.context().storageState({ path: './.auth/auth.json'}); //TESTING
-                console.log("******Done with login******");
-            } else {
-                console.log("DID NOT SEE FORM");
-            }
-        } else {
-            console.log("DID NOT SEE GLOBUS BUTTON");
-        } 
-    } else {
-        console.log("DID NOT SEE LOGIN BUTTON");
+    const page = await browser.newPage();
+    console.log("INFO - new page object created");
+
+    // Extra safety for debugging slow loads
+    page.on("console", (msg) => console.log("INFO - [PAGE LOG] ", msg.text()));
+    page.on("response", (res) => {
+        if (res.status() >= 400) console.log(`ERROR - [HTTP ${res.status()}] ${res.url()}`);
+    });
+
+    // --- Step 1: Go to DataFed ---
+    console.log("INFO - 1. Got to DataFed");
+    await page.goto("https://@DATAFED_DOMAIN@/ui/welcome", {
+        waitUntil: "networkidle",
+        timeout: 60000,
+    });
+
+    // --- Step 2: Click Login/Register ---
+    console.log("INFO - 2. Login and Register");
+    const loginButton = page.getByRole("button", { name: "Log In / Register" });
+    await loginButton.waitFor({ state: "visible", timeout: 30000 });
+    await loginButton.click();
+
+    // --- Step 3: Check if link is visible ---
+    console.log("INFO - 3. Check if link is visible");
+    const globusLink = page.getByRole("link", { name: /Globus/i });
+    await globusLink.waitFor({ state: "visible", timeout: 30000 });
+    await page.waitForTimeout(1000);
+
+    // --- Step 4: Click Globus ID to sign in ---
+    console.log("INFO - 4. Use Globus ID to sign in");
+    const globusIDButton = page.getByRole("button", { name: "Globus ID to sign in" });
+    await globusIDButton.waitFor({ state: "visible", timeout: 30000 });
+    await globusIDButton.click();
+    await page.waitForTimeout(1000);
+
+    // --- Step 5: Wait for Globus redirect ---
+    console.log("INFO - 5. Wait for Globus login to redirect");
+    await page.waitForLoadState("networkidle", { timeout: 45000 });
+
+    // --- Step 6: Fill in credentials robustly ---
+    console.log("INFO - 6. Fill in credentials");
+    const usernameField = page.getByLabel(/username/i);
+    await usernameField.waitFor({ state: "visible", timeout: 45000 });
+    await usernameField.fill(process.env.DATAFED_WEB_TEST_USERNAME);
+
+    const passwordField = page.getByLabel(/password/i);
+    await passwordField.waitFor({ state: "visible", timeout: 45000 });
+    await passwordField.fill(process.env.DATAFED_WEB_TEST_PASSWORD);
+
+    // --- Step 7: Submit form ---
+    await page.click('button[type="submit"]');
+
+    await Promise.race([
+        page.waitForURL(/\/ui\/main$/, { timeout: 45000 }),
+        page.waitForURL(/\/ui\/register$/, { timeout: 45000 }),
+    ]);
+
+    let current = page.url();
+    console.log("INFO - 7a Redirected to:", current);
+
+    if (current.includes("/ui/register")) {
+        console.log("INFO - 7b. Registering:", current);
+        await page.getByRole('button', { name: 'Continue Registration' }).click();
+    }  else {
+        console.log("INFO - 7b. Grabbing fresh url:", current);
+	if (!page.url().includes("/ui/main")) {
+            await page.waitForURL("https://@DATAFED_DOMAIN@/ui/main", { timeout: 45000 });
+        }
+        current = page.url();
+        console.log("INFO - 7c. URL is: ", current);
     }
+
+    await page.screenshot({ path: "after_login.png", fullPage: true });
+    if (current.includes("/ui/main")) {
+        console.log("INFO - 8b Successful: ", current);
+    } else {
+        throw new Error(`Unexpected redirect URL: ${current}`);
+    }
+    //await Promise.all([
+    //  page.waitForNavigation({ url: /\/ui\/main/ }), // robust matching
+    //  page.click('button[type="submit"]'),
+    //]);
+    //page.screenshot(path="final.png", full_page=True)
+    console.log("INFO - ******PAST LOGIN******");
+    await page.context().storageState({ path: "./.auth/auth.json" }); //TESTING
+    console.log("INFO - ******Done with login******");
+
     await browser.close();
-    //return page;  // pass on the page variable if using this function directly in a test script
 };
-
-// TODO this is not as efficient as storing the states in the context variable,
-// something like "page.context().storagestate" would work better in the future when
-// there are many more test files
-
