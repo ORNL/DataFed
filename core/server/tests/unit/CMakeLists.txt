@@ -3,6 +3,7 @@ foreach(PROG
     test_AuthMap
     test_AuthenticationManager
     test_DatabaseAPI
+    test_JsonSchemaValidator
 )
 
   file(GLOB ${PROG}_SOURCES ${PROG}*.cpp)

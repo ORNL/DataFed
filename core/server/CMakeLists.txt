@@ -5,7 +5,7 @@ configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/Version.hpp"
   @ONLY)
 
-file( GLOB Sources "*.cpp" )
+file( GLOB Sources "*.cpp" "schema_validators/*.cpp" )
 file( GLOB Main "main.cpp")
 list(REMOVE_ITEM Sources files ${Main})
 
