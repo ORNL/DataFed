@@ -15,13 +15,32 @@ AuthenticationManager::AuthenticationManager(
     std::map<PublicKeyType, time_t> purge_intervals,
     std::map<PublicKeyType, std::vector<std::unique_ptr<Condition>>>
         &&purge_conditions,
-    const std::string &db_url, const std::string &db_user,
-    const std::string &db_pass)
+    LogContext log_context)
     : m_purge_interval(purge_intervals),
       m_purge_conditions(std::move(purge_conditions)),
       m_auth_mapper(m_purge_interval[PublicKeyType::TRANSIENT],
                     m_purge_interval[PublicKeyType::SESSION],
-                    db_url, db_user, db_pass) {
+                    log_context),
+      m_log_context(log_context) {
+  for (const auto &purge_int : m_purge_interval) {
+    m_next_purge[purge_int.first] = time(0) + purge_int.second;
+  }
+}
+
+AuthenticationManager::AuthenticationManager(
+    std::map<PublicKeyType, time_t> purge_intervals,
+    std::map<PublicKeyType, std::vector<std::unique_ptr<Condition>>>
+        &&purge_conditions,
+    const std::string &db_url, const std::string &db_user,
+    const std::string &db_pass,
+    LogContext log_context)
+    : m_purge_interval(purge_intervals),
+      m_purge_conditions(std::move(purge_conditions)),
+      m_auth_mapper(m_purge_interval[PublicKeyType::TRANSIENT],
+                    m_purge_interval[PublicKeyType::SESSION],
+                    db_url, db_user, db_pass,
+                    log_context),
+      m_log_context(log_context) {
   for (const auto &purge_int : m_purge_interval) {
     m_next_purge[purge_int.first] = time(0) + purge_int.second;
   }
@@ -36,6 +55,7 @@ AuthenticationManager::operator=(AuthenticationManager &&other) {
     m_purge_interval = other.m_purge_interval;
     m_purge_conditions = std::move(other.m_purge_conditions);
     m_auth_mapper = std::move(other.m_auth_mapper);
+    m_log_context = other.m_log_context;
   }
   return *this;
 }
