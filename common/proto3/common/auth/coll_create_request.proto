@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+message CollCreateRequest {
+    string title = 1;
+    optional string desc = 2;
+    optional string alias = 3;
+    optional string parent_id = 4;
+    optional string topic = 6;
+    repeated string tags = 7;
+}

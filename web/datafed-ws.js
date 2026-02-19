@@ -15,7 +15,7 @@ if (process.argv.length != 3) {
     throw "Invalid arguments, usage: datafed-ws config-file";
 }
 
-import web_version from "./version.js";
+import version from "./version.js";
 import express from "express"; // For REST api
 import session from "express-session";
 import sanitizeHtml from "sanitize-html";
@@ -55,6 +55,7 @@ var g_host,
     g_test,
     g_msg_by_id = {},
     g_msg_by_name = {},
+    g_envelope_type,
     g_core_sock = zmq.socket("dealer"),
     g_core_serv_addr,
     g_globus_auth,
@@ -64,7 +65,7 @@ var g_host,
     g_ctx_next = 0,
     g_client_id,
     g_client_secret,
-    g_ready_start = 4,
+    g_ready_start = 3,
     g_version,
     g_ver_release_year,
     g_ver_release_month,
@@ -144,6 +145,25 @@ class Logger {
 }
 
 const logger = new Logger(LogLevel.INFO);
+
+g_ver_release_year = version.DATAFED_RELEASE_YEAR;
+g_ver_release_month = version.DATAFED_RELEASE_MONTH;
+g_ver_release_day = version.DATAFED_RELEASE_DAY;
+g_ver_release_hour = version.DATAFED_RELEASE_HOUR;
+g_ver_release_minute = version.DATAFED_RELEASE_MINUTE;
+
+g_version =
+    g_ver_release_year +
+    "." +
+    g_ver_release_month +
+    "." +
+    g_ver_release_day +
+    "." +
+    g_ver_release_hour +
+    "." +
+    g_ver_release_minute;
+
+if (--g_ready_start == 0) startServer();
 
 function getCurrentLineNumber() {
     const stackTrace = new Error().stack;
@@ -312,8 +332,31 @@ function storeCollectionId(req, res, next) {
         req.session.collection_id = req.query.collection_id;
         // TODO: assuming collection is specifically mapped and not HA/other variants
         req.session.collection_type = "mapped";
+        logger.info(
+            "storeCollectionId",
+            getCurrentLineNumber(),
+            "DEBUG: Storing Collection ID: " + req.query.collection_id + " to session.",
+        );
+        req.session.save((err) => {
+            if (err) {
+                logger.error(
+                    "storeCollectionId",
+                    getCurrentLineNumber(),
+                    "DEBUG: Session save error:",
+                    err,
+                );
+            } else {
+                logger.info(
+                    "storeCollectionId",
+                    getCurrentLineNumber(),
+                    "DEBUG: Session saved successfully.",
+                );
+            }
+            next();
+        });
+    } else {
+        next();
     }
-    next();
 }
 
 app.use(cookieParser(g_session_secret));
@@ -389,12 +432,21 @@ app.get("/ui/main", (a_req, a_resp) => {
         const nonce = crypto.randomBytes(16).toString("base64");
         a_resp.locals.nonce = nonce;
         a_resp.setHeader("Content-Security-Policy", `script-src 'nonce-${nonce}'`);
+
+        // Extract restore_state from session if present
+        let restore_state = null;
+        if (a_req.session.restore_state) {
+            restore_state = JSON.stringify(a_req.session.restore_state);
+            delete a_req.session.restore_state;
+        }
+
         a_resp.render("main", {
             nonce: a_resp.locals.nonce,
             user_uid: a_req.session.uid,
             theme: theme,
             version: g_version,
             test_mode: g_test,
+            restore_state: restore_state,
             ...g_google_analytics,
         });
     } else {
@@ -600,6 +652,16 @@ the registration page.
                                         );
                                     }
                                     let username = reply.user[0]?.uid?.replace(/^u\//, "");
+                                    if (!username) {
+                                        logger.error(
+                                            "/ui/authn",
+                                            getCurrentLineNumber(),
+                                            "Error: User identity found but UID is missing or invalid.",
+                                            reply.user,
+                                        );
+                                        a_resp.redirect("/ui/error");
+                                        return;
+                                    }
                                     logger.info(
                                         "/ui/authn",
                                         getCurrentLineNumber(),
@@ -619,12 +681,32 @@ the registration page.
                                     a_req.session.uid = username;
                                     a_req.session.reg = true;
 
+                                    if (a_req.query.state) {
+                                        try {
+                                            const state_obj = JSON.parse(a_req.query.state);
+                                            // Validate state structure to prevent arbitrary session pollution
+                                            if (
+                                                state_obj.endpoint_browser ||
+                                                state_obj.restore_state
+                                            ) {
+                                                a_req.session.restore_state = state_obj;
+                                            }
+                                        } catch (e) {
+                                            // State was not JSON or valid, ignore
+                                            logger.warning(
+                                                "/ui/authn",
+                                                getCurrentLineNumber(),
+                                                "Failed to parse state parameter: " + e,
+                                            );
+                                        }
+                                    }
+
                                     let redirect_path = "/ui/main";
 
                                     // Note: context/optional params for arbitrary input
                                     const token_context = {
                                         // passed values are mutable
-                                        resource_server: client_token.data.resource_sever,
+                                        resource_server: client_token.data.resource_server,
                                         collection_id: a_req.session.collection_id,
                                         scope: xfr_token.scope,
                                     };
@@ -641,15 +723,30 @@ the registration page.
                                             xfr_token.refresh_token,
                                             xfr_token.expires_in,
                                             optional_data,
+                                            (err) => {
+                                                if (err) {
+                                                    redirect_path = "/ui/error";
+                                                    logger.error(
+                                                        "/ui/authn",
+                                                        getCurrentLineNumber(),
+                                                        "setAccessToken Failed: " + err,
+                                                    );
+                                                    delete a_req.session.collection_id;
+                                                }
+                                                // TODO Account may be disable from SDMS (active = false)
+                                                a_resp.redirect(redirect_path);
+                                            },
                                         );
                                     } catch (err) {
                                         redirect_path = "/ui/error";
-                                        logger.error("/ui/authn", getCurrentLineNumber(), err);
+                                        logger.error(
+                                            "/ui/authn",
+                                            getCurrentLineNumber(),
+                                            "Exception in token handling: " + err,
+                                        );
                                         delete a_req.session.collection_id;
+                                        a_resp.redirect(redirect_path);
                                     }
-
-                                    // TODO Account may be disable from SDMS (active = false)
-                                    a_resp.redirect(redirect_path);
                                 }
                             },
                         );
@@ -751,6 +848,19 @@ app.get("/api/usr/register", (a_req, a_resp) => {
                             a_req.session.acc_tok,
                             a_req.session.ref_tok,
                             a_req.session.acc_tok_ttl,
+                            {},
+                            (err) => {
+                                if (err) {
+                                    logger.error("/api/usr/register", getCurrentLineNumber(), err);
+                                    a_resp.status(500).send("Registration failed during token set");
+                                    return;
+                                }
+
+                                // Set session as registered user
+                                a_req.session.reg = true;
+
+                                a_resp.send(reply);
+                            },
                         );
                     } catch (err) {
                         logger.error("/api/usr/register", getCurrentLineNumber(), err);
@@ -765,11 +875,6 @@ app.get("/api/usr/register", (a_req, a_resp) => {
                         delete a_req.session.ref_tok;
                         delete a_req.session.uuids;
                     }
-
-                    // Set session as registered user
-                    a_req.session.reg = true;
-
-                    a_resp.send(reply);
                 }
             },
         );
@@ -1108,23 +1213,6 @@ app.get("/api/dat/lock", (a_req, a_resp) => {
     );
 });
 
-app.get("/api/dat/lock/toggle", (a_req, a_resp) => {
-    sendMessage("RecordLockToggleRequest", { id: a_req.query.id }, a_req, a_resp, function (reply) {
-        a_resp.send(reply);
-    });
-});
-
-app.get("/api/dat/copy", (a_req, a_resp) => {
-    var params = {
-        sourceId: a_req.query.src,
-        destId: a_req.query.dst,
-    };
-
-    sendMessage("DataCopyRequest", params, a_req, a_resp, function (reply) {
-        a_resp.send(reply);
-    });
-});
-
 app.get("/api/dat/delete", (a_req, a_resp) => {
     sendMessage(
         "RecordDeleteRequest",
@@ -1209,18 +1297,6 @@ app.get("/api/dat/put", (a_req, a_resp) => {
     sendMessage("DataPutRequest", par, a_req, a_resp, function (reply) {
         a_resp.send(reply);
     });
-});
-
-app.get("/api/dat/dep/get", (a_req, a_resp) => {
-    sendMessage(
-        "RecordGetDependenciesRequest",
-        { id: a_req.query.ids },
-        a_req,
-        a_resp,
-        function (reply) {
-            a_resp.send(reply);
-        },
-    );
 });
 
 app.get("/api/dat/dep/graph/get", (a_req, a_resp) => {
@@ -1569,14 +1645,20 @@ app.get("/api/col/published/list", (a_req, a_resp) => {
     });
 });
 
-app.post("/api/cat/search", (a_req, a_resp) => {
-    sendMessage("CatalogSearchRequest", a_req.body, a_req, a_resp, function (reply) {
-        a_resp.send(reply);
-    });
-});
-
 app.get("/api/globus/consent_url", storeCollectionId, (a_req, a_resp) => {
-    const { requested_scopes, state, refresh_tokens, query_params } = a_req.query;
+    let { requested_scopes, state, refresh_tokens, query_params } = a_req.query;
+
+    if (typeof query_params === "string") {
+        try {
+            query_params = JSON.parse(query_params);
+        } catch (e) {
+            logger.error(
+                "/api/globus/consent_url",
+                getCurrentLineNumber(),
+                "Failed to parse query_params: " + e,
+            );
+        }
+    }
 
     const consent_url = generateConsentURL(
         g_oauth_credentials.clientId,
@@ -1588,12 +1670,6 @@ app.get("/api/globus/consent_url", storeCollectionId, (a_req, a_resp) => {
     );
 
     a_resp.json({ consent_url });
-});
-
-app.post("/api/col/pub/search/data", (a_req, a_resp) => {
-    sendMessage("RecordSearchPublishedRequest", a_req.body, a_req, a_resp, function (reply) {
-        a_resp.send(reply);
-    });
 });
 
 app.get("/api/repo/list", (a_req, a_resp) => {
@@ -1768,18 +1844,6 @@ app.get("/api/top/list/topics", (a_req, a_resp) => {
     }
 
     sendMessage("TopicListTopicsRequest", par, a_req, a_resp, function (reply) {
-        a_resp.json(reply);
-    });
-});
-
-app.get("/api/top/list/coll", (a_req, a_resp) => {
-    var par = { topicId: a_req.query.id };
-    if (a_req.query.offset != undefined && a_req.query.count != undefined) {
-        par.offset = a_req.query.offset;
-        par.count = a_req.query.count;
-    }
-
-    sendMessage("TopicListCollectionsRequest", par, a_req, a_resp, function (reply) {
         a_resp.json(reply);
     });
 });
@@ -2002,10 +2066,18 @@ app.get("/ui/theme/save", (a_req, a_resp) => {
  * @param {string} a_ref_tok - Refresh token for access token
  * @param {number} a_expires_sec - Time until expiration of access token
  * @param {OptionalData} [token_optional_params] - Optional params for DataFed to process access token accordingly
+ * @param {RequestCallback} [a_cb] - Optional callback function
  *
  * @throws Error - When a reply is not received from sendMessageDirect
  */
-function setAccessToken(a_uid, a_acc_tok, a_ref_tok, a_expires_sec, token_optional_params = {}) {
+function setAccessToken(
+    a_uid,
+    a_acc_tok,
+    a_ref_tok,
+    a_expires_sec,
+    token_optional_params = {},
+    a_cb = null,
+) {
     logger.info(
         setAccessToken.name,
         getCurrentLineNumber(),
@@ -2019,8 +2091,13 @@ function setAccessToken(a_uid, a_acc_tok, a_ref_tok, a_expires_sec, token_option
         // Should be an AckReply
         if (!reply) {
             logger.error("setAccessToken", getCurrentLineNumber(), "failed.");
+            if (a_cb) {
+                a_cb(new Error("setAccessToken failed"));
+                return;
+            }
             throw new Error("setAccessToken failed");
         }
+        if (a_cb) a_cb(null, reply);
     });
 }
 
@@ -2065,15 +2142,17 @@ function sendMessage(a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon) {
     a_resp.setHeader("Content-Type", "application/json");
 
     allocRequestContext(a_resp, function (ctx) {
-        var msg = g_msg_by_name[a_msg_name];
-        if (!msg) throw "Invalid message type: " + a_msg_name;
+        var msg_info = g_msg_by_name[a_msg_name];
+        if (!msg_info) throw "Invalid message type: " + a_msg_name;
 
-        var msg_buf = msg.encode(a_msg_data).finish();
+        // Wrap inner message data in an Envelope (matches C++ sendBody wrapInEnvelope)
+        var envelope_data = {};
+        envelope_data[msg_info.field_name] = a_msg_data;
+        var msg_buf = g_envelope_type.encode(envelope_data).finish();
 
         var frame = Buffer.alloc(8);
         frame.writeUInt32BE(msg_buf.length, 0);
-        frame.writeUInt8(msg._pid, 4);
-        frame.writeUInt8(msg._mid, 5);
+        frame.writeUInt16BE(msg_info.field_id, 4);
         frame.writeUInt16BE(ctx, 6);
 
         g_ctx[ctx] = function (a_reply) {
@@ -2121,7 +2200,10 @@ function sendMessage(a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon) {
                 sendMessage.name,
                 getCurrentLineNumber(),
                 "MsgType is: " +
-                    msg._msg_type +
+                    msg_info.field_id +
+                    " (" +
+                    a_msg_name +
+                    ")" +
                     " Writing ctx to frame, " +
                     ctx +
                     " buffer size " +
@@ -2142,7 +2224,10 @@ function sendMessage(a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon) {
                 sendMessage.name,
                 getCurrentLineNumber(),
                 "MsgType is: " +
-                    msg._msg_type +
+                    msg_info.field_id +
+                    " (" +
+                    a_msg_name +
+                    ")" +
                     " Writing ctx to frame, " +
                     ctx +
                     " buffer size " +
@@ -2154,17 +2239,19 @@ function sendMessage(a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon) {
 }
 
 function sendMessageDirect(a_msg_name, a_client, a_msg_data, a_cb) {
-    var msg = g_msg_by_name[a_msg_name];
-    if (!msg) throw "Invalid message type: " + a_msg_name;
+    var msg_info = g_msg_by_name[a_msg_name];
+    if (!msg_info) throw "Invalid message type: " + a_msg_name;
 
     allocRequestContext(null, function (ctx) {
-        var msg_buf = msg.encode(a_msg_data).finish();
+        // Wrap inner message data in an Envelope (matches C++ sendBody wrapInEnvelope)
+        var envelope_data = {};
+        envelope_data[msg_info.field_name] = a_msg_data;
+        var msg_buf = g_envelope_type.encode(envelope_data).finish();
 
         var frame = Buffer.alloc(8);
         // A protobuf message doesn't have to have a payload
         frame.writeUInt32BE(msg_buf.length, 0);
-        frame.writeUInt8(msg._pid, 4);
-        frame.writeUInt8(msg._mid, 5);
+        frame.writeUInt16BE(msg_info.field_id, 4);
         frame.writeUInt16BE(ctx, 6);
 
         g_ctx[ctx] = a_cb;
@@ -2187,7 +2274,10 @@ function sendMessageDirect(a_msg_name, a_client, a_msg_data, a_cb) {
                 sendMessageDirect.name,
                 getCurrentLineNumber(),
                 "MsgType is: " +
-                    msg._msg_type +
+                    msg_info.field_id +
+                    " (" +
+                    a_msg_name +
+                    ")" +
                     " Direct Writing ctx to frame, " +
                     ctx +
                     " buffer size " +
@@ -2208,7 +2298,10 @@ function sendMessageDirect(a_msg_name, a_client, a_msg_data, a_cb) {
                 sendMessageDirect.name,
                 getCurrentLineNumber(),
                 "MsgType is: " +
-                    msg._msg_type +
+                    msg_info.field_id +
+                    " (" +
+                    a_msg_name +
+                    ")" +
                     " Direct Writing ctx to frame, " +
                     ctx +
                     " buffer size " +
@@ -2219,71 +2312,65 @@ function sendMessageDirect(a_msg_name, a_client, a_msg_data, a_cb) {
     });
 }
 
-function processProtoFile(msg) {
-    //var mlist = msg.parent.order;
-    var i,
-        msg_list = [];
-    for (i in msg.parent.nested) msg_list.push(msg.parent.nested[i]);
+/**
+ * Processes the proto3 Envelope message to build message type maps.
+ *
+ * Instead of the old proto2 approach that derived message types from Protocol enum IDs
+ * and file ordering (pid << 8 | mid), this uses the envelope's oneof field numbers
+ * as stable message type identifiers.
+ *
+ * Each map entry stores:
+ *   - type:       the protobufjs Type (for encode/decode of the inner message)
+ *   - field_name: the envelope oneof field name (e.g. "version_request")
+ *   - field_id:   the envelope field number (used as msg_type in the frame)
+ *
+ * @param {protobuf.Root} root - The loaded protobuf root containing SDMS.Envelope
+ */
+function processEnvelope(root) {
+    g_envelope_type = root.lookupType("SDMS.Envelope");
+    var payloadOneof = g_envelope_type.oneofs.payload;
 
-    //msg_list.sort();
+    if (!payloadOneof) throw "Missing 'payload' oneof in SDMS.Envelope";
 
-    var pid = msg.values.ID;
+    payloadOneof.fieldsArray.forEach(function (field) {
+        var msgType = field.resolvedType;
+        if (!msgType) {
+            logger.warning(
+                processEnvelope.name,
+                getCurrentLineNumber(),
+                "Unresolved type for envelope field: " + field.name,
+            );
+            return;
+        }
 
-    for (i = 1; i < msg_list.length; i++) {
-        msg = msg_list[i];
-        msg._pid = pid;
-        msg._mid = i - 1;
-        msg._msg_type = (pid << 8) | (i - 1);
+        var entry = {
+            type: msgType, // protobufjs Type for encode/decode
+            field_name: field.name, // envelope oneof field name
+            field_id: field.id, // envelope field number = msg_type in frame
+        };
 
-        g_msg_by_id[msg._msg_type] = msg;
-        g_msg_by_name[msg.name] = msg;
-    }
+        g_msg_by_id[field.id] = entry;
+        g_msg_by_name[msgType.name] = entry;
+    });
+
+    logger.info(
+        processEnvelope.name,
+        getCurrentLineNumber(),
+        "Loaded " + Object.keys(g_msg_by_id).length + " message types from envelope",
+    );
 }
 
-protobuf.load("Version.proto", function (err, root) {
+var protobufRoot = new protobuf.Root();
+
+protobufRoot.resolvePath = function (origin, target) {
+    return "proto3/" + target;
+};
+
+protobufRoot.load("envelope.proto", function (err, root) {
     if (err) throw err;
 
-    var msg = root.lookupEnum("Version");
-    if (!msg) throw "Missing Version enum in Version.Anon proto file";
-
-    g_ver_release_year = msg.values.DATAFED_RELEASE_YEAR;
-    g_ver_release_month = msg.values.DATAFED_RELEASE_MONTH;
-    g_ver_release_day = msg.values.DATAFED_RELEASE_DAY;
-    g_ver_release_hour = msg.values.DATAFED_RELEASE_HOUR;
-    g_ver_release_minute = msg.values.DATAFED_RELEASE_MINUTE;
-
-    g_version =
-        g_ver_release_year +
-        "." +
-        g_ver_release_month +
-        "." +
-        g_ver_release_day +
-        "." +
-        g_ver_release_hour +
-        "." +
-        g_ver_release_minute;
-
-    logger.info("protobuf.load", getCurrentLineNumber(), "Running Version: " + g_version);
-    if (--g_ready_start == 0) startServer();
-});
-
-protobuf.load("SDMS_Anon.proto", function (err, root) {
-    if (err) throw err;
-
-    var msg = root.lookupEnum("SDMS.Anon.Protocol");
-    if (!msg) throw "Missing Protocol enum in SDMS.Anon proto file";
-
-    processProtoFile(msg);
-    if (--g_ready_start == 0) startServer();
-});
-
-protobuf.load("SDMS_Auth.proto", function (err, root) {
-    if (err) throw err;
-
-    var msg = root.lookupEnum("SDMS.Auth.Protocol");
-    if (!msg) throw "Missing Protocol enum in SDMS.Auth proto file";
-
-    processProtoFile(msg);
+    root.resolveAll();
+    processEnvelope(root);
     if (--g_ready_start == 0) startServer();
 });
 
@@ -2304,20 +2391,34 @@ g_core_sock.on(
         var mtype = (frame.readUInt8(4) << 8) | frame.readUInt8(5);
         var ctx = frame.readUInt16BE(6);
 
-        var msg_class = g_msg_by_id[mtype];
+        var msg_info = g_msg_by_id[mtype];
         var msg;
+        var msg_name = msg_info ? msg_info.type.name : "unknown(" + mtype + ")";
 
-        if (msg_class) {
+        if (msg_info) {
             // Only try to decode if there is a payload
             if (msg_buf && msg_buf.length) {
                 try {
-                    // This is unserializing the protocol message
-                    msg = msg_class.decode(msg_buf);
+                    // Decode as Envelope (matches C++ receiveBody unwrapFromEnvelope)
+                    var envelope = g_envelope_type.decode(msg_buf);
+                    var which_field = envelope.payload; // oneof discriminator: field name that is set
+                    if (which_field) {
+                        msg = envelope[which_field];
+                        msg_name = which_field;
+                    } else {
+                        logger.warning(
+                            "g_core_sock.on",
+                            getCurrentLineNumber(),
+                            "Envelope decoded but no payload field set, correlation_id: " +
+                                correlation_id,
+                        );
+                        msg = msg_info.type.create({});
+                    }
                     if (!msg) {
                         logger.error(
                             "g_core_sock.on",
                             getCurrentLineNumber(),
-                            "ERROR: msg decode failed: no reason, correlation_id: " +
+                            "ERROR: envelope decode produced null msg, correlation_id: " +
                                 correlation_id,
                         );
                     }
@@ -2325,11 +2426,15 @@ g_core_sock.on(
                     logger.error(
                         "g_core_sock.on",
                         getCurrentLineNumber(),
-                        "ERROR: msg decode failed: " + err + " correlation_id: " + correlation_id,
+                        "ERROR: envelope decode failed: " +
+                            err +
+                            " correlation_id: " +
+                            correlation_id,
                     );
                 }
             } else {
-                msg = msg_class;
+                // No payload body - create empty message instance
+                msg = msg_info.type.create({});
             }
         } else {
             logger.error(
@@ -2345,7 +2450,7 @@ g_core_sock.on(
             logger.info(
                 "g_core_sock.on",
                 getCurrentLineNumber(),
-                "freed ctx: " + ctx + " for msg: " + msg_class.name,
+                "freed ctx: " + ctx + " for msg: " + msg_name,
                 correlation_id,
             );
             g_ctx_next = ctx;
@@ -2360,7 +2465,7 @@ g_core_sock.on(
                     " - msg type: " +
                     mtype +
                     ", name: " +
-                    msg_class.name +
+                    msg_name +
                     " correlation_id: " +
                     correlation_id,
             );

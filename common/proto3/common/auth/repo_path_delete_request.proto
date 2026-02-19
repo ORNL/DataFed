@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+message RepoPathDeleteRequest {
+    string path = 1;
+}

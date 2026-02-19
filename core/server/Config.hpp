@@ -8,7 +8,7 @@
 // DataFed Common public includes
 #include "common/DynaLog.hpp"
 #include "common/ICredentials.hpp"
-#include "common/SDMS.pb.h"
+#include "common/envelope.pb.h"
 
 // Standard includes
 #include <map>

@@ -9,9 +9,7 @@
 #include "common/TraceException.hpp"
 
 // Proto file includes
-#include "common/SDMS.pb.h"
-#include "common/SDMS_Anon.pb.h"
-#include "common/SDMS_Auth.pb.h"
+#include "common/envelope.pb.h"
 
 // Third party includes
 #include <boost/program_options.hpp>
@@ -180,16 +178,23 @@ int main(int a_argc, char **a_argv) {
     }
     std::cout << std::endl;
 
+    // Changed: cast to Envelope, access inner message
     auto google_msg_ptr =
         std::get<::google::protobuf::Message *>(response.message->getPayload());
-    Anon::AuthenticateByTokenRequest *payload =
-        dynamic_cast<Anon::AuthenticateByTokenRequest *>(google_msg_ptr);
+    auto envelope =
+        dynamic_cast<SDMS::Envelope *>(google_msg_ptr);
 
-    if (payload->token().compare(token) != 0) {
+    if (!envelope || !envelope->has_authenticate_by_token_request()) {
+      std::cout << server->id() << " FAILED" << std::endl;
+      EXCEPT_PARAM(1, "Error detected in server, expected authenticate_by_token_request not found in envelope");
+    }
+
+    if (envelope->authenticate_by_token_request().token().compare(token) != 0) {
       std::cout << server->id() << " FAILED" << std::endl;
       EXCEPT_PARAM(1, "Error detected in server, expected message content is "
                       "incorrect. Actual token value is "
-                          << payload->token() << " Expected token value is "
+                          << envelope->authenticate_by_token_request().token() 
+                          << " Expected token value is "
                           << token);
     }
 
@@ -197,13 +202,14 @@ int main(int a_argc, char **a_argv) {
     // Server send a reply
     auto nack_msg = msg_factory.createResponseEnvelope(*response.message);
 
-    // Create Google proto message
-    auto nack_reply = std::make_unique<Anon::NackReply>();
-    nack_reply->set_err_code(ErrorCode::ID_SERVICE_ERROR);
+    // Changed: wrap in envelope
+    auto nack_envelope = std::make_unique<SDMS::Envelope>();
+    auto* nack_reply = nack_envelope->mutable_nack_reply();
+    nack_reply->set_err_code(ErrorCode::SERVICE_ERROR);
     nack_reply->set_err_msg(error_msg);
 
     // Place google proto message in IMessage
-    nack_msg->setPayload(std::move(nack_reply));
+    nack_msg->setPayload(std::move(nack_envelope));
 
     server->send(*nack_msg);
   }

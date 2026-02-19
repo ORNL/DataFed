@@ -90,8 +90,6 @@ class BaseRepository {
                 if (g_db._exists(config.id)) {
                     const existingDoc = g_db.repo.document(config.key);
                     const { _id, _key, _rev, ...temp } = existingDoc;
-                    console.log("existingData found");
-                    console.log(existingDoc);
                     this.repoData = {
                         id: existingDoc._id,
                         key: existingDoc._key,
@@ -101,8 +99,6 @@ class BaseRepository {
                 } else {
                     this.repoData = new_repo_data;
                 }
-                console.log("Repo data after deepMerge");
-                console.log(this.repoData);
             } catch {
                 return Result.err({
                     code: error.ERR_INVALID_PARAM,
@@ -111,9 +107,6 @@ class BaseRepository {
             }
         } else {
             this.repoData = { ...new_repo_data, id: `repo/${config.key}`, key: config.key };
-
-            console.log("Repo data, now that we know document doesn't exist");
-            console.log(this.repoData);
         }
 
         return Result.ok(this);

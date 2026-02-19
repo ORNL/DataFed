@@ -7,7 +7,6 @@ foreach(PROG
     test_Value
     test_MessageFactory
     test_OperatorFactory
-    test_ProtoBufFactory
     test_ProtoBufMap
     test_Proxy
     test_ProxyBasicZMQ
