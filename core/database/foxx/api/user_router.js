@@ -901,11 +901,18 @@ router
                                     other_token_data,
                                 ); // TODO: the call site and function and docs will need to be updated if changes are made to assumed data
                             // GLOBUS_TRANSFER parse currently assumes uuid and scopes exist
-                            let globus_collection = g_db.globus_coll.exists({
-                                _key: collection_search_key,
-                            });
-                            if (!globus_collection) {
-                                globus_collection = g_db.globus_coll.save({
+                            let globus_collection;
+
+                            if (
+                                g_db.globus_coll.exists({
+                                    _key: collection_search_key,
+                                })
+                            ) {
+                                globus_collection = g_db.globus_coll.document({
+                                    _key: collection_search_key,
+                                });
+                            } else {
+                                const meta = g_db.globus_coll.save({
                                     _key: collection_search_key,
                                     name: "Newly Inserted Collection",
                                     description: "The collection description",
@@ -916,16 +923,21 @@ router
                                     type: "mapped", // mapped/guest TODO: to be pulled from token data on follow-up ticket
                                     ha_enabled: false, // boolean - TODO: to be pulled from token data on follow-up ticket
                                 });
+                                globus_collection = g_db.globus_coll.document(meta);
                             }
 
                             const token_key =
                                 globus_collection._key + "_" + token_type + "_" + user_doc._key;
+
+                            const dependent_scopes_val =
+                                scopes || globus_collection.required_scopes;
+
                             const token_doc = {
                                 _key: token_key,
-                                _from: user_id, // the uid field
+                                _from: user_id,
                                 _to: globus_collection._id,
                                 type: token_type,
-                                dependent_scopes: scopes,
+                                dependent_scopes: dependent_scopes_val,
                                 request_time: Math.floor(Date.now() / 1000),
                                 last_used: Math.floor(Date.now() / 1000),
                                 status:
@@ -936,7 +948,7 @@ router
                             };
 
                             const token_doc_upsert = g_db.globus_token.insert(token_doc, {
-                                overwriteMode: "replace", // TODO: perhaps use 'update' and specify values for true upsert.
+                                overwriteMode: "replace",
                             });
                             break;
                         }
@@ -1853,10 +1865,9 @@ router
 
 router
     .get("/ep/get", function (req, res) {
+        let client = null;
         let first = null;
         try {
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
-            first = client?.eps.length ? client?.eps[0] : undefined;
             logger.logRequestStarted({
                 client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
@@ -1865,6 +1876,8 @@ router
                 status: "Started",
                 description: "Get recent end-points",
             });
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            first = client.eps && client.eps.length ? client.eps[0] : undefined;
 
             res.send(client.eps ? client.eps : []);
             logger.logRequestSuccess({
@@ -1874,7 +1887,7 @@ router
                 routePath: basePath + "/ep/get",
                 status: "Success",
                 description: "Get recent end-points",
-                extra: { most_recent: first, count: client?.eps?.length },
+                extra: { most_recent: first, count: client.eps ? client.eps.length : 0 },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -1884,7 +1897,7 @@ router
                 routePath: basePath + "/ep/get",
                 status: "Failure",
                 description: "Get recent end-points",
-                extra: { most_recent: first, count: client?.eps?.length },
+                extra: { most_recent: first, count: client && client.eps ? client.eps.length : 0 },
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -1896,8 +1909,8 @@ router
 
 router
     .get("/ep/set", function (req, res) {
+        let client = null;
         try {
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
                 client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
@@ -1906,6 +1919,7 @@ router
                 status: "Started",
                 description: "Set recent end-points",
             });
+            client = g_lib.getUserFromClientID(req.queryParams.client);
             g_db._update(
                 client._id,
                 {
@@ -1932,7 +1946,7 @@ router
                 routePath: basePath + "/ep/set",
                 status: "Failure",
                 description: "Set recent end-points",
-                extra: client.eps,
+                extra: client && client.eps ? client.eps : undefined,
                 error: e,
             });
             g_lib.handleException(e, res);

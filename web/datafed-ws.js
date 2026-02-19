@@ -332,8 +332,31 @@ function storeCollectionId(req, res, next) {
         req.session.collection_id = req.query.collection_id;
         // TODO: assuming collection is specifically mapped and not HA/other variants
         req.session.collection_type = "mapped";
+        logger.info(
+            "storeCollectionId",
+            getCurrentLineNumber(),
+            "DEBUG: Storing Collection ID: " + req.query.collection_id + " to session.",
+        );
+        req.session.save((err) => {
+            if (err) {
+                logger.error(
+                    "storeCollectionId",
+                    getCurrentLineNumber(),
+                    "DEBUG: Session save error:",
+                    err,
+                );
+            } else {
+                logger.info(
+                    "storeCollectionId",
+                    getCurrentLineNumber(),
+                    "DEBUG: Session saved successfully.",
+                );
+            }
+            next();
+        });
+    } else {
+        next();
     }
-    next();
 }
 
 app.use(cookieParser(g_session_secret));
@@ -409,12 +432,21 @@ app.get("/ui/main", (a_req, a_resp) => {
         const nonce = crypto.randomBytes(16).toString("base64");
         a_resp.locals.nonce = nonce;
         a_resp.setHeader("Content-Security-Policy", `script-src 'nonce-${nonce}'`);
+
+        // Extract restore_state from session if present
+        let restore_state = null;
+        if (a_req.session.restore_state) {
+            restore_state = JSON.stringify(a_req.session.restore_state);
+            delete a_req.session.restore_state;
+        }
+
         a_resp.render("main", {
             nonce: a_resp.locals.nonce,
             user_uid: a_req.session.uid,
             theme: theme,
             version: g_version,
             test_mode: g_test,
+            restore_state: restore_state,
             ...g_google_analytics,
         });
     } else {
@@ -620,6 +652,16 @@ the registration page.
                                         );
                                     }
                                     let username = reply.user[0]?.uid?.replace(/^u\//, "");
+                                    if (!username) {
+                                        logger.error(
+                                            "/ui/authn",
+                                            getCurrentLineNumber(),
+                                            "Error: User identity found but UID is missing or invalid.",
+                                            reply.user,
+                                        );
+                                        a_resp.redirect("/ui/error");
+                                        return;
+                                    }
                                     logger.info(
                                         "/ui/authn",
                                         getCurrentLineNumber(),
@@ -639,12 +681,32 @@ the registration page.
                                     a_req.session.uid = username;
                                     a_req.session.reg = true;
 
+                                    if (a_req.query.state) {
+                                        try {
+                                            const state_obj = JSON.parse(a_req.query.state);
+                                            // Validate state structure to prevent arbitrary session pollution
+                                            if (
+                                                state_obj.endpoint_browser ||
+                                                state_obj.restore_state
+                                            ) {
+                                                a_req.session.restore_state = state_obj;
+                                            }
+                                        } catch (e) {
+                                            // State was not JSON or valid, ignore
+                                            logger.warning(
+                                                "/ui/authn",
+                                                getCurrentLineNumber(),
+                                                "Failed to parse state parameter: " + e,
+                                            );
+                                        }
+                                    }
+
                                     let redirect_path = "/ui/main";
 
                                     // Note: context/optional params for arbitrary input
                                     const token_context = {
                                         // passed values are mutable
-                                        resource_server: client_token.data.resource_sever,
+                                        resource_server: client_token.data.resource_server,
                                         collection_id: a_req.session.collection_id,
                                         scope: xfr_token.scope,
                                     };
@@ -661,15 +723,30 @@ the registration page.
                                             xfr_token.refresh_token,
                                             xfr_token.expires_in,
                                             optional_data,
+                                            (err) => {
+                                                if (err) {
+                                                    redirect_path = "/ui/error";
+                                                    logger.error(
+                                                        "/ui/authn",
+                                                        getCurrentLineNumber(),
+                                                        "setAccessToken Failed: " + err,
+                                                    );
+                                                    delete a_req.session.collection_id;
+                                                }
+                                                // TODO Account may be disable from SDMS (active = false)
+                                                a_resp.redirect(redirect_path);
+                                            },
                                         );
                                     } catch (err) {
                                         redirect_path = "/ui/error";
-                                        logger.error("/ui/authn", getCurrentLineNumber(), err);
+                                        logger.error(
+                                            "/ui/authn",
+                                            getCurrentLineNumber(),
+                                            "Exception in token handling: " + err,
+                                        );
                                         delete a_req.session.collection_id;
+                                        a_resp.redirect(redirect_path);
                                     }
-
-                                    // TODO Account may be disable from SDMS (active = false)
-                                    a_resp.redirect(redirect_path);
                                 }
                             },
                         );
@@ -771,6 +848,19 @@ app.get("/api/usr/register", (a_req, a_resp) => {
                             a_req.session.acc_tok,
                             a_req.session.ref_tok,
                             a_req.session.acc_tok_ttl,
+                            {},
+                            (err) => {
+                                if (err) {
+                                    logger.error("/api/usr/register", getCurrentLineNumber(), err);
+                                    a_resp.status(500).send("Registration failed during token set");
+                                    return;
+                                }
+
+                                // Set session as registered user
+                                a_req.session.reg = true;
+
+                                a_resp.send(reply);
+                            },
                         );
                     } catch (err) {
                         logger.error("/api/usr/register", getCurrentLineNumber(), err);
@@ -785,11 +875,6 @@ app.get("/api/usr/register", (a_req, a_resp) => {
                         delete a_req.session.ref_tok;
                         delete a_req.session.uuids;
                     }
-
-                    // Set session as registered user
-                    a_req.session.reg = true;
-
-                    a_resp.send(reply);
                 }
             },
         );
@@ -1561,7 +1646,19 @@ app.get("/api/col/published/list", (a_req, a_resp) => {
 });
 
 app.get("/api/globus/consent_url", storeCollectionId, (a_req, a_resp) => {
-    const { requested_scopes, state, refresh_tokens, query_params } = a_req.query;
+    let { requested_scopes, state, refresh_tokens, query_params } = a_req.query;
+
+    if (typeof query_params === "string") {
+        try {
+            query_params = JSON.parse(query_params);
+        } catch (e) {
+            logger.error(
+                "/api/globus/consent_url",
+                getCurrentLineNumber(),
+                "Failed to parse query_params: " + e,
+            );
+        }
+    }
 
     const consent_url = generateConsentURL(
         g_oauth_credentials.clientId,
@@ -1969,10 +2066,18 @@ app.get("/ui/theme/save", (a_req, a_resp) => {
  * @param {string} a_ref_tok - Refresh token for access token
  * @param {number} a_expires_sec - Time until expiration of access token
  * @param {OptionalData} [token_optional_params] - Optional params for DataFed to process access token accordingly
+ * @param {RequestCallback} [a_cb] - Optional callback function
  *
  * @throws Error - When a reply is not received from sendMessageDirect
  */
-function setAccessToken(a_uid, a_acc_tok, a_ref_tok, a_expires_sec, token_optional_params = {}) {
+function setAccessToken(
+    a_uid,
+    a_acc_tok,
+    a_ref_tok,
+    a_expires_sec,
+    token_optional_params = {},
+    a_cb = null,
+) {
     logger.info(
         setAccessToken.name,
         getCurrentLineNumber(),
@@ -1986,8 +2091,13 @@ function setAccessToken(a_uid, a_acc_tok, a_ref_tok, a_expires_sec, token_option
         // Should be an AckReply
         if (!reply) {
             logger.error("setAccessToken", getCurrentLineNumber(), "failed.");
+            if (a_cb) {
+                a_cb(new Error("setAccessToken failed"));
+                return;
+            }
             throw new Error("setAccessToken failed");
         }
+        if (a_cb) a_cb(null, reply);
     });
 }
 
