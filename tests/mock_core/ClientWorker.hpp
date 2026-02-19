@@ -4,7 +4,7 @@
 
 // Local private includes
 #include "Config.hpp"
-#include "IMockCoreServer.hpp"
+#include "ICoreServer.hpp"
 
 // DataFed Common public includes
 #include "common/DynaLog.hpp"
@@ -39,7 +39,7 @@ namespace MockCore {
 class ClientWorker {
 public:
   /// ClientWorker constructor
-  ClientWorker(IMockCoreServer &a_core, size_t a_tid, LogContext log_context);
+  ClientWorker(Core::ICoreServer &a_core, size_t a_tid, LogContext log_context);
 
   /// ClientWorker destructor
   ~ClientWorker();
