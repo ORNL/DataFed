@@ -2459,11 +2459,17 @@ g_core_sock.on(
             if (msg) {
                 var resolve_type = msg_info ? msg_info.type : null;
                 if (which_field) {
-                    var actual_entry = Object.values(g_msg_by_id).find(e => e.field_name === which_field);
+                    var actual_entry = Object.values(g_msg_by_id).find(
+                        (e) => e.field_name === which_field,
+                    );
                     if (actual_entry) resolve_type = actual_entry.type;
                 }
                 if (resolve_type) {
-                    msg = resolve_type.toObject(msg, { defaults: true, longs: String, enums: String });
+                    msg = resolve_type.toObject(msg, {
+                        defaults: true,
+                        longs: String,
+                        enums: String,
+                    });
                 }
             }
 

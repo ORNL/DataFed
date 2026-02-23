@@ -81,11 +81,12 @@ class Record {
             this.#err_msg =
                 "Provided uid does not fit within supported directory " +
                 "structure for repository, no user or project folder has " +
-                "been determined for the record. uid: " + uid;
+                "been determined for the record. uid: " +
+                uid;
             return null;
         }
     }
-    
+
     /**
      * Compares two paths and if an error is detected will save the error code and message.
      *
@@ -173,24 +174,23 @@ class Record {
         return !!this.#alloc;
     }
 
-
     isPathConsistent(a_path) {
         if (!this.isManaged()) {
             return false;
         }
-    
+
         if (!a_path.startsWith("/")) {
             a_path = "/" + a_path;
         }
-    
+
         // Check current location
         this.#repo = g_db._document(this.#loc._to);
         let current_path = this._pathToRecord(this.#loc.uid, this.#repo.path);
-    
+
         if (current_path === a_path) {
             return true;
         }
-    
+
         // If record is in flight, also check new location
         if (this.#loc.hasOwnProperty("new_repo") && this.#loc.new_repo) {
             const new_uid = this.#loc.new_owner ? this.#loc.new_owner : this.#loc.uid;
@@ -198,45 +198,52 @@ class Record {
                 _from: new_uid,
                 _to: this.#loc.new_repo,
             });
-    
+
             if (!new_alloc) {
                 this.#error = error.ERR_PERM_DENIED;
                 this.#err_msg =
                     "Permission denied, '" + this.#key + "' is not part of an allocation'";
                 return false;
             }
-    
+
             const new_repo = g_db._document(this.#loc.new_repo);
             if (!new_repo) {
                 this.#error = error.ERR_INTERNAL_FAULT;
                 this.#err_msg =
-                    "Unable to find repo '" + this.#loc.new_repo + "' for record '" + this.#data_id + "'";
+                    "Unable to find repo '" +
+                    this.#loc.new_repo +
+                    "' for record '" +
+                    this.#data_id +
+                    "'";
                 return false;
             }
-    
+
             let new_path = this._pathToRecord(new_uid, new_repo.path);
             if (new_path === a_path) {
                 return true;
             }
-    
+
             // Neither matched — include both expected paths in error
             this.#error = error.ERR_PERM_DENIED;
             this.#err_msg =
                 "Record path is not consistent with repo. Expected: " +
-                current_path + " or " + new_path +
-                " but got: " + a_path;
+                current_path +
+                " or " +
+                new_path +
+                " but got: " +
+                a_path;
             return false;
         }
-    
+
         // No in-flight move, current path didn't match
         this.#error = error.ERR_PERM_DENIED;
         this.#err_msg =
             "Record path is not consistent with repo. Expected: " +
-            current_path + " but got: " + a_path;
+            current_path +
+            " but got: " +
+            a_path;
         return false;
     }
-
-
 }
 
 module.exports = Record;
