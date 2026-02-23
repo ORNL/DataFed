@@ -45,5 +45,12 @@ module.exports = (function () {
         return components.filter((component) => component !== "");
     };
 
+    obj.normalizePOSIXPath = function (a_posix_path) {
+        if (!a_posix_path || typeof a_posix_path !== "string") {
+            throw new Error("Invalid POSIX path");
+        }
+        return path.posix.normalize(a_posix_path);
+    };
+
     return obj;
 })();

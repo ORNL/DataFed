@@ -45,7 +45,12 @@ router
             if (!client) {
                 throw [error.ERR_PERM_DENIED, "Unknown client: " + req.queryParams.client];
             }
-            let repo = new Repo(req.queryParams.repo);
+            let repo = Repo.resolveFromPath(req.queryParams.file);
+
+            if (repo.id() !== req.queryParams.repo) {
+                console.warn("Repo mismatch: param=" + req.queryParams.repo +
+                             " resolved=" + repo.id());
+            }
             let path_type = repo.pathType(req.queryParams.file);
 
             // If the provided path is not within the repo throw an error
