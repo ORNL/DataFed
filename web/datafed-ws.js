@@ -216,46 +216,46 @@ function startServer() {
                 "ERROR: No reply from core server",
             );
         } else if (
-            reply.api_major != g_ver_api_major ||
-            reply.api_minor < g_ver_api_minor ||
-            reply.api_minor > g_ver_api_minor + 9
+            reply.apiMajor != g_ver_api_major ||
+            reply.apiMinor < g_ver_api_minor ||
+            reply.apiMinor > g_ver_api_minor + 9
         ) {
             logger.error(
                 startServer.name,
                 getCurrentLineNumber(),
                 "ERROR: Incompatible api version detected (" +
-                    reply.api_major +
+                    reply.apiMajor +
                     "." +
-                    reply.api_minor +
+                    reply.apiMinor +
                     "." +
-                    reply.api_patch +
+                    reply.apiPatch +
                     ")",
             );
         } else {
             var warning_msg =
                 "WARNING: A newer web server may be available the latest release version is: (" +
-                reply.release_year +
+                reply.releaseYear +
                 "." +
-                reply.release_month +
+                reply.releaseMonth +
                 "." +
-                reply.release_day +
+                reply.releaseDay +
                 "." +
-                reply.release_hour +
+                reply.releaseHour +
                 "." +
-                reply.release_minute;
-            if (reply.release_year > g_ver_release_year) {
+                reply.releaseMinute;
+            if (reply.releaseYear > g_ver_release_year) {
                 logger.warning(startServer.name, getCurrentLineNumber(), warning_msg);
-            } else if (reply.release_year == g_ver_release_year) {
-                if (reply.release_month > g_ver_release_month) {
+            } else if (reply.releaseYear == g_ver_release_year) {
+                if (reply.releaseMonth > g_ver_release_month) {
                     logger.warning(startServer.name, getCurrentLineNumber(), warning_msg);
-                } else if (reply.release_month == g_ver_release_month) {
-                    if (reply.release_day > g_ver_release_day) {
+                } else if (reply.releaseMonth == g_ver_release_month) {
+                    if (reply.releaseDay > g_ver_release_day) {
                         logger.warning(startServer.name, getCurrentLineNumber(), warning_msg);
-                    } else if (reply.release_day == g_ver_release_day) {
-                        if (reply.release_hour > g_ver_release_hour) {
+                    } else if (reply.releaseDay == g_ver_release_day) {
+                        if (reply.releaseHour > g_ver_release_hour) {
                             logger.warning(startServer.name, getCurrentLineNumber(), warning_msg);
-                        } else if (reply.release_hour == g_ver_release_hour) {
-                            if (reply.release_minute > g_ver_release_minute) {
+                        } else if (reply.releaseHour == g_ver_release_hour) {
+                            if (reply.releaseMinute > g_ver_release_minute) {
                                 logger.warning(
                                     startServer.name,
                                     getCurrentLineNumber(),
