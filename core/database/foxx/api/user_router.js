@@ -1161,12 +1161,8 @@ router
 
 router
     .get("/token/get/expiring", function (req, res) {
-<<<<<<< HEAD
         let extra_log_info = [];
         const desc = `User access tokens expiring in ${req.queryParams.expires_in} seconds`;
-=======
-        let result = null;
->>>>>>> devel
         try {
             logger.logRequestStarted({
                 client: req.queryParams.client,
