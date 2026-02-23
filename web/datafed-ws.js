@@ -146,11 +146,15 @@ class Logger {
 
 const logger = new Logger(LogLevel.INFO);
 
-g_ver_release_year = version.DATAFED_RELEASE_YEAR;
-g_ver_release_month = version.DATAFED_RELEASE_MONTH;
-g_ver_release_day = version.DATAFED_RELEASE_DAY;
-g_ver_release_hour = version.DATAFED_RELEASE_HOUR;
-g_ver_release_minute = version.DATAFED_RELEASE_MINUTE;
+g_ver_release_year = version.RELEASE_YEAR;
+g_ver_release_month = version.RELEASE_MONTH;
+g_ver_release_day = version.RELEASE_DAY;
+g_ver_release_hour = version.RELEASE_HOUR;
+g_ver_release_minute = version.RELEASE_MINUTE;
+
+g_ver_api_major = version.MAJOR;
+g_ver_api_minor = version.MINOR;
+g_ver_api_patch = version.PATCH;
 
 g_version =
     g_ver_release_year +
