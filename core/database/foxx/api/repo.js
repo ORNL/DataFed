@@ -188,35 +188,35 @@ class Repo {
 
     static resolveFromPath(file_path) {
         var canonical = pathModule.normalizePOSIXPath(file_path);
-        
+
         if (canonical !== file_path) {
-            throw [error.ERR_PERM_DENIED,
-                "Path contains invalid sequences: " + file_path];
+            throw [error.ERR_PERM_DENIED, "Path contains invalid sequences: " + file_path];
         }
-    
+
         var repos = g_db.repo.all().toArray();
         var best_match = null;
         var best_length = 0;
-    
+
         for (var i = 0; i < repos.length; i++) {
             var repo_path = repos[i].path;
-            if (repo_path.charAt(repo_path.length - 1) !== '/') {
-                repo_path += '/';
+            if (repo_path.charAt(repo_path.length - 1) !== "/") {
+                repo_path += "/";
             }
-            if (canonical.indexOf(repo_path) === 0 || 
-                canonical === repo_path.slice(0, -1)) {
+            if (canonical.indexOf(repo_path) === 0 || canonical === repo_path.slice(0, -1)) {
                 if (repo_path.length > best_length) {
                     best_match = repos[i];
                     best_length = repo_path.length;
                 }
             }
         }
-    
+
         if (!best_match) {
-            throw [error.ERR_PERM_DENIED,
-                "File path does not match any known repository: " + file_path];
+            throw [
+                error.ERR_PERM_DENIED,
+                "File path does not match any known repository: " + file_path,
+            ];
         }
-    
+
         return new Repo(best_match._id);
     }
 }
