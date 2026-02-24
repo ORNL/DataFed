@@ -5,6 +5,7 @@
 #include "common/DynaLog.hpp"
 #include "common/TraceException.hpp"
 #include "common/Util.hpp"
+#include "common/envelope.pb.h"
 
 // Standard includes
 #include <iostream>
@@ -226,7 +227,7 @@ std::string GlobusAPI::getSubmissionID(const std::string &a_acc_token) {
 
   try {
     if (!raw_result.size())
-      EXCEPT_PARAM(ID_SERVICE_ERROR, "Empty response. Code: " << code);
+      EXCEPT_PARAM(SERVICE_ERROR, "Empty response. Code: " << code);
 
     Value result;
 
@@ -239,7 +240,7 @@ std::string GlobusAPI::getSubmissionID(const std::string &a_acc_token) {
     return resp_obj.getString("value");
   } catch (libjson::ParseError &e) {
     DL_DEBUG(m_log_context, "PARSE FAILED! " << raw_result);
-    EXCEPT_PARAM(ID_SERVICE_ERROR,
+    EXCEPT_PARAM(SERVICE_ERROR,
                  "Globus submission API call returned invalid JSON.");
   } catch (TraceException &e) {
     DL_DEBUG(m_log_context, raw_result);
@@ -247,7 +248,7 @@ std::string GlobusAPI::getSubmissionID(const std::string &a_acc_token) {
     throw;
   } catch (...) {
     DL_DEBUG(m_log_context, "UNEXPECTED/MISSING JSON! " << raw_result);
-    EXCEPT_PARAM(ID_SERVICE_ERROR,
+    EXCEPT_PARAM(SERVICE_ERROR,
                  "Globus submission API call returned unexpected content");
   }
 }
@@ -292,7 +293,7 @@ string GlobusAPI::transfer(
 
   try {
     if (!raw_result.size())
-      EXCEPT_PARAM(ID_SERVICE_ERROR, "Empty response. Code: " << code);
+      EXCEPT_PARAM(SERVICE_ERROR, "Empty response. Code: " << code);
 
     Value result;
 
@@ -307,14 +308,14 @@ string GlobusAPI::transfer(
     string &code = resp_obj.getString("code");
 
     if (code.compare("Accepted") != 0)
-      EXCEPT_PARAM(ID_SERVICE_ERROR, "Request not accepted (" << code << ")");
+      EXCEPT_PARAM(SERVICE_ERROR, "Request not accepted (" << code << ")");
 
     string &task_id = resp_obj.getString("task_id");
 
     return task_id;
   } catch (libjson::ParseError &e) {
     DL_ERROR(m_log_context, "PARSE FAILED! " << raw_result);
-    EXCEPT_PARAM(ID_SERVICE_ERROR,
+    EXCEPT_PARAM(SERVICE_ERROR,
                  "Globus transfer API call returned invalid JSON.");
   } catch (TraceException &e) {
     DL_ERROR(m_log_context, raw_result);
@@ -322,7 +323,7 @@ string GlobusAPI::transfer(
     throw;
   } catch (...) {
     DL_ERROR(m_log_context, "UNEXPECTED EXCEPTION " << raw_result);
-    EXCEPT_PARAM(ID_SERVICE_ERROR,
+    EXCEPT_PARAM(SERVICE_ERROR,
                  "Globus transfer API call returned unexpected content");
   }
 }
@@ -344,7 +345,7 @@ bool GlobusAPI::checkTransferStatus(const std::string &a_task_id,
 
   try {
     if (!raw_result.size()) {
-      EXCEPT_PARAM(ID_SERVICE_ERROR, "Empty response. Code: " << code);
+      EXCEPT_PARAM(SERVICE_ERROR, "Empty response. Code: " << code);
     }
 
     Value result;
@@ -400,7 +401,7 @@ bool GlobusAPI::checkTransferStatus(const std::string &a_task_id,
     }
   } catch (libjson::ParseError &e) {
     DL_ERROR(m_log_context, "PARSE FAILED! " << raw_result);
-    EXCEPT_PARAM(ID_SERVICE_ERROR,
+    EXCEPT_PARAM(SERVICE_ERROR,
                  "Globus task view API call returned invalid JSON.");
   } catch (TraceException &e) {
     DL_ERROR(m_log_context, raw_result);
@@ -408,7 +409,7 @@ bool GlobusAPI::checkTransferStatus(const std::string &a_task_id,
     throw;
   } catch (...) {
     DL_ERROR(m_log_context, "UNEXPECTED/MISSING JSON! " << raw_result);
-    EXCEPT_PARAM(ID_SERVICE_ERROR,
+    EXCEPT_PARAM(SERVICE_ERROR,
                  "Globus task view API call returned unexpected content");
   }
 
@@ -421,7 +422,7 @@ bool GlobusAPI::checkTransferStatus(const std::string &a_task_id,
 
   try {
     if (!raw_result.size())
-      EXCEPT_PARAM(ID_SERVICE_ERROR, "Empty response. Code: " << code);
+      EXCEPT_PARAM(SERVICE_ERROR, "Empty response. Code: " << code);
 
     Value result;
 
@@ -434,7 +435,7 @@ bool GlobusAPI::checkTransferStatus(const std::string &a_task_id,
     string &data_type = resp_obj.getString("DATA_TYPE");
 
     if (data_type.compare("event_list") != 0)
-      EXCEPT(ID_SERVICE_ERROR, "Invalid DATA_TYPE field.");
+      EXCEPT(SERVICE_ERROR, "Invalid DATA_TYPE field.");
 
     vector<string> events;
 
@@ -457,7 +458,7 @@ bool GlobusAPI::checkTransferStatus(const std::string &a_task_id,
     return eventsHaveErrors(events, a_status, a_err_msg);
   } catch (libjson::ParseError &e) {
     DL_ERROR(m_log_context, "PARSE FAILED! " << raw_result);
-    EXCEPT_PARAM(ID_SERVICE_ERROR,
+    EXCEPT_PARAM(SERVICE_ERROR,
                  "Globus task event list API call returned invalid JSON.");
   } catch (TraceException &e) {
     DL_ERROR(m_log_context, raw_result);
@@ -465,7 +466,7 @@ bool GlobusAPI::checkTransferStatus(const std::string &a_task_id,
     throw;
   } catch (...) {
     DL_ERROR(m_log_context, "UNEXPECTED/MISSING JSON! " << raw_result);
-    EXCEPT_PARAM(ID_SERVICE_ERROR,
+    EXCEPT_PARAM(SERVICE_ERROR,
                  "Globus task event list API call returned unexpected content");
   }
 }
@@ -480,7 +481,7 @@ void GlobusAPI::cancelTask(const std::string &a_task_id,
 
   try {
     if (!raw_result.size())
-      EXCEPT_PARAM(ID_SERVICE_ERROR, "Empty response. Code: " << code);
+      EXCEPT_PARAM(SERVICE_ERROR, "Empty response. Code: " << code);
 
     Value result;
 
@@ -493,11 +494,11 @@ void GlobusAPI::cancelTask(const std::string &a_task_id,
     string &resp_code = resp_obj.getString("code");
 
     if (resp_code != "Canceled")
-      EXCEPT_PARAM(ID_SERVICE_ERROR,
+      EXCEPT_PARAM(SERVICE_ERROR,
                    "Unexpected 'code' value returned: " << resp_code);
   } catch (libjson::ParseError &e) {
     DL_ERROR(m_log_context, "PARSE FAILED! " << raw_result);
-    EXCEPT_PARAM(ID_SERVICE_ERROR,
+    EXCEPT_PARAM(SERVICE_ERROR,
                  "Globus cancel task API call returned invalid JSON.");
   } catch (TraceException &e) {
     DL_ERROR(m_log_context, raw_result);
@@ -505,7 +506,7 @@ void GlobusAPI::cancelTask(const std::string &a_task_id,
     throw;
   } catch (...) {
     DL_ERROR(m_log_context, "UNEXPECTED/MISSING JSON! " << raw_result);
-    EXCEPT_PARAM(ID_SERVICE_ERROR,
+    EXCEPT_PARAM(SERVICE_ERROR,
                  "Globus cancel task API call returned unexpected content");
   }
 }
@@ -555,7 +556,7 @@ void GlobusAPI::getEndpointInfo(const std::string &a_ep_id,
   Value result;
   try {
     if (!raw_result.size())
-      EXCEPT_PARAM(ID_SERVICE_ERROR, "Empty response. Code: " << code);
+      EXCEPT_PARAM(SERVICE_ERROR, "Empty response. Code: " << code);
 
     result.fromString(raw_result);
 
@@ -599,7 +600,7 @@ void GlobusAPI::getEndpointInfo(const std::string &a_ep_id,
     }
   } catch (libjson::ParseError &e) {
     DL_ERROR(m_log_context, "PARSE FAILED! " << raw_result);
-    EXCEPT_PARAM(ID_SERVICE_ERROR,
+    EXCEPT_PARAM(SERVICE_ERROR,
                  "Globus endpoint API call returned invalid JSON.");
   } catch (TraceException &e) {
     DL_ERROR(m_log_context, raw_result);
@@ -608,7 +609,7 @@ void GlobusAPI::getEndpointInfo(const std::string &a_ep_id,
     throw;
   } catch (exception &e) {
     DL_ERROR(m_log_context, "UNEXPECTED/MISSING JSON! " << raw_result);
-    EXCEPT_PARAM(ID_SERVICE_ERROR,
+    EXCEPT_PARAM(SERVICE_ERROR,
                  "Globus endpoint API call returned unexpected content");
   }
 }
@@ -625,7 +626,7 @@ void GlobusAPI::refreshAccessToken(const std::string &a_ref_tok,
 
   if (!raw_result.size()) {
     EXCEPT_PARAM(
-        ID_SERVICE_ERROR,
+        SERVICE_ERROR,
         "Globus token API call returned empty response. Code: " << code);
   }
 
@@ -643,7 +644,7 @@ void GlobusAPI::refreshAccessToken(const std::string &a_ref_tok,
   } catch (libjson::ParseError &e) {
     DL_ERROR(m_log_context,
              "PARSE FAILED! Globus token API call returned invalid JSON");
-    EXCEPT_PARAM(ID_SERVICE_ERROR,
+    EXCEPT_PARAM(SERVICE_ERROR,
                  "Globus token API call returned invalid JSON.");
   } catch (TraceException &e) {
     DL_ERROR(m_log_context, raw_result);
@@ -651,7 +652,7 @@ void GlobusAPI::refreshAccessToken(const std::string &a_ref_tok,
     throw;
   } catch (exception &e) {
     DL_ERROR(m_log_context, "UNEXPECTED/MISSING JSON! " << raw_result);
-    EXCEPT_PARAM(ID_SERVICE_ERROR,
+    EXCEPT_PARAM(SERVICE_ERROR,
                  "Globus token API call returned unexpected content");
   }
 }
@@ -661,9 +662,9 @@ void GlobusAPI::checkResponsCode(long a_code,
   if (a_code < 200 || a_code > 202) {
     libjson::Value::ObjectIter i = a_body.find("message");
     if (i == a_body.end())
-      EXCEPT_PARAM(ID_SERVICE_ERROR, "Request failed, code: " << a_code);
+      EXCEPT_PARAM(SERVICE_ERROR, "Request failed, code: " << a_code);
     else
-      EXCEPT_PARAM(ID_SERVICE_ERROR,
+      EXCEPT_PARAM(SERVICE_ERROR,
                    "Request failed, code: " << a_code << ", reason: "
                                             << i->second.asString());
   }

@@ -302,15 +302,74 @@ class EndpointBrowser {
         let title;
         // Generate consent URL for consent required errors
         if (error instanceof ApiError) {
-            if (error.code === "ConsentRequired" || error.data?.needs_consent === true) {
+            // Check for explicit consent requirement OR permission denied with auth parameters (530)
+            if (
+                error.code === "ConsentRequired" ||
+                error.data?.needs_consent === true ||
+                (error.data?.code === "permission_denied" &&
+                    error.data?.authorization_parameters?.session_required_single_domain)
+            ) {
                 const data = await new Promise((resolve) => {
+                    // Extract query params from authorization_parameters if available
+                    const queryParams = {};
+                    if (error.data?.authorization_parameters?.session_required_single_domain) {
+                        queryParams.session_required_single_domain =
+                            error.data.authorization_parameters.session_required_single_domain;
+                    }
+
+                    // Serialize current state for restoration after consent flow
+                    const stateObj = {
+                        endpoint_browser: {
+                            endpoint: this.props.endpoint.rawData,
+                            path: this.state.path,
+                            mode: this.props.mode,
+                        },
+                    };
+
+                    // Check if "New Data Record" dialog is open and save its state
+                    const new_data_dlg = $("#d_new_edit");
+                    const transfer_dlg_content = $("#records").closest(".ui-dialog-content");
+
+                    if (new_data_dlg.length && new_data_dlg.dialog("isOpen")) {
+                        const metadata_editor = ace.edit(new_data_dlg.find("#md")[0]);
+                        stateObj.parent_dialog = {
+                            type: "d_new_edit",
+                            mode: 0, // DLG_DATA_MODE_NEW
+                            data: {
+                                title: new_data_dlg.find("#title").val(),
+                                alias: new_data_dlg.find("#alias").val(),
+                                desc: new_data_dlg.find("#desc").val(),
+                                metadata: metadata_editor ? metadata_editor.getValue() : "",
+                                // Use parentId for the collection
+                                parentId: new_data_dlg.find("#coll").val(),
+                            },
+                        };
+                    } else if (
+                        transfer_dlg_content.length &&
+                        transfer_dlg_content.dialog("isOpen")
+                    ) {
+                        const controller = transfer_dlg_content.data("controller");
+                        if (controller) {
+                            stateObj.parent_dialog = {
+                                type: "transfer",
+                                mode: controller.model.mode,
+                                records: controller.ids,
+                            };
+                        }
+                    }
+
+                    const state = JSON.stringify(stateObj);
+
                     api.getGlobusConsentURL(
                         (_, data) => resolve(data),
                         this.props.endpoint.id,
                         error.data.required_scopes,
+                        false, // refresh_tokens
+                        queryParams,
+                        state,
                     );
                 });
-                title = `<span class='ui-state-error'>Consent Required: Please provide <a href="${data.consent_url}">consent</a>.</span>`;
+                title = `<span class='ui-state-error'>Consent/Login Required: Please <a href="${data.consent_url}">login with required identity</a>.</span>`;
             } else {
                 title = `<span class='ui-state-error'>Error: ${
                     error.data.message || "Unknown API error"

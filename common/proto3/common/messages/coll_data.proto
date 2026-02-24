@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+message CollData {
+    string id = 1;
+    string title = 2;
+    string alias = 3;
+    string desc = 4;
+    repeated string tags = 5;
+    string topic = 6;
+    string owner = 7;
+    string creator = 8;
+    uint32 ct = 9;
+    uint32 ut = 10;
+    string parent_id = 11;
+    uint32 notes = 12;
+}

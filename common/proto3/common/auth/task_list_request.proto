@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package SDMS;
+
+import "enums/task_status.proto";
+
+option cc_enable_arenas = true;
+
+message TaskListRequest {
+    optional uint32 since = 1;
+    optional uint32 from = 2;
+    optional uint32 to = 3;
+    repeated TaskStatus status = 4;
+    optional uint32 offset = 5;
+    optional uint32 count = 6;
+}

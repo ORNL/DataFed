@@ -184,17 +184,6 @@ export function dataPutCheck(a_id, a_cb) {
     _asyncGet("/api/dat/put?id=" + encodeURIComponent(a_id) + "&check=true", null, a_cb);
 }
 
-export function dataGetDeps(a_ids, a_cb) {
-    _asyncGet("/api/dat/dep/get?ids=" + encodeURIComponent(a_ids), null, function (ok, data) {
-        if (ok) {
-            a_cb(data);
-        } else {
-            util.setStatusText("Get Dependencies Error: " + data, true);
-            a_cb();
-        }
-    });
-}
-
 export function dataGetDepGraph(a_id, a_cb) {
     _asyncGet("/api/dat/dep/graph/get?id=" + encodeURIComponent(a_id), null, function (ok, data) {
         if (ok) {
@@ -240,23 +229,8 @@ export function sendDataDelete(a_ids, a_cb) {
     _asyncGet("/api/dat/delete?ids=" + encodeURIComponent(JSON.stringify(a_ids)), null, a_cb);
 }
 
-export function copyData(a_src_id, a_dst_id, a_cb) {
-    _asyncGet(
-        "/api/dat/copy?src=" +
-            encodeURIComponent(a_src_id) +
-            "&dst=" +
-            encodeURIComponent(a_dst_id),
-        null,
-        a_cb,
-    );
-}
-
 export function dataSearch(a_query, a_callback) {
     _asyncPost("/api/dat/search", a_query, a_callback);
-}
-
-export function dataPubSearch(a_query, a_cb) {
-    _asyncPost("/api/col/pub/search/data", a_query, a_cb);
 }
 
 export function sendDataLock(a_ids, a_lock, a_cb) {
@@ -332,13 +306,6 @@ export function collUpdate(a_record, a_cb) {
 
 export function collDelete(a_ids, a_cb) {
     _asyncGet("/api/col/delete?ids=" + encodeURIComponent(JSON.stringify(a_ids)), null, a_cb);
-}
-
-export function catalogSearch(a_query, a_cb) {
-    _asyncPost("/api/cat/search", a_query, a_cb);
-    /*_asyncPost( "/api/col/pub/search", a_query, function( ok, data ){
-        setTimeout( function(){ a_cb( ok, data ); }, 2000 );
-    });*/
 }
 
 export function projList_url(a_owned, a_admin, a_member, a_sort, a_offset, a_count) {
@@ -852,25 +819,6 @@ export function topicListTopics(a_id, a_offset, a_count, a_cb) {
     if (!a_cb) return;
 
     _asyncGet(topicListTopics_url(a_id, a_offset, a_count), null, a_cb);
-    /*_asyncGet( topicListTopics_url( a_id, a_offset, a_count ), null, function( ok, data ){
-        setTimeout( function(){ a_cb( ok, data ); }, 2000 );
-    });*/
-}
-
-export function topicListColl_url(a_id, a_offset, a_count) {
-    return (
-        "/api/top/list/coll?id=" +
-        a_id +
-        (a_offset != undefined && a_count != undefined
-            ? "&offset=" + a_offset + "&count=" + a_count
-            : "")
-    );
-}
-
-export function topicListColl(a_id, a_offset, a_count, a_cb) {
-    if (!a_cb) return;
-
-    _asyncGet(topicListColl_url(a_id, a_offset, a_count), null, a_cb);
 }
 
 export function topicSearch_url(a_phrase) {

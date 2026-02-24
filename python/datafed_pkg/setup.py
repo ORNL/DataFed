@@ -22,6 +22,13 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/ORNL/DataFed",
     packages=setuptools.find_packages(),
+    package_data={
+        "datafed": ["*.py"],
+        "datafed.anon": ["*.py"],
+        "datafed.auth": ["*.py"],
+        "datafed.enums": ["*.py"],
+        "datafed.messages": ["*.py"],
+    },
     setup_requires=["setuptools"],
     install_requires=install_requires,
     entry_points={"console_scripts": ["datafed = datafed.CLI:run"]},
@@ -31,3 +38,5 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
 )
+
+

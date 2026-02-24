@@ -237,7 +237,7 @@ describe("Record Class", () => {
         const valid_key = "1127";
         const key_id = "d/" + valid_key;
         const owner_id = "u/john";
-        const repo_id = "repo/orange-at-com";
+        const repo_id = "repo/orange-at-org";
         const new_repo_id = "repo/watermelon-at-org";
 
         // Create nodes

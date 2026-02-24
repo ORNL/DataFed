@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package SDMS;
+
+import "messages/dependency_data.proto";
+
+option cc_enable_arenas = true;
+
+message ListingData {
+    string id = 1;
+    string title = 2;
+    string alias = 3;
+    bool locked = 4;
+    string owner = 5;
+    string creator = 6;
+    double size = 7;
+    bool external = 8;
+    uint32 notes = 9;
+    int32 gen = 10;
+    bool deps_avail = 11;
+    repeated DependencyData dep = 12;
+    string owner_name = 13;
+    string desc = 14;
+}

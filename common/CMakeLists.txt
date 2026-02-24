@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 3.17.0)
 
 # The below command will by default generate the proto files in this folder
 # we want to place them in the binary folder in /proto/common
-add_subdirectory(proto/common)
+add_subdirectory(proto3/common)
 
 if( BUILD_COMMON ) 
   configure_file(

@@ -52,7 +52,7 @@ scripts/globus/mapping.json
 scripts/admin_datafed_backup.sh
 scripts/admin_refresh_certs.sh
 scripts/globus/__pycache__
-services/
+/services/
 tests/mock_core/Version.hpp
 tmp
 web/SDMS.proto

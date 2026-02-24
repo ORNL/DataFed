@@ -7,14 +7,18 @@ const g_db = require("@arangodb").db;
 const g_lib = require("./support");
 const error = require("./lib/error_codes");
 const permissions = require("./lib/permissions");
-
+const basePath = "note";
+const logger = require("./lib/logger");
 module.exports = router;
 
 //==================== ACL API FUNCTIONS
 
 router
     .post("/create", function (req, res) {
-        console.log("note/create");
+        let client = null;
+        let result = {};
+        let doc;
+        let _key, _rev;
         try {
             g_db._executeTransaction({
                 collections: {
@@ -22,9 +26,17 @@ router
                     write: ["d", "n", "note"],
                 },
                 action: function () {
-                    const client = g_lib.getUserFromClientID(req.queryParams.client);
-                    var id = g_lib.resolveDataCollID(req.queryParams.subject, client),
-                        doc = g_db._document(id);
+                    client = g_lib.getUserFromClientID(req.queryParams.client);
+                    var id = g_lib.resolveDataCollID(req.queryParams.subject, client);
+                    doc = g_db._document(id);
+                    logger.logRequestStarted({
+                        client: client?._id,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "POST",
+                        routePath: basePath + "/create",
+                        status: "Started",
+                        description: "Create an annotation on an object " + req.queryParams.subject,
+                    });
 
                     if (!permissions.hasAdminPermObject(client, id)) {
                         if (
@@ -87,9 +99,32 @@ router
                         results: [note.new],
                         updates: Object.values(updates),
                     });
+                    ({ _key, _rev, ...result } = doc);
+                    logger.logRequestSuccess({
+                        client: client?._id,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "POST",
+                        routePath: basePath + "/create",
+                        status: "Success",
+                        description: "Create an annotation on an object " + req.queryParams.subject,
+                        extra: result,
+                    });
                 },
             });
         } catch (e) {
+            if (doc) {
+                ({ _key, _rev, ...result } = doc);
+            }
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/create",
+                status: "Failure",
+                description: "Create an annotation on an object " + req.queryParams.subject,
+                extra: result,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -108,7 +143,8 @@ router
 
 router
     .post("/update", function (req, res) {
-        console.log("note/update");
+        let client = null;
+        let result, doc, _key, _rev;
         try {
             g_db._executeTransaction({
                 collections: {
@@ -116,7 +152,15 @@ router
                     write: ["d", "n", "note"],
                 },
                 action: function () {
-                    const client = g_lib.getUserFromClientID(req.queryParams.client);
+                    client = g_lib.getUserFromClientID(req.queryParams.client);
+                    logger.logRequestStarted({
+                        client: client?._id,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "POST",
+                        routePath: basePath + "/update",
+                        status: "Started",
+                        description: "Update annotation " + req.queryParams.id,
+                    });
 
                     if (!req.queryParams.id.startsWith("n/"))
                         throw [
@@ -232,9 +276,32 @@ router
                         results: [note],
                         updates: Object.values(updates),
                     });
+                    ({ _key, _rev, ...result } = doc);
+                    logger.logRequestSuccess({
+                        client: client?._id,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "POST",
+                        routePath: basePath + "/update",
+                        status: "Success",
+                        description: "Update annotation " + req.queryParams.id,
+                        extra: result,
+                    });
                 },
             });
         } catch (e) {
+            if (doc) {
+                ({ _key, _rev, ...result } = doc);
+            }
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/update",
+                status: "Failure",
+                description: "Update annotation " + req.queryParams.id,
+                extra: result,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -253,6 +320,8 @@ router
 
 router
     .post("/comment/edit", function (req, res) {
+        let client = null;
+        let note = null;
         try {
             g_db._executeTransaction({
                 collections: {
@@ -260,7 +329,19 @@ router
                     write: ["n"],
                 },
                 action: function () {
-                    const client = g_lib.getUserFromClientID(req.queryParams.client);
+                    client = g_lib.getUserFromClientID(req.queryParams.client);
+                    logger.logRequestStarted({
+                        client: client?._id,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "POST",
+                        routePath: basePath + "/comment/edit",
+                        status: "Started",
+                        description:
+                            "Edit annotation comment " +
+                            req.queryParams.id +
+                            " Comment ID:" +
+                            req.queryParams.comment_idx,
+                    });
 
                     if (!req.queryParams.id.startsWith("n/"))
                         throw [
@@ -274,7 +355,7 @@ router
                             "Annotaion ID '" + req.queryParams.id + "' does not exist.",
                         ];
 
-                    var note = g_db.n.document(req.queryParams.id);
+                    note = g_db.n.document(req.queryParams.id);
 
                     if (req.queryParams.comment_idx >= note.comments.length)
                         throw [error.ERR_INVALID_PARAM, "Comment index out of range."];
@@ -300,9 +381,40 @@ router
                     res.send({
                         results: [note.new],
                     });
+                    logger.logRequestSuccess({
+                        client: client?._id,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "POST",
+                        routePath: basePath + "/comment/edit",
+                        status: "Success",
+                        description:
+                            "Edit annotation comment " +
+                            req.queryParams.id +
+                            " Comment ID:" +
+                            req.queryParams.comment_idx,
+                        extra: {
+                            title: note.new.title,
+                            creator: note.new.creator,
+                            comments: note.new.comments[req.queryParams.comment_idx],
+                        },
+                    });
                 },
             });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/comment/edit",
+                status: "Failure",
+                description:
+                    "Edit an annotation comment " +
+                    req.queryParams.id +
+                    " Comment ID:" +
+                    req.queryParams.comment_idx,
+                extra: note.new,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -315,8 +427,17 @@ router
 
 router
     .get("/view", function (req, res) {
+        let client = null;
         try {
-            const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
+            client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Started",
+                description: "View annotation " + req.queryParams.id,
+            });
 
             if (!req.queryParams.id.startsWith("n/"))
                 throw [
@@ -369,7 +490,39 @@ router
             res.send({
                 results: [note],
             });
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Success",
+                description: "View annotation " + req.queryParams.id,
+                extra: {
+                    title: note?.title,
+                    creator: note?.creator,
+                    lastComment: Array.isArray(note.comments)
+                        ? note.comments[note.comments.length - 1] || null
+                        : null,
+                },
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Failure",
+                description: "View annotation " + req.queryParams.id,
+                extra: {
+                    title: note?.title,
+                    creator: note?.creator,
+                    lastComment: Array.isArray(note.comments)
+                        ? note.comments[note.comments.length - 1] || null
+                        : null,
+                },
+                error: e,
+            });
+
             g_lib.handleException(e, res);
         }
     })
@@ -380,11 +533,20 @@ router
 
 router
     .get("/list/by_subject", function (req, res) {
+        let client = null;
+        let results = null;
         try {
-            const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
+            client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/list/by_subject",
+                status: "Started",
+                description: "List annotations by subject " + req.queryParams.subject,
+            });
 
-            var results,
-                qry,
+            var qry,
                 id = g_lib.resolveDataCollID(req.queryParams.subject, client);
 
             if (!client) {
@@ -411,7 +573,26 @@ router
             res.send({
                 results: results.toArray(),
             });
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/list/by_subject",
+                status: "Success",
+                description: "List annotations by subject " + req.queryParams.subject,
+                extra: { found: results?._countTotal },
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/list/by_subject",
+                status: "Failure",
+                description: "List annotations by subject " + req.queryParams.subject,
+                extra: { found: results?._countTotal },
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -422,7 +603,23 @@ router
 
 router
     .get("/purge", function (req, res) {
+        let client = null;
+        let id = null;
+        const purgedIds = [];
         try {
+            client = req.queryParams?.client;
+            logger.logRequestStarted({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/purge",
+                status: "Started",
+                description:
+                    "Purge old closed annotations older than " +
+                    req.queryParams.age_sec +
+                    " seconds",
+            });
+
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn"],
@@ -432,23 +629,50 @@ router
                     //console.log("note purge, age:", req.queryParams.age_sec );
 
                     var t = Date.now() / 1000 - req.queryParams.age_sec;
-                    var id,
-                        notes = g_db._query(
-                            "for i in n filter i.state == " +
-                                g_lib.NOTE_CLOSED +
-                                " && i.ut < " +
-                                t +
-                                " and i.parent_id == null return i._id",
-                        );
+
+                    //maybe id = below
+                    var notes = g_db._query(
+                        "for i in n filter i.state == " +
+                            g_lib.NOTE_CLOSED +
+                            " && i.ut < " +
+                            t +
+                            " and i.parent_id == null return i._id",
+                    );
                     while (notes.hasNext()) {
                         id = notes.next();
-                        console.log("purging", id);
+                        purgedIds.push(id);
+
                         // This will also delete all dependent annotations
                         g_lib.annotationDelete(id);
                     }
                 },
             });
+            logger.logRequestSuccess({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/purge",
+                status: "Success",
+                description:
+                    "Purge old closed annotations older than " +
+                    req.queryParams.age_sec +
+                    " seconds.",
+                extra: `Ids of purged notes: ${purgedIds.join(", ")}`,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: client?._id,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/purge",
+                status: "Failure",
+                description:
+                    "Purge old closed annotations older than " +
+                    req.queryParams.age_sec +
+                    " seconds.",
+                extra: { last_purged_note: id },
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })

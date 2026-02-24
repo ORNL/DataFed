@@ -182,7 +182,7 @@ private:
 
   void schemaEnforceRequiredProperties(const nlohmann::json &a_schema);
   void recordCollectionDelete(const std::vector<std::string> &a_ids,
-                              Auth::TaskDataReply &a_reply,
+                              SDMS::TaskDataReply &a_reply,
                               LogContext log_context);
   void handleTaskResponse(libjson::Value &a_result, LogContext log_context);
 

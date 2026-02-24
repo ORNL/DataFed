@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+message ACLRule {
+    string id = 1;
+    uint32 grant = 2;
+    uint32 inhgrant = 3;
+}

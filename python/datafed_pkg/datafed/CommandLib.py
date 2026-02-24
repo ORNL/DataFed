@@ -14,11 +14,9 @@ import json as jsonlib
 import time
 import pathlib
 import requests
-from . import SDMS_Auth_pb2 as auth
-from . import SDMS_pb2 as sdms
 from . import MessageLib
 from . import Config
-
+from . import envelope_pb2 as sdms
 
 class API:
     """
@@ -168,7 +166,7 @@ class API:
         ------
         Exception: On communication or server error
         """
-        msg = auth.GenerateCredentialsRequest()
+        msg = sdms.GenerateCredentialsRequest()
 
         return self._mapi.sendRecv(msg)
 
@@ -236,7 +234,7 @@ class API:
         ------
         Exception : On communication or server error
         """
-        msg = auth.RepoCreateRequest()
+        msg = sdms.RepoCreateRequest()
         msg.id = repo_id
         msg.title = title
         msg.desc = desc
@@ -260,7 +258,7 @@ class API:
 
         By default will only list the repos associated with the user.
         """
-        msg = auth.RepoListRequest()
+        msg = sdms.RepoListRequest()
         msg.all = list_all
         return self._mapi.sendRecv(msg)
 
@@ -281,7 +279,7 @@ class API:
         ------
         Exception : On communication or server error
         """
-        msg = auth.RepoDeleteRequest()
+        msg = sdms.RepoDeleteRequest()
         msg.id = repo_id
         return self._mapi.sendRecv(msg)
 
@@ -289,7 +287,7 @@ class API:
         if not repo_id.startswith("repo/"):
             repo_id = "repo/" + repo_id
 
-        msg = auth.RepoAllocationCreateRequest()
+        msg = sdms.RepoAllocationCreateRequest()
         msg.repo = repo_id
         msg.subject = subject
         msg.data_limit = data_limit
@@ -300,14 +298,14 @@ class API:
         if not repo_id.startswith("repo/"):
             repo_id = "repo/" + repo_id
 
-        msg = auth.RepoListAllocationsRequest()
+        msg = sdms.RepoListAllocationsRequest()
         msg.id = repo_id
         return self._mapi.sendRecv(msg)
 
     def repoAllocationDelete(self, repo_id, subject):
         if not repo_id.startswith("repo/"):
             repo_id = "repo/" + repo_id
-        msg = auth.RepoAllocationDeleteRequest()
+        msg = sdms.RepoAllocationDeleteRequest()
         msg.repo = repo_id
         msg.subject = subject
         return self._mapi.sendRecv(msg)
@@ -341,7 +339,7 @@ class API:
         ------
         Exception : On communication or server error
         """
-        msg = auth.RecordViewRequest()
+        msg = sdms.RecordViewRequest()
         msg.id = self._resolve_id(data_id, context)
         msg.details = details
 
@@ -436,7 +434,7 @@ class API:
         if metadata and metadata_file:
             raise Exception("Cannot specify both metadata and metadata-file options.")
 
-        msg = auth.RecordCreateRequest()
+        msg = sdms.RecordCreateRequest()
         msg.title = title
         msg.parent_id = self._resolve_id(parent_id, context)
 
@@ -579,7 +577,7 @@ class API:
         if metadata and metadata_file:
             raise Exception("Cannot specify both metadata and metadata-file options.")
 
-        msg = auth.RecordUpdateRequest()
+        msg = sdms.RecordUpdateRequest()
         msg.id = self._resolve_id(data_id, context)
 
         if title is not None:
@@ -673,7 +671,7 @@ class API:
         ------
         Exception : On invalid options or communication / server error
         """
-        msg = auth.RecordDeleteRequest()
+        msg = sdms.RecordDeleteRequest()
 
         if isinstance(data_id, list):
             for i in data_id:
@@ -740,7 +738,7 @@ class API:
         # Request server to map specified IDs into a list of specific record IDs.
         # This accounts for download of collections.
 
-        msg = auth.DataGetRequest()
+        msg = sdms.DataGetRequest()
         msg.check = True
 
         if isinstance(item_id, str):
@@ -761,7 +759,7 @@ class API:
 
         if len(glob_ids) > 0:
             # Globus transfers
-            msg = auth.DataGetRequest()
+            msg = sdms.DataGetRequest()
             msg.id.extend(glob_ids)
             msg.path = self._resolvePathForGlobus(path, False)
             msg.encrypt = encrypt
@@ -770,7 +768,7 @@ class API:
             reply = self._mapi.sendRecv(msg)
 
             if reply[0].task and wait:
-                msg2 = auth.TaskViewRequest()
+                msg2 = sdms.TaskViewRequest()
                 msg2.task_id = reply[0].task.id
                 elapsed = 0
 
@@ -849,7 +847,7 @@ class API:
         ------
         Exception : On invalid options or communication / server error.
         """
-        msg = auth.DataPutRequest()
+        msg = sdms.DataPutRequest()
         msg.id = self._resolve_id(data_id, context)
         msg.path = self._resolvePathForGlobus(path, False)
         msg.encrypt = encrypt
@@ -859,7 +857,7 @@ class API:
         reply = self._mapi.sendRecv(msg)
 
         if (reply[0].HasField("task")) and wait:
-            msg2 = auth.TaskViewRequest()
+            msg2 = sdms.TaskViewRequest()
             msg2.task_id = reply[0].task.id
             elapsed = 0
 
@@ -944,7 +942,7 @@ class API:
 
                 payload.extend(records)
 
-        msg = auth.RecordCreateBatchRequest()
+        msg = sdms.RecordCreateBatchRequest()
         msg.records = jsonlib.dumps(payload)
 
         return self._mapi.sendRecv(msg)
@@ -998,7 +996,7 @@ class API:
                 else:
                     payload.extend(records)
 
-        msg = auth.RecordUpdateBatchRequest()
+        msg = sdms.RecordUpdateBatchRequest()
         msg.records = jsonlib.dumps(payload)
 
         return self._mapi.sendRecv(msg)
@@ -1029,7 +1027,7 @@ class API:
         ------
         Exception : On invalid options or communication / server error.
         """
-        msg = auth.CollViewRequest()
+        msg = sdms.CollViewRequest()
         msg.id = self._resolve_id(coll_id, context)
         # msg.id = self._resolve_coll_id( coll_id, context )
 
@@ -1083,7 +1081,7 @@ class API:
         ------
         Exception : On communication or server error
         """
-        msg = auth.CollCreateRequest()
+        msg = sdms.CollCreateRequest()
         msg.title = title
 
         if alias:
@@ -1149,7 +1147,7 @@ class API:
         ------
         Exception : On communication or server error
         """
-        msg = auth.CollUpdateRequest()
+        msg = sdms.CollUpdateRequest()
         msg.id = self._resolve_id(coll_id, context)
 
         if title is not None:
@@ -1197,7 +1195,7 @@ class API:
         ------
         Exception : On communication or server error
         """
-        msg = auth.CollDeleteRequest()
+        msg = sdms.CollDeleteRequest()
 
         if isinstance(coll_id, list):
             for i in coll_id:
@@ -1234,7 +1232,7 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        msg = auth.CollReadRequest()
+        msg = sdms.CollReadRequest()
         msg.count = count
         msg.offset = offset
         msg.id = self._resolve_id(coll_id, context)
@@ -1276,7 +1274,7 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        msg = auth.CollWriteRequest()
+        msg = sdms.CollWriteRequest()
         msg.id = self._resolve_id(coll_id, context)
 
         if isinstance(add_ids, list):
@@ -1317,7 +1315,7 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        msg = auth.CollGetParentsRequest()
+        msg = sdms.CollGetParentsRequest()
         msg.id = self._resolve_id(coll_id, context)
         msg.inclusive = inclusive
 
@@ -1348,7 +1346,7 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        msg = auth.QueryListRequest()
+        msg = sdms.QueryListRequest()
         msg.offset = offset
         msg.count = count
 
@@ -1371,7 +1369,7 @@ class API:
         ------
         Exception : On communication or server error
         """
-        msg = auth.QueryViewRequest()
+        msg = sdms.QueryViewRequest()
         msg.id = query_id
 
         return self._mapi.sendRecv(msg)
@@ -1422,7 +1420,7 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        msg = auth.QueryCreateRequest()
+        msg = sdms.QueryCreateRequest()
         msg.title = title
 
         self._buildSearchRequest(
@@ -1487,7 +1485,7 @@ class API:
         Exception : On invalid options
         """
 
-        msg = auth.QueryUpdateRequest()
+        msg = sdms.QueryUpdateRequest()
         msg.id = query_id
 
         if title is not None:
@@ -1532,7 +1530,7 @@ class API:
         ------
         Exception : On communication or server error
         """
-        msg = auth.QueryDeleteRequest()
+        msg = sdms.QueryDeleteRequest()
         msg.id.append(query_id)
 
         return self._mapi.sendRecv(msg)
@@ -1560,7 +1558,7 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        msg = auth.QueryExecRequest()
+        msg = sdms.QueryExecRequest()
         msg.id = query_id
         msg.offset = offset
         msg.count = count
@@ -1612,7 +1610,7 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        msg = auth.SearchRequest()
+        msg = sdms.SearchRequest()
 
         self._buildSearchRequest(
             msg,
@@ -1776,7 +1774,7 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        msg = auth.UserListCollabRequest()
+        msg = sdms.UserListCollabRequest()
         msg.offset = offset
         msg.count = count
 
@@ -1802,7 +1800,7 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        msg = auth.UserListAllRequest()
+        msg = sdms.UserListAllRequest()
         msg.offset = offset
         msg.count = count
 
@@ -1826,7 +1824,7 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        msg = auth.UserViewRequest()
+        msg = sdms.UserViewRequest()
         msg.uid = uid
 
         return self._mapi.sendRecv(msg)
@@ -1868,7 +1866,7 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        msg = auth.ProjectListRequest()
+        msg = sdms.ProjectListRequest()
         msg.as_owner = owned
         msg.as_admin = admin
         msg.as_member = member
@@ -1895,7 +1893,7 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        msg = auth.ProjectViewRequest()
+        msg = sdms.ProjectViewRequest()
         msg.id = project_id
 
         return self._mapi.sendRecv(msg)
@@ -1918,7 +1916,7 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        msg = auth.ProjectGetRoleRequest()
+        msg = sdms.ProjectGetRoleRequest()
         msg.id = project_id
 
         reply = self._mapi.sendRecv(msg)
@@ -1951,7 +1949,7 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        msg = auth.ACLSharedListRequest()
+        msg = sdms.ACLSharedListRequest()
 
         if inc_users is not None:
             msg.inc_users = inc_users
@@ -1981,7 +1979,7 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        msg = auth.ACLByUserRequest()
+        msg = sdms.ACLByUserRequest()
 
         return self._mapi.sendRecv( msg )
 
@@ -1999,7 +1997,7 @@ class API:
         Exception : On communication or server error
         Exception : On invalid options
         """
-        msg = auth.ACLByProjRequest()
+        msg = sdms.ACLByProjRequest()
 
         return self._mapi.sendRecv( msg )
     '''
@@ -2031,7 +2029,7 @@ class API:
         """
         # TODO add support for offset & count
 
-        msg = auth.ACLSharedListItemsRequest()
+        msg = sdms.ACLSharedListItemsRequest()
         msg.owner = owner_id.lower()
         if context is not None:
             msg.subject = context.lower()
@@ -2081,7 +2079,7 @@ class API:
         if since is not None and (time_from is not None or time_to is not None):
             raise Exception("Cannot specify 'since' and 'from'/'to' ranges.")
 
-        msg = auth.TaskListRequest()
+        msg = sdms.TaskListRequest()
 
         if time_from is not None:
             ts = self.strToTimestamp(time_from)
@@ -2191,12 +2189,12 @@ class API:
         Exception : On invalid options
         """
         if task_id:
-            msg = auth.TaskViewRequest()
+            msg = sdms.TaskViewRequest()
             msg.task_id = task_id
 
             reply = self._mapi.sendRecv(msg)
         else:
-            msg = auth.TaskListRequest()
+            msg = sdms.TaskListRequest()
             msg.offset = 0
             msg.count = 1
 
@@ -2221,7 +2219,7 @@ class API:
         ------
         Exception : On communication or server error
         """
-        msg = auth.UserGetRecentEPRequest()
+        msg = sdms.UserGetRecentEPRequest()
 
         return self._mapi.sendRecv(msg)
 
@@ -2305,7 +2303,7 @@ class API:
                 "Client configuration directory and/or client key files not configured"
             )
 
-        msg = auth.GenerateCredentialsRequest()
+        msg = sdms.GenerateCredentialsRequest()
 
         reply = self._mapi.sendRecv(msg)
 
@@ -2352,7 +2350,7 @@ class API:
             id2 = item_id
 
             if id2[0:2] == "p/":
-                msg = auth.ProjectViewRequest()
+                msg = sdms.ProjectViewRequest()
                 msg.id = id2
             else:
                 if id2[0:2] != "u/":
@@ -2364,7 +2362,7 @@ class API:
                         )
                     id2 = "u/" + id2
 
-                msg = auth.UserViewRequest()
+                msg = sdms.UserViewRequest()
                 msg.uid = id2
 
             # Don't need reply - just using to throw an except if id/uid is

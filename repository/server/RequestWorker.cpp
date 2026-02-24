@@ -12,11 +12,8 @@
 #include "common/TraceException.hpp"
 #include "common/Util.hpp"
 
-// Proto includes
-#include "common/SDMS.pb.h"
-#include "common/SDMS_Anon.pb.h"
-#include "common/SDMS_Auth.pb.h"
-#include "common/Version.pb.h"
+// Proto files
+#include "common/envelope.pb.h"
 
 // Third party includes
 #include <boost/filesystem.hpp>
@@ -28,9 +25,6 @@
 using namespace std;
 
 namespace SDMS {
-
-using namespace SDMS::Anon;
-using namespace SDMS::Auth;
 
 namespace Repo {
 
@@ -180,9 +174,14 @@ void RequestWorker::wait() {
   }
 }
 
-#define SET_MSG_HANDLER(proto_id, msg, func)                                   \
-  m_msg_handlers[m_msg_mapper->getMessageType(proto_id, #msg)] = func
+#define SET_MSG_HANDLER(msg, func)                                             \
+  m_msg_handlers[m_msg_mapper->getMessageType(#msg)] = func
 
+/**
+ * This method configures message handling by creating a map from message type
+ * (envelope field number) to handler function. Message types are identified
+ * by their field number in the Envelope proto message.
+ */
 void RequestWorker::setupMsgHandlers() {
   static std::atomic_flag lock = ATOMIC_FLAG_INIT;
 
@@ -190,22 +189,17 @@ void RequestWorker::setupMsgHandlers() {
     return;
 
   try {
+    // Anonymous interface handlers
+    SET_MSG_HANDLER(VersionRequest, &RequestWorker::procVersionRequest);
 
-    uint8_t proto_id =
-        m_msg_mapper->getProtocolID(MessageProtocol::GOOGLE_ANONONYMOUS);
-
-    SET_MSG_HANDLER(proto_id, VersionRequest,
-                    &RequestWorker::procVersionRequest);
-
-    proto_id = m_msg_mapper->getProtocolID(MessageProtocol::GOOGLE_AUTHORIZED);
-
-    SET_MSG_HANDLER(proto_id, RepoDataDeleteRequest,
+    // Authenticated interface handlers
+    SET_MSG_HANDLER(RepoDataDeleteRequest,
                     &RequestWorker::procDataDeleteRequest);
-    SET_MSG_HANDLER(proto_id, RepoDataGetSizeRequest,
+    SET_MSG_HANDLER(RepoDataGetSizeRequest,
                     &RequestWorker::procDataGetSizeRequest);
-    SET_MSG_HANDLER(proto_id, RepoPathCreateRequest,
+    SET_MSG_HANDLER(RepoPathCreateRequest,
                     &RequestWorker::procPathCreateRequest);
-    SET_MSG_HANDLER(proto_id, RepoPathDeleteRequest,
+    SET_MSG_HANDLER(RepoPathDeleteRequest,
                     &RequestWorker::procPathDeleteRequest);
   } catch (TraceException &e) {
     DL_ERROR(m_log_context,
@@ -252,6 +246,8 @@ void RequestWorker::workerThread(LogContext log_context) {
                           timeout_on_poll);
   }(repo_thread_id);
 
+  ProtoBufMap proto_map;
+
   DL_TRACE(log_context, "Listening on address " << client->address());
 
   while (m_run) {
@@ -280,7 +276,8 @@ void RequestWorker::workerThread(LogContext log_context) {
           uint16_t msg_type = std::get<uint16_t>(
               message.get(constants::message::google::MSG_TYPE));
 
-          DL_TRACE(message_log_context, "Received msg of type: " << msg_type);
+          DL_TRACE(message_log_context, "Received msg of type: "
+                                            << proto_map.toString(msg_type));
 
           if (m_msg_handlers.count(msg_type)) {
             map<uint16_t, msg_fun_t>::iterator handler =
@@ -348,7 +345,7 @@ void RequestWorker::workerThread(LogContext log_context) {
     DL_ERROR(message_log_context, "Error: " << e.what());                      \
     auto msg_reply = m_msg_factory.createResponseEnvelope(*msg_request);       \
     auto nack = std::make_unique<NackReply>();                                 \
-    nack->set_err_code(ID_INTERNAL_ERROR);                                     \
+    nack->set_err_code(INTERNAL_ERROR);                                        \
     nack->set_err_msg(e.what());                                               \
     msg_reply->setPayload(std::move(nack));                                    \
     return msg_reply;                                                          \
@@ -358,7 +355,7 @@ void RequestWorker::workerThread(LogContext log_context) {
              "Error unkown exception while processing message!");              \
     auto msg_reply = m_msg_factory.createResponseEnvelope(*msg_request);       \
     auto nack = std::make_unique<NackReply>();                                 \
-    nack->set_err_code(ID_INTERNAL_ERROR);                                     \
+    nack->set_err_code(INTERNAL_ERROR);                                        \
     nack->set_err_msg("Unknown exception type");                               \
     msg_reply->setPayload(std::move(nack));                                    \
     return msg_reply;                                                          \
@@ -373,7 +370,7 @@ void RequestWorker::workerThread(LogContext log_context) {
              "Message parse failed (malformed or unregistered msg type).");    \
     auto msg_reply = m_msg_factory.createResponseEnvelope(*msg_request);       \
     auto nack = std::make_unique<NackReply>();                                 \
-    nack->set_err_code(ID_BAD_REQUEST);                                        \
+    nack->set_err_code(BAD_REQUEST);                                           \
     nack->set_err_msg(                                                         \
         "Message parse failed (malformed or unregistered msg type)");          \
     msg_reply->setPayload(std::move(nack));                                    \
@@ -388,15 +385,15 @@ RequestWorker::procVersionRequest(std::unique_ptr<IMessage> &&msg_request) {
 
   DL_DEBUG(message_log_context, "Version request.");
 
-  reply.set_release_year(Version::DATAFED_RELEASE_YEAR);
-  reply.set_release_month(Version::DATAFED_RELEASE_MONTH);
-  reply.set_release_day(Version::DATAFED_RELEASE_DAY);
-  reply.set_release_hour(Version::DATAFED_RELEASE_HOUR);
-  reply.set_release_minute(Version::DATAFED_RELEASE_MINUTE);
+  reply.set_release_year(SDMS::release::YEAR);
+  reply.set_release_month(SDMS::release::MONTH);
+  reply.set_release_day(SDMS::release::DAY);
+  reply.set_release_hour(SDMS::release::HOUR);
+  reply.set_release_minute(SDMS::release::MINUTE);
 
-  reply.set_api_major(Version::DATAFED_COMMON_PROTOCOL_API_MAJOR);
-  reply.set_api_minor(Version::DATAFED_COMMON_PROTOCOL_API_MINOR);
-  reply.set_api_patch(Version::DATAFED_COMMON_PROTOCOL_API_PATCH);
+  reply.set_api_major(SDMS::protocol::version::MAJOR);
+  reply.set_api_minor(SDMS::protocol::version::MINOR);
+  reply.set_api_patch(SDMS::protocol::version::PATCH);
 
   reply.set_component_major(SDMS::repository::version::MAJOR);
   reply.set_component_minor(SDMS::repository::version::MINOR);
@@ -407,7 +404,7 @@ RequestWorker::procVersionRequest(std::unique_ptr<IMessage> &&msg_request) {
 
 std::unique_ptr<IMessage>
 RequestWorker::procDataDeleteRequest(std::unique_ptr<IMessage> &&msg_request) {
-  PROC_MSG_BEGIN(Auth::RepoDataDeleteRequest, Anon::AckReply)
+  PROC_MSG_BEGIN(RepoDataDeleteRequest, AckReply)
 
   if (request->loc_size()) {
 
@@ -427,7 +424,7 @@ RequestWorker::procDataDeleteRequest(std::unique_ptr<IMessage> &&msg_request) {
 
 std::unique_ptr<IMessage>
 RequestWorker::procDataGetSizeRequest(std::unique_ptr<IMessage> &&msg_request) {
-  PROC_MSG_BEGIN(Auth::RepoDataGetSizeRequest, Auth::RepoDataSizeReply)
+  PROC_MSG_BEGIN(RepoDataGetSizeRequest, RepoDataSizeReply)
 
   DL_DEBUG(message_log_context, "Data get size.");
 
@@ -462,7 +459,7 @@ RequestWorker::procDataGetSizeRequest(std::unique_ptr<IMessage> &&msg_request) {
 
 std::unique_ptr<IMessage>
 RequestWorker::procPathCreateRequest(std::unique_ptr<IMessage> &&msg_request) {
-  PROC_MSG_BEGIN(Auth::RepoPathCreateRequest, Anon::AckReply)
+  PROC_MSG_BEGIN(RepoPathCreateRequest, AckReply)
 
   std::string local_path = createSanitizedPath(request->path());
 
@@ -480,7 +477,7 @@ RequestWorker::procPathCreateRequest(std::unique_ptr<IMessage> &&msg_request) {
 
 std::unique_ptr<IMessage>
 RequestWorker::procPathDeleteRequest(std::unique_ptr<IMessage> &&msg_request) {
-  PROC_MSG_BEGIN(Auth::RepoPathDeleteRequest, Anon::AckReply)
+  PROC_MSG_BEGIN(RepoPathDeleteRequest, AckReply)
 
   DL_DEBUG(message_log_context,
            "Relative path delete request: " << request->path());
