@@ -279,6 +279,25 @@ describe("unit_authz_router: the Foxx microservice authz_router", () => {
         expect(response.status).to.equal(400);
     });
 
+    it("unit_authz_router: gridftp create action with invalid repo and valid file path.", () => {
+        defaultWorkingSetup();
+        const bad_repo_id = "repo/not_exist";
+        const request_string =
+            `${authz_base_url}/gridftp?client=` +
+            james_uuid +
+            `&repo=` +
+            encodeURIComponent(bad_repo_id) +
+            `&file=` +
+            encodeURIComponent(file_path) +
+            `&act=create`;
+
+        // act
+        const response = request.get(request_string);
+
+        // assert
+        expect(response.status).to.equal(400);
+    });
+
     it("unit_authz_router: gridftp create action with invalid client and valid file path.", () => {
         // Here we are creating a valid user but they simply do not have access to the provided file
         // path.

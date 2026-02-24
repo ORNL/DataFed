@@ -48,9 +48,10 @@ router
             let repo = Repo.resolveFromPath(req.queryParams.file);
 
             if (repo.id() !== req.queryParams.repo) {
-                console.warn(
-                    "Repo mismatch: param=" + req.queryParams.repo + " resolved=" + repo.id(),
-                );
+                throw [
+                    error.ERR_PERM_DENIED,
+                    "File path does not match repository: " + req.queryParams.file,
+                ];
             }
             let path_type = repo.pathType(req.queryParams.file);
 
