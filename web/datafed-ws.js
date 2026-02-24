@@ -2324,9 +2324,9 @@ function sendMessageDirect(a_msg_name, a_client, a_msg_data, a_cb) {
  * as stable message type identifiers.
  *
  * Each map entry stores:
- *   - type:       the protobufjs Type (for encode/decode of the inner message)
- *   - field_name: the envelope oneof field name (e.g. "version_request")
- *   - field_id:   the envelope field number (used as msg_type in the frame)
+ * - type:       the protobufjs Type (for encode/decode of the inner message)
+ * - field_name: the envelope oneof field name (e.g. "version_request")
+ * - field_id:   the envelope field number (used as msg_type in the frame)
  *
  * @param {protobuf.Root} root - The loaded protobuf root containing SDMS.Envelope
  */
