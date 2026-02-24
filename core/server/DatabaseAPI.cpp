@@ -1797,20 +1797,42 @@ void DatabaseAPI::queryUpdate(const SDMS::QueryUpdateRequest &a_request,
   }
 
   if (a_request.has_query()) {
-    string qry_begin, qry_end, qry_filter, params;
+    // Fetch existing stored query
+    Value existing;
+    dbGet("qry/view", {{"id", a_request.id()}}, existing, log_context);
 
-    uint32_t cnt = parseSearchRequest(a_request.query(), qry_begin, qry_end,
+    // Parse stored query JSON into a SearchRequest
+    SDMS::SearchRequest merged;
+    auto parse_stat = google::protobuf::util::JsonStringToMessage(
+        existing.asObject().getValue("query").toString(), &merged);
+    if (!parse_stat.ok()) {
+      EXCEPT(1, "Failed to parse existing query");
+    }
+
+    if (a_request.query().coll_size() > 0) {
+        merged.clear_coll();
+    }
+    if (a_request.query().tags_size() > 0) {
+        merged.clear_tags();
+    }
+    if (a_request.query().cat_tags_size() > 0) {
+        merged.clear_cat_tags();
+    }
+    // Incoming fields overwrite existing, unset fields left untouched
+    merged.MergeFrom(a_request.query());
+
+    // Re-generate AQL from the complete merged query
+    string qry_begin, qry_end, qry_filter, params;
+    uint32_t cnt = parseSearchRequest(merged, qry_begin, qry_end,
                                       qry_filter, params, log_context);
 
     google::protobuf::util::JsonPrintOptions options;
     string query_json;
-
     options.always_print_enums_as_ints = true;
     options.preserve_proto_field_names = true;
     options.always_print_primitive_fields = true;
-
     auto stat = google::protobuf::util::MessageToJsonString(
-        a_request.query(), &query_json, options);
+        merged, &query_json, options);
     if (!stat.ok()) {
       EXCEPT(1, "Invalid search request");
     }
@@ -1825,7 +1847,6 @@ void DatabaseAPI::queryUpdate(const SDMS::QueryUpdateRequest &a_request,
 
   string body = payload.dump(-1, ' ', true);
   dbPost("qry/update", {}, &body, result, log_context);
-
   setQueryData(a_reply, result, log_context);
 }
 
