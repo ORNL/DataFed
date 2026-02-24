@@ -7,7 +7,7 @@
 #include <string>
 
 namespace SDMS {
-
+struct LogContext;
 /**
  * Interface class for managing authenticating
  *
@@ -26,7 +26,7 @@ public:
    * Increments the number of times that the key has been accessed, this is
    *useful information when deciding if a key should be purged.
    **/
-  virtual void incrementKeyAccessCounter(const std::string &public_key) = 0;
+  virtual void incrementKeyAccessCounter(const std::string &public_key, LogContext log_context) = 0;
 
   /**
    * Will return true if the public key is known. This is also dependent on the
@@ -39,7 +39,7 @@ public:
    * - SESSION
    * - PERSISTENT
    **/
-  virtual bool hasKey(const std::string &pub_key) const = 0;
+  virtual bool hasKey(const std::string &pub_key, LogContext log_context) const = 0;
 
   /**
    * Will get the unique id or throw an error
@@ -49,7 +49,7 @@ public:
    * - SESSION
    * - PERSISTENT - user or repo
    **/
-  virtual std::string getUID(const std::string &pub_key) const = 0;
+  virtual std::string getUID(const std::string &pub_key, LogContext log_context) const = 0;
 
   /**
    * Purge keys if needed

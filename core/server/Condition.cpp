@@ -4,6 +4,9 @@
 
 // Standard includes
 #include <iostream>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 namespace SDMS {
 namespace Core {
@@ -11,10 +14,15 @@ namespace Core {
 void Promote::enforce(AuthMap &auth_map, const std::string &public_key) {
   if (auth_map.hasKeyType(m_promote_from, public_key)) {
     size_t access_count = auth_map.getAccessCount(m_promote_from, public_key);
+    boost::uuids::random_generator generator;
+    boost::uuids::uuid uuid = generator();
+
+    LogContext log_context;
+    log_context.correlation_id = boost::uuids::to_string(uuid);
     if (access_count >= m_transient_to_session_count_threshold) {
       // Convert transient key to session key if has been accessed more than the
       // threshold
-      std::string uid = auth_map.getUID(m_promote_from, public_key);
+      std::string uid = auth_map.getUID(m_promote_from, public_key, log_context);
       auth_map.addKey(m_promote_to, public_key, uid);
     }
     // Remove expired short lived transient key
