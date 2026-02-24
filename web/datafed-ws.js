@@ -1114,7 +1114,7 @@ app.post("/api/query/create", (a_req, a_resp) => {
 });
 
 app.post("/api/query/update", (a_req, a_resp) => {
-    var params = { id: a_req.query.id };
+    var params = { id: a_req.query.id, replaceQuery: true };
     if (a_req.query.title) params.title = a_req.query.title;
     if (a_req.body) params.query = a_req.body;
 

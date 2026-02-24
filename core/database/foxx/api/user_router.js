@@ -314,6 +314,8 @@ router
 
 router
     .get("/update", function (req, res) {
+
+        let client = null;
         let result = null;
         let sub = req.queryParams.subject ? req.queryParams.subject : req.queryParams.client;
         try {
