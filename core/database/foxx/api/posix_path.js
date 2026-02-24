@@ -1,5 +1,6 @@
 "use strict";
 
+const error = require("./lib/error_codes");
 const path = require("path");
 
 module.exports = (function () {
@@ -43,6 +44,13 @@ module.exports = (function () {
 
         // components: ['usr', 'local', 'bin', 'node']
         return components.filter((component) => component !== "");
+    };
+
+    obj.normalizePOSIXPath = function (a_posix_path) {
+        if (!a_posix_path || typeof a_posix_path !== "string") {
+            throw [error.ERR_INVALID_PARAM, "Invalid POSIX path"];
+        }
+        return path.posix.normalize(a_posix_path);
     };
 
     return obj;

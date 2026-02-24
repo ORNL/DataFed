@@ -892,7 +892,11 @@ var tasks_func = (function () {
                     //console.log("taskRunRecAllocChg - do xfr");
                     // Transfer data step
 
-                    var tokens = g_lib.getAccessToken(a_task.client);
+                    const token_doc = new UserToken({
+                        user_id: a_task.client,
+                    }).get_token();
+                    var tokens = UserToken.formatUserTokenForTransferTask(token_doc);
+                    const extra_token_format = UserToken.formatUserToken(false, token_doc, false);
                     params = {
                         uid: a_task.client,
                         type: a_task.type,
@@ -900,6 +904,8 @@ var tasks_func = (function () {
                         acc_tok: tokens.acc_tok,
                         ref_tok: tokens.ref_tok,
                         acc_tok_exp_in: tokens.acc_tok_exp_in,
+                        token_type: extra_token_format.token_type,
+                        scopes: extra_token_format.scopes,
                     };
                     params = Object.assign(params, xfr);
                     reply = {
@@ -1276,8 +1282,11 @@ var tasks_func = (function () {
                 case 1:
                     //console.log("taskRunRecOwnerChg - do xfr");
                     // Transfer data step
-
-                    var tokens = g_lib.getAccessToken(a_task.client);
+                    const token_doc = new UserToken({
+                        user_id: a_task.client,
+                    }).get_token();
+                    var tokens = UserToken.formatUserTokenForTransferTask(token_doc);
+                    const extra_token_format = UserToken.formatUserToken(false, token_doc, false);
                     params = {
                         uid: a_task.client,
                         type: a_task.type,
@@ -1285,6 +1294,8 @@ var tasks_func = (function () {
                         acc_tok: tokens.acc_tok,
                         ref_tok: tokens.ref_tok,
                         acc_tok_exp_in: tokens.acc_tok_exp_in,
+                        token_type: extra_token_format.token_type,
+                        scopes: extra_token_format.scopes,
                     };
                     params = Object.assign(params, xfr);
                     reply = {
