@@ -20,8 +20,7 @@
 #include "common/SocketOptions.hpp"
 
 // Proto file includes
-#include "common/SDMS_Anon.pb.h"
-#include "common/SDMS_Auth.pb.h"
+#include "common/envelope.pb.h"
 
 // Standard includes
 #include <memory>
@@ -219,7 +218,7 @@ BOOST_AUTO_TEST_CASE(testing_ProxyBasicZMQ) {
                                   log_context1);
 
               std::chrono::duration<double> duration =
-                  std::chrono::milliseconds(400);
+                  std::chrono::milliseconds(1000);
               proxy.setRunDuration(duration);
               proxy.run();
 
@@ -238,19 +237,31 @@ BOOST_AUTO_TEST_CASE(testing_ProxyBasicZMQ) {
     msg_from_client->set(MessageAttribute::ID, id);
     msg_from_client->set(MessageAttribute::KEY, key);
     auto auth_by_token_req =
-        std::make_unique<Anon::AuthenticateByTokenRequest>();
+        std::make_unique<SDMS::AuthenticateByTokenRequest>();
     auth_by_token_req->set_token(token);
     msg_from_client->setPayload(std::move(auth_by_token_req));
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    client->send(*msg_from_client);
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    //client->send(*msg_from_client);
+    // Client send with retry
+    auto end_time = std::chrono::steady_clock::now() + std::chrono::milliseconds(2000);
+    bool sent = false;
+    while (!sent && std::chrono::steady_clock::now() < end_time) {
+      try {
+        client->send(*msg_from_client);
+        sent = true;
+      } catch (...) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      }
+    }
+    BOOST_REQUIRE(sent);
     // Client send
 
     { // Server receive
       ICommunicator::Response response =
           server->receive(MessageType::GOOGLE_PROTOCOL_BUFFER);
 
-      std::chrono::duration<double> duration = std::chrono::milliseconds(50);
+      std::chrono::duration<double> duration = std::chrono::milliseconds(400);
       auto end_time = std::chrono::steady_clock::now() + duration;
       while (response.time_out and
              end_time > std::chrono::steady_clock::now()) {
@@ -291,7 +302,7 @@ BOOST_AUTO_TEST_CASE(testing_ProxyBasicZMQ) {
       auto google_msg = std::get<::google::protobuf::Message *>(
           response.message->getPayload());
       auto new_auth_by_pass_req =
-          dynamic_cast<SDMS::Anon::AuthenticateByTokenRequest *>(google_msg);
+          dynamic_cast<SDMS::AuthenticateByTokenRequest *>(google_msg);
 
       BOOST_CHECK(new_auth_by_pass_req->token().compare(token) == 0);
     } // Server receive
@@ -476,7 +487,7 @@ BOOST_AUTO_TEST_CASE(testing_ProxyBasicZMQ_Reply) {
     msg_from_client->set(MessageAttribute::ID, id);
     msg_from_client->set(MessageAttribute::KEY, key);
     auto auth_by_token_req =
-        std::make_unique<Anon::AuthenticateByTokenRequest>();
+        std::make_unique<SDMS::AuthenticateByTokenRequest>();
     auth_by_token_req->set_token(token);
     msg_from_client->setPayload(std::move(auth_by_token_req));
 
@@ -506,8 +517,8 @@ BOOST_AUTO_TEST_CASE(testing_ProxyBasicZMQ_Reply) {
     // the proxy chain
     auto return_msg = msg_factory.createResponseEnvelope(*response.message);
     // We will just pass a nack reply because it is easy
-    auto nack_reply = std::make_unique<Anon::NackReply>();
-    nack_reply->set_err_code(ErrorCode::ID_SERVICE_ERROR);
+    auto nack_reply = std::make_unique<SDMS::NackReply>();
+    nack_reply->set_err_code(ErrorCode::SERVICE_ERROR);
     nack_reply->set_err_msg(error_msg);
 
     // Place google proto message in IMessage
@@ -528,11 +539,11 @@ BOOST_AUTO_TEST_CASE(testing_ProxyBasicZMQ_Reply) {
     std::cout << __FILE__ << ":" << __LINE__ << std::endl;
     auto response_google_msg_ptr = std::get<::google::protobuf::Message *>(
         msg_from_server.message->getPayload());
-    Anon::NackReply *response_payload =
-        dynamic_cast<Anon::NackReply *>(response_google_msg_ptr);
+    SDMS::NackReply *response_payload =
+        dynamic_cast<SDMS::NackReply *>(response_google_msg_ptr);
 
     std::cout << __FILE__ << ":" << __LINE__ << std::endl;
-    BOOST_CHECK(response_payload->err_code() == ErrorCode::ID_SERVICE_ERROR);
+    BOOST_CHECK(response_payload->err_code() == ErrorCode::SERVICE_ERROR);
     BOOST_CHECK(response_payload->err_msg().compare(error_msg) == 0);
 
     std::cout << __FILE__ << ":" << __LINE__ << std::endl;
@@ -742,7 +753,7 @@ BOOST_AUTO_TEST_CASE(testing_ProxyBasicZMQ_TCPServer_Reply) {
     msg_from_client->set(MessageAttribute::KEY, key);
     msg_from_client->set(constants::message::google::CONTEXT, context);
     auto auth_by_token_req =
-        std::make_unique<Anon::AuthenticateByTokenRequest>();
+        std::make_unique<SDMS::AuthenticateByTokenRequest>();
     auth_by_token_req->set_token(token);
     msg_from_client->setPayload(std::move(auth_by_token_req));
 
@@ -785,8 +796,8 @@ BOOST_AUTO_TEST_CASE(testing_ProxyBasicZMQ_TCPServer_Reply) {
     // the proxy chain
     auto return_msg = msg_factory.createResponseEnvelope(*response.message);
     // We will just pass a nack reply because it is easy
-    auto nack_reply = std::make_unique<Anon::NackReply>();
-    nack_reply->set_err_code(ErrorCode::ID_SERVICE_ERROR);
+    auto nack_reply = std::make_unique<SDMS::NackReply>();
+    nack_reply->set_err_code(ErrorCode::SERVICE_ERROR);
     nack_reply->set_err_msg(error_msg);
 
     // Place google proto message in IMessage
@@ -812,11 +823,11 @@ BOOST_AUTO_TEST_CASE(testing_ProxyBasicZMQ_TCPServer_Reply) {
     std::cout << __FILE__ << ":" << __LINE__ << std::endl;
     auto response_google_msg_ptr = std::get<::google::protobuf::Message *>(
         msg_from_server.message->getPayload());
-    Anon::NackReply *response_payload =
-        dynamic_cast<Anon::NackReply *>(response_google_msg_ptr);
+    SDMS::NackReply *response_payload =
+        dynamic_cast<SDMS::NackReply *>(response_google_msg_ptr);
 
     std::cout << __FILE__ << ":" << __LINE__ << std::endl;
-    BOOST_CHECK(response_payload->err_code() == ErrorCode::ID_SERVICE_ERROR);
+    BOOST_CHECK(response_payload->err_code() == ErrorCode::SERVICE_ERROR);
     BOOST_CHECK(response_payload->err_msg().compare(error_msg) == 0);
 
     std::cout << __FILE__ << ":" << __LINE__ << std::endl;

@@ -4,9 +4,9 @@
 
 // Local private includes
 #include "../Buffer.hpp"
+#include "../ProtoBufFactory.hpp"
 
 // Local public includes
-#include "../ProtoBufFactory.hpp"
 #include "common/DynaLog.hpp"
 #include "common/ICommunicator.hpp"
 #include "common/IMessage.hpp"

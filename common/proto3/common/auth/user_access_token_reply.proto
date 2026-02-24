@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+message UserAccessTokenReply {
+    string access = 1;
+    uint32 expires_in = 2;
+    bool needs_consent = 3;
+}

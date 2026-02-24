@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+message TagData {
+    string name = 1;
+    uint64 count = 2;
+}

@@ -15,7 +15,7 @@
 #include "common/ICommunicator.hpp"
 #include "common/IMessage.hpp"
 #include "common/MessageFactory.hpp"
-#include "common/SDMS_Anon.pb.h"
+#include "common/envelope.pb.h"
 #include "common/TraceException.hpp"
 
 extern "C" {
@@ -397,7 +397,7 @@ BOOST_AUTO_TEST_CASE(ProcessResponseWithValidMessage) {
                         SDMS::MessageState::REQUEST);
   response.message->set(SDMS::constants::message::google::CONTEXT, context);
   auto auth_by_token_req =
-      std::make_unique<SDMS::Anon::AuthenticateByTokenRequest>();
+      std::make_unique<SDMS::AuthenticateByTokenRequest>();
   std::string token = "golden_chest";
   auth_by_token_req->set_token(token);
 
@@ -429,7 +429,7 @@ BOOST_AUTO_TEST_CASE(ProcessResponseWithNackReply) {
   response.message->set(SDMS::MessageAttribute::STATE,
                         SDMS::MessageState::REQUEST);
   response.message->set(SDMS::constants::message::google::CONTEXT, context);
-  auto nack = std::make_unique<SDMS::Anon::NackReply>();
+  auto nack = std::make_unique<SDMS::NackReply>();
 
   response.message->setPayload(std::move(nack));
 

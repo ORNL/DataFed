@@ -18,6 +18,7 @@ build-gcs-base:
         - echo "$BRANCH_LOWER"
         - source "scripts/dependency_versions.sh"
         - cd "external/globus-connect-server-deploy/docker"
+        - git fetch origin "$DATAFED_GCS_SUBMODULE_VERSION"
         - git checkout "$DATAFED_GCS_SUBMODULE_VERSION"
         - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
         - docker build --no-cache --progress plain -t "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest" - < "./docker-files/Dockerfile.${GCS_BASE_IMAGE_DISTRO}"

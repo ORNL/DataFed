@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+message RepoAllocationSetDefaultRequest {
+    string repo = 1;
+    optional string subject = 2;
+}

@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+message RepoAuthzRequest {
+    string repo = 1;
+    string client = 2;
+    string file = 3;
+    string action = 4;
+}

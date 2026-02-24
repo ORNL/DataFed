@@ -9,9 +9,6 @@
 #include "common/TraceException.hpp"
 #include "common/Util.hpp"
 
-// Protocol includes
-#include "common/Version.pb.h"
-
 // Third party includes
 #include <boost/program_options.hpp>
 
@@ -78,13 +75,13 @@ int main(int a_argc, char **a_argv) {
       }
 
       if (opt_map.count("version")) {
-        cout << "Release Version: " << DATAFED_RELEASE_YEAR << "."
-             << DATAFED_RELEASE_MONTH << "." << DATAFED_RELEASE_DAY << "."
-             << DATAFED_RELEASE_HOUR << "." << DATAFED_RELEASE_MINUTE
+        cout << "Release Version: " << release::YEAR << "."
+             << release::MONTH << "." << release::DAY << "."
+             << release::HOUR << "." << release::MINUTE
              << std::endl;
-        cout << "Messaging API: " << DATAFED_COMMON_PROTOCOL_API_MAJOR << "."
-             << DATAFED_COMMON_PROTOCOL_API_MINOR << "."
-             << DATAFED_COMMON_PROTOCOL_API_PATCH << endl;
+        cout << "Messaging API: " << protocol::version::MAJOR << "."
+             << protocol::version::MINOR << "."
+             << protocol::version::PATCH << endl;
         cout << "Repo Server: " << repository::version::MAJOR << "."
              << repository::version::MINOR << "." << repository::version::PATCH
              << endl;

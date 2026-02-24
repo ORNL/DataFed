@@ -36,7 +36,7 @@ building with static depencies is not completely possible because some system
 libraries must be shared libraries for DataFed to be interoperable. If this
 setting is turned on DataFed will build it's libraries as shared and try to
 link to shared libraries." OFF)
-OPTION(ENABLE_END_TO_END_API_TESTS "Enable end-to-end API testing" FALSE) 
+OPTION(ENABLE_END_TO_END_API_TESTS "Enable end-to-end API testing" FALSE)
 OPTION(ENABLE_END_TO_END_WEB_TESTS "Enable end-to-end web testing with Playwright" FALSE)
 OPTION(ENABLE_FOXX_TESTS "Enable Foxx testing, off by default because it
   will overwrite the test database." FALSE)
@@ -88,7 +88,7 @@ endif()
 
 set(CMAKE_PREFIX_PATH "${DEPENDENCY_INSTALL_PATH}")
 
-if ( BUILD_TESTS ) 
+if ( BUILD_TESTS )
   include(CTest)
   ENABLE_TESTING()
   set(CMAKE_CTEST_ARGUMENTS "--output-on-failure")
@@ -112,25 +112,24 @@ if( NOT DEFINED ENABLE_END_TO_END_TESTS )
 endif()
 
 if(CMAKE_MAKE_PROGRAM MATCHES "(make|gmake)")
-    add_definitions( -Wall -Wextra )
+  add_definitions( -Wall -Wextra )
 endif()
 
 
-if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON OR BUILD_PYTHON_CLIENT OR BUILD_WEB_SERVER) 
-  configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/common/proto/common/Version.proto.in"
-    "${CMAKE_CURRENT_SOURCE_DIR}/common/proto/common/Version.proto"
-    @ONLY)
+if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON OR BUILD_PYTHON_CLIENT OR BUILD_WEB_SERVER)
+
 
   # Create file glob here because need to be made visible here as well
-  file( GLOB ProtoFiles "${PROJECT_SOURCE_DIR}/common/proto/common/*.proto" )
+  file(GLOB_RECURSE ProtoFiles "${PROJECT_SOURCE_DIR}/common/proto3/common/*.proto")
   include(./cmake/Protobuf.cmake)
 endif()
 
 
 if( BUILD_WEB_SERVER )
   include(./cmake/Web.cmake)
-  file(COPY ${ProtoFiles} DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/web/")
+
+  file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/common/proto3/common/"
+     DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/web/proto3/")
 
   if( ENABLE_UNIT_TESTS )
     add_test(NAME unit_tests_web COMMAND "${DEPENDENCY_INSTALL_PATH}/nvm/versions/node/${LOCAL_NODE_VERSION}/bin/npm" "test")
@@ -144,7 +143,7 @@ if( BUILD_AUTHZ_TESTS )
   include(./cmake/GlobusCommon.cmake)
 endif()
 
-if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON) 
+if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON)
 
   include_directories( "/usr/include/globus" )
 
@@ -172,7 +171,7 @@ if ( BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON)
 
 endif()
 
-if( BUILD_COMMON ) 
+if( BUILD_COMMON )
   add_subdirectory( common )
 endif()
 
@@ -191,7 +190,7 @@ endif()
 # Must occur before building authz, location of mock keys are defined here
 # ENV DATAFED_MOCK_CORE_PUB_KEY
 if (ENABLE_INTEGRATION_TESTS OR ENABLE_END_TO_END_TESTS)
-    add_subdirectory(tests)
+  add_subdirectory(tests)
 endif()
 
 if( BUILD_REPO_SERVER OR BUILD_AUTHZ)
@@ -200,7 +199,7 @@ endif()
 
 if( BUILD_PYTHON_CLIENT )
   # make target = pydatafed
-  file(COPY ${PROJECT_SOURCE_DIR}/external/DataFedDependencies/python/datafed_pkg/requirements.txt DESTINATION ${PROJECT_SOURCE_DIR}/python/datafed_pkg/)
+  file(COPY ${PROJECT_SOURCE_DIR}/external/DataFedDependencies/python/datafed_pkg/requirements.txt DESTINATION ${PROJECT_SOURCE_DIR}/python/datafed_pkg)
   add_subdirectory( python EXCLUDE_FROM_ALL )
 endif()
 
@@ -228,13 +227,13 @@ if( INSTALL_CORE_SERVER )
 endif()
 
 if( INSTALL_WEB_SERVER )
-  install( FILES ${ProtoFiles} DESTINATION ${DATAFED_INSTALL_PATH}/web )
   install( DIRECTORY ${PROJECT_SOURCE_DIR}/web/static DESTINATION ${DATAFED_INSTALL_PATH}/web )
   install( DIRECTORY ${PROJECT_SOURCE_DIR}/web/views DESTINATION ${DATAFED_INSTALL_PATH}/web )
+  install( DIRECTORY ${PROJECT_SOURCE_DIR}/web/proto3 DESTINATION ${DATAFED_INSTALL_PATH}/web )
   install( FILES ${PROJECT_SOURCE_DIR}/web/version.js DESTINATION ${DATAFED_INSTALL_PATH}/web )
 endif()
 
-if( INSTALL_FOXX ) 
+if( INSTALL_FOXX )
   install(CODE "execute_process(COMMAND ${DataFed_SOURCE_DIR}/scripts/install_foxx.sh
                                 OUTPUT_VARIABLE _out
                                 ERROR_VARIABLE _err

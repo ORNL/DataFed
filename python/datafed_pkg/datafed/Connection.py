@@ -6,13 +6,11 @@
 # unserialized, and custom framing is generated to efficiently convey message
 # type, size, and a re-association context value.
 #
-# The Google protobuf library does not provide a mechanism for identifying
-# message types numerically (only by string), so a build-time custom tool
-# (pyproto_add_msg_idx.py) is used to generate the mappings from message
-# names to message index (and vice versa) and appends this information as
-# dictionaries to the compiled proto files (xxxx_pb2.py). The
-# registerProtocol() method then loads uses this information to create
-# consistent message type framing for python send/recv methods.
+# Message type identification is derived at runtime from the Envelope proto
+# message's field descriptors. Each message type has a stable field number
+# in the Envelope, which serves as its wire-format type ID. This replaces
+# the previous build-time pyproto_add_msg_idx.py hack that assigned type
+# IDs based on message declaration order within proto files.
 
 from google.protobuf.message_factory import GetMessageClass
 import logging
@@ -69,6 +67,10 @@ class Connection:
         self._msg_desc_by_type = {}
         self._msg_desc_by_name = {}
         self._msg_type_by_desc = {}
+        self._field_by_msg_desc = {}
+
+        self._envelope_class = None
+        self._envelope_desc = None
 
         self._address = "tcp://{0}:{1}".format(server_host, server_port)
         # init zeromq
@@ -116,19 +118,65 @@ class Connection:
             self._zmq_ctxt.destroy()
 
     ##
-    # @brief Register a protobuf module
+    # @brief Register message types from the Envelope proto message
+    #
+    # This method derives message type mappings at runtime by inspecting the
+    # Envelope message's field descriptors. Each field in the Envelope that
+    # wraps a message type has a stable field number, which becomes the
+    # message type ID used in wire framing. This replaces the old
+    # registerProtocol() approach that relied on build-time generated
+    # _msg_name_to_type / _msg_type_to_name dicts.
+    #
+    # @param envelope_module - The compiled envelope_pb2 module
+    # @param envelope_class_name - Name of the envelope message (default: "Envelope")
+    #
+    def registerEnvelope(self, envelope_module, envelope_class_name="Envelope"):
+        envelope_class = getattr(envelope_module, envelope_class_name)
+        envelope_desc = envelope_class.DESCRIPTOR
+
+        # Store for envelope wrapping/unwrapping
+        self._envelope_class = envelope_class
+        self._envelope_desc = envelope_desc
+
+        for field in envelope_desc.fields:
+            if field.message_type is None:
+                # Skip non-message fields (e.g. scalars) if any exist
+                continue
+
+            msg_type = field.number
+            desc = field.message_type
+
+            self._msg_desc_by_type[msg_type] = desc
+            self._msg_desc_by_name[desc.name] = desc
+            self._msg_type_by_desc[desc] = msg_type
+            self._field_by_msg_desc[desc] = field
+
+        self._logger.debug(
+            "Registered %d message types from %s",
+            len(self._msg_desc_by_type),
+            envelope_class_name,
+        )
+
+    ##
+    # @brief Register a protobuf module (DEPRECATED - use registerEnvelope)
     #
     # This method registers an imported protobuf module (_pb2 file) for use
     # with the Connection class. Registration is required for proper message
     # framing and serialization.
     #
+    # This relies on build-time generated _msg_name_to_type dicts appended
+    # to _pb2 files by pyproto_add_msg_idx.py. Prefer registerEnvelope()
+    # which derives mappings from envelope field numbers at runtime.
+    #
     # @param msg_module - Protobuf module (imported *_pb2 module)
     #
     def registerProtocol(self, msg_module):
-        # Message descriptors are stored by name created by protobuf compiler
-        # A custom post-proc tool generates and appends _msg_name_to_type with
-        # defined DataFed-sepcific numer message types
-
+        import warnings
+        warnings.warn(
+            "registerProtocol() is deprecated, use registerEnvelope() instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         for name, desc in sorted(msg_module.DESCRIPTOR.message_types_by_name.items()):
             msg_t = msg_module._msg_name_to_type[name]
             self._msg_desc_by_type[msg_t] = desc
@@ -138,15 +186,15 @@ class Connection:
     ##
     # @brief Receive a message
     #
-    # Receive a protobuf message with timeout. This method automatically
-    # parses and creates a new protobuf message class based on received
-    # framing. The new message object, the message name (defined in the
-    # associated proto file), and re-association context are returned as
-    # a tuple. On timeout, (None,None,None) is returned.
+    # Receive a protobuf message with timeout. The wire payload is an
+    # Envelope message; this method deserializes the Envelope and extracts
+    # the inner message via the oneof payload field. The inner message
+    # object, its name, and re-association context are returned as a tuple.
+    # On timeout, (None, None, None) is returned.
     #
     # @param timeout - Timeout in milliseconds
-    # @return Tuple of message, message type, and re-association context
-    # @retval (object,str,int) or (None,None,None) on timeout
+    # @return Tuple of message, message name, and re-association context
+    # @retval (object, str, int) or (None, None, None) on timeout
     # @exception Exception: if unregistered message type is received.
     #
     def recv(self, a_timeout=1000):
@@ -180,38 +228,46 @@ class Connection:
             # client
             self._socket.recv_string(0)
 
-            # receive custom frame header and unpack
+            # Receive frame: 8 bytes = uint32 size + uint16 msg_type + uint16 context
             frame_data = self._socket.recv(0)
-            frame_values = struct.unpack(">LBBH", frame_data)
-            msg_type = (frame_values[1] << 8) | frame_values[2]
+            frame_values = struct.unpack(">LHH", frame_data)
+            body_size = frame_values[0]
+            msg_type = frame_values[1]
+            ctxt = frame_values[2]
 
-            # find message descriptor based on type (descriptor index)
-
-            if not (msg_type in self._msg_desc_by_type):
+            if msg_type not in self._msg_desc_by_type:
                 raise Exception(
                     "received unregistered message type: {}".format(msg_type)
                 )
 
-            desc = self._msg_desc_by_type[msg_type]
+            data = self._socket.recv(0)
 
-            if frame_values[0] > 0:
-                # Create message by parsing content
-                data = self._socket.recv(0)
-                reply = GetMessageClass(desc)()
-                reply.ParseFromString(data)
+            if body_size > 0:
+                # Deserialize as Envelope
+                envelope = self._envelope_class()
+                envelope.ParseFromString(data)
+
+                # Extract inner message from the oneof
+                payload_field = envelope.WhichOneof("payload")
+                if payload_field is None:
+                    raise Exception("Received Envelope with no payload set")
+                reply = getattr(envelope, payload_field)
             else:
-                # No content, just create message instance
-                data = self._socket.recv(0)
+                # Zero-size body: create empty message instance from type
+                desc = self._msg_desc_by_type[msg_type]
                 reply = GetMessageClass(desc)()
 
-            return reply, desc.name, frame_values[3]
+            return reply, reply.DESCRIPTOR.name, ctxt
         else:
             return None, None, None
 
     ##
     # @brief Send a message
     #
-    # Serializes and sends framing and message payload over connection.
+    # Wraps the inner message in an Envelope, serializes it, and sends
+    # framing and payload over the connection. The frame header carries the
+    # message type (Envelope field number) for efficient routing on the
+    # server side.
     #
     # @param message - The protobuf message object to be sent
     # @param ctxt - Reply re-association value (int)
@@ -219,9 +275,15 @@ class Connection:
     #
     def send(self, message, ctxt):
         # Find msg type by descriptor look-up
-        if not (message.DESCRIPTOR in self._msg_type_by_desc):
+        if message.DESCRIPTOR not in self._msg_type_by_desc:
             raise Exception("Attempt to send unregistered message type.")
+
         msg_type = self._msg_type_by_desc[message.DESCRIPTOR]
+        field = self._field_by_msg_desc[message.DESCRIPTOR]
+
+        # Wrap inner message in Envelope
+        envelope = self._envelope_class()
+        getattr(envelope, field.name).CopyFrom(message)
 
         # Initial Null frame
         self._socket.send_string("BEGIN_DATAFED", zmq.SNDMORE)
@@ -235,12 +297,12 @@ class Connection:
         self._socket.send_string(self._pub_key, zmq.SNDMORE)
         self._socket.send_string("no_user", zmq.SNDMORE)
 
-        # Serialize
-        data = message.SerializeToString()
+        # Serialize the Envelope (not the inner message)
+        data = envelope.SerializeToString()
         data_sz = len(data)
 
-        # Build the message frame, to match C-struct MessageFrame
-        frame = struct.pack(">LBBH", data_sz, msg_type >> 8, msg_type & 0xFF, ctxt)
+        # Build the message frame: uint32 size + uint16 msg_type + uint16 context
+        frame = struct.pack(">LHH", data_sz, msg_type, ctxt)
 
         if data_sz > 0:
             # Send frame and payload

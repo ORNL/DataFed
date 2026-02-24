@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package SDMS;
+
+import "messages/alloc_data.proto";
+import "messages/task_data.proto";
+
+option cc_enable_arenas = true;
+
+message RecordOwnerChangeReply {
+    uint32 act_cnt = 1;
+    uint64 act_size = 2;
+    uint32 tot_cnt = 3;
+    repeated AllocData alloc = 4;
+    TaskData task = 8;
+}

@@ -33,6 +33,13 @@ describe("unit_task_router: the Foxx microservice task_router list/ endpoint", (
         });
     });
 
+    after(function () {
+        const collections = ["u", "task"];
+        collections.forEach((name) => {
+            const col = db._collection(name);
+            if (col) col.truncate();
+        });
+    });
     it("should successfully run the list route", () => {
         db.u.save({
             _key: "fakeUser",
