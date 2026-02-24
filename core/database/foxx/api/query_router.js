@@ -299,8 +299,9 @@ router
 
 router
     .get("/delete", function (req, res) {
+        let client = undefined;
         try {
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
+            client = g_lib.getUserFromClientID(req.queryParams.client);
             var owner;
             logger.logRequestStarted({
                 client: req.queryParams.client,

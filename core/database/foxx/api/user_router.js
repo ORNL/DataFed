@@ -332,8 +332,16 @@ router
                     write: ["u", "admin"],
                 },
                 action: function () {
-                    const client = g_lib.getUserFromClientID(req.queryParams.client);
+                    client = g_lib.getUserFromClientID(req.queryParams.client);
                     var user_id;
+                    logger.logRequestStarted({
+                        client: client?._id,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "GET",
+                        routePath: basePath + "/update",
+                        status: "Started",
+                        description: "Update user information",
+                    });
 
                     if (req.queryParams.subject) {
                         user_id = req.queryParams.subject;
@@ -392,6 +400,15 @@ router
                     delete user.new.refresh;
 
                     result = [user.new];
+
+                    const { is_admin, max_coll, max_proj, max_sav_qry } = user.new;
+
+                    extra_log_info = {
+                        is_admin,
+                        max_coll,
+                        max_proj,
+                        max_sav_qry,
+                    };
                 },
             });
             res.send(result);
@@ -1333,6 +1350,7 @@ router
 
 router
     .get("/list/all", function (req, res) {
+        let client = null;
         var qry = "for i in u sort i.name_last, i.name_first";
         var result;
         logger.logRequestStarted({
@@ -1679,8 +1697,16 @@ router
                     write: ["uuid", "accn", "ident"],
                 },
                 action: function () {
-                    const client = g_lib.getUserFromClientID(req.queryParams.client);
+                    client = g_lib.getUserFromClientID(req.queryParams.client);
                     var id;
+                    logger.logRequestStarted({
+                        client: client?._id,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "GET",
+                        routePath: basePath + "/ident/add",
+                        status: "Started",
+                        description: "Add new linked identity",
+                    });
 
                     if (g_lib.isUUID(req.queryParams.ident)) {
                         if (
@@ -1810,6 +1836,7 @@ router
 
 router
     .get("/ident/remove", function (req, res) {
+        let client = null;
         try {
             logger.logRequestStarted({
                 client: req.queryParams.client,
