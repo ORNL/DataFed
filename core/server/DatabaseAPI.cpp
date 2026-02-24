@@ -1797,33 +1797,36 @@ void DatabaseAPI::queryUpdate(const SDMS::QueryUpdateRequest &a_request,
   }
 
   if (a_request.has_query()) {
-    // Fetch existing stored query
-    Value existing;
-    dbGet("qry/view", {{"id", a_request.id()}}, existing, log_context);
+    SDMS::SearchRequest final_query;
+    if (a_request.replace_query()) {
+        // Full replacement — use incoming query as-is
+        final_query.CopyFrom(a_request.query());
+    } else {
+        // Partial update — merge incoming onto existing
+        Value existing;
+        dbGet("qry/view", {{"id", a_request.id()}}, existing, log_context);
 
-    // Parse stored query JSON into a SearchRequest
-    SDMS::SearchRequest merged;
-    auto parse_stat = google::protobuf::util::JsonStringToMessage(
-        existing.asObject().getValue("query").toString(), &merged);
-    if (!parse_stat.ok()) {
-      EXCEPT(1, "Failed to parse existing query");
-    }
+        auto parse_stat = google::protobuf::util::JsonStringToMessage(
+            existing.asObject().getValue("query").toString(), &final_query);
+        if (!parse_stat.ok()) {
+            EXCEPT(1, "Failed to parse existing query");
+        }
 
-    if (a_request.query().coll_size() > 0) {
-        merged.clear_coll();
+        if (a_request.query().coll_size() > 0) {
+            final_query.clear_coll();
+        }
+        if (a_request.query().tags_size() > 0) {
+            final_query.clear_tags();
+        }
+        if (a_request.query().cat_tags_size() > 0) {
+            final_query.clear_cat_tags();
+        }
+        final_query.MergeFrom(a_request.query());
     }
-    if (a_request.query().tags_size() > 0) {
-        merged.clear_tags();
-    }
-    if (a_request.query().cat_tags_size() > 0) {
-        merged.clear_cat_tags();
-    }
-    // Incoming fields overwrite existing, unset fields left untouched
-    merged.MergeFrom(a_request.query());
 
     // Re-generate AQL from the complete merged query
     string qry_begin, qry_end, qry_filter, params;
-    uint32_t cnt = parseSearchRequest(merged, qry_begin, qry_end,
+    uint32_t cnt = parseSearchRequest(final_query, qry_begin, qry_end,
                                       qry_filter, params, log_context);
 
     google::protobuf::util::JsonPrintOptions options;
@@ -1832,7 +1835,7 @@ void DatabaseAPI::queryUpdate(const SDMS::QueryUpdateRequest &a_request,
     options.preserve_proto_field_names = true;
     options.always_print_primitive_fields = true;
     auto stat = google::protobuf::util::MessageToJsonString(
-        merged, &query_json, options);
+        final_query, &query_json, options);
     if (!stat.ok()) {
       EXCEPT(1, "Invalid search request");
     }
