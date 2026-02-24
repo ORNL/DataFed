@@ -178,11 +178,11 @@ class Record {
         if (!this.isManaged()) {
             return false;
         }
-    
+
         if (!a_path.startsWith("/")) {
             a_path = "/" + a_path;
         }
-    
+
         // If record is in flight, only check new location
         if (this.#loc.hasOwnProperty("new_repo") && this.#loc.new_repo) {
             const new_uid = this.#loc.new_owner ? this.#loc.new_owner : this.#loc.uid;
@@ -190,14 +190,14 @@ class Record {
                 _from: new_uid,
                 _to: this.#loc.new_repo,
             });
-    
+
             if (!new_alloc) {
                 this.#error = error.ERR_PERM_DENIED;
                 this.#err_msg =
                     "Permission denied, '" + this.#key + "' is not part of an allocation'";
                 return false;
             }
-    
+
             const new_repo = g_db._document(this.#loc.new_repo);
             if (!new_repo) {
                 this.#error = error.ERR_INTERNAL_FAULT;
@@ -209,12 +209,12 @@ class Record {
                     "'";
                 return false;
             }
-    
+
             let new_path = this._pathToRecord(new_uid, new_repo.path);
             if (new_path === a_path) {
                 return true;
             }
-    
+
             this.#error = error.ERR_PERM_DENIED;
             this.#err_msg =
                 "Record path is not consistent with repo. Expected: " +
@@ -223,15 +223,15 @@ class Record {
                 a_path;
             return false;
         }
-    
+
         // No in-flight move — check current location
         this.#repo = g_db._document(this.#loc._to);
         let current_path = this._pathToRecord(this.#loc.uid, this.#repo.path);
-    
+
         if (current_path === a_path) {
             return true;
         }
-    
+
         this.#error = error.ERR_PERM_DENIED;
         this.#err_msg =
             "Record path is not consistent with repo. Expected: " +
