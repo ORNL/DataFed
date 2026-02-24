@@ -22,7 +22,7 @@ void Promote::enforce(AuthMap &auth_map, const std::string &public_key) {
     if (access_count >= m_transient_to_session_count_threshold) {
       // Convert transient key to session key if has been accessed more than the
       // threshold
-      std::string uid = auth_map.getUID(m_promote_from, public_key, log_context);
+    std::string uid = auth_map.getUID(m_promote_from, public_key, log_context);
       auth_map.addKey(m_promote_to, public_key, uid);
     }
     // Remove expired short lived transient key
