@@ -315,6 +315,7 @@ router
 router
     .get("/update", function (req, res) {
         let result = null;
+        let client = null;
         let sub = req.queryParams.subject ? req.queryParams.subject : req.queryParams.client;
         try {
             logger.logRequestStarted({
