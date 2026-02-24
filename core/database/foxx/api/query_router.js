@@ -660,6 +660,15 @@ router
 
             var qry = g_db.q.document(req.queryParams.id);
 
+            // Legacy query documents may have `params` stored as a JSON string
+            // rather than an object, because the original schema validation
+            // (joi.any()) accepted both. New documents are stored as objects
+            // (joi.object()), but old records remain until migrated.
+            // TODO: Remove after backfilling existing queries in ArangoDB.
+            if (typeof qry.params === "string") {
+                qry.params = JSON.parse(qry.params);
+            }
+
             if (client._id != qry.owner && !client.is_admin) {
                 throw error.ERR_PERM_DENIED;
             }
