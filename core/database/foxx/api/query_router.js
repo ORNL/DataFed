@@ -34,7 +34,6 @@ router
                 },
                 action: function () {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
-                    
 
                     // Check max number of saved queries
                     if (client.max_sav_qry >= 0) {
@@ -152,7 +151,7 @@ router
                 },
                 action: function () {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
-                                        var qry = g_db.q.document(req.body.id);
+                    var qry = g_db.q.document(req.body.id);
 
                     if (client._id != qry.owner && !client.is_admin) {
                         throw error.ERR_PERM_DENIED;
@@ -346,7 +345,7 @@ router
                     extra: req.queryParams.ids[i],
                 });
             }
-	    res.send();
+            res.send();
         } catch (e) {
             logger.logRequestFailure({
                 client: req.queryParams.client,
@@ -473,7 +472,7 @@ function execQuery(client, mode, published, orig_query) {
                         },
                     )
                     .toArray();
-	        if (!query.params.cols.length) {
+                if (!query.params.cols.length) {
                     throw [
                         error.ERR_PERM_DENIED,
                         "No access to user '" + query.params.owner + "' data/collections.",
@@ -507,7 +506,7 @@ function execQuery(client, mode, published, orig_query) {
                             },
                         )
                         .toArray();
-	            if (!query.params.cols.length) {
+                    if (!query.params.cols.length) {
                         throw [
                             error.ERR_PERM_DENIED,
                             "No access to project '" + query.params.owner + "'.",
@@ -686,10 +685,10 @@ router
                 routePath: basePath + "/exec",
                 status: "Success",
                 description: "Execute specified queries",
-		extra: {
+                extra: {
                     count: Array.isArray(results) ? results.length : undefined,
                     query_id: req.queryParams.id,
-                }
+                },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -699,7 +698,7 @@ router
                 routePath: basePath + "/exec",
                 status: "Failure",
                 description: "Execute specified queries",
-		extra: {
+                extra: {
                     count: Array.isArray(results) ? results.length : undefined,
                     query_id: req.queryParams.id,
                 },

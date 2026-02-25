@@ -401,7 +401,6 @@ router
                     delete user.new.refresh;
 
                     result = [user.new];
-
                 },
             });
             res.send(result);
@@ -718,7 +717,7 @@ router
 router
     .get("/keys/get", function (req, res) {
         let sub = req.queryParams.subject ? req.queryParams.subject : req.queryParams.client;
-	let user = null;
+        let user = null;
         try {
             if (req.queryParams.subject) {
                 if (!g_db.u.exists(req.queryParams.subject))
@@ -1030,7 +1029,7 @@ router
 router
     .get("/token/get", function (req, res) {
         let sub = req.queryParams.subject ? req.queryParams.subject : req.queryParams.client;
-	let user = null;
+        let user = null;
         try {
             const collection_token = UserToken.validateRequestParams(req.queryParams);
             // TODO: collection type determines logic when mapped vs HA
@@ -1117,7 +1116,7 @@ router
 router
     .get("/token/get/access", function (req, res) {
         let sub = req.queryParams.subject ? req.queryParams.subject : req.queryParams.client;
-	let user = null;
+        let user = null;
         try {
             if (req.queryParams.subject) {
                 if (!g_db.u.exists(req.queryParams.subject))
@@ -1225,7 +1224,7 @@ router
 router
     .get("/view", function (req, res) {
         let sub = req.queryParams.subject ? req.queryParams.subject : req.queryParams.client;
-	let client = null;
+        let client = null;
         try {
             client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
             logger.logRequestStarted({
@@ -1482,7 +1481,7 @@ Note: must delete ALL data records and projects owned by the user being deleted 
 router
     .get("/delete", function (req, res) {
         let user_id = null;
-	let sub = null;
+        let sub = null;
         try {
             sub = req.queryParams.subject ? req.queryParams.subject : req.queryParams.client;
             logger.logRequestStarted({
@@ -1609,7 +1608,7 @@ router
 router
     .get("/ident/list", function (req, res) {
         let sub = req.queryParams.subject ? req.queryParams.subject : req.queryParams.client;
-	let client = null;
+        let client = null;
         let extra_log = [];
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
@@ -1680,7 +1679,7 @@ router
 
 router
     .get("/ident/add", function (req, res) {
-	let client = null;
+        let client = null;
         let sub = req.queryParams.subject ? req.queryParams.subject : req.queryParams.client;
         try {
             logger.logRequestStarted({
@@ -1725,7 +1724,7 @@ router
                                 extra: req.queryParams.ident,
                             });
                             return;
-			}
+                        }
                         id = g_db.uuid.save(
                             {
                                 _key: req.queryParams.ident,
