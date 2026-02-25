@@ -446,6 +446,10 @@ router
     .description("List client saved queries");
 
 function execQuery(client, mode, published, orig_query) {
+    // Make sure we are always dealing with strings.
+    if (typeof mode === "string" && mode in g_lib) {
+        mode = g_lib[mode];
+    }
     var col_chk = true,
         ctxt = client._id;
     let query = {
