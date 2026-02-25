@@ -808,16 +808,6 @@ void DatabaseAPI::projGetRole(const SDMS::ProjectGetRoleRequest &a_request,
   a_reply.set_role((ProjectRole)(unsigned short)obj.getNumber("role"));
 }
 
-void DatabaseAPI::projSearch(const std::string &a_query,
-                             SDMS::ProjectDataReply &a_reply,
-                             LogContext log_context) {
-  Value result;
-
-  dbGet("prj/search", {{"query", a_query}}, result, log_context);
-
-  setProjectData(a_reply, result, log_context);
-}
-
 void DatabaseAPI::setProjectData(SDMS::ProjectDataReply &a_reply,
                                  const Value &a_result,
                                  LogContext log_context) {
@@ -1760,8 +1750,9 @@ void DatabaseAPI::queryCreate(const SDMS::QueryCreateRequest &a_request,
   google::protobuf::util::JsonPrintOptions options;
   string query_json;
 
-  options.always_print_enums_as_ints = true;
+  options.always_print_enums_as_ints = false;
   options.preserve_proto_field_names = true;
+  options.always_print_primitive_fields = true;
 
   auto stat = google::protobuf::util::MessageToJsonString(a_request.query(),
                                                           &query_json, options);
@@ -1796,19 +1787,45 @@ void DatabaseAPI::queryUpdate(const SDMS::QueryUpdateRequest &a_request,
   }
 
   if (a_request.has_query()) {
-    string qry_begin, qry_end, qry_filter, params;
+    SDMS::SearchRequest final_query;
+    if (a_request.replace_query()) {
+        // Full replacement — use incoming query as-is
+        final_query.CopyFrom(a_request.query());
+    } else {
+        // Partial update — merge incoming onto existing
+        Value existing;
+        dbGet("qry/view", {{"id", a_request.id()}}, existing, log_context);
 
-    uint32_t cnt = parseSearchRequest(a_request.query(), qry_begin, qry_end,
+        auto parse_stat = google::protobuf::util::JsonStringToMessage(
+            existing.asObject().getValue("query").toString(), &final_query);
+        if (!parse_stat.ok()) {
+            EXCEPT(1, "Failed to parse existing query");
+        }
+
+        if (a_request.query().coll_size() > 0) {
+            final_query.clear_coll();
+        }
+        if (a_request.query().tags_size() > 0) {
+            final_query.clear_tags();
+        }
+        if (a_request.query().cat_tags_size() > 0) {
+            final_query.clear_cat_tags();
+        }
+        final_query.MergeFrom(a_request.query());
+    }
+
+    // Re-generate AQL from the complete merged query
+    string qry_begin, qry_end, qry_filter, params;
+    uint32_t cnt = parseSearchRequest(final_query, qry_begin, qry_end,
                                       qry_filter, params, log_context);
 
     google::protobuf::util::JsonPrintOptions options;
     string query_json;
-
-    options.always_print_enums_as_ints = true;
+    options.always_print_enums_as_ints = false;
     options.preserve_proto_field_names = true;
-
+    options.always_print_primitive_fields = true;
     auto stat = google::protobuf::util::MessageToJsonString(
-        a_request.query(), &query_json, options);
+        final_query, &query_json, options);
     if (!stat.ok()) {
       EXCEPT(1, "Invalid search request");
     }
@@ -1823,7 +1840,6 @@ void DatabaseAPI::queryUpdate(const SDMS::QueryUpdateRequest &a_request,
 
   string body = payload.dump(-1, ' ', true);
   dbPost("qry/update", {}, &body, result, log_context);
-
   setQueryData(a_reply, result, log_context);
 }
 

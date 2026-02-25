@@ -43,10 +43,11 @@ router
                         var owner = client,
                             parent_id;
 
+                        let owner_id = owner._id;
                         if (req.body.parent) {
                             parent_id = g_lib.resolveCollID(req.body.parent, client);
 
-                            var owner_id = g_db.owner.firstExample({
+                            owner_id = g_db.owner.firstExample({
                                 _from: parent_id,
                             })._to;
                             if (owner_id != client._id) {

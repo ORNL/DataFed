@@ -191,6 +191,7 @@ class TestDataFedPythonAPIQueryCRUD(unittest.TestCase):
                 if model.alias.startswith("adamantium"):
                     material = model.alias
             time.sleep(self._timeout)
+            count = count + 1
         
         print(f"Query found {material}")
 

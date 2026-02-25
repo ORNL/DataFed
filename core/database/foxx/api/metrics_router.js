@@ -73,7 +73,7 @@ router
 router
     .get("/msg_count", function (req, res) {
         let client = null;
-        let result = null;
+        let result = [];
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
@@ -147,7 +147,7 @@ router
 router
     .get("/users/active", function (req, res) {
         let client = null;
-        let cnt = null;
+        let cnt = {};
         try {
             client = req.queryParams.client
                 ? g_lib.getUserFromClientID(req.queryParams.client)
@@ -161,7 +161,6 @@ router
                 description: "Get recently active users from metrics",
             });
 
-            cnt = {};
             var u,
                 r,
                 qryres = g_db

@@ -10,4 +10,5 @@ message QueryUpdateRequest {
     string id = 1;
     optional string title = 2;
     SearchRequest query = 3;
+    bool replace_query = 4;
 }
