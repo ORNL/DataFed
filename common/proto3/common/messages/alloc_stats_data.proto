@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+message AllocStatsData {
+    string repo = 1;
+    uint32 rec_count = 2;
+    uint32 file_count = 3;
+    uint64 data_size = 4;
+    repeated uint32 histogram = 5;
+}

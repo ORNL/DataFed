@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package SDMS;
+
+import "enums/search_mode.proto";
+import "enums/sort_option.proto";
+
+option cc_enable_arenas = true;
+
+message SearchRequest {
+    SearchMode mode = 1;
+    optional bool published = 2;
+    optional string id = 3;
+    optional string text = 4;
+    repeated string tags = 5;
+    repeated string cat_tags = 6;
+    optional uint32 from = 7;
+    optional uint32 to = 8;
+    optional string owner = 9;
+    optional string creator = 10;
+    repeated string coll = 11;
+    optional string sch_id = 12;
+    optional string meta = 13;
+    optional bool meta_err = 14;
+    optional SortOption sort = 15;
+    optional bool sort_rev = 16;
+    optional uint32 offset = 17;
+    optional uint32 count = 18;
+}

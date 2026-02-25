@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package SDMS;
+
+import "enums/access_token_type.proto";
+
+option cc_enable_arenas = true;
+
+message UserSetAccessTokenRequest {
+    string access = 1;
+    uint32 expires_in = 2;
+    string refresh = 3;
+    AccessTokenType type = 4;
+    string other = 5;
+}

@@ -1,6 +1,5 @@
 // Local private includes
 #include "ZeroMQCommunicatorSecure.hpp"
-#include "ProtoBufFactory.hpp"
 #include "support/zeromq/Context.hpp"
 #include "support/zeromq/SocketTranslator.hpp"
 

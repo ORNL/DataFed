@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package SDMS;
+
+import "enums/sort_option.proto";
+
+option cc_enable_arenas = true;
+
+message SchemaSearchRequest {
+    optional string id = 1;
+    optional string text = 2;
+    optional string owner = 3;
+    optional SortOption sort = 4;
+    optional bool sort_rev = 5;
+    optional uint32 offset = 6;
+    optional uint32 count = 7;
+}

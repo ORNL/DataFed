@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+message CollReadRequest {
+    string id = 1;
+    bool details = 3;
+    optional uint32 offset = 4;
+    optional uint32 count = 5;
+}

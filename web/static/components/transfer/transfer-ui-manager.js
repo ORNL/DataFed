@@ -222,6 +222,8 @@ export class TransferUIManager {
     createDialog(labels) {
         this.state.frame = $(document.createElement("div"));
         this.state.frame.html(getDialogTemplate(labels, this.#controller.model.mode));
+        // Attach controller to frame for state persistence
+        this.state.frame.data("controller", this.#controller);
         return this.state.frame;
     }
 

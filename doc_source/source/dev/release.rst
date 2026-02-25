@@ -2,6 +2,11 @@
 Release Notes
 =============
 
+For release notes, for dates after May 28, 2021 please refer to what is posted
+on the github website.
+
+https://github.com/ORNL/DataFed/releases
+
 1.2.0-4, May 28, 2021
 =====================
 

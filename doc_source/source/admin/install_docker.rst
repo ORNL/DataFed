@@ -53,6 +53,8 @@ Downloading DataFed:
 .. code-block:: bash
 
     git clone https://github.com/ORNL/DataFed.git
+    cd DataFed
+    git submodule update --init --recursive
 
 If you are deploying in development mode, the next step is to enter configuration options that are listed in ./.env To
 generate a template for this file you will first need to run:
@@ -208,7 +210,7 @@ Here is an example for the repository service:
         -e DATAFED_GLOBUS_APP_SECRET="" \
         -e DATAFED_GLOBUS_APP_ID="" \
         -e DATAFED_ZEROMQ_SESSION_SECRET="" \
-	    -e DATAFED_HTTPS_SERVER_PORT="" \
+        -e DATAFED_HTTPS_SERVER_PORT="" \
         -e DATAFED_DOMAIN="" \
         -e DATAFED_DEFAULT_LOG_PATH="" \
         -e DATAFED_CORE_ADDRESS_PORT_INTERNAL="" \
@@ -279,9 +281,6 @@ Notes on running arango in a container can be found on their official web site. 
         arangodb/arangodb:latest \
         --ssl.keyfile /usr/local/share/ca-certificates/datafed-arango.pem \
         --server.endpoint ssl://0.0.0.0:8529
-
-
-
 
 Nginx Service
 -------------

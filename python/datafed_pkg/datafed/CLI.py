@@ -34,8 +34,6 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 
-# from . import SDMS_Auth_pb2 as auth
-from . import Version_pb2
 from . import CommandLib
 from . import Config
 from . import VERSION
@@ -162,14 +160,14 @@ def run():
         except _NoCommand as e:
             # Be nice and switch to interactive when no command given
             if _interactive and _first:
-                api_version = f"{Version_pb2.DATAFED_COMMON_PROTOCOL_API_MAJOR}."
-                api_version += f"{Version_pb2.DATAFED_COMMON_PROTOCOL_API_MINOR}."
-                api_version += f"{Version_pb2.DATAFED_COMMON_PROTOCOL_API_PATCH}"
-                release_version = f"{Version_pb2.DATAFED_RELEASE_YEAR}."
-                release_version += f"{Version_pb2.DATAFED_RELEASE_MONTH}."
-                release_version += f"{Version_pb2.DATAFED_RELEASE_DAY}."
-                release_version += f"{Version_pb2.DATAFED_RELEASE_HOUR}."
-                release_version += f"{Version_pb2.DATAFED_RELEASE_MINUTE}"
+                api_version = f"{VERSION.DATAFED_COMMON_PROTOCOL_API_MAJOR}."
+                api_version += f"{VERSION.DATAFED_COMMON_PROTOCOL_API_MINOR}."
+                api_version += f"{VERSION.DATAFED_COMMON_PROTOCOL_API_PATCH}"
+                release_version = f"{VERSION.DATAFED_RELEASE_YEAR}."
+                release_version += f"{VERSION.DATAFED_RELEASE_MONTH}."
+                release_version += f"{VERSION.DATAFED_RELEASE_DAY}."
+                release_version += f"{VERSION.DATAFED_RELEASE_HOUR}."
+                release_version += f"{VERSION.DATAFED_RELEASE_MINUTE}"
                 _print_msg(1, f"Welcome to DataFed CLI, version {VERSION.__version__}")
                 _print_msg(
                     1, "               Release, version {}".format(release_version)

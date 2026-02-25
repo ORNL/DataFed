@@ -41,6 +41,8 @@ Prior to building DataFed, the build environment must be properly configured as 
 Downloading DataFed::
 
     git clone https://github.com/ORNL/DataFed.git
+    cd DataFed
+    git submodule update --init --recursive
 
 Install packages required to build DataFed:
 
@@ -50,7 +52,7 @@ Install packages required to build DataFed:
 * libboost-all-dev
 * protobuf-compiler
 * libzmq3-dev
-* libssl-dev
+* libssl-dev (version 3.0 or higher)
 * libcurl4-openssl-dev
 * libglobus-common-dev
 * libfuse-dev
@@ -140,8 +142,8 @@ Example download/install of ArangoDB 3.12.4 for Ubuntu::
     sudo apt-get update
     sudo apt-get install arangodb3
 
-It should start automatically with an install but to run the arangodb service, you
-can also interact with it via systemctl::
+It should start automatically with an install but to run the arangodb service,
+you can also interact with it via systemctl::
 
     sudo systemctl start arangodb3.service
 
@@ -180,7 +182,8 @@ Building the compiling the core service::
     cmake --build build --parallel 6
     sudo cmake --build build --target install
 
-Example datafed-core.cfg file::
+Example datafed-core.cfg file, note you will need to swap http for https in the
+db-url if the Arango database is running with ssl.::
 
     port = 9100
     client-threads = 4

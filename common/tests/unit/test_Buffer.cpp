@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE(testing_Buffer_googleprotobuf_repo_create_request) {
   ProtoBufMap proto_map;
   ProtoBufFactory proto_factory;
 
-  SDMS::Auth::RepoCreateRequest repo_create_req;
+  SDMS::RepoCreateRequest repo_create_req;
 
   const std::string id = "bonanza";
   const std::string title = "All you can eat.";
@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE(testing_Buffer_googleprotobuf_repo_create_request) {
   copyFromBuffer(new_msg.get(), buffer);
 
   auto new_repo_create_req =
-      dynamic_cast<SDMS::Auth::RepoCreateRequest *>(new_msg.get());
+      dynamic_cast<SDMS::RepoCreateRequest *>(new_msg.get());
 
   BOOST_CHECK(new_repo_create_req->id().compare(id) == 0);
   BOOST_CHECK(new_repo_create_req->title().compare(title) == 0);
@@ -177,7 +177,7 @@ BOOST_AUTO_TEST_CASE(testing_Buffer_googleprotobuf) {
   ProtoBufMap proto_map;
   ProtoBufFactory proto_factory;
 
-  SDMS::Anon::AuthenticateByPasswordRequest auth_by_pass_req;
+  SDMS::AuthenticateByPasswordRequest auth_by_pass_req;
 
   const std::string uid = "tonystark";
   const std::string password = "skeleton_key";
@@ -203,7 +203,7 @@ BOOST_AUTO_TEST_CASE(testing_Buffer_googleprotobuf) {
   copyFromBuffer(new_msg.get(), buffer);
 
   auto new_auth_by_pass_req =
-      dynamic_cast<SDMS::Anon::AuthenticateByPasswordRequest *>(new_msg.get());
+      dynamic_cast<SDMS::AuthenticateByPasswordRequest *>(new_msg.get());
 
   BOOST_CHECK(new_auth_by_pass_req->password().compare(password) == 0);
   BOOST_CHECK(new_auth_by_pass_req->uid().compare(uid) == 0);
@@ -214,7 +214,7 @@ BOOST_AUTO_TEST_CASE(testing_Buffer_googleprotobuf_empty_payload) {
   ProtoBufMap proto_map;
   ProtoBufFactory proto_factory;
 
-  SDMS::Anon::AckReply ack_reply;
+  SDMS::AckReply ack_reply;
 
   Buffer buffer;
   std::cout << "Calling Copy to buffer" << std::endl;
@@ -232,6 +232,6 @@ BOOST_AUTO_TEST_CASE(testing_Buffer_googleprotobuf_empty_payload) {
   copyFromBuffer(new_msg.get(), buffer);
 
   auto new_auth_by_pass_req =
-      dynamic_cast<SDMS::Anon::AckReply *>(new_msg.get());
+      dynamic_cast<SDMS::AckReply *>(new_msg.get());
 }
 BOOST_AUTO_TEST_SUITE_END()

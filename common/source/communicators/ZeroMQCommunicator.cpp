@@ -336,13 +336,9 @@ void receiveFrame(IMessage &msg, void *incoming_zmq_socket,
 void sendFrame(IMessage &msg, void *outgoing_zmq_socket) {
   zmq_msg_t zmq_msg;
   zmq_msg_init_size(&zmq_msg, 8);
-  // WARNING do not call zmq_msg_init it is called in copy method
-  // this is a code smell and should be fixed in the future
   FrameFactory factory;
   Frame frame = factory.create(msg);
   FrameConverter converter;
-  // Will call zmq_msg_init and create space for 8 bytes
-  // Convert host binary to network (endian) format
   converter.copy(FrameConverter::CopyDirection::FROM_FRAME, zmq_msg, frame);
 
   int number_of_bytes =
@@ -374,7 +370,6 @@ void receiveBody(IMessage &msg, Buffer &buffer, ProtoBufFactory &factory,
                           << frame_size << " received " << number_of_bytes);
     }
 
-    // Only set payload if there is a payload
     if (frame_size > 0) {
 
       if (zmq_msg_size(&zmq_msg) != frame_size) {
@@ -384,20 +379,20 @@ void receiveBody(IMessage &msg, Buffer &buffer, ProtoBufFactory &factory,
                             << ", got: " << zmq_msg_size(&zmq_msg));
       }
 
+      // Deserialize wire bytes into Envelope
       copyToBuffer(buffer, zmq_msg_data(&zmq_msg), frame_size);
-      uint16_t desc_type = std::get<uint16_t>(msg.get(MSG_TYPE));
-      std::unique_ptr<proto::Message> payload = factory.create(desc_type);
-      if (payload == nullptr) {
-        zmq_msg_close(&zmq_msg);
-        EXCEPT(1, "No payload was assigned something is wrong");
-      }
-      copyFromBuffer(payload.get(), buffer);
-      msg.setPayload(std::move(payload));
-    } else {
+      SDMS::Envelope envelope;
+      copyFromBuffer(&envelope, buffer);
 
-      // Even if the frame has 0 size it does not mean it is not a legitimate
-      // message some messages have zero size but are still legitimate such
-      // as a NACK
+      // Extract inner message from Envelope
+      ProtoBufMap proto_map;
+      std::unique_ptr<proto::Message> inner =
+          proto_map.unwrapFromEnvelope(envelope);
+
+      msg.setPayload(std::move(inner));
+
+    } else {
+      // Zero-size: no envelope on the wire. Frame msg_type identifies it.
       uint16_t msg_type = std::get<uint16_t>(msg.get(MSG_TYPE));
 
       ProtoBufMap proto_map;
@@ -429,29 +424,31 @@ void sendBody(IMessage &msg, Buffer &buffer, void *outgoing_zmq_socket) {
     uint32_t frame_size = std::get<uint32_t>(msg.get(FRAME_SIZE));
     if (frame_size > 0) {
       zmq_msg_t zmq_msg;
-
       zmq_msg_init_size(&zmq_msg, frame_size);
 
-      proto::Message *payload;
+      proto::Message *inner = nullptr;
       try {
-        payload = std::get<proto::Message *>(msg.getPayload());
+        inner = std::get<proto::Message *>(msg.getPayload());
       } catch (std::bad_variant_access const &ex) {
         EXCEPT(1, ex.what());
       }
 
-      if (payload) {
-        auto size = payload->ByteSizeLong();
+      if (inner) {
+        ProtoBufMap proto_map;
+        auto envelope = proto_map.wrapInEnvelope(*inner);
+
+        auto size = envelope->ByteSizeLong();
         if (size != frame_size) {
           zmq_msg_close(&zmq_msg);
-          EXCEPT_PARAM(1, "Frame and message sizes differ message size: "
+          EXCEPT_PARAM(1, "Frame and envelope sizes differ. Envelope size: "
                               << size << " frame size: " << frame_size);
         }
 
-        copyToBuffer<proto::Message *>(buffer, payload, size);
+        copyToBuffer<proto::Message *>(buffer, envelope.get(), size);
         copyFromBuffer<void *>(zmq_msg_data(&zmq_msg), buffer);
         int number_of_bytes = 0;
-        if ((number_of_bytes = zmq_msg_send(&zmq_msg, outgoing_zmq_socket, 0)) <
-            0) {
+        if ((number_of_bytes =
+                 zmq_msg_send(&zmq_msg, outgoing_zmq_socket, 0)) < 0) {
           zmq_msg_close(&zmq_msg);
           EXCEPT(1, "zmq_msg_send (body) failed.");
         }
@@ -462,7 +459,6 @@ void sendBody(IMessage &msg, Buffer &buffer, void *outgoing_zmq_socket) {
 
       zmq_msg_close(&zmq_msg);
     } else {
-
       sendFinalDelimiter(outgoing_zmq_socket);
     }
   } else {

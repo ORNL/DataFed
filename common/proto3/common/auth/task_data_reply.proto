@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package SDMS;
+
+import "messages/task_data.proto";
+
+option cc_enable_arenas = true;
+
+message TaskDataReply {
+    repeated TaskData task = 1;
+}

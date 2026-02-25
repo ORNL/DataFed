@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package SDMS;
+
+import "enums/encryption.proto";
+
+option cc_enable_arenas = true;
+
+message DataGetRequest {
+    repeated string id = 1;
+    optional string path = 2;
+    optional Encryption encrypt = 3;
+    optional bool orig_fname = 4;
+    optional bool check = 5;
+    optional string collection_id = 6;
+    optional string collection_type = 7;
+}

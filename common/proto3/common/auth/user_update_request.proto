@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+message UserUpdateRequest {
+    string uid = 1;
+    optional string email = 2;
+    optional string password = 3;
+    optional string options = 4;
+}

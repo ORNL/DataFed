@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+enum SearchMode {
+    SM_DATA = 0;
+    SM_COLLECTION = 1;
+}

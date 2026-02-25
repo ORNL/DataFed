@@ -12,8 +12,7 @@
 #include "common/ProtocolTypes.hpp"
 
 // Proto file includes
-#include "common/SDMS.pb.h"
-#include "common/SDMS_Anon.pb.h"
+#include "common/envelope.pb.h"
 
 // Standard includes
 #include <iostream>
@@ -139,7 +138,7 @@ BOOST_AUTO_TEST_CASE(testing_CommunicatorFactory) {
     msg_from_client->set(MessageAttribute::KEY, key);
 
     auto auth_by_token_req =
-        std::make_unique<Anon::AuthenticateByTokenRequest>();
+        std::make_unique<SDMS::AuthenticateByTokenRequest>();
     auth_by_token_req->set_token(token);
 
     msg_from_client->setPayload(std::move(auth_by_token_req));
@@ -178,8 +177,8 @@ BOOST_AUTO_TEST_CASE(testing_CommunicatorFactory) {
 
     auto google_msg_ptr =
         std::get<::google::protobuf::Message *>(response.message->getPayload());
-    Anon::AuthenticateByTokenRequest *payload =
-        dynamic_cast<Anon::AuthenticateByTokenRequest *>(google_msg_ptr);
+    SDMS::AuthenticateByTokenRequest *payload =
+        dynamic_cast<SDMS::AuthenticateByTokenRequest *>(google_msg_ptr);
 
     BOOST_CHECK(payload->token().compare(token) == 0);
   }
@@ -269,7 +268,7 @@ BOOST_AUTO_TEST_CASE(testing_CommunicatorFactorySecure) {
     msg_from_client->set(MessageAttribute::KEY, key);
 
     auto auth_by_token_req =
-        std::make_unique<Anon::AuthenticateByTokenRequest>();
+        std::make_unique<SDMS::AuthenticateByTokenRequest>();
     auth_by_token_req->set_token(token);
 
     msg_from_client->setPayload(std::move(auth_by_token_req));
@@ -308,8 +307,8 @@ BOOST_AUTO_TEST_CASE(testing_CommunicatorFactorySecure) {
 
     auto google_msg_ptr =
         std::get<::google::protobuf::Message *>(response.message->getPayload());
-    Anon::AuthenticateByTokenRequest *payload =
-        dynamic_cast<Anon::AuthenticateByTokenRequest *>(google_msg_ptr);
+    SDMS::AuthenticateByTokenRequest *payload =
+        dynamic_cast<SDMS::AuthenticateByTokenRequest *>(google_msg_ptr);
 
     BOOST_CHECK(payload->token().compare(token) == 0);
   }
@@ -320,7 +319,7 @@ BOOST_AUTO_TEST_CASE(testing_CommunicatorFactorySecure) {
     msg_from_client->set(MessageAttribute::ID, id);
     msg_from_client->set(MessageAttribute::KEY, key);
 
-    auto ack_reply = std::make_unique<Anon::AckReply>();
+    auto ack_reply = std::make_unique<SDMS::AckReply>();
 
     msg_from_client->setPayload(std::move(ack_reply));
 
@@ -358,7 +357,7 @@ BOOST_AUTO_TEST_CASE(testing_CommunicatorFactorySecure) {
 
     auto google_msg_ptr =
         std::get<::google::protobuf::Message *>(response.message->getPayload());
-    dynamic_cast<Anon::AckReply *>(google_msg_ptr);
+    dynamic_cast<SDMS::AckReply *>(google_msg_ptr);
   }
 }
 
@@ -454,7 +453,7 @@ BOOST_AUTO_TEST_CASE(testing_CommunicatorFactoryReply) {
   msg_from_client->set(MessageAttribute::ID, id);
   msg_from_client->set(MessageAttribute::KEY, key);
 
-  auto auth_by_token_req = std::make_unique<Anon::AuthenticateByTokenRequest>();
+  auto auth_by_token_req = std::make_unique<SDMS::AuthenticateByTokenRequest>();
   auth_by_token_req->set_token(token);
 
   msg_from_client->setPayload(std::move(auth_by_token_req));
@@ -494,8 +493,8 @@ BOOST_AUTO_TEST_CASE(testing_CommunicatorFactoryReply) {
 
   auto google_msg_ptr =
       std::get<::google::protobuf::Message *>(response.message->getPayload());
-  Anon::AuthenticateByTokenRequest *payload =
-      dynamic_cast<Anon::AuthenticateByTokenRequest *>(google_msg_ptr);
+  SDMS::AuthenticateByTokenRequest *payload =
+      dynamic_cast<SDMS::AuthenticateByTokenRequest *>(google_msg_ptr);
 
   BOOST_CHECK(payload->token().compare(token) == 0);
   // Server receive
@@ -504,8 +503,8 @@ BOOST_AUTO_TEST_CASE(testing_CommunicatorFactoryReply) {
   auto nack_msg = msg_factory.createResponseEnvelope(*response.message);
 
   // Create Google proto message
-  auto nack_reply = std::make_unique<Anon::NackReply>();
-  nack_reply->set_err_code(ErrorCode::ID_SERVICE_ERROR);
+  auto nack_reply = std::make_unique<SDMS::NackReply>();
+  nack_reply->set_err_code(ErrorCode::SERVICE_ERROR);
   std::string error_msg = "testing_no_error";
   nack_reply->set_err_msg(error_msg);
 
@@ -530,10 +529,10 @@ BOOST_AUTO_TEST_CASE(testing_CommunicatorFactoryReply) {
 
   auto response_google_msg_ptr = std::get<::google::protobuf::Message *>(
       response_client.message->getPayload());
-  Anon::NackReply *response_payload =
-      dynamic_cast<Anon::NackReply *>(response_google_msg_ptr);
+  SDMS::NackReply *response_payload =
+      dynamic_cast<SDMS::NackReply *>(response_google_msg_ptr);
 
-  BOOST_CHECK(response_payload->err_code() == ErrorCode::ID_SERVICE_ERROR);
+  BOOST_CHECK(response_payload->err_code() == ErrorCode::SERVICE_ERROR);
   BOOST_CHECK(response_payload->err_msg().compare(error_msg) == 0);
 
   // Client receive

@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package SDMS;
+
+import "messages/record_data_location.proto";
+
+option cc_enable_arenas = true;
+
+message RepoRecordDataLocations {
+    string repo_id = 1;
+    repeated RecordDataLocation loc = 2;
+}

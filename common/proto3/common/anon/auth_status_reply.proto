@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+message AuthStatusReply {
+    bool auth = 1;
+    string uid = 2;
+}

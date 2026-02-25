@@ -167,6 +167,14 @@ export default class OAuthTokenHandler {
                 break;
             }
             case AccessTokenType.GLOBUS_DEFAULT: {
+                if (token_context.collection_id) {
+                    const { collection_id, scope } = token_context;
+                    if (!scope) {
+                        throw new Error("Transfer token received without scope context");
+                    }
+                    optional_data.type = AccessTokenType.GLOBUS_TRANSFER;
+                    optional_data.other = collection_id + "|" + scope;
+                }
                 break;
             }
             default: {

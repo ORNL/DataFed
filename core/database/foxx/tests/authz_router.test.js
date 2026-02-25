@@ -218,6 +218,28 @@ describe("unit_authz_router: the Foxx microservice authz_router", () => {
         g_db.repo.truncate();
     });
 
+    after(() => {
+        [
+            "u",
+            "ident",
+            "uuid",
+            "acl",
+            "item",
+            "c",
+            "g",
+            "p",
+            "owner",
+            "member",
+            "d",
+            "alloc",
+            "loc",
+            "repo",
+        ].forEach((name) => {
+            const col = g_db._collection(name);
+            if (col) col.truncate();
+        });
+    });
+
     it("unit_authz_router: gridftp create action with user record and valid file path.", () => {
         defaultWorkingSetup();
         const request_string =
@@ -334,5 +356,59 @@ describe("unit_authz_router: the Foxx microservice authz_router", () => {
 
         // assert
         expect(response.status).to.equal(204);
+    });
+    //
+    // ===== PERM CHECK TESTS =====
+    //
+    it("unit_authz_router: perm/check should return granted=true for admin user on owned record", () => {
+        defaultWorkingSetup();
+
+        const request_string =
+            `${authz_base_url}/perm/check?client=` +
+            james_uuid +
+            `&id=` +
+            encodeURIComponent(record_id) +
+            `&perms=` +
+            permissions.PERM_ALL;
+
+        const response = request.get(request_string);
+
+        expect(response.status).to.equal(200);
+        const body = JSON.parse(response.body);
+        expect(body).to.have.property("granted", true);
+    });
+    //
+    // ===== PERM GET TESTS =====
+    //
+    it("unit_authz_router: perm/get should return permission bits for admin user on record", () => {
+        defaultWorkingSetup();
+
+        const request_string =
+            `${authz_base_url}/perm/get?client=` +
+            james_uuid +
+            `&id=` +
+            encodeURIComponent(record_id);
+
+        const response = request.get(request_string);
+
+        expect(response.status).to.equal(200);
+        const body = JSON.parse(response.body);
+        expect(body).to.have.property("granted");
+        expect(body.granted).to.be.a("number");
+    });
+
+    it("unit_authz_router: perm/get should fail with invalid id", () => {
+        defaultWorkingSetup();
+
+        const request_string =
+            `${authz_base_url}/perm/get?client=` +
+            james_uuid +
+            `&id=` +
+            encodeURIComponent("x/invalid") +
+            `&perms=` +
+            permissions.PERM_ALL;
+
+        const response = request.get(request_string);
+        expect(response.status).to.equal(400);
     });
 });

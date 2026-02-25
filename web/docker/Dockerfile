@@ -39,7 +39,7 @@ COPY ./scripts/generate_ws_config.sh  ${BUILD_DIR}/scripts/
 COPY ./scripts/install_ws.sh          ${BUILD_DIR}/scripts/
 COPY ./scripts/export_dependency_version.sh ${BUILD_DIR}/scripts/
 COPY ./cmake                          ${BUILD_DIR}/cmake
-COPY ./common/proto                   ${BUILD_DIR}/common/proto
+COPY ./common/proto3                  ${BUILD_DIR}/common/proto3
 COPY ./web                            ${BUILD_DIR}/web
 
 RUN ${DATAFED_DEPENDENCIES_ROOT}/scripts/generate_dependencies_config.sh && \
@@ -52,7 +52,8 @@ RUN ${DATAFED_DEPENDENCIES_ROOT}/scripts/generate_dependencies_config.sh && \
           -DBUILD_DOCS=False           \
           -DBUILD_PYTHON_CLIENT=False  \
           -DBUILD_FOXX=False           \
-          -DBUILD_COMMON=False
+          -DBUILD_COMMON=False         \
+          -DENABLE_INTEGRATION_TESTS=False
 RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build
 RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build --target install
 # Only part of the final install can be done here
@@ -76,12 +77,13 @@ ENV          DATAFED_DIR="$DATAFED_DIR"
 ENV            BUILD_DIR="$BUILD_DIR"
 ENV          DATAFED_DEFAULT_LOG_PATH="$DATAFED_INSTALL_PATH/logs"
 
-RUN apt install -y make g++
+RUN apt update && apt install -y make g++
 
 WORKDIR ${DATAFED_DIR}
 
 USER datafed
 
+RUN mkdir -p ${DATAFED_DEFAULT_LOG_PATH}; chown root:datafed ${DATAFED_DEFAULT_LOG_PATH}; chmod -R g+rw ${DATAFED_DEFAULT_LOG_PATH}
 COPY --from=ws-build --chown=datafed:root ${DATAFED_DEPENDENCIES_ROOT}/scripts/  {DATAFED_DEPENDENCIES_ROOT}/scripts/
 
 COPY --chown=datafed:root ./scripts/generate_datafed.sh             ${BUILD_DIR}/scripts/generate_datafed.sh
@@ -96,7 +98,7 @@ COPY --from=ws-build --chown=datafed:root ${DATAFED_DEPENDENCIES_ROOT}/scripts $
 COPY --from=ws-build --chown=datafed:root ${DATAFED_INSTALL_PATH}/web ${DATAFED_INSTALL_PATH}/web
 COPY --from=ws-build --chown=datafed:root /usr/bin/curl /usr/bin/curl
 
-WORKDIR ${BUILD_DIR}
+WORKDIR ${BUILD_DIR}/web
 
 USER root
 

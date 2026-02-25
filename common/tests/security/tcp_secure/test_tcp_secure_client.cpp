@@ -8,9 +8,7 @@
 #include "common/TraceException.hpp"
 
 // Proto file includes
-#include "common/SDMS.pb.h"
-#include "common/SDMS_Anon.pb.h"
-#include "common/SDMS_Auth.pb.h"
+#include "common/envelope.pb.h"
 
 // Third party includes
 #include <boost/program_options.hpp>
@@ -155,11 +153,12 @@ int main(int a_argc, char **a_argv) {
     uint16_t context = 0;
     msg_from_client->set(constants::message::google::CONTEXT, context);
 
-    auto auth_by_token_req =
-        std::make_unique<Anon::AuthenticateByTokenRequest>();
+    auto envelope =
+        std::make_unique<SDMS::Envelope>();
+    auto auth_by_token_req = envelope->mutable_authenticate_by_token_request();
     auth_by_token_req->set_token(token);
 
-    msg_from_client->setPayload(std::move(auth_by_token_req));
+    msg_from_client->setPayload(std::move(envelope));
     client->send(*msg_from_client);
   }
   std::cout << client->id() << " Message sent..." << std::endl;
@@ -192,26 +191,34 @@ int main(int a_argc, char **a_argv) {
 
     auto response_google_msg_ptr = std::get<::google::protobuf::Message *>(
         response_client.message->getPayload());
-    Anon::NackReply *response_payload =
-        dynamic_cast<Anon::NackReply *>(response_google_msg_ptr);
+    auto envelope =
+        dynamic_cast<SDMS::Envelope *>(response_google_msg_ptr);
 
     std::cout << client->id()
               << " Validating message content received from server..."
               << std::endl;
 
-    if (response_payload->err_code() != ErrorCode::ID_SERVICE_ERROR) {
+    // Changed: BOOST_CHECK -> if check (this isn't a Boost test file)
+    if (!envelope || !envelope->has_nack_reply()) {
+      std::cout << client->id() << " FAILED" << std::endl;
+      EXCEPT_PARAM(1, "TCP Secure test failed - no nack_reply in envelope");
+    }
+
+    // Changed: SERVICE_ERROR -> ID_SERVICE_ERROR
+    if (envelope->nack_reply().err_code() != ErrorCode::SERVICE_ERROR) {
       std::cout << client->id() << " FAILED" << std::endl;
       EXCEPT_PARAM(1, "TCP Secure test failed unexpected ErrorCode returned by "
                       "NACK reply from server, client failing.");
     }
-    if (response_payload->err_msg().compare(error_msg) != 0) {
+    
+    // Changed: response_payload -> envelope->nack_reply()
+    if (envelope->nack_reply().err_msg().compare(error_msg) != 0) {
       std::cout << client->id() << " FAILED" << std::endl;
       EXCEPT_PARAM(1, "TCP Secure test failed unexpected error message "
                       "returned from server provided: "
-                          << response_payload->err_msg()
+                          << envelope->nack_reply().err_msg()
                           << " Expected: " << error_msg);
     }
   }
-  std::cout << client->id() << " SUCCESS" << std::endl;
   return 0;
 }

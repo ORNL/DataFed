@@ -1,0 +1,54 @@
+{
+  "name": "multi-part-lite",
+  "author": "Alexey Bystrov <strikeentco@gmail.com>",
+  "version": "1.0.0",
+  "engines": {
+    "node": ">=8.3.0"
+  },
+  "description": "Simple and fast multipart/form-data implementation without any dependencies. With Stream and Buffer modes. Supports: Strings, Numbers, Arrays, Streams, Buffers and Vinyl.",
+  "keywords": [
+    "multi-part",
+    "form",
+    "data",
+    "buffer",
+    "stream",
+    "vinyl",
+    "form-data",
+    "multipart"
+  ],
+  "main": "./main.js",
+  "files": [
+    "lib",
+    "main.js"
+  ],
+  "scripts": {
+    "test": "mocha test",
+    "lint": "eslint main.js lib/**",
+    "check": "npm run lint && npm run test",
+    "cover": "nyc ./node_modules/mocha/bin/_mocha && nyc report --reporter=html",
+    "test-on-travis": "nyc ./node_modules/mocha/bin/_mocha && nyc report --reporter=lcovonly"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/strikeentco/multi-part-lite.git"
+  },
+  "bugs": {
+    "url": "https://github.com/strikeentco/multi-part-lite/issues"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "eslint": "^5.16.0",
+    "eslint-config-airbnb": "^17.1.1",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-jsx-a11y": "^6.2.3",
+    "eslint-plugin-react": "^7.14.3",
+    "express": "^4.17.1",
+    "got": "^9.6.0",
+    "mocha": "^6.2.0",
+    "multer": "^1.4.2",
+    "nyc": "^14.1.1",
+    "should": "^13.2.3",
+    "vinyl": "^2.2.0"
+  },
+  "license": "MIT"
+}

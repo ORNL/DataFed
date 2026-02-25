@@ -62,9 +62,14 @@ the ArangoDB container can mount it and locate the necessary certificate files.
 If not using SSL with Arango, omit this flag so that the container will run
 over TCP (HTTP).
 
-WARNING - If you do not want to run with HTTPS be sure to remove
-datafed-arango.key, datafed-arango.pem, datafed-arango.crt from
-(DataFed/compose/metadata|all/keys) folder.
+WARNING - If you do not want to run with HTTPS but it was previously run with
+HTTPS turned on, be sure to remove datafed-arango.key, datafed-arango.pem,
+datafed-arango.crt from (DataFed/compose/metadata|all/keys) folder. In
+addition, you may need to remove, the below variables from your .env file
+
+   DATAFED_ARANGO_CERT_PATH
+   DATAFED_ARANGO_KEY_PATH
+   DATAFED_ARANGO_PEM_PATH
 
 ### 2. Fill in the needed .env variables for the Metadata Core Services
 

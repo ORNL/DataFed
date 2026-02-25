@@ -19,8 +19,7 @@
 #include "common/SocketOptions.hpp"
 
 // Proto file includes
-#include "common/SDMS_Anon.pb.h"
-#include "common/SDMS_Auth.pb.h"
+#include "common/envelope.pb.h"
 
 // Standard includes
 #include <memory>
@@ -229,7 +228,7 @@ BOOST_AUTO_TEST_CASE(testing_Proxy) {
                         std::move(incoming_operators), log_context_proxy);
 
             std::chrono::duration<double> duration =
-                std::chrono::milliseconds(100);
+                std::chrono::milliseconds(1000);
             proxy.setRunDuration(duration);
             proxy.run();
 
@@ -251,7 +250,7 @@ BOOST_AUTO_TEST_CASE(testing_Proxy) {
     msg_from_client->set(MessageAttribute::KEY, key);
     msg_from_client->set(constants::message::google::CONTEXT, context);
     auto auth_by_token_req =
-        std::make_unique<Anon::AuthenticateByTokenRequest>();
+        std::make_unique<SDMS::AuthenticateByTokenRequest>();
     auth_by_token_req->set_token(token);
     msg_from_client->setPayload(std::move(auth_by_token_req));
     client->send(*msg_from_client);
@@ -449,7 +448,7 @@ BOOST_AUTO_TEST_CASE(testing_Proxy2) {
                         log_context_proxy_middle);
 
             std::chrono::duration<double> duration =
-                std::chrono::milliseconds(30);
+                std::chrono::milliseconds(400);
             proxy.setRunDuration(duration);
             proxy.run();
 
@@ -468,7 +467,7 @@ BOOST_AUTO_TEST_CASE(testing_Proxy2) {
     msg_from_client->set(MessageAttribute::ID, id);
     msg_from_client->set(MessageAttribute::KEY, key);
     auto auth_by_token_req =
-        std::make_unique<Anon::AuthenticateByTokenRequest>();
+        std::make_unique<SDMS::AuthenticateByTokenRequest>();
     auth_by_token_req->set_token(token);
     msg_from_client->setPayload(std::move(auth_by_token_req));
     client->send(*msg_from_client);
@@ -506,7 +505,7 @@ BOOST_AUTO_TEST_CASE(testing_Proxy2) {
     auto google_msg =
         std::get<::google::protobuf::Message *>(response.message->getPayload());
     auto new_auth_by_pass_req =
-        dynamic_cast<SDMS::Anon::AuthenticateByTokenRequest *>(google_msg);
+        dynamic_cast<SDMS::AuthenticateByTokenRequest *>(google_msg);
 
     BOOST_CHECK(new_auth_by_pass_req->token().compare(token) == 0);
 
@@ -766,7 +765,7 @@ BOOST_AUTO_TEST_CASE(testing_ProxyChain) {
       msg_factory.create(MessageType::GOOGLE_PROTOCOL_BUFFER);
   msg_from_client->set(MessageAttribute::ID, id);
   msg_from_client->set(MessageAttribute::KEY, key);
-  auto auth_by_token_req = std::make_unique<Anon::AuthenticateByTokenRequest>();
+  auto auth_by_token_req = std::make_unique<SDMS::AuthenticateByTokenRequest>();
   auth_by_token_req->set_token(token);
   msg_from_client->setPayload(std::move(auth_by_token_req));
   client->send(*msg_from_client);
@@ -807,7 +806,7 @@ BOOST_AUTO_TEST_CASE(testing_ProxyChain) {
     auto google_msg =
         std::get<::google::protobuf::Message *>(response.message->getPayload());
     auto new_auth_by_pass_req =
-        dynamic_cast<SDMS::Anon::AuthenticateByTokenRequest *>(google_msg);
+        dynamic_cast<SDMS::AuthenticateByTokenRequest *>(google_msg);
 
     BOOST_CHECK(new_auth_by_pass_req->token().compare(token) == 0);
 
@@ -816,8 +815,8 @@ BOOST_AUTO_TEST_CASE(testing_ProxyChain) {
     // the proxy chain
     auto return_msg = msg_factory.createResponseEnvelope(*response.message);
     // We will just pass a nack reply because it is easy
-    auto nack_reply = std::make_unique<Anon::NackReply>();
-    nack_reply->set_err_code(ErrorCode::ID_SERVICE_ERROR);
+    auto nack_reply = std::make_unique<SDMS::NackReply>();
+    nack_reply->set_err_code(ErrorCode::SERVICE_ERROR);
     nack_reply->set_err_msg(error_msg);
 
     // Place google proto message in IMessage
@@ -834,10 +833,10 @@ BOOST_AUTO_TEST_CASE(testing_ProxyChain) {
 
   auto response_google_msg_ptr = std::get<::google::protobuf::Message *>(
       msg_from_server.message->getPayload());
-  Anon::NackReply *response_payload =
-      dynamic_cast<Anon::NackReply *>(response_google_msg_ptr);
+  SDMS::NackReply *response_payload =
+      dynamic_cast<SDMS::NackReply *>(response_google_msg_ptr);
 
-  BOOST_CHECK(response_payload->err_code() == ErrorCode::ID_SERVICE_ERROR);
+  BOOST_CHECK(response_payload->err_code() == ErrorCode::SERVICE_ERROR);
   BOOST_CHECK(response_payload->err_msg().compare(error_msg) == 0);
 
   proxy_thread->join();
@@ -1015,7 +1014,7 @@ BOOST_AUTO_TEST_CASE(testing_Proxy_with_PERSISTENT_proxy_client) {
     msg_from_client->set(MessageAttribute::ID, id);
     msg_from_client->set(MessageAttribute::KEY, key);
     auto auth_by_token_req =
-        std::make_unique<Anon::AuthenticateByTokenRequest>();
+        std::make_unique<SDMS::AuthenticateByTokenRequest>();
     auth_by_token_req->set_token(token);
     msg_from_client->setPayload(std::move(auth_by_token_req));
     client->send(*msg_from_client);
@@ -1053,7 +1052,7 @@ BOOST_AUTO_TEST_CASE(testing_Proxy_with_PERSISTENT_proxy_client) {
     auto google_msg =
         std::get<::google::protobuf::Message *>(response.message->getPayload());
     auto new_auth_by_pass_req =
-        dynamic_cast<SDMS::Anon::AuthenticateByTokenRequest *>(google_msg);
+        dynamic_cast<SDMS::AuthenticateByTokenRequest *>(google_msg);
 
     BOOST_CHECK(new_auth_by_pass_req->token().compare(token) == 0);
 

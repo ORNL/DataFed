@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+enum TaskStatus {
+    TS_BLOCKED = 0;
+    TS_READY = 1;
+    TS_RUNNING = 2;
+    TS_SUCCEEDED = 3;
+    TS_FAILED = 4;
+}

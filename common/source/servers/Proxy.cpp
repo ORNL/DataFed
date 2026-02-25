@@ -7,10 +7,6 @@
 #include "common/ICommunicator.hpp"
 #include "common/TraceException.hpp"
 
-// Proto file includes
-#include "common/SDMS_Anon.pb.h"
-#include "common/SDMS_Auth.pb.h"
-
 // Standard includes
 #include <exception>
 #include <iostream>
