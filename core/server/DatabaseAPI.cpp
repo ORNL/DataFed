@@ -1750,7 +1750,7 @@ void DatabaseAPI::queryCreate(const SDMS::QueryCreateRequest &a_request,
   google::protobuf::util::JsonPrintOptions options;
   string query_json;
 
-  options.always_print_enums_as_ints = true;
+  options.always_print_enums_as_ints = false;
   options.preserve_proto_field_names = true;
   options.always_print_primitive_fields = true;
 
@@ -1821,7 +1821,7 @@ void DatabaseAPI::queryUpdate(const SDMS::QueryUpdateRequest &a_request,
 
     google::protobuf::util::JsonPrintOptions options;
     string query_json;
-    options.always_print_enums_as_ints = true;
+    options.always_print_enums_as_ints = false;
     options.preserve_proto_field_names = true;
     options.always_print_primitive_fields = true;
     auto stat = google::protobuf::util::MessageToJsonString(
