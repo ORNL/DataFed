@@ -16,7 +16,7 @@ module.exports = router;
 
 router
     .get("/list/topics", function (req, res) {
-	let client = null;
+        let client = null;
         let result = null;
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
@@ -107,7 +107,7 @@ router
 
 router
     .get("/view", function (req, res) {
-	let client = null;
+        let client = null;
         let topic_extra = undefined;
         try {
             client = req.queryParams.client
@@ -165,7 +165,7 @@ router
 
 router
     .get("/search", function (req, res) {
-	let client = null;
+        let client = null;
         let result = [];
         const phrase = req.queryParams.phrase;
         const shortPhrase = phrase.length > 10 ? phrase.slice(0, 10) + "..." : phrase;

@@ -514,5 +514,4 @@ describe("unit_proj_router: test project create endpoint", () => {
         body = JSON.parse(response.body);
         expect(body.role).to.equal(1); // member
     });
-
 });

@@ -601,8 +601,8 @@ router
 
 router
     .get("/list", function (req, res) {
-	let tot = null;
-	try {
+        let tot = null;
+        try {
             logger.logRequestStarted({
                 client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
@@ -637,7 +637,8 @@ router
                         (comma ? "),(" : "") +
                         "for i in 1..1 inbound @user admin filter IS_SAME_COLLECTION('p',i)";
                     if (count > 1)
-                        qry += " return { _id: i._id, title: i.title, owner: i.owner, creator: @user }";
+                        qry +=
+                            " return { _id: i._id, title: i.title, owner: i.owner, creator: @user }";
                     comma = true;
                 }
 
@@ -742,7 +743,7 @@ router
                 error: e,
             });
             g_lib.handleException(e, res);
-	}
+        }
     })
     .queryParam("client", joi.string().required(), "Client ID")
     .queryParam("subject", joi.string().optional(), "Subject (user) ID")

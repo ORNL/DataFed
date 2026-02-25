@@ -347,7 +347,7 @@ router
                 throw [error.ERR_IN_USE, "Cannot delete task that is still scheduled."];
 
             g_lib.graph.task.remove(req.queryParams.task_id);
-	    res.send();
+            res.send();
             logger.logRequestSuccess({
                 client: req?.queryParams?.task_id,
                 correlationId: req.headers["x-correlation-id"],
@@ -550,7 +550,7 @@ router
                     );
                 },
             });
-	    res.send();
+            res.send();
             logger.logRequestSuccess({
                 client: "undefined",
                 correlationId: req.headers["x-correlation-id"],

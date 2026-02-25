@@ -515,7 +515,8 @@ function recordUpdate(client, record, result) {
             perms |= permissions.PERM_WR_REC;
         }
 
-        if (data.locked || !permissions.hasPermissions(client, data, perms)) throw error.ERR_PERM_DENIED;
+        if (data.locked || !permissions.hasPermissions(client, data, perms))
+            throw error.ERR_PERM_DENIED;
     }
 
     var owner_id = g_db.owner.firstExample({
@@ -651,11 +652,9 @@ function recordUpdate(client, record, result) {
                 }
             }
 
-
-
             for (i in record.tags) {
                 tag = record.tags[i];
-		if (!data.tags.includes(tag)) {
+                if (!data.tags.includes(tag)) {
                     add_tags.push(tag);
                 }
             }
@@ -1826,7 +1825,7 @@ router
  */
 router
     .get("/path", function (req, res) {
-	let path = null;
+        let path = null;
         try {
             logger.logRequestStarted({
                 client: req.queryParams.client,
@@ -2391,7 +2390,7 @@ router
 router
     .post("/delete", function (req, res) {
         var retry = 10;
-	let ids = [];
+        let ids = [];
         logger.logRequestStarted({
             client: req.queryParams.client,
             correlationId: req.headers["x-correlation-id"],
@@ -2400,7 +2399,6 @@ router
             status: "Started",
             description: `Attempting to delete a total of: ${req.body.ids.length}`,
         });
-
 
         for (;;) {
             try {
@@ -2428,11 +2426,10 @@ router
                     },
                     action: function () {
                         const client = g_lib.getUserFromClientID(req.queryParams.client);
-                        var i,
-                            id;
+                        var i, id;
 
-			// Needs to be reinitialized to an empty array to avoid 
-			// accumulating content from retries
+                        // Needs to be reinitialized to an empty array to avoid
+                        // accumulating content from retries
                         ids = [];
                         for (i in req.body.ids) {
                             id = g_lib.resolveDataCollID(req.body.ids[i], client);
@@ -2444,7 +2441,7 @@ router
                         res.send(result);
                     },
                 });
-		const preview = ids.slice(0, 5).join(", ");
+                const preview = ids.slice(0, 5).join(", ");
                 const idSummary = ids.length > 5 ? `${preview}, ...` : preview;
                 logger.logRequestSuccess({
                     client: req.queryParams.client,
