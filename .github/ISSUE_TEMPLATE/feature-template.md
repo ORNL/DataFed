@@ -1,14 +1,10 @@
 ---
 name: Feature Template
-about: Template for new features to DataFed
+about: Template for issues describing new features to DataFed
 title: "[Feature] Feature Title"
 labels: ''
 assignees: ''
-
----
-
----
-type: feature
+type: 'feature'
 projects: ['DataFed']
 ---
 
