@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+message CollUpdateRequest {
+    string id = 1;
+    optional string title = 2;
+    optional string desc = 3;
+    optional string alias = 4;
+    optional string topic = 6;
+    repeated string tags = 7;
+    optional bool tags_clear = 8;
+}

@@ -55,7 +55,6 @@
 #
 # INTERMEDIATE_LAYER_NAME
 # This is used when tagging the image to help differentiate different layers
-
 .image_check:
     tags:
         - docker
@@ -64,30 +63,101 @@
             BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
             docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
             FORCE_BUILD="FALSE"
+            REPO_NAME="${COMPONENT}-${BRANCH_LOWER}"
+            IMAGE_PATH="${REGISTRY}/${PROJECT}/${REPO_NAME}"
+
+            # Check if image exists
             set +e
-            docker pull --quiet "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:latest"
-            if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD="TRUE"; fi;
+            docker pull --quiet "${IMAGE_PATH}:latest"
+            IMAGE_EXISTS=$?
             set -e
-            if [ "${BUILD_INTERMEDIATE}" == "TRUE" ]
-            then
-              set +e
-              docker pull --quiet "${REGISTRY}/${PROJECT}/${COMPONENT}-${INTERMEDIATE_LAYER_NAME}-${BRANCH_LOWER}:latest"
-              if [ $? -eq 0 ]; then echo "Image exists"; else FORCE_BUILD="TRUE"; fi;
-              set -e
-            fi
-            if [ "$FORCE_BUILD" == "TRUE" ]
-            then
-              cp .gitlab/build/force_build_${COMPONENT}_image.yml ${COMPONENT}_image.yml
+
+            if [ $IMAGE_EXISTS -ne 0 ]; then
+                echo "Image does not exist, forcing build"
+                FORCE_BUILD="TRUE"
             else
-              cp .gitlab/build/build_${COMPONENT}_image.yml ${COMPONENT}_image.yml
+                echo "Image exists, checking for changes in watched files"
+
+                # Get commit SHA from latest image via Harbor API
+                HARBOR_API_RESPONSE=$(curl -sf -u "${HARBOR_USER}:${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}" \
+                    "https://${REGISTRY}/api/v2.0/projects/${PROJECT}/repositories/${REPO_NAME}/artifacts?page_size=1&sort=-push_time")
+
+                if [ $? -ne 0 ] || [ -z "$HARBOR_API_RESPONSE" ]; then
+                    echo "WARNING: Harbor API request failed, forcing build"
+                    FORCE_BUILD="TRUE"
+                else
+                    LATEST_IMAGE_SHA=$(echo "$HARBOR_API_RESPONSE" \
+                        | jq -r '.[0].tags // [] | .[].name' \
+                        | grep -E '^[a-f0-9]{40}$' \
+                        | head -1)
+
+                    if [ -z "$LATEST_IMAGE_SHA" ]; then
+                        echo "WARNING: No commit SHA tag found on latest image, forcing build"
+                        FORCE_BUILD="TRUE"
+                    elif [ "$LATEST_IMAGE_SHA" == "$CI_COMMIT_SHA" ]; then
+                        echo "Current commit matches latest image, no rebuild needed"
+                    else
+                        echo "Latest image built from: $LATEST_IMAGE_SHA"
+                        echo "Current commit: $CI_COMMIT_SHA"
+
+                        # Fetch full history to ensure old commit is available
+                        git fetch --unshallow 2>/dev/null || git fetch origin "$LATEST_IMAGE_SHA" 2>/dev/null || true
+
+                        # Verify commit exists in history
+                        set +e
+                        git cat-file -e "$LATEST_IMAGE_SHA" 2>/dev/null
+                        COMMIT_EXISTS=$?
+                        set -e
+
+                        if [ $COMMIT_EXISTS -ne 0 ]; then
+                            echo "WARNING: Commit $LATEST_IMAGE_SHA not in git history, forcing build"
+                            FORCE_BUILD="TRUE"
+                        else
+                            if [ -z "$WATCHED_PATHS" ]; then
+                                echo "ERROR: WATCHED_PATHS not defined"
+                                exit 1
+                            fi
+
+                            DIFF_OUTPUT=$(git diff --name-only "$LATEST_IMAGE_SHA" "$CI_COMMIT_SHA" -- $WATCHED_PATHS)
+
+                            if [ -n "$DIFF_OUTPUT" ]; then
+                                echo "Changes detected in watched files:"
+                                echo "$DIFF_OUTPUT"
+                                FORCE_BUILD="TRUE"
+                            else
+                                echo "No changes in watched files since $LATEST_IMAGE_SHA"
+                            fi
+                        fi
+                    fi
+                fi
             fi
+
+            if [ "${BUILD_INTERMEDIATE}" == "TRUE" ] && [ "$FORCE_BUILD" == "FALSE" ]; then
+                set +e
+                docker pull --quiet "${REGISTRY}/${PROJECT}/${COMPONENT}-${INTERMEDIATE_LAYER_NAME}-${BRANCH_LOWER}:latest"
+                if [ $? -ne 0 ]; then
+                    echo "Intermediate image missing, forcing build"
+                    FORCE_BUILD="TRUE"
+                fi
+                set -e
+            fi
+
+            # File names are all underscores
+            FILE_COMPONENT=$(echo "$COMPONENT" | tr '-' '_')
+
+            if [ "$FORCE_BUILD" == "TRUE" ]; then
+                cp .gitlab/build/force_build_${FILE_COMPONENT}_image.yml ${FILE_COMPONENT}_image.yml
+            else
+                cp .gitlab/build/retag_${FILE_COMPONENT}_image.yml ${FILE_COMPONENT}_image.yml
+            fi
+
             echo "REGISTRY=${REGISTRY}" >> build.env
             echo "HARBOR_USER=${HARBOR_USER}" >> build.env
             echo "HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN=${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}" >> build.env
             sed -i 's/\(HARBOR_USER=.*\)\$/\1$$/g' build.env
     artifacts:
         paths:
-            - ${COMPONENT}_image.yml
+            - "*_image.yml"
         reports:
             dotenv: build.env
 
@@ -118,7 +188,7 @@
       docker push "${REGISTRY}/${PROJECT}/${DATAFED_HARBOR_REPOSITORY}:$CI_COMMIT_SHA"
       if [ "$first_iteration" == "FALSE" ]
       then
-        sleep 5  # Optional: Add a sleep to avoid busy waiting 
+        sleep 5  # Optional: Add a sleep to avoid busy waiting
       else
         first_iteration="FALSE"
       fi

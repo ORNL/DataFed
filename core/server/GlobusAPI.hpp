@@ -7,7 +7,6 @@
 
 // Local public includes
 #include "common/DynaLog.hpp"
-#include "common/SDMS.pb.h"
 #include "common/libjson.hpp"
 
 // Third party includes

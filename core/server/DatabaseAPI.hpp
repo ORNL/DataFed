@@ -4,9 +4,7 @@
 
 // Local public includes
 #include "common/DynaLog.hpp"
-#include "common/SDMS.pb.h"
-#include "common/SDMS_Anon.pb.h"
-#include "common/SDMS_Auth.pb.h"
+#include "common/envelope.pb.h"
 #include "common/libjson.hpp"
 
 // Third party includes
@@ -38,10 +36,10 @@ public:
   void setClient(const std::string &a_client);
 
   void clientAuthenticateByPassword(const std::string &a_password,
-                                    Anon::AuthStatusReply &a_reply,
+                                    SDMS::AuthStatusReply &a_reply,
                                     LogContext log_context);
   void clientAuthenticateByToken(const std::string &a_token,
-                                 Anon::AuthStatusReply &a_reply,
+                                 SDMS::AuthStatusReply &a_reply,
                                  LogContext log_context);
   void clientLinkIdentity(const std::string &a_identity,
                           LogContext log_context);
@@ -72,186 +70,184 @@ public:
                                std::vector<UserTokenInfo> &a_expiring_tokens,
                                LogContext log_context);
   void purgeTransferRecords(size_t age);
-  void checkPerms(const Auth::CheckPermsRequest &a_request,
-                  Auth::CheckPermsReply &a_reply, LogContext log_context);
-  void getPerms(const Auth::GetPermsRequest &a_request,
-                Auth::GetPermsReply &a_reply, LogContext log_context);
+  void checkPerms(const SDMS::CheckPermsRequest &a_request,
+                  SDMS::CheckPermsReply &a_reply, LogContext log_context);
+  void getPerms(const SDMS::GetPermsRequest &a_request,
+                SDMS::GetPermsReply &a_reply, LogContext log_context);
 
-  void userSetAccessToken(const Auth::UserSetAccessTokenRequest &a_request,
-                          Anon::AckReply &a_reply, LogContext log_context);
-  void userCreate(const Auth::UserCreateRequest &a_request,
-                  Auth::UserDataReply &a_reply, LogContext log_context);
-  void userView(const Auth::UserViewRequest &a_request,
-                Auth::UserDataReply &a_reply, LogContext log_context);
-  void userUpdate(const Auth::UserUpdateRequest &a_request,
-                  Auth::UserDataReply &a_reply, LogContext log_context);
-  void userListAll(const Auth::UserListAllRequest &a_request,
-                   Auth::UserDataReply &a_reply, LogContext log_context);
-  void userListCollab(const Auth::UserListCollabRequest &a_request,
-                      Auth::UserDataReply &a_reply, LogContext log_context);
-  void userFindByUUIDs(const Auth::UserFindByUUIDsRequest &a_request,
-                       Auth::UserDataReply &a_reply, LogContext log_context);
-  void userFindByNameUID(const Auth::UserFindByNameUIDRequest &a_request,
-                         Auth::UserDataReply &a_reply, LogContext log_context);
-  void userGetRecentEP(const Auth::UserGetRecentEPRequest &a_request,
-                       Auth::UserGetRecentEPReply &a_reply,
+  void userSetAccessToken(const SDMS::UserSetAccessTokenRequest &a_request,
+                          SDMS::AckReply &a_reply, LogContext log_context);
+  void userCreate(const SDMS::UserCreateRequest &a_request,
+                  SDMS::UserDataReply &a_reply, LogContext log_context);
+  void userView(const SDMS::UserViewRequest &a_request,
+                SDMS::UserDataReply &a_reply, LogContext log_context);
+  void userUpdate(const SDMS::UserUpdateRequest &a_request,
+                  SDMS::UserDataReply &a_reply, LogContext log_context);
+  void userListAll(const SDMS::UserListAllRequest &a_request,
+                   SDMS::UserDataReply &a_reply, LogContext log_context);
+  void userListCollab(const SDMS::UserListCollabRequest &a_request,
+                      SDMS::UserDataReply &a_reply, LogContext log_context);
+  void userFindByUUIDs(const SDMS::UserFindByUUIDsRequest &a_request,
+                       SDMS::UserDataReply &a_reply, LogContext log_context);
+  void userFindByNameUID(const SDMS::UserFindByNameUIDRequest &a_request,
+                         SDMS::UserDataReply &a_reply, LogContext log_context);
+  void userGetRecentEP(const SDMS::UserGetRecentEPRequest &a_request,
+                       SDMS::UserGetRecentEPReply &a_reply,
                        LogContext log_context);
-  void userSetRecentEP(const Auth::UserSetRecentEPRequest &a_request,
-                       Anon::AckReply &a_reply, LogContext log_context);
+  void userSetRecentEP(const SDMS::UserSetRecentEPRequest &a_request,
+                       SDMS::AckReply &a_reply, LogContext log_context);
 
-  void projCreate(const Auth::ProjectCreateRequest &a_request,
-                  Auth::ProjectDataReply &a_reply, LogContext log_context);
-  void projUpdate(const Auth::ProjectUpdateRequest &a_request,
-                  Auth::ProjectDataReply &a_reply, LogContext log_context);
-  void projView(const Auth::ProjectViewRequest &a_request,
-                Auth::ProjectDataReply &a_reply, LogContext log_context);
-  void projList(const Auth::ProjectListRequest &a_request,
-                Auth::ListingReply &a_reply, LogContext log_context);
-  void projSearch(const std::string &a_query, Auth::ProjectDataReply &a_reply,
-                  LogContext log_context);
-  void projGetRole(const Auth::ProjectGetRoleRequest &a_request,
-                   Auth::ProjectGetRoleReply &a_reply, LogContext log_context);
+  void projCreate(const SDMS::ProjectCreateRequest &a_request,
+                  SDMS::ProjectDataReply &a_reply, LogContext log_context);
+  void projUpdate(const SDMS::ProjectUpdateRequest &a_request,
+                  SDMS::ProjectDataReply &a_reply, LogContext log_context);
+  void projView(const SDMS::ProjectViewRequest &a_request,
+                SDMS::ProjectDataReply &a_reply, LogContext log_context);
+  void projList(const SDMS::ProjectListRequest &a_request,
+                SDMS::ListingReply &a_reply, LogContext log_context);
+  void projGetRole(const SDMS::ProjectGetRoleRequest &a_request,
+                   SDMS::ProjectGetRoleReply &a_reply, LogContext log_context);
 
-  void recordView(const Auth::RecordViewRequest &a_request,
-                  Auth::RecordDataReply &a_reply, LogContext log_context);
-  void recordCreate(const Auth::RecordCreateRequest &a_request,
-                    Auth::RecordDataReply &a_reply, LogContext log_context);
-  void recordCreateBatch(const Auth::RecordCreateBatchRequest &a_request,
-                         Auth::RecordDataReply &a_reply,
+  void recordView(const SDMS::RecordViewRequest &a_request,
+                  SDMS::RecordDataReply &a_reply, LogContext log_context);
+  void recordCreate(const SDMS::RecordCreateRequest &a_request,
+                    SDMS::RecordDataReply &a_reply, LogContext log_context);
+  void recordCreateBatch(const SDMS::RecordCreateBatchRequest &a_request,
+                         SDMS::RecordDataReply &a_reply,
                          LogContext log_context);
-  void recordUpdate(const Auth::RecordUpdateRequest &a_request,
-                    Auth::RecordDataReply &a_reply, libjson::Value &result,
+  void recordUpdate(const SDMS::RecordUpdateRequest &a_request,
+                    SDMS::RecordDataReply &a_reply, libjson::Value &result,
                     LogContext log_context);
-  void recordUpdateBatch(const Auth::RecordUpdateBatchRequest &a_request,
-                         Auth::RecordDataReply &a_reply, libjson::Value &result,
+  void recordUpdateBatch(const SDMS::RecordUpdateBatchRequest &a_request,
+                         SDMS::RecordDataReply &a_reply, libjson::Value &result,
                          LogContext log_context);
-  void recordUpdateSize(const Auth::RepoDataSizeReply &a_sizes,
+  void recordUpdateSize(const SDMS::RepoDataSizeReply &a_sizes,
                         LogContext log_context);
   void recordUpdateSchemaError(const std::string &a_rec_id,
                                const std::string &a_err_msg,
                                LogContext log_context);
-  void recordExport(const Auth::RecordExportRequest &a_request,
-                    Auth::RecordExportReply &a_reply, LogContext log_context);
-  void recordLock(const Auth::RecordLockRequest &a_request,
-                  Auth::ListingReply &a_reply, LogContext log_context);
-  void recordListByAlloc(const Auth::RecordListByAllocRequest &a_request,
-                         Auth::ListingReply &a_reply, LogContext log_context);
+  void recordExport(const SDMS::RecordExportRequest &a_request,
+                    SDMS::RecordExportReply &a_reply, LogContext log_context);
+  void recordLock(const SDMS::RecordLockRequest &a_request,
+                  SDMS::ListingReply &a_reply, LogContext log_context);
+  void recordListByAlloc(const SDMS::RecordListByAllocRequest &a_request,
+                         SDMS::ListingReply &a_reply, LogContext log_context);
   void recordGetDependencyGraph(
-      const Auth::RecordGetDependencyGraphRequest &a_request,
-      Auth::ListingReply &a_reply, LogContext log_context);
+      const SDMS::RecordGetDependencyGraphRequest &a_request,
+      SDMS::ListingReply &a_reply, LogContext log_context);
 
-  void generalSearch(const Auth::SearchRequest &a_request,
-                     Auth::ListingReply &a_reply, LogContext log_context);
+  void generalSearch(const SDMS::SearchRequest &a_request,
+                     SDMS::ListingReply &a_reply, LogContext log_context);
 
-  void dataPath(const Auth::DataPathRequest &a_request,
-                Auth::DataPathReply &a_reply, LogContext log_context);
+  void dataPath(const SDMS::DataPathRequest &a_request,
+                SDMS::DataPathReply &a_reply, LogContext log_context);
 
-  void collListPublished(const Auth::CollListPublishedRequest &a_request,
-                         Auth::ListingReply &a_reply, LogContext log_context);
-  void collCreate(const Auth::CollCreateRequest &a_request,
-                  Auth::CollDataReply &a_reply, LogContext log_context);
-  void collUpdate(const Auth::CollUpdateRequest &a_request,
-                  Auth::CollDataReply &a_reply, LogContext log_context);
-  void collView(const Auth::CollViewRequest &a_request,
-                Auth::CollDataReply &a_reply, LogContext log_context);
-  void collRead(const Auth::CollReadRequest &a_request,
-                Auth::ListingReply &a_reply, LogContext log_context);
-  void collWrite(const Auth::CollWriteRequest &a_request,
-                 Auth::ListingReply &a_reply, LogContext log_context);
-  void collMove(const Auth::CollMoveRequest &a_request, Anon::AckReply &a_reply,
+  void collListPublished(const SDMS::CollListPublishedRequest &a_request,
+                         SDMS::ListingReply &a_reply, LogContext log_context);
+  void collCreate(const SDMS::CollCreateRequest &a_request,
+                  SDMS::CollDataReply &a_reply, LogContext log_context);
+  void collUpdate(const SDMS::CollUpdateRequest &a_request,
+                  SDMS::CollDataReply &a_reply, LogContext log_context);
+  void collView(const SDMS::CollViewRequest &a_request,
+                SDMS::CollDataReply &a_reply, LogContext log_context);
+  void collRead(const SDMS::CollReadRequest &a_request,
+                SDMS::ListingReply &a_reply, LogContext log_context);
+  void collWrite(const SDMS::CollWriteRequest &a_request,
+                 SDMS::ListingReply &a_reply, LogContext log_context);
+  void collMove(const SDMS::CollMoveRequest &a_request, SDMS::AckReply &a_reply,
                 LogContext log_context);
-  void collGetParents(const Auth::CollGetParentsRequest &a_request,
-                      Auth::CollPathReply &a_reply, LogContext log_context);
-  void collGetOffset(const Auth::CollGetOffsetRequest &a_request,
-                     Auth::CollGetOffsetReply &a_reply, LogContext log_context);
+  void collGetParents(const SDMS::CollGetParentsRequest &a_request,
+                      SDMS::CollPathReply &a_reply, LogContext log_context);
+  void collGetOffset(const SDMS::CollGetOffsetRequest &a_request,
+                     SDMS::CollGetOffsetReply &a_reply, LogContext log_context);
 
-  void queryList(const Auth::QueryListRequest &a_request,
-                 Auth::ListingReply &a_reply, LogContext log_context);
-  void queryCreate(const Auth::QueryCreateRequest &a_request,
-                   Auth::QueryDataReply &a_reply, LogContext log_context);
-  void queryUpdate(const Auth::QueryUpdateRequest &a_request,
-                   Auth::QueryDataReply &a_reply, LogContext log_context);
-  void queryDelete(const Auth::QueryDeleteRequest &a_request,
-                   Anon::AckReply &a_reply, LogContext log_context);
-  void queryView(const Auth::QueryViewRequest &a_request,
-                 Auth::QueryDataReply &a_reply, LogContext log_context);
-  void queryExec(const Auth::QueryExecRequest &a_request,
-                 Auth::ListingReply &a_reply, LogContext log_context);
+  void queryList(const SDMS::QueryListRequest &a_request,
+                 SDMS::ListingReply &a_reply, LogContext log_context);
+  void queryCreate(const SDMS::QueryCreateRequest &a_request,
+                   SDMS::QueryDataReply &a_reply, LogContext log_context);
+  void queryUpdate(const SDMS::QueryUpdateRequest &a_request,
+                   SDMS::QueryDataReply &a_reply, LogContext log_context);
+  void queryDelete(const SDMS::QueryDeleteRequest &a_request,
+                   SDMS::AckReply &a_reply, LogContext log_context);
+  void queryView(const SDMS::QueryViewRequest &a_request,
+                 SDMS::QueryDataReply &a_reply, LogContext log_context);
+  void queryExec(const SDMS::QueryExecRequest &a_request,
+                 SDMS::ListingReply &a_reply, LogContext log_context);
 
-  void aclView(const Auth::ACLViewRequest &a_request,
-               Auth::ACLDataReply &a_reply, LogContext log_context);
-  void aclUpdate(const Auth::ACLUpdateRequest &a_request,
-                 Auth::ACLDataReply &a_reply, LogContext log_context);
-  void aclSharedList(const Auth::ACLSharedListRequest &a_request,
-                     Auth::ListingReply &a_reply, LogContext log_context);
-  void aclSharedListItems(const Auth::ACLSharedListItemsRequest &a_request,
-                          Auth::ListingReply &a_reply, LogContext log_context);
+  void aclView(const SDMS::ACLViewRequest &a_request,
+               SDMS::ACLDataReply &a_reply, LogContext log_context);
+  void aclUpdate(const SDMS::ACLUpdateRequest &a_request,
+                 SDMS::ACLDataReply &a_reply, LogContext log_context);
+  void aclSharedList(const SDMS::ACLSharedListRequest &a_request,
+                     SDMS::ListingReply &a_reply, LogContext log_context);
+  void aclSharedListItems(const SDMS::ACLSharedListItemsRequest &a_request,
+                          SDMS::ListingReply &a_reply, LogContext log_context);
 
-  void groupCreate(const Auth::GroupCreateRequest &a_request,
-                   Auth::GroupDataReply &a_reply, LogContext log_context);
-  void groupUpdate(const Auth::GroupUpdateRequest &a_request,
-                   Auth::GroupDataReply &a_reply, LogContext log_context);
-  void groupDelete(const Auth::GroupDeleteRequest &a_request,
-                   Anon::AckReply &a_reply, LogContext log_context);
-  void groupList(const Auth::GroupListRequest &a_request,
-                 Auth::GroupDataReply &a_reply, LogContext log_context);
-  void groupView(const Auth::GroupViewRequest &a_request,
-                 Auth::GroupDataReply &a_reply, LogContext log_context);
+  void groupCreate(const SDMS::GroupCreateRequest &a_request,
+                   SDMS::GroupDataReply &a_reply, LogContext log_context);
+  void groupUpdate(const SDMS::GroupUpdateRequest &a_request,
+                   SDMS::GroupDataReply &a_reply, LogContext log_context);
+  void groupDelete(const SDMS::GroupDeleteRequest &a_request,
+                   SDMS::AckReply &a_reply, LogContext log_context);
+  void groupList(const SDMS::GroupListRequest &a_request,
+                 SDMS::GroupDataReply &a_reply, LogContext log_context);
+  void groupView(const SDMS::GroupViewRequest &a_request,
+                 SDMS::GroupDataReply &a_reply, LogContext log_context);
 
   void repoList(std::vector<RepoData> &a_repos, LogContext log_context);
-  void repoList(const Auth::RepoListRequest &a_request,
-                Auth::RepoDataReply &a_reply, LogContext log_context);
+  void repoList(const SDMS::RepoListRequest &a_request,
+                SDMS::RepoDataReply &a_reply, LogContext log_context);
   void repoView(std::vector<RepoData> &a_repos, LogContext log_context);
-  void repoView(const Auth::RepoViewRequest &a_request,
-                Auth::RepoDataReply &a_reply, LogContext log_context);
-  void repoCreate(const Auth::RepoCreateRequest &a_request,
-                  Auth::RepoDataReply &a_reply, LogContext log_context);
-  void repoUpdate(const Auth::RepoUpdateRequest &a_request,
-                  Auth::RepoDataReply &a_reply, LogContext log_context);
-  void repoDelete(const Auth::RepoDeleteRequest &a_request,
-                  Anon::AckReply &a_reply, LogContext log_context);
-  void repoCalcSize(const Auth::RepoCalcSizeRequest &a_request,
-                    Auth::RepoCalcSizeReply &a_reply, LogContext log_context);
-  void repoListAllocations(const Auth::RepoListAllocationsRequest &a_request,
-                           Auth::RepoAllocationsReply &a_reply,
+  void repoView(const SDMS::RepoViewRequest &a_request,
+                SDMS::RepoDataReply &a_reply, LogContext log_context);
+  void repoCreate(const SDMS::RepoCreateRequest &a_request,
+                  SDMS::RepoDataReply &a_reply, LogContext log_context);
+  void repoUpdate(const SDMS::RepoUpdateRequest &a_request,
+                  SDMS::RepoDataReply &a_reply, LogContext log_context);
+  void repoDelete(const SDMS::RepoDeleteRequest &a_request,
+                  SDMS::AckReply &a_reply, LogContext log_context);
+  void repoCalcSize(const SDMS::RepoCalcSizeRequest &a_request,
+                    SDMS::RepoCalcSizeReply &a_reply, LogContext log_context);
+  void repoListAllocations(const SDMS::RepoListAllocationsRequest &a_request,
+                           SDMS::RepoAllocationsReply &a_reply,
                            LogContext log_context);
   void repoListSubjectAllocations(
-      const Auth::RepoListSubjectAllocationsRequest &a_request,
-      Auth::RepoAllocationsReply &a_reply, LogContext log_context);
+      const SDMS::RepoListSubjectAllocationsRequest &a_request,
+      SDMS::RepoAllocationsReply &a_reply, LogContext log_context);
   void repoListObjectAllocations(
-      const Auth::RepoListObjectAllocationsRequest &a_request,
-      Auth::RepoAllocationsReply &a_reply, LogContext log_context);
-  void repoViewAllocation(const Auth::RepoViewAllocationRequest &a_request,
-                          Auth::RepoAllocationsReply &a_reply,
+      const SDMS::RepoListObjectAllocationsRequest &a_request,
+      SDMS::RepoAllocationsReply &a_reply, LogContext log_context);
+  void repoViewAllocation(const SDMS::RepoViewAllocationRequest &a_request,
+                          SDMS::RepoAllocationsReply &a_reply,
                           LogContext log_context);
-  void repoAllocationStats(const Auth::RepoAllocationStatsRequest &a_request,
-                           Auth::RepoAllocationStatsReply &a_reply,
+  void repoAllocationStats(const SDMS::RepoAllocationStatsRequest &a_request,
+                           SDMS::RepoAllocationStatsReply &a_reply,
                            LogContext log_context);
-  void repoAllocationSet(const Auth::RepoAllocationSetRequest &a_request,
-                         Anon::AckReply &a_reply, LogContext log_context);
+  void repoAllocationSet(const SDMS::RepoAllocationSetRequest &a_request,
+                         SDMS::AckReply &a_reply, LogContext log_context);
   void repoAllocationSetDefault(
-      const Auth::RepoAllocationSetDefaultRequest &a_request,
-      Anon::AckReply &a_reply, LogContext log_context);
-  void repoAuthz(const Auth::RepoAuthzRequest &a_request,
-                 Anon::AckReply &a_reply, LogContext log_context);
+      const SDMS::RepoAllocationSetDefaultRequest &a_request,
+      SDMS::AckReply &a_reply, LogContext log_context);
+  void repoAuthz(const SDMS::RepoAuthzRequest &a_request,
+                 SDMS::AckReply &a_reply, LogContext log_context);
 
-  void topicListTopics(const Auth::TopicListTopicsRequest &a_request,
-                       Auth::TopicDataReply &a_reply, LogContext log_context);
-  void topicView(const Auth::TopicViewRequest &a_request,
-                 Auth::TopicDataReply &a_reply, LogContext log_context);
-  void topicSearch(const Auth::TopicSearchRequest &a_request,
-                   Auth::TopicDataReply &a_reply, LogContext log_context);
+  void topicListTopics(const SDMS::TopicListTopicsRequest &a_request,
+                       SDMS::TopicDataReply &a_reply, LogContext log_context);
+  void topicView(const SDMS::TopicViewRequest &a_request,
+                 SDMS::TopicDataReply &a_reply, LogContext log_context);
+  void topicSearch(const SDMS::TopicSearchRequest &a_request,
+                   SDMS::TopicDataReply &a_reply, LogContext log_context);
 
-  void noteCreate(const Auth::NoteCreateRequest &a_request,
-                  Auth::NoteDataReply &a_reply, LogContext log_context);
-  void noteUpdate(const Auth::NoteUpdateRequest &a_request,
-                  Auth::NoteDataReply &a_reply, LogContext log_context);
-  void noteCommentEdit(const Auth::NoteCommentEditRequest &a_request,
-                       Auth::NoteDataReply &a_reply, LogContext log_context);
-  void noteView(const Auth::NoteViewRequest &a_request,
-                Auth::NoteDataReply &a_reply, LogContext log_context);
-  void noteListBySubject(const Auth::NoteListBySubjectRequest &a_request,
-                         Auth::NoteDataReply &a_reply, LogContext log_context);
+  void noteCreate(const SDMS::NoteCreateRequest &a_request,
+                  SDMS::NoteDataReply &a_reply, LogContext log_context);
+  void noteUpdate(const SDMS::NoteUpdateRequest &a_request,
+                  SDMS::NoteDataReply &a_reply, LogContext log_context);
+  void noteCommentEdit(const SDMS::NoteCommentEditRequest &a_request,
+                       SDMS::NoteDataReply &a_reply, LogContext log_context);
+  void noteView(const SDMS::NoteViewRequest &a_request,
+                SDMS::NoteDataReply &a_reply, LogContext log_context);
+  void noteListBySubject(const SDMS::NoteListBySubjectRequest &a_request,
+                         SDMS::NoteDataReply &a_reply, LogContext log_context);
   void notePurge(uint32_t a_age_sec, LogContext log_context);
 
   void taskLoadReady(libjson::Value &a_result, LogContext log_context);
@@ -261,34 +257,34 @@ public:
   void taskAbort(const std::string &a_task_id, const std::string &a_msg,
                  libjson::Value &a_task_reply, LogContext log_context);
 
-  void taskInitDataGet(const Auth::DataGetRequest &a_request,
-                       Auth::DataGetReply &a_reply, libjson::Value &a_result,
+  void taskInitDataGet(const SDMS::DataGetRequest &a_request,
+                       SDMS::DataGetReply &a_reply, libjson::Value &a_result,
                        LogContext log_context);
-  void taskInitDataPut(const Auth::DataPutRequest &a_request,
-                       Auth::DataPutReply &a_reply, libjson::Value &a_result,
+  void taskInitDataPut(const SDMS::DataPutRequest &a_request,
+                       SDMS::DataPutReply &a_reply, libjson::Value &a_result,
                        LogContext log_context);
   void taskInitRecordCollectionDelete(const std::vector<std::string> &a_ids,
-                                      Auth::TaskDataReply &a_reply,
+                                      SDMS::TaskDataReply &a_reply,
                                       libjson::Value &a_result,
                                       LogContext log_context);
   void
-  taskInitRecordAllocChange(const Auth::RecordAllocChangeRequest &a_request,
-                            Auth::RecordAllocChangeReply &a_reply,
+  taskInitRecordAllocChange(const SDMS::RecordAllocChangeRequest &a_request,
+                            SDMS::RecordAllocChangeReply &a_reply,
                             libjson::Value &a_result, LogContext log_context);
   void
-  taskInitRecordOwnerChange(const Auth::RecordOwnerChangeRequest &a_request,
-                            Auth::RecordOwnerChangeReply &a_reply,
+  taskInitRecordOwnerChange(const SDMS::RecordOwnerChangeRequest &a_request,
+                            SDMS::RecordOwnerChangeReply &a_reply,
                             libjson::Value &a_result, LogContext log_context);
   void taskInitRepoAllocationCreate(
-      const Auth::RepoAllocationCreateRequest &a_request,
-      Auth::TaskDataReply &a_reply, libjson::Value &a_result,
+      const SDMS::RepoAllocationCreateRequest &a_request,
+      SDMS::TaskDataReply &a_reply, libjson::Value &a_result,
       LogContext log_context);
   void taskInitRepoAllocationDelete(
-      const Auth::RepoAllocationDeleteRequest &a_request,
-      Auth::TaskDataReply &a_reply, libjson::Value &a_result,
+      const SDMS::RepoAllocationDeleteRequest &a_request,
+      SDMS::TaskDataReply &a_reply, libjson::Value &a_result,
       LogContext log_context);
-  void taskInitProjectDelete(const Auth::ProjectDeleteRequest &a_request,
-                             Auth::TaskDataReply &a_reply,
+  void taskInitProjectDelete(const SDMS::ProjectDeleteRequest &a_request,
+                             SDMS::TaskDataReply &a_reply,
                              libjson::Value &a_result, LogContext log_context);
   void taskStart(const std::string &a_task_id, libjson::Value &a_result,
                  LogContext log_context);
@@ -298,34 +294,34 @@ public:
   void taskFinalize(const std::string &a_task_id, bool a_succeeded,
                     const std::string &a_msg, libjson::Value &a_result,
                     LogContext log_context);
-  void taskList(const Auth::TaskListRequest &a_request,
-                Auth::TaskDataReply &a_reply, LogContext log_context);
-  void taskView(const Auth::TaskViewRequest &a_request,
-                Auth::TaskDataReply &a_reply, LogContext log_context);
+  void taskList(const SDMS::TaskListRequest &a_request,
+                SDMS::TaskDataReply &a_reply, LogContext log_context);
+  void taskView(const SDMS::TaskViewRequest &a_request,
+                SDMS::TaskDataReply &a_reply, LogContext log_context);
   void taskPurge(uint32_t a_age_sec, LogContext log_context);
 
-  void tagSearch(const Auth::TagSearchRequest &a_request,
-                 Auth::TagDataReply &a_reply, LogContext log_context);
-  void tagListByCount(const Auth::TagListByCountRequest &a_request,
-                      Auth::TagDataReply &a_reply, LogContext log_context);
+  void tagSearch(const SDMS::TagSearchRequest &a_request,
+                 SDMS::TagDataReply &a_reply, LogContext log_context);
+  void tagListByCount(const SDMS::TagListByCountRequest &a_request,
+                      SDMS::TagDataReply &a_reply, LogContext log_context);
 
-  void schemaSearch(const Auth::SchemaSearchRequest &a_request,
-                    Auth::SchemaDataReply &a_reply, LogContext log_context);
-  void schemaView(const Auth::SchemaViewRequest &a_request,
-                  Auth::SchemaDataReply &a_reply, LogContext log_context);
+  void schemaSearch(const SDMS::SchemaSearchRequest &a_request,
+                    SDMS::SchemaDataReply &a_reply, LogContext log_context);
+  void schemaView(const SDMS::SchemaViewRequest &a_request,
+                  SDMS::SchemaDataReply &a_reply, LogContext log_context);
   void schemaView(const std::string &a_id, libjson::Value &a_result,
                   LogContext log_context);
-  void schemaCreate(const Auth::SchemaCreateRequest &a_request,
+  void schemaCreate(const SDMS::SchemaCreateRequest &a_request,
                     LogContext log_context);
-  void schemaRevise(const Auth::SchemaReviseRequest &a_request,
+  void schemaRevise(const SDMS::SchemaReviseRequest &a_request,
                     LogContext log_context);
-  void schemaUpdate(const Auth::SchemaUpdateRequest &a_request,
+  void schemaUpdate(const SDMS::SchemaUpdateRequest &a_request,
                     LogContext log_context);
-  void schemaDelete(const Auth::SchemaDeleteRequest &a_request,
-                    Anon::AckReply &a_reply, LogContext log_context);
+  void schemaDelete(const SDMS::SchemaDeleteRequest &a_request,
+                    SDMS::AckReply &a_reply, LogContext log_context);
 
-  void dailyMessage(const Anon::DailyMessageRequest &a_request,
-                    Anon::DailyMessageReply &a_reply, LogContext log_context);
+  void dailyMessage(const SDMS::DailyMessageRequest &a_request,
+                    SDMS::DailyMessageReply &a_reply, LogContext log_context);
 
   void metricsUpdateMsgCounts(
       uint32_t a_timestamp, uint32_t a_total,
@@ -342,66 +338,66 @@ protected:
               const std::vector<std::pair<std::string, std::string>> &a_params,
               const std::string *a_body, libjson::Value &a_result, LogContext);
 
-  void setAuthStatus(Anon::AuthStatusReply &a_reply,
+  void setAuthStatus(SDMS::AuthStatusReply &a_reply,
                      const libjson::Value &a_result);
-  void setUserData(Auth::UserDataReply &a_reply, const libjson::Value &a_result,
+  void setUserData(SDMS::UserDataReply &a_reply, const libjson::Value &a_result,
                    LogContext log_context);
-  void setProjectData(Auth::ProjectDataReply &a_reply,
+  void setProjectData(SDMS::ProjectDataReply &a_reply,
                       const libjson::Value &a_result, LogContext log_context);
-  void setRecordData(Auth::RecordDataReply &a_reply,
+  void setRecordData(SDMS::RecordDataReply &a_reply,
                      const libjson::Value &a_result, LogContext log_context);
-  void setCollData(Auth::CollDataReply &a_reply, const libjson::Value &a_result,
+  void setCollData(SDMS::CollDataReply &a_reply, const libjson::Value &a_result,
                    LogContext log_context);
-  void setCollPathData(Auth::CollPathReply &a_reply,
+  void setCollPathData(SDMS::CollPathReply &a_reply,
                        const libjson::Value &a_result, LogContext log_context);
-  void setQueryData(Auth::QueryDataReply &a_reply,
+  void setQueryData(SDMS::QueryDataReply &a_reply,
                     const libjson::Value &a_result, LogContext log_context);
-  void setListingDataReply(Auth::ListingReply &a_reply,
+  void setListingDataReply(SDMS::ListingReply &a_reply,
                            const libjson::Value &a_result,
                            LogContext log_context);
   void setListingData(ListingData *a_item, const libjson::Value::Object &a_obj,
                       LogContext log_context);
-  void setGroupData(Auth::GroupDataReply &a_reply,
+  void setGroupData(SDMS::GroupDataReply &a_reply,
                     const libjson::Value &a_result, LogContext log_context);
-  void setACLData(Auth::ACLDataReply &a_reply, const libjson::Value &a_result,
+  void setACLData(SDMS::ACLDataReply &a_reply, const libjson::Value &a_result,
                   LogContext log_context);
-  void setAllocData(Auth::RepoAllocationsReply &a_reply,
+  void setAllocData(SDMS::RepoAllocationsReply &a_reply,
                     const libjson::Value &a_result, LogContext log_context);
   void setAllocData(AllocData *a_alloc, const libjson::Value::Object &a_obj,
                     LogContext log_context);
-  void setRepoData(Auth::RepoDataReply *a_reply, std::vector<RepoData> &a_repos,
+  void setRepoData(SDMS::RepoDataReply *a_reply, std::vector<RepoData> &a_repos,
                    const libjson::Value &a_result, LogContext log_context);
   void setAllocStatsData(AllocStatsData &a_stats,
                          const libjson::Value::Object &a_object,
                          LogContext log_context);
-  void setNoteDataReply(Auth::NoteDataReply &a_reply,
+  void setNoteDataReply(SDMS::NoteDataReply &a_reply,
                         const libjson::Value &a_result, LogContext log_context);
   void setNoteData(NoteData *a_item, const libjson::Value::Object &a_obj,
                    LogContext log_context);
-  void setTaskDataReply(Auth::TaskDataReply &a_reply,
+  void setTaskDataReply(SDMS::TaskDataReply &a_reply,
                         const libjson::Value &a_result, LogContext log_context);
-  void setTaskDataReplyArray(Auth::TaskDataReply &a_reply,
+  void setTaskDataReplyArray(SDMS::TaskDataReply &a_reply,
                              const libjson::Value &a_result,
                              LogContext log_context);
   void setTaskData(TaskData *a_task, const libjson::Value &a_task_json,
                    LogContext log_context);
-  void setDataGetReply(Auth::DataGetReply &a_reply,
+  void setDataGetReply(SDMS::DataGetReply &a_reply,
                        const libjson::Value &a_result, LogContext log_context);
-  void setDataPutReply(Auth::DataPutReply &a_reply,
+  void setDataPutReply(SDMS::DataPutReply &a_reply,
                        const libjson::Value &a_result, LogContext log_context);
-  void setTagDataReply(Auth::TagDataReply &a_reply,
+  void setTagDataReply(SDMS::TagDataReply &a_reply,
                        const libjson::Value &a_result, LogContext log_context);
   void setTagData(TagData *a_tag, const libjson::Value::Object &a_obj,
                   LogContext log_context);
-  void setTopicDataReply(Auth::TopicDataReply &a_reply,
+  void setTopicDataReply(SDMS::TopicDataReply &a_reply,
                          const libjson::Value &a_result,
                          LogContext log_context);
-  void setSchemaDataReply(Auth::SchemaDataReply &a_reply,
+  void setSchemaDataReply(SDMS::SchemaDataReply &a_reply,
                           const libjson::Value &a_result,
                           LogContext log_context);
   void setSchemaData(SchemaData *a_schema, const libjson::Value::Object &a_obj);
 
-  uint32_t parseSearchRequest(const Auth::SearchRequest &a_request,
+  uint32_t parseSearchRequest(const SDMS::SearchRequest &a_request,
                               std::string &a_qry_begin, std::string &a_qry_end,
                               std::string &a_filter, std::string &a_params,
                               LogContext log_context);

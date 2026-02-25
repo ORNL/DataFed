@@ -24,9 +24,13 @@ export const generateConsentURL = (
     query_params,
     state,
 ) => {
-    const scopes = requested_scopes || ["openid", "profile", "email", "urn:globus:auth:scope:transfer.api.globus.org:all"];
+    const scopes = Array.isArray(requested_scopes)
+        ? requested_scopes
+        : typeof requested_scopes === "string"
+          ? [requested_scopes]
+          : ["openid", "profile", "email", "urn:globus:auth:scope:transfer.api.globus.org:all"];
 
-    if (refresh_tokens) {
+    if (refresh_tokens && !scopes.includes("offline_access")) {
         scopes.push("offline_access");
     }
 

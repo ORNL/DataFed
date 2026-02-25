@@ -27,6 +27,7 @@ COPY ./scripts/dependency_versions.sh  ${BUILD_DIR}/scripts/
 RUN mkdir -p ${DATAFED_DIR}
 RUN mkdir -p /opt/datafed
 RUN mkdir -p /var/log/datafed
+RUN mkdir -p /opt/datafed/logs
 RUN chown -R datafed:root /opt/datafed
 RUN chown -R datafed:root /var/log/datafed
 RUN chown -R datafed:root ${DATAFED_DIR}

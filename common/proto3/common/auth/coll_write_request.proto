@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+message CollWriteRequest {
+    string id = 1;
+    repeated string add = 2;
+    repeated string rem = 3;
+    bool rem_all = 4;
+}

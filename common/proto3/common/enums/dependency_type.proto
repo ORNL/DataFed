@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+enum DependencyType {
+    DEP_IS_DERIVED_FROM = 0;
+    DEP_IS_COMPONENT_OF = 1;
+    DEP_IS_NEW_VERSION_OF = 2;
+}

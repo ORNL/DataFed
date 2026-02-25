@@ -7,6 +7,8 @@ const g_db = require("@arangodb").db;
 const g_lib = require("./support");
 const error = require("./lib/error_codes");
 const permissions = require("./lib/permissions");
+const logger = require("./lib/logger");
+const basePath = "acl";
 
 module.exports = router;
 
@@ -14,8 +16,17 @@ module.exports = router;
 
 router
     .get("/update", function (req, res) {
+        let result = null;
         try {
-            var result = [];
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/update",
+                status: "Started",
+                description: `Update ACL(s) on a data record or collection. ID: ${req.queryParams.id}`,
+            });
+            result = [];
 
             g_db._executeTransaction({
                 collections: {
@@ -185,7 +196,27 @@ router
             });
 
             res.send(result);
+            logger.logRequestSuccess({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/update",
+                status: "Success",
+                description: `Update ACL(s) on a data record or collection. ID: ${req.queryParams.id}`,
+                extra: result,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/update",
+                status: "Failure",
+                description: `Update ACL(s) on a data record or collection. ID: ${req.queryParams.id}`,
+                extra: result,
+                error: e,
+            });
+
             g_lib.handleException(e, res);
         }
     })
@@ -203,7 +234,17 @@ router
 
 router
     .get("/view", function (req, res) {
+        let rules = [];
         try {
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Started",
+                description: `View current ACL on an object. ID: ${req.queryParams.id}`,
+            });
+
             const client = g_lib.getUserFromClientID(req.queryParams.client);
             var object = g_lib.getObject(req.queryParams.id, client);
 
@@ -215,7 +256,7 @@ router
                     throw error.ERR_PERM_DENIED;
             }
 
-            var rules = g_db
+            rules = g_db
                 ._query(
                     "for v, e in 1..1 outbound @object acl return { id: v._id, gid: v.gid, grant: e.grant, inhgrant: e.inhgrant }",
                     {
@@ -226,7 +267,26 @@ router
             postProcACLRules(rules, object);
 
             res.send(rules);
+            logger.logRequestSuccess({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Success",
+                description: `View current ACL on an object. ID: ${req.queryParams.id}`,
+                extra: { NumOfRules: rules.length },
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Failure",
+                description: `View current ACL on an object. ID: ${req.queryParams.id}`,
+                extra: { NumOfRules: rules.length },
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -234,20 +294,46 @@ router
     .queryParam("id", joi.string().required(), "ID or alias of data record or collection")
     .summary("View current ACL on an object")
     .description("View current ACL on an object (data record or collection)");
-
 router
     .get("/shared/list", function (req, res) {
+        let result = [];
         try {
             const client = g_lib.getUserFromClientID(req.queryParams.client);
-
-            res.send(
-                g_lib.getACLOwnersBySubject(
-                    client._id,
-                    req.queryParams.inc_users,
-                    req.queryParams.inc_projects,
-                ),
+            result = g_lib.getACLOwnersBySubject(
+                client._id,
+                req.queryParams.inc_users,
+                req.queryParams.inc_projects,
             );
+
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/shared/list",
+                status: "Started",
+                description: `List users/projects that have shared data or collections with client/subject. Users: ${req.queryParams.inc_users}; Projects: ${req.queryParams.inc_projects}`,
+            });
+            res.send(result);
+            logger.logRequestSuccess({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/shared/list",
+                status: "Success",
+                description: `List users/projects that have shared data or collections with client/subject. Users: ${req.queryParams.inc_users}; Projects: ${req.queryParams.inc_projects}`,
+                extra: { NumOfUsersAndProjs: result.length },
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/shared/list",
+                status: "Failure",
+                description: `List users/projects that have shared data or collections with client/subject. Users: ${req.queryParams.inc_users}; Projects: ${req.queryParams.inc_projects}`,
+                extra: { NumOfUsersAndProjs: result.length },
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -259,7 +345,16 @@ router
 
 router
     .get("/shared/list/items", function (req, res) {
+        let shares = [];
         try {
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/shared/list/items",
+                status: "Started",
+                description: `Lists data and collections shared with client/subject by owner. Owner ID: ${req.queryParams.owner}`,
+            });
             const client = g_lib.getUserFromClientID(req.queryParams.client);
             var owner_id;
 
@@ -273,17 +368,16 @@ router
                 owner_id = g_lib.getUserFromClientID(req.queryParams.owner)._id;
             }
 
-            var i,
-                share,
-                shares = g_db
-                    ._query(
-                        "for v in 1..2 inbound @client member, acl filter v.owner == @owner return {id:v._id,title:v.title,alias:v.alias,owner:v.owner,creator:v.creator,md_err:v.md_err,external:v.external,locked:v.locked}",
-                        {
-                            client: client._id,
-                            owner: owner_id,
-                        },
-                    )
-                    .toArray();
+            var i, share;
+            shares = g_db
+                ._query(
+                    "for v in 1..2 inbound @client member, acl filter v.owner == @owner return {id:v._id,title:v.title,alias:v.alias,owner:v.owner,creator:v.creator,md_err:v.md_err,external:v.external,locked:v.locked}",
+                    {
+                        client: client._id,
+                        owner: owner_id,
+                    },
+                )
+                .toArray();
 
             for (i in shares) {
                 share = shares[i];
@@ -295,7 +389,27 @@ router
             } else {
                 res.send(dedupShares(client, shares));
             }
+            logger.logRequestSuccess({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/shared/list/items",
+                status: "Success",
+                description: `Lists data and collections shared with client/subject by owner. Owner ID: ${req.queryParams.owner}`,
+                extra: { NumOfShares: shares.length },
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/shared/list/items",
+                status: "Failure",
+                description: `Lists data and collections shared with client/subject by owner. Owner ID: ${req.queryParams.owner}`,
+                extra: { NumOfShares: shares.length },
+                error: e,
+            });
+
             g_lib.handleException(e, res);
         }
     })

@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+enum ErrorCode {
+    UNSPECIFIED = 0;
+    BAD_REQUEST = 1;
+    INTERNAL_ERROR = 2;
+    CLIENT_ERROR = 3;
+    SERVICE_ERROR = 4;
+    AUTHN_REQUIRED = 5;
+    AUTHN_ERROR = 6;
+    DEST_PATH_ERROR = 7;
+    DEST_FILE_ERROR = 8;
+}

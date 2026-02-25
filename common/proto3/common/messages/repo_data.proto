@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+message RepoData {
+    string id = 1;
+    string title = 2;
+    string desc = 3;
+    uint64 capacity = 4;
+    string pub_key = 5;
+    string address = 6;
+    string endpoint = 7;
+    string path = 8;
+    string domain = 9;
+    string exp_path = 10;
+    repeated string admin = 11;
+    string type = 12;
+}

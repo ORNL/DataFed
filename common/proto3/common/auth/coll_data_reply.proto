@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package SDMS;
+
+import "messages/coll_data.proto";
+import "messages/listing_data.proto";
+
+option cc_enable_arenas = true;
+
+message CollDataReply {
+    repeated CollData coll = 1;
+    repeated ListingData update = 2;
+}

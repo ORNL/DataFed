@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+enum AccessTokenType {
+    TOKEN_UNSPECIFIED = 0;
+    GENERIC = 1;
+    GLOBUS = 2;
+    GLOBUS_AUTH = 3;
+    GLOBUS_TRANSFER = 4;
+    GLOBUS_DEFAULT = 5;
+}

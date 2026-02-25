@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+message RecordLockRequest {
+    repeated string id = 1;
+    bool lock = 2;
+}

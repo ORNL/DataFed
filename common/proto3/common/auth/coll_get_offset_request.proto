@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+message CollGetOffsetRequest {
+    string id = 1;
+    string item = 2;
+    uint32 page_sz = 3;
+}

@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+enum Encryption {
+    ENCRYPT_NONE = 0;
+    ENCRYPT_AVAIL = 1;
+    ENCRYPT_FORCE = 2;
+}

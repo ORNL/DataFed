@@ -8,16 +8,45 @@ const g_db = require("@arangodb").db;
 const g_lib = require("./support");
 const permissions = require("./lib/permissions");
 //const   perf = require('@arangodb/foxx');
+const basePath = "admin";
+const logger = require("./lib/logger");
 
 module.exports = router;
 
 router
     .get("/ping", function (req, res) {
         try {
+            logger.logRequestStarted({
+                client: "N/A",
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/ping",
+                status: "Started",
+                description: "Ping DB server",
+            });
             res.send({
                 status: 1,
             });
+            logger.logRequestSuccess({
+                client: "N/A",
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/ping",
+                status: "Success",
+                description: "Ping DB server",
+                extra: "N/A",
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: "N/A",
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/ping",
+                status: "Failure",
+                description: "Ping DB server",
+                extra: "N/A",
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -26,9 +55,18 @@ router
 
 router
     .get("/test", function (req, res) {
+        let result = null;
         try {
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/test",
+                status: "Started",
+                description: "Do perf test",
+            });
             const client = g_lib.getUserFromClientID(req.queryParams.client);
-            var result = true;
+            result = true;
             var item = g_lib.resolveID(req.queryParams.item, client);
             var obj = g_db[item[0]].document(item);
 
@@ -43,7 +81,26 @@ router
                 perm: result,
                 time: (t2 - t1) / 1000,
             });
+            logger.logRequestSuccess({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/test",
+                status: "Success",
+                extra: { execution_time_seconds: (t2 - t1) / 1000 },
+                description: "Do perf test",
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/test",
+                status: "Failure",
+                description: "Do perf test",
+                extra: { execution_time_seconds: 0 },
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -54,8 +111,17 @@ router
 
 router
     .get("/check", function (req, res) {
+        let result = null;
         try {
-            var result = {};
+            logger.logRequestStarted({
+                client: "N/A",
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/check",
+                status: "Started",
+                description: "Database integrity check",
+            });
+            result = {};
 
             g_db._executeTransaction({
                 collections: {
@@ -281,7 +347,26 @@ router
             });
 
             res.send(result);
+            logger.logRequestSuccess({
+                client: "N/A",
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/check",
+                status: "Success",
+                description: "Database integrity check",
+                extra: "N/A",
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: "N/A",
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/check",
+                status: "Failure",
+                description: "Database integrity check",
+                extra: "N/A",
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })

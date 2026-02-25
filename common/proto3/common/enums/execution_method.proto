@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+enum ExecutionMethod {
+    EXEC_UNSPECIFIED = 0;
+    DIRECT = 1;
+    DEFERRED = 2;
+}

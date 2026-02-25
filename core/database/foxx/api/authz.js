@@ -56,7 +56,6 @@ module.exports = (function () {
         let record = new Record(data_key);
         if (!record.exists()) {
             // Return not found error for non-existent records
-            console.log("AUTHZ act: read client: " + client._id + " path " + path + " NOT_FOUND");
             throw [error.ERR_NOT_FOUND, "Record not found: " + path];
         }
 
@@ -64,14 +63,12 @@ module.exports = (function () {
         // if record exists and if it is a public record
         if (!client) {
             if (!g_lib.hasPublicRead(record.id())) {
-                console.log("AUTHZ act: read" + " unknown client " + " path " + path + " FAILED");
                 throw [
                     error.ERR_PERM_DENIED,
                     "Unknown client does not have read permissions on " + path,
                 ];
             }
         } else if (!obj.isRecordActionAuthorized(client, data_key, permission)) {
-            console.log("AUTHZ act: read" + " client: " + client._id + " path " + path + " FAILED");
             throw [
                 error.ERR_PERM_DENIED,
                 "Client " + client._id + " does not have read permissions on " + path,
@@ -79,7 +76,6 @@ module.exports = (function () {
         }
 
         if (!record.isPathConsistent(path)) {
-            console.log("AUTHZ act: read client: " + client._id + " path " + path + " FAILED");
             throw [record.error(), record.errorMessage()];
         }
     };
@@ -98,17 +94,11 @@ module.exports = (function () {
         const data_key = path_components.at(-1);
 
         if (!client) {
-            console.log(
-                "AUTHZ act: create" + " client: " + client._id + " path " + path + " FAILED",
-            );
             throw [
                 error.ERR_PERM_DENIED,
                 "Unknown client does not have create permissions on " + path,
             ];
         } else if (!obj.isRecordActionAuthorized(client, data_key, permission)) {
-            console.log(
-                "AUTHZ act: create" + " client: " + client._id + " path " + path + " FAILED",
-            );
             throw [
                 error.ERR_PERM_DENIED,
                 "Client " + client._id + " does not have create permissions on " + path,
@@ -120,14 +110,12 @@ module.exports = (function () {
         // exists in the database.
         if (!record.exists()) {
             // If the record does not exist then the path would not be consistent.
-            console.log("AUTHZ act: create client: " + client._id + " path " + path + " FAILED");
             throw [error.ERR_PERM_DENIED, "Invalid record specified: " + path];
         }
 
         // This will tell us if the proposed path is consistent with what we expect
         // GridFTP will fail if the posix file path does not exist.
         if (!record.isPathConsistent(path)) {
-            console.log("AUTHZ act: create client: " + client._id + " path " + path + " FAILED");
             throw [record.error(), record.errorMessage()];
         }
     };

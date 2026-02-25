@@ -9,6 +9,8 @@ const g_lib = require("./support");
 const error = require("./lib/error_codes");
 const permissions = require("./lib/permissions");
 const g_tasks = require("./tasks");
+const logger = require("./lib/logger");
+const basePath = "prj";
 
 module.exports = router;
 
@@ -16,8 +18,16 @@ module.exports = router;
 
 router
     .get("/create", function (req, res) {
+        let result = null;
         try {
-            var result;
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/create",
+                status: "Started",
+                description: `Create new projects. Project ID: ${req.queryParams.id}`,
+            });
 
             g_db._executeTransaction({
                 collections: {
@@ -199,7 +209,44 @@ router
             });
 
             res.send(result);
+            logger.logRequestSuccess({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/create",
+                status: "Success",
+                description: `Create new projects. Project ID: ${req.queryParams.id}`,
+            });
+            if (req.queryParams.admins?.length) {
+                logger.logRequestSuccess({
+                    client: req.queryParams.client,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "GET",
+                    routePath: basePath + "/create",
+                    status: "Success",
+                    description: `Admins added: ${req.queryParams.admins}`,
+                });
+            }
+            if (req.queryParams.members?.length) {
+                logger.logRequestSuccess({
+                    client: req.queryParams.client,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "GET",
+                    routePath: basePath + "/create",
+                    status: "Success",
+                    description: `Members added: ${req.queryParams.members}`,
+                });
+            }
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/create",
+                status: "Failure",
+                description: `Create new projects. Project ID: ${req.queryParams.id}`,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -218,8 +265,17 @@ router
 
 router
     .get("/update", function (req, res) {
+        let proj = null;
+        let result = null;
         try {
-            var result;
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/update",
+                status: "Started",
+                description: `Update project information. Project ID: ${req.queryParams.id}`,
+            });
 
             g_db._executeTransaction({
                 collections: {
@@ -264,7 +320,7 @@ router
                         }
                     }
 
-                    var proj = g_db._update(proj_id, obj, {
+                    proj = g_db._update(proj_id, obj, {
                         keepNull: false,
                         returnNew: true,
                     });
@@ -367,7 +423,61 @@ router
             });
 
             res.send(result);
+            logger.logRequestSuccess({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/update",
+                status: "Success",
+                description: `Update project information. Project ID: ${req.queryParams.id}`,
+                extra: {
+                    owner: proj.new?.owner,
+                    title: proj.new?.title
+                        ? proj.new?.title.length > 15
+                            ? proj.new?.title.slice(0, 15) + "…"
+                            : proj.new?.title
+                        : undefined,
+                },
+            });
+            if (req.queryParams.admins?.length) {
+                logger.logRequestSuccess({
+                    client: req.queryParams.client,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "GET",
+                    routePath: basePath + "/update",
+                    status: "Success",
+                    description: `Admins added: ${req.queryParams.admins}`,
+                });
+            }
+            if (req.queryParams.members?.length) {
+                logger.logRequestSuccess({
+                    client: req.queryParams.client,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "GET",
+                    routePath: basePath + "/update",
+                    status: "Success",
+                    description: `Members added: ${req.queryParams.members}`,
+                });
+            }
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/update",
+                status: "Failure",
+                description: `Update project information. Project ID: ${req.queryParams.id}`,
+                extra: {
+                    owner: proj?.new?.owner,
+                    title: proj?.new?.title
+                        ? proj?.new?.title.length > 15
+                            ? proj?.new?.title.slice(0, 15) + "…"
+                            : proj?.new?.title
+                        : undefined,
+                },
+
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -386,7 +496,17 @@ router
 
 router
     .get("/view", function (req, res) {
+        let proj = null;
         try {
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Started",
+                description: `View project information. ID: ${req.queryParams.id}`,
+            });
+
             // TODO Enforce view permission
 
             const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
@@ -394,7 +514,7 @@ router
             if (!g_db.p.exists(req.queryParams.id))
                 throw [error.ERR_INVALID_PARAM, "No such project '" + req.queryParams.id + "'"];
 
-            var proj = g_db.p.document({
+            proj = g_db.p.document({
                 _id: req.queryParams.id,
             });
 
@@ -451,7 +571,26 @@ router
             delete proj._rev;
 
             res.send([proj]);
+            logger.logRequestSuccess({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Success",
+                description: `View project information. ID: ${req.queryParams.id}`,
+                result: proj,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/view",
+                status: "Failure",
+                description: `View project information. ID: ${req.queryParams.id}`,
+                extra: proj,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -462,114 +601,149 @@ router
 
 router
     .get("/list", function (req, res) {
-        const client = g_lib.getUserFromClientID(req.queryParams.client);
-        var qry,
-            result,
-            count =
-                (req.queryParams.as_owner ? 1 : 0) +
-                (req.queryParams.as_admin ? 1 : 0) +
-                (req.queryParams.as_member ? 1 : 0);
-
-        if (count) {
-            var comma = false;
-
-            if (count > 1) qry = "for i in union((";
-            else qry = "";
-
-            if (req.queryParams.as_owner) {
-                qry += "for i in 1..1 inbound @user owner filter IS_SAME_COLLECTION('p',i)";
-                if (count > 1) qry += " return { _id: i._id, title: i.title, owner: i.owner }";
-                comma = true;
-            }
-
-            if (!count || req.queryParams.as_admin) {
-                qry +=
-                    (comma ? "),(" : "") +
-                    "for i in 1..1 inbound @user admin filter IS_SAME_COLLECTION('p',i)";
-                if (count > 1)
-                    qry += " return { _id: i._id, title: i.title, owner: i.owner, creator: @user }";
-                comma = true;
-            }
-
-            if (req.queryParams.as_member) {
-                qry +=
-                    (comma ? "),(" : "") +
-                    "for i,e,p in 2..2 inbound @user member, outbound owner filter p.vertices[1].gid == 'members'";
-                if (count > 1) qry += " return { _id: i._id, title: i.title, owner: i.owner }";
-            }
-
-            if (count > 1) qry += "))";
-        } else {
-            qry = "for i in p";
-        }
-
-        qry += " sort i.";
-
-        switch (req.queryParams.sort) {
-            case g_lib.SORT_ID:
-                qry += "_id";
-                break;
-            case g_lib.SORT_TITLE:
-                qry += "title";
-                break;
-            case g_lib.SORT_TIME_CREATE:
-                qry += "ct";
-                break;
-            case g_lib.SORT_TIME_UPDATE:
-                qry += "ut";
-                break;
-            default:
-                qry += "_id";
-                break;
-        }
-
-        if (req.queryParams.sort_rev) qry += " desc";
-
-        var user_id;
-        if (req.queryParams.subject) {
-            permissions.ensureAdminPermUser(client, req.queryParams.subject);
-        } else user_id = client._id;
-
-        if (req.queryParams.offset != undefined && req.queryParams.count != undefined) {
-            qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
-            qry += " return { id: i._id, title: i.title, owner: i.owner, creator: i.creator }";
-            //console.log("proj list qry:",qry);
-            result = g_db._query(
-                qry,
-                count
-                    ? {
-                          user: user_id,
-                      }
-                    : {},
-                {},
-                {
-                    fullCount: true,
-                },
-            );
-            var tot = result.getExtra().stats.fullCount;
-            result = result.toArray();
-            result.push({
-                paging: {
-                    off: req.queryParams.offset,
-                    cnt: req.queryParams.count,
-                    tot: tot,
-                },
+        let tot = null;
+        try {
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/list",
+                status: "Started",
+                description: `List projects`,
             });
-        } else {
-            qry += " return { id: i._id, title: i.title, owner: i.owner, creator: i.creator }";
-            //console.log("proj list qry:",qry);
-            result = g_db._query(
-                qry,
-                count
-                    ? {
-                          user: user_id,
-                      }
-                    : {},
-            );
-        }
 
-        //res.send( g_db._query( qry, { user: client._id }));
-        res.send(result);
+            const client = g_lib.getUserFromClientID(req.queryParams.client);
+            var qry,
+                result,
+                count =
+                    (req.queryParams.as_owner ? 1 : 0) +
+                    (req.queryParams.as_admin ? 1 : 0) +
+                    (req.queryParams.as_member ? 1 : 0);
+
+            if (count) {
+                var comma = false;
+
+                if (count > 1) qry = "for i in union((";
+                else qry = "";
+
+                if (req.queryParams.as_owner) {
+                    qry += "for i in 1..1 inbound @user owner filter IS_SAME_COLLECTION('p',i)";
+                    if (count > 1) qry += " return { _id: i._id, title: i.title, owner: i.owner }";
+                    comma = true;
+                }
+
+                if (!count || req.queryParams.as_admin) {
+                    qry +=
+                        (comma ? "),(" : "") +
+                        "for i in 1..1 inbound @user admin filter IS_SAME_COLLECTION('p',i)";
+                    if (count > 1)
+                        qry +=
+                            " return { _id: i._id, title: i.title, owner: i.owner, creator: @user }";
+                    comma = true;
+                }
+
+                if (req.queryParams.as_member) {
+                    qry +=
+                        (comma ? "),(" : "") +
+                        "for i,e,p in 2..2 inbound @user member, outbound owner filter p.vertices[1].gid == 'members'";
+                    if (count > 1) qry += " return { _id: i._id, title: i.title, owner: i.owner }";
+                }
+
+                if (count > 1) qry += "))";
+            } else {
+                qry = "for i in p";
+            }
+
+            qry += " sort i.";
+
+            switch (req.queryParams.sort) {
+                case g_lib.SORT_ID:
+                    qry += "_id";
+                    break;
+                case g_lib.SORT_TITLE:
+                    qry += "title";
+                    break;
+                case g_lib.SORT_TIME_CREATE:
+                    qry += "ct";
+                    break;
+                case g_lib.SORT_TIME_UPDATE:
+                    qry += "ut";
+                    break;
+                default:
+                    qry += "_id";
+                    break;
+            }
+
+            if (req.queryParams.sort_rev) qry += " desc";
+
+            let user_id;
+            if (req.queryParams.subject) {
+                permissions.ensureAdminPermUser(client, req.queryParams.subject);
+                user_id = req.queryParams.subject;
+            } else user_id = client._id;
+
+            if (req.queryParams.offset != undefined && req.queryParams.count != undefined) {
+                qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
+                qry += " return { id: i._id, title: i.title, owner: i.owner, creator: i.creator }";
+                //console.log("proj list qry:",qry);
+                result = g_db._query(
+                    qry,
+                    count
+                        ? {
+                              user: user_id,
+                          }
+                        : {},
+                    {},
+                    {
+                        fullCount: true,
+                    },
+                );
+                tot = result.getExtra().stats.fullCount;
+                result = result.toArray();
+                result.push({
+                    paging: {
+                        off: req.queryParams.offset,
+                        cnt: req.queryParams.count,
+                        tot: tot,
+                    },
+                });
+            } else {
+                qry += " return { id: i._id, title: i.title, owner: i.owner, creator: i.creator }";
+                //console.log("proj list qry:",qry);
+                result = g_db._query(
+                    qry,
+                    count
+                        ? {
+                              user: user_id,
+                          }
+                        : {},
+                );
+            }
+
+            //res.send( g_db._query( qry, { user: client._id }));
+            res.send(result);
+            logger.logRequestSuccess({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/list",
+                status: "Success",
+                description: `List projects`,
+                extra: { NumOfProjs: tot },
+            });
+        } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/list",
+                status: "Failure",
+                description: `List projects`,
+                extra: { NumOfProjs: tot },
+                error: e,
+            });
+            g_lib.handleException(e, res);
+        }
     })
     .queryParam("client", joi.string().required(), "Client ID")
     .queryParam("subject", joi.string().optional(), "Subject (user) ID")
@@ -590,23 +764,18 @@ router
     );
 
 router
-    .get("/search", function (req, res) {
-        try {
-            g_lib.getUserFromClientID(req.queryParams.client);
-
-            res.send(g_db._query(req.queryParams.query, {}));
-        } catch (e) {
-            g_lib.handleException(e, res);
-        }
-    })
-    .queryParam("client", joi.string().required(), "Client ID")
-    .queryParam("query", joi.string().required(), "Query")
-    .summary("Find all projects that match query")
-    .description("Find all projects that match query");
-
-router
     .post("/delete", function (req, res) {
+        let result = null;
         try {
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/delete",
+                status: "Started",
+                description: `Delete project(s) and all associated data records and raw data. IDs: ${req.body.ids}`,
+            });
+
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn", "p", "alloc"],
@@ -616,12 +785,31 @@ router
                 action: function () {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
 
-                    var result = g_tasks.taskInitProjDelete(client, req.body.ids);
+                    result = g_tasks.taskInitProjDelete(client, req.body.ids);
 
                     res.send(result);
                 },
             });
+            logger.logRequestSuccess({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/delete",
+                status: "Success",
+                description: `Delete project(s) and all associated data records and raw data. IDs: ${req.body.ids}`,
+                extra: result,
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/delete",
+                status: "Failure",
+                description: `Delete project(s) and all associated data records and raw data. IDs: ${req.body.ids}`,
+                extra: result,
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })
@@ -639,7 +827,17 @@ router
 
 router
     .get("/get_role", function (req, res) {
+        let role = null;
         try {
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/get_role",
+                status: "Started",
+                description: `Get client/subject project role. ID: ${req.queryParams.id}`,
+            });
+
             const client = g_lib.getUserFromClientID(req.queryParams.client);
             var subj;
 
@@ -653,12 +851,32 @@ router
             if (!g_db._exists(req.queryParams.id))
                 throw [error.ERR_NOT_FOUND, "Project, " + req.queryParams.id + ", not found"];
 
-            var role = g_lib.getProjectRole(subj, req.queryParams.id);
+            role = g_lib.getProjectRole(subj, req.queryParams.id);
 
             res.send({
                 role: role,
             });
+
+            logger.logRequestSuccess({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/get_role",
+                status: "Success",
+                description: `Get client/subject project role. ID: ${req.queryParams.id}`,
+                extra: { role: role },
+            });
         } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/get_role",
+                status: "Failure",
+                description: `Get client/subject project role. ID: ${req.queryParams.id}`,
+                extra: { role: role },
+                error: e,
+            });
             g_lib.handleException(e, res);
         }
     })

@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package SDMS;
+
+option cc_enable_arenas = true;
+
+message ProjectCreateRequest {
+    string id = 1;
+    string title = 2;
+    optional string desc = 3;
+    repeated string admin = 4;
+    repeated string member = 5;
+}
