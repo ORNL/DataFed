@@ -402,14 +402,6 @@ router
 
                     result = [user.new];
 
-                    const { is_admin, max_coll, max_proj, max_sav_qry } = user.new;
-
-                    extra_log_info = {
-                        is_admin,
-                        max_coll,
-                        max_proj,
-                        max_sav_qry,
-                    };
                 },
             });
             res.send(result);
@@ -726,6 +718,7 @@ router
 router
     .get("/keys/get", function (req, res) {
         let sub = req.queryParams.subject ? req.queryParams.subject : req.queryParams.client;
+	let user = null;
         try {
             if (req.queryParams.subject) {
                 if (!g_db.u.exists(req.queryParams.subject))
@@ -734,7 +727,7 @@ router
                         "No such user '" + req.queryParams.subject + "'",
                     ];
 
-                let user = g_db.u.document({
+                user = g_db.u.document({
                     _id: req.queryParams.subject,
                 });
                 logger.logRequestStarted({
@@ -746,7 +739,7 @@ router
                     description: `Get user public and private keys. ${sub}`,
                 });
             } else {
-                let user = g_lib.getUserFromClientID(req.queryParams.client);
+                user = g_lib.getUserFromClientID(req.queryParams.client);
             }
 
             if (!user.pub_key || !user.priv_key) {
@@ -1037,6 +1030,7 @@ router
 router
     .get("/token/get", function (req, res) {
         let sub = req.queryParams.subject ? req.queryParams.subject : req.queryParams.client;
+	let user = null;
         try {
             const collection_token = UserToken.validateRequestParams(req.queryParams);
             // TODO: collection type determines logic when mapped vs HA
@@ -1049,11 +1043,11 @@ router
                         "No such user '" + req.queryParams.subject + "'",
                     ];
 
-                var user = g_db.u.document({
+                user = g_db.u.document({
                     _id: req.queryParams.subject,
                 });
             } else {
-                var user = g_lib.getUserFromClientID(req.queryParams.client);
+                user = g_lib.getUserFromClientID(req.queryParams.client);
             }
 
             logger.logRequestStarted({
@@ -1486,7 +1480,9 @@ Note: must delete ALL data records and projects owned by the user being deleted 
 router
     .get("/delete", function (req, res) {
         let user_id = null;
+	let sub = null;
         try {
+            sub = req.queryParams.subject ? req.queryParams.subject : req.queryParams.client;
             logger.logRequestStarted({
                 client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
@@ -1611,6 +1607,7 @@ router
 router
     .get("/ident/list", function (req, res) {
         let sub = req.queryParams.subject ? req.queryParams.subject : req.queryParams.client;
+	let client = null;
         let extra_log = [];
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
@@ -1681,6 +1678,7 @@ router
 
 router
     .get("/ident/add", function (req, res) {
+	let client = null;
         let sub = req.queryParams.subject ? req.queryParams.subject : req.queryParams.client;
         try {
             logger.logRequestStarted({
