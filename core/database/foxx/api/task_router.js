@@ -347,6 +347,7 @@ router
                 throw [error.ERR_IN_USE, "Cannot delete task that is still scheduled."];
 
             g_lib.graph.task.remove(req.queryParams.task_id);
+	    res.send();
             logger.logRequestSuccess({
                 client: req?.queryParams?.task_id,
                 correlationId: req.headers["x-correlation-id"],
@@ -357,7 +358,6 @@ router
                 extra: req.queryParams.task_id,
             });
         } catch (e) {
-            g_lib.handleException(e, res);
             logger.logRequestFailure({
                 client: req?.queryParams?.task_id,
                 correlationId: req.headers["x-correlation-id"],
@@ -368,6 +368,7 @@ router
                 extra: "undefined",
                 error: e,
             });
+            g_lib.handleException(e, res);
         }
     })
     .queryParam("task_id", joi.string().required(), "Task ID")
@@ -380,7 +381,7 @@ router
         try {
             const client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
-                client: req?.queryParams?.task_id,
+                client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/list",
@@ -422,7 +423,7 @@ router
 
             res.send(result);
             logger.logRequestSuccess({
-                client: req?.queryParams?.task_id,
+                client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/list",
@@ -435,7 +436,7 @@ router
             });
         } catch (e) {
             logger.logRequestFailure({
-                client: req?.queryParams?.task_id,
+                client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/list",
@@ -471,7 +472,7 @@ router
         try {
             result = [];
             logger.logRequestStarted({
-                client: req?.queryParams?.task_id,
+                client: "system",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/reload",
@@ -495,7 +496,7 @@ router
 
             res.send(result);
             logger.logRequestSuccess({
-                client: req?.queryParams?.task_id,
+                client: "system",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/reload",
@@ -505,7 +506,7 @@ router
             });
         } catch (e) {
             logger.logRequestFailure({
-                client: req?.queryParams?.task_id,
+                client: "system",
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/reload",
@@ -549,6 +550,7 @@ router
                     );
                 },
             });
+	    res.send();
             logger.logRequestSuccess({
                 client: "undefined",
                 correlationId: req.headers["x-correlation-id"],

@@ -291,7 +291,7 @@ router
                 routePath: basePath + "/create",
                 status: "Failure",
                 description: "Create new user entry",
-                extra: user.new.uid,
+                extra: user?.new?.uid,
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -1225,8 +1225,9 @@ router
 router
     .get("/view", function (req, res) {
         let sub = req.queryParams.subject ? req.queryParams.subject : req.queryParams.client;
+	let client = null;
         try {
-            const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
+            client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
             logger.logRequestStarted({
                 client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
@@ -1325,7 +1326,6 @@ router
                 extra: `uid=${user.uid}, is_admin=${!!client?.is_admin}`,
             }); //req.queryParams.details ?
         } catch (e) {
-            g_lib.handleException(e, res);
             logger.logRequestFailure({
                 client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
@@ -1333,9 +1333,10 @@ router
                 routePath: basePath + "/view",
                 status: "Failure",
                 description: `View User Information. Subject: ${sub}`,
-                extra: `uid=${user.uid}, is_admin=${!!client?.is_admin}`,
+                extra: `uid=${user?.uid}, is_admin=${!!client?.is_admin}`,
                 error: e,
             });
+            g_lib.handleException(e, res);
         }
     })
     .queryParam("client", joi.string().required(), "Client ID")
@@ -1713,7 +1714,7 @@ router
                             g_db._exists({
                                 _id: "uuid/" + req.queryParams.ident,
                             })
-                        )
+                        ) {
                             logger.logRequestSuccess({
                                 client: req.queryParams.client,
                                 correlationId: req.headers["x-correlation-id"],
@@ -1723,8 +1724,8 @@ router
                                 description: `Add new linked identity. Subject: ${sub}`,
                                 extra: req.queryParams.ident,
                             });
-
-                        return;
+                            return;
+			}
                         id = g_db.uuid.save(
                             {
                                 _key: req.queryParams.ident,
@@ -1964,7 +1965,7 @@ router
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/ep/set",
-                status: "Started",
+                status: "Success",
                 description: "Set recent end-points",
                 extra: client.eps,
             });

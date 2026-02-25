@@ -19,6 +19,7 @@ router
         let client = null;
         let result = null;
         let tot = null;
+	let name = null;
         try {
             client = req.queryParams.client
                 ? g_lib.getUserFromClientID(req.queryParams.client)
@@ -31,7 +32,7 @@ router
                 status: "Started",
                 description: `Search for tags by name (${req.queryParams?.name?.trim()})`,
             });
-            var name = req.queryParams.name.trim();
+            name = req.queryParams.name.trim();
             if (name.length < 3)
                 throw [error.ERR_INVALID_PARAM, "Input is too short for tag search."];
 

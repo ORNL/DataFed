@@ -19,6 +19,14 @@ router
     .post("/create", function (req, res) {
         let result = undefined;
         try {
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/create",
+                status: "Started",
+                description: "Create Query",
+            });
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn", "admin"],
@@ -26,14 +34,7 @@ router
                 },
                 action: function () {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
-                    logger.logRequestStarted({
-                        client: req.queryParams.client,
-                        correlationId: req.headers["x-correlation-id"],
-                        httpVerb: "POST",
-                        routePath: basePath + "/create",
-                        status: "Started",
-                        description: "Create Query",
-                    });
+                    
 
                     // Check max number of saved queries
                     if (client.max_sav_qry >= 0) {
@@ -82,7 +83,7 @@ router
                     delete qry.qry_end;
                     delete qry.qry_filter;
                     delete qry.params;
-                    delete qry.lmit;
+                    delete qry.limit;
 
                     result = qry;
                 },
@@ -135,6 +136,15 @@ router
     .post("/update", function (req, res) {
         let result = undefined;
         try {
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "POST",
+                routePath: basePath + "/update",
+                status: "Started",
+                description: "Update a saved query",
+            });
+
             g_db._executeTransaction({
                 collections: {
                     read: ["u", "uuid", "accn", "admin"],
@@ -142,16 +152,7 @@ router
                 },
                 action: function () {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
-                    logger.logRequestStarted({
-                        client: req.queryParams.client,
-                        correlationId: req.headers["x-correlation-id"],
-                        httpVerb: "POST",
-                        routePath: basePath + "/update",
-                        status: "Started",
-                        description: "Update a saved query",
-                    });
-
-                    var qry = g_db.q.document(req.body.id);
+                                        var qry = g_db.q.document(req.body.id);
 
                     if (client._id != qry.owner && !client.is_admin) {
                         throw error.ERR_PERM_DENIED;
@@ -189,7 +190,7 @@ router
                     delete qry.qry_end;
                     delete qry.qry_filter;
                     delete qry.params;
-                    delete qry.lmit;
+                    delete qry.limit;
 
                     result = qry;
                 },
@@ -265,7 +266,7 @@ router
             delete qry.qry_end;
             delete qry.qry_filter;
             delete qry.params;
-            delete qry.lmit;
+            delete qry.limit;
 
             res.send(qry);
             logger.logRequestSuccess({
@@ -345,6 +346,7 @@ router
                     extra: req.queryParams.ids[i],
                 });
             }
+	    res.send();
         } catch (e) {
             logger.logRequestFailure({
                 client: req.queryParams.client,
@@ -471,7 +473,7 @@ function execQuery(client, mode, published, orig_query) {
                         },
                     )
                     .toArray();
-                if (!query.params.cols) {
+	        if (!query.params.cols.length) {
                     throw [
                         error.ERR_PERM_DENIED,
                         "No access to user '" + query.params.owner + "' data/collections.",
@@ -505,7 +507,7 @@ function execQuery(client, mode, published, orig_query) {
                             },
                         )
                         .toArray();
-                    if (!query.params.cols) {
+	            if (!query.params.cols.length) {
                         throw [
                             error.ERR_PERM_DENIED,
                             "No access to project '" + query.params.owner + "'.",
@@ -684,7 +686,10 @@ router
                 routePath: basePath + "/exec",
                 status: "Success",
                 description: "Execute specified queries",
-                extra: results,
+		extra: {
+                    count: Array.isArray(results) ? results.length : undefined,
+                    query_id: req.queryParams.id,
+                }
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -694,7 +699,10 @@ router
                 routePath: basePath + "/exec",
                 status: "Failure",
                 description: "Execute specified queries",
-                extra: results,
+		extra: {
+                    count: Array.isArray(results) ? results.length : undefined,
+                    query_id: req.queryParams.id,
+                },
                 error: e,
             });
             g_lib.handleException(e, res);
