@@ -1117,6 +1117,7 @@ router
 router
     .get("/token/get/access", function (req, res) {
         let sub = req.queryParams.subject ? req.queryParams.subject : req.queryParams.client;
+	let user = null;
         try {
             if (req.queryParams.subject) {
                 if (!g_db.u.exists(req.queryParams.subject))
@@ -1124,11 +1125,11 @@ router
                         error.ERR_INVALID_PARAM,
                         "No such user '" + req.queryParams.subject + "'",
                     ];
-                let user = g_db.u.document({
+                user = g_db.u.document({
                     _id: req.queryParams.subject,
                 });
             } else {
-                let user = g_lib.getUserFromClientID(req.queryParams.client);
+                user = g_lib.getUserFromClientID(req.queryParams.client);
             }
             logger.logRequestStarted({
                 client: req.queryParams.client,
