@@ -808,16 +808,6 @@ void DatabaseAPI::projGetRole(const SDMS::ProjectGetRoleRequest &a_request,
   a_reply.set_role((ProjectRole)(unsigned short)obj.getNumber("role"));
 }
 
-void DatabaseAPI::projSearch(const std::string &a_query,
-                             SDMS::ProjectDataReply &a_reply,
-                             LogContext log_context) {
-  Value result;
-
-  dbGet("prj/search", {{"query", a_query}}, result, log_context);
-
-  setProjectData(a_reply, result, log_context);
-}
-
 void DatabaseAPI::setProjectData(SDMS::ProjectDataReply &a_reply,
                                  const Value &a_result,
                                  LogContext log_context) {

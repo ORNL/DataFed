@@ -1020,12 +1020,6 @@ app.get("/api/prj/list", (a_req, a_resp) => {
     });
 });
 
-app.post("/api/prj/search", (a_req, a_resp) => {
-    sendMessage("ProjectSearchRequest", a_req.body, a_req, a_resp, function (reply) {
-        a_resp.send(reply.item ? reply.item : []);
-    });
-});
-
 app.get("/api/grp/create", (a_req, a_resp) => {
     var params = {
         group: {
