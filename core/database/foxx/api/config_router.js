@@ -48,7 +48,7 @@ router
                 routePath: basePath + "/msg/daily",
                 status: "Failure",
                 description: "Get message of the day",
-                extra: (msg.msg || "").substring(0, 10),
+                extra: ((msg && msg.msg) || "").substring(0, 10),
                 error: e,
             });
 

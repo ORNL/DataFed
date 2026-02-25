@@ -16,9 +16,7 @@ module.exports = router;
 
 router
     .get("/list/topics", function (req, res) {
-        let client = req.queryParams.client
-            ? g_lib.getUserFromClientID(req.queryParams.client)
-            : undefined;
+        let client = null;
         let result = null;
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
@@ -109,11 +107,12 @@ router
 
 router
     .get("/view", function (req, res) {
-        let client = req.queryParams.client
-            ? g_lib.getUserFromClientID(req.queryParams.client)
-            : undefined;
+        let client = null;
         let topic_extra = undefined;
         try {
+            client = req.queryParams.client
+                ? g_lib.getUserFromClientID(req.queryParams.client)
+                : undefined;
             logger.logRequestStarted({
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
@@ -166,13 +165,14 @@ router
 
 router
     .get("/search", function (req, res) {
-        let client = req.queryParams.client
-            ? g_lib.getUserFromClientID(req.queryParams.client)
-            : undefined;
-        let result = null;
+        let client = null;
+        let result = [];
         const phrase = req.queryParams.phrase;
         const shortPhrase = phrase.length > 10 ? phrase.slice(0, 10) + "..." : phrase;
         try {
+            client = req.queryParams.client
+                ? g_lib.getUserFromClientID(req.queryParams.client)
+                : undefined;
             logger.logRequestStarted({
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],
@@ -194,7 +194,6 @@ router
                 path,
                 op = false;
 
-            result = [];
             if (tokens.length == 0) throw [error.ERR_INVALID_PARAM, "Invalid topic search phrase."];
 
             it = 0;

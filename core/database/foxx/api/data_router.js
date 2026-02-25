@@ -515,7 +515,8 @@ function recordUpdate(client, record, result) {
             perms |= permissions.PERM_WR_REC;
         }
 
-        if (data.locked || !g_lib.hasPermissions(client, data, perms)) throw error.ERR_PERM_DENIED;
+        if (data.locked || !permissions.hasPermissions(client, data, perms))
+            throw error.ERR_PERM_DENIED;
     }
 
     var owner_id = g_db.owner.firstExample({
@@ -646,14 +647,14 @@ function recordUpdate(client, record, result) {
 
             for (i in data.tags) {
                 tag = data.tags[i];
-                if (!(tag in record.tags)) {
+                if (!record.tags.includes(tag)) {
                     rem_tags.push(tag);
                 }
             }
 
             for (i in record.tags) {
                 tag = record.tags[i];
-                if (!(tag in data.tags)) {
+                if (!data.tags.includes(tag)) {
                     add_tags.push(tag);
                 }
             }
@@ -707,7 +708,7 @@ function recordUpdate(client, record, result) {
         }
     }
 
-    if (record.deps != undefined && (record.deps_add != undefined || record.deps_rem != undefined))
+    if (record.deps != undefined && (record.dep_add != undefined || record.dep_rem != undefined))
         throw [error.ERR_INVALID_PARAM, "Cannot use both dependency set and add/remove."];
 
     var dep,
@@ -1049,7 +1050,7 @@ router
                 httpVerb: "POST",
                 routePath: basePath + "/update/batch",
                 status: "Failure",
-                description: `Update a batch of existing data record. RecordIDs: ${displayIds}`,
+                description: `Update a batch of existing data record. RecordIDs: ${displayedIds}`,
                 extra: {
                     count: totalCount,
                 },
@@ -1515,7 +1516,7 @@ router
 
 router
     .get("/dep/graph/get", function (req, res) {
-        let result = null;
+        let result = [];
         try {
             logger.logRequestStarted({
                 client: req.queryParams.client,
@@ -1541,7 +1542,6 @@ router
                 notes,
                 gen = 0;
 
-            result = [];
             // Get Ancestors
 
             //console.log("get ancestors");
@@ -1825,6 +1825,7 @@ router
  */
 router
     .get("/path", function (req, res) {
+        let path = null;
         try {
             logger.logRequestStarted({
                 client: req.queryParams.client,
@@ -1856,7 +1857,7 @@ router
                     "Can only access data from '" + repo.domain + "' domain",
                 ];
 
-            var path = g_lib.computeDataPath(loc, true);
+            path = g_lib.computeDataPath(loc, true);
             res.send({
                 path: path,
             });
@@ -2389,6 +2390,15 @@ router
 router
     .post("/delete", function (req, res) {
         var retry = 10;
+        let ids = [];
+        logger.logRequestStarted({
+            client: req.queryParams.client,
+            correlationId: req.headers["x-correlation-id"],
+            httpVerb: "POST",
+            routePath: basePath + "/delete",
+            status: "Started",
+            description: `Attempting to delete a total of: ${req.body.ids.length}`,
+        });
 
         for (;;) {
             try {
@@ -2416,10 +2426,11 @@ router
                     },
                     action: function () {
                         const client = g_lib.getUserFromClientID(req.queryParams.client);
-                        var i,
-                            id,
-                            ids = [];
+                        var i, id;
 
+                        // Needs to be reinitialized to an empty array to avoid
+                        // accumulating content from retries
+                        ids = [];
                         for (i in req.body.ids) {
                             id = g_lib.resolveDataCollID(req.body.ids[i], client);
                             ids.push(id);
@@ -2430,8 +2441,30 @@ router
                         res.send(result);
                     },
                 });
+                const preview = ids.slice(0, 5).join(", ");
+                const idSummary = ids.length > 5 ? `${preview}, ...` : preview;
+                logger.logRequestSuccess({
+                    client: req.queryParams.client,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/delete",
+                    status: "Success",
+                    description: `Delete data items: ${idSummary}...`,
+                    extra: { count: ids.length },
+                });
+
                 break;
             } catch (e) {
+                logger.logRequestFailure({
+                    client: req.queryParams.client,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "POST",
+                    routePath: basePath + "/delete",
+                    status: "Failure",
+                    description: `Attempting to delete a total of: ${req.body.ids.length}`,
+                    extra: { retry_attempt: retry },
+                    error: e,
+                });
                 if (--retry == 0 || !e.errorNum || e.errorNum != 1200) {
                     g_lib.handleException(e, res);
                 }

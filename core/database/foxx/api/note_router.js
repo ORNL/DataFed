@@ -180,8 +180,9 @@ router
                         }),
                         old_state = note.state,
                         old_type = note.type,
-                        doc = g_db._document(ne._from),
                         updates = {};
+
+                    doc = g_db._document(ne._from);
 
                     /* Permissions to update: Currently any admin of the subject and the creator of the annotation may
                     make edits to the annotation. This approach is optimistic in assuming that conflicts will not arise
@@ -412,7 +413,7 @@ router
                     req.queryParams.id +
                     " Comment ID:" +
                     req.queryParams.comment_idx,
-                extra: note.new,
+                extra: note,
                 error: e,
             });
             g_lib.handleException(e, res);

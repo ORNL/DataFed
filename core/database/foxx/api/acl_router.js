@@ -234,7 +234,7 @@ router
 
 router
     .get("/view", function (req, res) {
-        let rules = null;
+        let rules = [];
         try {
             logger.logRequestStarted({
                 client: req.queryParams.client,
@@ -296,7 +296,7 @@ router
     .description("View current ACL on an object (data record or collection)");
 router
     .get("/shared/list", function (req, res) {
-        let result = null;
+        let result = [];
         try {
             const client = g_lib.getUserFromClientID(req.queryParams.client);
             result = g_lib.getACLOwnersBySubject(

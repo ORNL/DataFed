@@ -333,11 +333,11 @@ router
                 status: "Failure",
                 description: `Update schema. Schema ID: ${req.queryParams.id}`,
                 extra: {
-                    id: sch_new.id,
-                    own_id: sch_new.own_id,
-                    pub: sch_new.pub,
+                    id: sch_new?.id,
+                    own_id: sch_new?.own_id,
+                    pub: sch_new?.pub,
                     sys: req.body?.sys ?? false,
-                    ver: sch_new.ver,
+                    ver: sch_new?.ver,
                 },
                 error: e,
             });
@@ -499,11 +499,11 @@ router
                 status: "Failure",
                 description: `Revise schema. Schema ID: ${req.queryParams.id}`,
                 extra: {
-                    own_id: sch_new.own_id,
-                    own_nm: sch_new.own_nm,
-                    id: sch_new.id,
-                    pub: req.body.pub,
-                    sys: req.body.sys,
+                    own_id: sch_new?.own_id,
+                    own_nm: sch_new?.own_nm,
+                    id: sch_new?.id,
+                    pub: req.body?.pub,
+                    sys: req.body?.sys,
                 },
                 error: e,
             });
@@ -608,7 +608,7 @@ router
                 routePath: basePath + "/delete",
                 status: "Failure",
                 description: `Delete schema. Schema ID: ${req.queryParams.id}`,
-                extra: { deleted: sch_old._id },
+                extra: { deleted: sch_old?._id },
             });
             g_lib.handleException(e, res);
         }
@@ -700,8 +700,8 @@ router
                 status: "Failure",
                 description: `View schema. Schema ID: ${req.queryParams.id}`,
                 extra: {
-                    pub: sch.pub,
-                    sys: sch.sys,
+                    pub: sch?.pub,
+                    sys: sch?.sys,
                 },
             });
             g_lib.handleException(e, res);
