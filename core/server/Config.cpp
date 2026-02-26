@@ -78,8 +78,8 @@ void Config::loadRepositoryConfig(AuthenticationManager &auth_manager,
       DL_TRACE(log_context, "Registering repo " << r.id());
       
       // Check for duplicate keys across different maps
-      bool in_transient = auth_manager.hasKey(PublicKeyType::TRANSIENT, r.pub_key());
-      bool in_session = auth_manager.hasKey(PublicKeyType::SESSION, r.pub_key());
+      bool in_transient = auth_manager.hasKey(PublicKeyType::TRANSIENT, r.pub_key(), log_context);
+      bool in_session = auth_manager.hasKey(PublicKeyType::SESSION, r.pub_key(), log_context);
       
       if (in_transient && in_session) {
         // Key exists in both maps - this is an inconsistent state
@@ -114,7 +114,7 @@ void Config::loadRepositoryConfig(AuthenticationManager &auth_manager,
   DL_TRACE(log_context, "Validating repository keys after loading");
   for (const auto& repo_pair : m_repos) {
     const RepoData& repo = repo_pair.second;
-    if (auth_manager.hasKey(PublicKeyType::PERSISTENT, repo.pub_key())) {
+    if (auth_manager.hasKey(PublicKeyType::PERSISTENT, repo.pub_key(), log_context)) {
       DL_TRACE(log_context, "Key for " << repo.id() << " verified in PERSISTENT map");
     } else {
       DL_ERROR(log_context, "KEY MISSING! Repository " << repo.id() 

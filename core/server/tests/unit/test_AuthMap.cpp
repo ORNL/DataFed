@@ -25,6 +25,7 @@ BOOST_GLOBAL_FIXTURE(GlobalProtobufTeardown);
 BOOST_AUTO_TEST_SUITE(AuthMapTest)
 
 BOOST_AUTO_TEST_CASE(testing_AuthMap) {
+  SDMS::LogContext log_context;
   time_t active_transient_key_time = 30;
   time_t active_session_key_time = 30;
   std::string db_url = "https://db/sdms/blah";
@@ -40,11 +41,11 @@ BOOST_AUTO_TEST_CASE(testing_AuthMap) {
   auth_map.addKey(PublicKeyType::TRANSIENT, new_pub_key, user_id);
   BOOST_TEST(auth_map.size(PublicKeyType::TRANSIENT) == 1);
 
-  BOOST_TEST(auth_map.hasKey(PublicKeyType::TRANSIENT, new_pub_key));
-  BOOST_TEST(auth_map.hasKey(PublicKeyType::SESSION, new_pub_key) == false);
-  BOOST_TEST(auth_map.hasKey(PublicKeyType::PERSISTENT, new_pub_key) == false);
+  BOOST_TEST(auth_map.hasKey(PublicKeyType::TRANSIENT, new_pub_key, log_context));
+  BOOST_TEST(auth_map.hasKey(PublicKeyType::SESSION, new_pub_key, log_context) == false);
+  BOOST_TEST(auth_map.hasKey(PublicKeyType::PERSISTENT, new_pub_key, log_context) == false);
 
-  BOOST_TEST(auth_map.getUID(PublicKeyType::TRANSIENT, new_pub_key) == user_id);
+  BOOST_TEST(auth_map.getUID(PublicKeyType::TRANSIENT, new_pub_key, log_context) == user_id);
 }
 
 BOOST_AUTO_TEST_CASE(testing_AuthMap_setgetcount) {

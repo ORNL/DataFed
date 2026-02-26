@@ -4,10 +4,14 @@
 
 // Local public includes
 #include "common/TraceException.hpp"
+#include "common/DynaLog.hpp"
 
 // Standard includes
 #include <any>
 #include <iostream>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 namespace SDMS {
 
@@ -25,17 +29,22 @@ void AuthenticationOperator::execute(IMessage &message) {
   if (message.exists(MessageAttribute::KEY) == 0) {
     EXCEPT(1, "'KEY' attribute not defined.");
   }
+  // 🔹 Generate correlation ID for this request
+  boost::uuids::random_generator generator;
+  boost::uuids::uuid uuid = generator();
 
+  LogContext log_context;
+  log_context.correlation_id = boost::uuids::to_string(uuid);
   m_authentication_manager->purge();
 
   std::string key = std::get<std::string>(message.get(MessageAttribute::KEY));
 
   std::string uid = "anon";
-  if (m_authentication_manager->hasKey(key)) {
-    m_authentication_manager->incrementKeyAccessCounter(key);
+  if (m_authentication_manager->hasKey(key, log_context)) {
+    m_authentication_manager->incrementKeyAccessCounter(key, log_context);
     
     try {
-      uid = m_authentication_manager->getUID(key);
+      uid = m_authentication_manager->getUID(key, log_context);
     } catch (const std::exception& e) {
       // Log the exception to help diagnose authentication issues
       std::cerr << "[AuthenticationOperator] Failed to get UID for key: " 

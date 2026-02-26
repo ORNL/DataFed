@@ -43,7 +43,7 @@ public:
                                  LogContext log_context);
   void clientLinkIdentity(const std::string &a_identity,
                           LogContext log_context);
-  bool uidByPubKey(const std::string &a_pub_key, std::string &a_uid);
+  bool uidByPubKey(const std::string &a_pub_key, std::string &a_uid, LogContext log_context);
   bool userGetKeys(std::string &a_pub_key, std::string &a_priv_key,
                    LogContext log_context);
   void userSetKeys(const std::string &a_pub_key, const std::string &a_priv_key,
@@ -69,7 +69,7 @@ public:
   void getExpiringAccessTokens(uint32_t a_expires_in,
                                std::vector<UserTokenInfo> &a_expiring_tokens,
                                LogContext log_context);
-  void purgeTransferRecords(size_t age);
+  void purgeTransferRecords(size_t age, LogContext log_context);
   void checkPerms(const SDMS::CheckPermsRequest &a_request,
                   SDMS::CheckPermsReply &a_reply, LogContext log_context);
   void getPerms(const SDMS::GetPermsRequest &a_request,
@@ -333,7 +333,7 @@ protected:
   long dbGet(const char *a_url_path,
              const std::vector<std::pair<std::string, std::string>> &a_params,
              libjson::Value &a_result, LogContext, bool a_log = true);
-  bool dbGetRaw(const std::string url, std::string &a_result);
+  bool dbGetRaw(const std::string url, std::string &a_result, LogContext log_context);
   long dbPost(const char *a_url_path,
               const std::vector<std::pair<std::string, std::string>> &a_params,
               const std::string *a_body, libjson::Value &a_result, LogContext);
