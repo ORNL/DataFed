@@ -397,7 +397,7 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
                                      LogContext log_context) {
   // Ensure correlation ID exists
   if (log_context.correlation_id.empty() ||
-      log_context.correlation_id == "unknown") {
+      !log_context.correlation_id.compare("unknown")) {
 
     boost::uuids::random_generator generator;
     log_context.correlation_id = boost::uuids::to_string(generator());
@@ -477,7 +477,7 @@ void DatabaseAPI::userCreate(const SDMS::UserCreateRequest &a_request,
                              LogContext log_context) {
   // Ensure correlation ID exists
   if (log_context.correlation_id.empty() ||
-      log_context.correlation_id == "unknown") {
+      !log_context.correlation_id.compare("unknown")) {
 
     boost::uuids::random_generator generator;
     log_context.correlation_id = boost::uuids::to_string(generator());
@@ -2167,7 +2167,7 @@ void DatabaseAPI::repoList(const SDMS::RepoListRequest &a_request,
                            LogContext log_context) {
   // Ensure correlation ID exists
   if (log_context.correlation_id.empty() ||
-      log_context.correlation_id == "unknown") {
+      !log_context.correlation_id.compare("unknown")) {
 
     boost::uuids::random_generator generator;
     log_context.correlation_id = boost::uuids::to_string(generator());
@@ -2202,7 +2202,7 @@ void DatabaseAPI::repoView(std::vector<RepoData> &a_repos,
                            LogContext log_context) {
   // Ensure correlation ID exists
   if (log_context.correlation_id.empty() ||
-      log_context.correlation_id == "unknown") {
+      !log_context.correlation_id.compare("unknown")) {
 
     boost::uuids::random_generator generator;
     log_context.correlation_id = boost::uuids::to_string(generator());
@@ -3168,7 +3168,7 @@ void DatabaseAPI::taskRun(const std::string &a_task_id,
   vector<pair<string, string>> params;
   // Ensure correlation ID exists
   if (log_context.correlation_id.empty() ||
-      log_context.correlation_id == "unknown") {
+      !log_context.correlation_id.compare("unknown")) {
 
     boost::uuids::random_generator generator;
     log_context.correlation_id = boost::uuids::to_string(generator());
@@ -3846,7 +3846,7 @@ void DatabaseAPI::metricsUpdateMsgCounts(
 
   // Ensure correlation ID exists
   if (log_context.correlation_id.empty() ||
-      log_context.correlation_id == "unknown") {
+      !log_context.correlation_id.compare("unknown")) {
 
     boost::uuids::random_generator generator;
     log_context.correlation_id = boost::uuids::to_string(generator());
