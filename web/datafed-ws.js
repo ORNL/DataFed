@@ -826,7 +826,11 @@ app.get("/api/usr/register", (a_req, a_resp) => {
                         "Error: user registration failed - empty reply from server",
                     );
                     a_resp.status(500).send("Empty reply from server");
-                } else if (reply.errCode) {
+                } else if (
+                    reply.errCode !== undefined &&
+                    reply.errCode !== 0 &&
+                    reply.errCode !== "UNSPECIFIED"
+                ) {
                     if (reply.errMsg) {
                         logger.error(
                             "/api/usr/register",
@@ -2161,7 +2165,11 @@ function sendMessage(a_msg_name, a_msg_data, a_req, a_resp, a_cb, a_anon) {
                     "Error - reply handler: empty reply",
                 );
                 a_resp.status(500).send("Empty reply");
-            } else if (a_reply.errCode) {
+            } else if (
+                a_reply.errCode !== undefined &&
+                a_reply.errCode !== 0 &&
+                a_reply.errCode !== "UNSPECIFIED"
+            ) {
                 if (a_reply.errMsg) {
                     logger.error(
                         sendMessage.name,
