@@ -382,7 +382,11 @@ class API:
         self._validate_json(definition, "Schema definition")
 
         msg = sdms.SchemaCreateRequest()
-        msg.id = schema_id
+
+        if ":" in schema_id:
+            raise Exception("Colons are not allowed when creating a schema id.")
+
+        msg.id = schema_id + ":0"
         # See note above: "def" is a Python reserved keyword.
         setattr(msg, 'def', definition)
 
@@ -440,7 +444,17 @@ class API:
             self._validate_json(definition, "Schema definition")
 
         msg = sdms.SchemaReviseRequest()
-        msg.id = schema_id
+
+        if ":" not in schema_id:
+            raise Exception("Schema id is missing ':<version>'.")
+
+        try:
+            base, ver_str = schema_id.rsplit(":", 1)
+            ver = int(ver_str)
+        except (ValueError, IndexError):
+            raise Exception(f"Malformed schema_id {schema_id}")
+
+        msg.id = base + f":{ver + 1}"
 
         if definition is not None:
             # See schema section note: "def" is a Python reserved keyword.
