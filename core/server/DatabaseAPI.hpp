@@ -105,8 +105,6 @@ public:
                 SDMS::ProjectDataReply &a_reply, LogContext log_context);
   void projList(const SDMS::ProjectListRequest &a_request,
                 SDMS::ListingReply &a_reply, LogContext log_context);
-  void projSearch(const std::string &a_query, SDMS::ProjectDataReply &a_reply,
-                  LogContext log_context);
   void projGetRole(const SDMS::ProjectGetRoleRequest &a_request,
                    SDMS::ProjectGetRoleReply &a_reply, LogContext log_context);
 

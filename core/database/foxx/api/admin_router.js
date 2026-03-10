@@ -58,7 +58,7 @@ router
         let result = null;
         try {
             logger.logRequestStarted({
-                client: "N/A",
+                client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/test",
@@ -82,7 +82,7 @@ router
                 time: (t2 - t1) / 1000,
             });
             logger.logRequestSuccess({
-                client: "N/A",
+                client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/test",
@@ -92,13 +92,13 @@ router
             });
         } catch (e) {
             logger.logRequestFailure({
-                client: "N/A",
+                client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/test",
                 status: "Failure",
                 description: "Do perf test",
-                extra: { execution_time_seconds: (t2 - t1) / 1000 },
+                extra: { execution_time_seconds: 0 },
                 error: e,
             });
             g_lib.handleException(e, res);

@@ -51,14 +51,11 @@ export function getUpdatedValue(a_new_val, a_old_obj, a_new_obj, a_field) {
 export function getUpdatedValueJSON(a_new_val, a_old_obj, a_new_obj, a_field) {
     var tmp = a_new_val.trim(),
         old = a_old_obj[a_field];
-    if (old === undefined && tmp.length) {
+    if ((!old || old === undefined) && tmp.length) {
         a_new_obj[a_field] = tmp;
     } else if (tmp.length) {
-        // Must compare values - have to restringify both b/c formats may differ with same content
-        // TODO - This should be a deep compare due to possibly inconsistent object arrangement
         var oldjs = JSON.stringify(JSON.parse(old)),
             newjs = JSON.stringify(JSON.parse(tmp));
-
         if (oldjs != newjs) {
             a_new_obj[a_field] = tmp;
         }
