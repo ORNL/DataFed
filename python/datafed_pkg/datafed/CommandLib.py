@@ -3164,33 +3164,33 @@ class API:
 
         return opts
 
-def _load_schema_file(self, filepath):
-        """
-        Read a schema definition from a local JSON file
-
-        Parameters
-        ----------
-        filepath : str
-            Path to the schema definition file
-
-        Returns
-        -------
-        str
-            File contents as a string
-
-        Raises
-        ------
-        Exception : If file cannot be opened or read
-        """
-        try:
-            f = open(filepath, "r")
-            content = f.read()
-            f.close()
-            return content
-        except BaseException:
-            raise Exception(
-                "Could not open schema definition file: {}".format(filepath)
-            )
+    def _load_schema_file(self, filepath):
+            """
+            Read a schema definition from a local JSON file
+    
+            Parameters
+            ----------
+            filepath : str
+                Path to the schema definition file
+    
+            Returns
+            -------
+            str
+                File contents as a string
+    
+            Raises
+            ------
+            Exception : If file cannot be opened or read
+            """
+            try:
+                f = open(filepath, "r")
+                content = f.read()
+                f.close()
+                return content
+            except BaseException:
+                raise Exception(
+                    "Could not open schema definition file: {}".format(filepath)
+                )
 
     def _validate_json(self, json_str, label="JSON"):
         """
