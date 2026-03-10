@@ -75,17 +75,18 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
     def test_schema_create_view_delete(self):
         """Test basic schema lifecycle: create, view, delete."""
 
-        schema_id = "test_basic_schema"
+        schema_name = "test_basic_schema"
         definition = json.dumps(self._base_schema_def)
 
         # Create
         create_result = self._df_api.schemaCreate(
-            schema_id,
+            schema_name,
             definition=definition,
             description="Basic test schema",
         )
+        schema_id = create_result[0].data[0].id
         # schemaCreate returns AckReply
-        self.assertEqual(create_result[1], "AckReply")
+        self.assertEqual(create_result[1], "SchemaDataReply")
 
         # View
         view_result = self._df_api.schemaView(schema_id)
@@ -142,15 +143,16 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
     def test_schema_update(self):
         """Test updating a schema in place."""
 
-        schema_id = "test_update_schema"
+        schema_name = "test_update_schema"
         definition = json.dumps(self._base_schema_def)
 
-        self._df_api.schemaCreate(
-            schema_id,
+        create_result = self._df_api.schemaCreate(
+            schema_name,
             definition=definition,
             description="Before update",
         )
 
+        schema_id = create_result[0].data[0].id
         # Update description
         self._df_api.schemaUpdate(
             schema_id,
@@ -190,15 +192,16 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
     def test_schema_revise(self):
         """Test creating a new revision of a schema."""
 
-        schema_id = "test_revise_schema"
+        schema_name = "test_revise_schema"
         definition = json.dumps(self._base_schema_def)
 
-        self._df_api.schemaCreate(
-            schema_id,
+        create_result = self._df_api.schemaCreate(
+            schema_name,
             definition=definition,
             description="Revision 1",
         )
 
+        schema_id = create_result[0].data[0].id
         view_v1 = self._df_api.schemaView(schema_id)
         ver_1 = view_v1[0].schema[0].ver
 
@@ -206,13 +209,14 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
         revised_def = self._base_schema_def.copy()
         revised_def["properties"]["revision_field"] = {"type": "boolean"}
 
-        self._df_api.schemaRevise(
+        create_result = self._df_api.schemaRevise(
             schema_id,
             definition=json.dumps(revised_def),
             description="Revision 2",
         )
+        schema_id2 = create_result[0].data[0].id
 
-        view_v2 = self._df_api.schemaView(schema_id)
+        view_v2 = self._df_api.schemaView(schema_id2)
         ver_2 = view_v2[0].schema[0].ver
 
         self.assertGreater(ver_2, ver_1)
@@ -223,6 +227,7 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
 
         # Cleanup
         self._df_api.schemaDelete(schema_id)
+        self._df_api.schemaDelete(schema_id2)
 
     def test_schema_search(self):
         """Test schema search functionality."""
@@ -231,13 +236,14 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
         schemas_to_cleanup = []
 
         for i in range(3):
-            sid = "{}_{}".format(prefix, i)
-            schemas_to_cleanup.append(sid)
-            self._df_api.schemaCreate(
-                sid,
+            s_name = "{}_{}".format(prefix, i)
+            create_result = self._df_api.schemaCreate(
+                s_name,
                 definition=json.dumps(self._base_schema_def),
                 description="Searchable schema number {}".format(i),
             )
+            schema_id = create_result[0].data[0].id
+            schemas_to_cleanup.append(schema_id)
 
         # Search by ID prefix
         search_result = self._df_api.schemaSearch(schema_id=prefix)
@@ -267,16 +273,17 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
     def test_schema_public_flag(self):
         """Test creating a public schema."""
 
-        schema_id = "test_public_schema"
+        schema_name = "test_public_schema"
         definition = json.dumps(self._base_schema_def)
 
-        self._df_api.schemaCreate(
-            schema_id,
+        create_result = self._df_api.schemaCreate(
+            schema_name,
             definition=definition,
             description="Public schema test",
             public=True,
         )
 
+        schema_id = create_result[0].data[0].id
         view_result = self._df_api.schemaView(schema_id)
         self.assertTrue(view_result[0].schema[0].pub)
 
@@ -286,13 +293,14 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
     def test_metadata_validate_pass(self):
         """Test metadata validation with valid metadata."""
 
-        schema_id = "test_validate_schema"
+        schema_name = "test_validate_schema"
         definition = json.dumps(self._base_schema_def)
 
-        self._df_api.schemaCreate(
-            schema_id,
+        create_result = self._df_api.schemaCreate(
+            schema_name,
             definition=definition,
         )
+        schema_id = create_result[0].data[0].id
 
         valid_metadata = json.dumps({
             "name": "widget",
@@ -309,13 +317,14 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
     def test_metadata_validate_fail(self):
         """Test metadata validation with invalid metadata."""
 
-        schema_id = "test_validate_fail_schema"
+        schema_name = "test_validate_fail_schema"
         definition = json.dumps(self._base_schema_def)
 
-        self._df_api.schemaCreate(
-            schema_id,
+        create_result = self._df_api.schemaCreate(
+            schema_name,
             definition=definition,
         )
+        schema_id = create_result[0].data[0].id
 
         # Missing required "name" field, wrong type for "value"
         invalid_metadata = json.dumps({
@@ -350,7 +359,7 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
     def test_schema_create_from_file(self):
         """Test creating a schema from a definition file."""
 
-        schema_id = "test_file_schema"
+        schema_name = "test_file_schema"
         tmp_file = "/tmp/test_schema_def.json"
 
         try:
@@ -358,11 +367,12 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
                 json.dump(self._base_schema_def, f)
 
             create_result = self._df_api.schemaCreate(
-                schema_id,
+                schema_name,
                 definition_file=tmp_file,
                 description="Created from file",
             )
-            self.assertEqual(create_result[1], "AckReply")
+            schema_id = create_result[0].data[0].id
+            self.assertEqual(create_result[1], "SchemaDataReply")
 
             view_result = self._df_api.schemaView(schema_id)
             returned_def = json.loads(getattr(view_result[0].schema[0], 'def'))

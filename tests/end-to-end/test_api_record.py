@@ -284,7 +284,6 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
             )
 
             schema_id = schema_result[0].data[0].id  # should be "test_rec_schema:1"
-            schema_id = schema_result[0].data[0].id
             self.assertIn(":", schema_id, f"Expected versioned schema ID, got: {schema_id}")
             # --- Record create with valid metadata and schema enforce ---
             valid_metadata = json.dumps({

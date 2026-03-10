@@ -312,8 +312,10 @@ public:
   void schemaView(const std::string &a_id, libjson::Value &a_result,
                   LogContext log_context);
   void schemaCreate(const SDMS::SchemaCreateRequest &a_request,
+                    SDMS::SchemaDataReply &a_reply,
                     LogContext log_context);
   void schemaRevise(const SDMS::SchemaReviseRequest &a_request,
+                    SDMS::SchemaDataReply &a_reply,
                     LogContext log_context);
   void schemaUpdate(const SDMS::SchemaUpdateRequest &a_request,
                     LogContext log_context);
