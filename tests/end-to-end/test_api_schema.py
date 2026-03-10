@@ -84,7 +84,7 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
             definition=definition,
             description="Basic test schema",
         )
-        schema_id = create_result[0].data[0].id
+        schema_id = create_result[0].schema[0].id
         self.assertEqual(create_result[1], "SchemaDataReply")
 
         # View
@@ -151,7 +151,7 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
             description="Before update",
         )
 
-        schema_id = create_result[0].data[0].id
+        schema_id = create_result[0].schema[0].id
         # Update description
         self._df_api.schemaUpdate(
             schema_id,
@@ -200,7 +200,7 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
             description="Revision 1",
         )
 
-        schema_id = create_result[0].data[0].id
+        schema_id = create_result[0].schema[0].id
         view_v1 = self._df_api.schemaView(schema_id)
         ver_1 = view_v1[0].schema[0].ver
 
@@ -241,7 +241,7 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
                 definition=json.dumps(self._base_schema_def),
                 description="Searchable schema number {}".format(i),
             )
-            schema_id = create_result[0].data[0].id
+            schema_id = create_result[0].schema[0].id
             schemas_to_cleanup.append(schema_id)
 
         # Search by ID prefix
@@ -282,7 +282,7 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
             public=True,
         )
 
-        schema_id = create_result[0].data[0].id
+        schema_id = create_result[0].schema[0].id
         view_result = self._df_api.schemaView(schema_id)
         self.assertTrue(view_result[0].schema[0].pub)
 
@@ -299,7 +299,7 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
             schema_name,
             definition=definition,
         )
-        schema_id = create_result[0].data[0].id
+        schema_id = create_result[0].schema[0].id
 
         valid_metadata = json.dumps({
             "name": "widget",
@@ -323,7 +323,7 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
             schema_name,
             definition=definition,
         )
-        schema_id = create_result[0].data[0].id
+        schema_id = create_result[0].schema[0].id
 
         # Missing required "name" field, wrong type for "value"
         invalid_metadata = json.dumps({
@@ -370,7 +370,7 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
                 definition_file=tmp_file,
                 description="Created from file",
             )
-            schema_id = create_result[0].data[0].id
+            schema_id = create_result[0].schema[0].id
             self.assertEqual(create_result[1], "SchemaDataReply")
 
             view_result = self._df_api.schemaView(schema_id)
