@@ -277,12 +277,15 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
                 "required": ["temperature", "sample_id"]
             })
     
-            self._df_api.schemaCreate(
+            schema_result = self._df_api.schemaCreate(
                 "test_rec_schema",
                 definition=schema_def,
                 description="Schema for record integration test",
             )
-    
+
+            schema_id = schema_result[0].data[0].id  # should be "test_rec_schema:1"
+            schema_id = schema_result[0].data[0].id
+            self.assertIn(":", schema_id, f"Expected versioned schema ID, got: {schema_id}")
             # --- Record create with valid metadata and schema enforce ---
             valid_metadata = json.dumps({
                 "temperature": 300.5,
@@ -293,7 +296,7 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
             data_result = self._df_api.dataCreate(
                 title="Schema Enforced Record",
                 metadata=valid_metadata,
-                schema="test_rec_schema",
+                schema=schema_id,
                 schema_enforce=True,
                 parent_id="root",
             )
@@ -313,7 +316,7 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
                 self._df_api.dataCreate(
                     title="Should Fail",
                     metadata=invalid_metadata,
-                    schema="test_rec_schema",
+                    schema=schema_id,
                     schema_enforce=True,
                     parent_id="root",
                 )
@@ -322,7 +325,7 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
             warn_result = self._df_api.dataCreate(
                 title="Schema Warn Record",
                 metadata=invalid_metadata,
-                schema="test_rec_schema",
+                schema=schema_id,
                 parent_id="root",
             )
     
@@ -336,7 +339,7 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
             update_result = self._df_api.dataUpdate(
                 rec_id,
                 metadata=merge_metadata,
-                schema="test_rec_schema",
+                schema=schema_id,
                 schema_enforce=True,
             )
     
@@ -351,13 +354,13 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
                     rec_id,
                     metadata=incomplete_metadata,
                     metadata_set=True,
-                    schema="test_rec_schema",
+                    schema=schema_id,
                     schema_enforce=True,
                 )
     
             # --- Pre-validate metadata before committing ---
             validate_result = self._df_api.metadataValidate(
-                "test_rec_schema",
+                schema_id,
                 metadata=valid_metadata,
             )
     
@@ -365,7 +368,7 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
             self.assertFalse(validate_result[0].errors)
     
             validate_result_bad = self._df_api.metadataValidate(
-                "test_rec_schema",
+                schema_id,
                 metadata=invalid_metadata,
             )
     
@@ -387,7 +390,7 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
     
             self.assertEqual(status, 3)
     
-            self._df_api.schemaDelete("test_rec_schema")
+            self._df_api.schemaDelete(schema_id)
 
 
 if __name__ == "__main__":
