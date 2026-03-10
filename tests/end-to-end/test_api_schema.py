@@ -85,7 +85,6 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
             description="Basic test schema",
         )
         schema_id = create_result[0].data[0].id
-        # schemaCreate returns AckReply
         self.assertEqual(create_result[1], "SchemaDataReply")
 
         # View
