@@ -692,18 +692,22 @@ router
                 },
             });
         } catch (e) {
-            logger.logRequestFailure({
-                client: req.queryParams?.client,
-                correlationId: req.headers["x-correlation-id"],
-                httpVerb: "GET",
-                routePath: basePath + "/view",
-                status: "Failure",
-                description: `View schema. Schema ID: ${req.queryParams.id}`,
-                extra: {
-                    pub: sch?.pub,
-                    sys: sch?.sys,
-                },
-            });
+            try {
+                logger.logRequestFailure({
+                    client: req.queryParams?.client,
+                    correlationId: req.headers["x-correlation-id"],
+                    httpVerb: "GET",
+                    routePath: basePath + "/view",
+                    status: "Failure",
+                    description: `View schema. Schema ID: ${req.queryParams.id}`,
+                    extra: {
+                        pub: sch?.pub,
+                        sys: sch?.sys,
+                    },
+                });
+            } catch (logErr) {
+                console.error("Logger failed:", logErr);
+            }
             g_lib.handleException(e, res);
         }
     })
