@@ -66,11 +66,17 @@ function parseSchemaId(schId) {
     const ver = Number(verStr);
 
     if (verStr.length === 0) {
-        throw [error.ERR_INVALID_PARAM, "Schema ID has trailing colon with no version: '" + schId + "'"];
+        throw [
+            error.ERR_INVALID_PARAM,
+            "Schema ID has trailing colon with no version: '" + schId + "'",
+        ];
     }
 
     if (!Number.isInteger(ver)) {
-        throw [error.ERR_INVALID_PARAM, "Schema ID version suffix is not a valid integer: '" + verStr + "'"];
+        throw [
+            error.ERR_INVALID_PARAM,
+            "Schema ID version suffix is not a valid integer: '" + verStr + "'",
+        ];
     }
 
     return { id: schId.substr(0, idx), ver: ver };
@@ -172,9 +178,12 @@ router
                     }
 
                     const parsed = parseSchemaId(req.body.id);
-                    
+
                     if (parsed.ver !== null && parsed.ver !== 0) {
-                        throw [error.ERR_INVALID_PARAM, "Schema ID version must be 0 for creation, got: " + parsed.ver];
+                        throw [
+                            error.ERR_INVALID_PARAM,
+                            "Schema ID version must be 0 for creation, got: " + parsed.ver,
+                        ];
                     }
 
                     g_lib.procInputParam(req.body, "_sch_id", false, obj);
@@ -596,7 +605,6 @@ router
                 },
                 waitForSync: true,
                 action: function () {
-
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
                     const parsed = parseSchemaId(req.queryParams.id);
                     if (parsed.ver === null) {
@@ -605,9 +613,13 @@ router
                     sch_old = g_db.sch.firstExample({ id: parsed.id, ver: parsed.ver });
 
                     if (!sch_old)
-                        throw [error.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found."];
+                        throw [
+                            error.ERR_NOT_FOUND,
+                            "Schema '" + req.queryParams.id + "' not found.",
+                        ];
 
-                    if (sch_old.own_id != client._id && !client.is_admin) throw error.ERR_PERM_DENIED;
+                    if (sch_old.own_id != client._id && !client.is_admin)
+                        throw error.ERR_PERM_DENIED;
 
                     // Cannot delete schemas that are in use
                     if (sch_old.cnt) {
@@ -638,7 +650,10 @@ router
                             _to: sch_old._id,
                         })
                     ) {
-                        throw [error.ERR_PERM_DENIED, "Cannot delete intermediate schema revisions."];
+                        throw [
+                            error.ERR_PERM_DENIED,
+                            "Cannot delete intermediate schema revisions.",
+                        ];
                     }
 
                     g_graph.sch.remove(sch_old._id);
