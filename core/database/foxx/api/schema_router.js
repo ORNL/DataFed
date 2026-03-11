@@ -600,8 +600,8 @@ router
 
             g_db._executeTransaction({
                 collections: {
-                    read: ["u", "uuid", "accn", "sch_dep", "sch_ver"],
-                    write: ["sch"],
+                    read: ["u", "uuid", "accn"],
+                    write: ["sch", "sch_dep", "sch_ver"],
                 },
                 waitForSync: true,
                 action: function () {
