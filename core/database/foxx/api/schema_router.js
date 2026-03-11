@@ -43,6 +43,54 @@ function fixSchOwnNmAr(a_sch) {
     }
 }
 
+/**
+ * Validates and parses a schema ID string. Returns the bare ID and version number.
+ * If no version suffix is present, version is null.
+ *
+ * @param {string} schId - Schema ID, optionally with ":version" suffix
+ * @returns {{ id: string, ver: number|null }}
+ */
+function parseSchemaId(schId) {
+    const colonCount = (schId.match(/:/g) || []).length;
+
+    if (colonCount > 1) {
+        throw [error.ERR_INVALID_PARAM, "Schema ID contains multiple colons: '" + schId + "'"];
+    }
+
+    if (colonCount === 0) {
+        return { id: schId, ver: null };
+    }
+
+    const idx = schId.indexOf(":");
+    const verStr = schId.substr(idx + 1);
+    const ver = Number(verStr);
+
+    if (verStr.length === 0) {
+        throw [error.ERR_INVALID_PARAM, "Schema ID has trailing colon with no version: '" + schId + "'"];
+    }
+
+    if (!Number.isInteger(ver)) {
+        throw [error.ERR_INVALID_PARAM, "Schema ID version suffix is not a valid integer: '" + verStr + "'"];
+    }
+
+    return { id: schId.substr(0, idx), ver: ver };
+}
+
+/**
+ * Strips version suffix from a schema ID field if present.
+ * Handles the case where procInputParam composites "id:ver" into obj.id.
+ *
+ * @param {object} obj - Object with an id field to clean
+ */
+function stripSchemaIdVersion(obj) {
+    if (obj.id) {
+        var idx = obj.id.indexOf(":");
+        if (idx >= 0) {
+            obj.id = obj.id.substr(0, idx);
+        }
+    }
+}
+
 // Find all references (internal and external), load them, then place in refs param (object)
 // This allows preloading schema dependencies for schema processing on client side
 function _resolveDeps(a_sch_id, a_refs) {
@@ -123,8 +171,17 @@ router
                         obj.own_nm = client.name;
                     }
 
+                    const parsed = parseSchemaId(req.body.id);
+                    
+                    if (parsed.ver !== null && parsed.ver !== 0) {
+                        throw [error.ERR_INVALID_PARAM, "Schema ID version must be 0 for creation, got: " + parsed.ver];
+                    }
+
                     g_lib.procInputParam(req.body, "_sch_id", false, obj);
                     g_lib.procInputParam(req.body, "desc", false, obj);
+
+                    // Strip version suffix that procInputParam composited into obj.id
+                    stripSchemaIdVersion(obj);
 
                     sch = g_db.sch.save(obj, {
                         returnNew: true,
@@ -210,16 +267,12 @@ router
                 waitForSync: true,
                 action: function () {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
-                    var idx = req.queryParams.id.indexOf(":");
-                    if (idx < 0) {
+
+                    const parsed = parseSchemaId(req.queryParams.id);
+                    if (parsed.ver === null) {
                         throw [error.ERR_INVALID_PARAM, "Schema ID missing version number suffix."];
                     }
-                    var sch_id = req.queryParams.id.substr(0, idx),
-                        sch_ver = parseInt(req.queryParams.id.substr(idx + 1)),
-                        sch_old = g_db.sch.firstExample({
-                            id: sch_id,
-                            ver: sch_ver,
-                        });
+                    let sch_old = g_db.sch.firstExample({ id: parsed.id, ver: parsed.ver });
 
                     if (!sch_old) {
                         throw [
@@ -272,6 +325,7 @@ router
                     }
 
                     g_lib.procInputParam(req.body, "_sch_id", true, obj);
+                    stripSchemaIdVersion(obj);
 
                     if (
                         obj.id &&
@@ -382,16 +436,11 @@ router
                 waitForSync: true,
                 action: function () {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
-                    var idx = req.queryParams.id.indexOf(":");
-                    if (idx < 0) {
+                    const parsed = parseSchemaId(req.queryParams.id);
+                    if (parsed.ver === null) {
                         throw [error.ERR_INVALID_PARAM, "Schema ID missing version number suffix."];
                     }
-                    var sch_id = req.queryParams.id.substr(0, idx),
-                        sch_ver = parseInt(req.queryParams.id.substr(idx + 1)),
-                        sch = g_db.sch.firstExample({
-                            id: sch_id,
-                            ver: sch_ver,
-                        });
+                    let sch = g_db.sch.firstExample({ id: parsed.id, ver: parsed.ver });
 
                     if (!sch)
                         throw [
@@ -540,57 +589,64 @@ router
                 description: `Delete schema. Schema ID: ${req.queryParams.id}`,
             });
 
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
-            var idx = req.queryParams.id.indexOf(":");
-            if (idx < 0) {
-                throw [error.ERR_INVALID_PARAM, "Schema ID missing version number suffix."];
-            }
-            var sch_id = req.queryParams.id.substr(0, idx),
-                sch_ver = parseInt(req.queryParams.id.substr(idx + 1));
+            g_db._executeTransaction({
+                collections: {
+                    read: ["u", "uuid", "accn", "sch_dep", "sch_ver"],
+                    write: ["sch"],
+                },
+                waitForSync: true,
+                action: function () {
 
-            sch_old = g_db.sch.firstExample({
-                id: sch_id,
-                ver: sch_ver,
+                    const client = g_lib.getUserFromClientID(req.queryParams.client);
+                    const parsed = parseSchemaId(req.queryParams.id);
+                    if (parsed.ver === null) {
+                        throw [error.ERR_INVALID_PARAM, "Schema ID missing version number suffix."];
+                    }
+                    sch_old = g_db.sch.firstExample({ id: parsed.id, ver: parsed.ver });
+
+                    if (!sch_old)
+                        throw [error.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found."];
+
+                    if (sch_old.own_id != client._id && !client.is_admin) throw error.ERR_PERM_DENIED;
+
+                    // Cannot delete schemas that are in use
+                    if (sch_old.cnt) {
+                        throw [
+                            error.ERR_PERM_DENIED,
+                            "Schema is associated with data records - cannot delete.",
+                        ];
+                    }
+
+                    // Cannot delete schemas references by other schemas
+                    if (
+                        g_db.sch_dep.firstExample({
+                            _to: sch_old._id,
+                        })
+                    ) {
+                        throw [
+                            error.ERR_PERM_DENIED,
+                            "Schema is referenced by another schema - cannot delete.",
+                        ];
+                    }
+
+                    // Only allow deletion of oldest and newest revisions of schemas
+                    if (
+                        g_db.sch_ver.firstExample({
+                            _from: sch_old._id,
+                        }) &&
+                        g_db.sch_ver.firstExample({
+                            _to: sch_old._id,
+                        })
+                    ) {
+                        throw [error.ERR_PERM_DENIED, "Cannot delete intermediate schema revisions."];
+                    }
+
+                    g_graph.sch.remove(sch_old._id);
+
+                    res.send();
+                },
             });
 
-            if (!sch_old)
-                throw [error.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found."];
-
-            if (sch_old.own_id != client._id && !client.is_admin) throw error.ERR_PERM_DENIED;
-
-            // Cannot delete schemas that are in use
-            if (sch_old.cnt) {
-                throw [
-                    error.ERR_PERM_DENIED,
-                    "Schema is associated with data records - cannot update.",
-                ];
-            }
-
-            // Cannot delete schemas references by other schemas
-            if (
-                g_db.sch_dep.firstExample({
-                    _to: sch_old._id,
-                })
-            ) {
-                throw [
-                    error.ERR_PERM_DENIED,
-                    "Schema is referenced by another schema - cannot update.",
-                ];
-            }
-
-            // Only allow deletion of oldest and newest revisions of schemas
-            if (
-                g_db.sch_ver.firstExample({
-                    _from: sch_old._id,
-                }) &&
-                g_db.sch_ver.firstExample({
-                    _to: sch_old._id,
-                })
-            ) {
-                throw [error.ERR_PERM_DENIED, "Cannot delete intermediate schema revisions."];
-            }
-
-            g_graph.sch.remove(sch_old._id);
             logger.logRequestSuccess({
                 client: req.queryParams?.client,
                 correlationId: req.headers["x-correlation-id"],
@@ -632,16 +688,12 @@ router
                 description: `View schema. Schema ID: ${req.queryParams.id}`,
             });
             const client = g_lib.getUserFromClientID(req.queryParams.client);
-            var idx = req.queryParams.id.indexOf(":");
-            if (idx < 0) {
+
+            const parsed = parseSchemaId(req.queryParams.id);
+            if (parsed.ver === null) {
                 throw [error.ERR_INVALID_PARAM, "Schema ID missing version number suffix."];
             }
-            var sch_id = req.queryParams.id.substr(0, idx),
-                sch_ver = parseInt(req.queryParams.id.substr(idx + 1));
-            sch = g_db.sch.firstExample({
-                id: sch_id,
-                ver: sch_ver,
-            });
+            sch = g_db.sch.firstExample({ id: parsed.id, ver: parsed.ver });
 
             if (!sch) throw [error.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found."];
 
