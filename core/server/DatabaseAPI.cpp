@@ -475,14 +475,6 @@ void DatabaseAPI::purgeTransferRecords(size_t age, LogContext log_context) {
 void DatabaseAPI::userCreate(const SDMS::UserCreateRequest &a_request,
                              SDMS::UserDataReply &a_reply,
                              LogContext log_context) {
-  // Ensure correlation ID exists
-  if (log_context.correlation_id.empty() ||
-      !log_context.correlation_id.compare("unknown")) {
-
-    boost::uuids::random_generator generator;
-    log_context.correlation_id = boost::uuids::to_string(generator());
-  }
-
   DL_DEBUG(log_context,
            "DataFed user create - uid: " << a_request.uid()
                                          << ", name: " << a_request.name());

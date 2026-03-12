@@ -29,12 +29,9 @@ void AuthenticationOperator::execute(IMessage &message) {
   if (message.exists(MessageAttribute::KEY) == 0) {
     EXCEPT(1, "'KEY' attribute not defined.");
   }
-  // 🔹 Generate correlation ID for this request
-  boost::uuids::random_generator generator;
-  boost::uuids::uuid uuid = generator();
 
   LogContext log_context;
-  log_context.correlation_id = boost::uuids::to_string(uuid);
+  log_context.correlation_id = std::get<std::string>(message.get(MessageAttribute::CORRELATION_ID));
   m_authentication_manager->purge();
 
   std::string key = std::get<std::string>(message.get(MessageAttribute::KEY));

@@ -6,6 +6,9 @@
 
 // Local public includes
 #include "common/DynaLog.hpp"
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 // Standard includes
 #include <memory>
@@ -19,6 +22,10 @@ void Config::loadRepositoryConfig(AuthenticationManager &auth_manager,
                                   LogContext log_context) {
   DL_DEBUG(log_context, "Loading repo configuration ");
 
+  boost::uuids::random_generator generator;
+  boost::uuids::uuid uuid = generator();
+
+  log_context.correlation_id = boost::uuids::to_string(uuid);
   // Only load the repository config if it needs to be refreshed
   m_repos_mtx.lock();
   if (m_trigger_repo_refresh == false) {
