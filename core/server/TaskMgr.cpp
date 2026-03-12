@@ -10,6 +10,9 @@
 #include "common/TraceException.hpp"
 #include "common/libjson.hpp"
 #include "common/envelope.pb.h"
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 // Standard includes
 #include <algorithm>
@@ -26,6 +29,10 @@ std::mutex TaskMgr::singleton_instance_mutex;
 void TaskMgr::initialize(LogContext log_context) {
   m_log_context = log_context;
 
+  boost::uuids::random_generator generator;
+  boost::uuids::uuid uuid = generator();
+  
+  log_context.correlation_id = boost::uuids::to_string(uuid);
   TaskWorker *worker;
 
   ++m_thread_count;
