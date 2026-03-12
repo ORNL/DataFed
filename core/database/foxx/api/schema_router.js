@@ -58,7 +58,7 @@ function parseSchemaId(schId) {
     }
 
     if (colonCount === 0) {
-        return { id: schId, ver: null };
+        return { id: schId, ver: 0 };
     }
 
     const idx = schId.indexOf(":");
@@ -203,6 +203,7 @@ router
                     delete sch._key;
                     delete sch._rev;
 
+                    sch.id = parsed.id + ":" + parsed.ver;
                     res.send([sch]);
                 },
             });
