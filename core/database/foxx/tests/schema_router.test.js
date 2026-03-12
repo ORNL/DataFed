@@ -124,7 +124,7 @@ describe("schema router", () => {
             `${schema_base_url}/delete?client=u/fakeUser&id=test_schema_1:1`,
         );
 
-        expect(response.status).to.equal(200);
+        expect(response.status).to.equal(204);
 
         const deleted = db.sch.firstExample({ id: "test_schema_1", ver: 1 });
         expect(deleted).to.equal(null);
