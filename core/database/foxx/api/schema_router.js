@@ -657,8 +657,7 @@ router
                     }
 
                     g_graph.sch.remove(sch_old._id);
-
-                    res.send();
+                    res.status(200).send();
                 },
             });
 
