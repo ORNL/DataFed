@@ -2,6 +2,9 @@
 stages:
     - build
 
+include:
+    - local: .gitlab/common.yml
+
 build-gcs-base:
     stage: build
     variables:
@@ -9,10 +12,20 @@ build-gcs-base:
         COMPONENT: "gcs-base"
         GIT_STRATEGY: clone
         DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
+        BUILD_INTERMEDIATE: "FALSE"
         GCS_BASE_IMAGE_DISTRO: "debian-12"
     tags:
         - ci-datafed-globus
         - docker
+    rules:
+        - changes:
+              - docker/**/*
+              - scripts/**/*
+              - common/**/*
+              - .gitlab-ci.yml
+              - CMakeLists.txt
+              - cmake/**/*
+          when: on_success
     script:
         - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
         - echo "$BRANCH_LOWER"
@@ -37,3 +50,25 @@ build-gcs-base:
               sleep 5  # Optional: Add a sleep to avoid busy waiting 
             done
         - cat "${CI_PROJECT_DIR}/harbor_check.log"
+
+retag-image:
+    extends: .docker_retag_image
+    stage: build
+    variables:
+        PROJECT: "datafed"
+        COMPONENT: "gcs-base"
+        GIT_STRATEGY: clone
+        DATAFED_HARBOR_REGISTRY: "$REGISTRY" # needed by c_harbor_artifact_count
+        BUILD_INTERMEDIATE: "FALSE"
+    tags:
+        - docker
+    rules:
+        - changes:
+              - docker/**/*
+              - scripts/**/*
+              - common/**/*
+              - .gitlab-ci.yml
+              - CMakeLists.txt
+              - cmake/**/*
+          when: never
+        - when: on_success

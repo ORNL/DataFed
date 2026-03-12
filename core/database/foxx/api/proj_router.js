@@ -468,11 +468,11 @@ router
                 status: "Failure",
                 description: `Update project information. Project ID: ${req.queryParams.id}`,
                 extra: {
-                    owner: proj.new?.owner,
-                    title: proj.new?.title
-                        ? proj.new?.title.length > 15
-                            ? proj.new?.title.slice(0, 15) + "…"
-                            : proj.new?.title
+                    owner: proj?.new?.owner,
+                    title: proj?.new?.title
+                        ? proj?.new?.title.length > 15
+                            ? proj?.new?.title.slice(0, 15) + "…"
+                            : proj?.new?.title
                         : undefined,
                 },
 
@@ -601,132 +601,149 @@ router
 
 router
     .get("/list", function (req, res) {
-        logger.logRequestStarted({
-            client: req.queryParams.client,
-            correlationId: req.headers["x-correlation-id"],
-            httpVerb: "GET",
-            routePath: basePath + "/list",
-            status: "Started",
-            description: `List projects`,
-        });
-
-        const client = g_lib.getUserFromClientID(req.queryParams.client);
-        var qry,
-            result,
-            count =
-                (req.queryParams.as_owner ? 1 : 0) +
-                (req.queryParams.as_admin ? 1 : 0) +
-                (req.queryParams.as_member ? 1 : 0);
-
-        if (count) {
-            var comma = false;
-
-            if (count > 1) qry = "for i in union((";
-            else qry = "";
-
-            if (req.queryParams.as_owner) {
-                qry += "for i in 1..1 inbound @user owner filter IS_SAME_COLLECTION('p',i)";
-                if (count > 1) qry += " return { _id: i._id, title: i.title, owner: i.owner }";
-                comma = true;
-            }
-
-            if (!count || req.queryParams.as_admin) {
-                qry +=
-                    (comma ? "),(" : "") +
-                    "for i in 1..1 inbound @user admin filter IS_SAME_COLLECTION('p',i)";
-                if (count > 1)
-                    qry += " return { _id: i._id, title: i.title, owner: i.owner, creator: @user }";
-                comma = true;
-            }
-
-            if (req.queryParams.as_member) {
-                qry +=
-                    (comma ? "),(" : "") +
-                    "for i,e,p in 2..2 inbound @user member, outbound owner filter p.vertices[1].gid == 'members'";
-                if (count > 1) qry += " return { _id: i._id, title: i.title, owner: i.owner }";
-            }
-
-            if (count > 1) qry += "))";
-        } else {
-            qry = "for i in p";
-        }
-
-        qry += " sort i.";
-
-        switch (req.queryParams.sort) {
-            case g_lib.SORT_ID:
-                qry += "_id";
-                break;
-            case g_lib.SORT_TITLE:
-                qry += "title";
-                break;
-            case g_lib.SORT_TIME_CREATE:
-                qry += "ct";
-                break;
-            case g_lib.SORT_TIME_UPDATE:
-                qry += "ut";
-                break;
-            default:
-                qry += "_id";
-                break;
-        }
-
-        if (req.queryParams.sort_rev) qry += " desc";
-
-        var user_id;
-        if (req.queryParams.subject) {
-            permissions.ensureAdminPermUser(client, req.queryParams.subject);
-        } else user_id = client._id;
-
-        if (req.queryParams.offset != undefined && req.queryParams.count != undefined) {
-            qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
-            qry += " return { id: i._id, title: i.title, owner: i.owner, creator: i.creator }";
-            //console.log("proj list qry:",qry);
-            result = g_db._query(
-                qry,
-                count
-                    ? {
-                          user: user_id,
-                      }
-                    : {},
-                {},
-                {
-                    fullCount: true,
-                },
-            );
-            var tot = result.getExtra().stats.fullCount;
-            result = result.toArray();
-            result.push({
-                paging: {
-                    off: req.queryParams.offset,
-                    cnt: req.queryParams.count,
-                    tot: tot,
-                },
+        let tot = null;
+        try {
+            logger.logRequestStarted({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/list",
+                status: "Started",
+                description: `List projects`,
             });
-        } else {
-            qry += " return { id: i._id, title: i.title, owner: i.owner, creator: i.creator }";
-            //console.log("proj list qry:",qry);
-            result = g_db._query(
-                qry,
-                count
-                    ? {
-                          user: user_id,
-                      }
-                    : {},
-            );
-        }
 
-        //res.send( g_db._query( qry, { user: client._id }));
-        res.send(result);
-        logger.logRequestSuccess({
-            client: req.queryParams.client,
-            correlationId: req.headers["x-correlation-id"],
-            httpVerb: "GET",
-            routePath: basePath + "/list",
-            status: "Success",
-            description: `List projects`,
-            extra: { NumOfProjs: tot },
-        });
+            const client = g_lib.getUserFromClientID(req.queryParams.client);
+            var qry,
+                result,
+                count =
+                    (req.queryParams.as_owner ? 1 : 0) +
+                    (req.queryParams.as_admin ? 1 : 0) +
+                    (req.queryParams.as_member ? 1 : 0);
+
+            if (count) {
+                var comma = false;
+
+                if (count > 1) qry = "for i in union((";
+                else qry = "";
+
+                if (req.queryParams.as_owner) {
+                    qry += "for i in 1..1 inbound @user owner filter IS_SAME_COLLECTION('p',i)";
+                    if (count > 1) qry += " return { _id: i._id, title: i.title, owner: i.owner }";
+                    comma = true;
+                }
+
+                if (!count || req.queryParams.as_admin) {
+                    qry +=
+                        (comma ? "),(" : "") +
+                        "for i in 1..1 inbound @user admin filter IS_SAME_COLLECTION('p',i)";
+                    if (count > 1)
+                        qry +=
+                            " return { _id: i._id, title: i.title, owner: i.owner, creator: @user }";
+                    comma = true;
+                }
+
+                if (req.queryParams.as_member) {
+                    qry +=
+                        (comma ? "),(" : "") +
+                        "for i,e,p in 2..2 inbound @user member, outbound owner filter p.vertices[1].gid == 'members'";
+                    if (count > 1) qry += " return { _id: i._id, title: i.title, owner: i.owner }";
+                }
+
+                if (count > 1) qry += "))";
+            } else {
+                qry = "for i in p";
+            }
+
+            qry += " sort i.";
+
+            switch (req.queryParams.sort) {
+                case g_lib.SORT_ID:
+                    qry += "_id";
+                    break;
+                case g_lib.SORT_TITLE:
+                    qry += "title";
+                    break;
+                case g_lib.SORT_TIME_CREATE:
+                    qry += "ct";
+                    break;
+                case g_lib.SORT_TIME_UPDATE:
+                    qry += "ut";
+                    break;
+                default:
+                    qry += "_id";
+                    break;
+            }
+
+            if (req.queryParams.sort_rev) qry += " desc";
+
+            let user_id;
+            if (req.queryParams.subject) {
+                permissions.ensureAdminPermUser(client, req.queryParams.subject);
+                user_id = req.queryParams.subject;
+            } else user_id = client._id;
+
+            if (req.queryParams.offset != undefined && req.queryParams.count != undefined) {
+                qry += " limit " + req.queryParams.offset + ", " + req.queryParams.count;
+                qry += " return { id: i._id, title: i.title, owner: i.owner, creator: i.creator }";
+                //console.log("proj list qry:",qry);
+                result = g_db._query(
+                    qry,
+                    count
+                        ? {
+                              user: user_id,
+                          }
+                        : {},
+                    {},
+                    {
+                        fullCount: true,
+                    },
+                );
+                tot = result.getExtra().stats.fullCount;
+                result = result.toArray();
+                result.push({
+                    paging: {
+                        off: req.queryParams.offset,
+                        cnt: req.queryParams.count,
+                        tot: tot,
+                    },
+                });
+            } else {
+                qry += " return { id: i._id, title: i.title, owner: i.owner, creator: i.creator }";
+                //console.log("proj list qry:",qry);
+                result = g_db._query(
+                    qry,
+                    count
+                        ? {
+                              user: user_id,
+                          }
+                        : {},
+                );
+            }
+
+            //res.send( g_db._query( qry, { user: client._id }));
+            res.send(result);
+            logger.logRequestSuccess({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/list",
+                status: "Success",
+                description: `List projects`,
+                extra: { NumOfProjs: tot },
+            });
+        } catch (e) {
+            logger.logRequestFailure({
+                client: req.queryParams.client,
+                correlationId: req.headers["x-correlation-id"],
+                httpVerb: "GET",
+                routePath: basePath + "/list",
+                status: "Failure",
+                description: `List projects`,
+                extra: { NumOfProjs: tot },
+                error: e,
+            });
+            g_lib.handleException(e, res);
+        }
     })
     .queryParam("client", joi.string().required(), "Client ID")
     .queryParam("subject", joi.string().optional(), "Subject (user) ID")
@@ -745,64 +762,6 @@ router
     .description(
         "List projects. If no options are provided, lists all projects associated with client.",
     );
-
-router
-    .get("/search", function (req, res) {
-        let result = null;
-        let extra_log = null;
-        const rawQuery = typeof req.queryParams.query === "string" ? req.queryParams.query : "";
-        const safeQuerySnippet =
-            rawQuery.length > 200 ? rawQuery.slice(0, 200) + "…[truncated]" : rawQuery;
-        try {
-            logger.logRequestStarted({
-                client: req.queryParams.client,
-                correlationId: req.headers["x-correlation-id"],
-                httpVerb: "GET",
-                routePath: basePath + "/search",
-                status: "Started",
-                description: `Find all projects that match query: ${safeQuerySnippet}`,
-            });
-
-            g_lib.getUserFromClientID(req.queryParams.client);
-
-            result = g_db._query(req.queryParams.query, {});
-            res.send(result);
-            extra_log = {
-                documents: result._documents ? result._documents.slice(0, 10) : [], // first 10 IDs only
-                countTotal: result?._countTotal,
-                countQuery: result?._countQuery,
-                skip: result?._skip,
-                limit: result?._limit,
-                cached: result?._cached,
-            };
-
-            logger.logRequestSuccess({
-                client: req.queryParams.client,
-                correlationId: req.headers["x-correlation-id"],
-                httpVerb: "GET",
-                routePath: basePath + "/search",
-                status: "Success",
-                description: `Find all projects that match query: ${safeQuerySnippet}`,
-                extra: extra_log,
-            });
-        } catch (e) {
-            logger.logRequestFailure({
-                client: req.queryParams.client,
-                correlationId: req.headers["x-correlation-id"],
-                httpVerb: "GET",
-                routePath: basePath + "/search",
-                status: "Failure",
-                description: `Find all projects that match query: ${safeQuerySnippet}`,
-                extra: extra_log,
-                error: e,
-            });
-            g_lib.handleException(e, res);
-        }
-    })
-    .queryParam("client", joi.string().required(), "Client ID")
-    .queryParam("query", joi.string().required(), "Query")
-    .summary("Find all projects that match query")
-    .description("Find all projects that match query");
 
 router
     .post("/delete", function (req, res) {
@@ -826,7 +785,7 @@ router
                 action: function () {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
 
-                    var result = g_tasks.taskInitProjDelete(client, req.body.ids);
+                    result = g_tasks.taskInitProjDelete(client, req.body.ids);
 
                     res.send(result);
                 },
@@ -908,12 +867,12 @@ router
                 extra: { role: role },
             });
         } catch (e) {
-            logger.logRequestSuccess({
+            logger.logRequestFailure({
                 client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/get_role",
-                status: "Success",
+                status: "Failure",
                 description: `Get client/subject project role. ID: ${req.queryParams.id}`,
                 extra: { role: role },
                 error: e,

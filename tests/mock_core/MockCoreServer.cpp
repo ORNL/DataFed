@@ -196,7 +196,7 @@ void Server::msgRouter(LogContext log_context, int thread_count) {
   }
 
   ServerFactory server_factory(log_context);
-  auto proxy = server_factory.create(ServerType::PROXY_BASIC_ZMQ,
+  auto proxy = server_factory.create(ServerType::PROXY_CUSTOM,
                                      socket_options, socket_credentials);
 
   // Ceate worker threads

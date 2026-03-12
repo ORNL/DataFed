@@ -1,54 +1,46 @@
 import { test, expect } from "@playwright/test";
 
 // checking visibility and expanding some dropdowns
-test("test visibility", async ({ page }) => {
-    try {
-        console.log("******Begin test******");
-        // Temporary fix
-        let domain = process.env.DATAFED_DOMAIN;
-        await page.goto("https://" + domain + "/");
-        if (await page.getByRole("button", { name: "Log In / Register" }).isVisible()) {
-            console.log("NOT LOGGED IN");
+test.describe("DataFed UI Navigation", () => {
+    test("should display main navigation elements", async ({ page }) => {
+        const domain = process.env.DATAFED_DOMAIN;
+        if (!domain) {
+            throw new Error("DATAFED_DOMAIN environment variable not set");
         }
-        if (await expect(page.getByText("Continue Registration")).toBeVisible()) {
-            await page.getByText("Continue Registration").click({ timeout: 20000 });
-        }
-        await expect(page.locator(".ui-icon").first()).toBeVisible({
-            timeout: 20000,
-        });
+
+        await page.goto(`https://${domain}/ui/main`);
+
+        // Verify main elements
+        await expect(page.locator(".ui-icon").first()).toBeVisible();
         await expect(page.getByText("DataFed - Scientific Data")).toBeVisible();
         await expect(page.getByRole("link", { name: "My Data" })).toBeVisible();
         await expect(page.getByRole("link", { name: "Catalog" })).toBeVisible();
-        await expect(page.getByRole("button", { name: "" })).toBeVisible();
+    });
 
-        await page
-            .getByRole("treeitem", { name: "  Public Collections" })
-            .getByRole("button")
-            .click();
-        await page
-            .getByRole("treeitem", { name: "  Public Collections" })
-            .getByRole("group")
-            .click();
-        await page.getByRole("treeitem", { name: "  Allocations" }).getByRole("button").click();
-        await page.getByRole("treeitem", { name: "  Project Data" }).getByRole("button").click();
-        await page.getByRole("treeitem", { name: "  Shared Data" }).getByRole("button").click();
-        await page
-            .getByRole("treeitem", { name: "  Saved Queries" })
-            .locator("span")
-            .first()
-            .click();
-        await page.getByRole("treeitem", { name: "  Saved Queries" }).getByRole("button").click();
-        await page.getByText("Provenance Annotate Upload").click({ timeout: 20000 });
-        await page.getByRole("treeitem", { name: "  By User" }).getByRole("button").click();
-    } catch (error) {
-        // element not visible, either the test broke due to tags changing, or not logged in
-        // try to log out, because if not logged out, future tests will fail due to globus being annoying
-        if (await page.getByRole("button", { name: "" }).isVisible()) {
-            await page.getByRole("button", { name: "" }).click();
-        } else {
-            // if in here, check if you logged out properly
-            throw error;
+    test("should expand tree navigation items", async ({ page }) => {
+        const domain = process.env.DATAFED_DOMAIN;
+        if (!domain) {
+            throw new Error("DATAFED_DOMAIN environment variable not set");
         }
-    }
-    //removed logout
+
+        await page.goto(`https://${domain}/ui/main`);
+
+        // Define tree items to expand
+        const treeItems = [
+            "Public Collections",
+            "Allocations",
+            "Project Data",
+            "Shared Data",
+            "Saved Queries",
+            "By User",
+        ];
+
+        for (const item of treeItems) {
+            const treeItem = page.getByRole("treeitem", { name: new RegExp(item) });
+            const button = treeItem.getByRole("button").first();
+            await expect(button).toBeVisible();
+            await button.click();
+            // Add assertion that it expanded if needed
+        }
+    });
 });

@@ -291,7 +291,7 @@ router
                 routePath: basePath + "/create",
                 status: "Failure",
                 description: "Create new user entry",
-                extra: user.new.uid,
+                extra: user?.new?.uid,
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -314,6 +314,7 @@ router
 
 router
     .get("/update", function (req, res) {
+        let client = null;
         let result = null;
         let sub = req.queryParams.subject ? req.queryParams.subject : req.queryParams.client;
         try {
@@ -332,8 +333,16 @@ router
                     write: ["u", "admin"],
                 },
                 action: function () {
-                    const client = g_lib.getUserFromClientID(req.queryParams.client);
+                    client = g_lib.getUserFromClientID(req.queryParams.client);
                     var user_id;
+                    logger.logRequestStarted({
+                        client: client?._id,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "GET",
+                        routePath: basePath + "/update",
+                        status: "Started",
+                        description: "Update user information",
+                    });
 
                     if (req.queryParams.subject) {
                         user_id = req.queryParams.subject;
@@ -394,6 +403,7 @@ router
                     result = [user.new];
                 },
             });
+            res.send(result);
             logger.logRequestSuccess({
                 client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
@@ -707,6 +717,7 @@ router
 router
     .get("/keys/get", function (req, res) {
         let sub = req.queryParams.subject ? req.queryParams.subject : req.queryParams.client;
+        let user = null;
         try {
             if (req.queryParams.subject) {
                 if (!g_db.u.exists(req.queryParams.subject))
@@ -715,7 +726,7 @@ router
                         "No such user '" + req.queryParams.subject + "'",
                     ];
 
-                let user = g_db.u.document({
+                user = g_db.u.document({
                     _id: req.queryParams.subject,
                 });
                 logger.logRequestStarted({
@@ -727,7 +738,7 @@ router
                     description: `Get user public and private keys. ${sub}`,
                 });
             } else {
-                let user = g_lib.getUserFromClientID(req.queryParams.client);
+                user = g_lib.getUserFromClientID(req.queryParams.client);
             }
 
             if (!user.pub_key || !user.priv_key) {
@@ -901,11 +912,18 @@ router
                                     other_token_data,
                                 ); // TODO: the call site and function and docs will need to be updated if changes are made to assumed data
                             // GLOBUS_TRANSFER parse currently assumes uuid and scopes exist
-                            let globus_collection = g_db.globus_coll.exists({
-                                _key: collection_search_key,
-                            });
-                            if (!globus_collection) {
-                                globus_collection = g_db.globus_coll.save({
+                            let globus_collection;
+
+                            if (
+                                g_db.globus_coll.exists({
+                                    _key: collection_search_key,
+                                })
+                            ) {
+                                globus_collection = g_db.globus_coll.document({
+                                    _key: collection_search_key,
+                                });
+                            } else {
+                                const meta = g_db.globus_coll.save({
                                     _key: collection_search_key,
                                     name: "Newly Inserted Collection",
                                     description: "The collection description",
@@ -916,16 +934,21 @@ router
                                     type: "mapped", // mapped/guest TODO: to be pulled from token data on follow-up ticket
                                     ha_enabled: false, // boolean - TODO: to be pulled from token data on follow-up ticket
                                 });
+                                globus_collection = g_db.globus_coll.document(meta);
                             }
 
                             const token_key =
                                 globus_collection._key + "_" + token_type + "_" + user_doc._key;
+
+                            const dependent_scopes_val =
+                                scopes || globus_collection.required_scopes;
+
                             const token_doc = {
                                 _key: token_key,
-                                _from: user_id, // the uid field
+                                _from: user_id,
                                 _to: globus_collection._id,
                                 type: token_type,
-                                dependent_scopes: scopes,
+                                dependent_scopes: dependent_scopes_val,
                                 request_time: Math.floor(Date.now() / 1000),
                                 last_used: Math.floor(Date.now() / 1000),
                                 status:
@@ -936,7 +959,7 @@ router
                             };
 
                             const token_doc_upsert = g_db.globus_token.insert(token_doc, {
-                                overwriteMode: "replace", // TODO: perhaps use 'update' and specify values for true upsert.
+                                overwriteMode: "replace",
                             });
                             break;
                         }
@@ -1006,6 +1029,7 @@ router
 router
     .get("/token/get", function (req, res) {
         let sub = req.queryParams.subject ? req.queryParams.subject : req.queryParams.client;
+        let user = null;
         try {
             const collection_token = UserToken.validateRequestParams(req.queryParams);
             // TODO: collection type determines logic when mapped vs HA
@@ -1018,11 +1042,11 @@ router
                         "No such user '" + req.queryParams.subject + "'",
                     ];
 
-                var user = g_db.u.document({
+                user = g_db.u.document({
                     _id: req.queryParams.subject,
                 });
             } else {
-                var user = g_lib.getUserFromClientID(req.queryParams.client);
+                user = g_lib.getUserFromClientID(req.queryParams.client);
             }
 
             logger.logRequestStarted({
@@ -1092,6 +1116,7 @@ router
 router
     .get("/token/get/access", function (req, res) {
         let sub = req.queryParams.subject ? req.queryParams.subject : req.queryParams.client;
+        let user = null;
         try {
             if (req.queryParams.subject) {
                 if (!g_db.u.exists(req.queryParams.subject))
@@ -1099,11 +1124,11 @@ router
                         error.ERR_INVALID_PARAM,
                         "No such user '" + req.queryParams.subject + "'",
                     ];
-                let user = g_db.u.document({
+                user = g_db.u.document({
                     _id: req.queryParams.subject,
                 });
             } else {
-                let user = g_lib.getUserFromClientID(req.queryParams.client);
+                user = g_lib.getUserFromClientID(req.queryParams.client);
             }
             logger.logRequestStarted({
                 client: req.queryParams.client,
@@ -1148,7 +1173,8 @@ router
 
 router
     .get("/token/get/expiring", function (req, res) {
-        let result = null;
+        let extra_log_info = [];
+        const desc = `User access tokens expiring in ${req.queryParams.expires_in} seconds`;
         try {
             logger.logRequestStarted({
                 client: req.queryParams.client,
@@ -1156,24 +1182,25 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/token/get/expiring",
                 status: "Started",
-                description: "Getting expiring user access token",
+                description: desc,
             });
 
-            results = g_db._query(
+            const results = g_db._query(
                 "for i in u filter i.expiration != Null && i.expiration < @exp return {id:i._id,access:i.access,refresh:i.refresh,expiration:i.expiration}",
                 {
                     exp: Math.floor(Date.now() / 1000) + req.queryParams.expires_in,
                 },
             );
             res.send(results);
+            extra_log_info = results.toArray();
             logger.logRequestSuccess({
                 client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/token/get/expiring",
                 status: "Success",
-                description: "Getting expiring user access token",
-                extra: results,
+                description: desc,
+                extra: { expiring_token_count: extra_log_info.length },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -1182,8 +1209,8 @@ router
                 httpVerb: "GET",
                 routePath: basePath + "/token/get/expiring",
                 status: "Failure",
-                description: "Getting expiring user access token",
-                extra: result,
+                description: desc,
+                extra: { expiring_token_count: extra_log_info.length },
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -1197,8 +1224,9 @@ router
 router
     .get("/view", function (req, res) {
         let sub = req.queryParams.subject ? req.queryParams.subject : req.queryParams.client;
+        let client = null;
         try {
-            const client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
+            client = g_lib.getUserFromClientID_noexcept(req.queryParams.client);
             logger.logRequestStarted({
                 client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
@@ -1297,7 +1325,6 @@ router
                 extra: `uid=${user.uid}, is_admin=${!!client?.is_admin}`,
             }); //req.queryParams.details ?
         } catch (e) {
-            g_lib.handleException(e, res);
             logger.logRequestFailure({
                 client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
@@ -1305,9 +1332,10 @@ router
                 routePath: basePath + "/view",
                 status: "Failure",
                 description: `View User Information. Subject: ${sub}`,
-                extra: `uid=${user.uid}, is_admin=${!!client?.is_admin}`,
+                extra: `uid=${user?.uid}, is_admin=${!!client?.is_admin}`,
                 error: e,
             });
+            g_lib.handleException(e, res);
         }
     })
     .queryParam("client", joi.string().required(), "Client ID")
@@ -1318,6 +1346,7 @@ router
 
 router
     .get("/list/all", function (req, res) {
+        let client = null;
         var qry = "for i in u sort i.name_last, i.name_first";
         var result;
         logger.logRequestStarted({
@@ -1452,7 +1481,9 @@ Note: must delete ALL data records and projects owned by the user being deleted 
 router
     .get("/delete", function (req, res) {
         let user_id = null;
+        let sub = null;
         try {
+            sub = req.queryParams.subject ? req.queryParams.subject : req.queryParams.client;
             logger.logRequestStarted({
                 client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
@@ -1577,6 +1608,7 @@ router
 router
     .get("/ident/list", function (req, res) {
         let sub = req.queryParams.subject ? req.queryParams.subject : req.queryParams.client;
+        let client = null;
         let extra_log = [];
         try {
             client = g_lib.getUserFromClientID(req.queryParams.client);
@@ -1647,6 +1679,7 @@ router
 
 router
     .get("/ident/add", function (req, res) {
+        let client = null;
         let sub = req.queryParams.subject ? req.queryParams.subject : req.queryParams.client;
         try {
             logger.logRequestStarted({
@@ -1664,15 +1697,23 @@ router
                     write: ["uuid", "accn", "ident"],
                 },
                 action: function () {
-                    const client = g_lib.getUserFromClientID(req.queryParams.client);
+                    client = g_lib.getUserFromClientID(req.queryParams.client);
                     var id;
+                    logger.logRequestStarted({
+                        client: client?._id,
+                        correlationId: req.headers["x-correlation-id"],
+                        httpVerb: "GET",
+                        routePath: basePath + "/ident/add",
+                        status: "Started",
+                        description: "Add new linked identity",
+                    });
 
                     if (g_lib.isUUID(req.queryParams.ident)) {
                         if (
                             g_db._exists({
                                 _id: "uuid/" + req.queryParams.ident,
                             })
-                        )
+                        ) {
                             logger.logRequestSuccess({
                                 client: req.queryParams.client,
                                 correlationId: req.headers["x-correlation-id"],
@@ -1682,8 +1723,8 @@ router
                                 description: `Add new linked identity. Subject: ${sub}`,
                                 extra: req.queryParams.ident,
                             });
-
-                        return;
+                            return;
+                        }
                         id = g_db.uuid.save(
                             {
                                 _key: req.queryParams.ident,
@@ -1795,6 +1836,7 @@ router
 
 router
     .get("/ident/remove", function (req, res) {
+        let client = null;
         try {
             logger.logRequestStarted({
                 client: req.queryParams.client,
@@ -1853,10 +1895,9 @@ router
 
 router
     .get("/ep/get", function (req, res) {
+        let client = null;
         let first = null;
         try {
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
-            first = client?.eps.length ? client?.eps[0] : undefined;
             logger.logRequestStarted({
                 client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
@@ -1865,6 +1906,8 @@ router
                 status: "Started",
                 description: "Get recent end-points",
             });
+            client = g_lib.getUserFromClientID(req.queryParams.client);
+            first = client.eps && client.eps.length ? client.eps[0] : undefined;
 
             res.send(client.eps ? client.eps : []);
             logger.logRequestSuccess({
@@ -1874,7 +1917,7 @@ router
                 routePath: basePath + "/ep/get",
                 status: "Success",
                 description: "Get recent end-points",
-                extra: { most_recent: first, count: client?.eps?.length },
+                extra: { most_recent: first, count: client.eps ? client.eps.length : 0 },
             });
         } catch (e) {
             logger.logRequestFailure({
@@ -1884,7 +1927,7 @@ router
                 routePath: basePath + "/ep/get",
                 status: "Failure",
                 description: "Get recent end-points",
-                extra: { most_recent: first, count: client?.eps?.length },
+                extra: { most_recent: first, count: client && client.eps ? client.eps.length : 0 },
                 error: e,
             });
             g_lib.handleException(e, res);
@@ -1896,8 +1939,8 @@ router
 
 router
     .get("/ep/set", function (req, res) {
+        let client = null;
         try {
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
             logger.logRequestStarted({
                 client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
@@ -1906,6 +1949,7 @@ router
                 status: "Started",
                 description: "Set recent end-points",
             });
+            client = g_lib.getUserFromClientID(req.queryParams.client);
             g_db._update(
                 client._id,
                 {
@@ -1920,7 +1964,7 @@ router
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
                 routePath: basePath + "/ep/set",
-                status: "Started",
+                status: "Success",
                 description: "Set recent end-points",
                 extra: client.eps,
             });
@@ -1932,7 +1976,7 @@ router
                 routePath: basePath + "/ep/set",
                 status: "Failure",
                 description: "Set recent end-points",
-                extra: client.eps,
+                extra: client && client.eps ? client.eps : undefined,
                 error: e,
             });
             g_lib.handleException(e, res);

@@ -440,7 +440,6 @@ router
                 extra: logExtra,
             });
         } catch (e) {
-            res.send(groups);
             logger.logRequestFailure({
                 client: client?._id,
                 correlationId: req.headers["x-correlation-id"],

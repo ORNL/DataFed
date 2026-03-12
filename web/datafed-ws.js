@@ -146,11 +146,15 @@ class Logger {
 
 const logger = new Logger(LogLevel.INFO);
 
-g_ver_release_year = version.DATAFED_RELEASE_YEAR;
-g_ver_release_month = version.DATAFED_RELEASE_MONTH;
-g_ver_release_day = version.DATAFED_RELEASE_DAY;
-g_ver_release_hour = version.DATAFED_RELEASE_HOUR;
-g_ver_release_minute = version.DATAFED_RELEASE_MINUTE;
+g_ver_release_year = version.RELEASE_YEAR;
+g_ver_release_month = version.RELEASE_MONTH;
+g_ver_release_day = version.RELEASE_DAY;
+g_ver_release_hour = version.RELEASE_HOUR;
+g_ver_release_minute = version.RELEASE_MINUTE;
+
+g_ver_api_major = version.MAJOR;
+g_ver_api_minor = version.MINOR;
+g_ver_api_patch = version.PATCH;
 
 g_version =
     g_ver_release_year +
@@ -212,46 +216,46 @@ function startServer() {
                 "ERROR: No reply from core server",
             );
         } else if (
-            reply.api_major != g_ver_api_major ||
-            reply.api_minor < g_ver_api_minor ||
-            reply.api_minor > g_ver_api_minor + 9
+            reply.apiMajor != g_ver_api_major ||
+            reply.apiMinor < g_ver_api_minor ||
+            reply.apiMinor > g_ver_api_minor + 9
         ) {
             logger.error(
                 startServer.name,
                 getCurrentLineNumber(),
                 "ERROR: Incompatible api version detected (" +
-                    reply.api_major +
+                    reply.apiMajor +
                     "." +
-                    reply.api_minor +
+                    reply.apiMinor +
                     "." +
-                    reply.api_patch +
+                    reply.apiPatch +
                     ")",
             );
         } else {
             var warning_msg =
                 "WARNING: A newer web server may be available the latest release version is: (" +
-                reply.release_year +
+                reply.releaseYear +
                 "." +
-                reply.release_month +
+                reply.releaseMonth +
                 "." +
-                reply.release_day +
+                reply.releaseDay +
                 "." +
-                reply.release_hour +
+                reply.releaseHour +
                 "." +
-                reply.release_minute;
-            if (reply.release_year > g_ver_release_year) {
+                reply.releaseMinute;
+            if (reply.releaseYear > g_ver_release_year) {
                 logger.warning(startServer.name, getCurrentLineNumber(), warning_msg);
-            } else if (reply.release_year == g_ver_release_year) {
-                if (reply.release_month > g_ver_release_month) {
+            } else if (reply.releaseYear == g_ver_release_year) {
+                if (reply.releaseMonth > g_ver_release_month) {
                     logger.warning(startServer.name, getCurrentLineNumber(), warning_msg);
-                } else if (reply.release_month == g_ver_release_month) {
-                    if (reply.release_day > g_ver_release_day) {
+                } else if (reply.releaseMonth == g_ver_release_month) {
+                    if (reply.releaseDay > g_ver_release_day) {
                         logger.warning(startServer.name, getCurrentLineNumber(), warning_msg);
-                    } else if (reply.release_day == g_ver_release_day) {
-                        if (reply.release_hour > g_ver_release_hour) {
+                    } else if (reply.releaseDay == g_ver_release_day) {
+                        if (reply.releaseHour > g_ver_release_hour) {
                             logger.warning(startServer.name, getCurrentLineNumber(), warning_msg);
-                        } else if (reply.release_hour == g_ver_release_hour) {
-                            if (reply.release_minute > g_ver_release_minute) {
+                        } else if (reply.releaseHour == g_ver_release_hour) {
+                            if (reply.releaseMinute > g_ver_release_minute) {
                                 logger.warning(
                                     startServer.name,
                                     getCurrentLineNumber(),
@@ -332,8 +336,31 @@ function storeCollectionId(req, res, next) {
         req.session.collection_id = req.query.collection_id;
         // TODO: assuming collection is specifically mapped and not HA/other variants
         req.session.collection_type = "mapped";
+        logger.info(
+            "storeCollectionId",
+            getCurrentLineNumber(),
+            "DEBUG: Storing Collection ID: " + req.query.collection_id + " to session.",
+        );
+        req.session.save((err) => {
+            if (err) {
+                logger.error(
+                    "storeCollectionId",
+                    getCurrentLineNumber(),
+                    "DEBUG: Session save error:",
+                    err,
+                );
+            } else {
+                logger.info(
+                    "storeCollectionId",
+                    getCurrentLineNumber(),
+                    "DEBUG: Session saved successfully.",
+                );
+            }
+            next();
+        });
+    } else {
+        next();
     }
-    next();
 }
 
 app.use(cookieParser(g_session_secret));
@@ -409,12 +436,21 @@ app.get("/ui/main", (a_req, a_resp) => {
         const nonce = crypto.randomBytes(16).toString("base64");
         a_resp.locals.nonce = nonce;
         a_resp.setHeader("Content-Security-Policy", `script-src 'nonce-${nonce}'`);
+
+        // Extract restore_state from session if present
+        let restore_state = null;
+        if (a_req.session.restore_state) {
+            restore_state = JSON.stringify(a_req.session.restore_state);
+            delete a_req.session.restore_state;
+        }
+
         a_resp.render("main", {
             nonce: a_resp.locals.nonce,
             user_uid: a_req.session.uid,
             theme: theme,
             version: g_version,
             test_mode: g_test,
+            restore_state: restore_state,
             ...g_google_analytics,
         });
     } else {
@@ -620,6 +656,16 @@ the registration page.
                                         );
                                     }
                                     let username = reply.user[0]?.uid?.replace(/^u\//, "");
+                                    if (!username) {
+                                        logger.error(
+                                            "/ui/authn",
+                                            getCurrentLineNumber(),
+                                            "Error: User identity found but UID is missing or invalid.",
+                                            reply.user,
+                                        );
+                                        a_resp.redirect("/ui/error");
+                                        return;
+                                    }
                                     logger.info(
                                         "/ui/authn",
                                         getCurrentLineNumber(),
@@ -639,12 +685,32 @@ the registration page.
                                     a_req.session.uid = username;
                                     a_req.session.reg = true;
 
+                                    if (a_req.query.state) {
+                                        try {
+                                            const state_obj = JSON.parse(a_req.query.state);
+                                            // Validate state structure to prevent arbitrary session pollution
+                                            if (
+                                                state_obj.endpoint_browser ||
+                                                state_obj.restore_state
+                                            ) {
+                                                a_req.session.restore_state = state_obj;
+                                            }
+                                        } catch (e) {
+                                            // State was not JSON or valid, ignore
+                                            logger.warning(
+                                                "/ui/authn",
+                                                getCurrentLineNumber(),
+                                                "Failed to parse state parameter: " + e,
+                                            );
+                                        }
+                                    }
+
                                     let redirect_path = "/ui/main";
 
                                     // Note: context/optional params for arbitrary input
                                     const token_context = {
                                         // passed values are mutable
-                                        resource_server: client_token.data.resource_sever,
+                                        resource_server: client_token.data.resource_server,
                                         collection_id: a_req.session.collection_id,
                                         scope: xfr_token.scope,
                                     };
@@ -661,15 +727,30 @@ the registration page.
                                             xfr_token.refresh_token,
                                             xfr_token.expires_in,
                                             optional_data,
+                                            (err) => {
+                                                if (err) {
+                                                    redirect_path = "/ui/error";
+                                                    logger.error(
+                                                        "/ui/authn",
+                                                        getCurrentLineNumber(),
+                                                        "setAccessToken Failed: " + err,
+                                                    );
+                                                    delete a_req.session.collection_id;
+                                                }
+                                                // TODO Account may be disable from SDMS (active = false)
+                                                a_resp.redirect(redirect_path);
+                                            },
                                         );
                                     } catch (err) {
                                         redirect_path = "/ui/error";
-                                        logger.error("/ui/authn", getCurrentLineNumber(), err);
+                                        logger.error(
+                                            "/ui/authn",
+                                            getCurrentLineNumber(),
+                                            "Exception in token handling: " + err,
+                                        );
                                         delete a_req.session.collection_id;
+                                        a_resp.redirect(redirect_path);
                                     }
-
-                                    // TODO Account may be disable from SDMS (active = false)
-                                    a_resp.redirect(redirect_path);
                                 }
                             },
                         );
@@ -771,6 +852,19 @@ app.get("/api/usr/register", (a_req, a_resp) => {
                             a_req.session.acc_tok,
                             a_req.session.ref_tok,
                             a_req.session.acc_tok_ttl,
+                            {},
+                            (err) => {
+                                if (err) {
+                                    logger.error("/api/usr/register", getCurrentLineNumber(), err);
+                                    a_resp.status(500).send("Registration failed during token set");
+                                    return;
+                                }
+
+                                // Set session as registered user
+                                a_req.session.reg = true;
+
+                                a_resp.send(reply);
+                            },
                         );
                     } catch (err) {
                         logger.error("/api/usr/register", getCurrentLineNumber(), err);
@@ -785,11 +879,6 @@ app.get("/api/usr/register", (a_req, a_resp) => {
                         delete a_req.session.ref_tok;
                         delete a_req.session.uuids;
                     }
-
-                    // Set session as registered user
-                    a_req.session.reg = true;
-
-                    a_resp.send(reply);
                 }
             },
         );
@@ -931,12 +1020,6 @@ app.get("/api/prj/list", (a_req, a_resp) => {
     });
 });
 
-app.post("/api/prj/search", (a_req, a_resp) => {
-    sendMessage("ProjectSearchRequest", a_req.body, a_req, a_resp, function (reply) {
-        a_resp.send(reply.item ? reply.item : []);
-    });
-});
-
 app.get("/api/grp/create", (a_req, a_resp) => {
     var params = {
         group: {
@@ -1025,7 +1108,7 @@ app.post("/api/query/create", (a_req, a_resp) => {
 });
 
 app.post("/api/query/update", (a_req, a_resp) => {
-    var params = { id: a_req.query.id };
+    var params = { id: a_req.query.id, replaceQuery: true };
     if (a_req.query.title) params.title = a_req.query.title;
     if (a_req.body) params.query = a_req.body;
 
@@ -1561,7 +1644,19 @@ app.get("/api/col/published/list", (a_req, a_resp) => {
 });
 
 app.get("/api/globus/consent_url", storeCollectionId, (a_req, a_resp) => {
-    const { requested_scopes, state, refresh_tokens, query_params } = a_req.query;
+    let { requested_scopes, state, refresh_tokens, query_params } = a_req.query;
+
+    if (typeof query_params === "string") {
+        try {
+            query_params = JSON.parse(query_params);
+        } catch (e) {
+            logger.error(
+                "/api/globus/consent_url",
+                getCurrentLineNumber(),
+                "Failed to parse query_params: " + e,
+            );
+        }
+    }
 
     const consent_url = generateConsentURL(
         g_oauth_credentials.clientId,
@@ -1969,10 +2064,18 @@ app.get("/ui/theme/save", (a_req, a_resp) => {
  * @param {string} a_ref_tok - Refresh token for access token
  * @param {number} a_expires_sec - Time until expiration of access token
  * @param {OptionalData} [token_optional_params] - Optional params for DataFed to process access token accordingly
+ * @param {RequestCallback} [a_cb] - Optional callback function
  *
  * @throws Error - When a reply is not received from sendMessageDirect
  */
-function setAccessToken(a_uid, a_acc_tok, a_ref_tok, a_expires_sec, token_optional_params = {}) {
+function setAccessToken(
+    a_uid,
+    a_acc_tok,
+    a_ref_tok,
+    a_expires_sec,
+    token_optional_params = {},
+    a_cb = null,
+) {
     logger.info(
         setAccessToken.name,
         getCurrentLineNumber(),
@@ -1986,8 +2089,13 @@ function setAccessToken(a_uid, a_acc_tok, a_ref_tok, a_expires_sec, token_option
         // Should be an AckReply
         if (!reply) {
             logger.error("setAccessToken", getCurrentLineNumber(), "failed.");
+            if (a_cb) {
+                a_cb(new Error("setAccessToken failed"));
+                return;
+            }
             throw new Error("setAccessToken failed");
         }
+        if (a_cb) a_cb(null, reply);
     });
 }
 
@@ -2210,9 +2318,9 @@ function sendMessageDirect(a_msg_name, a_client, a_msg_data, a_cb) {
  * as stable message type identifiers.
  *
  * Each map entry stores:
- *   - type:       the protobufjs Type (for encode/decode of the inner message)
- *   - field_name: the envelope oneof field name (e.g. "version_request")
- *   - field_id:   the envelope field number (used as msg_type in the frame)
+ * - type:       the protobufjs Type (for encode/decode of the inner message)
+ * - field_name: the envelope oneof field name (e.g. "version_request")
+ * - field_id:   the envelope field number (used as msg_type in the frame)
  *
  * @param {protobuf.Root} root - The loaded protobuf root containing SDMS.Envelope
  */
@@ -2344,6 +2452,25 @@ g_core_sock.on(
                 correlation_id,
             );
             g_ctx_next = ctx;
+
+            // Convert protobufjs message to plain object with default values
+            if (msg) {
+                var resolve_type = msg_info ? msg_info.type : null;
+                if (which_field) {
+                    var actual_entry = Object.values(g_msg_by_id).find(
+                        (e) => e.field_name === which_field,
+                    );
+                    if (actual_entry) resolve_type = actual_entry.type;
+                }
+                if (resolve_type) {
+                    msg = resolve_type.toObject(msg, {
+                        defaults: true,
+                        longs: String,
+                        enums: String,
+                    });
+                }
+            }
+
             f(msg);
         } else {
             g_ctx[ctx] = null;

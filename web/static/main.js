@@ -61,6 +61,28 @@ $(document).ready(function () {
 
             browser_tab.init();
 
+            if (tmpl_data.restore_state) {
+                const parentState = tmpl_data.restore_state.parent_dialog;
+
+                if (parentState) {
+                    if (parentState.type === "d_new_edit") {
+                        import("/dlg_data_new_edit.js").then((module) => {
+                            const { mode, data } = parentState;
+                            module.show(mode, data, data.parentId);
+                        });
+                    } else if (parentState.type === "transfer") {
+                        import("/components/transfer/index.js").then((module) => {
+                            const { mode, records } = parentState;
+                            // Re-open transfer dialog
+                            module.transferDialog.show(mode, records, () => {
+                                // Default callback if needed, usually this refreshes view
+                                // but we might not have context.
+                            });
+                        });
+                    }
+                }
+            }
+
             util.setStatusText("DataFed Ready");
         } else {
             dialogs.dlgAlert("System Error", "Unable to access user record");

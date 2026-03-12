@@ -171,9 +171,9 @@ router
                 status: "Failure",
                 description: `View repo server record: ${req.queryParams.id}`,
                 extra: {
-                    type: repo.type,
-                    capacity: repo.capacity,
-                    admins: repo.admins,
+                    type: repo?.type,
+                    capacity: repo?.capacity,
+                    admins: repo?.admins,
                 },
                 error: e,
             });
@@ -917,7 +917,7 @@ router
             permissions.ensureAdminPermRepo(client, req.queryParams.repo);
             result = getAllocStats(req.queryParams.repo, req.queryParams.subject);
             res.send(result);
-            logger.logRequestStarted({
+            logger.logRequestSuccess({
                 client: req.queryParams.client,
                 correlationId: req.headers["x-correlation-id"],
                 httpVerb: "GET",
@@ -1211,7 +1211,7 @@ router
 
                     if (req.queryParams.subject) {
                         if (req.queryParams.subject.startsWith("p/")) {
-                            if (!g_db._exists(subject_id))
+                            if (!g_db._exists(req.queryParams.subject))
                                 throw [
                                     error.ERR_NOT_FOUND,
                                     "Project, " + req.queryParams.subject + ", not found",
