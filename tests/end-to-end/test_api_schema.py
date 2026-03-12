@@ -179,7 +179,7 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
         self.assertIn("new_field", returned_def["properties"])
 
         # Rename
-        new_id = "test_update_schema_renamed"
+        new_id = "test_update_schema_renamed:0"
         self._df_api.schemaUpdate(schema_id, new_id=new_id)
 
         view_result = self._df_api.schemaView(new_id)
@@ -217,7 +217,7 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
             definition=json.dumps(revised_def),
             description="Revision 2",
         )
-        schema_id2 = create_result[0].data[0].id
+        schema_id2 = create_result[0].schema[0].id
 
         view_v2 = self._df_api.schemaView(schema_id2)
         ver_2 = view_v2[0].schema[0].ver
@@ -261,6 +261,16 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
             return res
 
         search_result = wait_for_search(prefix, 3, timeout=10)
+
+        print("reply type:", search_result[1])
+        print("num schemas:", len(search_result[0].schema))
+        
+        for s in search_result[0].schema:
+            # s fields depend on the protobuf, but these are commonly present:
+            print("id:", getattr(s, "id", None),
+                  "ver:", getattr(s, "ver", None),
+                  "owner:", getattr(s, "owner", None),
+                  "desc:", getattr(s, "desc", None))
 
         self.assertEqual(search_result[1], "SchemaDataReply")
         self.assertGreaterEqual(len(search_result[0].schema), 3)
