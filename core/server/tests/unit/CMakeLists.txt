@@ -4,7 +4,7 @@ foreach(PROG
     test_AuthenticationManager
     test_DatabaseAPI
     test_JsonSchemaValidator
-    test_SchemaServiceFactory.cpp
+    test_SchemaServiceFactory
 )
 
   file(GLOB ${PROG}_SOURCES ${PROG}*.cpp)
