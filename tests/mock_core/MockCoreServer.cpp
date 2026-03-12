@@ -34,6 +34,12 @@ using namespace std;
 
 namespace SDMS {
 
+using Core::AuthenticationManager;
+using Core::Condition;
+using Core::Promote;
+using Core::PublicKeyType;
+using Core::Reset;
+
 namespace MockCore {
 
 Server::Server(LogContext log_context)
