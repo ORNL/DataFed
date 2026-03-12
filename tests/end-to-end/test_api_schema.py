@@ -115,6 +115,7 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
             self._df_api.schemaCreate(
                 "test_bad_json",
                 definition="{not valid json",
+                description="test bad schema"
             )
 
         self.assertIn("not valid JSON", str(ctx.exception))
@@ -123,7 +124,9 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
         """Must provide either definition or definition_file."""
 
         with self.assertRaises(Exception) as ctx:
-            self._df_api.schemaCreate("test_no_def")
+            self._df_api.schemaCreate("test_no_def",
+                description="test bad schema"
+            )
 
         self.assertIn("Must specify", str(ctx.exception))
 
@@ -135,6 +138,7 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
                 "test_both_def",
                 definition='{"type": "object", "properties": {}}',
                 definition_file="/tmp/fake.json",
+                description="test bad schema"
             )
 
         self.assertIn("Cannot specify both", str(ctx.exception))
@@ -246,6 +250,18 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
 
         # Search by ID prefix
         search_result = self._df_api.schemaSearch(schema_id=prefix)
+
+        def wait_for_search(prefix, expected, timeout=10):
+            start = time.time()
+            while time.time() - start < timeout:
+                res = self._df_api.schemaSearch(schema_id=prefix)
+                if len(res[0].schema) >= expected:
+                    return res
+                time.sleep(0.5)
+            return res
+
+        search_result = wait_for_search(prefix, 3, timeout=10)
+
         self.assertEqual(search_result[1], "SchemaDataReply")
         self.assertGreaterEqual(len(search_result[0].schema), 3)
 
@@ -298,6 +314,7 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
         create_result = self._df_api.schemaCreate(
             schema_name,
             definition=definition,
+            description="test bad schema"
         )
         schema_id = create_result[0].schema[0].id
 
@@ -322,6 +339,7 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
         create_result = self._df_api.schemaCreate(
             schema_name,
             definition=definition,
+            description="test bad schema"
         )
         schema_id = create_result[0].schema[0].id
 
