@@ -326,9 +326,9 @@ ClientWorker::procVersionRequest(const std::string &a_uid,
   reply.set_api_minor(protocol::version::MINOR);
   reply.set_api_patch(protocol::version::PATCH);
 
-  reply.set_component_major(core::version::MAJOR);
-  reply.set_component_minor(core::version::MINOR);
-  reply.set_component_patch(core::version::PATCH);
+  reply.set_component_major(version::MAJOR);
+  reply.set_component_minor(version::MINOR);
+  reply.set_component_patch(version::PATCH);
 
   PROC_MSG_END(log_context);
 }
