@@ -454,7 +454,7 @@ class API:
         except (ValueError, IndexError):
             raise Exception(f"Malformed schema_id {schema_id}")
 
-        msg.id = base + f":{ver + 1}"
+        msg.id = base + f":{ver}"
 
         if definition is not None:
             # See schema section note: "def" is a Python reserved keyword.

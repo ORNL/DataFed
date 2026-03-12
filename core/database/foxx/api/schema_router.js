@@ -743,6 +743,7 @@ router
 
             fixSchOwnNm(sch);
 
+            sch.id = parsed.id + ":" + parsed.ver;
             res.send([sch]);
             logger.logRequestSuccess({
                 client: req.queryParams?.client,
