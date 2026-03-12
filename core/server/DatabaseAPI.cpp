@@ -197,6 +197,8 @@ bool DatabaseAPI::dbGetRaw(const std::string url, string &a_result, LogContext l
 
   CURLcode res = curl_easy_perform(m_curl);
   curl_slist_free_all(headers);
+  headers = nullptr;
+  curl_easy_setopt(m_curl, CURLOPT_HTTPHEADER, nullptr);
   long http_code = 0;
   curl_easy_getinfo(m_curl, CURLINFO_RESPONSE_CODE, &http_code);
   if (res == CURLE_OK && (http_code >= 200 && http_code < 300))
@@ -395,13 +397,6 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
                                      const SDMS::AccessTokenType &token_type,
                                      const std::string &other_token_data,
                                      LogContext log_context) {
-  // Ensure correlation ID exists
-  if (log_context.correlation_id.empty() ||
-      !log_context.correlation_id.compare("unknown")) {
-
-    boost::uuids::random_generator generator;
-    log_context.correlation_id = boost::uuids::to_string(generator());
-  }
   string result;
   std::vector<pair<string, string>> params = {
       {"access", a_acc_tok},
@@ -2157,13 +2152,6 @@ void DatabaseAPI::setGroupData(GroupDataReply &a_reply,
 void DatabaseAPI::repoList(const SDMS::RepoListRequest &a_request,
                            SDMS::RepoDataReply &a_reply,
                            LogContext log_context) {
-  // Ensure correlation ID exists
-  if (log_context.correlation_id.empty() ||
-      !log_context.correlation_id.compare("unknown")) {
-
-    boost::uuids::random_generator generator;
-    log_context.correlation_id = boost::uuids::to_string(generator());
-  }
 
   Value result;
 
@@ -2192,14 +2180,6 @@ void DatabaseAPI::repoList(std::vector<RepoData> &a_repos,
 
 void DatabaseAPI::repoView(std::vector<RepoData> &a_repos,
                            LogContext log_context) {
-  // Ensure correlation ID exists
-  if (log_context.correlation_id.empty() ||
-      !log_context.correlation_id.compare("unknown")) {
-
-    boost::uuids::random_generator generator;
-    log_context.correlation_id = boost::uuids::to_string(generator());
-  }
-
   const std::vector<RepoData> copy = a_repos;
   a_repos.clear();
   for (const RepoData &r : copy) {
@@ -3158,13 +3138,6 @@ void DatabaseAPI::taskRun(const std::string &a_task_id,
                           libjson::Value &a_task_reply, LogContext log_context,
                           int *a_step, std::string *a_err_msg) {
   vector<pair<string, string>> params;
-  // Ensure correlation ID exists
-  if (log_context.correlation_id.empty() ||
-      !log_context.correlation_id.compare("unknown")) {
-
-    boost::uuids::random_generator generator;
-    log_context.correlation_id = boost::uuids::to_string(generator());
-  }
   params.push_back({"task_id", a_task_id});
   DL_DEBUG(log_context,
            "Calling taskRun from DatabaseAPI task id: " << a_task_id);
@@ -3835,14 +3808,6 @@ void DatabaseAPI::metricsUpdateMsgCounts(
     uint32_t a_timestamp, uint32_t a_total,
     const std::map<std::string, std::map<uint16_t, uint32_t>> &a_metrics,
     LogContext log_context) {
-
-  // Ensure correlation ID exists
-  if (log_context.correlation_id.empty() ||
-      !log_context.correlation_id.compare("unknown")) {
-
-    boost::uuids::random_generator generator;
-    log_context.correlation_id = boost::uuids::to_string(generator());
-  }
 
   std::string body = newJsonMetricParse(a_timestamp, a_total, a_metrics);
 
