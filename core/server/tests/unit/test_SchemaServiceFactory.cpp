@@ -6,6 +6,9 @@
 #include "SchemaServiceFactory.hpp"
 #include "ISchemaValidator.hpp"
 
+// Public includes
+#include "common/TraceException.hpp"
+
 // Standard includes
 #include <memory>
 #include <string>
@@ -180,13 +183,13 @@ BOOST_AUTO_TEST_CASE(no_default_throws_for_unknown_engine) {
   factory.registerValidator("SpecificEngine", specific);
   // No default set
 
-  BOOST_CHECK_THROW(factory.getValidator("UnknownEngine"), std::runtime_error);
+  BOOST_CHECK_THROW(factory.getValidator("UnknownEngine"), TraceException);
 }
 
 BOOST_AUTO_TEST_CASE(no_default_throws_for_empty_engine) {
   SchemaServiceFactory factory;
 
-  BOOST_CHECK_THROW(factory.getValidator(""), std::runtime_error);
+  BOOST_CHECK_THROW(factory.getValidator(""), TraceException);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
