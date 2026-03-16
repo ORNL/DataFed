@@ -530,7 +530,7 @@ router
                     delete sch_new._id;
                     delete sch_new._key;
                     delete sch_new._rev;
-                    
+
                     sch_new.id = sch_new.id + ":" + sch_new.ver;
                     res.send([sch_new]);
                 },
