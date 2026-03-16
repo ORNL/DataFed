@@ -27,6 +27,7 @@ AuthMap::AuthMap(const AuthMap &auth_map) {
   m_db_url = auth_map.m_db_url;
   m_db_user = auth_map.m_db_user;
   m_db_pass = auth_map.m_db_pass;
+  m_log_context = auth_map.m_log_context;
 }
 
 AuthMap &AuthMap::operator=(const AuthMap &&auth_map) {
@@ -60,6 +61,7 @@ AuthMap &AuthMap::operator=(const AuthMap &&auth_map) {
   m_db_url = auth_map.m_db_url;
   m_db_user = auth_map.m_db_user;
   m_db_pass = auth_map.m_db_pass;
+  m_log_context = auth_map.m_log_context;
   return *this;
 }
 
@@ -199,16 +201,19 @@ bool AuthMap::hasKey(const PublicKeyType pub_key_type,
       }
     }
     
-    // Only check database for user keys if not found in memory
-    try {
-      DatabaseAPI db(m_db_url, m_db_user, m_db_pass);
-      std::string uid;
-      if (db.uidByPubKey(public_key, uid)) {
-        return true;
+    // Only check database for user keys if DB is configured
+    if (!m_db_url.empty()) {
+      try {
+        DatabaseAPI db(m_db_url, m_db_user, m_db_pass);
+        std::string uid;
+        if (db.uidByPubKey(public_key, uid)) {
+          return true;
+        }
+      } catch (const std::exception& e) {
+        DL_WARNING(m_log_context,
+                   "Database unreachable during persistent key lookup: "
+                       << e.what());
       }
-    } catch (const std::exception& e) {
-      // Database is down, but we already checked memory map
-      // TODO: Caller should log this failure for monitoring/alerting
     }
   } else {
     EXCEPT(1, "Unrecognized PublicKey Type during execution of hasKey.");
@@ -258,11 +263,19 @@ std::string AuthMap::getUIDSafe(const PublicKeyType pub_key_type,
       }
     }
     
-    // Check database for user keys
-    DatabaseAPI db(m_db_url, m_db_user, m_db_pass);
-    std::string uid;
-    if (db.uidByPubKey(public_key, uid)) {
-      return uid;
+    // Only check database for user keys if DB is configured
+    if (!m_db_url.empty()) {
+      try {
+        DatabaseAPI db(m_db_url, m_db_user, m_db_pass);
+        std::string uid;
+        if (db.uidByPubKey(public_key, uid)) {
+          return uid;
+        }
+      } catch (const std::exception& e) {
+        DL_WARNING(m_log_context,
+                   "Database unreachable during persistent UID lookup: "
+                       << e.what());
+      }
     }
   }
   

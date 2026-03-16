@@ -14,8 +14,7 @@
 #include "common/TraceException.hpp"
 
 // Proto file includes
-#include "common/SDMS.pb.h"
-#include "common/SDMS_Anon.pb.h"
+#include "common/envelope.pb.h"
 
 // Standard includes
 #include <fstream>
@@ -140,7 +139,7 @@ BOOST_AUTO_TEST_CASE(mock_liveness_test_get_version) {
     msg_from_client->set(MessageAttribute::KEY,
                          cred_options[CredentialType::PUBLIC_KEY]);
 
-    auto version_req = std::make_unique<Anon::VersionRequest>();
+    auto version_req = std::make_unique<VersionRequest>();
 
     msg_from_client->setPayload(std::move(version_req));
 
@@ -171,31 +170,19 @@ BOOST_AUTO_TEST_CASE(mock_liveness_test_get_version) {
                 << std::get<std::string>(
                        response.message->get(MessageAttribute::ID))
                 << std::endl;
-      // BOOST_CHECK(
-      //   std::get<std::string>(response.message->get(MessageAttribute::KEY))
-      //        .compare(key) == 0);
-      // BOOST_CHECK(std::get<std::string>(response.message->get(MessageAttribute::ID)).compare(id)
-      // == 0);
-
-      // const auto &routes = response.message->getRoutes();
-      // std::cout << "Routes are " << std::endl;
-      // for (const auto &route : routes) {
-      //  std::cout << route << std::endl;
-      //}
-      // BOOST_CHECK(routes.size() == 1);
-      // BOOST_CHECK(routes.front().compare(client_id) == 0);
 
       auto google_msg_ptr = std::get<::google::protobuf::Message *>(
           response.message->getPayload());
 
-      Anon::VersionReply *version_response =
-          dynamic_cast<Anon::VersionReply *>(google_msg_ptr);
+      VersionReply *version_response =
+          dynamic_cast<VersionReply *>(google_msg_ptr);
 
-      BOOST_CHECK(version_response->has_release_year());
-      BOOST_CHECK(version_response->has_release_month());
-      BOOST_CHECK(version_response->has_release_day());
-      BOOST_CHECK(version_response->has_release_hour());
-      BOOST_CHECK(version_response->has_release_minute());
+      BOOST_CHECK(version_response != nullptr);
+      if (version_response) {
+        BOOST_CHECK(version_response->release_year() > 0);
+        BOOST_CHECK(version_response->release_month() > 0);
+        BOOST_CHECK(version_response->release_day() > 0);
+      }
     } else {
       std::cout << "No message was received." << std::endl;
     }

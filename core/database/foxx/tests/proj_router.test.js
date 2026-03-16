@@ -367,56 +367,6 @@ describe("unit_proj_router: test project create endpoint", () => {
         expect(ids).to.include.members(["p/proj1", "p/proj2", "p/proj3"]);
     });
 
-    it("should search projects using a provided AQL query", () => {
-        // ------------------------------------------------------------------
-        // Arrange
-        // ------------------------------------------------------------------
-        db.u.save({ _key: "search_user", is_admin: false });
-
-        db.p.save({
-            _key: "search_proj1",
-            title: "Alpha Project",
-            desc: "First searchable project",
-            ct: 1,
-            ut: 1,
-            owner: "u/search_user",
-        });
-
-        db.p.save({
-            _key: "search_proj2",
-            title: "Beta Project",
-            desc: "Second searchable project",
-            ct: 1,
-            ut: 1,
-            owner: "u/search_user",
-        });
-
-        // AQL query passed directly to /search
-        const aql = "FOR p IN p FILTER p.title LIKE '%Project%' RETURN p._id";
-
-        const url =
-            `${proj_base_url}/search` +
-            `?client=u/search_user` +
-            `&query=${encodeURIComponent(aql)}`;
-
-        // ------------------------------------------------------------------
-        // Act
-        // ------------------------------------------------------------------
-        const response = request.get(url, {
-            headers: { "x-correlation-id": "test-proj-search" },
-        });
-
-        // ------------------------------------------------------------------
-        // Assert
-        // ------------------------------------------------------------------
-        expect(response.status).to.equal(200);
-
-        const body = JSON.parse(response.body);
-
-        expect(body).to.be.an("array");
-        expect(body).to.include.members(["p/search_proj1", "p/search_proj2"]);
-    });
-
     it("should enqueue a project delete task when client is authorized", () => {
         // ------------------------------------------------------------------
         // Arrange
@@ -563,39 +513,5 @@ describe("unit_proj_router: test project create endpoint", () => {
         expect(response.status).to.equal(200);
         body = JSON.parse(response.body);
         expect(body.role).to.equal(1); // member
-    });
-
-    it("should handle malformed AQL for /prj/search without crashing and return an error response", () => {
-        // ------------------------------------------------------------------
-        // Arrange
-        // ------------------------------------------------------------------
-        db.u.save({ _key: "search_user_malformed", is_admin: false });
-
-        const client = "search_user_malformed";
-
-        // Intentionally malformed AQL (missing RETURN and invalid syntax)
-        const malformedBody = {
-            client,
-            aql: "FOR p IN p FILTER p.title == @title INVALID_SYNTAX",
-            bindVars: {
-                title: "Alpha Project",
-            },
-        };
-
-        // ------------------------------------------------------------------
-        // Act
-        // ------------------------------------------------------------------
-        const response = request.get("/prj/search", malformedBody);
-
-        // ------------------------------------------------------------------
-        // Assert
-        // ------------------------------------------------------------------
-        // Expect a 400-series error (bad request / invalid query) and a JSON error payload
-        expect(response.status).to.be.within(400, 499);
-
-        const body = JSON.parse(response.body);
-        expect(body).to.have.property("error", true);
-        expect(body).to.have.property("code");
-        expect(body).to.have.property("errorMessage");
     });
 });

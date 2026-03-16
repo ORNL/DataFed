@@ -1020,12 +1020,6 @@ app.get("/api/prj/list", (a_req, a_resp) => {
     });
 });
 
-app.post("/api/prj/search", (a_req, a_resp) => {
-    sendMessage("ProjectSearchRequest", a_req.body, a_req, a_resp, function (reply) {
-        a_resp.send(reply.item ? reply.item : []);
-    });
-});
-
 app.get("/api/grp/create", (a_req, a_resp) => {
     var params = {
         group: {
@@ -1114,7 +1108,7 @@ app.post("/api/query/create", (a_req, a_resp) => {
 });
 
 app.post("/api/query/update", (a_req, a_resp) => {
-    var params = { id: a_req.query.id };
+    var params = { id: a_req.query.id, replaceQuery: true };
     if (a_req.query.title) params.title = a_req.query.title;
     if (a_req.body) params.query = a_req.body;
 
@@ -2324,9 +2318,9 @@ function sendMessageDirect(a_msg_name, a_client, a_msg_data, a_cb) {
  * as stable message type identifiers.
  *
  * Each map entry stores:
- *   - type:       the protobufjs Type (for encode/decode of the inner message)
- *   - field_name: the envelope oneof field name (e.g. "version_request")
- *   - field_id:   the envelope field number (used as msg_type in the frame)
+ * - type:       the protobufjs Type (for encode/decode of the inner message)
+ * - field_name: the envelope oneof field name (e.g. "version_request")
+ * - field_id:   the envelope field number (used as msg_type in the frame)
  *
  * @param {protobuf.Root} root - The loaded protobuf root containing SDMS.Envelope
  */

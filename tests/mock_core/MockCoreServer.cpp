@@ -34,6 +34,12 @@ using namespace std;
 
 namespace SDMS {
 
+using Core::AuthenticationManager;
+using Core::Condition;
+using Core::Promote;
+using Core::PublicKeyType;
+using Core::Reset;
+
 namespace MockCore {
 
 Server::Server(LogContext log_context)
@@ -196,7 +202,7 @@ void Server::msgRouter(LogContext log_context, int thread_count) {
   }
 
   ServerFactory server_factory(log_context);
-  auto proxy = server_factory.create(ServerType::PROXY_BASIC_ZMQ,
+  auto proxy = server_factory.create(ServerType::PROXY_CUSTOM,
                                      socket_options, socket_credentials);
 
   // Ceate worker threads

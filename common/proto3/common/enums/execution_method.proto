@@ -5,7 +5,7 @@ package SDMS;
 option cc_enable_arenas = true;
 
 enum ExecutionMethod {
-    EXECUTION_METHOD_UNSPECIFIED = 0;
-    EXECUTION_METHOD_DIRECT = 1;
-    EXECUTION_METHOD_DEFERRED = 2;
+    EXEC_UNSPECIFIED = 0;
+    DIRECT = 1;
+    DEFERRED = 2;
 }

@@ -5,7 +5,7 @@
 // Local private includes
 #include "AuthenticationManager.hpp"
 #include "Config.hpp"
-#include "IMockCoreServer.hpp"
+#include "ICoreServer.hpp"
 
 // Public common includes
 #include "common/DynaLog.hpp"
@@ -51,7 +51,7 @@ class ClientWorker;
  * The ICoreServer interface class exposes an authenticateClient method to
  * client workers for manual (password) and token-based authentication.
  */
-class Server : public IMockCoreServer {
+class Server : public Core::ICoreServer {
 public:
   /// CoreServer constructor (uses Config singleton)
   explicit Server(LogContext);
@@ -67,7 +67,7 @@ public:
 
 private:
   /// Used to manage purging and public auth keys
-  AuthenticationManager m_auth_manager;
+  Core::AuthenticationManager m_auth_manager;
 
   /**
    * This method is called after a public key has been authenticated, the key is
@@ -76,7 +76,6 @@ private:
   void authenticateClient(const std::string &a_cert_uid,
                           const std::string &a_key, const std::string &a_uid,
                           LogContext log_context);
-  void metricsUpdateMsgCount(const std::string &a_uid, uint16_t a_msg_type);
   // bool isClientAuthenticated( const std::string & a_client_key, std::string &
   // a_uid );
   void loadKeys(const std::string &a_cred_dir);
