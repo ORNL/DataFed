@@ -48,11 +48,6 @@ Server::Server(LogContext log_context)
   // One-time global libcurl init
   curl_global_init(CURL_GLOBAL_DEFAULT);
 
-  // Add CorrelationID
-  if (m_log_context.correlation_id.empty() || !m_log_context.correlation_id.compare("unknown")) {
-      boost::uuids::random_generator generator;
-      m_log_context.correlation_id = boost::uuids::to_string(generator());  
-  }
   // Load ZMQ keys
   loadKeys(m_config.cred_dir);
 
@@ -464,6 +459,12 @@ void Server::dbMaintenance(LogContext log_context, int thread_count) {
       chrono::seconds(m_config.note_purge_period);
   DatabaseAPI db(m_config.db_url, m_config.db_user, m_config.db_pass);
 
+  // Add CorrelationID
+  if (log_context.correlation_id.empty() || !log_context.correlation_id.compare("unknown")) {
+      boost::uuids::random_generator generator;
+      log_context.correlation_id = boost::uuids::to_string(generator());  
+  }
+
   while (1) {
     try {
       DL_DEBUG(log_context, "DB Maint: Purging closed annotations");
@@ -506,6 +507,13 @@ void Server::repoCacheThread(LogContext log_context, int thread_count) {
 void Server::metricsThread(LogContext log_context, int thread_count) {
   log_context.thread_name += "-metricsThread";
   log_context.thread_id = thread_count;
+  
+  // Add CorrelationID
+  if (log_context.correlation_id.empty() || !log_context.correlation_id.compare("unknown")) {
+      boost::uuids::random_generator generator;
+      log_context.correlation_id = boost::uuids::to_string(generator());  
+  }
+
   chrono::system_clock::duration metrics_per =
       chrono::seconds(m_config.metrics_period);
   DatabaseAPI db(m_config.db_url, m_config.db_user, m_config.db_pass);
