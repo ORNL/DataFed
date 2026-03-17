@@ -131,6 +131,7 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
         self.assertIn("Must specify", str(ctx.exception))
 
     def test_schema_create_both_definition_sources(self):
+    def test_schema_create_both_definition_sources(self):
         """Cannot specify both definition and definition_file."""
 
         with self.assertRaises(Exception) as ctx:
@@ -138,7 +139,30 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
                 "test_both_def",
                 definition='{"type": "object", "properties": {}}',
                 definition_file="/tmp/fake.json",
-                description="test bad schema"
+            )
+
+        self.assertIn("Cannot specify both", str(ctx.exception))
+
+    def test_schema_update_both_definition_sources(self):
+        """Cannot specify both definition and definition_file for schemaUpdate."""
+
+        with self.assertRaises(Exception) as ctx:
+            self._df_api.schemaUpdate(
+                "test_update_both_def",
+                definition='{"type": "object", "properties": {}}',
+                definition_file="/tmp/fake.json",
+            )
+
+        self.assertIn("Cannot specify both", str(ctx.exception))
+
+    def test_schema_revise_both_definition_sources(self):
+        """Cannot specify both definition and definition_file for schemaRevise."""
+
+        with self.assertRaises(Exception) as ctx:
+            self._df_api.schemaRevise(
+                "test_revise_both_def",
+                definition='{"type": "object", "properties": {}}',
+                definition_file="/tmp/fake.json",
             )
 
         self.assertIn("Cannot specify both", str(ctx.exception))
