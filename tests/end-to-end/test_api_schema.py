@@ -383,6 +383,18 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
 
         self.assertIn("Must specify", str(ctx.exception))
 
+    def test_metadata_validate_metadata_file_cannot_be_opened(self):
+        """metadata_file set but file cannot be opened should raise expected error."""
+
+        bad_path = "/path/does/not/exist"
+
+        with self.assertRaises(Exception) as ctx:
+            self._df_api.metadataValidate("any_schema", metadata_file=bad_path)
+
+        # The client should surface a clear file-open error that includes the path.
+        self.assertIn("Could not open metadata file:", str(ctx.exception))
+        self.assertIn(bad_path, str(ctx.exception))
+
     def test_schema_create_from_file(self):
         """Test creating a schema from a definition file."""
 
