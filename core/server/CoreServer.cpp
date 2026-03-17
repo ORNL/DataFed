@@ -17,6 +17,9 @@
 
 // Third party includes
 #include <curl/curl.h>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 // Standard includes
 #include <chrono>
@@ -45,6 +48,11 @@ Server::Server(LogContext log_context)
   // One-time global libcurl init
   curl_global_init(CURL_GLOBAL_DEFAULT);
 
+  // Add CorrelationID
+  if (m_log_context.correlation_id.empty() || !m_log_context.correlation_id.compare("unknown")) {
+      boost::uuids::random_generator generator;
+      m_log_context.correlation_id = boost::uuids::to_string(generator());  
+  }
   // Load ZMQ keys
   loadKeys(m_config.cred_dir);
 
