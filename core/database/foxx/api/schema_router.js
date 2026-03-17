@@ -48,7 +48,7 @@ function fixSchOwnNmAr(a_sch) {
  * If no version suffix is present, version is null.
  *
  * @param {string} schId - Schema ID, optionally with ":version" suffix
- * @returns {{ id: string, ver: number|null }}
+ * @returns {{ id: string, ver: number|null }} Parsed ID and optional version.
  */
 function parseSchemaId(schId) {
     const colonCount = (schId.match(/:/g) || []).length;
