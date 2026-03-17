@@ -6,6 +6,7 @@
 #include "DatabaseAPI.hpp"
 #include "GlobusAPI.hpp"
 #include "ICoreServer.hpp"
+#include "client_handlers/SchemaHandler.hpp"
 
 // DataFed Common public includes
 #include "common/DynaLog.hpp"
@@ -180,7 +181,6 @@ private:
                           std::unique_ptr<IMessage> &&msg_request,
                           LogContext log_context);
 
-  void schemaEnforceRequiredProperties(const nlohmann::json &a_schema);
   void recordCollectionDelete(const std::vector<std::string> &a_ids,
                               SDMS::TaskDataReply &a_reply,
                               LogContext log_context);
@@ -194,9 +194,6 @@ private:
   typedef std::unique_ptr<IMessage> (ClientWorker::*msg_fun_t)(
       const std::string &a_uid, std::unique_ptr<IMessage> &&request,
       LogContext log_context);
-
-  void schemaLoader(const nlohmann::json_uri &a_uri, nlohmann::json &a_value,
-                    LogContext log_context);
 
   void error(const nlohmann::json::json_pointer &a_ptr,
              const nlohmann::json &a_inst,
@@ -221,6 +218,7 @@ private:
   mutable std::mutex m_run_mutex;
   bool m_run;                  ///< Thread run flag
   DatabaseAPI m_db_client;     ///< Local DB client instance
+  std::unique_ptr<SchemaHandler> m_schema_handler;
   GlobusAPI m_globus_api;      ///< Local GlobusAPI instance
   std::string m_validator_err; ///< String buffer for metadata validation errors
   LogContext m_log_context;

@@ -66,8 +66,6 @@ struct SchemaAPIConfig {
   /// Returns true if bearer_token is set
   bool hasAuth() const { return !bearer_token.empty(); }
 
-  /// Returns true if client certificate is configured for mTLS
-  bool hasMTLS() const { return !client_cert_path.empty(); }
 };
 
 } // namespace Core

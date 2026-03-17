@@ -40,12 +40,6 @@ SchemaAPIClient::SchemaAPIClient(const SchemaAPIConfig &a_config)
   if (!m_config.ca_cert_path.empty())
     curl_easy_setopt(m_curl, CURLOPT_CAINFO, m_config.ca_cert_path.c_str());
 
-  // Client certificate for mTLS (optional)
-  if (m_config.hasMTLS()) {
-    curl_easy_setopt(m_curl, CURLOPT_SSLCERT, m_config.client_cert_path.c_str());
-    curl_easy_setopt(m_curl, CURLOPT_SSLKEY, m_config.client_key_path.c_str());
-  }
-
   // ── Timeouts ──────────────────────────────────────────────────────────
   curl_easy_setopt(m_curl, CURLOPT_CONNECTTIMEOUT, m_config.connect_timeout_sec);
   curl_easy_setopt(m_curl, CURLOPT_TIMEOUT, m_config.request_timeout_sec);

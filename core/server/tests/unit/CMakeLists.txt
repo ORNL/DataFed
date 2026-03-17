@@ -5,6 +5,7 @@ foreach(PROG
     test_DatabaseAPI
     test_JsonSchemaValidator
     test_SchemaServiceFactory
+    test_SchemaHandler
 )
 
   file(GLOB ${PROG}_SOURCES ${PROG}*.cpp)
