@@ -208,7 +208,7 @@ bool AuthMap::hasKey(const PublicKeyType pub_key_type,
       try {
         DatabaseAPI db(m_db_url, m_db_user, m_db_pass);
         std::string uid;
-        if (db.uidByPubKey(public_key, uid)) {
+        if (db.uidByPubKey(public_key, uid, log_context)) {
           return true;
         }
       } catch (const std::exception& e) {
@@ -272,7 +272,7 @@ std::string AuthMap::getUIDSafe(const PublicKeyType pub_key_type,
       try {
         DatabaseAPI db(m_db_url, m_db_user, m_db_pass);
         std::string uid;
-        if (db.uidByPubKey(public_key, uid)) {
+        if (db.uidByPubKey(public_key, uid, log_context)) {
           return uid;
         }
       } catch (const std::exception& e) {
