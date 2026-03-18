@@ -18,7 +18,10 @@ public:
                                   const std::string &a_uid,
                                   LogContext log_context) = 0;
   virtual void metricsUpdateMsgCount(const std::string &a_uid,
-                                     uint16_t a_msg_type) = 0;
+                                     uint16_t a_msg_type) {
+    (void)a_uid;
+    (void)a_msg_type;
+  }
 };
 
 } // namespace Core

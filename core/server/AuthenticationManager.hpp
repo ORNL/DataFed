@@ -8,6 +8,7 @@
 #include "PublicKeyTypes.hpp"
 
 // Common includes
+#include "common/DynaLog.hpp"
 #include "common/IAuthenticationManager.hpp"
 
 // Standard includes
@@ -33,6 +34,8 @@ private:
 
   mutable std::mutex m_lock;
 
+  LogContext m_log_context;
+
 public:
   AuthenticationManager(){};
 
@@ -40,12 +43,22 @@ public:
 
   AuthenticationManager &operator=(AuthenticationManager &&other);
 
+  /// Construct without database connectivity (in-memory only mode).
+  /// Persistent key lookups will only check the in-memory map, not the DB.
+  AuthenticationManager(
+      std::map<PublicKeyType, time_t> purge_intervals,
+      std::map<PublicKeyType, std::vector<std::unique_ptr<Condition>>>
+          &&purge_conditions,
+      LogContext log_context = LogContext{});
+
+  /// Construct with database connectivity for persistent key lookups.
   AuthenticationManager(
       std::map<PublicKeyType, time_t> purge_intervals,
       std::map<PublicKeyType, std::vector<std::unique_ptr<Condition>>>
           &&purge_conditions,
       const std::string &db_url, const std::string &db_user,
-      const std::string &db_pass);
+      const std::string &db_pass,
+      LogContext log_context = LogContext{});
   /**
    * Increments the number of times that the key has been accessed, this is used
    *by the transient key to know when it needs to be converted to a session key.
