@@ -1,5 +1,6 @@
 // Local includes
 #include "SchemaHandler.hpp"
+#include "LocalJsonErrorHandler.hpp"
 #include "common/TraceException.hpp"
 
 // Standard includes
@@ -179,18 +180,7 @@ void SchemaHandler::handleMetadataValidate(
 
   // Stack-local error handler — no shared mutable state.
   // Replaces the old m_validator_err member on ClientWorker.
-  struct LocalErrorHandler
-      : nlohmann::json_schema::basic_error_handler {
-    std::string errors;
-    void error(const nlohmann::json::json_pointer &ptr,
-               const nlohmann::json &instance,
-               const std::string &message) override {
-      if (!errors.empty())
-        errors += "\n";
-      errors += "At " + ptr.to_string() + ": " + message;
-      basic_error_handler::error(ptr, instance, message);
-    }
-  } handler;
+  LocalJsonErrorHandler handler;
 
   try {
     validator.set_root_schema(schema);
@@ -199,13 +189,14 @@ void SchemaHandler::handleMetadataValidate(
 
     validator.validate(md, handler);
   } catch (exception &e) {
-    handler.errors =
-        string("Invalid metadata schema: ") + e.what() + "\n";
+    handler.appendError(
+        string("Invalid metadata schema: ") + e.what() + "\n"
+    );
     DL_ERROR(log_context, "Invalid metadata schema: " << e.what());
   }
 
-  if (!handler.errors.empty()) {
-    a_reply.set_errors(handler.errors);
+  if (handler.hasErrors()) {
+    a_reply.set_errors(handler.errors());
   }
 }
 

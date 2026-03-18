@@ -73,6 +73,11 @@ nlohmann::json SchemaAPIClient::curlPerform(const std::string &a_method,
   headers = curl_slist_append(headers, "Content-Type: application/json");
   headers = curl_slist_append(headers, "Accept: application/json");
 
+  if (m_config.hasAuth()) {
+      std::string auth = "Authorization: Bearer " + m_config.bearer_token;
+      headers = curl_slist_append(headers, auth.c_str());
+  }
+
   std::string corr_header = "x-correlation-id: " + log_context.correlation_id;
   headers = curl_slist_append(headers, corr_header.c_str());
 
