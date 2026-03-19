@@ -160,8 +160,8 @@ router
                         format: req.body.format,
                         type: req.body.type,
                     };
-                    
-                    if (req.body.type === 'json-schema') {
+
+                    if (req.body.type === "json-schema") {
                         // Schema validator has already been run at this point; however, DataFed further restricts
                         // the allowed character set for keys and this must be applied at this point.
                         validateProperties(req.body.def.properties);
@@ -259,8 +259,8 @@ router
                 def: joi.object().required(),
                 pub: joi.boolean().optional().default(true),
                 sys: joi.boolean().optional().default(false),
-                format: joi.string().default("json").valid('json','xml','yaml'),
-                type: joi.string().default("json-schema").valid('json-schema','linkml'),
+                format: joi.string().default("json").valid("json", "xml", "yaml"),
+                type: joi.string().default("json-schema").valid("json-schema", "linkml"),
             })
             .required(),
         "Schema fields",
@@ -365,7 +365,7 @@ router
                     g_lib.procInputParam(req.body, "desc", true, obj);
 
                     if (req.body.def) {
-                        if (sch_old.type === 'json-schema') {
+                        if (sch_old.type === "json-schema") {
                             validateProperties(req.body.def.properties);
                             obj.def = req.body.def;
                         } else {
@@ -521,7 +521,7 @@ router
                     g_lib.procInputParam(req.body, "desc", true, sch);
 
                     if (req.body.def != undefined) {
-                        if (sch.type === 'json-schema') {
+                        if (sch.type === "json-schema") {
                             validateProperties(req.body.def.properties);
                             sch.def = req.body.def;
                         } else {
@@ -771,10 +771,10 @@ router
             sch.id = parsed.id + ":" + parsed.ver;
 
             // If schema is missing sch_format and sch_type default to json
-            if (!Object.hasOwn(sch, 'format')) {
+            if (!Object.hasOwn(sch, "format")) {
                 sch.format = "json";
             }
-            if (!Object.hasOwn(sch, 'type')) {
+            if (!Object.hasOwn(sch, "type")) {
                 sch.type = "json-schema";
             }
 
@@ -886,7 +886,6 @@ router
             } else {
                 if (req.queryParams.sort_rev) qry += " sort i.id desc, i.ver";
                 else qry += " sort i.id,i.ver";
-
             }
 
             qry +=
@@ -1050,7 +1049,7 @@ function updateSchemaRefs(a_sch) {
         r,
         refs = new Set();
 
-    if (a_sch.def && typeof a_sch.def === 'object') {
+    if (a_sch.def && typeof a_sch.def === "object") {
         gatherRefs(a_sch.def.properties, refs);
     }
 
