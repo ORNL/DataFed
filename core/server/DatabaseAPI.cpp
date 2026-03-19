@@ -13,6 +13,9 @@
 // Third party includes
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include <google/protobuf/util/json_util.h>
 #include <nlohmann/json.hpp>
 #include <zmq.h>
@@ -169,7 +172,7 @@ long DatabaseAPI::dbGet(const char *a_url_path,
   }
 }
 
-bool DatabaseAPI::dbGetRaw(const std::string url, string &a_result) {
+bool DatabaseAPI::dbGetRaw(const std::string url, string &a_result, LogContext log_context) {
   a_result.clear();
 
   char error[CURL_ERROR_SIZE];
@@ -183,8 +186,19 @@ bool DatabaseAPI::dbGetRaw(const std::string url, string &a_result) {
   curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, &a_result);
   curl_easy_setopt(m_curl, CURLOPT_ERRORBUFFER, error);
   curl_easy_setopt(m_curl, CURLOPT_HTTPGET, 1);
+  struct curl_slist* headers = nullptr;
+
+  // safe: curl_slist_append copies the string internally
+  std::string header = "x-correlation-id: " + log_context.correlation_id;
+  headers = curl_slist_append(headers, header.c_str());
+
+  // attach headers to the CURL handle
+  curl_easy_setopt(m_curl, CURLOPT_HTTPHEADER, headers);
 
   CURLcode res = curl_easy_perform(m_curl);
+  curl_slist_free_all(headers);
+  headers = nullptr;
+  curl_easy_setopt(m_curl, CURLOPT_HTTPHEADER, nullptr);
   long http_code = 0;
   curl_easy_getinfo(m_curl, CURLINFO_RESPONSE_CODE, &http_code);
   if (res == CURLE_OK && (http_code >= 200 && http_code < 300))
@@ -303,10 +317,11 @@ void DatabaseAPI::clientLinkIdentity(const std::string &a_identity,
 }
 
 bool DatabaseAPI::uidByPubKey(const std::string &a_pub_key,
-                              std::string &a_uid) {
+                              std::string &a_uid,
+                              LogContext log_context) {
   const string url =
       buildSearchParamURL("usr/find/by_pub_key", {{"pub_key", a_pub_key}});
-  return dbGetRaw(url, a_uid);
+  return dbGetRaw(url, a_uid, log_context);
 }
 
 bool DatabaseAPI::userGetKeys(std::string &a_pub_key, std::string &a_priv_key,
@@ -394,7 +409,7 @@ void DatabaseAPI::userSetAccessToken(const std::string &a_acc_tok,
     params.push_back({"other_token_data", other_token_data});
   }
   const string url = buildSearchParamURL("usr/token/set", params);
-  dbGetRaw(url, result);
+  dbGetRaw(url, result, log_context);
   DL_TRACE(log_context, "token expires in: " << to_string(a_expires_in));
 }
 
@@ -445,11 +460,11 @@ void DatabaseAPI::getExpiringAccessTokens(
   TRANSLATE_END(result, log_context)
 }
 
-void DatabaseAPI::purgeTransferRecords(size_t age) {
+void DatabaseAPI::purgeTransferRecords(size_t age, LogContext log_context) {
   string result;
   const string url =
       buildSearchParamURL("xfr/purge", {{"age", to_string(age)}});
-  dbGetRaw(url, result);
+  dbGetRaw(url, result, log_context);
 }
 
 void DatabaseAPI::userCreate(const SDMS::UserCreateRequest &a_request,
@@ -2137,6 +2152,7 @@ void DatabaseAPI::setGroupData(GroupDataReply &a_reply,
 void DatabaseAPI::repoList(const SDMS::RepoListRequest &a_request,
                            SDMS::RepoDataReply &a_reply,
                            LogContext log_context) {
+
   Value result;
 
   DL_DEBUG(log_context, "Calling repoList.");
@@ -3151,7 +3167,7 @@ void DatabaseAPI::taskAbort(const std::string &a_task_id,
 }
 
 void DatabaseAPI::taskInitDataGet(const SDMS::DataGetRequest &a_request,
-                                  SDMS::DataGetReply &a_reply,
+    SDMS::DataGetReply &a_reply,
                                   libjson::Value &a_result,
                                   LogContext log_context) {
   nlohmann::json payload;

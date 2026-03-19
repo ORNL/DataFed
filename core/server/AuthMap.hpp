@@ -7,7 +7,9 @@
 #include "PublicKeyTypes.hpp"
 
 // Local common includes
+#include "common/DynaLog.hpp"
 #include "common/IAuthenticationManager.hpp"
+#include "common/DynaLog.hpp"
 
 // Standard includes
 #include <map>
@@ -54,16 +56,28 @@ private:
   std::string m_db_url;
   std::string m_db_user;
   std::string m_db_pass;
+  LogContext m_log_context;
 
 public:
   AuthMap(){};
 
+  /// Construct without database connectivity (in-memory only mode).
+  /// Persistent key lookups will only check the in-memory map, not the DB.
+  AuthMap(time_t trans_active_inc, time_t session_active_inc,
+          LogContext log_context = LogContext{})
+      : m_trans_active_increment(trans_active_inc),
+        m_session_active_increment(session_active_inc),
+        m_log_context(log_context){};
+
+  /// Construct with database connectivity for persistent key lookups.
   AuthMap(time_t trans_active_inc, time_t session_active_inc,
           const std::string &db_url, const std::string &db_user,
-          const std::string &db_pass)
+          const std::string &db_pass,
+          LogContext log_context = LogContext{})
       : m_trans_active_increment(trans_active_inc),
         m_session_active_increment(session_active_inc), m_db_url(db_url),
-        m_db_user(db_user), m_db_pass(db_pass){};
+        m_db_user(db_user), m_db_pass(db_pass),
+        m_log_context(log_context){};
 
   AuthMap(const AuthMap &);
 
@@ -113,13 +127,15 @@ public:
    *does not exist. Best to call hasKey first.
    **/
   std::string getUID(const PublicKeyType pub_key_type,
-                     const std::string &public_key) const;
+                     const std::string &public_key,
+                     LogContext log_context) const;
   
   /**
    * Safe version that returns empty string if key not found
    **/
   std::string getUIDSafe(const PublicKeyType pub_key_type,
-                         const std::string &public_key) const;
+                         const std::string &public_key,
+                         LogContext log_context) const;
 
   /**
    * Will return the number of keys of the provided type. Does not currently
@@ -128,7 +144,8 @@ public:
   size_t size(const PublicKeyType pub_key_type) const;
 
   bool hasKey(const PublicKeyType pub_key_type,
-              const std::string &public_key) const;
+              const std::string &public_key,
+              LogContext log_context) const;
 
   /***********************************************************************************
    * Manipulators
@@ -138,7 +155,8 @@ public:
    * Increase the recorded times the the public key has been accessed by one.
    **/
   void incrementKeyAccessCounter(const PublicKeyType pub_key_type,
-                                 const std::string &public_key);
+                                 const std::string &public_key,
+                                 LogContext log_context);
 
   /**
    * Adds the key to the AuthMap object

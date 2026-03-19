@@ -18,11 +18,15 @@
 #include "common/enums/task_type.pb.h"
 #include "common/enums/access_token_type.pb.h"
 
+
 // Standard includes
 #include "common/TraceException.hpp"
 #include "unistd.h"
 #include <memory>
 #include <sstream>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 using namespace std;
 using namespace libjson;
@@ -89,9 +93,16 @@ void TaskWorker::workerThread(LogContext log_context) {
     while (true) {
       try {
         if (first) {
+          boost::uuids::random_generator generator;
+          boost::uuids::uuid uuid = generator();
+          log_context.correlation_id = boost::uuids::to_string(uuid);
+
           m_db.taskRun(m_task->task_id, task_cmd, log_context, 0);
           first = false;
         } else {
+          boost::uuids::random_generator generator;
+          boost::uuids::uuid uuid = generator();
+          log_context.correlation_id = boost::uuids::to_string(uuid);
           m_db.taskRun(m_task->task_id, task_cmd, log_context,
                        err_msg.size() ? 0 : &step,
                        err_msg.size() ? &err_msg : 0);
