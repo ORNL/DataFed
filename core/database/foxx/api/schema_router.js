@@ -568,8 +568,8 @@ router
                     id: sch_new.id,
                     pub: req.body.pub,
                     sys: req.body.sys,
-                    type: sch_new.type,
-                    format: sch_new.format,
+                    type: sch_new?.type,
+                    format: sch_new?.format,
                 },
             });
         } catch (e) {
@@ -586,8 +586,8 @@ router
                     id: sch_new?.id,
                     pub: req.body?.pub,
                     sys: req.body?.sys,
-                    type: sch_new.type,
-                    format: sch_new.format,
+                    type: sch_new?.type,
+                    format: sch_new?.format,
                 },
                 error: e,
             });
