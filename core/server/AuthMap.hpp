@@ -9,6 +9,7 @@
 // Local common includes
 #include "common/DynaLog.hpp"
 #include "common/IAuthenticationManager.hpp"
+#include "common/DynaLog.hpp"
 
 // Standard includes
 #include <map>
@@ -126,13 +127,15 @@ public:
    *does not exist. Best to call hasKey first.
    **/
   std::string getUID(const PublicKeyType pub_key_type,
-                     const std::string &public_key) const;
+                     const std::string &public_key,
+                     LogContext log_context) const;
   
   /**
    * Safe version that returns empty string if key not found
    **/
   std::string getUIDSafe(const PublicKeyType pub_key_type,
-                         const std::string &public_key) const;
+                         const std::string &public_key,
+                         LogContext log_context) const;
 
   /**
    * Will return the number of keys of the provided type. Does not currently
@@ -141,7 +144,8 @@ public:
   size_t size(const PublicKeyType pub_key_type) const;
 
   bool hasKey(const PublicKeyType pub_key_type,
-              const std::string &public_key) const;
+              const std::string &public_key,
+              LogContext log_context) const;
 
   /***********************************************************************************
    * Manipulators
@@ -151,7 +155,8 @@ public:
    * Increase the recorded times the the public key has been accessed by one.
    **/
   void incrementKeyAccessCounter(const PublicKeyType pub_key_type,
-                                 const std::string &public_key);
+                                 const std::string &public_key,
+                                 LogContext log_context);
 
   /**
    * Adds the key to the AuthMap object

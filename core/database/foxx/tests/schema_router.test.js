@@ -97,7 +97,7 @@ describe("schema router", () => {
 
         const schema = JSON.parse(response.body)[0];
         expect(schema).to.have.property("ver", 1);
-        expect(schema).to.have.property("id", "test_schema_1");
+        expect(schema).to.have.property("id", "test_schema_1:1");
     });
 
     it("unit_schema_router: should search schemas", () => {
@@ -138,7 +138,7 @@ describe("schema router", () => {
         expect(response.status).to.equal(200);
 
         const schema = JSON.parse(response.body)[0];
-        expect(schema).to.have.property("id", "test_schema_1");
+        expect(schema).to.have.property("id", "test_schema_1:0");
         expect(schema).to.have.property("ver", 0);
         expect(schema).to.have.property("own_id", "u/fakeUser");
     });
