@@ -9,6 +9,11 @@ if( ENABLE_INTEGRATION_TESTS )
     ${CMAKE_CURRENT_BINARY_DIR}/mock/mock_stop.sh
     COPYONLY)
 
+    configure_file(
+      "${CMAKE_CURRENT_SOURCE_DIR}/mock_core/Version.hpp.in"
+      "${CMAKE_CURRENT_SOURCE_DIR}/mock_core/Version.hpp"
+      @ONLY)
+
     add_test(NAME start_mock
       COMMAND ${CMAKE_CURRENT_BINARY_DIR}/mock/mock_start.sh
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/tests/mock_core
