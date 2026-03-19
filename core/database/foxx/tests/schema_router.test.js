@@ -325,9 +325,7 @@ describe("schema router - type and format support", () => {
     });
 
     it("view: new schema with explicit type/format returns stored values", () => {
-        const response = request.get(
-            `${schema_base_url}/view?client=u/fakeUser&id=typed_linkml:0`,
-        );
+        const response = request.get(`${schema_base_url}/view?client=u/fakeUser&id=typed_linkml:0`);
 
         expect(response.status).to.equal(200);
         const schema = JSON.parse(response.body)[0];
@@ -415,7 +413,9 @@ describe("schema router - type and format support", () => {
     });
 
     it("update: legacy schema without type treats as json-schema", () => {
-        const newDef = { properties: { old_field: { type: "string" }, new_field: { type: "boolean" } } };
+        const newDef = {
+            properties: { old_field: { type: "string" }, new_field: { type: "boolean" } },
+        };
 
         const response = request.post(
             `${schema_base_url}/update?client=u/fakeUser&id=legacy_schema_1:0`,
