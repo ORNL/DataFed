@@ -4,6 +4,7 @@
 
 // Local public includes
 #include "common/TraceException.hpp"
+#include "common/DynaLog.hpp"
 
 // Standard includes
 #include <any>
@@ -26,16 +27,18 @@ void AuthenticationOperator::execute(IMessage &message) {
     EXCEPT(1, "'KEY' attribute not defined.");
   }
 
+  LogContext log_context;
+  log_context.correlation_id = std::get<std::string>(message.get(MessageAttribute::CORRELATION_ID));
   m_authentication_manager->purge();
 
   std::string key = std::get<std::string>(message.get(MessageAttribute::KEY));
 
   std::string uid = "anon";
-  if (m_authentication_manager->hasKey(key)) {
-    m_authentication_manager->incrementKeyAccessCounter(key);
+  if (m_authentication_manager->hasKey(key, log_context)) {
+    m_authentication_manager->incrementKeyAccessCounter(key, log_context);
     
     try {
-      uid = m_authentication_manager->getUID(key);
+      uid = m_authentication_manager->getUID(key, log_context);
     } catch (const std::exception& e) {
       // Log the exception to help diagnose authentication issues
       std::cerr << "[AuthenticationOperator] Failed to get UID for key: " 
