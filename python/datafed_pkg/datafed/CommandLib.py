@@ -310,6 +310,409 @@ class API:
         msg.subject = subject
         return self._mapi.sendRecv(msg)
 
+# =========================================================================
+    # ---------------------------------------------------------- Schema Methods
+    # =========================================================================
+    #
+    # NOTE ON PROTOBUF FIELD NAMING:
+    #
+    # Several schema-related protobuf messages (SchemaCreateRequest,
+    # SchemaReviseRequest, SchemaUpdateRequest, SchemaData) use a field
+    # named "def" to hold the JSON schema definition string. "def" is a
+    # reserved keyword in Python — it introduces function definitions —
+    # so the following is a syntax error:
+    #
+    #     msg.def = '{"type": "object", ...}'   # SyntaxError
+    #
+    # Unlike some language bindings, protobuf's Python code generator does
+    # NOT rename reserved-word fields (no trailing underscore, no prefix).
+    # The field is still internally registered as "def" in the message
+    # descriptor, so the standard workaround is:
+    #
+    #     setattr(msg, 'def', '{"type": "object", ...}')   # works
+    #     value = getattr(msg, 'def')                       # works
+    #
+    # This is a well-known protobuf-Python interop issue. If these protos
+    # are ever revised, renaming the field (e.g. to "definition") would
+    # eliminate the need for this workaround.
+    # =========================================================================
+
+    def schemaCreate(self, schema_id, definition=None, definition_file=None,
+                     description=None, public=False, system=False):
+        """
+        Create a new metadata schema
+
+        Create a new metadata schema with a JSON schema definition. The
+        definition may be provided directly as a string, or read from a local
+        JSON file. Cannot specify both definition and definition_file.
+
+        Parameters
+        ----------
+        schema_id : str
+            Schema ID
+        definition : str, Optional. Default = None
+            JSON schema definition string
+        definition_file : str, Optional. Default = None
+            Path to local JSON file containing the schema definition
+        description : str, Optional. Default = None
+            Text description of schema
+        public : bool, Optional. Default = False
+            Make schema publicly visible
+        system : bool, Optional. Default = False
+            Create as a system schema
+
+        Returns
+        -------
+        msg : AckReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error, or invalid options
+        """
+        if definition and definition_file:
+            raise Exception("Cannot specify both definition and definition_file options.")
+
+        if not definition and not definition_file:
+            raise Exception("Must specify either definition or definition_file.")
+
+        if definition_file:
+            definition = self._load_schema_file(definition_file)
+
+        self._validate_json(definition, "Schema definition")
+
+        msg = sdms.SchemaCreateRequest()
+
+        if ":" in schema_id:
+            raise Exception("Colons are not allowed when creating a schema id.")
+
+        msg.id = schema_id + ":0"
+        # See note above: "def" is a Python reserved keyword.
+        setattr(msg, 'def', definition)
+
+        if description:
+            msg.desc = description
+
+        if public:
+            msg.pub = True
+
+        if system:
+            msg.sys = True
+
+        return self._mapi.sendRecv(msg)
+
+    def schemaRevise(self, schema_id, definition=None, definition_file=None,
+                     description=None, public=None, system=None):
+        """
+        Create a new revision of an existing schema
+
+        Creates a new version of the specified schema. Any fields not provided
+        are carried forward from the current revision. The definition may be
+        provided directly as a string or read from a local JSON file.
+
+        Parameters
+        ----------
+        schema_id : str
+            Schema ID of the schema to revise
+        definition : str, Optional. Default = None
+            Updated JSON schema definition string
+        definition_file : str, Optional. Default = None
+            Path to local JSON file containing the updated schema definition
+        description : str, Optional. Default = None
+            Updated text description
+        public : bool, Optional. Default = None
+            Update public visibility
+        system : bool, Optional. Default = None
+            Update system schema flag
+
+        Returns
+        -------
+        msg : AckReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error, or invalid options
+        """
+        if definition and definition_file:
+            raise Exception("Cannot specify both definition and definition_file options.")
+
+        if definition_file:
+            definition = self._load_schema_file(definition_file)
+
+        if definition is not None:
+            self._validate_json(definition, "Schema definition")
+
+        msg = sdms.SchemaReviseRequest()
+
+        if ":" not in schema_id:
+            raise Exception("Schema id is missing ':<version>'.")
+
+        try:
+            base, ver_str = schema_id.rsplit(":", 1)
+            ver = int(ver_str)
+        except (ValueError, IndexError):
+            raise Exception(f"Malformed schema_id {schema_id}")
+
+        msg.id = base + f":{ver}"
+
+        if definition is not None:
+            # See schema section note: "def" is a Python reserved keyword.
+            setattr(msg, 'def', definition)
+
+        if description is not None:
+            msg.desc = description
+
+        if public is not None:
+            msg.pub = public
+
+        if system is not None:
+            msg.sys = system
+
+        return self._mapi.sendRecv(msg)
+
+    def schemaUpdate(self, schema_id, new_id=None, definition=None, definition_file=None,
+                     description=None, public=None, system=None):
+        """
+        Update an existing schema in place (no new revision)
+
+        Modifies the current schema without creating a new version. The
+        definition may be provided directly as a string or read from a local
+        JSON file.
+
+        Parameters
+        ----------
+        schema_id : str
+            Schema ID of the schema to update
+        new_id : str, Optional. Default = None
+            New schema ID (rename)
+        definition : str, Optional. Default = None
+            Updated JSON schema definition string
+        definition_file : str, Optional. Default = None
+            Path to local JSON file containing the updated schema definition
+        description : str, Optional. Default = None
+            Updated text description
+        public : bool, Optional. Default = None
+            Update public visibility
+        system : bool, Optional. Default = None
+            Update system schema flag
+
+        Returns
+        -------
+        msg : AckReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error, or invalid options
+        """
+        if definition and definition_file:
+            raise Exception("Cannot specify both definition and definition_file options.")
+
+        if definition_file:
+            definition = self._load_schema_file(definition_file)
+
+        if definition is not None:
+            self._validate_json(definition, "Schema definition")
+
+        msg = sdms.SchemaUpdateRequest()
+        msg.id = schema_id
+
+        if new_id is not None:
+            msg.id_new = new_id
+
+        if definition is not None:
+            # See schema section note: "def" is a Python reserved keyword.
+            setattr(msg, 'def', definition)
+
+        if description is not None:
+            msg.desc = description
+
+        if public is not None:
+            msg.pub = public
+
+        if system is not None:
+            msg.sys = system
+
+        return self._mapi.sendRecv(msg)
+
+    def schemaView(self, schema_id, resolve=False):
+        """
+        View schema details
+
+        Parameters
+        ----------
+        schema_id : str
+            Schema ID to view
+        resolve : bool, Optional. Default = False
+            Resolve schema references
+
+        Returns
+        -------
+        msg : SchemaDataReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        """
+        msg = sdms.SchemaViewRequest()
+        msg.id = schema_id
+
+        if resolve:
+            msg.resolve = True
+
+        return self._mapi.sendRecv(msg)
+
+    def schemaSearch(self, schema_id=None, text=None, owner=None, sort=None,
+                     sort_rev=None, offset=0, count=20):
+        """
+        Search for schemas
+
+        Parameters
+        ----------
+        schema_id : str, Optional. Default = None
+            Schema ID query text
+        text : str, Optional. Default = None
+            Text search in schema description
+        owner : str, Optional. Default = None
+            Filter by owner ID
+        sort : str, Optional. Default = None
+            Sort option. Valid values: "id", "title", "owner", "ct", "ut", "text"
+        sort_rev : bool, Optional. Default = None
+            Reverse sort order. Not available for text-relevance sorting.
+        offset : int, Optional. Default = 0
+            Offset of listing results for paging
+        count : int, Optional. Default = 20
+            Number (limit) of listing results for paging
+
+        Returns
+        -------
+        msg : SchemaDataReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error, or invalid options
+        """
+        msg = sdms.SchemaSearchRequest()
+
+        if schema_id is not None:
+            msg.id = schema_id
+
+        if text is not None:
+            msg.text = text
+
+        if owner is not None:
+            msg.owner = owner
+
+        if sort is not None:
+            if sort == "id":
+                msg.sort = 0
+            elif sort == "title":
+                msg.sort = 1
+            elif sort == "owner":
+                msg.sort = 2
+            elif sort == "ct":
+                msg.sort = 3
+            elif sort == "ut":
+                msg.sort = 4
+            elif sort == "text":
+                msg.sort = 5
+            else:
+                raise Exception("Invalid sort option.")
+
+        if sort_rev is not None:
+            if msg.sort == 5:
+                raise Exception(
+                    "Reverse sort option not available for text-relevance sorting."
+                )
+            msg.sort_rev = sort_rev
+
+        if offset is not None:
+            msg.offset = offset
+
+        if count is not None:
+            msg.count = count
+
+        return self._mapi.sendRecv(msg)
+
+    def schemaDelete(self, schema_id):
+        """
+        Delete a schema
+
+        Parameters
+        ----------
+        schema_id : str
+            Schema ID to delete
+
+        Returns
+        -------
+        msg : AckReply Google protobuf message
+            Response from DataFed
+
+        Raises
+        ------
+        Exception : On communication or server error
+        """
+        msg = sdms.SchemaDeleteRequest()
+        msg.id = schema_id
+
+        return self._mapi.sendRecv(msg)
+
+    def metadataValidate(self, schema_id, metadata=None, metadata_file=None):
+        """
+        Validate metadata against a schema without creating or updating a record
+
+        This is useful for pre-validating metadata before committing it to a
+        record via dataCreate or dataUpdate, particularly when schema_enforce
+        would be set. The server-side validation logic is identical — this
+        just avoids the side effect of creating or modifying a record.
+
+        Parameters
+        ----------
+        schema_id : str
+            Schema ID to validate against (format: "id:version")
+        metadata : str, Optional. Default = None
+            JSON metadata string to validate
+        metadata_file : str, Optional. Default = None
+            Path to local JSON file containing metadata to validate
+
+        Returns
+        -------
+        msg : MetadataValidateReply Google protobuf message
+            Response from DataFed. The ``errors`` field contains a string
+            describing any validation failures, or is empty on success.
+
+        Raises
+        ------
+        Exception : On communication or server error, or invalid options
+        """
+        if metadata and metadata_file:
+            raise Exception("Cannot specify both metadata and metadata_file options.")
+
+        if not metadata and not metadata_file:
+            raise Exception("Must specify either metadata or metadata_file.")
+
+        if metadata_file:
+            try:
+                f = open(metadata_file, "r")
+                metadata = f.read()
+                f.close()
+            except BaseException:
+                raise Exception(
+                    "Could not open metadata file: {}".format(metadata_file)
+                )
+
+        self._validate_json(metadata, "Metadata")
+
+        msg = sdms.MetadataValidateRequest()
+        msg.sch_id = schema_id
+        msg.metadata = metadata
+
+        return self._mapi.sendRecv(msg)
+
+
     # =========================================================================
     # ------------------------------------------------------------ Data Methods
     # =========================================================================
@@ -2774,3 +3177,54 @@ class API:
             self.cfg.save()
 
         return opts
+
+    def _load_schema_file(self, filepath):
+            """
+            Read a schema definition from a local JSON file
+    
+            Parameters
+            ----------
+            filepath : str
+                Path to the schema definition file
+    
+            Returns
+            -------
+            str
+                File contents as a string
+    
+            Raises
+            ------
+            Exception : If file cannot be opened or read
+            """
+            try:
+                f = open(filepath, "r")
+                content = f.read()
+                f.close()
+                return content
+            except BaseException:
+                raise Exception(
+                    "Could not open schema definition file: {}".format(filepath)
+                )
+
+    def _validate_json(self, json_str, label="JSON"):
+        """
+        Validate that a string is parseable JSON
+
+        Client-side check to catch malformed JSON before sending to the server,
+        providing a clearer error message than the server-side parse failure.
+
+        Parameters
+        ----------
+        json_str : str
+            String to validate as JSON
+        label : str, Optional. Default = "JSON"
+            Label for error messages (e.g. "Schema definition", "Metadata")
+
+        Raises
+        ------
+        Exception : If string is not valid JSON
+        """
+        try:
+            jsonlib.loads(json_str)
+        except (jsonlib.JSONDecodeError, TypeError) as e:
+            raise Exception("{} is not valid JSON: {}".format(label, e))

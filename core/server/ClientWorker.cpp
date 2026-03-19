@@ -754,7 +754,7 @@ ClientWorker::procSchemaCreateRequest(const std::string &a_uid,
                                       LogContext log_context) {
   log_context.correlation_id =
       std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
-  PROC_MSG_BEGIN(SchemaCreateRequest, AckReply, log_context)
+  PROC_MSG_BEGIN(SchemaCreateRequest, SchemaDataReply, log_context)
 
   m_db_client.setClient(a_uid);
 
@@ -771,7 +771,8 @@ ClientWorker::procSchemaCreateRequest(const std::string &a_uid,
 
     validator.set_root_schema(schema);
 
-    m_db_client.schemaCreate(*request, log_context);
+    m_db_client.schemaCreate(*request, reply, log_context);
+
   } catch (exception &e) {
     DL_ERROR(log_context, "Invalid metadata schema: " << e.what());
     EXCEPT_PARAM(1, "Invalid metadata schema: " << e.what());
@@ -786,7 +787,7 @@ ClientWorker::procSchemaReviseRequest(const std::string &a_uid,
                                       LogContext log_context) {
   log_context.correlation_id =
       std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
-  PROC_MSG_BEGIN(SchemaReviseRequest, AckReply, log_context)
+  PROC_MSG_BEGIN(SchemaReviseRequest, SchemaDataReply, log_context)
 
   m_db_client.setClient(a_uid);
 
@@ -809,7 +810,7 @@ ClientWorker::procSchemaReviseRequest(const std::string &a_uid,
     }
   }
 
-  m_db_client.schemaRevise(*request, log_context);
+  m_db_client.schemaRevise(*request, reply, log_context);
 
   PROC_MSG_END(log_context);
 }

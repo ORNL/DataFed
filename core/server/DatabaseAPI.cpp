@@ -2944,6 +2944,7 @@ void DatabaseAPI::schemaView(const SDMS::SchemaViewRequest &a_request,
 }
 
 void DatabaseAPI::schemaCreate(const SDMS::SchemaCreateRequest &a_request,
+                               SDMS::SchemaDataReply &a_reply,
                                LogContext log_context) {
   libjson::Value result;
 
@@ -2957,9 +2958,11 @@ void DatabaseAPI::schemaCreate(const SDMS::SchemaCreateRequest &a_request,
   string body = payload.dump(-1, ' ', true);
 
   dbPost("schema/create", {}, &body, result, log_context);
+  setSchemaDataReply(a_reply, result, log_context);
 }
 
 void DatabaseAPI::schemaRevise(const SDMS::SchemaReviseRequest &a_request,
+                               SDMS::SchemaDataReply &a_reply,
                                LogContext log_context) {
   libjson::Value result;
 
@@ -2983,6 +2986,7 @@ void DatabaseAPI::schemaRevise(const SDMS::SchemaReviseRequest &a_request,
   string body = payload.dump(-1, ' ', true);
 
   dbPost("schema/revise", {{"id", a_request.id()}}, &body, result, log_context);
+  setSchemaDataReply(a_reply, result, log_context);
 }
 
 void DatabaseAPI::schemaUpdate(const SDMS::SchemaUpdateRequest &a_request,
