@@ -170,7 +170,8 @@ size_t AuthMap::size(const PublicKeyType pub_key_type) const {
 }
 
 void AuthMap::incrementKeyAccessCounter(const PublicKeyType pub_key_type,
-                                        const std::string &public_key) {
+                                        const std::string &public_key,
+                                        LogContext log_context) {
   if (pub_key_type == PublicKeyType::TRANSIENT) {
     lock_guard<mutex> lock(m_trans_clients_mtx);
     if (m_trans_auth_clients.count(public_key)) {
@@ -185,7 +186,8 @@ void AuthMap::incrementKeyAccessCounter(const PublicKeyType pub_key_type,
 }
 
 bool AuthMap::hasKey(const PublicKeyType pub_key_type,
-                     const std::string &public_key) const {
+                     const std::string &public_key, 
+                     LogContext log_context) const {
   if (pub_key_type == PublicKeyType::TRANSIENT) {
     lock_guard<mutex> lock(m_trans_clients_mtx);
     return m_trans_auth_clients.count(public_key) > 0;
@@ -206,7 +208,7 @@ bool AuthMap::hasKey(const PublicKeyType pub_key_type,
       try {
         DatabaseAPI db(m_db_url, m_db_user, m_db_pass);
         std::string uid;
-        if (db.uidByPubKey(public_key, uid)) {
+        if (db.uidByPubKey(public_key, uid, log_context)) {
           return true;
         }
       } catch (const std::exception& e) {
@@ -222,9 +224,10 @@ bool AuthMap::hasKey(const PublicKeyType pub_key_type,
 }
 
 std::string AuthMap::getUID(const PublicKeyType pub_key_type,
-                            const std::string &public_key) const {
+                            const std::string &public_key,
+                            LogContext log_context) const {
 
-  std::string uid = getUIDSafe(pub_key_type, public_key);
+  std::string uid = getUIDSafe(pub_key_type, public_key, log_context);
   
   if (uid.empty()) {
     if (pub_key_type == PublicKeyType::TRANSIENT) {
@@ -243,7 +246,8 @@ std::string AuthMap::getUID(const PublicKeyType pub_key_type,
 }
 
 std::string AuthMap::getUIDSafe(const PublicKeyType pub_key_type,
-                                const std::string &public_key) const {
+                                const std::string &public_key,
+                                LogContext log_context) const {
   if (pub_key_type == PublicKeyType::TRANSIENT) {
     lock_guard<mutex> lock(m_trans_clients_mtx);
     if (m_trans_auth_clients.count(public_key)) {
@@ -268,7 +272,7 @@ std::string AuthMap::getUIDSafe(const PublicKeyType pub_key_type,
       try {
         DatabaseAPI db(m_db_url, m_db_user, m_db_pass);
         std::string uid;
-        if (db.uidByPubKey(public_key, uid)) {
+        if (db.uidByPubKey(public_key, uid, log_context)) {
           return uid;
         }
       } catch (const std::exception& e) {

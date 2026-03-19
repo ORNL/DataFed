@@ -10,6 +10,7 @@
 #include "common/MessageFactory.hpp"
 #include "common/OperatorFactory.hpp"
 #include "common/OperatorTypes.hpp"
+#include "common/DynaLog.hpp"
 
 // Third party includes
 #include <google/protobuf/stubs/common.h>
@@ -38,15 +39,15 @@ private:
   /**
    * Methods only available via the interface
    **/
-  virtual void incrementKeyAccessCounter(const std::string &pub_key) final {
+  virtual void incrementKeyAccessCounter(const std::string &pub_key, LogContext log_context) final {
     ++m_counters.at(pub_key);
   }
 
-  virtual bool hasKey(const std::string &pub_key) const {
+  virtual bool hasKey(const std::string &pub_key, LogContext log_context) const {
     return m_counters.count(pub_key);
   }
   // Just assume all keys map to the anon_uid
-  virtual std::string getUID(const std::string &) const {
+  virtual std::string getUID(const std::string &, LogContext log_context) const {
     return "authenticated_uid";
   }
 

@@ -731,7 +731,7 @@ ClientWorker::procSchemaCreateRequest(const std::string &a_uid,
                                       LogContext log_context) {
   log_context.correlation_id =
       std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
-  PROC_MSG_BEGIN(SchemaCreateRequest, AckReply, log_context)
+  PROC_MSG_BEGIN(SchemaCreateRequest, SchemaDataReply, log_context)
 
   m_schema_handler->handleCreate(a_uid, *request, reply, log_context);
 
@@ -744,7 +744,7 @@ ClientWorker::procSchemaReviseRequest(const std::string &a_uid,
                                       LogContext log_context) {
   log_context.correlation_id =
       std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
-  PROC_MSG_BEGIN(SchemaReviseRequest, AckReply, log_context)
+  PROC_MSG_BEGIN(SchemaReviseRequest, SchemaDataReply, log_context)
 
   m_schema_handler->handleRevise(a_uid, *request, reply, log_context);
 
