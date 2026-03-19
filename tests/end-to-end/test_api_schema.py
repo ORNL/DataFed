@@ -124,13 +124,13 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
         """Must provide either definition or definition_file."""
 
         with self.assertRaises(Exception) as ctx:
-            self._df_api.schemaCreate("test_no_def",
-                description="test bad schema"
-            )
+            self._df_api.schemaCreate(
+                    "test_no_def",
+                    description="test bad schema"
+                )
 
         self.assertIn("Must specify", str(ctx.exception))
 
-    def test_schema_create_both_definition_sources(self):
     def test_schema_create_both_definition_sources(self):
         """Cannot specify both definition and definition_file."""
 
