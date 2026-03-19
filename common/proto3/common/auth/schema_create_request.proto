@@ -10,4 +10,6 @@ message SchemaCreateRequest {
     bool pub = 3;
     bool sys = 4;
     string def = 5;
+    string schema_type = 6;
+    string schema_format = 7;
 }
