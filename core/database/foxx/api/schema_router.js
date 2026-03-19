@@ -162,6 +162,8 @@ router
                         ver: 0,
                         pub: req.body.pub,
                         def: req.body.def,
+                        format: req.body.format,
+                        type: req.body.type,
                     };
 
                     if (req.body.sys) {
@@ -219,6 +221,8 @@ router
                     own_id: sch?.own_id,
                     pub: req.body.pub,
                     sys: req.body.sys,
+                    format: sch?.format,
+                    type: sch?.type,
                 },
             });
         } catch (e) {
@@ -234,6 +238,8 @@ router
                     own_id: sch?.own_id,
                     pub: req.body.pub,
                     sys: req.body.sys,
+                    format: sch?.format,
+                    type: sch?.type,
                 },
                 error: e,
             });
@@ -249,6 +255,8 @@ router
                 def: joi.object().required(),
                 pub: joi.boolean().optional().default(true),
                 sys: joi.boolean().optional().default(false),
+                format: joi.string().optional().default("json"),
+                type: joi.string().optional().default("json"),
             })
             .required(),
         "Schema fields",
@@ -548,6 +556,8 @@ router
                     id: sch_new.id,
                     pub: req.body.pub,
                     sys: req.body.sys,
+                    type: sch_new.type,
+                    format: sch_new.format,
                 },
             });
         } catch (e) {
@@ -564,6 +574,8 @@ router
                     id: sch_new?.id,
                     pub: req.body?.pub,
                     sys: req.body?.sys,
+                    type: sch_new.type,
+                    format: sch_new.format,
                 },
                 error: e,
             });
@@ -745,6 +757,15 @@ router
             fixSchOwnNm(sch);
 
             sch.id = parsed.id + ":" + parsed.ver;
+
+            // If schema is missing sch_format and sch_type default to json
+            if (!Object.hasOwn(sch, 'format')) {
+                sch.format = "json";
+            }
+            if (!Object.hasOwn(sch, 'type')) {
+                sch.type = "json";
+            }
+
             res.send([sch]);
             logger.logRequestSuccess({
                 client: req.queryParams?.client,
@@ -759,6 +780,8 @@ router
                     id: sch.id,
                     pub: sch.pub,
                     sys: sch.sys,
+                    sch_format: sch.format,
+                    sch_type: sch.type,
                 },
             });
         } catch (e) {
@@ -852,7 +875,6 @@ router
                 if (req.queryParams.sort_rev) qry += " sort i.id desc, i.ver";
                 else qry += " sort i.id,i.ver";
 
-                //qry += (req.queryParams.sort_rev?" desc":"");
             }
 
             qry +=
@@ -860,9 +882,9 @@ router
                 off +
                 "," +
                 cnt +
-                " return {_id:i._id,id:i.id,ver:i.ver,cnt:i.cnt,pub:i.pub,own_nm:i.own_nm,own_id:i.own_id}";
-
-            //qry += " filter (i.pub == true || i.own_id == @uid) sort i.id limit " + off + "," + cnt + " return {id:i.id,ver:i.ver,cnt:i.cnt,pub:i.pub,own_nm:i.own_nm,own_id:i.own_id}";
+                " return {_id:i._id,id:i.id,ver:i.ver,cnt:i.cnt,pub:i.pub,own_nm:i.own_nm,own_id:i.own_id," +
+                "type: NOT_NULL(i.type, 'json')," +
+                "format: NOT_NULL(i.format, 'json')";
 
             result = g_db._query(
                 qry,
