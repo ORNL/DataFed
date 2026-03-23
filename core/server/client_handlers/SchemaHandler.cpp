@@ -2,6 +2,8 @@
 #include "SchemaHandler.hpp"
 #include "LocalJsonErrorHandler.hpp"
 #include "common/TraceException.hpp"
+#include "schema_storage/ArangoSchemaStorage.hpp"
+#include "schema_validator/JsonSchemaValidator.hpp"
 
 // Standard includes
 #include <functional>
@@ -12,7 +14,14 @@ namespace SDMS {
 namespace Core {
 
 SchemaHandler::SchemaHandler(DatabaseAPI &a_db_client)
-    : m_db_client(a_db_client) {}
+    : m_db_client(a_db_client) {
+    // Assumes that we have already placed the schema in the database, arango
+    // storage is a shell to be consistent with the interface.
+    auto arango_storage = std::make_shared<ArangoSchemaStorage>();
+    m_schema_factory.registerStorage("json-schema", std::move(arango_storage));
+    auto json_schema_validator = std::make_shared<JsonSchemaValidator>();
+    m_schema_factory.registerValidator("json-schema", std::move(json_schema_validator));
+}
 
 // ── Static Utilities ────────────────────────────────────────────────────────
 
@@ -40,19 +49,6 @@ void SchemaHandler::enforceRequiredProperties(const nlohmann::json &a_schema) {
 }
 
 // ── Private ─────────────────────────────────────────────────────────────────
-
-void SchemaHandler::validateSchemaDefinition(const std::string &a_def,
-                                             LogContext log_context) {
-  nlohmann::json schema = nlohmann::json::parse(a_def);
-
-  enforceRequiredProperties(schema);
-
-  nlohmann::json_schema::json_validator validator(
-      bind(&SchemaHandler::schemaLoader, this, placeholders::_1,
-           placeholders::_2, log_context));
-
-  validator.set_root_schema(schema);
-}
 
 void SchemaHandler::schemaLoader(const nlohmann::json_uri &a_uri,
                                  nlohmann::json &a_value,
@@ -86,12 +82,37 @@ void SchemaHandler::handleCreate(const std::string &a_uid,
   DL_DEBUG(log_context, "Schema create");
 
   try {
-    validateSchemaDefinition(a_request.def(), log_context);
-    m_db_client.schemaCreate(a_request, a_reply, log_context);
+
+    auto validator = m_schema_factory.getValidator(a_request.type());
+    // Pass in the format
+    auto result = validator.validateDefinition(a_request.format(), a_request.def(), log_context);
+    //validateSchemaDefinition(a_request.def(), log_context);
+    if (result.valid == true ) {
+      m_db_client.schemaCreate(a_request, a_reply, log_context);
+    } else {
+      DL_ERROR(log_context, "Invalid metadata schema: " << result.errors.empty());
+      EXCEPT_PARAM(1, "Invalid metadata schema: " << result.errors.empty());
+    }
   } catch (exception &e) {
     DL_ERROR(log_context, "Invalid metadata schema: " << e.what());
     EXCEPT_PARAM(1, "Invalid metadata schema: " << e.what());
   }
+
+  try {
+    // Use the reply not the request when storing.
+    m_schema_factory.getStorage(a_request.type()).storeContent(
+      a_reply.id(),
+      a_request.def(),
+      a_request.desc(),
+      log_context
+    );
+  } catch (exception &e) {
+    // Should handle rollback because the schemaCreate with Arango passed
+    // but schema storage failed.
+    DL_ERROR(log_context, "Schema storage failed: " << e.what());
+    EXCEPT_PARAM(1, "Failed schema storage: " << e.what());
+  }
+
 }
 
 void SchemaHandler::handleRevise(const std::string &a_uid,
@@ -104,15 +125,52 @@ void SchemaHandler::handleRevise(const std::string &a_uid,
   DL_DEBUG(log_context, "Schema revise");
 
   if (a_request.has_def()) {
+    std::string schema_type = "json-schema";
+    std::string schema_format = "json";
     try {
-      validateSchemaDefinition(a_request.def(), log_context);
+      libjson::Value sch;
+      DL_TRACE(log_context, "Schema " << a_request.sch_id());
+
+      m_db_client.schemaView(a_request.sch_id(), sch, log_context);
+      schema_type = sch.asArray().begin()->asObject().getValue("type").toString();
+      schema_format = sch.asArray().begin()->asObject().getValue("format").toString();
+
+    } catch (exception &e) {
+      // Unable to find original schema
+    }
+
+    try {
+      auto validator = m_schema_factory.getValidator(schema_type);
+      // Pass in the format
+      auto result = validator.validateDefinition(schema_format, a_request.def(), log_context);
+      //validateSchemaDefinition(a_request.def(), log_context);
     } catch (exception &e) {
       DL_ERROR(log_context, "Invalid metadata schema: " << e.what());
       EXCEPT_PARAM(1, "Invalid metadata schema: " << e.what());
     }
   }
 
-  m_db_client.schemaRevise(a_request, a_reply, log_context);
+  try {
+    m_db_client.schemaRevise(a_request, a_reply, log_context);
+  } catch (exception &e) {
+    DL_ERROR(log_context, "Schema revision failed: " << e.what());
+    EXCEPT_PARAM(1, "Schema revision failed: " << e.what());
+  }
+
+  try {
+    // Use the reply not the request when storing.
+    m_schema_factory.getStorage(schema_type).storeContent(
+      a_reply.id(),
+      a_request.def(),
+      a_request.desc(),
+      log_context
+    );
+
+  } catch (exception &e) {
+    DL_ERROR(log_context, "Revised schema storage failed: " << e.what());
+    EXCEPT_PARAM(1, "Revised schema storage failed: " << e.what());
+
+  }
 }
 
 void SchemaHandler::handleUpdate(const std::string &a_uid,
