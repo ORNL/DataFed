@@ -78,41 +78,37 @@ void SchemaHandler::handleCreate(const std::string &a_uid,
                                  LogContext log_context) {
   (void)a_reply;
   m_db_client.setClient(a_uid);
-
   DL_DEBUG(log_context, "Schema create");
 
+  // Validate schema definition through factory
   try {
+    auto &validator = m_schema_factory.getValidator(a_request.type());
+    auto result = validator.validateDefinition(
+        a_request.format(), a_request.def(), log_context);
 
-    auto validator = m_schema_factory.getValidator(a_request.type());
-    // Pass in the format
-    auto result = validator.validateDefinition(a_request.format(), a_request.def(), log_context);
-    //validateSchemaDefinition(a_request.def(), log_context);
-    if (result.valid == true ) {
-      m_db_client.schemaCreate(a_request, a_reply, log_context);
-    } else {
-      DL_ERROR(log_context, "Invalid metadata schema: " << result.errors.empty());
-      EXCEPT_PARAM(1, "Invalid metadata schema: " << result.errors.empty());
+    if (!result.valid) {
+      DL_ERROR(log_context, "Invalid metadata schema: " << result.errors);
+      EXCEPT_PARAM(1, "Invalid metadata schema: " << result.errors);
     }
+  } catch (TraceException &) {
+    throw;
   } catch (exception &e) {
-    DL_ERROR(log_context, "Invalid metadata schema: " << e.what());
-    EXCEPT_PARAM(1, "Invalid metadata schema: " << e.what());
+    DL_ERROR(log_context, "Schema validation failed: " << e.what());
+    EXCEPT_PARAM(1, "Schema validation failed: " << e.what());
   }
 
+  // Persist to Arango — exception propagates naturally on failure
+  m_db_client.schemaCreate(a_request, a_reply, log_context);
+
+  // Store content through factory (no-op for Arango, meaningful for external)
   try {
-    // Use the reply not the request when storing.
     m_schema_factory.getStorage(a_request.type()).storeContent(
-      a_reply.id(),
-      a_request.def(),
-      a_request.desc(),
-      log_context
-    );
+        a_reply.id(), a_request.def(), a_request.desc(), log_context);
   } catch (exception &e) {
-    // Should handle rollback because the schemaCreate with Arango passed
-    // but schema storage failed.
+    // TODO: Arango doc exists but external storage failed — needs rollback
     DL_ERROR(log_context, "Schema storage failed: " << e.what());
-    EXCEPT_PARAM(1, "Failed schema storage: " << e.what());
+    EXCEPT_PARAM(1, "Schema storage failed: " << e.what());
   }
-
 }
 
 void SchemaHandler::handleRevise(const std::string &a_uid,
