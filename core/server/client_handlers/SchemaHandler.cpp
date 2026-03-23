@@ -105,8 +105,13 @@ void SchemaHandler::handleCreate(const std::string &a_uid,
     m_schema_factory.getStorage(a_request.type()).storeContent(
         a_reply.id(), a_request.def(), a_request.desc(), log_context);
   } catch (exception &e) {
-    // TODO: Arango doc exists but external storage failed — needs rollback
-    DL_ERROR(log_context, "Schema storage failed: " << e.what());
+    DL_ERROR(log_context, "Schema storage failed attempting rollback: " << e.what());
+    try {
+      AckReply a_reply_delete;
+      m_db_client.schemaDelete(a_reply.id(), a_reply_delete, log_context);
+    } catch (exception &e) {
+      DL_ERROR(log_context, "Schema rollback of create request failed: " << e.what());
+    }
     EXCEPT_PARAM(1, "Schema storage failed: " << e.what());
   }
 }
@@ -117,55 +122,63 @@ void SchemaHandler::handleRevise(const std::string &a_uid,
                                  LogContext log_context) {
   (void)a_reply;
   m_db_client.setClient(a_uid);
-
   DL_DEBUG(log_context, "Schema revise");
-
+ 
+  // Method-scoped so storage block can see them
+  std::string schema_type = "json-schema";
+  std::string schema_format = "json";
+ 
   if (a_request.has_def()) {
-    std::string schema_type = "json-schema";
-    std::string schema_format = "json";
+    // Look up existing schema to determine type/format for validation
     try {
       libjson::Value sch;
-      DL_TRACE(log_context, "Schema " << a_request.sch_id());
-
-      m_db_client.schemaView(a_request.sch_id(), sch, log_context);
-      schema_type = sch.asArray().begin()->asObject().getValue("type").toString();
-      schema_format = sch.asArray().begin()->asObject().getValue("format").toString();
-
+      // NOTE: verify this is the correct field — might be id() not sch_id()
+      m_db_client.schemaView(a_request.id(), sch, log_context);
+      schema_type =
+          sch.asArray().begin()->asObject().getValue("type").toString();
+      schema_format =
+          sch.asArray().begin()->asObject().getValue("format").toString();
     } catch (exception &e) {
-      // Unable to find original schema
+      DL_WARN(log_context,
+              "Could not look up schema " << a_request.id()
+                  << " for type/format, defaulting to json-schema/json: "
+                  << e.what());
+      schema_type = "json-schema";
+      schema_format = "json";
     }
-
+ 
+    // Validate new definition
     try {
-      auto validator = m_schema_factory.getValidator(schema_type);
-      // Pass in the format
-      auto result = validator.validateDefinition(schema_format, a_request.def(), log_context);
-      //validateSchemaDefinition(a_request.def(), log_context);
+      auto &validator = m_schema_factory.getValidator(schema_type);
+      auto result = validator.validateDefinition(
+          schema_format, a_request.def(), log_context);
+ 
+      if (!result.valid) {
+        DL_ERROR(log_context, "Invalid metadata schema: " << result.errors);
+        EXCEPT_PARAM(1, "Invalid metadata schema: " << result.errors);
+      }
+    } catch (TraceException &) {
+      throw;
     } catch (exception &e) {
-      DL_ERROR(log_context, "Invalid metadata schema: " << e.what());
-      EXCEPT_PARAM(1, "Invalid metadata schema: " << e.what());
+      DL_ERROR(log_context, "Schema validation failed: " << e.what());
+      EXCEPT_PARAM(1, "Schema validation failed: " << e.what());
     }
   }
-
-  try {
-    m_db_client.schemaRevise(a_request, a_reply, log_context);
-  } catch (exception &e) {
-    DL_ERROR(log_context, "Schema revision failed: " << e.what());
-    EXCEPT_PARAM(1, "Schema revision failed: " << e.what());
-  }
-
-  try {
-    // Use the reply not the request when storing.
-    m_schema_factory.getStorage(schema_type).storeContent(
-      a_reply.id(),
-      a_request.def(),
-      a_request.desc(),
-      log_context
-    );
-
-  } catch (exception &e) {
-    DL_ERROR(log_context, "Revised schema storage failed: " << e.what());
-    EXCEPT_PARAM(1, "Revised schema storage failed: " << e.what());
-
+ 
+  // Create new revision in Arango
+  m_db_client.schemaRevise(a_request, a_reply, log_context);
+ 
+  // Store content for new revision only when def was provided
+  if (a_request.has_def()) {
+    try {
+      m_schema_factory.getStorage(schema_type).storeContent(
+          a_reply.id(), a_request.def(), a_request.desc(), log_context);
+    } catch (exception &e) {
+      // TODO: Arango revision exists but external storage failed — needs rollback
+      DL_ERROR(log_context,
+               "Schema storage failed for revision: " << e.what());
+      EXCEPT_PARAM(1, "Schema storage failed for revision: " << e.what());
+    }
   }
 }
 
