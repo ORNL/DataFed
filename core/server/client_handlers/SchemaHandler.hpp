@@ -61,7 +61,7 @@ public:
    */
   void handleCreate(const std::string &a_uid,
                     const SchemaCreateRequest &a_request,
-                    AckReply &a_reply,
+                    SchemaDataReply &a_reply,
                     LogContext log_context);
 
   /**
@@ -72,7 +72,7 @@ public:
    */
   void handleRevise(const std::string &a_uid,
                     const SchemaReviseRequest &a_request,
-                    AckReply &a_reply,
+                    SchemaDataReply &a_reply,
                     LogContext log_context);
 
   /**
@@ -83,7 +83,7 @@ public:
    */
   void handleUpdate(const std::string &a_uid,
                     const SchemaUpdateRequest &a_request,
-                    AckReply &a_reply,
+                    SchemaDataReply &a_reply,
                     LogContext log_context);
 
   // ── Metadata Validation ───────────────────────────────────────────────

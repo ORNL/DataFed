@@ -66,7 +66,6 @@ struct SchemaAPIConfig {
 
   /// Returns true if bearer_token is set, or api_key is set
   bool hasAuth() const { return !bearer_token.empty() || !api_key.empty(); }
-
 };
 
 } // namespace Core

@@ -78,7 +78,7 @@ void SchemaHandler::schemaLoader(const nlohmann::json_uri &a_uri,
 
 void SchemaHandler::handleCreate(const std::string &a_uid,
                                  const SchemaCreateRequest &a_request,
-                                 AckReply &a_reply,
+                                 SchemaDataReply &a_reply,
                                  LogContext log_context) {
   (void)a_reply;
   m_db_client.setClient(a_uid);
@@ -87,7 +87,7 @@ void SchemaHandler::handleCreate(const std::string &a_uid,
 
   try {
     validateSchemaDefinition(a_request.def(), log_context);
-    m_db_client.schemaCreate(a_request, log_context);
+    m_db_client.schemaCreate(a_request, a_reply, log_context);
   } catch (exception &e) {
     DL_ERROR(log_context, "Invalid metadata schema: " << e.what());
     EXCEPT_PARAM(1, "Invalid metadata schema: " << e.what());
@@ -96,7 +96,7 @@ void SchemaHandler::handleCreate(const std::string &a_uid,
 
 void SchemaHandler::handleRevise(const std::string &a_uid,
                                  const SchemaReviseRequest &a_request,
-                                 AckReply &a_reply,
+                                 SchemaDataReply &a_reply,
                                  LogContext log_context) {
   (void)a_reply;
   m_db_client.setClient(a_uid);
@@ -112,12 +112,12 @@ void SchemaHandler::handleRevise(const std::string &a_uid,
     }
   }
 
-  m_db_client.schemaRevise(a_request, log_context);
+  m_db_client.schemaRevise(a_request, a_reply, log_context);
 }
 
 void SchemaHandler::handleUpdate(const std::string &a_uid,
                                  const SchemaUpdateRequest &a_request,
-                                 AckReply &a_reply,
+                                 SchemaDataReply &a_reply,
                                  LogContext log_context) {
   (void)a_reply;
   m_db_client.setClient(a_uid);

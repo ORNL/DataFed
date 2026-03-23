@@ -757,7 +757,7 @@ ClientWorker::procSchemaUpdateRequest(const std::string &a_uid,
                                       LogContext log_context) {
   log_context.correlation_id =
       std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
-  PROC_MSG_BEGIN(SchemaUpdateRequest, AckReply, log_context)
+  PROC_MSG_BEGIN(SchemaUpdateRequest, SchemaDataReply, log_context)
 
   m_schema_handler->handleUpdate(a_uid, *request, reply, log_context);
 

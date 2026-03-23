@@ -258,7 +258,7 @@ BOOST_AUTO_TEST_CASE(create_with_invalid_json_throws) {
   request.set_sys(false);
   request.set_def("not valid json {{{");
 
-  SDMS::AckReply reply;
+  SDMS::SchemaDataReply reply;
 
   BOOST_CHECK_THROW(
       f.handler.handleCreate("u/test_user", request, reply, f.log_context),
@@ -279,7 +279,7 @@ BOOST_AUTO_TEST_CASE(create_with_missing_properties_throws) {
   request.set_sys(false);
   request.set_def(TestData::NO_PROPERTIES);
 
-  SDMS::AckReply reply;
+  SDMS::SchemaDataReply reply;
 
   BOOST_CHECK_THROW(
       f.handler.handleCreate("u/test_user", request, reply, f.log_context),
@@ -300,7 +300,7 @@ BOOST_AUTO_TEST_CASE(create_with_missing_type_throws) {
   request.set_sys(false);
   request.set_def(TestData::NO_TYPE);
 
-  SDMS::AckReply reply;
+  SDMS::SchemaDataReply reply;
 
   BOOST_CHECK_THROW(
       f.handler.handleCreate("u/test_user", request, reply, f.log_context),
@@ -319,7 +319,7 @@ BOOST_AUTO_TEST_CASE(revise_without_def_skips_validation) {
   request.set_id("test-schema:1");
   // Deliberately NOT setting def
 
-  SDMS::AckReply reply;
+  SDMS::SchemaDataReply reply;
 
   // This will throw from the DB if schema doesn't exist, but it should
   // NOT throw from validation — that's what we're testing.
@@ -345,7 +345,7 @@ BOOST_AUTO_TEST_CASE(update_without_def_skips_validation) {
   request.set_id("test-schema:1");
   // Deliberately NOT setting def
 
-  SDMS::AckReply reply;
+  SDMS::SchemaDataReply reply;
 
   try {
     f.handler.handleUpdate("u/test_user", request, reply, f.log_context);

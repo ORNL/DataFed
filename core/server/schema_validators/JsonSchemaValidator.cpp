@@ -10,9 +10,6 @@
 namespace SDMS {
 namespace Core {
 
-// ── Local Error Handler ──────────────────────────────────────────────────────
-// Thread-safe: each validation call creates its own instance on the stack.
-
 // ── Constructor ─────────────────────────────────────────────────────────────
 
 JsonSchemaValidator::JsonSchemaValidator(SchemaLoaderCallback a_loader)
