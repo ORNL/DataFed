@@ -124,17 +124,10 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
         """Must provide either definition or definition_file."""
 
         with self.assertRaises(Exception) as ctx:
-<<<<<<< 1857-DAPS-python-client-schema-support_2
             self._df_api.schemaCreate(
                     "test_no_def",
                     description="test bad schema"
                 )
-=======
-            self._df_api.schemaCreate("test_no_def",
-                description="test bad schema"
-            )
->>>>>>> devel
-
         self.assertIn("Must specify", str(ctx.exception))
 
     def test_schema_create_both_definition_sources(self):
@@ -145,7 +138,6 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
                 "test_both_def",
                 definition='{"type": "object", "properties": {}}',
                 definition_file="/tmp/fake.json",
-<<<<<<< 1857-DAPS-python-client-schema-support_2
             )
 
         self.assertIn("Cannot specify both", str(ctx.exception))
@@ -170,9 +162,6 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
                 "test_revise_both_def",
                 definition='{"type": "object", "properties": {}}',
                 definition_file="/tmp/fake.json",
-=======
-                description="test bad schema"
->>>>>>> devel
             )
 
         self.assertIn("Cannot specify both", str(ctx.exception))
@@ -417,7 +406,6 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
 
         self.assertIn("Must specify", str(ctx.exception))
 
-<<<<<<< 1857-DAPS-python-client-schema-support_2
     def test_metadata_validate_metadata_file_cannot_be_opened(self):
         """metadata_file set but file cannot be opened should raise expected error."""
 
@@ -430,8 +418,6 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
         self.assertIn("Could not open metadata file:", str(ctx.exception))
         self.assertIn(bad_path, str(ctx.exception))
 
-=======
->>>>>>> devel
     def test_schema_create_from_file(self):
         """Test creating a schema from a definition file."""
 
