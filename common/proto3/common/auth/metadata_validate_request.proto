@@ -7,5 +7,5 @@ option cc_enable_arenas = true;
 message MetadataValidateRequest {
     string metadata = 1;
     string sch_id = 2;
-    string metadata_format = 3;
+    string format = 3;
 }

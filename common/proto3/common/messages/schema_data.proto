@@ -17,6 +17,6 @@ message SchemaData {
     string def = 10;
     repeated SchemaData uses = 11;
     repeated SchemaData used_by = 12;
-    string schema_type = 13;
-    string schema_format = 14;
+    string type = 13;
+    string format = 14;
 }
