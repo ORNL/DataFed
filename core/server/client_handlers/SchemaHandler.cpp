@@ -177,6 +177,12 @@ void SchemaHandler::handleRevise(const std::string &a_uid,
       // TODO: Arango revision exists but external storage failed — needs rollback
       DL_ERROR(log_context,
                "Schema storage failed for revision: " << e.what());
+      try {
+        AckReply a_reply_delete;
+        m_db_client.schemaDelete(a_reply.id(), a_reply_delete, log_context);
+      } catch (exception &e) {
+        DL_ERROR(log_context, "Schema rollback of revision request failed: " << e.what());
+      }
       EXCEPT_PARAM(1, "Schema storage failed for revision: " << e.what());
     }
   }
@@ -188,19 +194,68 @@ void SchemaHandler::handleUpdate(const std::string &a_uid,
                                  LogContext log_context) {
   (void)a_reply;
   m_db_client.setClient(a_uid);
-
   DL_DEBUG(log_context, "Schema update");
 
+  std::string schema_type = "json-schema";
+  std::string schema_format = "json";
+
   if (a_request.has_def()) {
+    // Look up existing schema to determine type/format
     try {
-      validateSchemaDefinition(a_request.def(), log_context);
+      libjson::Value sch;
+      m_db_client.schemaView(a_request.id(), sch, log_context);
+      schema_type =
+          sch.asArray().begin()->asObject().getValue("type").toString();
+      schema_format =
+          sch.asArray().begin()->asObject().getValue("format").toString();
     } catch (exception &e) {
-      DL_ERROR(log_context, "Invalid metadata schema: " << e.what());
-      EXCEPT_PARAM(1, "Invalid metadata schema: " << e.what());
+      DL_WARN(log_context,
+              "Could not look up schema " << a_request.id()
+                  << " for type/format, defaulting to json-schema/json: "
+                  << e.what());
+    }
+
+    // Validate new definition
+    try {
+      auto &validator = m_schema_factory.getValidator(schema_type);
+      auto result = validator.validateDefinition(
+          schema_format, a_request.def(), log_context);
+
+      if (!result.valid) {
+        DL_ERROR(log_context, "Invalid metadata schema: " << result.errors);
+        EXCEPT_PARAM(1, "Invalid metadata schema: " << result.errors);
+      }
+    } catch (TraceException &) {
+      throw;
+    } catch (exception &e) {
+      DL_ERROR(log_context, "Schema validation failed: " << e.what());
+      EXCEPT_PARAM(1, "Schema validation failed: " << e.what());
     }
   }
 
+  // Update in-place in Arango
   m_db_client.schemaUpdate(a_request, log_context);
+
+  // Update content in external storage only when def was provided.
+  // Uses updateContent (in-place) rather than storeContent (new entry).
+  if (a_request.has_def()) {
+    try {
+      // NOTE: if SchemaUpdateRequest doesn't have has_desc(), just pass
+      // std::nullopt unconditionally and let Arango be the source of truth
+      // for description.
+      std::optional<std::string> desc = std::nullopt;
+      if (a_request.has_desc()) {
+        desc = a_request.desc();
+      }
+
+      m_schema_factory.getStorage(schema_type).updateContent(
+          a_request.id(), a_request.def(), desc, log_context);
+    } catch (exception &e) {
+      DL_ERROR(log_context,
+               "Schema storage update failed: " << e.what());
+      EXCEPT_PARAM(1, "Schema storage update failed: " << e.what());
+    }
+  }
 }
 
 // ── Metadata Validation ─────────────────────────────────────────────────────
