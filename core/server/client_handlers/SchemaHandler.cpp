@@ -267,60 +267,77 @@ void SchemaHandler::handleMetadataValidate(
     LogContext log_context) {
 
   DL_DEBUG(log_context, "Metadata validate");
-
   m_db_client.setClient(a_uid);
 
-  // ── Load schema from DB ───────────────────────────────────────────────
+  // ── Load schema record from DB ────────────────────────────────────────
 
-  nlohmann::json schema;
+  std::string schema_type = "json-schema";
+  std::string schema_format = "json";
+  std::string schema_def;
 
   try {
     libjson::Value sch;
-    DL_TRACE(log_context, "Schema " << a_request.sch_id());
+    DL_TRACE(log_context, "Loading schema " << a_request.sch_id());
 
+    // Look up the schema type from the source of truth in arango 
     m_db_client.schemaView(a_request.sch_id(), sch, log_context);
 
-    DL_TRACE(
-        log_context,
-        "Schema: "
-            << sch.asArray().begin()->asObject().getValue("def").toString());
+    auto &sch_doc = sch.asArray().begin()->asObject();
 
-    schema = nlohmann::json::parse(
-        sch.asArray().begin()->asObject().getValue("def").toString());
+    schema_def = sch_doc.getValue("def").toString();
+    // These fields may not exist on older records — fall through to defaults
+    try {
+      schema_type = sch_doc.getValue("type").toString();
+      schema_format = sch_doc.getValue("format").toString();
+    } catch (exception &) {
+      DL_WARN(log_context,
+              "Schema " << a_request.sch_id()
+                  << " missing type/format fields, defaulting to "
+                     "json-schema/json");
+    }
   } catch (TraceException &e) {
-    DL_ERROR(log_context, "Schema validate failure: " << e.what());
+    DL_ERROR(log_context, "Schema lookup failed: " << e.what());
     throw;
   } catch (exception &e) {
-    EXCEPT_PARAM(1, "Schema parse error: " << e.what());
+    EXCEPT_PARAM(1, "Schema lookup error: " << e.what());
   }
 
-  // ── Validate metadata against schema ──────────────────────────────────
+  auto storage_result = m_schema_factory.getStorage(schema_type)
+      .retrieveContent(a_request.sch_id(), schema_def, log_context);
+  if (!storage_result.ok) {
+      EXCEPT_PARAM(1, "Failed to retrieve schema content: " << storage_result.error);
+  }
+  schema_def = storage_result.content;
 
-  nlohmann::json_schema::json_validator validator(
-      bind(&SchemaHandler::schemaLoader, this, placeholders::_1,
-           placeholders::_2, log_context));
-
-  // Stack-local error handler — no shared mutable state.
-  // Replaces the old m_validator_err member on ClientWorker.
-  LocalJsonErrorHandler handler;
+  // ── Validate metadata through factory ─────────────────────────────────
 
   try {
-    validator.set_root_schema(schema);
+    auto &validator = m_schema_factory.getValidator(schema_type);
 
-    nlohmann::json md = nlohmann::json::parse(a_request.metadata());
+    // Always refresh cache from what we just loaded from DB.
+    // Avoids stale compiled schemas after updates.
+    if (!validator.cacheSchema(a_request.sch_id(), schema_def,
+                               schema_format, log_context)) {
+      EXCEPT_PARAM(1,
+                   "Failed to compile schema: " << a_request.sch_id());
+    }
 
-    validator.validate(md, handler);
+    auto result = validator.validateMetadata(
+        a_request.sch_id(), schema_format, a_request.metadata(),
+        log_context);
+
+    if (!result.valid) {
+      a_reply.set_errors(result.errors);
+    }
+
+  } catch (TraceException &) {
+    throw;
   } catch (exception &e) {
-    handler.appendError(
-        string("Invalid metadata schema: ") + e.what() + "\n"
-    );
-    DL_ERROR(log_context, "Invalid metadata schema: " << e.what());
-  }
-
-  if (handler.hasErrors()) {
-    a_reply.set_errors(handler.errors());
+    DL_ERROR(log_context, "Metadata validation error: " << e.what());
+    EXCEPT_PARAM(1, "Metadata validation error: " << e.what());
   }
 }
+
 
 void SchemaHandler::handleSearch(const std::string &a_uid,
                                  const SchemaSearchRequest &a_request,
