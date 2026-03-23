@@ -3,7 +3,7 @@
 #include "LocalJsonErrorHandler.hpp"
 #include "common/TraceException.hpp"
 #include "schema_storage/ArangoSchemaStorage.hpp"
-#include "schema_validator/JsonSchemaValidator.hpp"
+#include "schema_validators/JsonSchemaValidator.hpp"
 
 // Standard includes
 #include <functional>
@@ -19,55 +19,18 @@ SchemaHandler::SchemaHandler(DatabaseAPI &a_db_client)
     // storage is a shell to be consistent with the interface.
     auto arango_storage = std::make_shared<ArangoSchemaStorage>();
     m_schema_factory.registerStorage("json-schema", std::move(arango_storage));
-    auto json_schema_validator = std::make_shared<JsonSchemaValidator>();
-    m_schema_factory.registerValidator("json-schema", std::move(json_schema_validator));
-}
 
-// ── Static Utilities ────────────────────────────────────────────────────────
+    auto json_schema_validator = std::make_shared<JsonSchemaValidator>(
+        [this](const std::string &a_id, LogContext log_context)
+            -> nlohmann::json {
+          libjson::Value sch;
+          m_db_client.schemaView(a_id, sch, log_context);
+          return nlohmann::json::parse(
+              sch.asArray().begin()->asObject().getValue("def").toString());
+        });
 
-void SchemaHandler::enforceRequiredProperties(const nlohmann::json &a_schema) {
-  // json_schema validator does not check for required fields in schema
-  // Must include properties and type: Object
-  if (!a_schema.is_object())
-    EXCEPT(1, "Schema must be a JSON object.");
-
-  nlohmann::json::const_iterator i = a_schema.find("properties");
-
-  if (i == a_schema.end())
-    EXCEPT(1, "Schema is missing required 'properties' field.");
-
-  if (!i.value().is_object())
-    EXCEPT(1, "Schema properties field must be a JSON object.");
-
-  i = a_schema.find("type");
-
-  if (i == a_schema.end())
-    EXCEPT(1, "Schema is missing required 'type' field.");
-
-  if (!i.value().is_string() || i.value().get<string>() != "object")
-    EXCEPT(1, "Schema type must be 'object'.");
-}
-
-// ── Private ─────────────────────────────────────────────────────────────────
-
-void SchemaHandler::schemaLoader(const nlohmann::json_uri &a_uri,
-                                 nlohmann::json &a_value,
-                                 LogContext log_context) {
-  DL_DEBUG(log_context, "Load schema, scheme: "
-                            << a_uri.scheme() << ", path: " << a_uri.path()
-                            << ", auth: " << a_uri.authority()
-                            << ", id: " << a_uri.identifier());
-
-  libjson::Value sch;
-  std::string id = a_uri.path();
-
-  id = id.substr(1); // Skip leading "/"
-  m_db_client.schemaView(id, sch, log_context);
-
-  a_value = nlohmann::json::parse(
-      sch.asArray().begin()->asObject().getValue("def").toString());
-
-  DL_TRACE(log_context, "Loaded schema: " << a_value);
+    m_schema_factory.registerValidator("json-schema",
+                                       std::move(json_schema_validator));
 }
 
 // ── Schema Definition Handlers ──────────────────────────────────────────────
@@ -103,12 +66,14 @@ void SchemaHandler::handleCreate(const std::string &a_uid,
   // Store content through factory (no-op for Arango, meaningful for external)
   try {
     m_schema_factory.getStorage(a_request.type()).storeContent(
-        a_reply.id(), a_request.def(), a_request.desc(), log_context);
+        a_reply.schema(0).id(), a_request.def(), a_request.desc(), log_context);
   } catch (exception &e) {
     DL_ERROR(log_context, "Schema storage failed attempting rollback: " << e.what());
     try {
       AckReply a_reply_delete;
-      m_db_client.schemaDelete(a_reply.id(), a_reply_delete, log_context);
+      SchemaDeleteRequest delete_request;
+      delete_request.set_id(a_reply.schema(0).id());
+      m_db_client.schemaDelete(delete_request, a_reply_delete, log_context);
     } catch (exception &e) {
       DL_ERROR(log_context, "Schema rollback of create request failed: " << e.what());
     }
@@ -139,7 +104,7 @@ void SchemaHandler::handleRevise(const std::string &a_uid,
       schema_format =
           sch.asArray().begin()->asObject().getValue("format").toString();
     } catch (exception &e) {
-      DL_WARN(log_context,
+      DL_WARNING(log_context,
               "Could not look up schema " << a_request.id()
                   << " for type/format, defaulting to json-schema/json: "
                   << e.what());
@@ -172,14 +137,16 @@ void SchemaHandler::handleRevise(const std::string &a_uid,
   if (a_request.has_def()) {
     try {
       m_schema_factory.getStorage(schema_type).storeContent(
-          a_reply.id(), a_request.def(), a_request.desc(), log_context);
+          a_reply.schema(0).id(), a_request.def(), a_request.desc(), log_context);
     } catch (exception &e) {
       // TODO: Arango revision exists but external storage failed — needs rollback
       DL_ERROR(log_context,
                "Schema storage failed for revision: " << e.what());
       try {
         AckReply a_reply_delete;
-        m_db_client.schemaDelete(a_reply.id(), a_reply_delete, log_context);
+        SchemaDeleteRequest delete_request;
+        delete_request.set_id(a_reply.schema(0).id());
+        m_db_client.schemaDelete(delete_request, a_reply_delete, log_context);
       } catch (exception &e) {
         DL_ERROR(log_context, "Schema rollback of revision request failed: " << e.what());
       }
@@ -209,7 +176,7 @@ void SchemaHandler::handleUpdate(const std::string &a_uid,
       schema_format =
           sch.asArray().begin()->asObject().getValue("format").toString();
     } catch (exception &e) {
-      DL_WARN(log_context,
+      DL_WARNING(log_context,
               "Could not look up schema " << a_request.id()
                   << " for type/format, defaulting to json-schema/json: "
                   << e.what());
@@ -260,6 +227,73 @@ void SchemaHandler::handleUpdate(const std::string &a_uid,
 
 // ── Metadata Validation ─────────────────────────────────────────────────────
 
+std::string SchemaHandler::validateMetadataContent(
+    const std::string &a_sch_id,
+    const std::string &a_metadata,
+    LogContext log_context) {
+
+  DL_DEBUG(log_context, "validateMetadataContent schema=" << a_sch_id);
+
+  std::string schema_type = "json-schema";
+  std::string schema_format = "json";
+  std::string schema_def;
+
+  // Load schema record from DB
+  try {
+    libjson::Value sch;
+    m_db_client.schemaView(a_sch_id, sch, log_context);
+
+    auto &sch_doc = sch.asArray().begin()->asObject();
+    schema_def = sch_doc.getValue("def").toString();
+
+    try {
+      schema_type = sch_doc.getValue("type").toString();
+      schema_format = sch_doc.getValue("format").toString();
+    } catch (std::exception &) {
+      DL_WARNING(log_context,
+              "Schema " << a_sch_id
+                  << " missing type/format fields, defaulting to "
+                     "json-schema/json");
+    }
+  } catch (std::exception &e) {
+    return std::string("Metadata schema error: ") + e.what() + "\n";
+  }
+
+  // Retrieve content from storage backend
+  try {
+    auto &storage = m_schema_factory.getStorage(schema_type);
+    auto storage_result = storage.retrieveContent(
+        a_sch_id, schema_def, log_context);
+    if (!storage_result.Ok) {
+      return "Failed to retrieve schema content: " + storage_result.error + "\n";
+    }
+    schema_def = storage_result.content;
+  } catch (std::exception &e) {
+    return std::string("Schema storage error: ") + e.what() + "\n";
+  }
+
+  // Cache and validate
+  try {
+    auto &validator = m_schema_factory.getValidator(schema_type);
+
+    if (!validator.cacheSchema(a_sch_id, schema_def,
+                               schema_format, log_context)) {
+      return "Failed to compile schema: " + a_sch_id + "\n";
+    }
+
+    auto result = validator.validateMetadata(
+        a_sch_id, schema_format, a_metadata, log_context);
+
+    if (!result.valid) {
+      return result.errors;
+    }
+  } catch (std::exception &e) {
+    return std::string("Metadata validation error: ") + e.what() + "\n";
+  }
+
+  return "";
+}
+
 void SchemaHandler::handleMetadataValidate(
     const std::string &a_uid,
     const MetadataValidateRequest &a_request,
@@ -269,106 +303,228 @@ void SchemaHandler::handleMetadataValidate(
   DL_DEBUG(log_context, "Metadata validate");
   m_db_client.setClient(a_uid);
 
-  // ── Load schema record from DB ────────────────────────────────────────
+  std::string errors = validateMetadataContent(
+      a_request.sch_id(), a_request.metadata(), log_context);
 
-  std::string schema_type = "json-schema";
-  std::string schema_format = "json";
-  std::string schema_def;
-
-  try {
-    libjson::Value sch;
-    DL_TRACE(log_context, "Loading schema " << a_request.sch_id());
-
-    // Look up the schema type from the source of truth in arango 
-    m_db_client.schemaView(a_request.sch_id(), sch, log_context);
-
-    auto &sch_doc = sch.asArray().begin()->asObject();
-
-    schema_def = sch_doc.getValue("def").toString();
-    // These fields may not exist on older records — fall through to defaults
-    try {
-      schema_type = sch_doc.getValue("type").toString();
-      schema_format = sch_doc.getValue("format").toString();
-    } catch (exception &) {
-      DL_WARN(log_context,
-              "Schema " << a_request.sch_id()
-                  << " missing type/format fields, defaulting to "
-                     "json-schema/json");
-    }
-  } catch (TraceException &e) {
-    DL_ERROR(log_context, "Schema lookup failed: " << e.what());
-    throw;
-  } catch (exception &e) {
-    EXCEPT_PARAM(1, "Schema lookup error: " << e.what());
-  }
-
-  auto storage_result = m_schema_factory.getStorage(schema_type)
-      .retrieveContent(a_request.sch_id(), schema_def, log_context);
-  if (!storage_result.ok) {
-      EXCEPT_PARAM(1, "Failed to retrieve schema content: " << storage_result.error);
-  }
-  schema_def = storage_result.content;
-
-  // ── Validate metadata through factory ─────────────────────────────────
-
-  try {
-    auto &validator = m_schema_factory.getValidator(schema_type);
-
-    // Always refresh cache from what we just loaded from DB.
-    // Avoids stale compiled schemas after updates.
-    if (!validator.cacheSchema(a_request.sch_id(), schema_def,
-                               schema_format, log_context)) {
-      EXCEPT_PARAM(1,
-                   "Failed to compile schema: " << a_request.sch_id());
-    }
-
-    auto result = validator.validateMetadata(
-        a_request.sch_id(), schema_format, a_request.metadata(),
-        log_context);
-
-    if (!result.valid) {
-      a_reply.set_errors(result.errors);
-    }
-
-  } catch (TraceException &) {
-    throw;
-  } catch (exception &e) {
-    DL_ERROR(log_context, "Metadata validation error: " << e.what());
-    EXCEPT_PARAM(1, "Metadata validation error: " << e.what());
+  if (!errors.empty()) {
+    a_reply.set_errors(errors);
   }
 }
 
-
-void SchemaHandler::handleSearch(const std::string &a_uid,
-                                 const SchemaSearchRequest &a_request,
-                                 SchemaDataReply &a_reply,
-                                 LogContext log_context) {
-  (void)a_reply;
-  m_db_client.setClient(a_uid);
-  DL_DEBUG(log_context, "Schema search");
-  m_db_client.schemaSearch(a_request, a_reply, log_context);
-}
+//void SchemaHandler::handleMetadataValidate(
+//    const std::string &a_uid,
+//    const MetadataValidateRequest &a_request,
+//    MetadataValidateReply &a_reply,
+//    LogContext log_context) {
+//
+//  DL_DEBUG(log_context, "Metadata validate");
+//  m_db_client.setClient(a_uid);
+//
+//  // ── Load schema record from DB ────────────────────────────────────────
+//
+//  std::string schema_type = "json-schema";
+//  std::string schema_format = "json";
+//  std::string schema_def;
+//
+//  try {
+//    libjson::Value sch;
+//    DL_TRACE(log_context, "Loading schema " << a_request.sch_id());
+//
+//    // Look up the schema type from the source of truth in arango 
+//    m_db_client.schemaView(a_request.sch_id(), sch, log_context);
+//
+//    auto &sch_doc = sch.asArray().begin()->asObject();
+//
+//    schema_def = sch_doc.getValue("def").toString();
+//    // These fields may not exist on older records — fall through to defaults
+//    try {
+//      schema_type = sch_doc.getValue("type").toString();
+//      schema_format = sch_doc.getValue("format").toString();
+//    } catch (exception &) {
+//      DL_WARNING(log_context,
+//              "Schema " << a_request.sch_id()
+//                  << " missing type/format fields, defaulting to "
+//                     "json-schema/json");
+//    }
+//  } catch (TraceException &e) {
+//    DL_ERROR(log_context, "Schema lookup failed: " << e.what());
+//    throw;
+//  } catch (exception &e) {
+//    EXCEPT_PARAM(1, "Schema lookup error: " << e.what());
+//  }
+//
+//  auto storage_result = m_schema_factory.getStorage(schema_type)
+//      .retrieveContent(a_request.sch_id(), schema_def, log_context);
+//  if (!storage_result.Ok) {
+//      EXCEPT_PARAM(1, "Failed to retrieve schema content: " << storage_result.error);
+//  }
+//  schema_def = storage_result.content;
+//
+//  // ── Validate metadata through factory ─────────────────────────────────
+//
+//  try {
+//    auto &validator = m_schema_factory.getValidator(schema_type);
+//
+//    // Always refresh cache from what we just loaded from DB.
+//    // Avoids stale compiled schemas after updates.
+//    if (!validator.cacheSchema(a_request.sch_id(), schema_def,
+//                               schema_format, log_context)) {
+//      EXCEPT_PARAM(1,
+//                   "Failed to compile schema: " << a_request.sch_id());
+//    }
+//
+//    auto result = validator.validateMetadata(
+//        a_request.sch_id(), schema_format, a_request.metadata(),
+//        log_context);
+//
+//    if (!result.valid) {
+//      a_reply.set_errors(result.errors);
+//    }
+//
+//  } catch (TraceException &) {
+//    throw;
+//  } catch (exception &e) {
+//    DL_ERROR(log_context, "Metadata validation error: " << e.what());
+//    EXCEPT_PARAM(1, "Metadata validation error: " << e.what());
+//  }
+//}
 
 void SchemaHandler::handleView(const std::string &a_uid,
-                                 const SchemaViewRequest &a_request,
-                                 SchemaDataReply &a_reply,
-                                 LogContext log_context) {
-
+                                const SchemaViewRequest &a_request,
+                                SchemaDataReply &a_reply,
+                                LogContext log_context) {
   (void)a_reply;
   m_db_client.setClient(a_uid);
   DL_DEBUG(log_context, "Schema view");
+
   m_db_client.schemaView(a_request, a_reply, log_context);
+
+  // Hydrate def field from storage backend for each record in the reply.
+  // For Arango-native schemas this is a no-op passthrough.
+  // For external backends, the Arango def field may be a reference/stub
+  // that retrieveContent resolves to the actual content.
+  //
+  // NOTE: Assumes SchemaDataReply has a repeated SchemaData field accessible
+  // via data() / mutable_data(). Adjust accessor names to match your proto.
+  for (int i = 0; i < a_reply.schema_size(); ++i) {
+    auto *record = a_reply.mutable_schema(i);
+
+    std::string schema_type = "json-schema";
+    try {
+      if (!record->type().empty()) {
+        schema_type = record->type();
+      }
+    } catch (exception &) {
+      // Fall through to default
+    }
+
+    try {
+      auto &storage = m_schema_factory.getStorage(schema_type);
+      auto result = storage.retrieveContent(
+          record->id(), record->def(), log_context);
+
+      if (result.Ok) {
+        record->set_def(result.content);
+      } else {
+        DL_WARNING(log_context,
+                "Failed to retrieve content for schema "
+                    << record->id() << ": " << result.error
+                    << ". Returning Arango def as-is.");
+      }
+    } catch (exception &e) {
+      DL_WARNING(log_context,
+              "Storage retrieval failed for schema "
+                  << record->id() << ": " << e.what()
+                  << ". Returning Arango def as-is.");
+    }
+  }
+}
+
+void SchemaHandler::handleSearch(const std::string &a_uid,
+                                  const SchemaSearchRequest &a_request,
+                                  SchemaDataReply &a_reply,
+                                  LogContext log_context) {
+  (void)a_reply;
+  m_db_client.setClient(a_uid);
+  DL_DEBUG(log_context, "Schema search");
+
+  m_db_client.schemaSearch(a_request, a_reply, log_context);
+
+  for (int i = 0; i < a_reply.schema_size(); ++i) {
+    auto *record = a_reply.mutable_schema(i);
+
+    std::string schema_type = "json-schema";
+    try {
+      if (!record->type().empty()) {
+        schema_type = record->type();
+      }
+    } catch (exception &) {
+      // Fall through to default
+    }
+
+    try {
+      auto &storage = m_schema_factory.getStorage(schema_type);
+      auto result = storage.retrieveContent(
+          record->id(), record->def(), log_context);
+
+      if (result.Ok) {
+        record->set_def(result.content);
+      } else {
+        DL_WARNING(log_context,
+                "Failed to retrieve content for schema "
+                    << record->id() << ": " << result.error
+                    << ". Returning Arango def as-is.");
+      }
+    } catch (exception &e) {
+      DL_WARNING(log_context,
+              "Storage retrieval failed for schema "
+                  << record->id() << ": " << e.what()
+                  << ". Returning Arango def as-is.");
+    }
+  }
 }
 
 void SchemaHandler::handleDelete(const std::string &a_uid,
-                                 const SchemaDeleteRequest &a_request,
-                                 AckReply &a_reply,
-                                 LogContext log_context) {
-
+                                  const SchemaDeleteRequest &a_request,
+                                  AckReply &a_reply,
+                                  LogContext log_context) {
   (void)a_reply;
   m_db_client.setClient(a_uid);
   DL_DEBUG(log_context, "Schema delete");
+
+  // Look up type BEFORE deleting from Arango — we need it for
+  // external storage cleanup and it won't exist after deletion.
+  std::string schema_type = "json-schema";
+  try {
+    libjson::Value sch;
+    m_db_client.schemaView(a_request.id(), sch, log_context);
+
+    auto &sch_doc = sch.asArray().begin()->asObject();
+    schema_type = sch_doc.getValue("type").toString();
+  } catch (exception &e) {
+    DL_WARNING(log_context,
+            "Could not look up schema " << a_request.id()
+                << " type before deletion, defaulting to json-schema: "
+                << e.what());
+  }
+
+  // Delete from Arango first — this is the source of truth
   m_db_client.schemaDelete(a_request, a_reply, log_context);
+
+  // Clean up external storage. For Arango-native this is a no-op.
+  // Runs after Arango deletion so we don't orphan external content
+  // if the Arango delete fails.
+  try {
+    m_schema_factory.getStorage(schema_type).deleteContent(
+        a_request.id(), log_context);
+  } catch (exception &e) {
+    // Log but don't fail the request — Arango record is already gone.
+    // Orphaned external content is preferable to a failed delete that
+    // leaves the Arango record inconsistent.
+    DL_ERROR(log_context,
+             "External storage cleanup failed for deleted schema "
+                 << a_request.id() << ": " << e.what());
+  }
 }
 
 
