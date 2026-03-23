@@ -467,6 +467,7 @@ if __name__ == "__main__":
     suite.addTest(TestDataFedPythonAPISchemaCRUD("test_metadata_validate_client_rejects_bad_json"))
     suite.addTest(TestDataFedPythonAPISchemaCRUD("test_metadata_validate_requires_input"))
     suite.addTest(TestDataFedPythonAPISchemaCRUD("test_schema_create_from_file"))
+    suite.addTest(TestDataFedPythonAPISchemaCRUD("test_metadata_validate_metadata_file_cannot_be_opened"))
     runner = unittest.TextTestRunner()
     result = runner.run(suite)
     sys.exit(not result.wasSuccessful())
