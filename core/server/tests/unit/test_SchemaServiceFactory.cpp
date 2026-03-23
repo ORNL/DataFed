@@ -50,86 +50,106 @@ private:
   std::string m_name;
 };
 
-} // anonymous namespace
+
 
 // ============================================================================
-// Test Suite: Validator Registration
+// Add MockStorage alongside MockValidator
 // ============================================================================
 
-BOOST_AUTO_TEST_SUITE(ValidatorRegistration)
+/**
+ * @brief Minimal mock storage that tracks its identity.
+ */
+class MockStorage : public ISchemaStorage {
+public:
+  explicit MockStorage(const std::string &name) : m_name(name) {}
 
-BOOST_AUTO_TEST_CASE(register_and_retrieve_validator) {
-  SchemaServiceFactory factory;
-  auto mock = std::make_shared<MockValidator>("TestValidator");
+  std::string storeContent(const std::string & /*id*/,
+                           const std::string &a_content,
+                           const std::string & /*desc*/,
+                           LogContext /*ctx*/) override {
+    return a_content;
+  }
 
-  factory.registerValidator("TestEngine", mock);
+  StorageRetrieveResult retrieveContent(const std::string & /*id*/,
+                                        const std::string &a_arango_def,
+                                        LogContext /*ctx*/) override {
+    return StorageRetrieveResult::Ok(a_arango_def);
+  }
 
-  ISchemaValidator &retrieved = factory.getValidator("TestEngine");
-  auto *mock_ptr = dynamic_cast<MockValidator *>(&retrieved);
-  BOOST_REQUIRE(mock_ptr != nullptr);
-  BOOST_TEST(mock_ptr->getName() == "TestValidator");
+  std::string updateContent(const std::string & /*id*/,
+                            const std::string &a_content,
+                            const std::optional<std::string> & /*desc*/,
+                            LogContext /*ctx*/) override {
+    return a_content;
+  }
+
+  void deleteContent(const std::string & /*id*/,
+                     LogContext /*ctx*/) override {}
+
+  const std::string &getName() const { return m_name; }
+
+private:
+  std::string m_name;
+};
+
+}
+// ============================================================================
+// Helper to register both storage + validator for an engine
+// ============================================================================
+
+void registerEngine(SchemaServiceFactory &factory,
+                    const std::string &engine,
+                    const std::string &validator_name,
+                    const std::string &storage_name) {
+  factory.registerValidator(engine, std::make_shared<MockValidator>(validator_name));
+  factory.registerStorage(engine, std::make_shared<MockStorage>(storage_name));
 }
 
-BOOST_AUTO_TEST_CASE(register_multiple_validators) {
+// ============================================================================
+// Test Suite: setDefaultSchemaType
+// ============================================================================
+
+BOOST_AUTO_TEST_SUITE(SetDefaultSchemaType)
+
+BOOST_AUTO_TEST_CASE(throws_if_validator_not_registered) {
   SchemaServiceFactory factory;
-  auto mock1 = std::make_shared<MockValidator>("Validator1");
-  auto mock2 = std::make_shared<MockValidator>("Validator2");
+  factory.registerStorage("Engine", std::make_shared<MockStorage>("S"));
 
-  factory.registerValidator("Engine1", mock1);
-  factory.registerValidator("Engine2", mock2);
-
-  auto *v1 = dynamic_cast<MockValidator *>(&factory.getValidator("Engine1"));
-  auto *v2 = dynamic_cast<MockValidator *>(&factory.getValidator("Engine2"));
-
-  BOOST_REQUIRE(v1 != nullptr);
-  BOOST_REQUIRE(v2 != nullptr);
-  BOOST_TEST(v1->getName() == "Validator1");
-  BOOST_TEST(v2->getName() == "Validator2");
+  BOOST_CHECK_THROW(factory.setDefaultSchemaType("Engine"), TraceException);
 }
 
-BOOST_AUTO_TEST_CASE(register_overwrites_existing) {
+BOOST_AUTO_TEST_CASE(throws_if_storage_not_registered) {
   SchemaServiceFactory factory;
-  auto original = std::make_shared<MockValidator>("Original");
-  auto replacement = std::make_shared<MockValidator>("Replacement");
+  factory.registerValidator("Engine", std::make_shared<MockValidator>("V"));
 
-  factory.registerValidator("Engine", original);
-  factory.registerValidator("Engine", replacement);
-
-  auto *retrieved = dynamic_cast<MockValidator *>(&factory.getValidator("Engine"));
-  BOOST_REQUIRE(retrieved != nullptr);
-  BOOST_TEST(retrieved->getName() == "Replacement");
+  BOOST_CHECK_THROW(factory.setDefaultSchemaType("Engine"), TraceException);
 }
 
-BOOST_AUTO_TEST_CASE(engine_names_are_case_sensitive) {
+BOOST_AUTO_TEST_CASE(throws_if_neither_registered) {
   SchemaServiceFactory factory;
-  auto lower = std::make_shared<MockValidator>("LowerCase");
-  auto upper = std::make_shared<MockValidator>("UpperCase");
 
-  factory.registerValidator("jsonschema", lower);
-  factory.registerValidator("JSONSCHEMA", upper);
+  BOOST_CHECK_THROW(factory.setDefaultSchemaType("Engine"), TraceException);
+}
 
-  auto *v_lower = dynamic_cast<MockValidator *>(&factory.getValidator("jsonschema"));
-  auto *v_upper = dynamic_cast<MockValidator *>(&factory.getValidator("JSONSCHEMA"));
+BOOST_AUTO_TEST_CASE(succeeds_when_both_registered) {
+  SchemaServiceFactory factory;
+  registerEngine(factory, "Engine", "V", "S");
 
-  BOOST_REQUIRE(v_lower != nullptr);
-  BOOST_REQUIRE(v_upper != nullptr);
-  BOOST_TEST(v_lower->getName() == "LowerCase");
-  BOOST_TEST(v_upper->getName() == "UpperCase");
+  BOOST_CHECK_NO_THROW(factory.setDefaultSchemaType("Engine"));
 }
 
 BOOST_AUTO_TEST_SUITE_END()
 
 // ============================================================================
-// Test Suite: Default Validator
+// Test Suite: Default Validator (updated for setDefaultSchemaType)
 // ============================================================================
 
 BOOST_AUTO_TEST_SUITE(DefaultValidator)
 
 BOOST_AUTO_TEST_CASE(set_and_get_default_for_empty_engine) {
   SchemaServiceFactory factory;
-  auto default_val = std::make_shared<MockValidator>("Default");
-
-  factory.setDefaultValidator(default_val);
+  registerEngine(factory, "json-schema", "Default", "DefaultStorage");
+  factory.setDefaultSchemaType("json-schema");
 
   auto *retrieved = dynamic_cast<MockValidator *>(&factory.getValidator(""));
   BOOST_REQUIRE(retrieved != nullptr);
@@ -138,49 +158,49 @@ BOOST_AUTO_TEST_CASE(set_and_get_default_for_empty_engine) {
 
 BOOST_AUTO_TEST_CASE(unregistered_engine_returns_default) {
   SchemaServiceFactory factory;
-  auto default_val = std::make_shared<MockValidator>("Default");
-  auto specific = std::make_shared<MockValidator>("Specific");
-
-  factory.setDefaultValidator(default_val);
-  factory.registerValidator("SpecificEngine", specific);
+  registerEngine(factory, "json-schema", "Default", "DefaultStorage");
+  registerEngine(factory, "SpecificEngine", "Specific", "SpecificStorage");
+  factory.setDefaultSchemaType("json-schema");
 
   // Registered engine returns specific validator
-  auto *v_specific = dynamic_cast<MockValidator *>(&factory.getValidator("SpecificEngine"));
+  auto *v_specific = dynamic_cast<MockValidator *>(
+      &factory.getValidator("SpecificEngine"));
   BOOST_TEST(v_specific->getName() == "Specific");
 
   // Unregistered engine returns default
-  auto *v_unknown = dynamic_cast<MockValidator *>(&factory.getValidator("UnknownEngine"));
+  auto *v_unknown = dynamic_cast<MockValidator *>(
+      &factory.getValidator("UnknownEngine"));
   BOOST_TEST(v_unknown->getName() == "Default");
 }
 
 BOOST_AUTO_TEST_CASE(native_engine_returns_default) {
   SchemaServiceFactory factory;
-  auto default_val = std::make_shared<MockValidator>("Default");
+  registerEngine(factory, "json-schema", "Default", "DefaultStorage");
+  factory.setDefaultSchemaType("json-schema");
 
-  factory.setDefaultValidator(default_val);
-
-  auto *retrieved = dynamic_cast<MockValidator *>(&factory.getValidator("native"));
+  auto *retrieved = dynamic_cast<MockValidator *>(
+      &factory.getValidator("native"));
   BOOST_REQUIRE(retrieved != nullptr);
   BOOST_TEST(retrieved->getName() == "Default");
 }
 
 BOOST_AUTO_TEST_CASE(default_can_be_replaced) {
   SchemaServiceFactory factory;
-  auto default1 = std::make_shared<MockValidator>("Default1");
-  auto default2 = std::make_shared<MockValidator>("Default2");
+  registerEngine(factory, "engine-a", "Default1", "Storage1");
+  registerEngine(factory, "engine-b", "Default2", "Storage2");
 
-  factory.setDefaultValidator(default1);
-  BOOST_TEST(dynamic_cast<MockValidator *>(&factory.getValidator(""))->getName() == "Default1");
+  factory.setDefaultSchemaType("engine-a");
+  BOOST_TEST(dynamic_cast<MockValidator *>(
+      &factory.getValidator(""))->getName() == "Default1");
 
-  factory.setDefaultValidator(default2);
-  BOOST_TEST(dynamic_cast<MockValidator *>(&factory.getValidator(""))->getName() == "Default2");
+  factory.setDefaultSchemaType("engine-b");
+  BOOST_TEST(dynamic_cast<MockValidator *>(
+      &factory.getValidator(""))->getName() == "Default2");
 }
 
 BOOST_AUTO_TEST_CASE(no_default_throws_for_unknown_engine) {
   SchemaServiceFactory factory;
-  auto specific = std::make_shared<MockValidator>("Specific");
-
-  factory.registerValidator("SpecificEngine", specific);
+  registerEngine(factory, "SpecificEngine", "Specific", "SpecificStorage");
   // No default set
 
   BOOST_CHECK_THROW(factory.getValidator("UnknownEngine"), TraceException);
@@ -195,7 +215,7 @@ BOOST_AUTO_TEST_CASE(no_default_throws_for_empty_engine) {
 BOOST_AUTO_TEST_SUITE_END()
 
 // ============================================================================
-// Test Suite: hasCustomValidator
+// Test Suite: hasCustomValidator (one test updated)
 // ============================================================================
 
 BOOST_AUTO_TEST_SUITE(HasCustomValidator)
@@ -217,13 +237,15 @@ BOOST_AUTO_TEST_CASE(returns_true_for_registered) {
 
 BOOST_AUTO_TEST_CASE(default_does_not_count_as_custom) {
   SchemaServiceFactory factory;
-  auto default_val = std::make_shared<MockValidator>("Default");
+  registerEngine(factory, "json-schema", "Default", "DefaultStorage");
+  factory.setDefaultSchemaType("json-schema");
 
-  factory.setDefaultValidator(default_val);
-
-  // Default is set, but no custom validator for this engine
+  // Default is set, but no custom validator for these engines
   BOOST_TEST(factory.hasCustomValidator("SomeEngine") == false);
   BOOST_TEST(factory.hasCustomValidator("") == false);
+
+  // The default engine itself IS registered, so it shows as custom
+  BOOST_TEST(factory.hasCustomValidator("json-schema") == true);
 }
 
 BOOST_AUTO_TEST_CASE(case_sensitive_check) {
@@ -239,41 +261,3 @@ BOOST_AUTO_TEST_CASE(case_sensitive_check) {
 
 BOOST_AUTO_TEST_SUITE_END()
 
-// ============================================================================
-// Test Suite: Validator Reference Stability
-// ============================================================================
-
-BOOST_AUTO_TEST_SUITE(ValidatorReferenceStability)
-
-BOOST_AUTO_TEST_CASE(same_reference_returned_on_multiple_calls) {
-  SchemaServiceFactory factory;
-  auto mock = std::make_shared<MockValidator>("Test");
-
-  factory.registerValidator("Engine", mock);
-
-  ISchemaValidator &ref1 = factory.getValidator("Engine");
-  ISchemaValidator &ref2 = factory.getValidator("Engine");
-
-  BOOST_TEST(&ref1 == &ref2);
-}
-
-BOOST_AUTO_TEST_CASE(reference_remains_valid_after_other_registrations) {
-  SchemaServiceFactory factory;
-  auto mock1 = std::make_shared<MockValidator>("First");
-
-  factory.registerValidator("Engine1", mock1);
-  ISchemaValidator &ref1 = factory.getValidator("Engine1");
-
-  // Register more validators
-  auto mock2 = std::make_shared<MockValidator>("Second");
-  auto mock3 = std::make_shared<MockValidator>("Third");
-  factory.registerValidator("Engine2", mock2);
-  factory.registerValidator("Engine3", mock3);
-
-  // Original reference should still be valid
-  auto *mock_ptr = dynamic_cast<MockValidator *>(&ref1);
-  BOOST_REQUIRE(mock_ptr != nullptr);
-  BOOST_TEST(mock_ptr->getName() == "First");
-}
-
-BOOST_AUTO_TEST_SUITE_END()

@@ -8,9 +8,14 @@ namespace Core {
 
 // ── Storage Registry ────────────────────────────────────────────────────────
 
-void SchemaServiceFactory::setDefaultStorage(
-    std::shared_ptr<ISchemaStorage> a_storage) {
-  m_default_storage = std::move(a_storage);
+void SchemaServiceFactory::setDefaultSchemaType(
+    const std::string & a_engine) {
+
+  if (m_storage.count(a_engine) == 0 || m_validators.count(a_engine) == 0) {
+    EXCEPT_PARAM(INTERNAL_ERROR,
+         "SchemaServiceFactory: no storage or validator available for '" << a_engine << "' both must be set, before it can be made the default.");
+  }
+  m_default_engine = a_engine;
 }
 
 void SchemaServiceFactory::registerStorage(
@@ -25,11 +30,6 @@ SchemaServiceFactory::getStorage(const std::string &a_engine) {
 }
 
 // ── Validator Registry ──────────────────────────────────────────────────────
-
-void SchemaServiceFactory::setDefaultValidator(
-    std::shared_ptr<ISchemaValidator> a_validator) {
-  m_default_validator = std::move(a_validator);
-}
 
 void SchemaServiceFactory::registerValidator(
     const std::string &a_engine,
@@ -66,9 +66,9 @@ ISchemaStorage &SchemaServiceFactory::resolveStorage(
       return *(it->second);
   }
 
-  if (m_default_storage)
-    return *m_default_storage;
-
+  if (!m_default_engine.empty()) {
+    return *m_storage.at(m_default_engine);
+  }
   EXCEPT_PARAM(INTERNAL_ERROR,
          "SchemaServiceFactory: no storage available for engine '" << a_engine << "' and no default storage set");
 }
@@ -82,8 +82,9 @@ ISchemaValidator &SchemaServiceFactory::resolveValidator(
       return *(it->second);
   }
 
-  if (m_default_validator)
-    return *m_default_validator;
+  if (!m_default_engine.empty()) {
+    return *m_validators.at(m_default_engine);
+  }
 
   EXCEPT_PARAM(INTERNAL_ERROR,
          "SchemaServiceFactory: no validator available for engine '" << a_engine << "' and no default validator set");

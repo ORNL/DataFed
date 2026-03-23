@@ -31,6 +31,7 @@ SchemaHandler::SchemaHandler(DatabaseAPI &a_db_client)
 
     m_schema_factory.registerValidator("json-schema",
                                        std::move(json_schema_validator));
+    m_schema_factory.setDefaultSchemaType("json-schema");
 }
 
 // ── Schema Definition Handlers ──────────────────────────────────────────────
@@ -310,84 +311,6 @@ void SchemaHandler::handleMetadataValidate(
     a_reply.set_errors(errors);
   }
 }
-
-//void SchemaHandler::handleMetadataValidate(
-//    const std::string &a_uid,
-//    const MetadataValidateRequest &a_request,
-//    MetadataValidateReply &a_reply,
-//    LogContext log_context) {
-//
-//  DL_DEBUG(log_context, "Metadata validate");
-//  m_db_client.setClient(a_uid);
-//
-//  // ── Load schema record from DB ────────────────────────────────────────
-//
-//  std::string schema_type = "json-schema";
-//  std::string schema_format = "json";
-//  std::string schema_def;
-//
-//  try {
-//    libjson::Value sch;
-//    DL_TRACE(log_context, "Loading schema " << a_request.sch_id());
-//
-//    // Look up the schema type from the source of truth in arango 
-//    m_db_client.schemaView(a_request.sch_id(), sch, log_context);
-//
-//    auto &sch_doc = sch.asArray().begin()->asObject();
-//
-//    schema_def = sch_doc.getValue("def").toString();
-//    // These fields may not exist on older records — fall through to defaults
-//    try {
-//      schema_type = sch_doc.getValue("type").toString();
-//      schema_format = sch_doc.getValue("format").toString();
-//    } catch (exception &) {
-//      DL_WARNING(log_context,
-//              "Schema " << a_request.sch_id()
-//                  << " missing type/format fields, defaulting to "
-//                     "json-schema/json");
-//    }
-//  } catch (TraceException &e) {
-//    DL_ERROR(log_context, "Schema lookup failed: " << e.what());
-//    throw;
-//  } catch (exception &e) {
-//    EXCEPT_PARAM(1, "Schema lookup error: " << e.what());
-//  }
-//
-//  auto storage_result = m_schema_factory.getStorage(schema_type)
-//      .retrieveContent(a_request.sch_id(), schema_def, log_context);
-//  if (!storage_result.Ok) {
-//      EXCEPT_PARAM(1, "Failed to retrieve schema content: " << storage_result.error);
-//  }
-//  schema_def = storage_result.content;
-//
-//  // ── Validate metadata through factory ─────────────────────────────────
-//
-//  try {
-//    auto &validator = m_schema_factory.getValidator(schema_type);
-//
-//    // Always refresh cache from what we just loaded from DB.
-//    // Avoids stale compiled schemas after updates.
-//    if (!validator.cacheSchema(a_request.sch_id(), schema_def,
-//                               schema_format, log_context)) {
-//      EXCEPT_PARAM(1,
-//                   "Failed to compile schema: " << a_request.sch_id());
-//    }
-//
-//    auto result = validator.validateMetadata(
-//        a_request.sch_id(), schema_format, a_request.metadata(),
-//        log_context);
-//
-//    if (!result.valid) {
-//      a_reply.set_errors(result.errors);
-//    }
-//
-//  } catch (TraceException &) {
-//    throw;
-//  } catch (exception &e) {
-//    DL_ERROR(log_context, "Metadata validation error: " << e.what());
-//    EXCEPT_PARAM(1, "Metadata validation error: " << e.what());
-//  }
-//}
 
 void SchemaHandler::handleView(const std::string &a_uid,
                                 const SchemaViewRequest &a_request,
