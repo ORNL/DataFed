@@ -148,7 +148,13 @@ void ClientWorker::setupMsgHandlers() {
                     &ClientWorker::procSchemaUpdateRequest);
     SET_MSG_HANDLER(MetadataValidateRequest,
                     &ClientWorker::procMetadataValidateRequest);
-
+    SET_MSG_HANDLER(SchemaSearchRequest, 
+                    &ClientWorker::procSchemaSearchRequest);
+    SET_MSG_HANDLER(SchemaViewRequest, 
+                    &ClientWorker::procSchemaViewRequest);
+    SET_MSG_HANDLER(SchemaDeleteRequest, 
+                    &ClientWorker::procSchemaDeleteRequest);
+        
     // Requires updating repo cache
     SET_MSG_HANDLER(RepoCreateRequest, &ClientWorker::procRepoCreate);
     SET_MSG_HANDLER(RepoUpdateRequest, &ClientWorker::procRepoUpdate);
@@ -241,9 +247,6 @@ void ClientWorker::setupMsgHandlers() {
                        repoAllocationSetDefault);
     SET_MSG_HANDLER_DB(RepoAllocationStatsRequest, RepoAllocationStatsReply,
                        repoAllocationStats);
-    SET_MSG_HANDLER_DB(SchemaSearchRequest, SchemaDataReply, schemaSearch);
-    SET_MSG_HANDLER_DB(SchemaViewRequest, SchemaDataReply, schemaView);
-    SET_MSG_HANDLER_DB(SchemaDeleteRequest, AckReply, schemaDelete);
     SET_MSG_HANDLER_DB(TagSearchRequest, TagDataReply, tagSearch);
     SET_MSG_HANDLER_DB(TagListByCountRequest, TagDataReply, tagListByCount);
     SET_MSG_HANDLER_DB(TopicListTopicsRequest, TopicDataReply,
@@ -773,6 +776,45 @@ ClientWorker::procMetadataValidateRequest(const std::string &a_uid,
   PROC_MSG_BEGIN(MetadataValidateRequest, MetadataValidateReply, log_context)
 
   m_schema_handler->handleMetadataValidate(a_uid, *request, reply, log_context);
+
+  PROC_MSG_END(log_context);
+}
+
+std::unique_ptr<IMessage>
+ClientWorker::procSchemaSearchRequest(const std::string &a_uid,
+                                          std::unique_ptr<IMessage> &&msg_request,
+                                          LogContext log_context) {
+  log_context.correlation_id =
+      std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+  PROC_MSG_BEGIN(SchemaSearchRequest, SchemaDataReply, log_context)
+
+  m_schema_handler->handleSearch(a_uid, *request, reply, log_context);
+
+  PROC_MSG_END(log_context);
+}
+
+std::unique_ptr<IMessage>
+ClientWorker::procSchemaViewRequest(const std::string &a_uid,
+                                          std::unique_ptr<IMessage> &&msg_request,
+                                          LogContext log_context) {
+  log_context.correlation_id =
+      std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+  PROC_MSG_BEGIN(SchemaViewRequest, SchemaDataReply, log_context)
+
+  m_schema_handler->handleView(a_uid, *request, reply, log_context);
+
+  PROC_MSG_END(log_context);
+}
+
+std::unique_ptr<IMessage>
+ClientWorker::procSchemaDeleteRequest(const std::string &a_uid,
+                                          std::unique_ptr<IMessage> &&msg_request,
+                                          LogContext log_context) {
+  log_context.correlation_id =
+      std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
+  PROC_MSG_BEGIN(SchemaDeleteRequest, AckReply, log_context)
+
+  m_schema_handler->handleDelete(a_uid, *request, reply, log_context);
 
   PROC_MSG_END(log_context);
 }

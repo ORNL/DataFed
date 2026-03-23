@@ -180,6 +180,18 @@ private:
   procSchemaUpdateRequest(const std::string &a_uid,
                           std::unique_ptr<IMessage> &&msg_request,
                           LogContext log_context);
+  std::unique_ptr<IMessage>
+  procSchemaSearchRequest(const std::string &a_uid,
+                          std::unique_ptr<IMessage> &&msg_request,
+                          LogContext log_context);
+  std::unique_ptr<IMessage>
+  procSchemaViewRequest(const std::string &a_uid,
+                          std::unique_ptr<IMessage> &&msg_request,
+                          LogContext log_context);
+  std::unique_ptr<IMessage>
+  procSchemaDeleteRequest(const std::string &a_uid,
+                          std::unique_ptr<IMessage> &&msg_request,
+                          LogContext log_context);
 
   void recordCollectionDelete(const std::vector<std::string> &a_ids,
                               SDMS::TaskDataReply &a_reply,
