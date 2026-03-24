@@ -200,5 +200,38 @@ void SchemaHandler::handleMetadataValidate(
   }
 }
 
+void SchemaHandler::handleSearch(const std::string &a_uid,
+                                 const SchemaSearchRequest &a_request,
+                                 SchemaDataReply &a_reply,
+                                 LogContext log_context) {
+  (void)a_reply;
+  m_db_client.setClient(a_uid);
+  DL_DEBUG(log_context, "Schema search");
+  m_db_client.schemaSearch(a_request, a_reply, log_context);
+}
+
+void SchemaHandler::handleView(const std::string &a_uid,
+                                 const SchemaViewRequest &a_request,
+                                 SchemaDataReply &a_reply,
+                                 LogContext log_context) {
+
+  (void)a_reply;
+  m_db_client.setClient(a_uid);
+  DL_DEBUG(log_context, "Schema view");
+  m_db_client.schemaView(a_request, a_reply, log_context);
+}
+
+void SchemaHandler::handleDelete(const std::string &a_uid,
+                                 const SchemaDeleteRequest &a_request,
+                                 AckReply &a_reply,
+                                 LogContext log_context) {
+
+  (void)a_reply;
+  m_db_client.setClient(a_uid);
+  DL_DEBUG(log_context, "Schema delete");
+  m_db_client.schemaDelete(a_request, a_reply, log_context);
+}
+
+
 } // namespace Core
 } // namespace SDMS

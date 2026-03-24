@@ -102,6 +102,21 @@ public:
                               MetadataValidateReply &a_reply,
                               LogContext log_context);
 
+  void handleSearch(const std::string &a_uid,
+                    const SchemaSearchRequest &a_request,
+                    SchemaDataReply &a_reply,
+                    LogContext log_context);
+
+  void handleView(const std::string &a_uid,
+                    const SchemaViewRequest &a_request,
+                    SchemaDataReply &a_reply,
+                    LogContext log_context);
+
+  void handleDelete(const std::string &a_uid,
+                    const SchemaDeleteRequest &a_request,
+                    AckReply &a_reply,
+                    LogContext log_context);
+
   // ── Utilities (public for direct unit testing) ────────────────────────
 
   /**
