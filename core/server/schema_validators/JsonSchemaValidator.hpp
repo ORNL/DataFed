@@ -1,3 +1,5 @@
+#ifndef JSON_SCHEMA_VALIDATOR_HPP
+#define JSON_SCHEMA_VALIDATOR_HPP
 #pragma once
 
 // Local includes
@@ -182,3 +184,4 @@ private:
 
 } // namespace Core
 } // namespace SDMS
+#endif // JSON_SCHEMA_VALIDATOR_HPP

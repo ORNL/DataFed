@@ -47,6 +47,7 @@ ClientWorker::ClientWorker(ICoreServer &a_core, size_t a_tid,
       std::to_string(log_context.thread_id) + "-WorkerThread";
   log_context.thread_id = 0;
   m_globus_api = std::move(GlobusAPI(log_context));
+  m_schema_handler = std::make_unique<SchemaHandler>(m_db_client);
   m_worker_thread = std::make_unique<std::thread>(&ClientWorker::workerThread,
                                                   this, log_context);
 }
@@ -724,30 +725,6 @@ ClientWorker::procDataPutRequest(const std::string &a_uid,
   PROC_MSG_END(log_context);
 }
 
-void ClientWorker::schemaEnforceRequiredProperties(
-    const nlohmann::json &a_schema) {
-  // json_schema validator does not check for required fields in schema
-  // Must include properties and type: Object
-  if (!a_schema.is_object())
-    EXCEPT(1, "Schema must be a JSON object.");
-
-  nlohmann::json::const_iterator i = a_schema.find("properties");
-
-  if (i == a_schema.end())
-    EXCEPT(1, "Schema is missing required 'properties' field.");
-
-  if (!i.value().is_object())
-    EXCEPT(1, "Schema properties field must be a JSON object.");
-
-  i = a_schema.find("type");
-
-  if (i == a_schema.end())
-    EXCEPT(1, "Schema is missing required 'type' field.");
-
-  if (!i.value().is_string() || i.value().get<string>() != "object")
-    EXCEPT(1, "Schema type must be 'object'.");
-}
-
 std::unique_ptr<IMessage>
 ClientWorker::procSchemaCreateRequest(const std::string &a_uid,
                                       std::unique_ptr<IMessage> &&msg_request,
@@ -756,27 +733,7 @@ ClientWorker::procSchemaCreateRequest(const std::string &a_uid,
       std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
   PROC_MSG_BEGIN(SchemaCreateRequest, SchemaDataReply, log_context)
 
-  m_db_client.setClient(a_uid);
-
-  DL_DEBUG(log_context, "Schema create");
-
-  try {
-    nlohmann::json schema = nlohmann::json::parse(request->def());
-
-    schemaEnforceRequiredProperties(schema);
-
-    nlohmann::json_schema::json_validator validator(
-        bind(&ClientWorker::schemaLoader, this, placeholders::_1,
-             placeholders::_2, log_context));
-
-    validator.set_root_schema(schema);
-
-    m_db_client.schemaCreate(*request, reply, log_context);
-
-  } catch (exception &e) {
-    DL_ERROR(log_context, "Invalid metadata schema: " << e.what());
-    EXCEPT_PARAM(1, "Invalid metadata schema: " << e.what());
-  }
+  m_schema_handler->handleCreate(a_uid, *request, reply, log_context);
 
   PROC_MSG_END(log_context);
 }
@@ -789,28 +746,7 @@ ClientWorker::procSchemaReviseRequest(const std::string &a_uid,
       std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
   PROC_MSG_BEGIN(SchemaReviseRequest, SchemaDataReply, log_context)
 
-  m_db_client.setClient(a_uid);
-
-  DL_DEBUG(log_context, "Schema revise");
-
-  if (request->has_def()) {
-    try {
-      nlohmann::json schema = nlohmann::json::parse(request->def());
-
-      schemaEnforceRequiredProperties(schema);
-
-      nlohmann::json_schema::json_validator validator(
-          bind(&ClientWorker::schemaLoader, this, placeholders::_1,
-               placeholders::_2, log_context));
-
-      validator.set_root_schema(schema);
-    } catch (exception &e) {
-      DL_ERROR(log_context, "Invalid metadata schema: " << e.what());
-      EXCEPT_PARAM(1, "Invalid metadata schema: " << e.what());
-    }
-  }
-
-  m_db_client.schemaRevise(*request, reply, log_context);
+  m_schema_handler->handleRevise(a_uid, *request, reply, log_context);
 
   PROC_MSG_END(log_context);
 }
@@ -821,86 +757,22 @@ ClientWorker::procSchemaUpdateRequest(const std::string &a_uid,
                                       LogContext log_context) {
   log_context.correlation_id =
       std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
-  PROC_MSG_BEGIN(SchemaUpdateRequest, AckReply, log_context)
+  PROC_MSG_BEGIN(SchemaUpdateRequest, SchemaDataReply, log_context)
 
-  m_db_client.setClient(a_uid);
-
-  DL_DEBUG(log_context, "Schema update");
-
-  if (request->has_def()) {
-    try {
-      nlohmann::json schema = nlohmann::json::parse(request->def());
-
-      schemaEnforceRequiredProperties(schema);
-
-      nlohmann::json_schema::json_validator validator(
-          bind(&ClientWorker::schemaLoader, this, placeholders::_1,
-               placeholders::_2, log_context));
-
-      validator.set_root_schema(schema);
-    } catch (exception &e) {
-      DL_ERROR(log_context, "Invalid metadata schema: " << e.what());
-      EXCEPT_PARAM(1, "Invalid metadata schema: " << e.what());
-    }
-  }
-
-  m_db_client.schemaUpdate(*request, log_context);
+  m_schema_handler->handleUpdate(a_uid, *request, reply, log_context);
 
   PROC_MSG_END(log_context);
 }
 
-std::unique_ptr<IMessage> ClientWorker::procMetadataValidateRequest(
-    const std::string &a_uid, std::unique_ptr<IMessage> &&msg_request,
-    LogContext log_context) {
-
+std::unique_ptr<IMessage>
+ClientWorker::procMetadataValidateRequest(const std::string &a_uid,
+                                          std::unique_ptr<IMessage> &&msg_request,
+                                          LogContext log_context) {
   log_context.correlation_id =
       std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
   PROC_MSG_BEGIN(MetadataValidateRequest, MetadataValidateReply, log_context)
 
-  DL_DEBUG(log_context, "Metadata validate");
-
-  m_db_client.setClient(a_uid);
-
-  nlohmann::json schema;
-
-  try {
-    libjson::Value sch;
-    DL_TRACE(log_context, "Schema " << request->sch_id());
-
-    m_db_client.schemaView(request->sch_id(), sch, log_context);
-
-    DL_TRACE(
-        log_context,
-        "Schema: "
-            << sch.asArray().begin()->asObject().getValue("def").toString());
-
-    schema = nlohmann::json::parse(
-        sch.asArray().begin()->asObject().getValue("def").toString());
-  } catch (TraceException &e) {
-    DL_ERROR(log_context, "Schema validate failure: " << e.what());
-    throw;
-  } catch (exception &e) {
-    EXCEPT_PARAM(1, "Schema parse error: " << e.what());
-  }
-
-  nlohmann::json_schema::json_validator validator(
-      bind(&ClientWorker::schemaLoader, this, placeholders::_1,
-           placeholders::_2, log_context));
-  try {
-    validator.set_root_schema(schema);
-
-    nlohmann::json md = nlohmann::json::parse(request->metadata());
-
-    m_validator_err.clear();
-    validator.validate(md, *this);
-  } catch (exception &e) {
-    m_validator_err = string("Invalid metadata schema: ") + e.what() + "\n";
-    DL_ERROR(log_context, "Invalid metadata schema: " << e.what());
-  }
-
-  if (m_validator_err.size()) {
-    reply.set_errors(m_validator_err);
-  }
+  m_schema_handler->handleMetadataValidate(a_uid, *request, reply, log_context);
 
   PROC_MSG_END(log_context);
 }
@@ -938,8 +810,8 @@ ClientWorker::procRecordCreateRequest(const std::string &a_uid,
           sch.asArray().begin()->asObject().getValue("def").toString());
 
       nlohmann::json_schema::json_validator validator(
-          bind(&ClientWorker::schemaLoader, this, placeholders::_1,
-               placeholders::_2, log_context));
+          bind(&SchemaHandler::schemaLoader, m_schema_handler.get(),
+               placeholders::_1, placeholders::_2, log_context));
 
       try {
         validator.set_root_schema(schema);
@@ -1051,8 +923,8 @@ ClientWorker::procRecordUpdateRequest(const std::string &a_uid,
       DL_TRACE(log_context, "Schema nlohmann: " << schema);
 
       nlohmann::json_schema::json_validator validator(
-          bind(&ClientWorker::schemaLoader, this, placeholders::_1,
-               placeholders::_2, log_context));
+          bind(&SchemaHandler::schemaLoader, m_schema_handler.get(),
+               placeholders::_1, placeholders::_2, log_context));
 
       try {
         validator.set_root_schema(schema);
@@ -1382,25 +1254,6 @@ void ClientWorker::handleTaskResponse(libjson::Value &a_result,
       TaskMgr::getInstance().newTask(task_obj.getString("_id"), log_context);
     }
   }
-}
-
-void ClientWorker::schemaLoader(const nlohmann::json_uri &a_uri,
-                                nlohmann::json &a_value,
-                                LogContext log_context) {
-  DL_DEBUG(log_context, "Load schema, scheme: "
-                            << a_uri.scheme() << ", path: " << a_uri.path()
-                            << ", auth: " << a_uri.authority()
-                            << ", id: " << a_uri.identifier());
-
-  libjson::Value sch;
-  std::string id = a_uri.path();
-
-  id = id.substr(1); // Skip leading "/"
-  m_db_client.schemaView(id, sch, log_context);
-
-  a_value = nlohmann::json::parse(
-      sch.asArray().begin()->asObject().getValue("def").toString());
-  DL_TRACE(log_context, "Loaded schema: " << a_value);
 }
 
 } // namespace Core

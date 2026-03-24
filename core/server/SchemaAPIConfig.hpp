@@ -36,6 +36,7 @@ struct SchemaAPIConfig {
   /// Recommend loading from environment variable, not config file.
   std::string bearer_token;
 
+  std::string api_key;
   // ── TLS Options ───────────────────────────────────────────────────────
 
   /// Verify server certificate. Should be true in production.
@@ -63,11 +64,8 @@ struct SchemaAPIConfig {
   /// Returns true if base_url is set (minimum required config)
   bool isConfigured() const { return !base_url.empty(); }
 
-  /// Returns true if bearer_token is set
-  bool hasAuth() const { return !bearer_token.empty(); }
-
-  /// Returns true if client certificate is configured for mTLS
-  bool hasMTLS() const { return !client_cert_path.empty(); }
+  /// Returns true if bearer_token is set, or api_key is set
+  bool hasAuth() const { return !bearer_token.empty() || !api_key.empty(); }
 };
 
 } // namespace Core

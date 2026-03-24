@@ -1,5 +1,6 @@
 // Local includes
 #include "JsonSchemaValidator.hpp"
+#include "LocalJsonErrorHandler.hpp"
 #include "common/DynaLog.hpp"
 #include "common/TraceException.hpp"
 
@@ -8,34 +9,6 @@
 
 namespace SDMS {
 namespace Core {
-
-// ── Local Error Handler ──────────────────────────────────────────────────────
-// Thread-safe: each validation call creates its own instance on the stack.
-
-namespace {
-
-class LocalErrorHandler : public nlohmann::json_schema::basic_error_handler {
-public:
-  void error(const nlohmann::json::json_pointer &ptr,
-             const nlohmann::json &instance,
-             const std::string &message) override {
-    if (!m_errors.empty()) {
-      m_errors += "\n";
-    }
-    m_errors += "At " + ptr.to_string() + ": " + message;
-
-    // Call base class to continue validation (don't throw)
-    nlohmann::json_schema::basic_error_handler::error(ptr, instance, message);
-  }
-
-  const std::string &errors() const { return m_errors; }
-  bool hasErrors() const { return !m_errors.empty(); }
-
-private:
-  std::string m_errors;
-};
-
-} // anonymous namespace
 
 // ── Constructor ─────────────────────────────────────────────────────────────
 
@@ -217,7 +190,7 @@ JsonSchemaValidator::validateMetadata(const std::string &a_schema_id,
     nlohmann::json metadata = nlohmann::json::parse(a_metadata_content);
 
     // Use local error handler (thread-safe: stack-allocated per call)
-    LocalErrorHandler error_handler;
+    LocalJsonErrorHandler error_handler;
 
     // Validate against schema
     validator->validate(metadata, error_handler);

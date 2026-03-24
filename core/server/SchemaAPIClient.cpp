@@ -40,12 +40,6 @@ SchemaAPIClient::SchemaAPIClient(const SchemaAPIConfig &a_config)
   if (!m_config.ca_cert_path.empty())
     curl_easy_setopt(m_curl, CURLOPT_CAINFO, m_config.ca_cert_path.c_str());
 
-  // Client certificate for mTLS (optional)
-  if (m_config.hasMTLS()) {
-    curl_easy_setopt(m_curl, CURLOPT_SSLCERT, m_config.client_cert_path.c_str());
-    curl_easy_setopt(m_curl, CURLOPT_SSLKEY, m_config.client_key_path.c_str());
-  }
-
   // ── Timeouts ──────────────────────────────────────────────────────────
   curl_easy_setopt(m_curl, CURLOPT_CONNECTTIMEOUT, m_config.connect_timeout_sec);
   curl_easy_setopt(m_curl, CURLOPT_TIMEOUT, m_config.request_timeout_sec);
@@ -78,6 +72,11 @@ nlohmann::json SchemaAPIClient::curlPerform(const std::string &a_method,
   struct curl_slist *headers = nullptr;
   headers = curl_slist_append(headers, "Content-Type: application/json");
   headers = curl_slist_append(headers, "Accept: application/json");
+
+  if (m_config.hasAuth()) {
+      std::string auth = "Authorization: Bearer " + m_config.bearer_token;
+      headers = curl_slist_append(headers, auth.c_str());
+  }
 
   std::string corr_header = "x-correlation-id: " + log_context.correlation_id;
   headers = curl_slist_append(headers, corr_header.c_str());
