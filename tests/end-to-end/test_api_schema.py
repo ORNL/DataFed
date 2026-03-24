@@ -124,10 +124,10 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
         """Must provide either definition or definition_file."""
 
         with self.assertRaises(Exception) as ctx:
-            self._df_api.schemaCreate("test_no_def",
-                description="test bad schema"
-            )
-
+            self._df_api.schemaCreate(
+                    "test_no_def",
+                    description="test bad schema"
+                )
         self.assertIn("Must specify", str(ctx.exception))
 
     def test_schema_create_both_definition_sources(self):
@@ -138,7 +138,30 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
                 "test_both_def",
                 definition='{"type": "object", "properties": {}}',
                 definition_file="/tmp/fake.json",
-                description="test bad schema"
+            )
+
+        self.assertIn("Cannot specify both", str(ctx.exception))
+
+    def test_schema_update_both_definition_sources(self):
+        """Cannot specify both definition and definition_file for schemaUpdate."""
+
+        with self.assertRaises(Exception) as ctx:
+            self._df_api.schemaUpdate(
+                "test_update_both_def",
+                definition='{"type": "object", "properties": {}}',
+                definition_file="/tmp/fake.json",
+            )
+
+        self.assertIn("Cannot specify both", str(ctx.exception))
+
+    def test_schema_revise_both_definition_sources(self):
+        """Cannot specify both definition and definition_file for schemaRevise."""
+
+        with self.assertRaises(Exception) as ctx:
+            self._df_api.schemaRevise(
+                "test_revise_both_def",
+                definition='{"type": "object", "properties": {}}',
+                definition_file="/tmp/fake.json",
             )
 
         self.assertIn("Cannot specify both", str(ctx.exception))
@@ -383,6 +406,18 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
 
         self.assertIn("Must specify", str(ctx.exception))
 
+    def test_metadata_validate_metadata_file_cannot_be_opened(self):
+        """metadata_file set but file cannot be opened should raise expected error."""
+
+        bad_path = "/path/does/not/exist"
+
+        with self.assertRaises(Exception) as ctx:
+            self._df_api.metadataValidate("any_schema", metadata_file=bad_path)
+
+        # The client should surface a clear file-open error that includes the path.
+        self.assertIn("Could not open metadata file:", str(ctx.exception))
+        self.assertIn(bad_path, str(ctx.exception))
+
     def test_schema_create_from_file(self):
         """Test creating a schema from a definition file."""
 
@@ -432,6 +467,7 @@ if __name__ == "__main__":
     suite.addTest(TestDataFedPythonAPISchemaCRUD("test_metadata_validate_client_rejects_bad_json"))
     suite.addTest(TestDataFedPythonAPISchemaCRUD("test_metadata_validate_requires_input"))
     suite.addTest(TestDataFedPythonAPISchemaCRUD("test_schema_create_from_file"))
+    suite.addTest(TestDataFedPythonAPISchemaCRUD("test_metadata_validate_metadata_file_cannot_be_opened"))
     runner = unittest.TextTestRunner()
     result = runner.run(suite)
     sys.exit(not result.wasSuccessful())

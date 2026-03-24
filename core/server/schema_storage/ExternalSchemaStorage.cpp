@@ -1,10 +1,8 @@
 #include "ExternalSchemaStorage.hpp"
 #include "common/TraceException.hpp"
 #include "common/envelope.pb.h"
-
 namespace SDMS {
 namespace Core {
-
 ExternalSchemaStorage::ExternalSchemaStorage(
     std::unique_ptr<SchemaAPIClient> a_client)
     : m_client(std::move(a_client)) {
@@ -14,37 +12,33 @@ ExternalSchemaStorage::ExternalSchemaStorage(
     EXCEPT(INTERNAL_ERROR,
            "ExternalSchemaStorage: client not configured (empty base URL)");
 }
-
-std::string ExternalSchemaStorage::storeContent(const std::string &a_id,
-                                                const std::string &a_content,
-                                                const std::string &a_desc,
-                                                LogContext log_context) {
-  // Use PUT to enforce the same ID in both Arango and the API
+std::string ExternalSchemaStorage::storeContent(
+    const std::string &a_id, const std::string &a_content,
+    const std::string &a_desc, const std::string &a_schema_format,
+    const std::string &a_engine, const std::string &a_version,
+    LogContext log_context) {
+  // PUT /schemas/{id} — creates or replaces at this ID.
+  // name = id is a DataFed convention; the API requires a name field.
   m_client->putSchema(a_id,
                       a_id, // name = id (convention)
-                      a_desc, a_content, log_context);
-
+                      a_desc, a_schema_format, a_engine, a_content, a_version,
+                      log_context);
   return ""; // Arango def is empty — content lives in the API
 }
-
 StorageRetrieveResult
 ExternalSchemaStorage::retrieveContent(const std::string &a_id,
                                        const std::string &a_arango_def,
                                        LogContext log_context) {
   (void)a_arango_def; // Ignored — we fetch from the API
-
   try {
     auto result = m_client->getSchema(a_id, log_context);
-
     if (result.contains("content"))
       return StorageRetrieveResult::Ok(result["content"].get<std::string>());
-
     // API returned but no content field — treat as empty content, not error
     DL_WARNING(log_context,
                "ExternalSchemaStorage: API returned no content field for "
                    << a_id);
     return StorageRetrieveResult::Ok("");
-
   } catch (TraceException &e) {
     // Storage unreachable — return explicit failure, don't hide it
     DL_ERROR(log_context,
@@ -54,18 +48,20 @@ ExternalSchemaStorage::retrieveContent(const std::string &a_id,
         "Schema storage service unavailable: " + e.toString());
   }
 }
-
 std::string ExternalSchemaStorage::updateContent(
     const std::string &a_id, const std::string &a_content,
-    const std::optional<std::string> &a_desc, LogContext log_context) {
-
+    const std::optional<std::string> &a_desc,
+    const std::optional<std::string> &a_schema_format,
+    const std::optional<std::string> &a_engine,
+    const std::optional<std::string> &a_version, LogContext log_context) {
+  // PATCH /schemas/{id} — partial update, only sends non-nullopt fields.
   m_client->patchSchema(a_id,
                         std::nullopt, // name unchanged
-                        a_desc, a_content, log_context);
-
+                        a_desc, a_schema_format, a_engine,
+                        std::optional<std::string>(a_content), a_version,
+                        log_context);
   return ""; // Arango def stays empty
 }
-
 void ExternalSchemaStorage::deleteContent(const std::string &a_id,
                                           LogContext log_context) {
   try {
@@ -77,6 +73,5 @@ void ExternalSchemaStorage::deleteContent(const std::string &a_id,
                    << a_id << " (orphaned content may remain): " << e.toString());
   }
 }
-
 } // namespace Core
 } // namespace SDMS

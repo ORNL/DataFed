@@ -55,16 +55,23 @@ public:
   /**
    * @brief Store schema content on create.
    *
-   * @param a_id      Schema ID (matches Arango document ID).
-   * @param a_content The raw schema definition text.
-   * @param a_desc    Human-readable description (storage may use this).
-   * @param log_context Logging/correlation context.
+   * @param a_id            Schema ID (matches Arango document ID).
+   * @param a_content       The raw schema definition text.
+   * @param a_desc          Human-readable description (storage may use this).
+   * @param a_schema_format Serialization format ("json", "yaml", "xml").
+   * @param a_engine        Validation engine / schema type ("JSONSchema",
+   *                        "LinkML", etc.).
+   * @param a_version       Semantic version string (empty if not versioned).
+   * @param log_context     Logging/correlation context.
    * @return The value to write into Arango's `def` field.
    * @throws TraceException on failure.
    */
   virtual std::string storeContent(const std::string &a_id,
                                    const std::string &a_content,
                                    const std::string &a_desc,
+                                   const std::string &a_schema_format,
+                                   const std::string &a_engine,
+                                   const std::string &a_version,
                                    LogContext log_context) = 0;
 
   /**
@@ -83,16 +90,22 @@ public:
   /**
    * @brief Update schema content.
    *
-   * @param a_id      Schema ID.
-   * @param a_content New schema definition text.
-   * @param a_desc    Updated description (nullopt if unchanged).
-   * @param log_context Logging/correlation context.
+   * @param a_id            Schema ID.
+   * @param a_content       New schema definition text.
+   * @param a_desc          Updated description (nullopt if unchanged).
+   * @param a_schema_format Updated format (nullopt if unchanged).
+   * @param a_engine        Updated engine (nullopt if unchanged).
+   * @param a_version       Updated version (nullopt if unchanged).
+   * @param log_context     Logging/correlation context.
    * @return The value to write into Arango's `def` field.
    * @throws TraceException on failure.
    */
   virtual std::string updateContent(const std::string &a_id,
                                     const std::string &a_content,
                                     const std::optional<std::string> &a_desc,
+                                    const std::optional<std::string> &a_schema_format,
+                                    const std::optional<std::string> &a_engine,
+                                    const std::optional<std::string> &a_version,
                                     LogContext log_context) = 0;
 
   /**
