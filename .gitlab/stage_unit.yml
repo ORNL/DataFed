@@ -1,6 +1,7 @@
 ---
 include:
     - local: .gitlab/stage_build.yml
+    - local: .gitlab/common.yml
 
 run-ws-unit-job:
     # Either the web container needs to be rebuilt or the container needs to be
@@ -126,3 +127,31 @@ run-authz-unit-job:
         - echo "-c 'cd /datafed/source; /opt/datafed/dependencies/bin/cmake --build build --target test'" >> run_globus.sh
         - chmod +x run_globus.sh
         - ./run_globus.sh
+
+
+run-core-unit-job:
+    needs: ["run-core-build-job"]
+    stage: unit
+    variables:
+        PROJECT: "datafed"
+        COMPONENT: "core"
+        GIT_STRATEGY: clone
+        INTERMEDIATE_LAYER_NAME: "build"
+    tags:
+        - ci-datafed-core
+        - docker
+    script:
+        - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
+        - docker login "${REGISTRY}" -u "${HARBOR_USER}" -p "${HARBOR_DATAFED_GITLAB_CI_REGISTRY_TOKEN}"
+        - ./scripts/container_stop.sh -n "core-unit-" -p
+        - random_string=$(bash -c "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1")
+        - |
+            docker run --rm \
+              --name "core-unit-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}" \
+              --entrypoint bash \
+              -t "${REGISTRY}/${PROJECT}/${COMPONENT}-${INTERMEDIATE_LAYER_NAME}-${BRANCH_LOWER}:${CI_COMMIT_SHA}" \
+              -c 'cd /datafed/source && \
+                  /opt/datafed/dependencies/bin/ctest \
+                    --test-dir build \
+                    -LE "integration|fixture" \
+                    --output-on-failure'
