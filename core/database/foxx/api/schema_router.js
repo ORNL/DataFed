@@ -153,16 +153,22 @@ router
                 action: function () {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
 
-                    // Schema validator has already been run at this point; however, DataFed further restricts
-                    // the allowed character set for keys and this must be applied at this point.
-                    validateProperties(req.body.def.properties);
-
                     var obj = {
                         cnt: 0,
                         ver: 0,
                         pub: req.body.pub,
-                        def: req.body.def,
+                        format: req.body.format,
+                        type: req.body.type,
                     };
+
+                    if (req.body.type === "json-schema") {
+                        // Schema validator has already been run at this point; however, DataFed further restricts
+                        // the allowed character set for keys and this must be applied at this point.
+                        validateProperties(req.body.def.properties);
+                        obj.def = req.body.def;
+                    } else {
+                        obj.def = {};
+                    }
 
                     if (req.body.sys) {
                         if (!client.is_admin)
@@ -219,6 +225,8 @@ router
                     own_id: sch?.own_id,
                     pub: req.body.pub,
                     sys: req.body.sys,
+                    format: sch?.format,
+                    type: sch?.type,
                 },
             });
         } catch (e) {
@@ -234,6 +242,8 @@ router
                     own_id: sch?.own_id,
                     pub: req.body.pub,
                     sys: req.body.sys,
+                    format: sch?.format,
+                    type: sch?.type,
                 },
                 error: e,
             });
@@ -249,6 +259,8 @@ router
                 def: joi.object().required(),
                 pub: joi.boolean().optional().default(true),
                 sys: joi.boolean().optional().default(false),
+                format: joi.string().default("json").valid("json", "xml", "yaml"),
+                type: joi.string().default("json-schema").valid("json-schema", "linkml"),
             })
             .required(),
         "Schema fields",
@@ -353,8 +365,12 @@ router
                     g_lib.procInputParam(req.body, "desc", true, obj);
 
                     if (req.body.def) {
-                        validateProperties(req.body.def.properties);
-                        obj.def = req.body.def;
+                        if (sch_old.type === "json-schema") {
+                            validateProperties(req.body.def.properties);
+                            obj.def = req.body.def;
+                        } else {
+                            obj.def = {};
+                        }
                     }
 
                     sch_new = g_db.sch.update(sch_old._id, obj, {
@@ -505,8 +521,12 @@ router
                     g_lib.procInputParam(req.body, "desc", true, sch);
 
                     if (req.body.def != undefined) {
-                        validateProperties(req.body.def.properties);
-                        sch.def = req.body.def;
+                        if (sch.type === "json-schema") {
+                            validateProperties(req.body.def.properties);
+                            sch.def = req.body.def;
+                        } else {
+                            sch.def = {};
+                        }
                     }
 
                     var old_id = sch._id;
@@ -548,6 +568,8 @@ router
                     id: sch_new.id,
                     pub: req.body.pub,
                     sys: req.body.sys,
+                    type: sch_new?.type,
+                    format: sch_new?.format,
                 },
             });
         } catch (e) {
@@ -564,6 +586,8 @@ router
                     id: sch_new?.id,
                     pub: req.body?.pub,
                     sys: req.body?.sys,
+                    type: sch_new?.type,
+                    format: sch_new?.format,
                 },
                 error: e,
             });
@@ -745,6 +769,15 @@ router
             fixSchOwnNm(sch);
 
             sch.id = parsed.id + ":" + parsed.ver;
+
+            // If schema is missing sch_format and sch_type default to json
+            if (!Object.hasOwn(sch, "format")) {
+                sch.format = "json";
+            }
+            if (!Object.hasOwn(sch, "type")) {
+                sch.type = "json-schema";
+            }
+
             res.send([sch]);
             logger.logRequestSuccess({
                 client: req.queryParams?.client,
@@ -759,6 +792,8 @@ router
                     id: sch.id,
                     pub: sch.pub,
                     sys: sch.sys,
+                    sch_format: sch.format,
+                    sch_type: sch.type,
                 },
             });
         } catch (e) {
@@ -851,8 +886,6 @@ router
             } else {
                 if (req.queryParams.sort_rev) qry += " sort i.id desc, i.ver";
                 else qry += " sort i.id,i.ver";
-
-                //qry += (req.queryParams.sort_rev?" desc":"");
             }
 
             qry +=
@@ -860,9 +893,9 @@ router
                 off +
                 "," +
                 cnt +
-                " return {_id:i._id,id:i.id,ver:i.ver,cnt:i.cnt,pub:i.pub,own_nm:i.own_nm,own_id:i.own_id}";
-
-            //qry += " filter (i.pub == true || i.own_id == @uid) sort i.id limit " + off + "," + cnt + " return {id:i.id,ver:i.ver,cnt:i.cnt,pub:i.pub,own_nm:i.own_nm,own_id:i.own_id}";
+                " return {_id:i._id,id:i.id,ver:i.ver,cnt:i.cnt,pub:i.pub,own_nm:i.own_nm,own_id:i.own_id," +
+                "type: NOT_NULL(i.type, 'json-schema')," +
+                "format: NOT_NULL(i.format, 'json')}";
 
             result = g_db._query(
                 qry,
@@ -1016,7 +1049,9 @@ function updateSchemaRefs(a_sch) {
         r,
         refs = new Set();
 
-    gatherRefs(a_sch.def.properties, refs);
+    if (a_sch.def && typeof a_sch.def === "object") {
+        gatherRefs(a_sch.def.properties, refs);
+    }
 
     refs.forEach(function (v) {
         idx = v.indexOf(":");
