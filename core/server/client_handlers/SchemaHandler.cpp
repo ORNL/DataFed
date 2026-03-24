@@ -66,8 +66,16 @@ void SchemaHandler::handleCreate(const std::string &a_uid,
 
   // Store content through factory (no-op for Arango, meaningful for external)
   try {
+
     m_schema_factory.getStorage(a_request.type()).storeContent(
-        a_reply.schema(0).id(), a_request.def(), a_request.desc(), log_context);
+      a_reply.schema(0).id(),
+      a_request.def(),
+      a_request.desc(),
+      a_request.format(),
+      a_request.type(),
+      std::to_string(a_reply.schema(0).ver()),
+      log_context);
+
   } catch (exception &e) {
     DL_ERROR(log_context, "Schema storage failed attempting rollback: " << e.what());
     try {
@@ -137,8 +145,16 @@ void SchemaHandler::handleRevise(const std::string &a_uid,
   // Store content for new revision only when def was provided
   if (a_request.has_def()) {
     try {
-      m_schema_factory.getStorage(schema_type).storeContent(
-          a_reply.schema(0).id(), a_request.def(), a_request.desc(), log_context);
+
+      m_schema_factory.getStorage(a_reply.schema(0).type()).storeContent(
+        a_reply.schema(0).id(),
+        a_request.def(),
+        a_request.desc(),
+        schema_format,
+        schema_type,
+        std::to_string(a_reply.schema(0).ver()),
+        log_context);
+
     } catch (exception &e) {
       // TODO: Arango revision exists but external storage failed — needs rollback
       DL_ERROR(log_context,
@@ -219,7 +235,14 @@ void SchemaHandler::handleUpdate(const std::string &a_uid,
       }
 
       m_schema_factory.getStorage(schema_type).updateContent(
-          a_request.id(), a_request.def(), desc, log_context);
+        a_request.id(),
+        a_request.def(),
+        a_request.has_desc() ? std::optional<std::string>(a_request.desc()) : std::nullopt,
+        std::nullopt,         // schema_format — unchanged on update
+        std::nullopt,         // engine — unchanged on update
+        std::nullopt,         // version — unchanged on update
+        log_context);
+
     } catch (exception &e) {
 
       SchemaUpdateRequest rollback_request;
