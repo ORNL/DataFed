@@ -101,9 +101,9 @@ void SchemaHandler::handleRevise(const std::string &a_uid,
       // NOTE: verify this is the correct field — might be id() not sch_id()
       m_db_client.schemaView(a_request.id(), sch, log_context);
       schema_type =
-          sch.asArray().begin()->asObject().getValue("type").toString();
+          sch.asArray().begin()->asObject().getString("type");
       schema_format =
-          sch.asArray().begin()->asObject().getValue("format").toString();
+          sch.asArray().begin()->asObject().getString("format");
     } catch (exception &e) {
       DL_WARNING(log_context,
               "Could not look up schema " << a_request.id()
@@ -175,9 +175,9 @@ void SchemaHandler::handleUpdate(const std::string &a_uid,
     try {
       m_db_client.schemaView(a_request.id(), sch, log_context);
       schema_type =
-          sch.asArray().begin()->asObject().getValue("type").toString();
+          sch.asArray().begin()->asObject().getString("type");
       schema_format =
-          sch.asArray().begin()->asObject().getValue("format").toString();
+          sch.asArray().begin()->asObject().getString("format");
     } catch (exception &e) {
       DL_WARNING(log_context,
               "Could not look up schema " << a_request.id()
@@ -224,8 +224,8 @@ void SchemaHandler::handleUpdate(const std::string &a_uid,
 
       SchemaUpdateRequest rollback_request;
       auto & sch_doc = sch.asArray().begin()->asObject();
-      rollback_request.set_id(sch_doc.getValue("id").toString());
-      rollback_request.set_desc(sch_doc.getValue("desc").toString());
+      rollback_request.set_id(sch_doc.getString("id"));
+      rollback_request.set_desc(sch_doc.getString("desc"));
       rollback_request.set_pub(sch_doc.getBool("pub"));
       rollback_request.set_sys(sch_doc.getBool("sys"));
 
@@ -265,8 +265,8 @@ std::string SchemaHandler::validateMetadataContent(
     schema_def = sch_doc.getValue("def").toString();
 
     try {
-      schema_type = sch_doc.getValue("type").toString();
-      schema_format = sch_doc.getValue("format").toString();
+      schema_type = sch_doc.getString("type");
+      schema_format = sch_doc.getString("format");
     } catch (std::exception &) {
       DL_WARNING(log_context,
               "Schema " << a_sch_id
@@ -440,7 +440,7 @@ void SchemaHandler::handleDelete(const std::string &a_uid,
     m_db_client.schemaView(a_request.id(), sch, log_context);
 
     auto &sch_doc = sch.asArray().begin()->asObject();
-    schema_type = sch_doc.getValue("type").toString();
+    schema_type = sch_doc.getString("type");
   } catch (exception &e) {
     DL_WARNING(log_context,
             "Could not look up schema " << a_request.id()
