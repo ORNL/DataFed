@@ -167,10 +167,12 @@ void SchemaHandler::handleUpdate(const std::string &a_uid,
   std::string schema_type = "json-schema";
   std::string schema_format = "json";
 
+  // Get current state of the schema document
+  libjson::Value sch;
+
   if (a_request.has_def()) {
     // Look up existing schema to determine type/format
     try {
-      libjson::Value sch;
       m_db_client.schemaView(a_request.id(), sch, log_context);
       schema_type =
           sch.asArray().begin()->asObject().getValue("type").toString();
@@ -219,8 +221,23 @@ void SchemaHandler::handleUpdate(const std::string &a_uid,
       m_schema_factory.getStorage(schema_type).updateContent(
           a_request.id(), a_request.def(), desc, log_context);
     } catch (exception &e) {
+
+      SchemaUpdateRequest rollback_request;
+      auto & sch_doc = sch.asArray().begin()->asObject();
+      rollback_request.set_id(sch_doc.getValue("id").toString());
+      rollback_request.set_desc(sch_doc.getValue("desc").toString());
+      rollback_request.set_pub(sch_doc.getBool("pub"));
+      rollback_request.set_sys(sch_doc.getBool("sys"));
+
       DL_ERROR(log_context,
-               "Schema storage update failed: " << e.what());
+               "Schema storage update failed attempting rollback: " << e.what());
+      try {
+        m_db_client.schemaUpdate(rollback_request, log_context);
+      } catch (exception &e) {
+        DL_ERROR(log_context,
+               "Schema storage update rollback failed: " << e.what());
+
+      }
       EXCEPT_PARAM(1, "Schema storage update failed: " << e.what());
     }
   }
