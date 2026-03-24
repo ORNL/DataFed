@@ -58,7 +58,7 @@ function parseSchemaId(schId) {
     }
 
     if (colonCount === 0) {
-        return { id: schId, ver: 0 };
+        return { id: schId, ver: null };
     }
 
     const idx = schId.indexOf(":");
