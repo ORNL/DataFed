@@ -19,6 +19,6 @@ foreach(PROG
     COMMAND ${CMAKE_CURRENT_BINARY_DIR}/mock_liveness_${PROG} 
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/tests/mock_core
 	)
-  set_tests_properties(mock_liveness_${PROG} PROPERTIES FIXTURES_REQUIRED FIX_MOCK)
+  set_tests_properties(mock_liveness_${PROG} PROPERTIES FIXTURES_REQUIRED FIX_MOCK LABELS "integration")
 
 endforeach(PROG)
