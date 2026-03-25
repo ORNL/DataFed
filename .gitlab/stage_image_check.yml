@@ -18,7 +18,8 @@ check-core-image:
     variables:
         PROJECT: "datafed"
         COMPONENT: "core"
-        BUILD_INTERMEDIATE: "FALSE"
+        BUILD_INTERMEDIATE: "TRUE"
+        INTERMEDIATE_LAYER_NAME: "build"
         WATCHED_PATHS: "docker scripts core common CMakeLists.txt cmake .gitlab-ci.yml"
 
 check-repo-image:

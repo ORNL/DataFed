@@ -43,6 +43,11 @@ COPY ./cmake                           ${BUILD_DIR}/cmake
 COPY ./core/docker/entrypoint.sh       ${BUILD_DIR}/core/docker/
 COPY ./core/server                     ${BUILD_DIR}/core/server
 
+# ---------------------------------------------------------------------------
+# CHANGED: Enable unit and integration tests so the intermediate image
+# contains all test binaries. The production 'core' stage below still only
+# copies the server binary, so tests never land in the production image.
+# ---------------------------------------------------------------------------
 RUN ${DATAFED_DEPENDENCIES_ROOT}/scripts/generate_dependencies_config.sh && \
     ${BUILD_DIR}/scripts/generate_datafed.sh && \
     ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake -S. -B build \
@@ -53,10 +58,14 @@ RUN ${DATAFED_DEPENDENCIES_ROOT}/scripts/generate_dependencies_config.sh && \
       -DBUILD_DOCS=False \
       -DBUILD_PYTHON_CLIENT=False \
       -DBUILD_FOXX=False \
+      -DENABLE_UNIT_TESTS=True \
       -DENABLE_INTEGRATION_TESTS=False
 RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build -j 8
 RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build --target install
 
+# ===========================================================================
+# Production image — unchanged. Only the server binary is copied in.
+# ===========================================================================
 FROM ${RUNTIME} AS core
 
 SHELL ["/bin/bash", "-c"]
