@@ -3,7 +3,9 @@
 #include "LocalJsonErrorHandler.hpp"
 #include "common/TraceException.hpp"
 #include "schema_storage/ArangoSchemaStorage.hpp"
+#include "schema_storage/ExternalSchemaStorage.hpp"
 #include "schema_validators/JsonSchemaValidator.hpp"
+#include "schema_validators/ExternalSchemaValidator.hpp"
 
 // Standard includes
 #include <functional>
@@ -15,6 +17,10 @@ namespace Core {
 
 SchemaHandler::SchemaHandler(DatabaseAPI &a_db_client)
     : m_db_client(a_db_client) {
+
+    auto linkml_storage = std::make_shared<ArangoSchemaStorage>();
+    m_schema_factory.registerStorage("linkml", std::move(linkml_storage));
+
     // Assumes that we have already placed the schema in the database, arango
     // storage is a shell to be consistent with the interface.
     auto arango_storage = std::make_shared<ArangoSchemaStorage>();
