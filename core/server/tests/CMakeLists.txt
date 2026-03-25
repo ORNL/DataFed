@@ -1,3 +1,6 @@
 if( ENABLE_UNIT_TESTS OR ENABLE_MEMORY_TESTS )
   add_subdirectory(unit)
 endif( ENABLE_UNIT_TESTS OR ENABLE_MEMORY_TESTS )
+if( ENABLE_INTEGRATION_TESTS)
+  add_subdirectory(integration)
+endif( ENABLE_INTEGRATION_TESTS)

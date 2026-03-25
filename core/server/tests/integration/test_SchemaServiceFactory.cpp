@@ -4,8 +4,9 @@
 
 // Local includes
 #include "SchemaServiceFactory.hpp"
-#include "JsonSchemaValidator.hpp"
-#include "NullSchemaValidator.hpp"
+#include "ISchemaStorage.hpp"
+#include "schema_validators/JsonSchemaValidator.hpp"
+#include "schema_validators/NullSchemaValidator.hpp"
 
 // Standard includes
 #include <memory>
@@ -51,6 +52,58 @@ const std::string INVALID_METADATA_WRONG_TYPE = R"({
   "age": "not a number"
 })";
 
+// ---------------------------------------------------------------------------
+// Minimal mock — only needs to satisfy setDefaultSchemaType's precondition
+// that a storage is registered. No storage methods are exercised by these
+// tests, so every override is a no-op / trivial return.
+// ---------------------------------------------------------------------------
+class MockStorage : public ISchemaStorage {
+public:
+  explicit MockStorage(const std::string &a_label) : m_label(a_label) {}
+
+  std::string storeContent(const std::string & /*a_id*/,
+                           const std::string &a_content,
+                           const std::string & /*a_desc*/,
+                           const std::string & /*a_schema_format*/,
+                           const std::string & /*a_engine*/,
+                           const std::string & /*a_version*/,
+                           LogContext /*log_context*/) override {
+    return a_content;
+  }
+
+  StorageRetrieveResult retrieveContent(const std::string & /*a_id*/,
+                                        const std::string &a_arango_def,
+                                        LogContext /*log_context*/) override {
+    return StorageRetrieveResult::Ok(a_arango_def);
+  }
+
+  std::string updateContent(const std::string & /*a_id*/,
+                            const std::string &a_content,
+                            const std::optional<std::string> & /*a_desc*/,
+                            const std::optional<std::string> & /*a_schema_format*/,
+                            const std::optional<std::string> & /*a_engine*/,
+                            const std::optional<std::string> & /*a_version*/,
+                            LogContext /*log_context*/) override {
+    return a_content;
+  }
+
+  void deleteContent(const std::string & /*a_id*/,
+                     LogContext /*log_context*/) override {}
+
+private:
+  std::string m_label;
+};
+
+/// Helper: register a NullSchemaValidator as the default fallback engine.
+/// The factory requires both storage and validator for an engine before
+/// it can be set as default via setDefaultSchemaType.
+void registerNullDefault(SchemaServiceFactory &factory,
+                         const std::string &engine = "null-default") {
+  factory.registerValidator(engine, std::make_shared<NullSchemaValidator>());
+  factory.registerStorage(engine, std::make_shared<MockStorage>("default"));
+  factory.setDefaultSchemaType(engine);
+}
+
 } // anonymous namespace
 
 // ============================================================================
@@ -63,19 +116,19 @@ BOOST_AUTO_TEST_CASE(register_json_schema_validator) {
   SchemaServiceFactory factory;
   auto json_validator = std::make_shared<JsonSchemaValidator>();
 
-  factory.registerValidator("JSONSchema", json_validator);
+  factory.registerValidator("json-schema", json_validator);
 
-  ISchemaValidator &retrieved = factory.getValidator("JSONSchema");
+  ISchemaValidator &retrieved = factory.getValidator("json-schema");
   BOOST_TEST(retrieved.hasValidationCapability() == true);
 }
 
 BOOST_AUTO_TEST_CASE(validate_definition_through_factory) {
   SchemaServiceFactory factory;
   auto json_validator = std::make_shared<JsonSchemaValidator>();
-  factory.registerValidator("JSONSchema", json_validator);
+  factory.registerValidator("json-schema", json_validator);
   auto ctx = makeTestLogContext();
 
-  ISchemaValidator &validator = factory.getValidator("JSONSchema");
+  ISchemaValidator &validator = factory.getValidator("json-schema");
   auto result = validator.validateDefinition("json", VALID_SCHEMA, ctx);
 
   BOOST_TEST(result.valid == true);
@@ -85,10 +138,10 @@ BOOST_AUTO_TEST_CASE(validate_definition_through_factory) {
 BOOST_AUTO_TEST_CASE(validate_metadata_through_factory) {
   SchemaServiceFactory factory;
   auto json_validator = std::make_shared<JsonSchemaValidator>();
-  factory.registerValidator("JSONSchema", json_validator);
+  factory.registerValidator("json-schema", json_validator);
   auto ctx = makeTestLogContext();
 
-  ISchemaValidator &validator = factory.getValidator("JSONSchema");
+  ISchemaValidator &validator = factory.getValidator("json-schema");
 
   // Cache schema first
   bool cached = validator.cacheSchema("test-schema", VALID_SCHEMA, "json", ctx);
@@ -102,10 +155,10 @@ BOOST_AUTO_TEST_CASE(validate_metadata_through_factory) {
 BOOST_AUTO_TEST_CASE(invalid_metadata_fails_through_factory) {
   SchemaServiceFactory factory;
   auto json_validator = std::make_shared<JsonSchemaValidator>();
-  factory.registerValidator("JSONSchema", json_validator);
+  factory.registerValidator("json-schema", json_validator);
   auto ctx = makeTestLogContext();
 
-  ISchemaValidator &validator = factory.getValidator("JSONSchema");
+  ISchemaValidator &validator = factory.getValidator("json-schema");
   validator.cacheSchema("test-schema", VALID_SCHEMA, "json", ctx);
 
   auto result = validator.validateMetadata(
@@ -125,16 +178,19 @@ BOOST_AUTO_TEST_SUITE(FactoryWithNullDefault)
 
 BOOST_AUTO_TEST_CASE(null_validator_as_default_for_legacy) {
   SchemaServiceFactory factory;
-  auto null_validator = std::make_shared<NullSchemaValidator>();
   auto json_validator = std::make_shared<JsonSchemaValidator>();
 
-  factory.setDefaultValidator(null_validator);
-  factory.registerValidator("JSONSchema", json_validator);
+  // Register json-schema engine (needs both validator + storage)
+  factory.registerValidator("json-schema", json_validator);
+  factory.registerStorage("json-schema", std::make_shared<MockStorage>("json"));
 
-  // JSONSchema engine gets real validation
-  BOOST_TEST(factory.getValidator("JSONSchema").hasValidationCapability() == true);
+  // Register null-default as the fallback engine
+  registerNullDefault(factory);
 
-  // Empty/unknown engines get null validator (no validation)
+  // json-schema engine gets real validation
+  BOOST_TEST(factory.getValidator("json-schema").hasValidationCapability() == true);
+
+  // Empty/unknown engines fall back to the null-default engine
   BOOST_TEST(factory.getValidator("").hasValidationCapability() == false);
   BOOST_TEST(factory.getValidator("native").hasValidationCapability() == false);
   BOOST_TEST(factory.getValidator("other").hasValidationCapability() == false);
@@ -142,13 +198,15 @@ BOOST_AUTO_TEST_CASE(null_validator_as_default_for_legacy) {
 
 BOOST_AUTO_TEST_CASE(null_validator_accepts_anything) {
   SchemaServiceFactory factory;
-  auto null_validator = std::make_shared<NullSchemaValidator>();
-  factory.setDefaultValidator(null_validator);
   auto ctx = makeTestLogContext();
 
+  // Register null-default as the fallback engine
+  registerNullDefault(factory);
+
+  // "legacy" is unregistered, resolves to the null-default
   ISchemaValidator &validator = factory.getValidator("legacy");
 
-  // Invalid JSON passes with null validator
+  // Invalid JSON passes with null validator — no validation capability
   auto result = validator.validateDefinition("json", "{ broken json }", ctx);
   BOOST_TEST(result.valid == true);
 }
@@ -166,17 +224,22 @@ BOOST_AUTO_TEST_CASE(different_engines_use_different_validators) {
   auto json_validator = std::make_shared<JsonSchemaValidator>();
   auto null_validator = std::make_shared<NullSchemaValidator>();
 
-  factory.registerValidator("JSONSchema", json_validator);
-  factory.registerValidator("other", null_validator);
-  factory.setDefaultValidator(null_validator);
+  factory.registerValidator("json-schema", json_validator);
+  factory.registerStorage("json-schema", std::make_shared<MockStorage>("json"));
 
-  // JSONSchema has validation capability
-  BOOST_TEST(factory.getValidator("JSONSchema").hasValidationCapability() == true);
+  factory.registerValidator("other", null_validator);
+  factory.registerStorage("other", std::make_shared<MockStorage>("other"));
+
+  // Set "other" (null) as the default fallback
+  factory.setDefaultSchemaType("other");
+
+  // json-schema has validation capability
+  BOOST_TEST(factory.getValidator("json-schema").hasValidationCapability() == true);
 
   // "other" explicitly registered as null
   BOOST_TEST(factory.getValidator("other").hasValidationCapability() == false);
 
-  // Unknown falls back to default (null)
+  // Unknown falls back to default ("other" / null)
   BOOST_TEST(factory.getValidator("unknown").hasValidationCapability() == false);
 }
 
@@ -221,15 +284,21 @@ BOOST_AUTO_TEST_CASE(typical_datafed_setup) {
   // JsonSchemaValidator for JSON Schema validation
   auto json_validator = std::make_shared<JsonSchemaValidator>();
 
-  // Configure factory
-  factory.setDefaultValidator(null_validator);  // Legacy default
-  factory.registerValidator("JSONSchema", json_validator);
+  // Configure factory — register both engines with storage + validator
+  factory.registerValidator("json-schema", json_validator);
+  factory.registerStorage("json-schema", std::make_shared<MockStorage>("json"));
+
+  factory.registerValidator("legacy-null", null_validator);
+  factory.registerStorage("legacy-null", std::make_shared<MockStorage>("legacy"));
+
+  // Legacy null engine is the fallback for empty/unknown engine strings
+  factory.setDefaultSchemaType("legacy-null");
 
   auto ctx = makeTestLogContext();
 
-  // Test: JSONSchema engine validates properly
+  // Test: json-schema engine validates properly
   {
-    ISchemaValidator &v = factory.getValidator("JSONSchema");
+    ISchemaValidator &v = factory.getValidator("json-schema");
 
     auto def_result = v.validateDefinition("json", VALID_SCHEMA, ctx);
     BOOST_TEST(def_result.valid == true);
