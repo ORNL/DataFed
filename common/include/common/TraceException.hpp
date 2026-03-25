@@ -48,7 +48,7 @@ public:
       return m_context;
   }
 
-  unsigned long getErrorCode() { return m_error_code; }
+  unsigned long getErrorCode() const { return m_error_code; }
 
   const char *what() const throw() { return m_context.c_str(); }
 
