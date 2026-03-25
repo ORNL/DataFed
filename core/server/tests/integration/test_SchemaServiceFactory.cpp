@@ -4,8 +4,8 @@
 
 // Local includes
 #include "SchemaServiceFactory.hpp"
-#include "JsonSchemaValidator.hpp"
-#include "NullSchemaValidator.hpp"
+#include "schema_validators/JsonSchemaValidator.hpp"
+#include "schema_validators/NullSchemaValidator.hpp"
 
 // Standard includes
 #include <memory>
