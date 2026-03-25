@@ -6,6 +6,7 @@
 #include "schema_storage/ExternalSchemaStorage.hpp"
 #include "schema_validators/JsonSchemaValidator.hpp"
 #include "schema_validators/ExternalSchemaValidator.hpp"
+#include "Config.hpp"
 
 // Standard includes
 #include <functional>
@@ -15,12 +16,19 @@ using namespace std;
 namespace SDMS {
 namespace Core {
 
-SchemaHandler::SchemaHandler(DatabaseAPI &a_db_client)
+  SchemaHandler::SchemaHandler(DatabaseAPI &a_db_client)
     : m_db_client(a_db_client) {
 
-    auto linkml_storage = std::make_shared<ArangoSchemaStorage>();
-    m_schema_factory.registerStorage("linkml", std::move(linkml_storage));
-
+    if ( Config::getInstance().schemas.count("linkml") ){
+      SchemaAPIConfig linkml_config = Config::getInstance().schemas.at("linkml");
+      auto schema_api_client_storage = make_unique<SchemaAPIClient>(linkml_config);
+      auto linkml_storage = std::make_shared<ExternalSchemaStorage>(std::move(schema_api_client_storage));
+      m_schema_factory.registerStorage("linkml", std::move(linkml_storage));
+      auto schema_api_client_validator = make_unique<SchemaAPIClient>(linkml_config);
+      auto linkml_schema_validator = std::make_shared<ExternalSchemaValidator>(std::move(schema_api_client_validator), "linkml");
+      m_schema_factory.registerValidator("linkml",
+          std::move(linkml_schema_validator));
+    }
     // Assumes that we have already placed the schema in the database, arango
     // storage is a shell to be consistent with the interface.
     auto arango_storage = std::make_shared<ArangoSchemaStorage>();
