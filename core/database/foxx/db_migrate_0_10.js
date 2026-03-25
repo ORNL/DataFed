@@ -1,4 +1,5 @@
-db._useDatabase("sdms");
+require('./db_env');
+db._useDatabase(DB_NAME);
 
 db._query(
     "for i in alloc update i with { data_limit: i.max_size, data_size: i.tot_size, rec_limit: i.max_count, rec_count: i.tot_count } in alloc",

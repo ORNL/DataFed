@@ -6,7 +6,7 @@ const error = require("./lib/error_codes");
 const { UserToken } = require("./lib/user_token");
 
 const g_db = require("@arangodb").db;
-const g_graph = require("@arangodb/general-graph")._graph("sdmsg");
+const g_graph = require('./db_config').getGraph();
 const g_proc = require("./process");
 const permissions = require("./lib/permissions");
 

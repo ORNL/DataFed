@@ -5,7 +5,7 @@ const router = createRouter();
 const joi = require("joi");
 
 const g_db = require("@arangodb").db;
-const g_graph = require("@arangodb/general-graph")._graph("sdmsg");
+const g_graph = require('./db_config').getGraph();
 const g_lib = require("./support");
 const error = require("./lib/error_codes");
 const permissions = require("./lib/permissions");
@@ -405,7 +405,7 @@ router
                                 _from: coll_id,
                             });
                             if (old_alias) {
-                                const graph = require("@arangodb/general-graph")._graph("sdmsg");
+                                const graph = require('./db_config').getGraph();
                                 graph.a.remove(old_alias._to);
                             }
 
