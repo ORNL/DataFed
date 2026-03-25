@@ -25,7 +25,6 @@ struct LoggingFixture {
   }
 };
 
-// Minimal LogContext for testing
 LogContext makeTestLogContext() {
   LogContext ctx;
   ctx.thread_name = "test";
@@ -34,7 +33,14 @@ LogContext makeTestLogContext() {
   return ctx;
 }
 
-// Valid JSON Schema that meets DataFed requirements
+} // anonymous namespace
+
+// ============================================================================
+// Test Data
+// ============================================================================
+
+namespace TestData {
+
 const std::string VALID_SCHEMA = R"({
   "type": "object",
   "properties": {
@@ -44,24 +50,49 @@ const std::string VALID_SCHEMA = R"({
   "required": ["name"]
 })";
 
-// Schema missing "type" field (DataFed requirement)
-const std::string SCHEMA_MISSING_TYPE = R"({
+const std::string MINIMAL_VALID_SCHEMA = R"({
+  "type": "object",
+  "properties": {}
+})";
+
+const std::string NESTED_SCHEMA = R"({
+  "type": "object",
   "properties": {
-    "name": { "type": "string" }
+    "address": {
+      "type": "object",
+      "properties": {
+        "street": { "type": "string" },
+        "zip": { "type": "string", "pattern": "^[0-9]{5}$" }
+      },
+      "required": ["street"]
+    }
   }
 })";
 
-// Schema missing "properties" field (DataFed requirement)
-const std::string SCHEMA_MISSING_PROPERTIES = R"({
-  "type": "object"
+// Missing "properties" field
+const std::string SCHEMA_MISSING_PROPERTIES = R"({ "type": "object" })";
+
+// Missing "type" field
+const std::string SCHEMA_MISSING_TYPE = R"({
+  "properties": { "x": { "type": "string" } }
 })";
 
-// Schema with wrong type (DataFed requires type: "object")
+// type is "array" instead of "object"
 const std::string SCHEMA_WRONG_TYPE = R"({
   "type": "array",
-  "properties": {
-    "name": { "type": "string" }
-  }
+  "properties": { "x": { "type": "string" } }
+})";
+
+// properties is a string instead of object
+const std::string SCHEMA_PROPERTIES_NOT_OBJECT = R"({
+  "type": "object",
+  "properties": "not an object"
+})";
+
+// type is an integer instead of string
+const std::string SCHEMA_TYPE_NOT_STRING = R"({
+  "type": 42,
+  "properties": { "x": { "type": "string" } }
 })";
 
 // Not a JSON object at root
@@ -110,7 +141,7 @@ const std::string ADDRESS_SCHEMA = R"({
   }
 })";
 
-} // anonymous namespace
+} // namespace TestData
 
 // ============================================================================
 // Test Suite: Construction and Capability
@@ -126,7 +157,7 @@ BOOST_AUTO_TEST_CASE(default_construction) {
 }
 
 BOOST_AUTO_TEST_CASE(construction_with_loader) {
-  auto loader = [](const std::string&, LogContext) -> nlohmann::json {
+  auto loader = [](const std::string &, LogContext) -> nlohmann::json {
     return nlohmann::json::object();
   };
   JsonSchemaValidator validator(loader);
@@ -136,27 +167,157 @@ BOOST_AUTO_TEST_CASE(construction_with_loader) {
 BOOST_AUTO_TEST_SUITE_END()
 
 // ============================================================================
-// Test Suite: Schema Definition Validation
+// Test Suite: DataFed Schema Requirements
+//
+// These tests exercise enforceDataFedRequirements() through the public
+// validateDefinition() API. This logic was originally on
+// SchemaHandler::enforceRequiredProperties() and was moved here during
+// the factory refactor.
 // ============================================================================
 
-BOOST_AUTO_TEST_SUITE(SchemaDefinitionValidation)
+BOOST_AUTO_TEST_SUITE(DataFedSchemaRequirements)
 
-BOOST_AUTO_TEST_CASE(valid_schema_passes) {
+BOOST_AUTO_TEST_CASE(accepts_valid_schema) {
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
-  auto result = validator.validateDefinition("json", VALID_SCHEMA, ctx);
-  
+
+  auto result = validator.validateDefinition("json", TestData::VALID_SCHEMA, ctx);
   BOOST_TEST(result.valid == true);
   BOOST_TEST(result.errors.empty());
 }
 
+BOOST_AUTO_TEST_CASE(accepts_minimal_valid_schema) {
+  JsonSchemaValidator validator;
+  auto ctx = makeTestLogContext();
+
+  auto result = validator.validateDefinition(
+      "json", TestData::MINIMAL_VALID_SCHEMA, ctx);
+  BOOST_TEST(result.valid == true);
+}
+
+BOOST_AUTO_TEST_CASE(accepts_schema_with_nested_objects) {
+  JsonSchemaValidator validator;
+  auto ctx = makeTestLogContext();
+
+  auto result = validator.validateDefinition(
+      "json", TestData::NESTED_SCHEMA, ctx);
+  BOOST_TEST(result.valid == true);
+}
+
+BOOST_AUTO_TEST_CASE(rejects_non_object_json_array) {
+  JsonSchemaValidator validator;
+  auto ctx = makeTestLogContext();
+
+  auto result = validator.validateDefinition(
+      "json", TestData::SCHEMA_NOT_OBJECT, ctx);
+  BOOST_TEST(result.valid == false);
+  BOOST_TEST(!result.errors.empty());
+}
+
+BOOST_AUTO_TEST_CASE(rejects_non_object_json_string) {
+  JsonSchemaValidator validator;
+  auto ctx = makeTestLogContext();
+
+  auto result = validator.validateDefinition("json", R"("just a string")", ctx);
+  BOOST_TEST(result.valid == false);
+}
+
+BOOST_AUTO_TEST_CASE(rejects_non_object_json_number) {
+  JsonSchemaValidator validator;
+  auto ctx = makeTestLogContext();
+
+  auto result = validator.validateDefinition("json", "42", ctx);
+  BOOST_TEST(result.valid == false);
+}
+
+BOOST_AUTO_TEST_CASE(rejects_non_object_json_boolean) {
+  JsonSchemaValidator validator;
+  auto ctx = makeTestLogContext();
+
+  auto result = validator.validateDefinition("json", "true", ctx);
+  BOOST_TEST(result.valid == false);
+}
+
+BOOST_AUTO_TEST_CASE(rejects_non_object_json_null) {
+  JsonSchemaValidator validator;
+  auto ctx = makeTestLogContext();
+
+  auto result = validator.validateDefinition("json", "null", ctx);
+  BOOST_TEST(result.valid == false);
+}
+
+BOOST_AUTO_TEST_CASE(rejects_missing_properties) {
+  JsonSchemaValidator validator;
+  auto ctx = makeTestLogContext();
+
+  auto result = validator.validateDefinition(
+      "json", TestData::SCHEMA_MISSING_PROPERTIES, ctx);
+  BOOST_TEST(result.valid == false);
+  BOOST_TEST(!result.errors.empty());
+}
+
+BOOST_AUTO_TEST_CASE(rejects_missing_type) {
+  JsonSchemaValidator validator;
+  auto ctx = makeTestLogContext();
+
+  auto result = validator.validateDefinition(
+      "json", TestData::SCHEMA_MISSING_TYPE, ctx);
+  BOOST_TEST(result.valid == false);
+  BOOST_TEST(!result.errors.empty());
+}
+
+BOOST_AUTO_TEST_CASE(rejects_wrong_type_value) {
+  JsonSchemaValidator validator;
+  auto ctx = makeTestLogContext();
+
+  auto result = validator.validateDefinition(
+      "json", TestData::SCHEMA_WRONG_TYPE, ctx);
+  BOOST_TEST(result.valid == false);
+  BOOST_TEST(!result.errors.empty());
+}
+
+BOOST_AUTO_TEST_CASE(rejects_properties_not_object) {
+  JsonSchemaValidator validator;
+  auto ctx = makeTestLogContext();
+
+  auto result = validator.validateDefinition(
+      "json", TestData::SCHEMA_PROPERTIES_NOT_OBJECT, ctx);
+  BOOST_TEST(result.valid == false);
+  BOOST_TEST(!result.errors.empty());
+}
+
+BOOST_AUTO_TEST_CASE(rejects_type_not_string) {
+  JsonSchemaValidator validator;
+  auto ctx = makeTestLogContext();
+
+  auto result = validator.validateDefinition(
+      "json", TestData::SCHEMA_TYPE_NOT_STRING, ctx);
+  BOOST_TEST(result.valid == false);
+  BOOST_TEST(!result.errors.empty());
+}
+
+BOOST_AUTO_TEST_CASE(rejects_empty_object) {
+  JsonSchemaValidator validator;
+  auto ctx = makeTestLogContext();
+
+  auto result = validator.validateDefinition("json", "{}", ctx);
+  BOOST_TEST(result.valid == false);
+  BOOST_TEST(!result.errors.empty());
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+// ============================================================================
+// Test Suite: Schema Definition Validation (format/content handling)
+// ============================================================================
+
+BOOST_AUTO_TEST_SUITE(SchemaDefinitionValidation)
+
 BOOST_AUTO_TEST_CASE(empty_content_fails) {
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
+
   auto result = validator.validateDefinition("json", "", ctx);
-  
   BOOST_TEST(result.valid == false);
   BOOST_TEST(!result.errors.empty());
 }
@@ -164,49 +325,9 @@ BOOST_AUTO_TEST_CASE(empty_content_fails) {
 BOOST_AUTO_TEST_CASE(invalid_json_fails) {
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
-  auto result = validator.validateDefinition("json", INVALID_JSON, ctx);
-  
-  BOOST_TEST(result.valid == false);
-  BOOST_TEST(!result.errors.empty());
-}
 
-BOOST_AUTO_TEST_CASE(schema_missing_type_fails) {
-  JsonSchemaValidator validator;
-  auto ctx = makeTestLogContext();
-  
-  auto result = validator.validateDefinition("json", SCHEMA_MISSING_TYPE, ctx);
-  
-  BOOST_TEST(result.valid == false);
-  BOOST_TEST(!result.errors.empty());
-}
-
-BOOST_AUTO_TEST_CASE(schema_missing_properties_fails) {
-  JsonSchemaValidator validator;
-  auto ctx = makeTestLogContext();
-  
-  auto result = validator.validateDefinition("json", SCHEMA_MISSING_PROPERTIES, ctx);
-  
-  BOOST_TEST(result.valid == false);
-  BOOST_TEST(!result.errors.empty());
-}
-
-BOOST_AUTO_TEST_CASE(schema_wrong_type_fails) {
-  JsonSchemaValidator validator;
-  auto ctx = makeTestLogContext();
-  
-  auto result = validator.validateDefinition("json", SCHEMA_WRONG_TYPE, ctx);
-  
-  BOOST_TEST(result.valid == false);
-  BOOST_TEST(!result.errors.empty());
-}
-
-BOOST_AUTO_TEST_CASE(schema_not_object_fails) {
-  JsonSchemaValidator validator;
-  auto ctx = makeTestLogContext();
-  
-  auto result = validator.validateDefinition("json", SCHEMA_NOT_OBJECT, ctx);
-  
+  auto result = validator.validateDefinition(
+      "json", TestData::INVALID_JSON, ctx);
   BOOST_TEST(result.valid == false);
   BOOST_TEST(!result.errors.empty());
 }
@@ -214,9 +335,9 @@ BOOST_AUTO_TEST_CASE(schema_not_object_fails) {
 BOOST_AUTO_TEST_CASE(unsupported_format_fails) {
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
-  auto result = validator.validateDefinition("yaml", VALID_SCHEMA, ctx);
-  
+
+  auto result = validator.validateDefinition(
+      "yaml", TestData::VALID_SCHEMA, ctx);
   BOOST_TEST(result.valid == false);
   BOOST_TEST(!result.errors.empty());
 }
@@ -224,10 +345,17 @@ BOOST_AUTO_TEST_CASE(unsupported_format_fails) {
 BOOST_AUTO_TEST_CASE(empty_format_treated_as_json) {
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
-  auto result = validator.validateDefinition("", VALID_SCHEMA, ctx);
-  
+
+  auto result = validator.validateDefinition("", TestData::VALID_SCHEMA, ctx);
   BOOST_TEST(result.valid == true);
+}
+
+BOOST_AUTO_TEST_CASE(whitespace_only_content_fails) {
+  JsonSchemaValidator validator;
+  auto ctx = makeTestLogContext();
+
+  auto result = validator.validateDefinition("json", "   \n\t  ", ctx);
+  BOOST_TEST(result.valid == false);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -241,11 +369,12 @@ BOOST_AUTO_TEST_SUITE(SchemaCaching)
 BOOST_AUTO_TEST_CASE(cache_valid_schema) {
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
+
   BOOST_TEST(validator.isCached("test-schema") == false);
-  
-  bool cached = validator.cacheSchema("test-schema", VALID_SCHEMA, "json", ctx);
-  
+
+  bool cached = validator.cacheSchema(
+      "test-schema", TestData::VALID_SCHEMA, "json", ctx);
+
   BOOST_TEST(cached == true);
   BOOST_TEST(validator.isCached("test-schema") == true);
 }
@@ -253,9 +382,10 @@ BOOST_AUTO_TEST_CASE(cache_valid_schema) {
 BOOST_AUTO_TEST_CASE(cache_invalid_schema_fails) {
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
-  bool cached = validator.cacheSchema("bad-schema", INVALID_JSON, "json", ctx);
-  
+
+  bool cached = validator.cacheSchema(
+      "bad-schema", TestData::INVALID_JSON, "json", ctx);
+
   BOOST_TEST(cached == false);
   BOOST_TEST(validator.isCached("bad-schema") == false);
 }
@@ -263,9 +393,10 @@ BOOST_AUTO_TEST_CASE(cache_invalid_schema_fails) {
 BOOST_AUTO_TEST_CASE(cache_schema_missing_datafed_requirements_fails) {
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
-  bool cached = validator.cacheSchema("incomplete", SCHEMA_MISSING_TYPE, "json", ctx);
-  
+
+  bool cached = validator.cacheSchema(
+      "incomplete", TestData::SCHEMA_MISSING_TYPE, "json", ctx);
+
   BOOST_TEST(cached == false);
   BOOST_TEST(validator.isCached("incomplete") == false);
 }
@@ -273,35 +404,33 @@ BOOST_AUTO_TEST_CASE(cache_schema_missing_datafed_requirements_fails) {
 BOOST_AUTO_TEST_CASE(evict_schema) {
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
-  validator.cacheSchema("to-evict", VALID_SCHEMA, "json", ctx);
+
+  validator.cacheSchema("to-evict", TestData::VALID_SCHEMA, "json", ctx);
   BOOST_TEST(validator.isCached("to-evict") == true);
-  
+
   validator.evictSchema("to-evict");
-  
+
   BOOST_TEST(validator.isCached("to-evict") == false);
 }
 
 BOOST_AUTO_TEST_CASE(evict_nonexistent_schema_is_safe) {
   JsonSchemaValidator validator;
-  
-  // Should not throw
+
   validator.evictSchema("never-existed");
-  
   BOOST_TEST(validator.isCached("never-existed") == false);
 }
 
 BOOST_AUTO_TEST_CASE(clear_cache) {
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
-  validator.cacheSchema("schema1", VALID_SCHEMA, "json", ctx);
-  validator.cacheSchema("schema2", VALID_SCHEMA, "json", ctx);
+
+  validator.cacheSchema("schema1", TestData::VALID_SCHEMA, "json", ctx);
+  validator.cacheSchema("schema2", TestData::VALID_SCHEMA, "json", ctx);
   BOOST_TEST(validator.isCached("schema1") == true);
   BOOST_TEST(validator.isCached("schema2") == true);
-  
+
   validator.clearCache();
-  
+
   BOOST_TEST(validator.isCached("schema1") == false);
   BOOST_TEST(validator.isCached("schema2") == false);
 }
@@ -309,22 +438,32 @@ BOOST_AUTO_TEST_CASE(clear_cache) {
 BOOST_AUTO_TEST_CASE(cache_overwrites_existing) {
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
-  // Cache initial schema
-  validator.cacheSchema("my-schema", VALID_SCHEMA, "json", ctx);
+
+  validator.cacheSchema("my-schema", TestData::VALID_SCHEMA, "json", ctx);
   BOOST_TEST(validator.isCached("my-schema") == true);
-  
-  // Cache different schema with same ID
+
   const std::string DIFFERENT_SCHEMA = R"({
     "type": "object",
     "properties": {
       "different": { "type": "boolean" }
     }
   })";
-  bool cached = validator.cacheSchema("my-schema", DIFFERENT_SCHEMA, "json", ctx);
-  
+  bool cached = validator.cacheSchema(
+      "my-schema", DIFFERENT_SCHEMA, "json", ctx);
+
   BOOST_TEST(cached == true);
   BOOST_TEST(validator.isCached("my-schema") == true);
+}
+
+BOOST_AUTO_TEST_CASE(cache_unsupported_format_fails) {
+  JsonSchemaValidator validator;
+  auto ctx = makeTestLogContext();
+
+  bool cached = validator.cacheSchema(
+      "yaml-schema", TestData::VALID_SCHEMA, "yaml", ctx);
+
+  BOOST_TEST(cached == false);
+  BOOST_TEST(validator.isCached("yaml-schema") == false);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -338,12 +477,12 @@ BOOST_AUTO_TEST_SUITE(MetadataValidation)
 BOOST_AUTO_TEST_CASE(valid_metadata_passes) {
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
-  validator.cacheSchema("person-schema", VALID_SCHEMA, "json", ctx);
-  
+
+  validator.cacheSchema("person-schema", TestData::VALID_SCHEMA, "json", ctx);
+
   auto result = validator.validateMetadata(
-      "person-schema", "json", VALID_METADATA, ctx);
-  
+      "person-schema", "json", TestData::VALID_METADATA, ctx);
+
   BOOST_TEST(result.valid == true);
   BOOST_TEST(result.errors.empty());
 }
@@ -351,12 +490,12 @@ BOOST_AUTO_TEST_CASE(valid_metadata_passes) {
 BOOST_AUTO_TEST_CASE(metadata_missing_required_field_fails) {
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
-  validator.cacheSchema("person-schema", VALID_SCHEMA, "json", ctx);
-  
+
+  validator.cacheSchema("person-schema", TestData::VALID_SCHEMA, "json", ctx);
+
   auto result = validator.validateMetadata(
-      "person-schema", "json", METADATA_MISSING_REQUIRED, ctx);
-  
+      "person-schema", "json", TestData::METADATA_MISSING_REQUIRED, ctx);
+
   BOOST_TEST(result.valid == false);
   BOOST_TEST(!result.errors.empty());
 }
@@ -364,12 +503,12 @@ BOOST_AUTO_TEST_CASE(metadata_missing_required_field_fails) {
 BOOST_AUTO_TEST_CASE(metadata_wrong_type_fails) {
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
-  validator.cacheSchema("person-schema", VALID_SCHEMA, "json", ctx);
-  
+
+  validator.cacheSchema("person-schema", TestData::VALID_SCHEMA, "json", ctx);
+
   auto result = validator.validateMetadata(
-      "person-schema", "json", METADATA_WRONG_TYPE, ctx);
-  
+      "person-schema", "json", TestData::METADATA_WRONG_TYPE, ctx);
+
   BOOST_TEST(result.valid == false);
   BOOST_TEST(!result.errors.empty());
 }
@@ -377,12 +516,12 @@ BOOST_AUTO_TEST_CASE(metadata_wrong_type_fails) {
 BOOST_AUTO_TEST_CASE(metadata_constraint_violation_fails) {
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
-  validator.cacheSchema("person-schema", VALID_SCHEMA, "json", ctx);
-  
+
+  validator.cacheSchema("person-schema", TestData::VALID_SCHEMA, "json", ctx);
+
   auto result = validator.validateMetadata(
-      "person-schema", "json", METADATA_CONSTRAINT_VIOLATION, ctx);
-  
+      "person-schema", "json", TestData::METADATA_CONSTRAINT_VIOLATION, ctx);
+
   BOOST_TEST(result.valid == false);
   BOOST_TEST(!result.errors.empty());
 }
@@ -390,11 +529,12 @@ BOOST_AUTO_TEST_CASE(metadata_constraint_violation_fails) {
 BOOST_AUTO_TEST_CASE(metadata_empty_content_fails) {
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
-  validator.cacheSchema("person-schema", VALID_SCHEMA, "json", ctx);
-  
-  auto result = validator.validateMetadata("person-schema", "json", "", ctx);
-  
+
+  validator.cacheSchema("person-schema", TestData::VALID_SCHEMA, "json", ctx);
+
+  auto result = validator.validateMetadata(
+      "person-schema", "json", "", ctx);
+
   BOOST_TEST(result.valid == false);
   BOOST_TEST(!result.errors.empty());
 }
@@ -402,12 +542,12 @@ BOOST_AUTO_TEST_CASE(metadata_empty_content_fails) {
 BOOST_AUTO_TEST_CASE(metadata_invalid_json_fails) {
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
-  validator.cacheSchema("person-schema", VALID_SCHEMA, "json", ctx);
-  
+
+  validator.cacheSchema("person-schema", TestData::VALID_SCHEMA, "json", ctx);
+
   auto result = validator.validateMetadata(
-      "person-schema", "json", INVALID_JSON, ctx);
-  
+      "person-schema", "json", TestData::INVALID_JSON, ctx);
+
   BOOST_TEST(result.valid == false);
   BOOST_TEST(!result.errors.empty());
 }
@@ -415,11 +555,10 @@ BOOST_AUTO_TEST_CASE(metadata_invalid_json_fails) {
 BOOST_AUTO_TEST_CASE(metadata_validation_uncached_schema_fails) {
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
-  // Don't cache the schema
+
   auto result = validator.validateMetadata(
-      "nonexistent-schema", "json", VALID_METADATA, ctx);
-  
+      "nonexistent-schema", "json", TestData::VALID_METADATA, ctx);
+
   BOOST_TEST(result.valid == false);
   BOOST_TEST(!result.errors.empty());
 }
@@ -427,12 +566,12 @@ BOOST_AUTO_TEST_CASE(metadata_validation_uncached_schema_fails) {
 BOOST_AUTO_TEST_CASE(metadata_unsupported_format_fails) {
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
-  validator.cacheSchema("person-schema", VALID_SCHEMA, "json", ctx);
-  
+
+  validator.cacheSchema("person-schema", TestData::VALID_SCHEMA, "json", ctx);
+
   auto result = validator.validateMetadata(
-      "person-schema", "yaml", VALID_METADATA, ctx);
-  
+      "person-schema", "yaml", TestData::VALID_METADATA, ctx);
+
   BOOST_TEST(result.valid == false);
   BOOST_TEST(!result.errors.empty());
 }
@@ -440,12 +579,12 @@ BOOST_AUTO_TEST_CASE(metadata_unsupported_format_fails) {
 BOOST_AUTO_TEST_CASE(metadata_empty_format_treated_as_json) {
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
-  validator.cacheSchema("person-schema", VALID_SCHEMA, "json", ctx);
-  
+
+  validator.cacheSchema("person-schema", TestData::VALID_SCHEMA, "json", ctx);
+
   auto result = validator.validateMetadata(
-      "person-schema", "", VALID_METADATA, ctx);
-  
+      "person-schema", "", TestData::VALID_METADATA, ctx);
+
   BOOST_TEST(result.valid == true);
 }
 
@@ -460,63 +599,87 @@ BOOST_AUTO_TEST_SUITE(SchemaReferenceResolution)
 BOOST_AUTO_TEST_CASE(schema_with_ref_resolves_via_loader) {
   bool loader_called = false;
   std::string requested_id;
-  
-  auto loader = [&](const std::string& schema_id, LogContext) -> nlohmann::json {
+
+  auto loader = [&](const std::string &schema_id,
+                     LogContext) -> nlohmann::json {
     loader_called = true;
     requested_id = schema_id;
-    return nlohmann::json::parse(ADDRESS_SCHEMA);
+    return nlohmann::json::parse(TestData::ADDRESS_SCHEMA);
   };
-  
+
   JsonSchemaValidator validator(loader);
   auto ctx = makeTestLogContext();
-  
-  // This schema has $ref to "address-schema"
-  auto result = validator.validateDefinition("json", SCHEMA_WITH_REF, ctx);
-  
+
+  auto result = validator.validateDefinition(
+      "json", TestData::SCHEMA_WITH_REF, ctx);
+
   BOOST_TEST(result.valid == true);
   BOOST_TEST(loader_called == true);
   BOOST_TEST(requested_id == "address-schema");
 }
 
 BOOST_AUTO_TEST_CASE(schema_ref_without_loader_fails) {
-  // No loader provided
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
-  auto result = validator.validateDefinition("json", SCHEMA_WITH_REF, ctx);
-  
+
+  auto result = validator.validateDefinition(
+      "json", TestData::SCHEMA_WITH_REF, ctx);
+
   BOOST_TEST(result.valid == false);
   BOOST_TEST(!result.errors.empty());
 }
 
 BOOST_AUTO_TEST_CASE(loader_can_be_set_after_construction) {
-  JsonSchemaValidator validator;  // No loader initially
+  JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
+
   bool loader_called = false;
-  validator.setSchemaLoader([&](const std::string&, LogContext) -> nlohmann::json {
-    loader_called = true;
-    return nlohmann::json::parse(ADDRESS_SCHEMA);
-  });
-  
-  auto result = validator.validateDefinition("json", SCHEMA_WITH_REF, ctx);
-  
+  validator.setSchemaLoader(
+      [&](const std::string &, LogContext) -> nlohmann::json {
+        loader_called = true;
+        return nlohmann::json::parse(TestData::ADDRESS_SCHEMA);
+      });
+
+  auto result = validator.validateDefinition(
+      "json", TestData::SCHEMA_WITH_REF, ctx);
+
   BOOST_TEST(result.valid == true);
   BOOST_TEST(loader_called == true);
 }
 
 BOOST_AUTO_TEST_CASE(loader_exception_causes_validation_failure) {
-  auto loader = [](const std::string&, LogContext) -> nlohmann::json {
+  auto loader = [](const std::string &, LogContext) -> nlohmann::json {
     throw std::runtime_error("Schema not found");
   };
-  
+
   JsonSchemaValidator validator(loader);
   auto ctx = makeTestLogContext();
-  
-  auto result = validator.validateDefinition("json", SCHEMA_WITH_REF, ctx);
-  
+
+  auto result = validator.validateDefinition(
+      "json", TestData::SCHEMA_WITH_REF, ctx);
+
   BOOST_TEST(result.valid == false);
   BOOST_TEST(!result.errors.empty());
+}
+
+BOOST_AUTO_TEST_CASE(ref_resolution_works_for_cached_schemas) {
+  auto loader = [](const std::string &, LogContext) -> nlohmann::json {
+    return nlohmann::json::parse(TestData::ADDRESS_SCHEMA);
+  };
+
+  JsonSchemaValidator validator(loader);
+  auto ctx = makeTestLogContext();
+
+  bool cached = validator.cacheSchema(
+      "ref-schema", TestData::SCHEMA_WITH_REF, "json", ctx);
+  BOOST_TEST(cached == true);
+
+  // Validate metadata against the cached schema that uses $ref
+  auto result = validator.validateMetadata(
+      "ref-schema", "json",
+      R"({ "address": { "street": "123 Main", "city": "Anywhere" } })",
+      ctx);
+  BOOST_TEST(result.valid == true);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -528,7 +691,7 @@ BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE(ComplexSchemaScenarios)
 
 BOOST_AUTO_TEST_CASE(nested_objects_validation) {
-  const std::string NESTED_SCHEMA = R"({
+  const std::string NESTED_OBJ_SCHEMA = R"({
     "type": "object",
     "properties": {
       "user": {
@@ -541,31 +704,22 @@ BOOST_AUTO_TEST_CASE(nested_objects_validation) {
       }
     }
   })";
-  
-  const std::string VALID_NESTED_METADATA = R"({
-    "user": {
-      "name": "Alice",
-      "email": "alice@example.com"
-    }
-  })";
-  
-  const std::string INVALID_NESTED_METADATA = R"({
-    "user": {
-      "email": "no-name@example.com"
-    }
-  })";
-  
+
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
-  validator.cacheSchema("nested-schema", NESTED_SCHEMA, "json", ctx);
-  
+
+  validator.cacheSchema("nested-schema", NESTED_OBJ_SCHEMA, "json", ctx);
+
   auto valid_result = validator.validateMetadata(
-      "nested-schema", "json", VALID_NESTED_METADATA, ctx);
+      "nested-schema", "json",
+      R"({ "user": { "name": "Alice", "email": "alice@example.com" } })",
+      ctx);
   BOOST_TEST(valid_result.valid == true);
-  
+
   auto invalid_result = validator.validateMetadata(
-      "nested-schema", "json", INVALID_NESTED_METADATA, ctx);
+      "nested-schema", "json",
+      R"({ "user": { "email": "no-name@example.com" } })",
+      ctx);
   BOOST_TEST(invalid_result.valid == false);
 }
 
@@ -580,26 +734,22 @@ BOOST_AUTO_TEST_CASE(array_validation) {
       }
     }
   })";
-  
-  const std::string VALID_ARRAY = R"({ "tags": ["science", "data"] })";
-  const std::string EMPTY_ARRAY = R"({ "tags": [] })";
-  const std::string WRONG_ITEM_TYPE = R"({ "tags": [1, 2, 3] })";
-  
+
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
+
   validator.cacheSchema("array-schema", ARRAY_SCHEMA, "json", ctx);
-  
+
   auto valid_result = validator.validateMetadata(
-      "array-schema", "json", VALID_ARRAY, ctx);
+      "array-schema", "json", R"({ "tags": ["science", "data"] })", ctx);
   BOOST_TEST(valid_result.valid == true);
-  
+
   auto empty_result = validator.validateMetadata(
-      "array-schema", "json", EMPTY_ARRAY, ctx);
+      "array-schema", "json", R"({ "tags": [] })", ctx);
   BOOST_TEST(empty_result.valid == false);
-  
+
   auto wrong_type_result = validator.validateMetadata(
-      "array-schema", "json", WRONG_ITEM_TYPE, ctx);
+      "array-schema", "json", R"({ "tags": [1, 2, 3] })", ctx);
   BOOST_TEST(wrong_type_result.valid == false);
 }
 
@@ -613,21 +763,18 @@ BOOST_AUTO_TEST_CASE(enum_validation) {
       }
     }
   })";
-  
-  const std::string VALID_ENUM = R"({ "status": "active" })";
-  const std::string INVALID_ENUM = R"({ "status": "unknown" })";
-  
+
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
+
   validator.cacheSchema("enum-schema", ENUM_SCHEMA, "json", ctx);
-  
+
   auto valid_result = validator.validateMetadata(
-      "enum-schema", "json", VALID_ENUM, ctx);
+      "enum-schema", "json", R"({ "status": "active" })", ctx);
   BOOST_TEST(valid_result.valid == true);
-  
+
   auto invalid_result = validator.validateMetadata(
-      "enum-schema", "json", INVALID_ENUM, ctx);
+      "enum-schema", "json", R"({ "status": "unknown" })", ctx);
   BOOST_TEST(invalid_result.valid == false);
 }
 
@@ -641,21 +788,18 @@ BOOST_AUTO_TEST_CASE(pattern_validation) {
       }
     }
   })";
-  
-  const std::string VALID_PATTERN = R"({ "id": "AB1234" })";
-  const std::string INVALID_PATTERN = R"({ "id": "invalid" })";
-  
+
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
+
   validator.cacheSchema("pattern-schema", PATTERN_SCHEMA, "json", ctx);
-  
+
   auto valid_result = validator.validateMetadata(
-      "pattern-schema", "json", VALID_PATTERN, ctx);
+      "pattern-schema", "json", R"({ "id": "AB1234" })", ctx);
   BOOST_TEST(valid_result.valid == true);
-  
+
   auto invalid_result = validator.validateMetadata(
-      "pattern-schema", "json", INVALID_PATTERN, ctx);
+      "pattern-schema", "json", R"({ "id": "invalid" })", ctx);
   BOOST_TEST(invalid_result.valid == false);
 }
 
@@ -667,21 +811,19 @@ BOOST_AUTO_TEST_CASE(additional_properties_validation) {
     },
     "additionalProperties": false
   })";
-  
-  const std::string VALID_STRICT = R"({ "name": "Test" })";
-  const std::string EXTRA_PROPS = R"({ "name": "Test", "extra": "not allowed" })";
-  
+
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
+
   validator.cacheSchema("strict-schema", STRICT_SCHEMA, "json", ctx);
-  
+
   auto valid_result = validator.validateMetadata(
-      "strict-schema", "json", VALID_STRICT, ctx);
+      "strict-schema", "json", R"({ "name": "Test" })", ctx);
   BOOST_TEST(valid_result.valid == true);
-  
+
   auto invalid_result = validator.validateMetadata(
-      "strict-schema", "json", EXTRA_PROPS, ctx);
+      "strict-schema", "json",
+      R"({ "name": "Test", "extra": "not allowed" })", ctx);
   BOOST_TEST(invalid_result.valid == false);
 }
 
@@ -695,7 +837,7 @@ BOOST_AUTO_TEST_SUITE(ValidationResultStructure)
 
 BOOST_AUTO_TEST_CASE(ok_result_has_correct_fields) {
   auto result = ValidationResult::Ok();
-  
+
   BOOST_TEST(result.valid == true);
   BOOST_TEST(result.errors.empty());
   BOOST_TEST(result.warnings.empty());
@@ -703,7 +845,7 @@ BOOST_AUTO_TEST_CASE(ok_result_has_correct_fields) {
 
 BOOST_AUTO_TEST_CASE(ok_result_with_warnings) {
   auto result = ValidationResult::Ok("Some warning");
-  
+
   BOOST_TEST(result.valid == true);
   BOOST_TEST(result.errors.empty());
   BOOST_TEST(result.warnings == "Some warning");
@@ -711,7 +853,7 @@ BOOST_AUTO_TEST_CASE(ok_result_with_warnings) {
 
 BOOST_AUTO_TEST_CASE(fail_result_has_correct_fields) {
   auto result = ValidationResult::Fail("Error message");
-  
+
   BOOST_TEST(result.valid == false);
   BOOST_TEST(result.errors == "Error message");
   BOOST_TEST(result.warnings.empty());
@@ -733,46 +875,45 @@ BOOST_AUTO_TEST_CASE(unicode_in_schema_and_metadata) {
       "説明": { "type": "string" }
     }
   })";
-  
+
   const std::string UNICODE_METADATA = R"({
     "名前": "テスト",
     "説明": "日本語のテスト"
   })";
-  
+
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
-  auto def_result = validator.validateDefinition("json", UNICODE_SCHEMA, ctx);
+
+  auto def_result = validator.validateDefinition(
+      "json", UNICODE_SCHEMA, ctx);
   BOOST_TEST(def_result.valid == true);
-  
+
   validator.cacheSchema("unicode-schema", UNICODE_SCHEMA, "json", ctx);
-  
+
   auto md_result = validator.validateMetadata(
       "unicode-schema", "json", UNICODE_METADATA, ctx);
   BOOST_TEST(md_result.valid == true);
 }
 
 BOOST_AUTO_TEST_CASE(large_metadata_object) {
-  // Create a schema that allows many properties
   const std::string FLEXIBLE_SCHEMA = R"({
     "type": "object",
     "properties": {
       "data": { "type": "object" }
     }
   })";
-  
-  // Create metadata with many nested properties
+
   nlohmann::json large_data;
   large_data["data"] = nlohmann::json::object();
   for (int i = 0; i < 1000; ++i) {
     large_data["data"]["field_" + std::to_string(i)] = i;
   }
-  
+
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
+
   validator.cacheSchema("flex-schema", FLEXIBLE_SCHEMA, "json", ctx);
-  
+
   auto result = validator.validateMetadata(
       "flex-schema", "json", large_data.dump(), ctx);
   BOOST_TEST(result.valid == true);
@@ -785,44 +926,23 @@ BOOST_AUTO_TEST_CASE(deeply_nested_metadata) {
       "level1": { "type": "object" }
     }
   })";
-  
-  // Create deeply nested structure
+
   nlohmann::json nested;
-  nlohmann::json* current = &nested;
+  nlohmann::json *current = &nested;
   for (int i = 1; i <= 50; ++i) {
     (*current)["level" + std::to_string(i)] = nlohmann::json::object();
     current = &((*current)["level" + std::to_string(i)]);
   }
   (*current)["value"] = "deep";
-  
+
   JsonSchemaValidator validator;
   auto ctx = makeTestLogContext();
-  
+
   validator.cacheSchema("nested-schema", NESTED_SCHEMA, "json", ctx);
-  
+
   auto result = validator.validateMetadata(
       "nested-schema", "json", nested.dump(), ctx);
   BOOST_TEST(result.valid == true);
-}
-
-BOOST_AUTO_TEST_CASE(whitespace_only_content) {
-  JsonSchemaValidator validator;
-  auto ctx = makeTestLogContext();
-  
-  auto result = validator.validateDefinition("json", "   \n\t  ", ctx);
-  
-  // Should fail - whitespace is not valid JSON
-  BOOST_TEST(result.valid == false);
-}
-
-BOOST_AUTO_TEST_CASE(null_json_value) {
-  JsonSchemaValidator validator;
-  auto ctx = makeTestLogContext();
-  
-  // "null" is valid JSON but not a valid DataFed schema (must be object)
-  auto result = validator.validateDefinition("json", "null", ctx);
-  
-  BOOST_TEST(result.valid == false);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

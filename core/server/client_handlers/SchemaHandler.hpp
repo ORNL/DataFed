@@ -5,6 +5,7 @@
 // Local public includes
 #include "DatabaseAPI.hpp"
 #include "common/DynaLog.hpp"
+#include "SchemaServiceFactory.hpp"
 
 // Proto includes
 #include "common/envelope.pb.h"
@@ -117,30 +118,9 @@ public:
                     AckReply &a_reply,
                     LogContext log_context);
 
-  // ── Utilities (public for direct unit testing) ────────────────────────
-
-  /**
-   * @brief Enforce DataFed-specific schema requirements.
-   *
-   * Checks that the schema is a JSON object with "type": "object" and
-   * a "properties" field that is also a JSON object. These are requirements
-   * beyond what JSON Schema itself mandates.
-   *
-   * Static so it can be tested without constructing a SchemaHandler.
-   *
-   * @throws TraceException if requirements are not met.
-   */
-  static void enforceRequiredProperties(const nlohmann::json &a_schema);
-
-  /**
-   * @brief Schema $ref loader callback.
-   *
-   * Called by nlohmann::json_schema::json_validator when it encounters a
-   * $ref URI. Loads the referenced schema from the DB via schemaView.
-   */
-  void schemaLoader(const nlohmann::json_uri &a_uri,
-                    nlohmann::json &a_value,
-                    LogContext log_context);
+  std::string validateMetadataContent(const std::string &a_sch_id,
+                                    const std::string &a_metadata,
+                                    LogContext log_context);
 
 private:
   /**
@@ -156,6 +136,7 @@ private:
                                 LogContext log_context);
 
   DatabaseAPI &m_db_client;
+  SchemaServiceFactory m_schema_factory;
 };
 
 } // namespace Core
