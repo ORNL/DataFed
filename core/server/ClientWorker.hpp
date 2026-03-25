@@ -207,20 +207,6 @@ private:
       const std::string &a_uid, std::unique_ptr<IMessage> &&request,
       LogContext log_context);
 
-  void error(const nlohmann::json::json_pointer &a_ptr,
-             const nlohmann::json &a_inst,
-             const std::string &a_err_msg) override {
-    (void)a_ptr;
-    (void)a_inst;
-    const std::string &path = a_ptr.to_string();
-
-    if (m_validator_err.size() == 0)
-      m_validator_err = "Schema Validation Error(s):\n";
-
-    m_validator_err +=
-        "At " + (path.size() ? path : "top-level") + ": " + a_err_msg + "\n";
-  }
-
   bool isRunning() const;
 
   Config &m_config;    ///< Ref to configuration singleton
@@ -232,7 +218,6 @@ private:
   DatabaseAPI m_db_client;     ///< Local DB client instance
   std::unique_ptr<SchemaHandler> m_schema_handler;
   GlobusAPI m_globus_api;      ///< Local GlobusAPI instance
-  std::string m_validator_err; ///< String buffer for metadata validation errors
   LogContext m_log_context;
   MessageFactory m_msg_factory;
   std::unique_ptr<IMessageMapper> m_msg_mapper;

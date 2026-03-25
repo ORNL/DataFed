@@ -40,9 +40,8 @@ public:
   SchemaServiceFactory(const SchemaServiceFactory &) = delete;
   SchemaServiceFactory &operator=(const SchemaServiceFactory &) = delete;
 
+  void setDefaultSchemaType(const std::string & a_engine);
   // ── Storage Registry ──────────────────────────────────────────────────
-
-  void setDefaultStorage(std::shared_ptr<ISchemaStorage> a_storage);
 
   void registerStorage(const std::string &a_engine,
                        std::shared_ptr<ISchemaStorage> a_storage);
@@ -50,8 +49,6 @@ public:
   ISchemaStorage &getStorage(const std::string &a_engine);
 
   // ── Validator Registry ────────────────────────────────────────────────
-
-  void setDefaultValidator(std::shared_ptr<ISchemaValidator> a_validator);
 
   void registerValidator(const std::string &a_engine,
                          std::shared_ptr<ISchemaValidator> a_validator);
@@ -74,8 +71,7 @@ private:
   ISchemaStorage &resolveStorage(const std::string &a_engine) const;
   ISchemaValidator &resolveValidator(const std::string &a_engine) const;
 
-  std::shared_ptr<ISchemaStorage> m_default_storage;
-  std::shared_ptr<ISchemaValidator> m_default_validator;
+  std::string m_default_engine;
   std::unordered_map<std::string, std::shared_ptr<ISchemaStorage>> m_storage;
   std::unordered_map<std::string, std::shared_ptr<ISchemaValidator>> m_validators;
 };

@@ -829,11 +829,9 @@ ClientWorker::procRecordCreateRequest(const std::string &a_uid,
 
   m_db_client.setClient(a_uid);
 
-  // Validate metdata if present
-
   DL_DEBUG(log_context, "Creating record");
 
-  m_validator_err.clear();
+  std::string validator_err;
 
   if (request->has_sch_enforce() &&
       !(request->has_metadata() && request->has_sch_id())) {
@@ -842,56 +840,34 @@ ClientWorker::procRecordCreateRequest(const std::string &a_uid,
   }
 
   if (request->has_metadata() && request->has_sch_id()) {
+    validator_err = m_schema_handler->validateMetadataContent(
+        request->sch_id(), request->metadata(), log_context);
 
-    nlohmann::json schema;
-
-    try {
-      libjson::Value sch;
-      m_db_client.schemaView(request->sch_id(), sch, log_context);
-      schema = nlohmann::json::parse(
-          sch.asArray().begin()->asObject().getValue("def").toString());
-
-      nlohmann::json_schema::json_validator validator(
-          bind(&SchemaHandler::schemaLoader, m_schema_handler.get(),
-               placeholders::_1, placeholders::_2, log_context));
-
-      try {
-        validator.set_root_schema(schema);
-
-        nlohmann::json md = nlohmann::json::parse(request->metadata());
-
-        m_validator_err.clear();
-        validator.validate(md, *this);
-      } catch (exception &e) {
-        m_validator_err = string("Invalid metadata schema: ") + e.what() + "\n";
-        DL_ERROR(log_context, "Invalid metadata schema: " << e.what());
-      }
-    } catch (exception &e) {
-      m_validator_err = string("Metadata schema error: ") + e.what() + "\n";
-      DL_ERROR(log_context, "Could not load metadata schema: " << e.what());
+    if (!validator_err.empty()) {
+      DL_ERROR(log_context, "Metadata validation error: " << validator_err);
     }
 
-    if (request->has_sch_enforce() && m_validator_err.size()) {
-      EXCEPT(1, m_validator_err);
+    if (request->has_sch_enforce() && !validator_err.empty()) {
+      EXCEPT(1, validator_err);
     }
   }
 
   m_db_client.recordCreate(*request, reply, log_context);
 
-  if (m_validator_err.size()) {
+  if (!validator_err.empty()) {
     DL_ERROR(log_context, "Validation error - update record");
 
     RecordData *data = reply.mutable_data(0);
 
-    m_db_client.recordUpdateSchemaError(data->id(), m_validator_err,
+    m_db_client.recordUpdateSchemaError(data->id(), validator_err,
                                         log_context);
-    // TODO need a def for md_err mask
     data->set_notes(data->notes() | NOTE_MASK_MD_ERR);
-    data->set_md_err_msg(m_validator_err);
+    data->set_md_err_msg(validator_err);
   }
 
   PROC_MSG_END(log_context);
 }
+
 
 std::unique_ptr<IMessage>
 ClientWorker::procRecordUpdateRequest(const std::string &a_uid,
@@ -903,17 +879,16 @@ ClientWorker::procRecordUpdateRequest(const std::string &a_uid,
 
   m_db_client.setClient(a_uid);
 
-  // Validate metdata if present
-
   libjson::Value result;
 
   DL_DEBUG(log_context, "Updating record");
 
-  m_validator_err.clear();
+  std::string validator_err;
 
   if (request->has_metadata() ||
       (request->has_sch_id() && request->sch_id().size()) ||
       request->has_sch_enforce()) {
+
     string metadata, cur_metadata, sch_id;
     bool merge = true;
 
@@ -921,9 +896,6 @@ ClientWorker::procRecordUpdateRequest(const std::string &a_uid,
       merge = false;
 
     if (!request->has_metadata() || merge || !request->has_sch_id()) {
-      // Request does not include metadata AND schema, or it's a merge, so must
-      // load the missing parts from DB before validation can be done.
-
       RecordViewRequest view_request;
       RecordDataReply view_reply;
 
@@ -945,8 +917,6 @@ ClientWorker::procRecordUpdateRequest(const std::string &a_uid,
       else
         sch_id = request->sch_id();
     } else {
-      // metadata and schema ID are both in request AND it is not a merge
-      // operation
       metadata = request->metadata();
       sch_id = request->sch_id();
     }
@@ -954,42 +924,34 @@ ClientWorker::procRecordUpdateRequest(const std::string &a_uid,
     if (metadata.size() && sch_id.size()) {
       DL_TRACE(log_context, "Must validate JSON, schema " << sch_id);
 
-      libjson::Value sch;
-      m_db_client.schemaView(sch_id, sch, log_context);
+      // Apply merge patch before validation
+      std::string effective_metadata = metadata;
 
-      DL_TRACE(log_context, "Schema record JSON:" << sch.toString());
-
-      nlohmann::json schema = nlohmann::json::parse(
-          sch.asArray().begin()->asObject().getValue("def").toString());
-
-      DL_TRACE(log_context, "Schema nlohmann: " << schema);
-
-      nlohmann::json_schema::json_validator validator(
-          bind(&SchemaHandler::schemaLoader, m_schema_handler.get(),
-               placeholders::_1, placeholders::_2, log_context));
-
-      try {
-        validator.set_root_schema(schema);
-
-        // TODO This is a hacky way to convert between JSON implementations...
-
-        nlohmann::json md = nlohmann::json::parse(metadata);
-
-        // Apply merge patch if needed
-        if (cur_metadata.size()) {
+      if (cur_metadata.size()) {
+        try {
           nlohmann::json cur_md = nlohmann::json::parse(cur_metadata);
-          cur_md.merge_patch(md);
-          md = cur_md;
+          nlohmann::json new_md = nlohmann::json::parse(metadata);
+          cur_md.merge_patch(new_md);
+          effective_metadata = cur_md.dump();
+        } catch (exception &e) {
+          validator_err =
+              string("Metadata merge error: ") + e.what() + "\n";
+          DL_WARNING(log_context, "Metadata merge failed: " << e.what());
         }
-
-        validator.validate(md, *this);
-      } catch (exception &e) {
-        m_validator_err = string("Invalid metadata schema: ") + e.what() + "\n";
-        DL_WARNING(log_context, "Invalid metadata schema: " << e.what());
       }
 
-      if (request->has_sch_enforce() && m_validator_err.size()) {
-        EXCEPT(1, m_validator_err);
+      if (validator_err.empty()) {
+        validator_err = m_schema_handler->validateMetadataContent(
+            sch_id, effective_metadata, log_context);
+
+        if (!validator_err.empty()) {
+          DL_WARNING(log_context,
+                     "Metadata validation error: " << validator_err);
+        }
+      }
+
+      if (request->has_sch_enforce() && !validator_err.empty()) {
+        EXCEPT(1, validator_err);
       }
     } else if (request->has_sch_enforce()) {
       EXCEPT(1, "Enforce schema option specified, but metadata and/or schema "
@@ -999,21 +961,20 @@ ClientWorker::procRecordUpdateRequest(const std::string &a_uid,
 
   m_db_client.recordUpdate(*request, reply, result, log_context);
 
-  if (m_validator_err.size()) {
+  if (!validator_err.empty()) {
     DL_WARNING(log_context,
                "Validation error - while attempting to update record");
 
-    m_db_client.recordUpdateSchemaError(request->id(), m_validator_err,
+    m_db_client.recordUpdateSchemaError(request->id(), validator_err,
                                         log_context);
-    // Must find and update md_err flag in reply (always 1 data entry)
+
     RecordData *data = reply.mutable_data(0);
     data->set_notes(data->notes() | NOTE_MASK_MD_ERR);
-    data->set_md_err_msg(m_validator_err);
+    data->set_md_err_msg(validator_err);
 
     for (int i = 0; i < reply.update_size(); i++) {
       ListingData *data = reply.mutable_update(i);
       if (data->id() == request->id()) {
-        // TODO need a def for md_err mask
         data->set_notes(data->notes() | NOTE_MASK_MD_ERR);
         break;
       }
