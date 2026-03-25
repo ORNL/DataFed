@@ -27,8 +27,8 @@ if( ENABLE_INTEGRATION_TESTS )
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/tests/mock_core
     )
 
-    set_tests_properties(start_mock PROPERTIES FIXTURES_SETUP FIX_MOCK)
-    set_tests_properties(stop_mock PROPERTIES FIXTURES_CLEANUP FIX_MOCK)
+    set_tests_properties(start_mock PROPERTIES FIXTURES_SETUP FIX_MOCK LABELS "integration")
+    set_tests_properties(stop_mock PROPERTIES FIXTURES_CLEANUP FIX_MOCK LABELS "integration")
 
     add_subdirectory(mock_core)
     add_subdirectory(mock)
