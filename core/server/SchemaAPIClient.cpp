@@ -1,6 +1,7 @@
 #include "SchemaAPIClient.hpp"
 #include "common/TraceException.hpp"
 #include "common/envelope.pb.h"
+#include "common/enums/error_code.pb.h"
 
 #include <sstream>
 
@@ -55,6 +56,19 @@ SchemaAPIClient::~SchemaAPIClient() {
 
 void SchemaAPIClient::setCustomHeaders(
     const std::map<std::string, std::string> &a_headers) {
+
+  LogContext log_context;
+  for (const auto &[name, value] : a_headers) {
+    // Guard against header injection via CR/LF in header names or values.
+    if (name.find_first_of("\r\n") != std::string::npos ||
+        value.find_first_of("\r\n") != std::string::npos) {
+      throw std::invalid_argument(
+          "Custom header name/value must not contain CR or LF characters");
+
+      DL_ERROR(log_context, "Custom header name/value must not contain CR or LF characters. " << name << " " << value);
+      EXCEPT_PARAM(SERVICE_ERROR, "Custom header name/value must not contain CR or LF characters.");
+    }
+  }
   m_custom_headers = a_headers;
 }
 
