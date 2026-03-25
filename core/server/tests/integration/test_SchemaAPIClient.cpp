@@ -754,16 +754,28 @@ BOOST_AUTO_TEST_CASE(custom_headers_replaced_not_accumulated) {
 
   // Set to 500
   preferCode(500);
-  BOOST_CHECK_THROW(client->getSchema(TEST_SCHEMA_ID, log), TraceException);
+  BOOST_CHECK_EXCEPTION(
+      client->getSchema(TEST_SCHEMA_ID, log),
+      TraceException,
+      [](const TraceException &ex) {
+        // 500 path in httpGet should map to SERVICE_ERROR
+        return ex.getErrorCode() == TraceErrorCode::SERVICE_ERROR;
+      });
 
   // Replace with 404 — should NOT still have 500
   preferCode(404);
-  BOOST_CHECK_THROW(client->getSchema(TEST_SCHEMA_ID, log), TraceException);
+  BOOST_CHECK_EXCEPTION(
+      client->getSchema(TEST_SCHEMA_ID, log),
+      TraceException,
+      [](const TraceException &ex) {
+        // 404 path in httpGet should map to BAD_REQUEST
+        return ex.getErrorCode() == TraceErrorCode::BAD_REQUEST;
+      });
 
   // The 404 path in httpGet throws BAD_REQUEST, while 500 throws
   // SERVICE_ERROR. Both are TraceException, but at least we confirm the
-  // header was replaced (if it were still 500 and somehow the 404 handler
-  // ran, something would be very wrong).
+  // header was replaced and the error type changed (if it were still 500 and
+  // somehow the 404 handler ran, something would be very wrong).
 
   preferDefault();
 }
