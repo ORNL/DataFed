@@ -128,7 +128,6 @@ run-authz-unit-job:
         - chmod +x run_globus.sh
         - ./run_globus.sh
 
-
 run-core-unit-job:
     needs: ["run-core-build-job"]
     stage: unit
