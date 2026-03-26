@@ -10,13 +10,13 @@ var tree, dlg_inst, frame;
 
 /** Strip version suffix from a composite schema ID (e.g. "foo:0" -> "foo") */
 function schemaName(id) {
-    var idx = id.indexOf(':');
+    var idx = id.indexOf(":");
     return idx !== -1 ? id.substring(0, idx) : id;
 }
 
 /** Ensure a schema ID has the :version suffix */
 function schemaId(id, ver) {
-    return id.indexOf(':') !== -1 ? id : id + ":" + ver;
+    return id.indexOf(":") !== -1 ? id : id + ":" + ver;
 }
 
 window.schemaPageLoad = function (key, offset) {
