@@ -125,7 +125,7 @@ if ! command -v foxx >/dev/null 2>&1; then
 fi
 
 PATH_TO_PASSWD_FILE=${SOURCE}/database_temp.password
-echo "${local_DATAFED_DATABASE_PASSWORD}" > "${PATH_TO_PASSWD_FILE}"
+echo "${local_DATAFED_DATABASE_PASSWORD}" >"${PATH_TO_PASSWD_FILE}"
 
 # set up test user fixtures, this script should be idempotent, this script is described in the manifest
 "${FOXX_PREFIX}foxx" script -u "${local_DATABASE_USER}" \
