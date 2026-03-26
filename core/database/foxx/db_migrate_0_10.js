@@ -1,4 +1,4 @@
-require("./db_env");
+const { DB_NAME } = require('./db_env');
 db._useDatabase(DB_NAME);
 
 db._query(
