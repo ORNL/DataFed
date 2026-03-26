@@ -1,4 +1,6 @@
-const { DB_NAME } = require("./db_env");
+
+const path = require("path");
+const { DB_NAME } = require(path.join(__dirname, "db_env"));
 db._useDatabase(DB_NAME);
 
 db._query(

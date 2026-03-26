@@ -220,7 +220,7 @@ if [[ "$output" == "" ]]; then
   exit 1
 fi
 
-if [[ "$output" =~ .*"${local_DATABASE_NAME}".* ]]; then
+if [[ "$output" =~ "\"${local_DATABASE_NAME}\"" ]]; then
   echo "INFO - Database '${local_DATABASE_NAME}' already exists, do nothing."
 else
   echo "INFO - Creating database '${local_DATABASE_NAME}'"
