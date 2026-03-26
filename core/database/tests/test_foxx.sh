@@ -38,11 +38,12 @@ Help() {
 
 local_DATABASE_NAME="${DATAFED_DATABASE_NAME:-sdms_test}"
 
-if [ "${local_DATABASE_NAME}" = "sdms" ] && [ "${ALLOW_PRODUCTION_DB:-false}" != "true" ]; then
-  echo "ERROR - DATAFED_DATABASE_NAME is 'sdms' (the production database name)." >&2
-  echo "        tests must use a different name (e.g. 'sdms_test')." >&2
-  echo "        If you intend to target production, set ALLOW_PRODUCTION_DB=true." >&2
-  exit 1
+local_allow_prod=$(echo "${ALLOW_PRODUCTION_DB:-false}" | tr '[:upper:]' '[:lower:]')
+if [ "${local_DATABASE_NAME}" = "sdms" ] && [[ ! "${local_allow_prod}" =~ ^(true|on|yes|1)$ ]]; then
+    echo "ERROR - DATAFED_DATABASE_NAME is 'sdms' (the production database name)." >&2
+    echo "        tests must use a different name (e.g. 'sdms_test')." >&2
+    echo "        If you intend to target production, set ALLOW_PRODUCTION_DB=true." >&2
+    exit 1
 fi
 
 local_DATABASE_USER="root"
