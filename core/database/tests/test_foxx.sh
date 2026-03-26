@@ -125,6 +125,7 @@ if ! command -v foxx >/dev/null 2>&1; then
 fi
 
 PATH_TO_PASSWD_FILE=${SOURCE}/database_temp.password
+echo "${local_DATAFED_DATABASE_PASSWORD}" > "${PATH_TO_PASSWD_FILE}"
 if [ "$TEST_TO_RUN" == "all" ]; then
   # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint
   "${FOXX_PREFIX}foxx" test -u "${local_DATABASE_USER}" \
