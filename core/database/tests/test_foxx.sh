@@ -37,6 +37,14 @@ Help() {
 }
 
 local_DATABASE_NAME="${DATAFED_DATABASE_NAME:-sdms_test}"
+
+if [ "${local_DATABASE_NAME}" = "sdms" ] && [ "${ALLOW_PRODUCTION_DB:-false}" != "true" ]; then
+  echo "ERROR - DATAFED_DATABASE_NAME is 'sdms' (the production database name)." >&2
+  echo "        tests must use a different name (e.g. 'sdms_test')." >&2
+  echo "        If you intend to target production, set ALLOW_PRODUCTION_DB=true." >&2
+  exit 1
+fi
+
 local_DATABASE_USER="root"
 
 if [ -z "${DATAFED_DATABASE_PASSWORD:-}" ]; then
@@ -107,6 +115,12 @@ if [ "$ERROR_DETECTED" == "1" ]; then
   exit 1
 fi
 
+if [ -z "${DATAFED_DATABASE_HOST:-}" ]; then
+  local_DATAFED_DATABASE_HOST="localhost"
+else
+  local_DATAFED_DATABASE_HOST=$(printenv DATAFED_DATABASE_HOST)
+fi
+
 # There are apparently 3 different ways to deploy Foxx microservices,
 # Using curl with http requests
 # Using the Arango web ui
@@ -129,7 +143,7 @@ echo "${local_DATAFED_DATABASE_PASSWORD}" >"${PATH_TO_PASSWD_FILE}"
 if [ "$TEST_TO_RUN" == "all" ]; then
   # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint
   "${FOXX_PREFIX}foxx" test -u "${local_DATABASE_USER}" \
-    --server "tcp://${DATAFED_DATABASE_HOST}:8529" \
+    --server "tcp://${local_DATAFED_DATABASE_HOST}:8529" \
     -p "${PATH_TO_PASSWD_FILE}" \
     --database "${local_DATABASE_NAME}" \
     "/api/${local_FOXX_MAJOR_API_VERSION}" --reporter spec
@@ -137,7 +151,7 @@ else
   echo "Test: $TEST_TO_RUN"
   # WARNING Foxx and arangosh arguments differ --server is used for Foxx not --server.endpoint
   "${FOXX_PREFIX}foxx" test -u "${local_DATABASE_USER}" \
-    --server "tcp://${DATAFED_DATABASE_HOST}:8529" \
+    --server "tcp://${local_DATAFED_DATABASE_HOST}:8529" \
     -p "${PATH_TO_PASSWD_FILE}" \
     --database "${local_DATABASE_NAME}" \
     "/api/${local_FOXX_MAJOR_API_VERSION}" "$TEST_TO_RUN" --reporter spec --verbose

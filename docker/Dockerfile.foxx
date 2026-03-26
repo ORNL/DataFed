@@ -40,10 +40,12 @@ ENV                 ENABLE_FOXX_TESTS="FALSE"
 # Database name — defaults to production. Override at runtime with
 # docker run -e DATAFED_DATABASE_NAME=sdms_test for testing.
 ENV            DATAFED_DATABASE_NAME="sdms"
+ENV            DATAFED_TEST_DATABASE_NAME="sdms_test"
 # Production containers are allowed to target the "sdms" database.
 # install_foxx.sh refuses "sdms" without this flag to prevent test
 # fixtures from accidentally writing to production.
 ENV             ALLOW_PRODUCTION_DB="true"
+ENV DATAFED_ALLOW_TESTING_PROD_DATABASE="false"
 
 RUN mkdir -p ${BUILD_DIR}/external/DataFedDependencies/scripts/ && \
      mv ./scripts/dependency_versions.sh           ${BUILD_DIR}/external/DataFedDependencies/scripts/ && \
