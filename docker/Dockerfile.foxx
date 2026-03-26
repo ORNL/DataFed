@@ -37,9 +37,13 @@ ENV              DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
 ENV          DATAFED_DEFAULT_LOG_PATH="$DATAFED_INSTALL_PATH/logs"
 # Set to false by default to avoid wiping the database
 ENV                 ENABLE_FOXX_TESTS="FALSE"
-# Database name — defaults to production. Override with
+# Database name — defaults to production. Override at runtime with
 # docker run -e DATAFED_DATABASE_NAME=sdms_test for testing.
 ENV            DATAFED_DATABASE_NAME="sdms"
+# Production containers are allowed to target the "sdms" database.
+# install_foxx.sh refuses "sdms" without this flag to prevent test
+# fixtures from accidentally writing to production.
+ENV             ALLOW_PRODUCTION_DB="true"
 
 RUN mkdir -p ${BUILD_DIR}/external/DataFedDependencies/scripts/ && \
      mv ./scripts/dependency_versions.sh           ${BUILD_DIR}/external/DataFedDependencies/scripts/ && \

@@ -379,6 +379,8 @@ end_to_end_client-test:
         DATAFED_DOMAIN: "${CI_DATAFED_DOMAIN}"
         DATAFED_PYTHON_CLIENT_ALLOW_SELF_SIGNED_CERTS: "TRUE"
         DATAFED_PYTHON_DEPENDENCIES_DIR: "${DATAFED_DEPENDENCIES_INSTALL_PATH}/python"
+        DATAFED_DATABASE_NAME: "sdms"
+        ALLOW_PRODUCTION_DB: "true"
     stage: end-to-end-test
     dependencies:
         - end-to-end-gcs-authz-setup

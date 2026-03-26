@@ -36,7 +36,7 @@ Help() {
   echo "NOTE: Do not run this script with sudo!"
 }
 
-local_DATABASE_NAME="sdms"
+local_DATABASE_NAME="${DATAFED_DATABASE_NAME:-sdms_test}"
 local_DATABASE_USER="root"
 
 if [ -z "${DATAFED_DATABASE_PASSWORD:-}" ]; then

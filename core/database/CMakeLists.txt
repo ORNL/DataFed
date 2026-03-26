@@ -11,7 +11,11 @@ configure_file(
   @ONLY)
 
 if( ENABLE_FOXX_TESTS )
-  add_test(NAME foxx_setup COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_setup.sh")
+  add_test(NAME foxx_setup COMMAND "${PROJECT_SOURCE_DIR}/scripts/install_foxx.sh")
+  set_tests_properties(foxx_setup PROPERTIES
+    FIXTURES_SETUP Foxx
+    ENVIRONMENT "DATAFED_DATABASE_NAME=sdms_test"
+  )
   add_test(NAME foxx_teardown COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_teardown.sh")
   add_test(NAME foxx_db_fixtures COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_fixture_setup.sh")
 

@@ -70,9 +70,24 @@ if [[ ! -z "${local_SSL_CERT_FILE}" ]]; then
   fi
 fi
 
-local_DATABASE_NAME="sdms"
+# Read database name from environment. Defaults to "sdms" for backward
+# compatibility with existing deployments and CI pipelines.
+local_DATABASE_NAME="${DATAFED_DATABASE_NAME:-sdms}"
 local_DATABASE_USER="root"
 local_DATABASE_PORT="8529"
+
+# ── Safety check ─────────────────────────────────────────────────────────────
+# Refuse to target the production database name unless explicitly allowed.
+# This prevents integration test fixtures from accidentally wiping production.
+# Production callers (Dockerfile entrypoint, deploy scripts) set
+# ALLOW_PRODUCTION_DB=true in their environment.
+
+if [ "${local_DATABASE_NAME}" = "sdms" ] && [ "${ALLOW_PRODUCTION_DB:-false}" != "true" ]; then
+  echo "ERROR - DATAFED_DATABASE_NAME is 'sdms' (the production database name)." >&2
+  echo "        Integration tests must use a different name (e.g. 'sdms_test')." >&2
+  echo "        If you intend to target production, set ALLOW_PRODUCTION_DB=true." >&2
+  exit 1
+fi
 
 if [ -z "${DATAFED_DATABASE_PASSWORD}" ]; then
   local_DATAFED_DATABASE_PASSWORD=""
@@ -195,7 +210,7 @@ for attempt in $(seq 1 $max_retries); do
 done
 
 url2="${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_api/database"
-# We are now going to initialize the DataFed database in Arango, but only if sdms database does
+# We are now going to initialize the DataFed database in Arango, but only if the database does
 # not exist
 output=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl ${local_CURL_SSL_ARG} -s -i --user "$basic_auth" "$url2")
 
@@ -204,10 +219,12 @@ if [[ "$output" == "" ]]; then
   exit 1
 fi
 
-if [[ "$output" =~ .*"sdms".* ]]; then
-  echo "INFO - SDMS already exists do nothing."
+if [[ "$output" =~ .*"${local_DATABASE_NAME}".* ]]; then
+  echo "INFO - Database '${local_DATABASE_NAME}' already exists, do nothing."
 else
-  echo "INFO - Creating SDMS"
+  echo "INFO - Creating database '${local_DATABASE_NAME}'"
+  # Export so db_create.js reads it via db_env.js
+  export DATAFED_DATABASE_NAME="${local_DATABASE_NAME}"
   arangosh --server.endpoint \
     "${local_ARANGOSH_SERVER_ENDPOINT_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
     --server.password "${local_DATAFED_DATABASE_PASSWORD}" \
@@ -218,11 +235,13 @@ else
   arangosh --server.endpoint "${local_ARANGOSH_SERVER_ENDPOINT_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
     --server.password "${local_DATAFED_DATABASE_PASSWORD}" \
     --server.username "${local_DATABASE_USER}" \
-    --javascript.execute-string 'db._useDatabase("sdms"); db.config.insert({"_key": "msg_daily", "msg" : "DataFed servers will be off-line for regular maintenance every Sunday night from 11:45 pm until 12:15 am EST Monday morning."}, {overwrite: true});'
+    --server.database "${local_DATABASE_NAME}" \
+    --javascript.execute-string 'db.config.insert({"_key": "msg_daily", "msg" : "DataFed servers will be off-line for regular maintenance every Sunday night from 11:45 pm until 12:15 am EST Monday morning."}, {overwrite: true});'
   arangosh --server.endpoint "${local_ARANGOSH_SERVER_ENDPOINT_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}" \
     --server.password "${local_DATAFED_DATABASE_PASSWORD}" \
     --server.username "${local_DATABASE_USER}" \
-    --javascript.execute-string "db._useDatabase(\"sdms\"); db.config.insert({ \"_key\": \"system\", \"_id\": \"config/system\"}, {overwrite: true } );"
+    --server.database "${local_DATABASE_NAME}" \
+    --javascript.execute-string "db.config.insert({ \"_key\": \"system\", \"_id\": \"config/system\"}, {overwrite: true } );"
 fi
 
 # There are apparently 3 different ways to deploy Foxx microservices,
@@ -264,10 +283,10 @@ echo "$local_DATAFED_DATABASE_PASSWORD" >"${PATH_TO_PASSWD_FILE}"
   INSTALL_API="FALSE"
   FOUND_API=$(echo "$existing_services" | grep "/api/${local_FOXX_MAJOR_API_VERSION}")
 
-  RESULT=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl ${local_CURL_SSL_ARG} -s ${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/version)
+  RESULT=$(LD_LIBRARY_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}:$LD_LIBRARY_PATH" curl ${local_CURL_SSL_ARG} -s ${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/version)
   CODE=$(echo "${RESULT}" | jq '.code')
   if [ -z "${FOUND_API}" ]; then
-    echo "INFO - API found at ${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_db/sdms/api/${local_FOXX_MAJOR_API_VERSION}/version"
+    echo "INFO - API found at ${local_DATABASE_API_SCHEME}://${local_DATAFED_DATABASE_HOST}:${local_DATABASE_PORT}/_db/${local_DATABASE_NAME}/api/${local_FOXX_MAJOR_API_VERSION}/version"
     INSTALL_API="TRUE"
   elif [ "$CODE" == "503" ]; then
     echo "WARNING - $CODE returned, attempting to remove api at /api/${local_FOXX_MAJOR_API_VERSION}"
