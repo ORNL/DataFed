@@ -1,4 +1,4 @@
-require('./db_env');
+require("./db_env");
 db._useDatabase(DB_NAME);
 
 db._query(

@@ -1,6 +1,6 @@
 // Creates SDMS database schema for ArangoDB
 
-require('./db_env');
+require("./db_env");
 db._createDatabase(DB_NAME);
 db._useDatabase(DB_NAME);
 

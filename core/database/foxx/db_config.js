@@ -17,13 +17,13 @@
  * const graph = getGraph();
  */
 
-'use strict';
+"use strict";
 
-const db = require('@arangodb').db;
-const generalGraph = require('@arangodb/general-graph');
+const db = require("@arangodb").db;
+const generalGraph = require("@arangodb/general-graph");
 
 /** Graph name derived from the current database: <dbname>g */
-const GRAPH_NAME = db._name() + 'g';
+const GRAPH_NAME = db._name() + "g";
 
 /**
  * Get the named graph object.
@@ -36,10 +36,10 @@ const GRAPH_NAME = db._name() + 'g';
  * @returns {object} ArangoDB general-graph instance
  */
 function getGraph() {
-  return generalGraph._graph(GRAPH_NAME);
+    return generalGraph._graph(GRAPH_NAME);
 }
 
 module.exports = {
-  GRAPH_NAME,
-  getGraph,
+    GRAPH_NAME,
+    getGraph,
 };
