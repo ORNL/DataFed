@@ -102,7 +102,6 @@ RUN chown -R datafed:root /home/datafed \
                  ${BUILD_DIR}/core/database/tests/test_fixture_setup.sh \
                  ${BUILD_DIR}/core/database/tests/test_foxx.sh \
                  ${BUILD_DIR}/core/database/tests/test_teardown.sh \
-                 ${BUILD_DIR}/core/database/tests/test_setup.sh \
                  ${BUILD_DIR}/docker/entrypoint_foxx.sh \
                  ${BUILD_DIR}/scripts/generate_datafed.sh \
                  ${BUILD_DIR}/scripts/install_foxx.sh
