@@ -490,7 +490,7 @@ router
                         throw [error.ERR_NOT_FOUND, "Repo, " + req.queryParams.id + ", not found"];
 
                     permissions.ensureAdminPermRepo(client, req.queryParams.id);
-                    const graph = require('./db_config').getGraph();
+                    const graph = require("./db_config").getGraph();
 
                     // Make sure there are no allocations present on repo
                     var alloc = g_db._query("for v in 1..1 inbound @repo alloc return {id:v._id}", {

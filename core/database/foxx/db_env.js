@@ -16,12 +16,12 @@
  * the runtime database context.
  */
 
-'use strict';
+"use strict";
 
-const internal = require('internal');
+const internal = require("internal");
 
-const DB_NAME = internal.env.DATAFED_DATABASE_NAME || 'sdms';
-const GRAPH_NAME = DB_NAME + 'g';
+const DB_NAME = internal.env.DATAFED_DATABASE_NAME || "sdms";
+const GRAPH_NAME = DB_NAME + "g";
 
 exports.DB_NAME = DB_NAME;
 exports.GRAPH_NAME = GRAPH_NAME;
