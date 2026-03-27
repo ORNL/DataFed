@@ -34,8 +34,8 @@ rm -f "${STATE_FILE}"
 # ── Check for an already-running instance ────────────────────────────────────
 
 if curl -sf -o /dev/null \
-    -u "root:${ROOT_PASS}" \
-    "http://localhost:${PORT}/_api/version" 2>/dev/null; then
+  -u "root:${ROOT_PASS}" \
+  "http://localhost:${PORT}/_api/version" 2>/dev/null; then
   echo "ArangoDB already reachable on port ${PORT} — reusing existing instance"
 else
   # ── No instance found — start a container ────────────────────────────────
