@@ -40,7 +40,11 @@ OPTION(ENABLE_END_TO_END_API_TESTS "Enable end-to-end API testing" FALSE)
 OPTION(ENABLE_END_TO_END_WEB_TESTS "Enable end-to-end web testing with Playwright" FALSE)
 OPTION(ENABLE_FOXX_TESTS "Enable Foxx testing, off by default because it
   will overwrite the test database." FALSE)
+option(DATAFED_ALLOW_TESTING_PROD_DATABASE
+  "Allow testing on production database." FALSE)
 
+set(DATAFED_TEST_DATABASE_NAME "sdms_test"
+    CACHE STRING "Database name used by Foxx tests")
 set(INSTALL_REPO_SERVER ${BUILD_REPO_SERVER})
 set(INSTALL_AUTHZ ${BUILD_AUTHZ})
 set(INSTALL_CORE_SERVER ${BUILD_CORE_SERVER})
