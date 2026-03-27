@@ -9,6 +9,8 @@
 
 // Standard includes
 #include <cstdlib>
+#include <chrono>
+#include <thread>
 #include <memory>
 #include <string>
 #include <vector>
@@ -115,6 +117,19 @@ struct ArangoFixture {
 
     try {
       db = std::make_unique<DatabaseAPI>(url, user, pass);
+      
+      // Create the test user (ignore errors if it already exists)
+      try {
+        UserCreateRequest user_req;
+        UserDataReply user_reply;
+        user_req.set_uid("integration_test_user");
+        user_req.set_name("Integration Test");
+        user_req.set_email("test@test.com");
+        db->userCreate(user_req, user_reply, log_context);
+      } catch (...) {
+        // User may already exist from a previous run — that's fine
+      }
+      
       handler = std::make_unique<SchemaHandler>(*db);
       available = true;
     } catch (std::exception &e) {
@@ -172,15 +187,37 @@ struct ArangoFixture {
       return "";
     return val;
   }
-};
 
-/// Skip macro — avoids nesting every test body in an if block.
-#define SKIP_IF_UNAVAILABLE()                                                  \
-  if (!isAvailable()) {                                                        \
-    BOOST_TEST_MESSAGE("Skipping: test ArangoDB not configured");              \
-    return;                                                                    \
+  /// Poll until ArangoSearch view catches up, or timeout.
+  SchemaDataReply waitForSearchResults(const std::string &id_prefix,
+                                       int min_expected,
+                                       int max_attempts = 20,
+                                       int interval_ms = 250) {
+      SchemaSearchRequest search_req;
+      SchemaDataReply search_reply;
+      search_req.set_id(id_prefix);
+  
+      for (int attempt = 0; attempt < max_attempts; ++attempt) {
+          search_reply.Clear();
+          handler->handleSearch(TEST_USER, search_req, search_reply, log_context);
+  
+          if (search_reply.schema_size() >= min_expected) {
+              return search_reply;
+          }
+  
+          std::this_thread::sleep_for(std::chrono::milliseconds(interval_ms));
+      }
+  
+      // Return whatever we got — the caller's BOOST_TEST will report the failure
+      return search_reply;
   }
 
+};
+
+#define REQUIRE_AVAILABLE()                                                    \
+  BOOST_REQUIRE_MESSAGE(isAvailable(),                                         \
+      "Test ArangoDB not configured — set DATAFED_TEST_ARANGO_URL, "           \
+      "DATAFED_TEST_ARANGO_USER, and DATAFED_TEST_ARANGO_PASS")
 // ============================================================================
 // Test Suite: handleCreate
 // ============================================================================
@@ -188,7 +225,7 @@ struct ArangoFixture {
 BOOST_FIXTURE_TEST_SUITE(HandleCreate, ArangoFixture)
 
 BOOST_AUTO_TEST_CASE(create_valid_schema) {
-  SKIP_IF_UNAVAILABLE();
+  REQUIRE_AVAILABLE();
 
   std::string id = createTestSchema("test_create_valid");
 
@@ -197,7 +234,7 @@ BOOST_AUTO_TEST_CASE(create_valid_schema) {
 }
 
 BOOST_AUTO_TEST_CASE(create_and_view_round_trip) {
-  SKIP_IF_UNAVAILABLE();
+  REQUIRE_AVAILABLE();
 
   std::string id = createTestSchema("test_create_view", VALID_SCHEMA_DEF,
                                     "round trip test");
@@ -224,7 +261,7 @@ BOOST_AUTO_TEST_CASE(create_and_view_round_trip) {
 }
 
 BOOST_AUTO_TEST_CASE(create_with_invalid_json_throws) {
-  SKIP_IF_UNAVAILABLE();
+  REQUIRE_AVAILABLE();
 
   SchemaCreateRequest req;
   SchemaDataReply reply;
@@ -243,7 +280,7 @@ BOOST_AUTO_TEST_CASE(create_with_invalid_json_throws) {
 }
 
 BOOST_AUTO_TEST_CASE(create_with_missing_properties_throws) {
-  SKIP_IF_UNAVAILABLE();
+  REQUIRE_AVAILABLE();
 
   SchemaCreateRequest req;
   SchemaDataReply reply;
@@ -262,7 +299,7 @@ BOOST_AUTO_TEST_CASE(create_with_missing_properties_throws) {
 }
 
 BOOST_AUTO_TEST_CASE(create_with_missing_type_throws) {
-  SKIP_IF_UNAVAILABLE();
+  REQUIRE_AVAILABLE();
 
   SchemaCreateRequest req;
   SchemaDataReply reply;
@@ -281,7 +318,7 @@ BOOST_AUTO_TEST_CASE(create_with_missing_type_throws) {
 }
 
 BOOST_AUTO_TEST_CASE(create_with_description) {
-  SKIP_IF_UNAVAILABLE();
+  REQUIRE_AVAILABLE();
 
   std::string id = createTestSchema("test_create_desc", VALID_SCHEMA_DEF,
                                     "detailed description here");
@@ -305,7 +342,7 @@ BOOST_AUTO_TEST_SUITE_END()
 BOOST_FIXTURE_TEST_SUITE(HandleRevise, ArangoFixture)
 
 BOOST_AUTO_TEST_CASE(revise_creates_new_version) {
-  SKIP_IF_UNAVAILABLE();
+  REQUIRE_AVAILABLE();
 
   std::string id_v1 = createTestSchema("test_revise");
 
@@ -342,7 +379,7 @@ BOOST_AUTO_TEST_CASE(revise_creates_new_version) {
 }
 
 BOOST_AUTO_TEST_CASE(revise_without_def_skips_validation) {
-  SKIP_IF_UNAVAILABLE();
+  REQUIRE_AVAILABLE();
 
   std::string id = createTestSchema("test_revise_no_def");
 
@@ -366,7 +403,7 @@ BOOST_AUTO_TEST_CASE(revise_without_def_skips_validation) {
 }
 
 BOOST_AUTO_TEST_CASE(revise_with_invalid_def_throws) {
-  SKIP_IF_UNAVAILABLE();
+  REQUIRE_AVAILABLE();
 
   std::string id = createTestSchema("test_revise_bad_def");
 
@@ -389,7 +426,7 @@ BOOST_AUTO_TEST_SUITE_END()
 BOOST_FIXTURE_TEST_SUITE(HandleUpdate, ArangoFixture)
 
 BOOST_AUTO_TEST_CASE(update_description_only) {
-  SKIP_IF_UNAVAILABLE();
+  REQUIRE_AVAILABLE();
 
   std::string id = createTestSchema("test_update_desc", VALID_SCHEMA_DEF,
                                     "original description");
@@ -412,7 +449,7 @@ BOOST_AUTO_TEST_CASE(update_description_only) {
 }
 
 BOOST_AUTO_TEST_CASE(update_definition) {
-  SKIP_IF_UNAVAILABLE();
+  REQUIRE_AVAILABLE();
 
   std::string id = createTestSchema("test_update_def");
 
@@ -436,7 +473,7 @@ BOOST_AUTO_TEST_CASE(update_definition) {
 }
 
 BOOST_AUTO_TEST_CASE(update_without_def_skips_validation) {
-  SKIP_IF_UNAVAILABLE();
+  REQUIRE_AVAILABLE();
 
   std::string id = createTestSchema("test_update_no_def");
 
@@ -457,7 +494,7 @@ BOOST_AUTO_TEST_CASE(update_without_def_skips_validation) {
 }
 
 BOOST_AUTO_TEST_CASE(update_with_invalid_def_throws) {
-  SKIP_IF_UNAVAILABLE();
+  REQUIRE_AVAILABLE();
 
   std::string id = createTestSchema("test_update_bad_def");
 
@@ -480,7 +517,7 @@ BOOST_AUTO_TEST_SUITE_END()
 BOOST_FIXTURE_TEST_SUITE(HandleDelete, ArangoFixture)
 
 BOOST_AUTO_TEST_CASE(delete_existing_schema) {
-  SKIP_IF_UNAVAILABLE();
+  REQUIRE_AVAILABLE();
 
   std::string id = createTestSchema("test_delete");
 
@@ -513,38 +550,36 @@ BOOST_AUTO_TEST_SUITE_END()
 BOOST_FIXTURE_TEST_SUITE(HandleSearch, ArangoFixture)
 
 BOOST_AUTO_TEST_CASE(search_finds_created_schemas) {
-  SKIP_IF_UNAVAILABLE();
+    REQUIRE_AVAILABLE();
 
-  // Create a few schemas with a common prefix
-  createTestSchema("test_search_a");
-  createTestSchema("test_search_b");
-  createTestSchema("test_search_c");
+    createTestSchema("test_search_a");
+    createTestSchema("test_search_b");
+    createTestSchema("test_search_c");
 
-  SchemaSearchRequest search_req;
-  SchemaDataReply search_reply;
-  search_req.set_id("test_search_");
+    SchemaDataReply search_reply = waitForSearchResults("test_search_", 3);
 
-  handler->handleSearch(TEST_USER, search_req, search_reply, log_context);
-
-  BOOST_TEST(search_reply.schema_size() >= 3);
+    BOOST_TEST(search_reply.schema_size() >= 3);
 }
 
 BOOST_AUTO_TEST_CASE(search_returns_def_content) {
-  SKIP_IF_UNAVAILABLE();
+    REQUIRE_AVAILABLE();
 
-  createTestSchema("test_search_def");
+    std::string id = createTestSchema("test_viewable_schema");
 
-  SchemaSearchRequest search_req;
-  SchemaDataReply search_reply;
-  search_req.set_id("test_search_def");
+    SchemaDataReply search_reply = waitForSearchResults("test_viewable_schema", 1);
 
-  handler->handleSearch(TEST_USER, search_req, search_reply, log_context);
+    BOOST_REQUIRE(search_reply.schema_size() > 0);
 
-  BOOST_REQUIRE(search_reply.schema_size() > 0);
+    // Search results are lightweight — def is not included.
+    // Use the ID we already know from create to fetch via view.
+    SchemaViewRequest view_req;
+    SchemaDataReply view_reply;
+    view_req.set_id(id);
 
-  // def should be populated (hydrated from storage)
-  std::string def = search_reply.schema(0).def();
-  BOOST_TEST(!def.empty());
+    handler->handleView(TEST_USER, view_req, view_reply, log_context);
+
+    BOOST_REQUIRE(view_reply.schema_size() > 0);
+    BOOST_TEST(!view_reply.schema(0).def().empty());
 }
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -556,7 +591,7 @@ BOOST_AUTO_TEST_SUITE_END()
 BOOST_FIXTURE_TEST_SUITE(MetadataValidation, ArangoFixture)
 
 BOOST_AUTO_TEST_CASE(valid_metadata_passes) {
-  SKIP_IF_UNAVAILABLE();
+  REQUIRE_AVAILABLE();
 
   std::string id = createTestSchema("test_validate_pass");
 
@@ -567,7 +602,7 @@ BOOST_AUTO_TEST_CASE(valid_metadata_passes) {
 }
 
 BOOST_AUTO_TEST_CASE(missing_required_field_fails) {
-  SKIP_IF_UNAVAILABLE();
+  REQUIRE_AVAILABLE();
 
   std::string id = createTestSchema("test_validate_missing");
 
@@ -578,7 +613,7 @@ BOOST_AUTO_TEST_CASE(missing_required_field_fails) {
 }
 
 BOOST_AUTO_TEST_CASE(wrong_type_fails) {
-  SKIP_IF_UNAVAILABLE();
+  REQUIRE_AVAILABLE();
 
   std::string id = createTestSchema("test_validate_type");
 
@@ -589,7 +624,7 @@ BOOST_AUTO_TEST_CASE(wrong_type_fails) {
 }
 
 BOOST_AUTO_TEST_CASE(invalid_json_metadata_fails) {
-  SKIP_IF_UNAVAILABLE();
+  REQUIRE_AVAILABLE();
 
   std::string id = createTestSchema("test_validate_bad_json");
 
@@ -600,7 +635,7 @@ BOOST_AUTO_TEST_CASE(invalid_json_metadata_fails) {
 }
 
 BOOST_AUTO_TEST_CASE(nonexistent_schema_returns_error) {
-  SKIP_IF_UNAVAILABLE();
+  REQUIRE_AVAILABLE();
 
   std::string errors = handler->validateMetadataContent(
       "does_not_exist:99", VALID_METADATA, log_context);
@@ -610,7 +645,7 @@ BOOST_AUTO_TEST_CASE(nonexistent_schema_returns_error) {
 }
 
 BOOST_AUTO_TEST_CASE(handle_metadata_validate_sets_errors_on_failure) {
-  SKIP_IF_UNAVAILABLE();
+  REQUIRE_AVAILABLE();
 
   std::string id = createTestSchema("test_handle_validate_fail");
 
@@ -625,7 +660,7 @@ BOOST_AUTO_TEST_CASE(handle_metadata_validate_sets_errors_on_failure) {
 }
 
 BOOST_AUTO_TEST_CASE(handle_metadata_validate_no_errors_on_success) {
-  SKIP_IF_UNAVAILABLE();
+  REQUIRE_AVAILABLE();
 
   std::string id = createTestSchema("test_handle_validate_pass");
 
@@ -648,7 +683,7 @@ BOOST_AUTO_TEST_SUITE_END()
 BOOST_FIXTURE_TEST_SUITE(FullLifecycle, ArangoFixture)
 
 BOOST_AUTO_TEST_CASE(create_validate_update_revise_delete) {
-  SKIP_IF_UNAVAILABLE();
+  REQUIRE_AVAILABLE();
 
   // 1. Create
   std::string id = createTestSchema("test_lifecycle", VALID_SCHEMA_DEF,

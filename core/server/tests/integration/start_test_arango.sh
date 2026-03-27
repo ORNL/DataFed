@@ -14,6 +14,7 @@
 #   ARANGO_ROOT_PASS     — Root password (default: "test")
 #   ARANGO_CONTAINER     — Container name (default: datafed-test-arango)
 #   ARANGO_PULL          — "true" to pull image before starting (default: true)
+#   DATAFED_DATABASE_NAME — Database name (default: "sdms_test")
 set -eu
 
 PROJECT_ROOT="${DATAFED_PROJECT_ROOT:?DATAFED_PROJECT_ROOT must be set}"
@@ -21,6 +22,7 @@ PORT="${ARANGO_PORT:-8529}"
 ROOT_PASS="${ARANGO_ROOT_PASS:-test}"
 NAME="${ARANGO_CONTAINER:-datafed-test-arango}"
 PULL="${ARANGO_PULL:-true}"
+DB_NAME="${DATAFED_DATABASE_NAME:-sdms_test}"
 MAX_WAIT=60
 
 # State file: if we create it, the cleanup step knows to tear down the
@@ -90,10 +92,60 @@ fi
 echo "Provisioning database and Foxx services..."
 export DATAFED_DATABASE_PASSWORD="${ROOT_PASS}"
 export DATAFED_DATABASE_HOST="localhost"
+export DATAFED_DATABASE_NAME="${DB_NAME}"
 
-bash "${DATAFED_PROJECT_ROOT}/scripts/install_foxx.sh" \
+bash "${PROJECT_ROOT}/scripts/install_foxx.sh" \
   -p "${ROOT_PASS}" \
   -u "root" \
   -i "localhost"
 
 echo "Foxx provisioning complete."
+
+# ── Clean up stale test data ─────────────────────────────────────────────────
+#
+# Previous test runs may have left behind schemas (e.g. from crashes, or from
+# the earlier :null bug).  Remove anything with a test_ prefix so the new run
+# starts clean.  This runs after Foxx provisioning to ensure the database and
+# collections exist.
+
+ARANGO_URL="http://localhost:${PORT}"
+
+echo "Cleaning stale test schemas from ${DB_NAME}..."
+RESULT=$(curl -sf -u "root:${ROOT_PASS}" \
+  "${ARANGO_URL}/_db/${DB_NAME}/_api/cursor" \
+  -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"query": "FOR s IN sch FILTER STARTS_WITH(s.id, \"test_\") REMOVE s IN sch RETURN OLD.id"}' \
+  2>/dev/null) || true
+
+if [ -n "${RESULT}" ]; then
+  REMOVED=$(echo "${RESULT}" | grep -o '"result":\[' | wc -l)
+  if [ "${REMOVED}" -gt 0 ]; then
+    COUNT=$(echo "${RESULT}" | grep -o '"id"' | wc -l)
+    echo "Removed ${COUNT} stale test schema(s)"
+  else
+    echo "No stale test schemas found"
+  fi
+else
+  echo "No stale test schemas found (or sch collection does not exist yet)"
+fi
+
+# Also clean up stale schema version edges that reference removed schemas
+echo "Cleaning stale schema version edges..."
+curl -sf -u "root:${ROOT_PASS}" \
+  "${ARANGO_URL}/_db/${DB_NAME}/_api/cursor" \
+  -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"query": "FOR e IN sch_ver LET fromExists = LENGTH(FOR s IN sch FILTER s._id == e._from LIMIT 1 RETURN 1) LET toExists = LENGTH(FOR s IN sch FILTER s._id == e._to LIMIT 1 RETURN 1) FILTER fromExists == 0 OR toExists == 0 REMOVE e IN sch_ver RETURN OLD._key"}' \
+  -o /dev/null 2>/dev/null || true
+
+# Clean up stale schema dependency edges
+echo "Cleaning stale schema dependency edges..."
+curl -sf -u "root:${ROOT_PASS}" \
+  "${ARANGO_URL}/_db/${DB_NAME}/_api/cursor" \
+  -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"query": "FOR e IN sch_dep LET fromExists = LENGTH(FOR s IN sch FILTER s._id == e._from LIMIT 1 RETURN 1) LET toExists = LENGTH(FOR s IN sch FILTER s._id == e._to LIMIT 1 RETURN 1) FILTER fromExists == 0 OR toExists == 0 REMOVE e IN sch_dep RETURN OLD._key"}' \
+  -o /dev/null 2>/dev/null || true
+
+echo "Test environment ready."

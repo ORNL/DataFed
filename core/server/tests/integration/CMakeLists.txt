@@ -19,6 +19,8 @@ set(ARANGO_ROOT_PASS "test"
     CACHE STRING "Root password for the ArangoDB test instance")
 set(ARANGO_PULL "true"
     CACHE STRING "Pull the ArangoDB image before starting (set to 'false' for offline/local builds)")
+set(DATAFED_TEST_DATABASE_NAME "sdms_test"
+    CACHE STRING "Database name for integration tests (default: sdms_test)")
 
 # ── Check for Docker (needed by SchemaAPIClient tests) ───────────────────────
 
@@ -122,18 +124,18 @@ if(DOCKER_EXECUTABLE)
   # ========================================================================
 
   set(_arango_env
-    "ARANGO_IMAGE=${ARANGO_TEST_IMAGE}"
-    "ARANGO_PORT=${ARANGO_TEST_PORT}"
-    "ARANGO_ROOT_PASS=${ARANGO_TEST_ROOT_PASS}"
+    "ARANGO_IMAGE=${ARANGO_IMAGE}"
+    "ARANGO_PORT=${ARANGO_PORT}"
+    "ARANGO_ROOT_PASS=${ARANGO_ROOT_PASS}"
     "ARANGO_CONTAINER=datafed-test-arango"
-    "ARANGO_PULL=${ARANGO_TEST_PULL}"
+    "ARANGO_PULL=${ARANGO_PULL}"
     "DATAFED_PROJECT_ROOT=${DataFed_SOURCE_DIR}"
     "DATAFED_DATABASE_NAME=${DATAFED_TEST_DATABASE_NAME}"
   )
-
   set(_arango_test_env
-    "ARANGO_TEST_URL=http://localhost:${ARANGO_TEST_PORT}"
-    "ARANGO_TEST_ROOT_PASS=${ARANGO_TEST_ROOT_PASS}"
+    "DATAFED_TEST_ARANGO_URL=http://localhost:${ARANGO_PORT}/_db/${DATAFED_TEST_DATABASE_NAME}/api/${DATAFED_FOXX_MAJOR}/"
+    "DATAFED_TEST_ARANGO_USER=root"
+    "DATAFED_TEST_ARANGO_PASS=${ARANGO_ROOT_PASS}"
     "DATAFED_DATABASE_NAME=${ARANGO_TEST_DATABASE_NAME}"
   )
 
