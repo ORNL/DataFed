@@ -191,8 +191,10 @@ if [ "$ERROR_DETECTED" == "1" ]; then
   exit 1
 fi
 
+local_DATABASE_NAME="${DATAFED_DATABASE_NAME:-sdms}"
+
 FOXX_MAJOR_API_VERSION=$(cat ${PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs)
-local_DATABASE_API_URL="${local_DATAFED_DATABASE_IP_ADDRESS_PORT}/_db/sdms/api/${FOXX_MAJOR_API_VERSION}/"
+local_DATABASE_API_URL="${local_DATAFED_DATABASE_IP_ADDRESS_PORT}/_db/${local_DATABASE_NAME}/api/${FOXX_MAJOR_API_VERSION}/"
 
 PATH_TO_CONFIG_DIR=$(realpath "$SOURCE/../config")
 

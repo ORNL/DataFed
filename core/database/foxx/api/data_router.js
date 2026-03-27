@@ -681,7 +681,7 @@ function recordUpdate(client, record, result) {
             _from: data_id,
         });
         if (old_alias) {
-            const graph = require("@arangodb/general-graph")._graph("sdmsg");
+            const graph = require("./db_config").getGraph();
             graph.a.remove(old_alias._to);
         }
 

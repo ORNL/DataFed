@@ -8,7 +8,7 @@ module.exports = (function () {
     var obj = {};
 
     obj.db = require("@arangodb").db;
-    obj.graph = require("@arangodb/general-graph")._graph("sdmsg");
+    obj.graph = require("./db_config").getGraph();
 
     obj.MAX_COLL_ITEMS = 10000;
     obj.MAX_QRY_ITEMS = 10000;

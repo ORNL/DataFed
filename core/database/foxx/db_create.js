@@ -1,10 +1,11 @@
 // Creates SDMS database schema for ArangoDB
-
-db._createDatabase("sdms");
-db._useDatabase("sdms");
+const path = require("path");
+const { DB_NAME, GRAPH_NAME } = require(path.join(__dirname, "db_env"));
+db._createDatabase(DB_NAME);
+db._useDatabase(DB_NAME);
 
 var graph_module = require("@arangodb/general-graph");
-var graph = graph_module._create("sdmsg");
+var graph = graph_module._create(GRAPH_NAME);
 
 graph._addVertexCollection("u"); // User
 graph._addVertexCollection("accn"); // User facility accounts
