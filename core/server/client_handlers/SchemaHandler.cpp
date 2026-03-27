@@ -46,7 +46,7 @@ namespace Core {
     m_schema_factory.registerValidator("json-schema",
                                        std::move(json_schema_validator));
     m_schema_factory.setDefaultSchemaType("json-schema");
-}
+  }
 
 // ── Schema Definition Handlers ──────────────────────────────────────────────
 

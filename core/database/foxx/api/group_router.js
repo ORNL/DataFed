@@ -7,7 +7,7 @@ const error = require("./lib/error_codes");
 const permissions = require("./lib/permissions");
 
 const g_db = require("@arangodb").db;
-const g_graph = require("@arangodb/general-graph")._graph("sdmsg");
+const g_graph = require("./db_config").getGraph();
 const g_lib = require("./support");
 const logger = require("./lib/logger");
 const basePath = "grp";
