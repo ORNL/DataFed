@@ -122,17 +122,19 @@ if(DOCKER_EXECUTABLE)
   # ========================================================================
 
   set(_arango_env
-    "ARANGO_IMAGE=${ARANGO_IMAGE}"
-    "ARANGO_PORT=${ARANGO_PORT}"
-    "ARANGO_ROOT_PASS=${ARANGO_ROOT_PASS}"
-    "ARANGO_PULL=${ARANGO_PULL}"
+    "ARANGO_IMAGE=${ARANGO_TEST_IMAGE}"
+    "ARANGO_PORT=${ARANGO_TEST_PORT}"
+    "ARANGO_ROOT_PASS=${ARANGO_TEST_ROOT_PASS}"
     "ARANGO_CONTAINER=datafed-test-arango"
+    "ARANGO_PULL=${ARANGO_TEST_PULL}"
+    "DATAFED_PROJECT_ROOT=${DataFed_SOURCE_DIR}"
+    "DATAFED_DATABASE_NAME=${DATAFED_TEST_DATABASE_NAME}"
   )
 
   set(_arango_test_env
-    "DATAFED_TEST_ARANGO_URL=http://localhost:${ARANGO_PORT}"
-    "DATAFED_TEST_ARANGO_USER=root"
-    "DATAFED_TEST_ARANGO_PASS=${ARANGO_ROOT_PASS}"
+    "ARANGO_TEST_URL=http://localhost:${ARANGO_TEST_PORT}"
+    "ARANGO_TEST_ROOT_PASS=${ARANGO_TEST_ROOT_PASS}"
+    "DATAFED_DATABASE_NAME=${ARANGO_TEST_DATABASE_NAME}"
   )
 
   # ── Fixture setup: start ArangoDB container ──────────────────────────
