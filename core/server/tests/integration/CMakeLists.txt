@@ -11,11 +11,22 @@ set(MOCK_SCHEMA_PORT "4010"
 set(MOCK_SCHEMA_PULL "true"
     CACHE STRING "Pull the mock image before starting (set to 'false' for offline/local builds)")
 
+set(ARANGO_IMAGE "savannah.ornl.gov/datafed/arango-foxx:latest"
+    CACHE STRING "Docker image for the ArangoDB test instance (with Foxx services)")
+set(ARANGO_PORT "8529"
+    CACHE STRING "Host port for the ArangoDB test container")
+set(ARANGO_ROOT_PASS "test"
+    CACHE STRING "Root password for the ArangoDB test instance")
+set(ARANGO_PULL "true"
+    CACHE STRING "Pull the ArangoDB image before starting (set to 'false' for offline/local builds)")
+set(DATAFED_TEST_DATABASE_NAME "sdms_test"
+    CACHE STRING "Database name for integration tests (default: sdms_test)")
+
 # ── Check for Docker (needed by SchemaAPIClient tests) ───────────────────────
 
 find_program(DOCKER_EXECUTABLE docker)
 if(NOT DOCKER_EXECUTABLE)
-  message(STATUS "Docker not found — SchemaAPIClient integration tests will be skipped")
+  message(STATUS "Docker not found — integration tests requiring containers will be skipped")
 endif()
 
 # ── Compile and register all integration tests ──────────────────────────────
@@ -23,6 +34,7 @@ endif()
 foreach(PROG
     test_SchemaServiceFactory
     test_SchemaAPIClient
+    test_SchemaHandler
 )
   file(GLOB ${PROG}_SOURCES ${PROG}*.cpp)
   add_executable(integration_${PROG} ${${PROG}_SOURCES})
@@ -52,6 +64,10 @@ endforeach(PROG)
 
 if(DOCKER_EXECUTABLE)
 
+  # ========================================================================
+  # Mock Schema API (Prism) fixture — used by SchemaAPIClient
+  # ========================================================================
+
   set(_mock_schema_env
     "MOCK_SCHEMA_IMAGE=${MOCK_SCHEMA_IMAGE}"
     "MOCK_SCHEMA_PORT=${MOCK_SCHEMA_PORT}"
@@ -59,7 +75,7 @@ if(DOCKER_EXECUTABLE)
     "CONTAINER_NAME=datafed-mock-schema"
   )
 
-  set(_test_env
+  set(_mock_schema_test_env
     "SCHEMA_API_TEST_URL=http://localhost:${MOCK_SCHEMA_PORT}"
   )
 
@@ -91,14 +107,74 @@ if(DOCKER_EXECUTABLE)
 
   set_tests_properties(integration_test_SchemaAPIClient PROPERTIES
     FIXTURES_REQUIRED MockSchemaAPI
-    ENVIRONMENT       "${_test_env}"
+    ENVIRONMENT       "${_mock_schema_test_env}"
     LABELS            "integration"
   )
 
   if(ENABLE_MEMORY_TESTS)
     set_tests_properties(memory_test_SchemaAPIClient PROPERTIES
       FIXTURES_REQUIRED MockSchemaAPI
-      ENVIRONMENT       "${_test_env}"
+      ENVIRONMENT       "${_mock_schema_test_env}"
+      LABELS            "integration;memory"
+    )
+  endif()
+
+  # ========================================================================
+  # ArangoDB fixture — used by SchemaHandler
+  # ========================================================================
+
+  set(_arango_env
+    "ARANGO_IMAGE=${ARANGO_IMAGE}"
+    "ARANGO_PORT=${ARANGO_PORT}"
+    "ARANGO_ROOT_PASS=${ARANGO_ROOT_PASS}"
+    "ARANGO_CONTAINER=datafed-test-arango"
+    "ARANGO_PULL=${ARANGO_PULL}"
+    "DATAFED_PROJECT_ROOT=${DataFed_SOURCE_DIR}"
+    "DATAFED_DATABASE_NAME=${DATAFED_TEST_DATABASE_NAME}"
+  )
+  set(_arango_test_env
+    "DATAFED_TEST_ARANGO_URL=http://localhost:${ARANGO_PORT}/_db/${DATAFED_TEST_DATABASE_NAME}/api/${DATAFED_FOXX_MAJOR}/"
+    "DATAFED_TEST_ARANGO_USER=root"
+    "DATAFED_TEST_ARANGO_PASS=${ARANGO_ROOT_PASS}"
+    "DATAFED_DATABASE_NAME=${ARANGO_TEST_DATABASE_NAME}"
+  )
+
+  # ── Fixture setup: start ArangoDB container ──────────────────────────
+
+  add_test(
+    NAME arango_start
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/start_test_arango.sh
+  )
+  set_tests_properties(arango_start PROPERTIES
+    FIXTURES_SETUP    TestArangoDB
+    ENVIRONMENT       "${_arango_env}"
+    LABELS            "fixture;integration"
+  )
+
+  # ── Fixture cleanup: stop and remove container ───────────────────────
+
+  add_test(
+    NAME arango_stop
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/stop_test_arango.sh
+  )
+  set_tests_properties(arango_stop PROPERTIES
+    FIXTURES_CLEANUP  TestArangoDB
+    ENVIRONMENT       "${_arango_env}"
+    LABELS            "fixture;integration"
+  )
+
+  # ── Attach fixture to SchemaHandler tests ────────────────────────────
+
+  set_tests_properties(integration_test_SchemaHandler PROPERTIES
+    FIXTURES_REQUIRED TestArangoDB
+    ENVIRONMENT       "${_arango_test_env}"
+    LABELS            "integration"
+  )
+
+  if(ENABLE_MEMORY_TESTS)
+    set_tests_properties(memory_test_SchemaHandler PROPERTIES
+      FIXTURES_REQUIRED TestArangoDB
+      ENVIRONMENT       "${_arango_test_env}"
       LABELS            "integration;memory"
     )
   endif()

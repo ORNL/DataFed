@@ -8,13 +8,22 @@ import * as dlgSchema from "./dlg_schema.js";
 
 var tree, dlg_inst, frame;
 
-/** Strip version suffix from a composite schema ID (e.g. "foo:0" -> "foo") */
+/**
+ * Strip version suffix from a composite schema ID (e.g. "foo:0" -> "foo").
+ * @param {string} id - Composite schema ID.
+ * @returns {string} Schema name without version suffix.
+ */
 function schemaName(id) {
     var idx = id.indexOf(":");
     return idx !== -1 ? id.substring(0, idx) : id;
 }
 
-/** Ensure a schema ID has the :version suffix */
+/**
+ * Ensure a schema ID has the :version suffix.
+ * @param {string} id - Schema ID, possibly without version.
+ * @param {string|number} ver - Version to append if missing.
+ * @returns {string} Schema ID with version suffix.
+ */
 function schemaId(id, ver) {
     return id.indexOf(":") !== -1 ? id : id + ":" + ver;
 }
