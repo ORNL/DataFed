@@ -209,7 +209,7 @@ router
                     delete sch._key;
                     delete sch._rev;
 
-                    sch.id = parsed.id + ":" + parsed.ver;
+                    sch.id = parsed.id + ":" + obj.ver;
                     res.send([sch]);
                 },
             });
