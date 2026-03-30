@@ -648,7 +648,8 @@ BOOST_AUTO_TEST_CASE(delete_cleans_up_external_storage) {
 
   // Validate against deleted schema should return error, not crash
   std::string errors = handler->validateMetadataContent(
-      id, VALID_LINKML_METADATA, log_context);
+      TEST_USER, id, VALID_LINKML_METADATA, log_context);
+  BOOST_TEST_MESSAGE("validation errors: [" << errors << "]");
   BOOST_TEST(!errors.empty());
 }
 
@@ -706,8 +707,8 @@ BOOST_AUTO_TEST_CASE(valid_metadata_passes) {
   std::string id = createTestSchema("test_linkml_val_pass");
 
   std::string errors = handler->validateMetadataContent(
-      id, VALID_LINKML_METADATA, log_context);
-
+      TEST_USER, id, VALID_LINKML_METADATA, log_context);
+  BOOST_TEST_MESSAGE("validation errors: [" << errors << "]");
   BOOST_TEST(errors.empty());
 }
 
@@ -717,8 +718,9 @@ BOOST_AUTO_TEST_CASE(missing_required_field_fails) {
   std::string id = createTestSchema("test_linkml_val_missing");
 
   std::string errors = handler->validateMetadataContent(
-      id, INVALID_LINKML_METADATA_MISSING_REQUIRED, log_context);
+      TEST_USER, id, INVALID_LINKML_METADATA_MISSING_REQUIRED, log_context);
 
+  BOOST_TEST_MESSAGE("validation errors: [" << errors << "]");
   BOOST_TEST(!errors.empty());
 }
 
@@ -728,8 +730,9 @@ BOOST_AUTO_TEST_CASE(wrong_type_fails) {
   std::string id = createTestSchema("test_linkml_val_type");
 
   std::string errors = handler->validateMetadataContent(
-      id, INVALID_LINKML_METADATA_WRONG_TYPE, log_context);
+      TEST_USER, id, INVALID_LINKML_METADATA_WRONG_TYPE, log_context);
 
+  BOOST_TEST_MESSAGE("validation errors: [" << errors << "]");
   BOOST_TEST(!errors.empty());
 }
 
@@ -737,8 +740,9 @@ BOOST_AUTO_TEST_CASE(nonexistent_schema_returns_error) {
   REQUIRE_LINKML();
 
   std::string errors = handler->validateMetadataContent(
-      "does_not_exist:99", VALID_LINKML_METADATA, log_context);
+      TEST_USER, "does_not_exist:99", VALID_LINKML_METADATA, log_context);
 
+  BOOST_TEST_MESSAGE("validation errors: [" << errors << "]");
   BOOST_TEST(!errors.empty());
 }
 
@@ -791,14 +795,17 @@ BOOST_AUTO_TEST_CASE(create_validate_update_revise_delete) {
   // 2. Validate good metadata
   {
     std::string errors = handler->validateMetadataContent(
-        id, VALID_LINKML_METADATA, log_context);
+        TEST_USER, id, VALID_LINKML_METADATA, log_context);
+  
+    BOOST_TEST_MESSAGE("validation errors: [" << errors << "]");
     BOOST_TEST(errors.empty());
   }
 
   // 3. Validate bad metadata
   {
     std::string errors = handler->validateMetadataContent(
-        id, INVALID_LINKML_METADATA_MISSING_REQUIRED, log_context);
+        TEST_USER, id, INVALID_LINKML_METADATA_MISSING_REQUIRED, log_context);
+    BOOST_TEST_MESSAGE("validation errors: [" << errors << "]");
     BOOST_TEST(!errors.empty());
   }
 
@@ -845,7 +852,7 @@ BOOST_AUTO_TEST_CASE(create_validate_update_revise_delete) {
   //    since we only added an optional "unit" field
   {
     std::string errors = handler->validateMetadataContent(
-        id_v2, VALID_LINKML_METADATA, log_context);
+        TEST_USER, id_v2, VALID_LINKML_METADATA, log_context);
     BOOST_TEST(errors.empty());
   }
 

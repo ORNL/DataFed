@@ -2955,6 +2955,8 @@ void DatabaseAPI::schemaCreate(const SDMS::SchemaCreateRequest &a_request,
   payload["pub"] = a_request.pub();
   payload["sys"] = a_request.sys();
   payload["def"] = a_request.def();
+  payload["type"] = a_request.type();
+  payload["format"] = a_request.format();
   string body = payload.dump(-1, ' ', true);
 
   dbPost("schema/create", {}, &body, result, log_context);
@@ -3058,29 +3060,45 @@ void DatabaseAPI::setSchemaData(SchemaData *a_schema,
   a_schema->set_id(a_obj.getString("id"));
   a_schema->set_ver(a_obj.getNumber("ver"));
 
-  if (a_obj.has("cnt"))
+  if (a_obj.has("cnt")) {
     a_schema->set_cnt(a_obj.asNumber());
+  }
 
-  if (a_obj.has("own_id") && !a_obj.value().isNull())
+  if (a_obj.has("own_id") && !a_obj.value().isNull()) {
     a_schema->set_own_id(a_obj.asString());
+  }
 
-  if (a_obj.has("own_nm") && !a_obj.value().isNull())
+  if (a_obj.has("own_nm") && !a_obj.value().isNull()) {
     a_schema->set_own_nm(a_obj.asString());
+  }
 
-  if (a_obj.has("desc"))
+  if (a_obj.has("desc")) {
     a_schema->set_desc(a_obj.asString());
+  }
 
-  if (a_obj.has("pub"))
+  if (a_obj.has("pub")) {
     a_schema->set_pub(a_obj.asBool());
+  }
 
-  if (a_obj.has("depr"))
+  if (a_obj.has("depr")) {
     a_schema->set_depr(a_obj.asBool());
+  }
 
-  if (a_obj.has("ref"))
+  if (a_obj.has("ref")) {
     a_schema->set_ref(a_obj.asBool());
+  }
 
-  if (a_obj.has("def"))
+  if (a_obj.has("def")) {
     a_schema->set_def(a_obj.value().toString());
+  }
+
+  if (a_obj.has("type")) {
+    a_schema->set_type(a_obj.asString());
+  }
+
+  if (a_obj.has("format")) {
+    a_schema->set_format(a_obj.asString());
+  }
 
   Value::ArrayConstIter j;
   SchemaData *dep;

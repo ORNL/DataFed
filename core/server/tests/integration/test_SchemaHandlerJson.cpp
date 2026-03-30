@@ -596,7 +596,7 @@ BOOST_AUTO_TEST_CASE(valid_metadata_passes) {
   std::string id = createTestSchema("test_validate_pass");
 
   std::string errors = handler->validateMetadataContent(
-      id, VALID_METADATA, log_context);
+      TEST_USER, id, VALID_METADATA, log_context);
 
   BOOST_TEST(errors.empty());
 }
@@ -607,7 +607,7 @@ BOOST_AUTO_TEST_CASE(missing_required_field_fails) {
   std::string id = createTestSchema("test_validate_missing");
 
   std::string errors = handler->validateMetadataContent(
-      id, INVALID_METADATA_MISSING_REQUIRED, log_context);
+      TEST_USER, id, INVALID_METADATA_MISSING_REQUIRED, log_context);
 
   BOOST_TEST(!errors.empty());
 }
@@ -618,7 +618,7 @@ BOOST_AUTO_TEST_CASE(wrong_type_fails) {
   std::string id = createTestSchema("test_validate_type");
 
   std::string errors = handler->validateMetadataContent(
-      id, INVALID_METADATA_WRONG_TYPE, log_context);
+      TEST_USER, id, INVALID_METADATA_WRONG_TYPE, log_context);
 
   BOOST_TEST(!errors.empty());
 }
@@ -629,7 +629,7 @@ BOOST_AUTO_TEST_CASE(invalid_json_metadata_fails) {
   std::string id = createTestSchema("test_validate_bad_json");
 
   std::string errors = handler->validateMetadataContent(
-      id, INVALID_JSON, log_context);
+      TEST_USER, id, INVALID_JSON, log_context);
 
   BOOST_TEST(!errors.empty());
 }
@@ -638,7 +638,7 @@ BOOST_AUTO_TEST_CASE(nonexistent_schema_returns_error) {
   REQUIRE_AVAILABLE();
 
   std::string errors = handler->validateMetadataContent(
-      "does_not_exist:99", VALID_METADATA, log_context);
+      TEST_USER, "does_not_exist:99", VALID_METADATA, log_context);
 
   // Should return an error string, not throw
   BOOST_TEST(!errors.empty());
@@ -692,14 +692,14 @@ BOOST_AUTO_TEST_CASE(create_validate_update_revise_delete) {
   // 2. Validate metadata against it
   {
     std::string errors = handler->validateMetadataContent(
-        id, VALID_METADATA, log_context);
+        TEST_USER, id, VALID_METADATA, log_context);
     BOOST_TEST(errors.empty());
   }
 
   // 3. Validate bad metadata
   {
     std::string errors = handler->validateMetadataContent(
-        id, INVALID_METADATA_MISSING_REQUIRED, log_context);
+        TEST_USER, id, INVALID_METADATA_MISSING_REQUIRED, log_context);
     BOOST_TEST(!errors.empty());
   }
 
@@ -745,7 +745,7 @@ BOOST_AUTO_TEST_CASE(create_validate_update_revise_delete) {
   // 7. Validate metadata against new revision
   {
     std::string errors = handler->validateMetadataContent(
-        id_v2, VALID_METADATA, log_context);
+        TEST_USER, id_v2, VALID_METADATA, log_context);
     BOOST_TEST(errors.empty());
   }
 

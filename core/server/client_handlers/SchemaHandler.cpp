@@ -76,7 +76,13 @@ void SchemaHandler::handleCreate(const std::string &a_uid,
   }
 
   // Persist to Arango — exception propagates naturally on failure
-  m_db_client.schemaCreate(a_request, a_reply, log_context);
+  // For external schema types, store a stub in Arango —
+  // the real content lives in external storage.
+  SchemaCreateRequest arango_req(a_request);
+  if (a_request.type() != "json-schema") {
+    arango_req.set_def("{}");  // stub
+  }
+  m_db_client.schemaCreate(arango_req, a_reply, log_context);
 
   // Store content through factory (no-op for Arango, meaningful for external)
   try {
@@ -154,7 +160,13 @@ void SchemaHandler::handleRevise(const std::string &a_uid,
   }
  
   // Create new revision in Arango
-  m_db_client.schemaRevise(a_request, a_reply, log_context);
+  // For external schema types, store a stub in Arango —
+  // the real content lives in external storage.
+  SchemaReviseRequest arango_req(a_request);
+  if (schema_type != "json-schema") {
+    arango_req.set_def("{}");  // stub
+  }
+  m_db_client.schemaRevise(arango_req, a_reply, log_context);
  
   // Store content for new revision only when def was provided
   if (a_request.has_def()) {
@@ -234,7 +246,13 @@ void SchemaHandler::handleUpdate(const std::string &a_uid,
   }
 
   // Update in-place in Arango
-  m_db_client.schemaUpdate(a_request, log_context);
+  // For external schema types, store a stub in Arango —
+  // the real content lives in external storage.
+  SchemaUpdateRequest arango_req(a_request);
+  if (schema_type != "json-schema") {
+    arango_req.set_def("{}");  // stub
+  }
+  m_db_client.schemaUpdate(arango_req, log_context);
 
   // Update content in external storage only when def was provided.
   // Uses updateContent (in-place) rather than storeContent (new entry).
@@ -264,7 +282,9 @@ void SchemaHandler::handleUpdate(const std::string &a_uid,
       rollback_request.set_id(sch_doc.getString("id"));
       rollback_request.set_desc(sch_doc.getString("desc"));
       rollback_request.set_pub(sch_doc.getBool("pub"));
-      rollback_request.set_sys(sch_doc.getBool("sys"));
+      if (sch_doc.has("sys")) {
+        rollback_request.set_sys(sch_doc.getBool("sys"));
+      }
 
       DL_ERROR(log_context,
                "Schema storage update failed attempting rollback: " << e.what());
@@ -283,10 +303,12 @@ void SchemaHandler::handleUpdate(const std::string &a_uid,
 // ── Metadata Validation ─────────────────────────────────────────────────────
 
 std::string SchemaHandler::validateMetadataContent(
+    const std::string &a_uid,
     const std::string &a_sch_id,
     const std::string &a_metadata,
     LogContext log_context) {
 
+  m_db_client.setClient(a_uid);
   DL_DEBUG(log_context, "validateMetadataContent schema=" << a_sch_id);
 
   std::string schema_type = "json-schema";
@@ -356,10 +378,9 @@ void SchemaHandler::handleMetadataValidate(
     LogContext log_context) {
 
   DL_DEBUG(log_context, "Metadata validate");
-  m_db_client.setClient(a_uid);
 
   std::string errors = validateMetadataContent(
-      a_request.sch_id(), a_request.metadata(), log_context);
+      a_uid, a_request.sch_id(), a_request.metadata(), log_context);
 
   if (!errors.empty()) {
     a_reply.set_errors(errors);

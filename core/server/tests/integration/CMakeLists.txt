@@ -11,7 +11,7 @@ set(MOCK_SCHEMA_PORT "4011"
 set(MOCK_SCHEMA_PULL "true"
     CACHE STRING "Pull the mock image before starting (set to 'false' for offline/local builds)")
 
-set(ARANGO_IMAGE "savannah.ornl.gov/datafed/arango-foxx:latest"
+set(ARANGO_IMAGE "arangodb/arangodb:3.12.4"
     CACHE STRING "Docker image for the ArangoDB test instance (with Foxx services)")
 set(ARANGO_PORT "8529"
     CACHE STRING "Host port for the ArangoDB test container")
@@ -22,7 +22,8 @@ set(ARANGO_PULL "true"
 set(DATAFED_TEST_DATABASE_NAME "sdms_test"
     CACHE STRING "Database name for integration tests (default: sdms_test)")
 
-set(DATAFED_TEST_SCHEMA_API_URL "http://0.0.0.0:8080"
+# NOTE - Mock I don't think has the v1 in the path, the actual service however does.
+set(DATAFED_TEST_SCHEMA_API_URL "http://0.0.0.0:8080/v1"
     CACHE STRING "Url to LinkML Schema")
 set(DATAFED_TEST_SCHEMA_API_TOKEN "testy"
     CACHE STRING "Token for LinkML Schema Service")

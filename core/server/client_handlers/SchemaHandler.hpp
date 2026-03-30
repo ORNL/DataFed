@@ -118,9 +118,10 @@ public:
                     AckReply &a_reply,
                     LogContext log_context);
 
-  std::string validateMetadataContent(const std::string &a_sch_id,
-                                    const std::string &a_metadata,
-                                    LogContext log_context);
+  std::string validateMetadataContent(const std::string &a_uid,
+                                      const std::string &a_sch_id,
+                                      const std::string &a_metadata,
+                                      LogContext log_context);
 
 private:
   /**
