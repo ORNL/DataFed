@@ -6,14 +6,14 @@
 #
 # Optional env:
 #   MOCK_SCHEMA_IMAGE   — Docker image (default: savannah.ornl.gov/datafed/mock-schema:latest)
-#   MOCK_SCHEMA_PORT    — Host port to bind (default: 4010)
+#   MOCK_SCHEMA_PORT    — Host port to bind (default: 4011)
 #   CONTAINER_NAME      — Docker container name (default: datafed-mock-schema)
 #   MOCK_SCHEMA_PULL    — "true" to pull image before starting (default: true)
 
 set -eu
 
 IMAGE="${MOCK_SCHEMA_IMAGE:-savannah.ornl.gov/datafed/mock-schema:latest}"
-PORT="${MOCK_SCHEMA_PORT:-4010}"
+PORT="${MOCK_SCHEMA_PORT:-4011}"
 NAME="${CONTAINER_NAME:-datafed-mock-schema}"
 PULL="${MOCK_SCHEMA_PULL:-true}"
 MAX_WAIT=30
@@ -42,9 +42,10 @@ echo "Starting mock schema server on port ${PORT}..."
 
 docker run -d \
   --name "${NAME}" \
-  -p "${PORT}:4010" \
+  -p "${PORT}:4011" \
   -e PRISM_DYNAMIC=false \
   -e PRISM_ERRORS=true \
+  -e PRISM_PORT=4011 \
   "${IMAGE}"
 
 # ── Wait for readiness ───────────────────────────────────────────────────────

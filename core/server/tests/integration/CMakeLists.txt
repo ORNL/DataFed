@@ -6,7 +6,7 @@
 
 set(MOCK_SCHEMA_IMAGE "savannah.ornl.gov/datafed/mock-schema:latest"
     CACHE STRING "Docker image for the mock Schema API (Prism)")
-set(MOCK_SCHEMA_PORT "4010"
+set(MOCK_SCHEMA_PORT "4011"
     CACHE STRING "Host port for the mock Schema API container")
 set(MOCK_SCHEMA_PULL "true"
     CACHE STRING "Pull the mock image before starting (set to 'false' for offline/local builds)")
