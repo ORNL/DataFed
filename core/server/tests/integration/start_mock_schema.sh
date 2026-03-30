@@ -42,8 +42,6 @@ echo "Starting mock schema server on port ${PORT}..."
 
 echo "docker run -d --name ${NAME} -p "${PORT}:4011" -e PRISM_DYNAMIC=false -e PRISM_ERRORS=true -e PRISM_PORT=4011 ${IMAGE}"
 
-
-
 docker run -d \
   --name "${NAME}" \
   -p "${PORT}:4011" \
@@ -59,7 +57,7 @@ echo "Waiting for readiness (max ${MAX_WAIT}s)..."
 
 if ! curl --version &>/dev/null; then
   echo "ERROR: curl is broken (likely missing shared library). Check: curl --version" >&2
-  curl --version  # Print the actual error for diagnostics
+  curl --version # Print the actual error for diagnostics
   exit 1
 fi
 
