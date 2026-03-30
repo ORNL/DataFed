@@ -2955,8 +2955,12 @@ void DatabaseAPI::schemaCreate(const SDMS::SchemaCreateRequest &a_request,
   payload["pub"] = a_request.pub();
   payload["sys"] = a_request.sys();
   payload["def"] = a_request.def();
-  payload["type"] = a_request.type();
-  payload["format"] = a_request.format();
+  if (!a_request.format().empty()) {
+    payload["format"] = a_request.format();
+  }
+  if (!a_request.type().empty()) {
+    payload["type"] = a_request.type();
+  }
   string body = payload.dump(-1, ' ', true);
 
   dbPost("schema/create", {}, &body, result, log_context);

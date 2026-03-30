@@ -79,8 +79,8 @@ void SchemaHandler::handleCreate(const std::string &a_uid,
   // For external schema types, store a stub in Arango —
   // the real content lives in external storage.
   SchemaCreateRequest arango_req(a_request);
-  if (a_request.type() != "json-schema") {
-    arango_req.set_def("{}");  // stub
+  if (!a_request.type().empty() && a_request.type() != "json-schema") {
+    arango_req.set_def("{}");
   }
   m_db_client.schemaCreate(arango_req, a_reply, log_context);
 
@@ -163,8 +163,8 @@ void SchemaHandler::handleRevise(const std::string &a_uid,
   // For external schema types, store a stub in Arango —
   // the real content lives in external storage.
   SchemaReviseRequest arango_req(a_request);
-  if (schema_type != "json-schema") {
-    arango_req.set_def("{}");  // stub
+  if (!schema_type.empty() && schema_type != "json-schema") {
+    arango_req.set_def("{}");
   }
   m_db_client.schemaRevise(arango_req, a_reply, log_context);
  
@@ -249,8 +249,8 @@ void SchemaHandler::handleUpdate(const std::string &a_uid,
   // For external schema types, store a stub in Arango —
   // the real content lives in external storage.
   SchemaUpdateRequest arango_req(a_request);
-  if (schema_type != "json-schema") {
-    arango_req.set_def("{}");  // stub
+  if (!schema_type.empty() && schema_type != "json-schema") {
+    arango_req.set_def("{}");
   }
   m_db_client.schemaUpdate(arango_req, log_context);
 
