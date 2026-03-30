@@ -22,6 +22,11 @@ set(ARANGO_PULL "true"
 set(DATAFED_TEST_DATABASE_NAME "sdms_test"
     CACHE STRING "Database name for integration tests (default: sdms_test)")
 
+set(DATAFED_TEST_SCHEMA_API_URL "http://0.0.0.0:8080"
+    CACHE STRING "Url to LinkML Schema")
+set(DATAFED_TEST_SCHEMA_API_TOKEN "testy"
+    CACHE STRING "Token for LinkML Schema Service")
+
 # ── Check for Docker (needed by SchemaAPIClient tests) ───────────────────────
 
 find_program(DOCKER_EXECUTABLE docker)
@@ -34,7 +39,8 @@ endif()
 foreach(PROG
     test_SchemaServiceFactory
     test_SchemaAPIClient
-    test_SchemaHandler
+    test_SchemaHandlerJson
+    test_SchemaHandlerLinkML
 )
   file(GLOB ${PROG}_SOURCES ${PROG}*.cpp)
   add_executable(integration_${PROG} ${${PROG}_SOURCES})
@@ -138,6 +144,14 @@ if(DOCKER_EXECUTABLE)
     "DATAFED_TEST_ARANGO_PASS=${ARANGO_ROOT_PASS}"
     "DATAFED_DATABASE_NAME=${ARANGO_TEST_DATABASE_NAME}"
   )
+  set(_linkml_test_env
+    "DATAFED_TEST_ARANGO_URL=http://localhost:${ARANGO_PORT}/_db/${DATAFED_TEST_DATABASE_NAME}/api/${DATAFED_FOXX_MAJOR}/"
+    "DATAFED_TEST_ARANGO_USER=root"
+    "DATAFED_TEST_ARANGO_PASS=${ARANGO_ROOT_PASS}"
+    "DATAFED_DATABASE_NAME=${ARANGO_TEST_DATABASE_NAME}"
+    "DATAFED_TEST_SCHEMA_API_URL=${DATAFED_TEST_SCHEMA_API_URL}"
+    "DATAFED_TEST_SCHEMA_API_TOKEN=${DATAFED_TEST_SCHEMA_API_TOKEN}"
+  )
 
   # ── Fixture setup: start ArangoDB container ──────────────────────────
 
@@ -165,16 +179,26 @@ if(DOCKER_EXECUTABLE)
 
   # ── Attach fixture to SchemaHandler tests ────────────────────────────
 
-  set_tests_properties(integration_test_SchemaHandler PROPERTIES
+  set_tests_properties(integration_test_SchemaHandlerJson PROPERTIES
     FIXTURES_REQUIRED TestArangoDB
     ENVIRONMENT       "${_arango_test_env}"
     LABELS            "integration"
   )
+  set_tests_properties(integration_test_SchemaHandlerLinkML PROPERTIES
+    FIXTURES_REQUIRED TestArangoDB
+    ENVIRONMENT       "${_linkml_test_env}"
+    LABELS            "integration"
+  )
 
   if(ENABLE_MEMORY_TESTS)
-    set_tests_properties(memory_test_SchemaHandler PROPERTIES
+    set_tests_properties(memory_test_SchemaHandlerJson PROPERTIES
       FIXTURES_REQUIRED TestArangoDB
       ENVIRONMENT       "${_arango_test_env}"
+      LABELS            "integration;memory"
+    )
+    set_tests_properties(memory_test_SchemaHandlerLinkML PROPERTIES
+      FIXTURES_REQUIRED TestArangoDB
+      ENVIRONMENT       "${_linkml_test_env}"
       LABELS            "integration;memory"
     )
   endif()
