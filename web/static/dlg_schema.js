@@ -110,7 +110,7 @@ export function show(a_mode, a_schema, a_cb) {
         schName = a_schema ? schemaName(a_schema.id) : null;
 
     // Determine current schema type from existing schema or default
-    var curType = (a_schema && a_schema.type) ? a_schema.type : "json-schema";
+    var curType = a_schema && a_schema.type ? a_schema.type : "json-schema";
 
     frame.html(
         "<div id='dlg-tabs' style='height:100%;padding:0' class='tabs-no-header no-border'>\
@@ -150,7 +150,9 @@ export function show(a_mode, a_schema, a_cb) {
             <div id='tab-dlg-def' style='padding:.5em 1em'>\
                 <div class='col-flex' style='height:100%'>\
                     <div style='flex:none;padding-bottom:0.25em'>\
-                        <span id='sch_def_label'>" + defLabel(curType) + "</span> <span style='float:right'><a href='https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts' target='_blank'>editor help</a></span>\
+                        <span id='sch_def_label'>" +
+            defLabel(curType) +
+            "</span> <span style='float:right'><a href='https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts' target='_blank'>editor help</a></span>\
                     </div>\
                     <div class='ui-widget ui-widget-content' style='flex:1 1 100%;padding:0'>\
                         <div id='sch_def' style='height:100%;width:100%'></div>\
