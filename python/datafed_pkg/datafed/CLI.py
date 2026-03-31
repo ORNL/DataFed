@@ -2046,22 +2046,35 @@ def _schemaView(schema_id, resolve):
 @click.option(
     "-s", "--system", is_flag=True, required=False, help="Create as a system schema."
 )
+@click.option(
+    "-t", "--type", "schema_type",
+    type=click.Choice(["json-schema", "linkml"]),
+    default="json-schema",
+    help="Schema engine type (default: json-schema).",
+)
+@click.option(
+    "--format", "schema_format",
+    type=click.Choice(["json", "yaml"]),
+    default="json",
+    help="Schema definition format (default: json).",
+)
 @_global_output_options
-def _schemaCreate(schema_id, definition, definition_file, description, public, system):
+def _schemaCreate(schema_id, definition, definition_file, description,
+                  public, system, schema_type, schema_format):
     """
     Create a new metadata schema. A JSON schema definition is required and
     may be provided inline via --definition or read from a file via
     --definition-file. Cannot specify both.
     """
-
+ 
     if definition and definition_file:
         raise Exception(
             "Cannot specify both --definition and --definition-file options."
         )
-
+ 
     if not definition and not definition_file:
         raise Exception("Must specify either --definition or --definition-file.")
-
+ 
     reply = _capi.schemaCreate(
         schema_id,
         definition=definition,
@@ -2069,6 +2082,8 @@ def _schemaCreate(schema_id, definition, definition_file, description, public, s
         description=description,
         public=public,
         system=system,
+        schema_type=schema_type,
+        schema_format=schema_format,
     )
     _generic_reply_handler(reply, _print_ack_reply)
 
@@ -2106,19 +2121,26 @@ def _schemaCreate(schema_id, definition, definition_file, description, public, s
     required=False,
     help="Set as system schema.",
 )
+@click.option(
+    "-t", "--type", "schema_type",
+    type=click.Choice(["json-schema", "linkml"]),
+    default=None, required=False,
+    help="Schema engine type.",
+)
 @_global_output_options
-def _schemaRevise(schema_id, definition, definition_file, description, public, system):
+def _schemaRevise(schema_id, definition, definition_file, description,
+                  public, system, schema_type):
     """
     Create a new revision of an existing schema. Any fields not provided are
     carried forward from the current revision. The definition may be provided
     inline or read from a file.
     """
-
+ 
     if definition and definition_file:
         raise Exception(
             "Cannot specify both --definition and --definition-file options."
         )
-
+ 
     reply = _capi.schemaRevise(
         schema_id,
         definition=definition,
@@ -2126,6 +2148,7 @@ def _schemaRevise(schema_id, definition, definition_file, description, public, s
         description=description,
         public=public if public else None,
         system=system if system else None,
+        schema_type=schema_type,
     )
     _generic_reply_handler(reply, _print_ack_reply)
 
@@ -2164,20 +2187,27 @@ def _schemaRevise(schema_id, definition, definition_file, description, public, s
     required=False,
     help="Set as system schema.",
 )
+@click.option(
+    "-t", "--type", "schema_type",
+    type=click.Choice(["json-schema", "linkml"]),
+    default=None, required=False,
+    help="Schema engine type.",
+)
 @_global_output_options
 def _schemaUpdate(
-    schema_id, new_id, definition, definition_file, description, public, system
+    schema_id, new_id, definition, definition_file, description,
+    public, system, schema_type
 ):
     """
     Update an existing schema in place without creating a new revision.
     The definition may be provided inline or read from a file.
     """
-
+ 
     if definition and definition_file:
         raise Exception(
             "Cannot specify both --definition and --definition-file options."
         )
-
+ 
     reply = _capi.schemaUpdate(
         schema_id,
         new_id=new_id,
@@ -2186,6 +2216,7 @@ def _schemaUpdate(
         description=description,
         public=public if public else None,
         system=system if system else None,
+        schema_type=schema_type,
     )
     _generic_reply_handler(reply, _print_ack_reply)
 
