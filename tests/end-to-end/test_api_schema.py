@@ -58,7 +58,7 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
             count += 1
             assert count < 3
 
-        # Base schema definition reused across tests
+        # Base JSON Schema definition reused across tests
         self._base_schema_def = {
             "type": "object",
             "properties": {
@@ -71,6 +71,62 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
             },
             "required": ["name", "value"]
         }
+
+        # Base LinkML schema definition reused across LinkML tests
+        self._base_linkml_def = (
+            "id: https://example.org/test-schema\n"
+            "name: test_schema\n"
+            "prefixes:\n"
+            "  linkml: https://w3id.org/linkml/\n"
+            "  test_schema: https://example.org/test-schema/\n"
+            "imports:\n"
+            "  - linkml:types\n"
+            "default_range: string\n"
+            "default_prefix: test_schema\n"
+            "\n"
+            "classes:\n"
+            "  Experiment:\n"
+            "    attributes:\n"
+            "      id:\n"
+            "        required: true\n"
+            "      name:\n"
+            "        required: true\n"
+            "      description:\n"
+            "      sample_count:\n"
+            "        range: integer\n"
+            "      tags:\n"
+            "        multivalued: true\n"
+        )
+
+        self._updated_linkml_def = (
+            "id: https://example.org/test-schema\n"
+            "name: test_schema\n"
+            "prefixes:\n"
+            "  linkml: https://w3id.org/linkml/\n"
+            "  test_schema: https://example.org/test-schema/\n"
+            "imports:\n"
+            "  - linkml:types\n"
+            "default_range: string\n"
+            "default_prefix: test_schema\n"
+            "\n"
+            "classes:\n"
+            "  Experiment:\n"
+            "    attributes:\n"
+            "      id:\n"
+            "        required: true\n"
+            "      name:\n"
+            "        required: true\n"
+            "      description:\n"
+            "      sample_count:\n"
+            "        range: integer\n"
+            "      unit:\n"
+            "      tags:\n"
+            "        multivalued: true\n"
+        )
+
+    # =========================================================================
+    # JSON Schema Tests
+    # =========================================================================
 
     def test_schema_create_view_delete(self):
         """Test basic schema lifecycle: create, view, delete."""
@@ -287,7 +343,7 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
 
         print("reply type:", search_result[1])
         print("num schemas:", len(search_result[0].schema))
-        
+
         for s in search_result[0].schema:
             # s fields depend on the protobuf, but these are commonly present:
             print("id:", getattr(s, "id", None),
@@ -445,6 +501,368 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
             if os.path.exists(tmp_file):
                 os.remove(tmp_file)
 
+    # =========================================================================
+    # LinkML Schema Tests
+    #
+    # These tests require the SchemaDBApi service to be running and the
+    # DataFed core server configured with a linkml schema engine.
+    #
+    # The Python API must support schema_type and schema_format parameters
+    # on schemaCreate, schemaUpdate, and schemaRevise. If these parameters
+    # are not yet supported, these tests will need to be updated once they
+    # are added to the Python client.
+    # =========================================================================
+
+    def test_linkml_schema_create_view_delete(self):
+        """Test basic LinkML schema lifecycle: create, view, delete."""
+
+        schema_name = "test_linkml_basic"
+
+        create_result = self._df_api.schemaCreate(
+            schema_name,
+            definition=self._base_linkml_def,
+            description="Basic LinkML test schema",
+            schema_type="linkml",
+            schema_format="yaml",
+        )
+        schema_id = create_result[0].schema[0].id
+        self.assertEqual(create_result[1], "SchemaDataReply")
+
+        # View — content should be hydrated from external storage
+        view_result = self._df_api.schemaView(schema_id)
+        self.assertEqual(view_result[1], "SchemaDataReply")
+        self.assertTrue(len(view_result[0].schema) > 0)
+
+        schema_data = view_result[0].schema[0]
+        self.assertEqual(schema_data.id, schema_id)
+        self.assertEqual(schema_data.desc, "Basic LinkML test schema")
+
+        returned_def = getattr(schema_data, 'def')
+        self.assertIn("Experiment", returned_def)
+        self.assertIn("sample_count", returned_def)
+        self.assertIn("linkml:types", returned_def)
+
+        # Delete
+        delete_result = self._df_api.schemaDelete(schema_id)
+        self.assertEqual(delete_result[1], "AckReply")
+
+        # Verify deleted
+        with self.assertRaises(Exception):
+            self._df_api.schemaView(schema_id)
+
+    def test_linkml_schema_create_invalid_yaml(self):
+        """Server should reject invalid YAML as a LinkML schema."""
+
+        invalid_yaml = "  not: valid: yaml: {{{{\n  - [unterminated\n"
+
+        with self.assertRaises(Exception):
+            self._df_api.schemaCreate(
+                "test_linkml_bad_yaml",
+                definition=invalid_yaml,
+                description="Should fail",
+                schema_type="linkml",
+                schema_format="yaml",
+            )
+
+    def test_linkml_schema_update_description(self):
+        """Test updating a LinkML schema description in place."""
+
+        schema_name = "test_linkml_update"
+
+        create_result = self._df_api.schemaCreate(
+            schema_name,
+            definition=self._base_linkml_def,
+            description="Before update",
+            schema_type="linkml",
+            schema_format="yaml",
+        )
+        schema_id = create_result[0].schema[0].id
+
+        self._df_api.schemaUpdate(
+            schema_id,
+            description="After update",
+        )
+
+        view_result = self._df_api.schemaView(schema_id)
+        self.assertEqual(view_result[0].schema[0].desc, "After update")
+
+        # Cleanup
+        self._df_api.schemaDelete(schema_id)
+
+    def test_linkml_schema_update_definition(self):
+        """Test updating a LinkML schema definition in place."""
+
+        schema_name = "test_linkml_update_def"
+
+        create_result = self._df_api.schemaCreate(
+            schema_name,
+            definition=self._base_linkml_def,
+            description="Original def",
+            schema_type="linkml",
+            schema_format="yaml",
+        )
+        schema_id = create_result[0].schema[0].id
+
+        self._df_api.schemaUpdate(
+            schema_id,
+            definition=self._updated_linkml_def,
+        )
+
+        view_result = self._df_api.schemaView(schema_id)
+        returned_def = getattr(view_result[0].schema[0], 'def')
+        self.assertIn("unit", returned_def)
+
+        # Cleanup
+        self._df_api.schemaDelete(schema_id)
+
+    def test_linkml_schema_revise(self):
+        """Test creating a new revision of a LinkML schema."""
+
+        schema_name = "test_linkml_revise"
+
+        create_result = self._df_api.schemaCreate(
+            schema_name,
+            definition=self._base_linkml_def,
+            description="LinkML Revision 1",
+            schema_type="linkml",
+            schema_format="yaml",
+        )
+        schema_id = create_result[0].schema[0].id
+        view_v1 = self._df_api.schemaView(schema_id)
+        ver_1 = view_v1[0].schema[0].ver
+
+        # Revise with updated definition
+        revise_result = self._df_api.schemaRevise(
+            schema_id,
+            definition=self._updated_linkml_def,
+            description="LinkML Revision 2",
+        )
+        schema_id2 = revise_result[0].schema[0].id
+
+        view_v2 = self._df_api.schemaView(schema_id2)
+        ver_2 = view_v2[0].schema[0].ver
+
+        self.assertGreater(ver_2, ver_1)
+        self.assertEqual(view_v2[0].schema[0].desc, "LinkML Revision 2")
+
+        returned_def = getattr(view_v2[0].schema[0], 'def')
+        self.assertIn("unit", returned_def)
+
+        # Cleanup
+        self._df_api.schemaDelete(schema_id)
+        self._df_api.schemaDelete(schema_id2)
+
+    def test_linkml_schema_search(self):
+        """Test schema search finds LinkML schemas."""
+
+        prefix = "test_linkml_search"
+        schemas_to_cleanup = []
+
+        for i in range(2):
+            s_name = "{}_{}".format(prefix, i)
+            create_result = self._df_api.schemaCreate(
+                s_name,
+                definition=self._base_linkml_def,
+                description="LinkML searchable {}".format(i),
+                schema_type="linkml",
+                schema_format="yaml",
+            )
+            schema_id = create_result[0].schema[0].id
+            schemas_to_cleanup.append(schema_id)
+
+        def wait_for_search(prefix, expected, timeout=10):
+            start = time.time()
+            while time.time() - start < timeout:
+                res = self._df_api.schemaSearch(schema_id=prefix)
+                if len(res[0].schema) >= expected:
+                    return res
+                time.sleep(0.5)
+            return res
+
+        search_result = wait_for_search(prefix, 2, timeout=10)
+
+        self.assertEqual(search_result[1], "SchemaDataReply")
+        self.assertGreaterEqual(len(search_result[0].schema), 2)
+
+        # Cleanup
+        for sid in schemas_to_cleanup:
+            self._df_api.schemaDelete(sid)
+
+    def test_linkml_metadata_validate_pass(self):
+        """Test metadata validation passes with valid data against a LinkML schema."""
+
+        schema_name = "test_linkml_validate_pass"
+
+        create_result = self._df_api.schemaCreate(
+            schema_name,
+            definition=self._base_linkml_def,
+            description="LinkML validation test",
+            schema_type="linkml",
+            schema_format="yaml",
+        )
+        schema_id = create_result[0].schema[0].id
+
+        valid_metadata = json.dumps({
+            "id": "exp001",
+            "name": "trial run",
+            "description": "initial experiment",
+            "sample_count": 5,
+            "tags": ["alpha", "beta"]
+        })
+
+        result = self._df_api.metadataValidate(schema_id, metadata=valid_metadata)
+        self.assertFalse(result[0].errors)
+
+        # Cleanup
+        self._df_api.schemaDelete(schema_id)
+
+    def test_linkml_metadata_validate_missing_required(self):
+        """Test metadata validation fails when required fields are missing."""
+
+        schema_name = "test_linkml_validate_missing"
+
+        create_result = self._df_api.schemaCreate(
+            schema_name,
+            definition=self._base_linkml_def,
+            description="LinkML validation test",
+            schema_type="linkml",
+            schema_format="yaml",
+        )
+        schema_id = create_result[0].schema[0].id
+
+        # Missing required "id" and "name" fields
+        invalid_metadata = json.dumps({
+            "sample_count": 5
+        })
+
+        result = self._df_api.metadataValidate(schema_id, metadata=invalid_metadata)
+        self.assertTrue(result[0].errors)
+        self.assertIn("required", result[0].errors.lower())
+
+        # Cleanup
+        self._df_api.schemaDelete(schema_id)
+
+    def test_linkml_metadata_validate_wrong_type(self):
+        """Test metadata validation fails when field types are wrong."""
+
+        schema_name = "test_linkml_validate_type"
+
+        create_result = self._df_api.schemaCreate(
+            schema_name,
+            definition=self._base_linkml_def,
+            description="LinkML type validation test",
+            schema_type="linkml",
+            schema_format="yaml",
+        )
+        schema_id = create_result[0].schema[0].id
+
+        # sample_count should be integer, not string
+        invalid_metadata = json.dumps({
+            "id": "exp001",
+            "name": "trial run",
+            "sample_count": "not_a_number"
+        })
+
+        result = self._df_api.metadataValidate(schema_id, metadata=invalid_metadata)
+        self.assertTrue(result[0].errors)
+
+        # Cleanup
+        self._df_api.schemaDelete(schema_id)
+
+    def test_linkml_schema_create_from_file(self):
+        """Test creating a LinkML schema from a definition file."""
+
+        schema_name = "test_linkml_file_schema"
+        tmp_file = "/tmp/test_linkml_def.yaml"
+
+        try:
+            with open(tmp_file, "w") as f:
+                f.write(self._base_linkml_def)
+
+            create_result = self._df_api.schemaCreate(
+                schema_name,
+                definition_file=tmp_file,
+                description="Created from YAML file",
+                schema_type="linkml",
+                schema_format="yaml",
+            )
+            schema_id = create_result[0].schema[0].id
+            self.assertEqual(create_result[1], "SchemaDataReply")
+
+            view_result = self._df_api.schemaView(schema_id)
+            returned_def = getattr(view_result[0].schema[0], 'def')
+            self.assertIn("Experiment", returned_def)
+
+            self._df_api.schemaDelete(schema_id)
+        finally:
+            if os.path.exists(tmp_file):
+                os.remove(tmp_file)
+
+    def test_linkml_full_lifecycle(self):
+        """Test complete LinkML lifecycle: create, validate, update, revise, delete."""
+
+        schema_name = "test_linkml_lifecycle"
+
+        # 1. Create
+        create_result = self._df_api.schemaCreate(
+            schema_name,
+            definition=self._base_linkml_def,
+            description="Lifecycle v1",
+            schema_type="linkml",
+            schema_format="yaml",
+        )
+        schema_id = create_result[0].schema[0].id
+
+        # 2. Validate good metadata
+        valid_metadata = json.dumps({
+            "id": "exp001",
+            "name": "trial run",
+            "description": "initial experiment",
+            "sample_count": 5,
+            "tags": ["alpha", "beta"]
+        })
+        result = self._df_api.metadataValidate(schema_id, metadata=valid_metadata)
+        self.assertFalse(result[0].errors)
+
+        # 3. Validate bad metadata
+        invalid_metadata = json.dumps({"sample_count": 5})
+        result = self._df_api.metadataValidate(schema_id, metadata=invalid_metadata)
+        self.assertTrue(result[0].errors)
+
+        # 4. Update description
+        self._df_api.schemaUpdate(schema_id, description="Lifecycle v1 updated")
+
+        view_result = self._df_api.schemaView(schema_id)
+        self.assertEqual(view_result[0].schema[0].desc, "Lifecycle v1 updated")
+
+        # 5. Revise with updated definition
+        revise_result = self._df_api.schemaRevise(
+            schema_id,
+            definition=self._updated_linkml_def,
+            description="Lifecycle v2",
+        )
+        schema_id2 = revise_result[0].schema[0].id
+
+        # 6. Validate metadata against new revision — should still pass
+        #    since we only added an optional "unit" field
+        result = self._df_api.metadataValidate(schema_id2, metadata=valid_metadata)
+        self.assertFalse(result[0].errors)
+
+        # 7. View new revision — should have "unit" in def
+        view_v2 = self._df_api.schemaView(schema_id2)
+        returned_def = getattr(view_v2[0].schema[0], 'def')
+        self.assertIn("unit", returned_def)
+
+        # 8. Delete both
+        self._df_api.schemaDelete(schema_id2)
+        self._df_api.schemaDelete(schema_id)
+
+        # 9. Verify both gone
+        with self.assertRaises(Exception):
+            self._df_api.schemaView(schema_id)
+        with self.assertRaises(Exception):
+            self._df_api.schemaView(schema_id2)
+
     def tearDown(self):
         # No shared resources to clean up — each test manages its own schemas.
         # This keeps tests independent and avoids masking failures in cleanup.
@@ -453,7 +871,8 @@ class TestDataFedPythonAPISchemaCRUD(unittest.TestCase):
 
 if __name__ == "__main__":
     suite = unittest.TestSuite()
-    # Order: basic lifecycle first, then features, then validation, then edge cases
+
+    # JSON Schema tests — basic lifecycle first, then features, then validation, then edge cases
     suite.addTest(TestDataFedPythonAPISchemaCRUD("test_schema_create_view_delete"))
     suite.addTest(TestDataFedPythonAPISchemaCRUD("test_schema_create_with_invalid_json"))
     suite.addTest(TestDataFedPythonAPISchemaCRUD("test_schema_create_missing_definition"))
@@ -468,6 +887,22 @@ if __name__ == "__main__":
     suite.addTest(TestDataFedPythonAPISchemaCRUD("test_metadata_validate_requires_input"))
     suite.addTest(TestDataFedPythonAPISchemaCRUD("test_schema_create_from_file"))
     suite.addTest(TestDataFedPythonAPISchemaCRUD("test_metadata_validate_metadata_file_cannot_be_opened"))
+    suite.addTest(TestDataFedPythonAPISchemaCRUD("test_schema_update_both_definition_sources"))
+    suite.addTest(TestDataFedPythonAPISchemaCRUD("test_schema_revise_both_definition_sources"))
+
+    # LinkML Schema tests
+    suite.addTest(TestDataFedPythonAPISchemaCRUD("test_linkml_schema_create_view_delete"))
+    suite.addTest(TestDataFedPythonAPISchemaCRUD("test_linkml_schema_create_invalid_yaml"))
+    suite.addTest(TestDataFedPythonAPISchemaCRUD("test_linkml_schema_update_description"))
+    suite.addTest(TestDataFedPythonAPISchemaCRUD("test_linkml_schema_update_definition"))
+    suite.addTest(TestDataFedPythonAPISchemaCRUD("test_linkml_schema_revise"))
+    suite.addTest(TestDataFedPythonAPISchemaCRUD("test_linkml_schema_search"))
+    suite.addTest(TestDataFedPythonAPISchemaCRUD("test_linkml_metadata_validate_pass"))
+    suite.addTest(TestDataFedPythonAPISchemaCRUD("test_linkml_metadata_validate_missing_required"))
+    suite.addTest(TestDataFedPythonAPISchemaCRUD("test_linkml_metadata_validate_wrong_type"))
+    suite.addTest(TestDataFedPythonAPISchemaCRUD("test_linkml_schema_create_from_file"))
+    suite.addTest(TestDataFedPythonAPISchemaCRUD("test_linkml_full_lifecycle"))
+
     runner = unittest.TextTestRunner()
     result = runner.run(suite)
     sys.exit(not result.wasSuccessful())
