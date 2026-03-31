@@ -59,6 +59,9 @@ end-to-end-foxx-setup:
         - echo "-e DATAFED_DATABASE_IP_ADDRESS_PORT=\"$CI_DATAFED_DATABASE_IP_ADDRESS_PORT\" \\" >> "${RUN_FILE}"
         - echo "-e DATAFED_DATABASE_HOST=\"$CI_DATAFED_DATABASE_HOST\" \\" >> "${RUN_FILE}"
         - echo "-e DATAFED_DEFAULT_LOG_PATH=\"$CONTAINER_LOG_FILE_PATH\" \\" >> "${RUN_FILE}"
+        - echo "-e ALLOW_PRODUCTION_DB=\"True\" \\" >> "${RUN_FILE}"
+        - echo "-e DATAFED_DATABASE_NAME=\"sdms\" \\" >> "${RUN_FILE}"
+        - echo "-e DATAFED_ALLOW_TESTING_PROD_DATABASE=\"True\" \\" >> "${RUN_FILE}"
         - echo "-v \"${HOST_LOG_FILE_PATH}:${CONTAINER_LOG_FILE_PATH}\" \\" >> "${RUN_FILE}"
         - echo "-v \"./foxx_tmp:/tmp\" \\" >> "${RUN_FILE}"
         - echo "-t \"${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:${CI_COMMIT_SHA}\"" >> "${RUN_FILE}"
@@ -379,6 +382,8 @@ end_to_end_client-test:
         DATAFED_DOMAIN: "${CI_DATAFED_DOMAIN}"
         DATAFED_PYTHON_CLIENT_ALLOW_SELF_SIGNED_CERTS: "TRUE"
         DATAFED_PYTHON_DEPENDENCIES_DIR: "${DATAFED_DEPENDENCIES_INSTALL_PATH}/python"
+        DATAFED_DATABASE_NAME: "sdms"
+        ALLOW_PRODUCTION_DB: "true"
     stage: end-to-end-test
     dependencies:
         - end-to-end-gcs-authz-setup

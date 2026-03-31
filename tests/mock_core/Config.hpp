@@ -2,13 +2,10 @@
 #define CONFIG_HPP
 #pragma once
 
-// Core local private includes
-#include "AuthenticationManager.hpp"
-
 // DataFed Common public includes
 #include "common/DynaLog.hpp"
 #include "common/ICredentials.hpp"
-#include "common/SDMS.pb.h"
+#include "common/envelope.pb.h"
 
 // Standard includes
 #include <map>

@@ -31,6 +31,7 @@ BOOST_GLOBAL_FIXTURE(GlobalProtobufTeardown);
 BOOST_AUTO_TEST_SUITE(AuthenticationManagerTest)
 
 BOOST_AUTO_TEST_CASE(testing_AuthenticationManagerPurgeTrans) {
+  SDMS::LogContext log_context;
 
   std::map<PublicKeyType, time_t> purge_intervals;
   purge_intervals[PublicKeyType::TRANSIENT] = 1; // Seconds
@@ -59,16 +60,16 @@ BOOST_AUTO_TEST_CASE(testing_AuthenticationManagerPurgeTrans) {
   const std::string uid = "u/benz";
   auth_manager.addKey(PublicKeyType::TRANSIENT, public_key, uid);
 
-  BOOST_TEST(auth_manager.hasKey(public_key));
-  BOOST_TEST(boost::iequals(auth_manager.getUID(public_key), uid));
+  BOOST_TEST(auth_manager.hasKey(public_key, log_context));
+  BOOST_TEST(boost::iequals(auth_manager.getUID(public_key, log_context), uid));
 
   // Run purge
   auth_manager.purge(PublicKeyType::TRANSIENT);
 
   std::cout << "Show output" << std::endl;
   // Nothing should happen because the interval was not surpassed
-  BOOST_TEST(auth_manager.hasKey(public_key));
-  BOOST_TEST(boost::iequals(auth_manager.getUID(public_key), uid));
+  BOOST_TEST(auth_manager.hasKey(public_key, log_context));
+  BOOST_TEST(boost::iequals(auth_manager.getUID(public_key, log_context), uid));
 
   // Sleep for the purge interval
   sleep(purge_intervals[PublicKeyType::TRANSIENT]);
@@ -77,11 +78,11 @@ BOOST_AUTO_TEST_CASE(testing_AuthenticationManagerPurgeTrans) {
   auth_manager.purge(PublicKeyType::TRANSIENT);
 
   // Key should have been removed
-  BOOST_TEST(auth_manager.hasKey(public_key) == false);
+  BOOST_TEST(auth_manager.hasKey(public_key, log_context) == false);
 }
 
 BOOST_AUTO_TEST_CASE(testing_AuthenticationManagerPromotePurgeSession) {
-
+  SDMS::LogContext log_context;
   std::map<PublicKeyType, time_t> purge_intervals;
   purge_intervals[PublicKeyType::TRANSIENT] = 1; // Seconds
   purge_intervals[PublicKeyType::SESSION] = 2;   // Seconds
@@ -111,8 +112,8 @@ BOOST_AUTO_TEST_CASE(testing_AuthenticationManagerPromotePurgeSession) {
   auth_manager.addKey(PublicKeyType::TRANSIENT, public_key, uid);
 
   // Register two accesses to the public_key
-  auth_manager.incrementKeyAccessCounter(public_key);
-  auth_manager.incrementKeyAccessCounter(public_key);
+  auth_manager.incrementKeyAccessCounter(public_key, log_context);
+  auth_manager.incrementKeyAccessCounter(public_key, log_context);
 
   // Sleep for the purge interval
   sleep(purge_intervals[PublicKeyType::TRANSIENT]);
@@ -122,15 +123,16 @@ BOOST_AUTO_TEST_CASE(testing_AuthenticationManagerPromotePurgeSession) {
   auth_manager.purge(PublicKeyType::TRANSIENT);
 
   // Should still have the key becuase it was promoted to a SESSION KEY
-  BOOST_TEST(auth_manager.hasKey(public_key));
+  BOOST_TEST(auth_manager.hasKey(public_key, log_context));
 
   // Nothing should happen at this point because the SESSION key is fresh
   auth_manager.purge(PublicKeyType::SESSION);
-  BOOST_TEST(auth_manager.hasKey(public_key));
+  BOOST_TEST(auth_manager.hasKey(public_key, log_context));
 }
 
 BOOST_AUTO_TEST_CASE(testing_AuthenticationManagerSessionReset) {
 
+  SDMS::LogContext log_context;
   std::map<PublicKeyType, time_t> purge_intervals;
   purge_intervals[PublicKeyType::SESSION] = 2; // Seconds
 
@@ -157,11 +159,11 @@ BOOST_AUTO_TEST_CASE(testing_AuthenticationManagerSessionReset) {
   const std::string uid = "u/benz";
   auth_manager.addKey(PublicKeyType::SESSION, public_key, uid);
 
-  BOOST_TEST(auth_manager.hasKey(public_key));
-  BOOST_TEST(boost::iequals(auth_manager.getUID(public_key), uid));
+  BOOST_TEST(auth_manager.hasKey(public_key, log_context));
+  BOOST_TEST(boost::iequals(auth_manager.getUID(public_key, log_context), uid));
 
   // Register one accesses to the public_key
-  auth_manager.incrementKeyAccessCounter(public_key);
+  auth_manager.incrementKeyAccessCounter(public_key, log_context);
 
   // Sleep for the purge interval
   sleep(purge_intervals[PublicKeyType::SESSION]);
@@ -171,17 +173,17 @@ BOOST_AUTO_TEST_CASE(testing_AuthenticationManagerSessionReset) {
   auth_manager.purge(PublicKeyType::SESSION);
 
   // Should still have the key becuase it was reset
-  BOOST_TEST(auth_manager.hasKey(public_key));
+  BOOST_TEST(auth_manager.hasKey(public_key, log_context));
 
   // Nothing should happen at this point because the SESSION key is fresh
   auth_manager.purge(PublicKeyType::SESSION);
-  BOOST_TEST(auth_manager.hasKey(public_key));
+  BOOST_TEST(auth_manager.hasKey(public_key, log_context));
 
   // Sleep for the purge interval of the SESSION
   sleep(purge_intervals[PublicKeyType::SESSION]);
 
   auth_manager.purge(PublicKeyType::SESSION);
-  BOOST_TEST(auth_manager.hasKey(public_key) == false);
+  BOOST_TEST(auth_manager.hasKey(public_key, log_context) == false);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

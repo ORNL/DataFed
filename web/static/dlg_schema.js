@@ -11,13 +11,34 @@ export const mode_rev = 3;
 const dlg_title = ["View", "Edit", "Create New", "Create Revision of "];
 const btn_title = ["Close", "Save", "Create", "Create"];
 
+/**
+ * Strip version suffix from a composite schema ID (e.g. "foo:0" -> "foo").
+ * @param {string} id - Composite schema ID.
+ * @returns {string} Schema name without version suffix.
+ */
+function schemaName(id) {
+    var idx = id.indexOf(":");
+    return idx !== -1 ? id.substring(0, idx) : id;
+}
+
+/**
+ * Ensure a schema ID has the :version suffix.
+ * @param {string} id - Schema ID, possibly without version.
+ * @param {string|number} ver - Version to append if missing.
+ * @returns {string} Schema ID with version suffix.
+ */
+function schemaId(id, ver) {
+    return id.indexOf(":") !== -1 ? id : id + ":" + ver;
+}
+
 export function show(a_mode, a_schema, a_cb) {
     var ele = document.createElement("div");
-    ele.id = "dlg_schema_" + (a_schema ? a_schema.id + "_" + a_schema.ver : "new");
+    ele.id = "dlg_schema_" + (a_schema ? schemaName(a_schema.id) + "_" + a_schema.ver : "new");
 
     var frame = $(ele),
         dlg_inst,
-        json_val;
+        json_val,
+        schName = a_schema ? schemaName(a_schema.id) : null;
 
     frame.html(
         "<div id='dlg-tabs' style='height:100%;padding:0' class='tabs-no-header no-border'>\
@@ -113,7 +134,7 @@ export function show(a_mode, a_schema, a_cb) {
             $("#dlg-tabs", frame).tabs({ heightStyle: "fill" });
 
             if (a_schema) {
-                $("#sch_id", frame).val(a_schema.id);
+                $("#sch_id", frame).val(schName);
                 $("#sch_desc", frame).val(a_schema.desc);
 
                 if (a_mode == mode_rev) {
@@ -150,7 +171,7 @@ export function show(a_mode, a_schema, a_cb) {
                         html = "";
                         for (i in a_schema.uses) {
                             dep = a_schema.uses[i];
-                            html += dep.id + ":" + dep.ver + "<br>";
+                            html += schemaName(dep.id) + ":" + dep.ver + "<br>";
                         }
                         $("#sch_uses", frame).html(html);
                     }
@@ -159,7 +180,7 @@ export function show(a_mode, a_schema, a_cb) {
                         html = "";
                         for (i in a_schema.usedBy) {
                             dep = a_schema.usedBy[i];
-                            html += dep.id + ":" + dep.ver + "<br>";
+                            html += schemaName(dep.id) + ":" + dep.ver + "<br>";
                         }
                         $("#sch_used_by", frame).html(html);
                     }
@@ -259,16 +280,16 @@ export function show(a_mode, a_schema, a_cb) {
                 console.log("new", obj);
                 api.schemaCreate(obj, handleSubmit);
             } else if (a_mode == mode_rev) {
-                obj.id = a_schema.id + ":" + a_schema.ver;
+                obj.id = schemaId(a_schema.id, a_schema.ver);
 
                 console.log("rev", obj);
                 api.schemaRevise(obj, handleSubmit);
             } else {
                 // edit mode
-                obj.id = a_schema.id + ":" + a_schema.ver;
+                obj.id = schemaId(a_schema.id, a_schema.ver);
 
                 var tmp = $("#sch_id", frame).val().trim();
-                if (tmp != a_schema.id) obj.idNew = tmp;
+                if (tmp != schName) obj.idNew = tmp;
 
                 if (obj.desc == a_schema.desc) delete obj.desc;
 

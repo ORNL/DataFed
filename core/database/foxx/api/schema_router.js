@@ -7,7 +7,7 @@ const joi = require("joi");
 const error = require("./lib/error_codes");
 const g_db = require("@arangodb").db;
 const g_lib = require("./support");
-const g_graph = require("@arangodb/general-graph")._graph("sdmsg");
+const g_graph = require("./db_config").getGraph();
 const logger = require("./lib/logger");
 const basePath = "schema";
 
@@ -40,6 +40,60 @@ function fixSchOwnNmAr(a_sch) {
             nm += tmp[j].charAt(0).toUpperCase() + tmp[j].substr(1);
         }
         sch.own_nm = nm;
+    }
+}
+
+/**
+ * Validates and parses a schema ID string. Returns the bare ID and version number.
+ * If no version suffix is present, version is null.
+ *
+ * @param {string} schId - Schema ID, optionally with ":version" suffix
+ * @returns {{ id: string, ver: number|null }} Parsed ID and optional version.
+ */
+function parseSchemaId(schId) {
+    const colonCount = (schId.match(/:/g) || []).length;
+
+    if (colonCount > 1) {
+        throw [error.ERR_INVALID_PARAM, "Schema ID contains multiple colons: '" + schId + "'"];
+    }
+
+    if (colonCount === 0) {
+        return { id: schId, ver: null };
+    }
+
+    const idx = schId.indexOf(":");
+    const verStr = schId.substr(idx + 1);
+    const ver = Number(verStr);
+
+    if (verStr.length === 0) {
+        throw [
+            error.ERR_INVALID_PARAM,
+            "Schema ID has trailing colon with no version: '" + schId + "'",
+        ];
+    }
+
+    if (!Number.isInteger(ver)) {
+        throw [
+            error.ERR_INVALID_PARAM,
+            "Schema ID version suffix is not a valid integer: '" + verStr + "'",
+        ];
+    }
+
+    return { id: schId.substr(0, idx), ver: ver };
+}
+
+/**
+ * Strips version suffix from a schema ID field if present.
+ * Handles the case where procInputParam composites "id:ver" into obj.id.
+ *
+ * @param {object} obj - Object with an id field to clean
+ */
+function stripSchemaIdVersion(obj) {
+    if (obj.id) {
+        var idx = obj.id.indexOf(":");
+        if (idx >= 0) {
+            obj.id = obj.id.substr(0, idx);
+        }
     }
 }
 
@@ -99,16 +153,22 @@ router
                 action: function () {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
 
-                    // Schema validator has already been run at this point; however, DataFed further restricts
-                    // the allowed character set for keys and this must be applied at this point.
-                    validateProperties(req.body.def.properties);
-
                     var obj = {
                         cnt: 0,
                         ver: 0,
                         pub: req.body.pub,
-                        def: req.body.def,
+                        format: req.body.format,
+                        type: req.body.type,
                     };
+
+                    if (req.body.type === "json-schema") {
+                        // Schema validator has already been run at this point; however, DataFed further restricts
+                        // the allowed character set for keys and this must be applied at this point.
+                        validateProperties(req.body.def.properties);
+                        obj.def = req.body.def;
+                    } else {
+                        obj.def = {};
+                    }
 
                     if (req.body.sys) {
                         if (!client.is_admin)
@@ -123,8 +183,20 @@ router
                         obj.own_nm = client.name;
                     }
 
+                    const parsed = parseSchemaId(req.body.id);
+
+                    if (parsed.ver !== null && parsed.ver !== 0) {
+                        throw [
+                            error.ERR_INVALID_PARAM,
+                            "Schema ID version must be 0 for creation, got: " + parsed.ver,
+                        ];
+                    }
+
                     g_lib.procInputParam(req.body, "_sch_id", false, obj);
                     g_lib.procInputParam(req.body, "desc", false, obj);
+
+                    // Strip version suffix that procInputParam composited into obj.id
+                    stripSchemaIdVersion(obj);
 
                     sch = g_db.sch.save(obj, {
                         returnNew: true,
@@ -137,6 +209,7 @@ router
                     delete sch._key;
                     delete sch._rev;
 
+                    sch.id = parsed.id + ":" + obj.ver;
                     res.send([sch]);
                 },
             });
@@ -152,6 +225,8 @@ router
                     own_id: sch?.own_id,
                     pub: req.body.pub,
                     sys: req.body.sys,
+                    format: sch?.format,
+                    type: sch?.type,
                 },
             });
         } catch (e) {
@@ -167,6 +242,8 @@ router
                     own_id: sch?.own_id,
                     pub: req.body.pub,
                     sys: req.body.sys,
+                    format: sch?.format,
+                    type: sch?.type,
                 },
                 error: e,
             });
@@ -182,6 +259,8 @@ router
                 def: joi.object().required(),
                 pub: joi.boolean().optional().default(true),
                 sys: joi.boolean().optional().default(false),
+                format: joi.string().default("json").valid("json", "xml", "yaml"),
+                type: joi.string().default("json-schema").valid("json-schema", "linkml"),
             })
             .required(),
         "Schema fields",
@@ -210,16 +289,12 @@ router
                 waitForSync: true,
                 action: function () {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
-                    var idx = req.queryParams.id.indexOf(":");
-                    if (idx < 0) {
+
+                    const parsed = parseSchemaId(req.queryParams.id);
+                    if (parsed.ver === null) {
                         throw [error.ERR_INVALID_PARAM, "Schema ID missing version number suffix."];
                     }
-                    var sch_id = req.queryParams.id.substr(0, idx),
-                        sch_ver = parseInt(req.queryParams.id.substr(idx + 1)),
-                        sch_old = g_db.sch.firstExample({
-                            id: sch_id,
-                            ver: sch_ver,
-                        });
+                    let sch_old = g_db.sch.firstExample({ id: parsed.id, ver: parsed.ver });
 
                     if (!sch_old) {
                         throw [
@@ -272,6 +347,7 @@ router
                     }
 
                     g_lib.procInputParam(req.body, "_sch_id", true, obj);
+                    stripSchemaIdVersion(obj);
 
                     if (
                         obj.id &&
@@ -289,8 +365,12 @@ router
                     g_lib.procInputParam(req.body, "desc", true, obj);
 
                     if (req.body.def) {
-                        validateProperties(req.body.def.properties);
-                        obj.def = req.body.def;
+                        if (sch_old.type === "json-schema") {
+                            validateProperties(req.body.def.properties);
+                            obj.def = req.body.def;
+                        } else {
+                            obj.def = {};
+                        }
                     }
 
                     sch_new = g_db.sch.update(sch_old._id, obj, {
@@ -382,16 +462,11 @@ router
                 waitForSync: true,
                 action: function () {
                     const client = g_lib.getUserFromClientID(req.queryParams.client);
-                    var idx = req.queryParams.id.indexOf(":");
-                    if (idx < 0) {
+                    const parsed = parseSchemaId(req.queryParams.id);
+                    if (parsed.ver === null) {
                         throw [error.ERR_INVALID_PARAM, "Schema ID missing version number suffix."];
                     }
-                    var sch_id = req.queryParams.id.substr(0, idx),
-                        sch_ver = parseInt(req.queryParams.id.substr(idx + 1)),
-                        sch = g_db.sch.firstExample({
-                            id: sch_id,
-                            ver: sch_ver,
-                        });
+                    let sch = g_db.sch.firstExample({ id: parsed.id, ver: parsed.ver });
 
                     if (!sch)
                         throw [
@@ -446,8 +521,12 @@ router
                     g_lib.procInputParam(req.body, "desc", true, sch);
 
                     if (req.body.def != undefined) {
-                        validateProperties(req.body.def.properties);
-                        sch.def = req.body.def;
+                        if (sch.type === "json-schema") {
+                            validateProperties(req.body.def.properties);
+                            sch.def = req.body.def;
+                        } else {
+                            sch.def = {};
+                        }
                     }
 
                     var old_id = sch._id;
@@ -472,6 +551,7 @@ router
                     delete sch_new._key;
                     delete sch_new._rev;
 
+                    sch_new.id = sch_new.id + ":" + sch_new.ver;
                     res.send([sch_new]);
                 },
             });
@@ -488,6 +568,8 @@ router
                     id: sch_new.id,
                     pub: req.body.pub,
                     sys: req.body.sys,
+                    type: sch_new?.type,
+                    format: sch_new?.format,
                 },
             });
         } catch (e) {
@@ -504,6 +586,8 @@ router
                     id: sch_new?.id,
                     pub: req.body?.pub,
                     sys: req.body?.sys,
+                    type: sch_new?.type,
+                    format: sch_new?.format,
                 },
                 error: e,
             });
@@ -540,57 +624,69 @@ router
                 description: `Delete schema. Schema ID: ${req.queryParams.id}`,
             });
 
-            const client = g_lib.getUserFromClientID(req.queryParams.client);
-            var idx = req.queryParams.id.indexOf(":");
-            if (idx < 0) {
-                throw [error.ERR_INVALID_PARAM, "Schema ID missing version number suffix."];
-            }
-            var sch_id = req.queryParams.id.substr(0, idx),
-                sch_ver = parseInt(req.queryParams.id.substr(idx + 1));
+            g_db._executeTransaction({
+                collections: {
+                    read: ["u", "uuid", "accn"],
+                    write: ["sch", "sch_dep", "sch_ver"],
+                },
+                waitForSync: true,
+                action: function () {
+                    const client = g_lib.getUserFromClientID(req.queryParams.client);
+                    const parsed = parseSchemaId(req.queryParams.id);
+                    if (parsed.ver === null) {
+                        throw [error.ERR_INVALID_PARAM, "Schema ID missing version number suffix."];
+                    }
+                    sch_old = g_db.sch.firstExample({ id: parsed.id, ver: parsed.ver });
 
-            sch_old = g_db.sch.firstExample({
-                id: sch_id,
-                ver: sch_ver,
+                    if (!sch_old)
+                        throw [
+                            error.ERR_NOT_FOUND,
+                            "Schema '" + req.queryParams.id + "' not found.",
+                        ];
+
+                    if (sch_old.own_id != client._id && !client.is_admin)
+                        throw error.ERR_PERM_DENIED;
+
+                    // Cannot delete schemas that are in use
+                    if (sch_old.cnt) {
+                        throw [
+                            error.ERR_PERM_DENIED,
+                            "Schema is associated with data records - cannot delete.",
+                        ];
+                    }
+
+                    // Cannot delete schemas references by other schemas
+                    if (
+                        g_db.sch_dep.firstExample({
+                            _to: sch_old._id,
+                        })
+                    ) {
+                        throw [
+                            error.ERR_PERM_DENIED,
+                            "Schema is referenced by another schema - cannot delete.",
+                        ];
+                    }
+
+                    // Only allow deletion of oldest and newest revisions of schemas
+                    if (
+                        g_db.sch_ver.firstExample({
+                            _from: sch_old._id,
+                        }) &&
+                        g_db.sch_ver.firstExample({
+                            _to: sch_old._id,
+                        })
+                    ) {
+                        throw [
+                            error.ERR_PERM_DENIED,
+                            "Cannot delete intermediate schema revisions.",
+                        ];
+                    }
+
+                    g_graph.sch.remove(sch_old._id);
+                    res.send();
+                },
             });
 
-            if (!sch_old)
-                throw [error.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found."];
-
-            if (sch_old.own_id != client._id && !client.is_admin) throw error.ERR_PERM_DENIED;
-
-            // Cannot delete schemas that are in use
-            if (sch_old.cnt) {
-                throw [
-                    error.ERR_PERM_DENIED,
-                    "Schema is associated with data records - cannot update.",
-                ];
-            }
-
-            // Cannot delete schemas references by other schemas
-            if (
-                g_db.sch_dep.firstExample({
-                    _to: sch_old._id,
-                })
-            ) {
-                throw [
-                    error.ERR_PERM_DENIED,
-                    "Schema is referenced by another schema - cannot update.",
-                ];
-            }
-
-            // Only allow deletion of oldest and newest revisions of schemas
-            if (
-                g_db.sch_ver.firstExample({
-                    _from: sch_old._id,
-                }) &&
-                g_db.sch_ver.firstExample({
-                    _to: sch_old._id,
-                })
-            ) {
-                throw [error.ERR_PERM_DENIED, "Cannot delete intermediate schema revisions."];
-            }
-
-            g_graph.sch.remove(sch_old._id);
             logger.logRequestSuccess({
                 client: req.queryParams?.client,
                 correlationId: req.headers["x-correlation-id"],
@@ -609,6 +705,7 @@ router
                 status: "Failure",
                 description: `Delete schema. Schema ID: ${req.queryParams.id}`,
                 extra: { deleted: sch_old?._id },
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -631,16 +728,12 @@ router
                 description: `View schema. Schema ID: ${req.queryParams.id}`,
             });
             const client = g_lib.getUserFromClientID(req.queryParams.client);
-            var idx = req.queryParams.id.indexOf(":");
-            if (idx < 0) {
+
+            const parsed = parseSchemaId(req.queryParams.id);
+            if (parsed.ver === null) {
                 throw [error.ERR_INVALID_PARAM, "Schema ID missing version number suffix."];
             }
-            var sch_id = req.queryParams.id.substr(0, idx),
-                sch_ver = parseInt(req.queryParams.id.substr(idx + 1));
-            sch = g_db.sch.firstExample({
-                id: sch_id,
-                ver: sch_ver,
-            });
+            sch = g_db.sch.firstExample({ id: parsed.id, ver: parsed.ver });
 
             if (!sch) throw [error.ERR_NOT_FOUND, "Schema '" + req.queryParams.id + "' not found."];
 
@@ -675,6 +768,16 @@ router
 
             fixSchOwnNm(sch);
 
+            sch.id = parsed.id + ":" + parsed.ver;
+
+            // If schema is missing sch_format and sch_type default to json
+            if (!Object.hasOwn(sch, "format")) {
+                sch.format = "json";
+            }
+            if (!Object.hasOwn(sch, "type")) {
+                sch.type = "json-schema";
+            }
+
             res.send([sch]);
             logger.logRequestSuccess({
                 client: req.queryParams?.client,
@@ -689,6 +792,8 @@ router
                     id: sch.id,
                     pub: sch.pub,
                     sys: sch.sys,
+                    sch_format: sch.format,
+                    sch_type: sch.type,
                 },
             });
         } catch (e) {
@@ -703,6 +808,7 @@ router
                     pub: sch?.pub,
                     sys: sch?.sys,
                 },
+                error: e,
             });
             g_lib.handleException(e, res);
         }
@@ -780,8 +886,6 @@ router
             } else {
                 if (req.queryParams.sort_rev) qry += " sort i.id desc, i.ver";
                 else qry += " sort i.id,i.ver";
-
-                //qry += (req.queryParams.sort_rev?" desc":"");
             }
 
             qry +=
@@ -789,9 +893,9 @@ router
                 off +
                 "," +
                 cnt +
-                " return {_id:i._id,id:i.id,ver:i.ver,cnt:i.cnt,pub:i.pub,own_nm:i.own_nm,own_id:i.own_id}";
-
-            //qry += " filter (i.pub == true || i.own_id == @uid) sort i.id limit " + off + "," + cnt + " return {id:i.id,ver:i.ver,cnt:i.cnt,pub:i.pub,own_nm:i.own_nm,own_id:i.own_id}";
+                " return {_id:i._id,id:i.id,ver:i.ver,cnt:i.cnt,pub:i.pub,own_nm:i.own_nm,own_id:i.own_id," +
+                "type: NOT_NULL(i.type, 'json-schema')," +
+                "format: NOT_NULL(i.format, 'json')}";
 
             result = g_db._query(
                 qry,
@@ -945,7 +1049,9 @@ function updateSchemaRefs(a_sch) {
         r,
         refs = new Set();
 
-    gatherRefs(a_sch.def.properties, refs);
+    if (a_sch.def && typeof a_sch.def === "object") {
+        gatherRefs(a_sch.def.properties, refs);
+    }
 
     refs.forEach(function (v) {
         idx = v.indexOf(":");

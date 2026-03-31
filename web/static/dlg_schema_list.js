@@ -8,6 +8,26 @@ import * as dlgSchema from "./dlg_schema.js";
 
 var tree, dlg_inst, frame;
 
+/**
+ * Strip version suffix from a composite schema ID (e.g. "foo:0" -> "foo").
+ * @param {string} id - Composite schema ID.
+ * @returns {string} Schema name without version suffix.
+ */
+function schemaName(id) {
+    var idx = id.indexOf(":");
+    return idx !== -1 ? id.substring(0, idx) : id;
+}
+
+/**
+ * Ensure a schema ID has the :version suffix.
+ * @param {string} id - Schema ID, possibly without version.
+ * @param {string|number} ver - Version to append if missing.
+ * @returns {string} Schema ID with version suffix.
+ */
+function schemaId(id, ver) {
+    return id.indexOf(":") !== -1 ? id : id + ":" + ver;
+}
+
 window.schemaPageLoad = function (key, offset) {
     var node = tree.getNodeByKey(key);
     if (node) {
@@ -45,24 +65,25 @@ function loadSchemas() {
             //console.log( "sch res: ", data );
             var src = [];
             if (data.schema) {
-                var sch;
+                var sch, name;
                 for (var i in data.schema) {
                     sch = data.schema[i];
-                    //src.push({ title: sch.id + (sch.ver?"-"+sch.ver:"") + (sch.cnt?" (" + sch.cnt + ")":"") + (sch.ownNm?" " + sch.ownNm:"") + (sch.ownId?" (" + sch.ownId +")":""), key: sch.id + ":" + sch.ver });
+                    name = schemaName(sch.id);
                     src.push({
                         title:
-                            sch.id +
+                            name +
                             ":" +
                             sch.ver +
                             (sch.cnt ? " (" + sch.cnt + ")" : "") +
                             (sch.ref ? " (R)" : ""),
                         own_nm: util.escapeHTML(sch.ownNm),
                         own_id: sch.ownId.substr(2),
+                        name: name,
                         id: sch.id,
                         ver: sch.ver,
                         cnt: sch.cnt,
                         ref: sch.ref,
-                        key: sch.id + ":" + sch.ver,
+                        key: sch.id,
                     });
                 }
             } else {
@@ -77,7 +98,7 @@ function loadSchemas() {
 
 function getSelSchema(a_cb, a_resolve) {
     var data = tree.getSelectedNodes()[0].data;
-    api.schemaView(data.id + ":" + data.ver, a_resolve, function (ok, reply) {
+    api.schemaView(schemaId(data.id, data.ver), a_resolve, function (ok, reply) {
         //console.log("schema",reply);
         if (ok && reply.schema) {
             a_cb(reply.schema[0]);
@@ -256,7 +277,7 @@ export function show(a_select, a_resolve, a_cb) {
 
     $("#sch_view", frame).on("click", function () {
         getSelSchema(function (schema) {
-            if (util.checkDlgOpen("dlg_schema_" + schema.id + "_" + schema.ver)) return;
+            if (util.checkDlgOpen("dlg_schema_" + schemaName(schema.id) + "_" + schema.ver)) return;
 
             dlgSchema.show(dlgSchema.mode_view, schema);
         });
@@ -264,7 +285,7 @@ export function show(a_select, a_resolve, a_cb) {
 
     $("#sch_edit", frame).on("click", function () {
         getSelSchema(function (schema) {
-            if (util.checkDlgOpen("dlg_schema_" + schema.id + "_" + schema.ver)) return;
+            if (util.checkDlgOpen("dlg_schema_" + schemaName(schema.id) + "_" + schema.ver)) return;
 
             dlgSchema.show(dlgSchema.mode_edit, schema, function () {
                 setTimeout(function () {
@@ -286,7 +307,7 @@ export function show(a_select, a_resolve, a_cb) {
 
     $("#sch_rev", frame).on("click", function () {
         getSelSchema(function (schema) {
-            if (util.checkDlgOpen("dlg_schema_" + schema.id + "_" + schema.ver)) return;
+            if (util.checkDlgOpen("dlg_schema_" + schemaName(schema.id) + "_" + schema.ver)) return;
 
             dlgSchema.show(dlgSchema.mode_rev, schema, function () {
                 setTimeout(function () {
@@ -298,9 +319,9 @@ export function show(a_select, a_resolve, a_cb) {
 
     $("#sch_del", frame).on("click", function () {
         getSelSchema(function (schema) {
-            if (util.checkDlgOpen("dlg_schema_" + schema.id + "_" + schema.ver)) return;
+            if (util.checkDlgOpen("dlg_schema_" + schemaName(schema.id) + "_" + schema.ver)) return;
 
-            api.schemaDelete(schema.id + ":" + schema.ver, function (ok, reply) {
+            api.schemaDelete(schemaId(schema.id, schema.ver), function (ok, reply) {
                 if (ok) {
                     loadSchemas();
                 } else {
@@ -334,7 +355,7 @@ export function show(a_select, a_resolve, a_cb) {
         in_timer = setTimeout( function(){
             var node = tree.getNodeByKey("search");
             node.load(true).done( function(){ node.setExpanded(true); });
-        }, 500 );
+        }, 0);
     });*/
 
     frame.dialog(dlg_opts);

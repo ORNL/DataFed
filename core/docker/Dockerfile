@@ -24,6 +24,12 @@ ARG DATAFED_DEPENDENCIES_INSTALL_PATH
 ARG DATAFED_DEPENDENCIES_ROOT
 
 ENV DATAFED_INSTALL_PATH="${DATAFED_INSTALL_PATH}"
+
+# The intermediate build stage is used for running tests. Default to the
+# test database so integration tests work out of the box without requiring
+# callers to remember -e DATAFED_DATABASE_NAME=sdms_test.
+ENV DATAFED_DATABASE_NAME="sdms_test"
+
 # For communicating with repo server
 EXPOSE 7512
 # For listening to web server
@@ -43,6 +49,11 @@ COPY ./cmake                           ${BUILD_DIR}/cmake
 COPY ./core/docker/entrypoint.sh       ${BUILD_DIR}/core/docker/
 COPY ./core/server                     ${BUILD_DIR}/core/server
 
+# ---------------------------------------------------------------------------
+# Enable unit and integration tests so the intermediate image contains all
+# test binaries. The production 'core' stage below still only copies the
+# server binary, so tests never land in the production image.
+# ---------------------------------------------------------------------------
 RUN ${DATAFED_DEPENDENCIES_ROOT}/scripts/generate_dependencies_config.sh && \
     ${BUILD_DIR}/scripts/generate_datafed.sh && \
     ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake -S. -B build \
@@ -53,10 +64,14 @@ RUN ${DATAFED_DEPENDENCIES_ROOT}/scripts/generate_dependencies_config.sh && \
       -DBUILD_DOCS=False \
       -DBUILD_PYTHON_CLIENT=False \
       -DBUILD_FOXX=False \
+      -DENABLE_UNIT_TESTS=True \
       -DENABLE_INTEGRATION_TESTS=False
 RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build -j 8
 RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build --target install
 
+# ===========================================================================
+# Production image — only the server binary is copied in.
+# ===========================================================================
 FROM ${RUNTIME} AS core
 
 SHELL ["/bin/bash", "-c"]
@@ -76,6 +91,12 @@ ENV          DATAFED_DIR="$DATAFED_DIR"
 ENV            BUILD_DIR="$BUILD_DIR"
 ENV              LIB_DIR="$LIB_DIR"
 ENV          DATAFED_DEFAULT_LOG_PATH="$DATAFED_INSTALL_PATH/logs"
+# Database name — defaults to production. Override at runtime with:
+#   docker run -e DATAFED_DATABASE_NAME=sdms_test ...
+# generate_core_config.sh reads this when the entrypoint runs.
+ENV          DATAFED_DATABASE_NAME="sdms"
+# Production container is allowed to target "sdms".
+ENV          ALLOW_PRODUCTION_DB="true"
 
 RUN ldconfig
 

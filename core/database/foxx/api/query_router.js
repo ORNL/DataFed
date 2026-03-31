@@ -6,7 +6,7 @@ const joi = require("joi");
 
 const error = require("./lib/error_codes");
 const g_db = require("@arangodb").db;
-const g_graph = require("@arangodb/general-graph")._graph("sdmsg");
+const g_graph = require("./db_config").getGraph();
 const g_lib = require("./support");
 const logger = require("./lib/logger");
 const basePath = "qry";
