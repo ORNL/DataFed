@@ -43,7 +43,7 @@ function aceMode(type) {
 /**
  * Return a human label for the definition tab header.
  * @param {string} type - "json-schema" or "linkml"
- * @returns {string}
+ * @returns {string} Tab header label.
  */
 function defLabel(type) {
     return type === "linkml" ? "Schema Definition (YAML):" : "Schema Definition (JSON):";
@@ -61,7 +61,7 @@ function schemaFormat(type) {
 /**
  * Return a default template for a new schema definition.
  * @param {string} type - "json-schema" or "linkml"
- * @returns {string}
+ * @returns {string} default schema template
  */
 function defaultTemplate(type) {
     if (type === "linkml") {
