@@ -315,13 +315,34 @@ bool SchemaAPIClient::validateMetadata(const std::string &a_schema_id,
     a_warnings = result.value("warnings", "");
     return true;
   }
+ 
   if (code == 422) {
-    a_errors = result.value("message", "metadata validation failed");
+    if (result.contains("details") && result["details"].contains("errors")) {
+        std::string raw = result["details"]["errors"].get<std::string>();
+        if (a_engine == "linkml") {
+            // Normalize semicolon-separated errors to newline-separated
+            // for consistency with json-schema validator output
+            std::string normalized;
+            size_t pos = 0, found;
+            while ((found = raw.find("; ", pos)) != std::string::npos) {
+                normalized += raw.substr(pos, found - pos) + "\n";
+                pos = found + 2;
+            }
+            normalized += raw.substr(pos);
+            a_errors = normalized;
+        } else {
+            a_errors = raw;
+        }
+    } else {
+        a_errors = result.value("message", "metadata validation failed");
+    }
     return false;
   }
-  if (code == 404)
+
+  if (code == 404) {
     EXCEPT_PARAM(BAD_REQUEST,
                  "SchemaAPI: schema " << a_schema_id << " not found");
+  }
   EXCEPT_PARAM(SERVICE_ERROR,
                "SchemaAPI validateMetadata failed, HTTP " << code);
 }

@@ -23,7 +23,7 @@ using json = nlohmann::json;
 // ============================================================================
 // Fixture
 //
-// Reads SCHEMA_API_TEST_URL from environment (default: http://localhost:4010).
+// Reads SCHEMA_API_TEST_URL from environment (default: http://localhost:4011).
 //
 // Helper methods set/clear the Prefer header between requests to steer Prism
 // to specific response codes and named examples.
@@ -41,7 +41,7 @@ struct PrismFixture {
   std::unique_ptr<SchemaAPIClient> makeClient() {
     SchemaAPIConfig cfg;
     const char *url = std::getenv("SCHEMA_API_TEST_URL");
-    cfg.base_url = url ? url : "http://localhost:4010";
+    cfg.base_url = url ? url : "http://localhost:4011";
     cfg.verify_ssl = false;
     cfg.connect_timeout_sec = 5;
     cfg.request_timeout_sec = 10;
@@ -709,7 +709,7 @@ BOOST_AUTO_TEST_CASE(unconfigured_client_throws_on_all_operations) {
 
 BOOST_AUTO_TEST_CASE(trailing_slash_normalized) {
   SchemaAPIConfig cfg;
-  cfg.base_url = "http://localhost:4010/";
+  cfg.base_url = "http://localhost:4011/";
   cfg.verify_ssl = false;
 
   SchemaAPIClient client(cfg);

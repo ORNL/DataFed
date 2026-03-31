@@ -841,7 +841,7 @@ ClientWorker::procRecordCreateRequest(const std::string &a_uid,
 
   if (request->has_metadata() && request->has_sch_id()) {
     validator_err = m_schema_handler->validateMetadataContent(
-        request->sch_id(), request->metadata(), log_context);
+        a_uid, request->sch_id(), request->metadata(), log_context);
 
     if (!validator_err.empty()) {
       DL_ERROR(log_context, "Metadata validation error: " << validator_err);
@@ -942,7 +942,7 @@ ClientWorker::procRecordUpdateRequest(const std::string &a_uid,
 
       if (validator_err.empty()) {
         validator_err = m_schema_handler->validateMetadataContent(
-            sch_id, effective_metadata, log_context);
+            a_uid, sch_id, effective_metadata, log_context);
 
         if (!validator_err.empty()) {
           DL_WARNING(log_context,

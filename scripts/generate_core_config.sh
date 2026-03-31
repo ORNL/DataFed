@@ -95,6 +95,18 @@ else
   local_DATAFED_CORE_LOG_LEVEL=$(printenv DATAFED_CORE_LOG_LEVEL)
 fi
 
+if [ -z "${DATAFED_LINKML_SCHEMA_API_URL}" ]; then
+  local_DATAFED_LINKML_SCHEMA_API_URL=""
+else
+  local_DATAFED_LINKML_SCHEMA_API_URL=$(printenv DATAFED_LINKML_SCHEMA_API_URL)
+fi
+
+if [ -z "${DATAFED_LINKML_SCHEMA_API_TOKEN}" ]; then
+  local_DATAFED_LINKML_SCHEMA_API_TOKEN=""
+else
+  local_DATAFED_LINKML_SCHEMA_API_TOKEN=$(printenv DATAFED_LINKML_SCHEMA_API_TOKEN)
+fi
+
 VALID_ARGS=$(getopt -o ht:c:f:a:s:i:u:p --long 'help',threads-task:,cred-dir:,threads-client:,database-ip-address:,globus-secret:,globus-id:,database-user:,database-password: -- "$@")
 if [[ $? -ne 0 ]]; then
   exit 1
@@ -224,6 +236,11 @@ client-secret=$local_DATAFED_GLOBUS_APP_SECRET
 # 4 - Debug
 # 5 - Trace
 log-level=$local_DATAFED_CORE_LOG_LEVEL
+# External LinkML Schema API service.
+# If empty, LinkML schema engine is not registered.
+linkml-schema-api-url=$local_DATAFED_LINKML_SCHEMA_API_URL
+# Bearer token for LinkML Schema API authentication (optional)
+linkml-schema-api-token=$local_DATAFED_LINKML_SCHEMA_API_TOKEN
 EOF
 
 echo

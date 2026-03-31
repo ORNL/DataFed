@@ -190,6 +190,18 @@ else
   local_DATAFED_GLOBUS_SUBSCRIPTION=$(printenv DATAFED_GLOBUS_SUBSCRIPTION)
 fi
 
+if [ -z "${DATAFED_LINKML_SCHEMA_API_URL}" ]; then
+  local_DATAFED_LINKML_SCHEMA_API_URL=""
+else
+  local_DATAFED_LINKML_SCHEMA_API_URL=$(printenv DATAFED_LINKML_SCHEMA_API_URL)
+fi
+
+if [ -z "${DATAFED_LINKML_SCHEMA_API_TOKEN}" ]; then
+  local_DATAFED_LINKML_SCHEMA_API_TOKEN=""
+else
+  local_DATAFED_LINKML_SCHEMA_API_TOKEN=$(printenv DATAFED_LINKML_SCHEMA_API_TOKEN)
+fi
+
 if [ ! -d "$PATH_TO_CONFIG_DIR" ]; then
   mkdir -p "$PATH_TO_CONFIG_DIR"
 fi
@@ -336,4 +348,13 @@ export DATAFED_GLOBUS_ALLOWED_DOMAINS="$local_DATAFED_GLOBUS_ALLOWED_DOMAINS"
 export DATAFED_GLOBUS_CONTROL_PORT="$local_DATAFED_GLOBUS_CONTROL_PORT"
 # Globus subscription ID
 export DATAFED_GLOBUS_SUBSCRIPTION="${local_DATAFED_GLOBUS_SUBSCRIPTION}"
+
+# ************************************************
+# Env Variables for Schema API Service (LinkML)
+# ************************************************
+# Base URL for the external schema API service (e.g. http://localhost:8080/v1)
+# If empty, LinkML schema support is disabled.
+export DATAFED_LINKML_SCHEMA_API_URL="$local_DATAFED_LINKML_SCHEMA_API_URL"
+# Bearer token for Schema API authentication (optional)
+export DATAFED_LINKML_SCHEMA_API_TOKEN="$local_DATAFED_LINKML_SCHEMA_API_TOKEN"
 EOF

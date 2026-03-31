@@ -6,14 +6,14 @@
 #
 # Optional env:
 #   MOCK_SCHEMA_IMAGE   — Docker image (default: savannah.ornl.gov/datafed/mock-schema:latest)
-#   MOCK_SCHEMA_PORT    — Host port to bind (default: 4010)
+#   MOCK_SCHEMA_PORT    — Host port to bind (default: 4011)
 #   CONTAINER_NAME      — Docker container name (default: datafed-mock-schema)
 #   MOCK_SCHEMA_PULL    — "true" to pull image before starting (default: true)
 
 set -eu
 
 IMAGE="${MOCK_SCHEMA_IMAGE:-savannah.ornl.gov/datafed/mock-schema:latest}"
-PORT="${MOCK_SCHEMA_PORT:-4010}"
+PORT="${MOCK_SCHEMA_PORT:-4011}"
 NAME="${CONTAINER_NAME:-datafed-mock-schema}"
 PULL="${MOCK_SCHEMA_PULL:-true}"
 MAX_WAIT=30
@@ -40,11 +40,14 @@ fi
 
 echo "Starting mock schema server on port ${PORT}..."
 
+echo "docker run -d --name ${NAME} -p "${PORT}:4011" -e PRISM_DYNAMIC=false -e PRISM_ERRORS=true -e PRISM_PORT=4011 ${IMAGE}"
+
 docker run -d \
   --name "${NAME}" \
-  -p "${PORT}:4010" \
+  -p "${PORT}:4011" \
   -e PRISM_DYNAMIC=false \
   -e PRISM_ERRORS=true \
+  -e PRISM_PORT=4011 \
   "${IMAGE}"
 
 # ── Wait for readiness ───────────────────────────────────────────────────────
@@ -52,8 +55,15 @@ docker run -d \
 
 echo "Waiting for readiness (max ${MAX_WAIT}s)..."
 
+if ! curl --version &>/dev/null; then
+  echo "ERROR: curl is broken (likely missing shared library). Check: curl --version" >&2
+  curl --version # Print the actual error for diagnostics
+  exit 1
+fi
+
+echo "Testing: http://localhost:${PORT}/schemas?page=1&limit=10&schema_format=json"
 for i in $(seq 1 ${MAX_WAIT}); do
-  if curl -sf -o /dev/null "http://localhost:${PORT}/schemas?page=1&limit=1" 2>/dev/null; then
+  if curl -sf -o /dev/null "http://localhost:${PORT}/schemas?page=1&limit=10&schema_format=json" 2>/dev/null; then
     echo "Mock schema server ready on port ${PORT} (took ${i}s)"
     exit 0
   fi
