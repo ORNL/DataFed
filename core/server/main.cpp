@@ -14,6 +14,7 @@
 
 // Standard includes
 #include "Config.hpp"
+#include "SchemaAPIConfig.hpp"
 #include <climits>
 #include <fstream>
 #include <iostream>
@@ -34,6 +35,7 @@ int main(int a_argc, char **a_argv) {
   LogContext log_context;
   log_context.thread_name = "core_server";
   log_context.thread_id = 0;
+  Core::SchemaAPIConfig linkml_schema_config;
 
   try {
 
@@ -64,6 +66,12 @@ int main(int a_argc, char **a_argv) {
         "Globus authorization API base URL")(
         "glob-xfr-url", po::value<string>(&config.glob_xfr_url),
         "Globus transfer API base URL")(
+        "linkml-schema-api-url",
+         po::value<string>(&linkml_schema_config.base_url),
+         "External LinkML schema API base URL (enables LinkML support)")(
+        "linkml-schema-api-token",
+         po::value<string>(&linkml_schema_config.bearer_token),
+         "Bearer token for LinkML schema API authentication")(
         "client-id", po::value<string>(&config.client_id), "Client ID")(
         "client-secret", po::value<string>(&config.client_secret),
         "Client secret")("task-purge-age",
@@ -152,6 +160,16 @@ int main(int a_argc, char **a_argv) {
 
         return 0;
       }
+
+      if (linkml_schema_config.isConfigured()) {
+        config.schemas["linkml"] = linkml_schema_config;
+        DL_INFO(log_context, "LinkML schema engine enabled, API: "
+                                 << linkml_schema_config.base_url);
+      } else {
+        DL_INFO(log_context,
+                "LinkML schema engine disabled (no linkml-schema-api-url configured)");
+      }
+
       if (cfg_log_level != UINT_MAX) {
         if (cfg_log_level >=
             static_cast<unsigned int>(LogLevel::LAST_SENTINEL)) {
