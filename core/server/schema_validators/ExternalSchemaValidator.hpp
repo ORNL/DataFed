@@ -44,6 +44,11 @@ public:
 
   bool hasValidationCapability() const override { return true; }
 
+  bool cacheSchema(const std::string &, const std::string &,
+                 const std::string &, LogContext) override {
+    return true;
+  }
+
 private:
   std::unique_ptr<SchemaAPIClient> m_client;
   std::string m_engine;

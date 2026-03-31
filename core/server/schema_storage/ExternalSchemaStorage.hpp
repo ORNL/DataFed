@@ -23,7 +23,6 @@ public:
    */
   explicit ExternalSchemaStorage(std::unique_ptr<SchemaAPIClient> a_client);
   ~ExternalSchemaStorage() override = default;
-  // Non-copyable (owns unique_ptr)
   ExternalSchemaStorage(const ExternalSchemaStorage &) = delete;
   ExternalSchemaStorage &operator=(const ExternalSchemaStorage &) = delete;
   std::string storeContent(const std::string &a_id,
