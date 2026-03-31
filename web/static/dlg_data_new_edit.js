@@ -123,7 +123,9 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
 
     $("#sch_pick", frame).on("click", function (ev) {
         dlgSchList.show(true, false, function (schema) {
-            $("#sch_id", frame).val(schema.id + ":" + schema.ver);
+            var idx = schema.id.indexOf(":");
+            var name = idx !== -1 ? schema.id.substring(0, idx) : schema.id;
+            $("#sch_id", frame).val(name + ":" + schema.ver);
             $("#md_err_msg", frame).text("").hide();
         });
     });

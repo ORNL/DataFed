@@ -336,34 +336,38 @@ class API:
     # are ever revised, renaming the field (e.g. to "definition") would
     # eliminate the need for this workaround.
     # =========================================================================
-
     def schemaCreate(self, schema_id, definition=None, definition_file=None,
-                     description=None, public=False, system=False):
+                     description=None, public=False, system=False,
+                     schema_type="json-schema", schema_format="json"):
         """
         Create a new metadata schema
 
-        Create a new metadata schema with a JSON schema definition. The
-        definition may be provided directly as a string, or read from a local
-        JSON file. Cannot specify both definition and definition_file.
+        Create a new metadata schema. The definition may be provided directly
+        as a string, or read from a local file. Cannot specify both definition
+        and definition_file.
 
         Parameters
         ----------
         schema_id : str
             Schema ID
         definition : str, Optional. Default = None
-            JSON schema definition string
+            Schema definition string (JSON for json-schema, YAML for linkml)
         definition_file : str, Optional. Default = None
-            Path to local JSON file containing the schema definition
+            Path to local file containing the schema definition
         description : str, Optional. Default = None
             Text description of schema
         public : bool, Optional. Default = False
             Make schema publicly visible
         system : bool, Optional. Default = False
             Create as a system schema
+        schema_type : str, Optional. Default = "json-schema"
+            Schema engine type ("json-schema" or "linkml")
+        schema_format : str, Optional. Default = "json"
+            Schema format ("json" or "yaml")
 
         Returns
         -------
-        msg : AckReply Google protobuf message
+        msg : SchemaDataReply Google protobuf message
             Response from DataFed
 
         Raises
@@ -379,7 +383,8 @@ class API:
         if definition_file:
             definition = self._load_schema_file(definition_file)
 
-        self._validate_json(definition, "Schema definition")
+        if schema_type == "json-schema":
+            self._validate_json(definition, "Schema definition")
 
         msg = sdms.SchemaCreateRequest()
 
@@ -387,8 +392,9 @@ class API:
             raise Exception("Colons are not allowed when creating a schema id.")
 
         msg.id = schema_id + ":0"
-        # See note above: "def" is a Python reserved keyword.
         setattr(msg, 'def', definition)
+        msg.type = schema_type
+        msg.format = schema_format
 
         if description:
             msg.desc = description
@@ -402,32 +408,36 @@ class API:
         return self._mapi.sendRecv(msg)
 
     def schemaRevise(self, schema_id, definition=None, definition_file=None,
-                     description=None, public=None, system=None):
+                     description=None, public=None, system=None,
+                     schema_type=None):
         """
         Create a new revision of an existing schema
 
         Creates a new version of the specified schema. Any fields not provided
         are carried forward from the current revision. The definition may be
-        provided directly as a string or read from a local JSON file.
+        provided directly as a string or read from a local file.
 
         Parameters
         ----------
         schema_id : str
             Schema ID of the schema to revise
         definition : str, Optional. Default = None
-            Updated JSON schema definition string
+            Updated schema definition string
         definition_file : str, Optional. Default = None
-            Path to local JSON file containing the updated schema definition
+            Path to local file containing the updated schema definition
         description : str, Optional. Default = None
             Updated text description
         public : bool, Optional. Default = None
             Update public visibility
         system : bool, Optional. Default = None
             Update system schema flag
+        schema_type : str, Optional. Default = None
+            Schema engine type. When None, JSON validation is applied for
+            backward compatibility. Set to "linkml" to skip JSON validation.
 
         Returns
         -------
-        msg : AckReply Google protobuf message
+        msg : SchemaDataReply Google protobuf message
             Response from DataFed
 
         Raises
@@ -440,7 +450,7 @@ class API:
         if definition_file:
             definition = self._load_schema_file(definition_file)
 
-        if definition is not None:
+        if definition is not None and (schema_type is None or schema_type == "json-schema"):
             self._validate_json(definition, "Schema definition")
 
         msg = sdms.SchemaReviseRequest()
@@ -457,7 +467,6 @@ class API:
         msg.id = base + f":{ver}"
 
         if definition is not None:
-            # See schema section note: "def" is a Python reserved keyword.
             setattr(msg, 'def', definition)
 
         if description is not None:
@@ -472,13 +481,14 @@ class API:
         return self._mapi.sendRecv(msg)
 
     def schemaUpdate(self, schema_id, new_id=None, definition=None, definition_file=None,
-                     description=None, public=None, system=None):
+                     description=None, public=None, system=None,
+                     schema_type=None):
         """
         Update an existing schema in place (no new revision)
 
         Modifies the current schema without creating a new version. The
         definition may be provided directly as a string or read from a local
-        JSON file.
+        file.
 
         Parameters
         ----------
@@ -487,15 +497,18 @@ class API:
         new_id : str, Optional. Default = None
             New schema ID (rename)
         definition : str, Optional. Default = None
-            Updated JSON schema definition string
+            Updated schema definition string
         definition_file : str, Optional. Default = None
-            Path to local JSON file containing the updated schema definition
+            Path to local file containing the updated schema definition
         description : str, Optional. Default = None
             Updated text description
         public : bool, Optional. Default = None
             Update public visibility
         system : bool, Optional. Default = None
             Update system schema flag
+        schema_type : str, Optional. Default = None
+            Schema engine type. When None, JSON validation is applied for
+            backward compatibility. Set to "linkml" to skip JSON validation.
 
         Returns
         -------
@@ -512,7 +525,7 @@ class API:
         if definition_file:
             definition = self._load_schema_file(definition_file)
 
-        if definition is not None:
+        if definition is not None and (schema_type is None or schema_type == "json-schema"):
             self._validate_json(definition, "Schema definition")
 
         msg = sdms.SchemaUpdateRequest()
@@ -522,7 +535,6 @@ class API:
             msg.id_new = new_id
 
         if definition is not None:
-            # See schema section note: "def" is a Python reserved keyword.
             setattr(msg, 'def', definition)
 
         if description is not None:
