@@ -313,6 +313,7 @@ std::string SchemaHandler::validateMetadataContent(
 
   std::string schema_type = "json-schema";
   std::string schema_format = "json";
+  std::string metadata_format = "json";
   std::string schema_def;
 
   // Load schema record from DB
@@ -359,7 +360,7 @@ std::string SchemaHandler::validateMetadataContent(
     }
 
     auto result = validator.validateMetadata(
-        a_sch_id, schema_format, a_metadata, log_context);
+        a_sch_id, metadata_format, a_metadata, log_context);
 
     if (!result.valid) {
       return result.errors;
