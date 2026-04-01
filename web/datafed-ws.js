@@ -1883,6 +1883,10 @@ app.post("/api/sch/search", (a_req, a_resp) => {
 });
 
 app.post("/api/sch/create", (a_req, a_resp) => {
+    // Mirror Python CommandLib: ensure :0 version suffix on create
+    if (a_req.body.id && a_req.body.id.indexOf(":") === -1) {
+        a_req.body.id = a_req.body.id + ":0";
+    }
     sendMessage("SchemaCreateRequest", a_req.body, a_req, a_resp, function (reply) {
         a_resp.json(reply);
     });
