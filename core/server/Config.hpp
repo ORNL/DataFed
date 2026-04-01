@@ -4,6 +4,7 @@
 
 // Core local private includes
 #include "AuthenticationManager.hpp"
+#include "SchemaAPIConfig.hpp"
 
 // DataFed Common public includes
 #include "common/DynaLog.hpp"
@@ -16,6 +17,7 @@
 #include <mutex>
 #include <stdint.h>
 #include <string>
+#include <unordered_map>
 
 namespace SDMS {
 namespace Core {
@@ -78,6 +80,8 @@ public:
   uint32_t metrics_period;
   uint32_t metrics_purge_period;
   uint32_t metrics_purge_age;
+
+  std::unordered_map<std::string, SchemaAPIConfig> schemas;
 
   // MsgComm::SecurityContext            sec_ctx;
   std::unique_ptr<ICredentials> sec_ctx;

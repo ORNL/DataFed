@@ -68,6 +68,8 @@ if [ ! -f "$install_flag" ]; then
     -DBUILD_FOXX=True
     -DINSTALL_FOXX=True
     -DENABLE_INTEGRATION_TESTS=False
+    -DDATAFED_TEST_DATABASE_NAME=${DATAFED_TEST_DATABASE_NAME}
+    -DDATAFED_ALLOW_TESTING_PROD_DATABASE=${DATAFED_ALLOW_TESTING_PROD_DATABASE}
   )
 
   # Add the ENABLE_FOXX_TESTS option if it's set to TRUE
@@ -84,6 +86,7 @@ if [ ! -f "$install_flag" ]; then
   "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" --build build --target install
 
   if [ "$ENABLE_FOXX_TESTS" == "TRUE" ]; then
+
     "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake" \
       --build build \
       --target test

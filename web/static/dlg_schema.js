@@ -11,13 +11,106 @@ export const mode_rev = 3;
 const dlg_title = ["View", "Edit", "Create New", "Create Revision of "];
 const btn_title = ["Close", "Save", "Create", "Create"];
 
+/**
+ * Strip version suffix from a composite schema ID (e.g. "foo:0" -> "foo").
+ * @param {string} id - Composite schema ID.
+ * @returns {string} Schema name without version suffix.
+ */
+function schemaName(id) {
+    var idx = id.indexOf(":");
+    return idx !== -1 ? id.substring(0, idx) : id;
+}
+
+/**
+ * Ensure a schema ID has the :version suffix.
+ * @param {string} id - Schema ID, possibly without version.
+ * @param {string|number} ver - Version to append if missing.
+ * @returns {string} Schema ID with version suffix.
+ */
+function schemaId(id, ver) {
+    return id.indexOf(":") !== -1 ? id : id + ":" + ver;
+}
+
+/**
+ * Return the Ace editor mode string for a given schema type.
+ * @param {string} type - "json-schema" or "linkml"
+ * @returns {string} Ace mode path
+ */
+function aceMode(type) {
+    return type === "linkml" ? "ace/mode/yaml" : "ace/mode/json";
+}
+
+/**
+ * Return a human label for the definition tab header.
+ * @param {string} type - "json-schema" or "linkml"
+ * @returns {string} Tab header label.
+ */
+function defLabel(type) {
+    return type === "linkml" ? "Schema Definition (YAML):" : "Schema Definition (JSON):";
+}
+
+/**
+ * Return the schema format string for the API.
+ * @param {string} type - "json-schema" or "linkml"
+ * @returns {string} "json" or "yaml"
+ */
+function schemaFormat(type) {
+    return type === "linkml" ? "yaml" : "json";
+}
+
+/**
+ * Return a default template for a new schema definition.
+ * @param {string} type - "json-schema" or "linkml"
+ * @returns {string} default schema template
+ */
+function defaultTemplate(type) {
+    if (type === "linkml") {
+        return [
+            "id: https://example.org/schemas/my_schema",
+            "name: my_schema",
+            "title: My Schema",
+            "description: Description of this schema",
+            "",
+            "prefixes:",
+            "  linkml: https://w3id.org/linkml/",
+            "",
+            "default_range: string",
+            "",
+            "imports:",
+            "  - linkml:types",
+            "",
+            "classes:",
+            "  MyClass:",
+            "    description: A sample class",
+            "    attributes:",
+            "      name:",
+            "        required: true",
+            "      value:",
+            "        range: float",
+        ].join("\n");
+    }
+    return JSON.stringify(
+        {
+            properties: { example: { type: "string" } },
+            required: ["example"],
+            type: "object",
+        },
+        null,
+        4,
+    );
+}
+
 export function show(a_mode, a_schema, a_cb) {
     var ele = document.createElement("div");
-    ele.id = "dlg_schema_" + (a_schema ? a_schema.id + "_" + a_schema.ver : "new");
+    ele.id = "dlg_schema_" + (a_schema ? schemaName(a_schema.id) + "_" + a_schema.ver : "new");
 
     var frame = $(ele),
         dlg_inst,
-        json_val;
+        json_val,
+        schName = a_schema ? schemaName(a_schema.id) : null;
+
+    // Determine current schema type from existing schema or default
+    var curType = a_schema && a_schema.type ? a_schema.type : "json-schema";
 
     frame.html(
         "<div id='dlg-tabs' style='height:100%;padding:0' class='tabs-no-header no-border'>\
@@ -35,6 +128,12 @@ export function show(a_mode, a_schema, a_cb) {
                             <td>Uses:</td><td><input type='text' title='Number of records using this schema' id='sch_cnt' style='width:95%'></input></td>\
                             <td>Refs:</td><td><input type='text' title='Number of references to this schema' id='sch_refs' style='width:100%'></input></td>\
                         </tr>\
+                        <tr><td>Type:</td><td colspan='5'>\
+                            <select title='Schema engine type' id='sch_type' style='width:100%'>\
+                                <option value='json-schema'>JSON Schema</option>\
+                                <option value='linkml'>LinkML</option>\
+                            </select>\
+                        </td></tr>\
                         <tr><td>Owner:</td><td colspan='5'><input type='text' title='Owner name/ID' id='sch_own' style='width:100%'></input></td></tr>\
                         <tr><td>Access:</td><td colspan='5'>\
                             <label for='sch_priv'><input type='radio' id='sch_priv' name='sch_acc' value='private' checked/>Private</label>&nbsp;&nbsp;\
@@ -51,7 +150,9 @@ export function show(a_mode, a_schema, a_cb) {
             <div id='tab-dlg-def' style='padding:.5em 1em'>\
                 <div class='col-flex' style='height:100%'>\
                     <div style='flex:none;padding-bottom:0.25em'>\
-                        Schema Definition (JSON): <span style='float:right'><a href='https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts' target='_blank'>editor help</a></span>\
+                        <span id='sch_def_label'>" +
+            defLabel(curType) +
+            "</span> <span style='float:right'><a href='https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts' target='_blank'>editor help</a></span>\
                     </div>\
                     <div class='ui-widget ui-widget-content' style='flex:1 1 100%;padding:0'>\
                         <div id='sch_def' style='height:100%;width:100%'></div>\
@@ -71,10 +172,34 @@ export function show(a_mode, a_schema, a_cb) {
 
     var jsoned = ace.edit($("#sch_def", frame).get(0), {
         theme: settings.theme == "light" ? "ace/theme/light" : "ace/theme/dark",
-        mode: "ace/mode/json",
+        mode: aceMode(curType),
         fontSize: 16,
         autoScrollEditorIntoView: true,
         wrap: true,
+    });
+
+    // --- Type selector change handler ---
+    $("#sch_type", frame).on("change", function () {
+        var newType = $(this).val();
+        var session = jsoned.getSession();
+
+        // Switch editor mode
+        session.setMode(aceMode(newType));
+
+        // Update definition tab label
+        $("#sch_def_label", frame).text(defLabel(newType));
+
+        // If the editor still has the default template (or is empty),
+        // replace it with the new type's template
+        var curVal = jsoned.getValue().trim();
+        var jsonDefault = defaultTemplate("json-schema").trim();
+        var linkmlDefault = defaultTemplate("linkml").trim();
+
+        if (!curVal || curVal === jsonDefault || curVal === linkmlDefault) {
+            jsoned.setValue(defaultTemplate(newType), -1);
+        }
+
+        curType = newType;
     });
 
     function handleSubmit(ok, reply) {
@@ -113,8 +238,9 @@ export function show(a_mode, a_schema, a_cb) {
             $("#dlg-tabs", frame).tabs({ heightStyle: "fill" });
 
             if (a_schema) {
-                $("#sch_id", frame).val(a_schema.id);
+                $("#sch_id", frame).val(schName);
                 $("#sch_desc", frame).val(a_schema.desc);
+                $("#sch_type", frame).val(curType);
 
                 if (a_mode == mode_rev) {
                     $("#sch_ver", frame).val(a_schema.ver + 1);
@@ -140,9 +266,17 @@ export function show(a_mode, a_schema, a_cb) {
                     $("#sch_sys", frame).attr("checked", true);
                 }
 
-                var def = JSON.parse(a_schema.def);
-                json_val = JSON.stringify(def, null, 4);
-                jsoned.setValue(json_val, -1);
+                // Display the definition based on type
+                if (curType === "linkml") {
+                    // LinkML definitions are stored as YAML strings
+                    json_val = a_schema.def;
+                    jsoned.setValue(json_val, -1);
+                } else {
+                    // JSON Schema definitions — pretty-print
+                    var def = JSON.parse(a_schema.def);
+                    json_val = JSON.stringify(def, null, 4);
+                    jsoned.setValue(json_val, -1);
+                }
 
                 if (a_mode != mode_rev) {
                     var i, dep, html;
@@ -150,7 +284,7 @@ export function show(a_mode, a_schema, a_cb) {
                         html = "";
                         for (i in a_schema.uses) {
                             dep = a_schema.uses[i];
-                            html += dep.id + ":" + dep.ver + "<br>";
+                            html += schemaName(dep.id) + ":" + dep.ver + "<br>";
                         }
                         $("#sch_uses", frame).html(html);
                     }
@@ -159,7 +293,7 @@ export function show(a_mode, a_schema, a_cb) {
                         html = "";
                         for (i in a_schema.usedBy) {
                             dep = a_schema.usedBy[i];
-                            html += dep.id + ":" + dep.ver + "<br>";
+                            html += schemaName(dep.id) + ":" + dep.ver + "<br>";
                         }
                         $("#sch_used_by", frame).html(html);
                     }
@@ -169,23 +303,18 @@ export function show(a_mode, a_schema, a_cb) {
                 $("#sch_cnt", frame).val(0);
                 $("#sch_refs", frame).val(0);
                 $("#sch_own", frame).val(settings.user.uid);
-                jsoned.setValue(
-                    JSON.stringify(
-                        {
-                            properties: { example: { type: "string" } },
-                            required: ["example"],
-                            type: "object",
-                        },
-                        null,
-                        4,
-                    ),
-                    -1,
-                );
+                $("#sch_type", frame).val("json-schema");
+                jsoned.setValue(defaultTemplate("json-schema"), -1);
             }
 
             jsoned.resize();
 
             util.inputDisable($("#sch_ver,#sch_cnt,#sch_refs,#sch_own", frame));
+
+            // Type is immutable after creation — lock in view, edit, and revise modes
+            if (a_mode != mode_new) {
+                $("#sch_type", frame).prop("disabled", true);
+            }
 
             if (a_mode == mode_view) {
                 util.inputDisable($("#sch_id,#sch_desc", frame));
@@ -231,11 +360,16 @@ export function show(a_mode, a_schema, a_cb) {
                 return;
             }
 
-            var anno = jsoned.getSession().getAnnotations();
+            var selType = $("#sch_type", frame).val();
 
-            if (anno && anno.length) {
-                dialogs.dlgAlert("Schema Error", "Schema has unresolved JSON syntax errors.");
-                return;
+            // Only check Ace annotations for JSON mode — YAML mode
+            // annotations are less reliable and not a hard gate
+            if (selType === "json-schema") {
+                var anno = jsoned.getSession().getAnnotations();
+                if (anno && anno.length) {
+                    dialogs.dlgAlert("Schema Error", "Schema has unresolved JSON syntax errors.");
+                    return;
+                }
             }
 
             var obj = {},
@@ -255,20 +389,22 @@ export function show(a_mode, a_schema, a_cb) {
 
             if (a_mode == mode_new) {
                 obj.id = $("#sch_id", frame).val().trim();
+                obj.type = selType;
+                obj.format = schemaFormat(selType);
 
                 console.log("new", obj);
                 api.schemaCreate(obj, handleSubmit);
             } else if (a_mode == mode_rev) {
-                obj.id = a_schema.id + ":" + a_schema.ver;
+                obj.id = schemaId(a_schema.id, a_schema.ver);
 
                 console.log("rev", obj);
                 api.schemaRevise(obj, handleSubmit);
             } else {
                 // edit mode
-                obj.id = a_schema.id + ":" + a_schema.ver;
+                obj.id = schemaId(a_schema.id, a_schema.ver);
 
                 var tmp = $("#sch_id", frame).val().trim();
-                if (tmp != a_schema.id) obj.idNew = tmp;
+                if (tmp != schName) obj.idNew = tmp;
 
                 if (obj.desc == a_schema.desc) delete obj.desc;
 

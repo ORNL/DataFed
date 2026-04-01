@@ -34,7 +34,9 @@ set -ef -o pipefail
 
 # Check that required env variables have been set
 
-local_DATABASE_NAME="sdms"
+# Read database name from environment. Defaults to "sdms_test" because this
+# script wipes the database (clear_db.sh) as its first action.
+local_DATABASE_NAME="${DATAFED_DATABASE_NAME:-sdms_test}"
 local_DATABASE_USER="root"
 
 if [ -z "${DATAFED_DATABASE_PASSWORD}" ]; then
@@ -116,6 +118,10 @@ if [ "${DATAFED_DATABASE_HOST}" == "localhost" ] || [ "${DATAFED_DATABASE_HOST}"
     exit 1
   fi
 fi
+
+# Export so clear_db.sh and install_foxx.sh propagate the database name to
+# db_clear.js and db_create.js respectively via db_env.js.
+export DATAFED_DATABASE_NAME="${local_DATABASE_NAME}"
 
 # First step is to clear the database
 echo "Clearing old database"

@@ -7,7 +7,7 @@
 #include "common/Util.hpp"
 
 // messaging version
-#include "common/Version.pb.h"
+#include "Version.hpp"
 
 // Third party includes
 #include <boost/program_options.hpp>

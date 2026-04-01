@@ -95,6 +95,18 @@ else
   local_DATAFED_CORE_LOG_LEVEL=$(printenv DATAFED_CORE_LOG_LEVEL)
 fi
 
+if [ -z "${DATAFED_LINKML_SCHEMA_API_URL}" ]; then
+  local_DATAFED_LINKML_SCHEMA_API_URL=""
+else
+  local_DATAFED_LINKML_SCHEMA_API_URL=$(printenv DATAFED_LINKML_SCHEMA_API_URL)
+fi
+
+if [ -z "${DATAFED_LINKML_SCHEMA_API_TOKEN}" ]; then
+  local_DATAFED_LINKML_SCHEMA_API_TOKEN=""
+else
+  local_DATAFED_LINKML_SCHEMA_API_TOKEN=$(printenv DATAFED_LINKML_SCHEMA_API_TOKEN)
+fi
+
 VALID_ARGS=$(getopt -o ht:c:f:a:s:i:u:p --long 'help',threads-task:,cred-dir:,threads-client:,database-ip-address:,globus-secret:,globus-id:,database-user:,database-password: -- "$@")
 if [[ $? -ne 0 ]]; then
   exit 1
@@ -191,8 +203,10 @@ if [ "$ERROR_DETECTED" == "1" ]; then
   exit 1
 fi
 
+local_DATABASE_NAME="${DATAFED_DATABASE_NAME:-sdms}"
+
 FOXX_MAJOR_API_VERSION=$(cat ${PROJECT_ROOT}/cmake/Version.cmake | grep -o -P "(?<=FOXX_API_MAJOR).*(?=\))" | xargs)
-local_DATABASE_API_URL="${local_DATAFED_DATABASE_IP_ADDRESS_PORT}/_db/sdms/api/${FOXX_MAJOR_API_VERSION}/"
+local_DATABASE_API_URL="${local_DATAFED_DATABASE_IP_ADDRESS_PORT}/_db/${local_DATABASE_NAME}/api/${FOXX_MAJOR_API_VERSION}/"
 
 PATH_TO_CONFIG_DIR=$(realpath "$SOURCE/../config")
 
@@ -222,6 +236,11 @@ client-secret=$local_DATAFED_GLOBUS_APP_SECRET
 # 4 - Debug
 # 5 - Trace
 log-level=$local_DATAFED_CORE_LOG_LEVEL
+# External LinkML Schema API service.
+# If empty, LinkML schema engine is not registered.
+linkml-schema-api-url=$local_DATAFED_LINKML_SCHEMA_API_URL
+# Bearer token for LinkML Schema API authentication (optional)
+linkml-schema-api-token=$local_DATAFED_LINKML_SCHEMA_API_TOKEN
 EOF
 
 echo

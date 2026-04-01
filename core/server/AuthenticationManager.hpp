@@ -8,6 +8,7 @@
 #include "PublicKeyTypes.hpp"
 
 // Common includes
+#include "common/DynaLog.hpp"
 #include "common/IAuthenticationManager.hpp"
 
 // Standard includes
@@ -33,6 +34,8 @@ private:
 
   mutable std::mutex m_lock;
 
+  LogContext m_log_context;
+
 public:
   AuthenticationManager(){};
 
@@ -40,12 +43,22 @@ public:
 
   AuthenticationManager &operator=(AuthenticationManager &&other);
 
+  /// Construct without database connectivity (in-memory only mode).
+  /// Persistent key lookups will only check the in-memory map, not the DB.
+  AuthenticationManager(
+      std::map<PublicKeyType, time_t> purge_intervals,
+      std::map<PublicKeyType, std::vector<std::unique_ptr<Condition>>>
+          &&purge_conditions,
+      LogContext log_context = LogContext{});
+
+  /// Construct with database connectivity for persistent key lookups.
   AuthenticationManager(
       std::map<PublicKeyType, time_t> purge_intervals,
       std::map<PublicKeyType, std::vector<std::unique_ptr<Condition>>>
           &&purge_conditions,
       const std::string &db_url, const std::string &db_user,
-      const std::string &db_pass);
+      const std::string &db_pass,
+      LogContext log_context = LogContext{});
   /**
    * Increments the number of times that the key has been accessed, this is used
    *by the transient key to know when it needs to be converted to a session key.
@@ -54,7 +67,7 @@ public:
    *allotted purge time frame. If the count is above one then the session key
    *not be purged.
    **/
-  virtual void incrementKeyAccessCounter(const std::string &public_key) final;
+  virtual void incrementKeyAccessCounter(const std::string &public_key, LogContext log_context) final;
 
   /**
    * This will purge all keys of a particular type that have expired.
@@ -79,7 +92,7 @@ public:
    * - SESSION
    * - PERSISTENT
    **/
-  virtual bool hasKey(const std::string &pub_key) const final;
+  virtual bool hasKey(const std::string &pub_key, LogContext log_context) const final;
 
   void addKey(const PublicKeyType &pub_key_type, const std::string &public_key,
               const std::string &uid);
@@ -87,7 +100,7 @@ public:
   /**
    * Check if a specific key exists in a specific map type
    **/
-  bool hasKey(const PublicKeyType &pub_key_type, const std::string &public_key) const;
+  bool hasKey(const PublicKeyType &pub_key_type, const std::string &public_key, LogContext log_context) const;
 
   /**
    * Migrate a key from one type to another
@@ -121,13 +134,13 @@ public:
    * - SESSION
    * - PERSISTENT
    **/
-  virtual std::string getUID(const std::string &pub_key) const final;
+  virtual std::string getUID(const std::string &pub_key, LogContext log_context) const final;
   
   /**
    * Safe version that returns empty string if key not found
    * instead of throwing an exception
    **/
-  std::string getUIDSafe(const std::string &pub_key) const;
+  std::string getUIDSafe(const std::string &pub_key, LogContext log_context) const;
 };
 
 } // namespace Core

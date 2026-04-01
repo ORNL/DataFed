@@ -1,4 +1,7 @@
-db._useDatabase("sdms");
+const path = require("path");
+const { DB_NAME } = require(path.join(__dirname, "db_env"));
+
+db._useDatabase(DB_NAME);
 db._truncate("u");
 db._truncate("accn");
 db._truncate("uuid");

@@ -4,6 +4,7 @@
 
 // Common includes
 #include "common/TraceException.hpp"
+#include "common/DynaLog.hpp"
 
 // Standard includes
 #include <iostream>
@@ -15,13 +16,32 @@ AuthenticationManager::AuthenticationManager(
     std::map<PublicKeyType, time_t> purge_intervals,
     std::map<PublicKeyType, std::vector<std::unique_ptr<Condition>>>
         &&purge_conditions,
-    const std::string &db_url, const std::string &db_user,
-    const std::string &db_pass)
+    LogContext log_context)
     : m_purge_interval(purge_intervals),
       m_purge_conditions(std::move(purge_conditions)),
       m_auth_mapper(m_purge_interval[PublicKeyType::TRANSIENT],
                     m_purge_interval[PublicKeyType::SESSION],
-                    db_url, db_user, db_pass) {
+                    log_context),
+      m_log_context(log_context) {
+  for (const auto &purge_int : m_purge_interval) {
+    m_next_purge[purge_int.first] = time(0) + purge_int.second;
+  }
+}
+
+AuthenticationManager::AuthenticationManager(
+    std::map<PublicKeyType, time_t> purge_intervals,
+    std::map<PublicKeyType, std::vector<std::unique_ptr<Condition>>>
+        &&purge_conditions,
+    const std::string &db_url, const std::string &db_user,
+    const std::string &db_pass,
+    LogContext log_context)
+    : m_purge_interval(purge_intervals),
+      m_purge_conditions(std::move(purge_conditions)),
+      m_auth_mapper(m_purge_interval[PublicKeyType::TRANSIENT],
+                    m_purge_interval[PublicKeyType::SESSION],
+                    db_url, db_user, db_pass,
+                    log_context),
+      m_log_context(log_context) {
   for (const auto &purge_int : m_purge_interval) {
     m_next_purge[purge_int.first] = time(0) + purge_int.second;
   }
@@ -36,6 +56,7 @@ AuthenticationManager::operator=(AuthenticationManager &&other) {
     m_purge_interval = other.m_purge_interval;
     m_purge_conditions = std::move(other.m_purge_conditions);
     m_auth_mapper = std::move(other.m_auth_mapper);
+    m_log_context = other.m_log_context;
   }
   return *this;
 }
@@ -69,46 +90,47 @@ void AuthenticationManager::purge(const PublicKeyType pub_key_type) {
 }
 
 void AuthenticationManager::incrementKeyAccessCounter(
-    const std::string &public_key) {
+    const std::string &public_key,
+    LogContext log_context) {
   std::lock_guard<std::mutex> lock(m_lock);
-  if (m_auth_mapper.hasKey(PublicKeyType::TRANSIENT, public_key)) {
+  if (m_auth_mapper.hasKey(PublicKeyType::TRANSIENT, public_key, log_context)) {
     m_auth_mapper.incrementKeyAccessCounter(PublicKeyType::TRANSIENT,
-                                            public_key);
-  } else if (m_auth_mapper.hasKey(PublicKeyType::SESSION, public_key)) {
-    m_auth_mapper.incrementKeyAccessCounter(PublicKeyType::SESSION, public_key);
+                                            public_key, log_context);
+  } else if (m_auth_mapper.hasKey(PublicKeyType::SESSION, public_key, log_context)) {
+    m_auth_mapper.incrementKeyAccessCounter(PublicKeyType::SESSION, public_key, log_context);
   }
   // Ignore persistent cases because counter does nothing for them
 }
 
-bool AuthenticationManager::hasKey(const std::string &public_key) const {
+bool AuthenticationManager::hasKey(const std::string &public_key, LogContext log_context) const {
   std::lock_guard<std::mutex> lock(m_lock);
   
-  if (m_auth_mapper.hasKey(PublicKeyType::TRANSIENT, public_key)) {
+  if (m_auth_mapper.hasKey(PublicKeyType::TRANSIENT, public_key, log_context)) {
     return true;
   }
   
-  if (m_auth_mapper.hasKey(PublicKeyType::SESSION, public_key)) {
+  if (m_auth_mapper.hasKey(PublicKeyType::SESSION, public_key, log_context)) {
     return true;
   }
   
-  if (m_auth_mapper.hasKey(PublicKeyType::PERSISTENT, public_key)) {
+  if (m_auth_mapper.hasKey(PublicKeyType::PERSISTENT, public_key, log_context)) {
     return true;
   }
   
   return false;
 }
 
-std::string AuthenticationManager::getUID(const std::string &public_key) const {
+std::string AuthenticationManager::getUID(const std::string &public_key, LogContext log_context) const {
   std::lock_guard<std::mutex> lock(m_lock);
 
-  if (m_auth_mapper.hasKey(PublicKeyType::TRANSIENT, public_key)) {
-    return m_auth_mapper.getUID(PublicKeyType::TRANSIENT, public_key);
+  if (m_auth_mapper.hasKey(PublicKeyType::TRANSIENT, public_key, log_context)) {
+    return m_auth_mapper.getUID(PublicKeyType::TRANSIENT, public_key, log_context);
   }
-  if (m_auth_mapper.hasKey(PublicKeyType::SESSION, public_key)) {
-    return m_auth_mapper.getUID(PublicKeyType::SESSION, public_key);
+  if (m_auth_mapper.hasKey(PublicKeyType::SESSION, public_key, log_context)) {
+    return m_auth_mapper.getUID(PublicKeyType::SESSION, public_key, log_context);
   }
-  if (m_auth_mapper.hasKey(PublicKeyType::PERSISTENT, public_key)) {
-    return m_auth_mapper.getUID(PublicKeyType::PERSISTENT, public_key);
+  if (m_auth_mapper.hasKey(PublicKeyType::PERSISTENT, public_key, log_context)) {
+    return m_auth_mapper.getUID(PublicKeyType::PERSISTENT, public_key, log_context);
   }
   
   EXCEPT(1, "Unrecognized public_key during execution of getUID.");
@@ -122,9 +144,10 @@ void AuthenticationManager::addKey(const PublicKeyType &pub_key_type,
 }
 
 bool AuthenticationManager::hasKey(const PublicKeyType &pub_key_type,
-                                   const std::string &public_key) const {
+                                   const std::string &public_key,
+                                   LogContext log_context) const {
   std::lock_guard<std::mutex> lock(m_lock);
-  return m_auth_mapper.hasKey(pub_key_type, public_key);
+  return m_auth_mapper.hasKey(pub_key_type, public_key, log_context);
 }
 
 void AuthenticationManager::migrateKey(const PublicKeyType &from_type,
@@ -150,21 +173,21 @@ void AuthenticationManager::clearAllNonPersistentKeys() {
   m_auth_mapper.clearAllNonPersistentKeys();
 }
 
-std::string AuthenticationManager::getUIDSafe(const std::string &public_key) const {
+std::string AuthenticationManager::getUIDSafe(const std::string &public_key, LogContext log_context) const {
   std::lock_guard<std::mutex> lock(m_lock);
   
   // Try each key type in order
-  std::string uid = m_auth_mapper.getUIDSafe(PublicKeyType::TRANSIENT, public_key);
+  std::string uid = m_auth_mapper.getUIDSafe(PublicKeyType::TRANSIENT, public_key, log_context);
   if (!uid.empty()) {
     return uid;
   }
   
-  uid = m_auth_mapper.getUIDSafe(PublicKeyType::SESSION, public_key);
+  uid = m_auth_mapper.getUIDSafe(PublicKeyType::SESSION, public_key, log_context);
   if (!uid.empty()) {
     return uid;
   }
   
-  uid = m_auth_mapper.getUIDSafe(PublicKeyType::PERSISTENT, public_key);
+  uid = m_auth_mapper.getUIDSafe(PublicKeyType::PERSISTENT, public_key, log_context);
   if (!uid.empty()) {
     return uid;
   }

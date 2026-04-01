@@ -77,6 +77,13 @@ if [[ "$BUILD_METADATA" == "TRUE" ]]; then
     "${PROJECT_ROOT}/core/docker/Dockerfile" \
     --build-arg DEPENDENCIES="datafed-dependencies:latest" \
     --build-arg RUNTIME="datafed-runtime:latest" \
+    --target core-build \
+    "${PROJECT_ROOT}" \
+    -t datafed-core-build:latest
+  docker build -f \
+    "${PROJECT_ROOT}/core/docker/Dockerfile" \
+    --build-arg DEPENDENCIES="datafed-dependencies:latest" \
+    --build-arg RUNTIME="datafed-runtime:latest" \
     "${PROJECT_ROOT}" \
     -t datafed-core:latest
   docker build -f \

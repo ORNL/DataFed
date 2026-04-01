@@ -1,4 +1,3 @@
-
 // Local DataFed includes
 #include "ClientWorker.hpp"
 #include "Version.hpp"
@@ -13,10 +12,7 @@
 #include "common/libjson.hpp"
 
 // Proto files
-#include "common/SDMS.pb.h"
-#include "common/SDMS_Anon.pb.h"
-#include "common/SDMS_Auth.pb.h"
-#include "common/Version.pb.h"
+#include "common/envelope.pb.h"
 
 // Third party includes
 #include <boost/tokenizer.hpp>
@@ -29,9 +25,6 @@ using namespace std;
 
 namespace SDMS {
 
-using namespace SDMS::Anon;
-using namespace SDMS::Auth;
-
 namespace MockCore {
 
 map<uint16_t, ClientWorker::msg_fun_t> ClientWorker::m_msg_handlers;
@@ -39,11 +32,12 @@ map<uint16_t, ClientWorker::msg_fun_t> ClientWorker::m_msg_handlers;
 // TODO - This should be defined in proto files
 #define NOTE_MASK_MD_ERR 0x2000
 
-ClientWorker::ClientWorker(IMockCoreServer &a_core, size_t a_tid,
+ClientWorker::ClientWorker(Core::ICoreServer &a_core, size_t a_tid,
                            LogContext log_context_in)
     : m_config(Config::getInstance()), m_tid(a_tid), m_run(true),
       m_log_context(log_context_in),
       m_msg_mapper(std::unique_ptr<IMessageMapper>(new ProtoBufMap)) {
+  (void)a_core;
   setupMsgHandlers();
   LogContext log_context = m_log_context;
   log_context.thread_name +=
@@ -76,17 +70,13 @@ void ClientWorker::wait() {
   }
 }
 
-#define SET_MSG_HANDLER(proto_id, msg, func)                                   \
-  m_msg_handlers[m_msg_mapper->getMessageType(proto_id, #msg)] = func
+#define SET_MSG_HANDLER(msg, func)                                             \
+  m_msg_handlers[m_msg_mapper->getMessageType(#msg)] = func
 
 /**
  * This method configures message handling by creating a map from message type
- * to handler function. There are currently two protocol levels: anonymous and
- * authenticated. Each is supported by a Google protobuf interface (in
- * /common/proto). Most requests can be handled directly by the DB (via
- * DatabaseAPI class), but some require local processing. This method maps the
- * two classes of requests using the macros SET_MSG_HANDLER (for local) and
- * SET_MSG_HANDLER_DB (for DB only).
+ * (envelope field number) to handler function. Message types are identified
+ * by name and resolved to field numbers via the ProtoBufMap.
  */
 void ClientWorker::setupMsgHandlers() {
   static std::atomic_flag lock = ATOMIC_FLAG_INIT;
@@ -97,18 +87,8 @@ void ClientWorker::setupMsgHandlers() {
     return;
 
   try {
-    // Register and setup handlers for the Anonymous interface
-
-    uint8_t proto_id = m_msg_mapper->getProtocolID(
-        MessageProtocol::GOOGLE_ANONONYMOUS); // REG_PROTO( SDMS::Anon );
-    // Requests that require the server to take action
-    SET_MSG_HANDLER(proto_id, VersionRequest,
-                    &ClientWorker::procVersionRequest);
-
-    // Register and setup handlers for the Authenticated interface
-    proto_id = m_msg_mapper->getProtocolID(MessageProtocol::GOOGLE_AUTHORIZED);
-    SET_MSG_HANDLER(proto_id, RepoAuthzRequest,
-                    &ClientWorker::procRepoAuthzRequest);
+    SET_MSG_HANDLER(VersionRequest, &ClientWorker::procVersionRequest);
+    SET_MSG_HANDLER(RepoAuthzRequest, &ClientWorker::procRepoAuthzRequest);
 
   } catch (TraceException &e) {
     DL_ERROR(m_log_context, "exception: " << e.toString());
@@ -154,7 +134,7 @@ void ClientWorker::workerThread(LogContext log_context) {
   }();
 
   ProtoBufMap proto_map;
-  uint16_t task_list_msg_type = proto_map.getMessageType(2, "TaskListRequest");
+  uint16_t task_list_msg_type = proto_map.getMessageType("TaskListRequest");
 
   DL_DEBUG(log_context, "W" << m_tid << " m_run " << m_run);
 
@@ -186,7 +166,7 @@ void ClientWorker::workerThread(LogContext log_context) {
                    "W" << m_tid << " msg " << msg_type << " [" << uid << "]");
         }
 
-        if (uid.compare("anon") == 0 && msg_type > 0x1FF) {
+        if (uid.compare("anon") == 0 && proto_map.requiresAuth(proto_map.toString(msg_type))) {
           DL_WARNING(message_log_context,
                      "W" << m_tid
                          << " unauthorized access attempt from anon user");
@@ -194,8 +174,8 @@ void ClientWorker::workerThread(LogContext log_context) {
 
           // I know this is not great... allocating memory here slow
           // This will need to be fixed
-          auto nack = std::make_unique<Anon::NackReply>();
-          nack->set_err_code(ID_AUTHN_REQUIRED);
+          auto nack = std::make_unique<SDMS::NackReply>();
+          nack->set_err_code(AUTHN_REQUIRED);
           nack->set_err_msg("Authentication required");
           response_msg->setPayload(std::move(nack));
           client->send(*response_msg);
@@ -287,7 +267,7 @@ void ClientWorker::workerThread(LogContext log_context) {
     if (send_reply) {                                                          \
       auto msg_reply = m_msg_factory.createResponseEnvelope(*msg_request);     \
       auto nack = std::make_unique<NackReply>();                               \
-      nack->set_err_code(ID_INTERNAL_ERROR);                                   \
+      nack->set_err_code(INTERNAL_ERROR);                                      \
       nack->set_err_msg(e.what());                                             \
       msg_reply->setPayload(std::move(nack));                                  \
       return msg_reply;                                                        \
@@ -299,7 +279,7 @@ void ClientWorker::workerThread(LogContext log_context) {
     if (send_reply) {                                                          \
       auto msg_reply = m_msg_factory.createResponseEnvelope(*msg_request);     \
       auto nack = std::make_unique<NackReply>();                               \
-      nack->set_err_code(ID_INTERNAL_ERROR);                                   \
+      nack->set_err_code(INTERNAL_ERROR);                                      \
       nack->set_err_msg("Unknown exception type");                             \
       msg_reply->setPayload(std::move(nack));                                  \
       return msg_reply;                                                        \
@@ -318,7 +298,7 @@ void ClientWorker::workerThread(LogContext log_context) {
                                  "unregistered msg type).");                   \
     auto msg_reply = m_msg_factory.createResponseEnvelope(*msg_request);       \
     auto nack = std::make_unique<NackReply>();                                 \
-    nack->set_err_code(ID_BAD_REQUEST);                                        \
+    nack->set_err_code(BAD_REQUEST);                                           \
     nack->set_err_msg(                                                         \
         "Message parse failed (malformed or unregistered msg type)");          \
     msg_reply->setPayload(std::move(nack));                                    \
@@ -336,19 +316,19 @@ ClientWorker::procVersionRequest(const std::string &a_uid,
   (void)a_uid;
   DL_INFO(log_context, "Version request received.");
 
-  reply.set_release_year(DATAFED_RELEASE_YEAR);
-  reply.set_release_month(DATAFED_RELEASE_MONTH);
-  reply.set_release_day(DATAFED_RELEASE_DAY);
-  reply.set_release_hour(DATAFED_RELEASE_HOUR);
-  reply.set_release_minute(DATAFED_RELEASE_MINUTE);
+  reply.set_release_year(  release::YEAR);
+  reply.set_release_month( release::MONTH);
+  reply.set_release_day(   release::DAY);
+  reply.set_release_hour(  release::HOUR);
+  reply.set_release_minute(release::MINUTE);
 
-  reply.set_api_major(DATAFED_COMMON_PROTOCOL_API_MAJOR);
-  reply.set_api_minor(DATAFED_COMMON_PROTOCOL_API_MINOR);
-  reply.set_api_patch(DATAFED_COMMON_PROTOCOL_API_PATCH);
+  reply.set_api_major(protocol::version::MAJOR);
+  reply.set_api_minor(protocol::version::MINOR);
+  reply.set_api_patch(protocol::version::PATCH);
 
-  reply.set_component_major(MockCore::version::MAJOR);
-  reply.set_component_minor(MockCore::version::MINOR);
-  reply.set_component_patch(MockCore::version::PATCH);
+  reply.set_component_major(version::MAJOR);
+  reply.set_component_minor(version::MINOR);
+  reply.set_component_patch(version::PATCH);
 
   PROC_MSG_END(log_context);
 }

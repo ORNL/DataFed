@@ -1997,6 +1997,326 @@ def _taskView(task_id):
 
 
 # =============================================================================
+# ---------------------------------------------------------- Schema Functions
+# =============================================================================
+
+
+@_cli.command(name="schema", cls=_AliasedGroup, help="Schema commands.")
+def _schema():
+    pass
+
+
+@_schema.command(name="view")
+@click.argument("schema_id", metavar="ID")
+@click.option(
+    "-r", "--resolve", is_flag=True, help="Resolve schema references."
+)
+@_global_output_options
+def _schemaView(schema_id, resolve):
+    """
+    View schema information. Displays schema definition, description, owner,
+    and other administrative fields. ID is the schema identifier, optionally
+    including a version suffix (e.g. "my_schema:1").
+    """
+
+    reply = _capi.schemaView(_resolve_id(schema_id), resolve=resolve)
+    _generic_reply_handler(reply, _print_schema)
+
+
+@_schema.command(name="create")
+@click.argument("schema_id", metavar="ID")
+@click.option(
+    "-D",
+    "--definition",
+    type=str,
+    required=False,
+    help="Inline JSON schema definition string.",
+)
+@click.option(
+    "-F",
+    "--definition-file",
+    type=str,
+    required=False,
+    help="Path to local JSON file containing schema definition.",
+)
+@click.option("-d", "--description", type=str, required=False, help="Description text.")
+@click.option(
+    "-p", "--public", is_flag=True, required=False, help="Make schema publicly visible."
+)
+@click.option(
+    "-s", "--system", is_flag=True, required=False, help="Create as a system schema."
+)
+@click.option(
+    "-t", "--type", "schema_type",
+    type=click.Choice(["json-schema", "linkml"]),
+    default="json-schema",
+    help="Schema engine type (default: json-schema).",
+)
+@click.option(
+    "--format", "schema_format",
+    type=click.Choice(["json", "yaml"]),
+    default="json",
+    help="Schema definition format (default: json).",
+)
+@_global_output_options
+def _schemaCreate(schema_id, definition, definition_file, description,
+                  public, system, schema_type, schema_format):
+    """
+    Create a new metadata schema. A JSON schema definition is required and
+    may be provided inline via --definition or read from a file via
+    --definition-file. Cannot specify both.
+    """
+ 
+    if definition and definition_file:
+        raise Exception(
+            "Cannot specify both --definition and --definition-file options."
+        )
+ 
+    if not definition and not definition_file:
+        raise Exception("Must specify either --definition or --definition-file.")
+ 
+    reply = _capi.schemaCreate(
+        schema_id,
+        definition=definition,
+        definition_file=definition_file,
+        description=description,
+        public=public,
+        system=system,
+        schema_type=schema_type,
+        schema_format=schema_format,
+    )
+    _generic_reply_handler(reply, _print_ack_reply)
+
+
+@_schema.command(name="revise")
+@click.argument("schema_id", metavar="ID")
+@click.option(
+    "-D",
+    "--definition",
+    type=str,
+    required=False,
+    help="Updated inline JSON schema definition string.",
+)
+@click.option(
+    "-F",
+    "--definition-file",
+    type=str,
+    required=False,
+    help="Path to local JSON file containing updated schema definition.",
+)
+@click.option("-d", "--description", type=str, required=False, help="Description text.")
+@click.option(
+    "-p",
+    "--public",
+    is_flag=True,
+    default=None,
+    required=False,
+    help="Make schema publicly visible.",
+)
+@click.option(
+    "-s",
+    "--system",
+    is_flag=True,
+    default=None,
+    required=False,
+    help="Set as system schema.",
+)
+@click.option(
+    "-t", "--type", "schema_type",
+    type=click.Choice(["json-schema", "linkml"]),
+    default=None, required=False,
+    help="Schema engine type.",
+)
+@_global_output_options
+def _schemaRevise(schema_id, definition, definition_file, description,
+                  public, system, schema_type):
+    """
+    Create a new revision of an existing schema. Any fields not provided are
+    carried forward from the current revision. The definition may be provided
+    inline or read from a file.
+    """
+ 
+    if definition and definition_file:
+        raise Exception(
+            "Cannot specify both --definition and --definition-file options."
+        )
+ 
+    reply = _capi.schemaRevise(
+        schema_id,
+        definition=definition,
+        definition_file=definition_file,
+        description=description,
+        public=public if public else None,
+        system=system if system else None,
+        schema_type=schema_type,
+    )
+    _generic_reply_handler(reply, _print_ack_reply)
+
+
+@_schema.command(name="update")
+@click.argument("schema_id", metavar="ID")
+@click.option("-n", "--new-id", type=str, required=False, help="Rename schema to new ID.")
+@click.option(
+    "-D",
+    "--definition",
+    type=str,
+    required=False,
+    help="Updated inline JSON schema definition string.",
+)
+@click.option(
+    "-F",
+    "--definition-file",
+    type=str,
+    required=False,
+    help="Path to local JSON file containing updated schema definition.",
+)
+@click.option("-d", "--description", type=str, required=False, help="Description text.")
+@click.option(
+    "-p",
+    "--public",
+    is_flag=True,
+    default=None,
+    required=False,
+    help="Make schema publicly visible.",
+)
+@click.option(
+    "-s",
+    "--system",
+    is_flag=True,
+    default=None,
+    required=False,
+    help="Set as system schema.",
+)
+@click.option(
+    "-t", "--type", "schema_type",
+    type=click.Choice(["json-schema", "linkml"]),
+    default=None, required=False,
+    help="Schema engine type.",
+)
+@_global_output_options
+def _schemaUpdate(
+    schema_id, new_id, definition, definition_file, description,
+    public, system, schema_type
+):
+    """
+    Update an existing schema in place without creating a new revision.
+    The definition may be provided inline or read from a file.
+    """
+ 
+    if definition and definition_file:
+        raise Exception(
+            "Cannot specify both --definition and --definition-file options."
+        )
+ 
+    reply = _capi.schemaUpdate(
+        schema_id,
+        new_id=new_id,
+        definition=definition,
+        definition_file=definition_file,
+        description=description,
+        public=public if public else None,
+        system=system if system else None,
+        schema_type=schema_type,
+    )
+    _generic_reply_handler(reply, _print_ack_reply)
+
+
+@_schema.command(name="delete")
+@click.option("-f", "--force", is_flag=True, help="Delete without confirmation.")
+@click.argument("schema_id", metavar="ID")
+def _schemaDelete(schema_id, force):
+    """
+    Delete a schema by ID.
+    """
+
+    if not force:
+        if not _interactive:
+            raise Exception("Cannot confirm deletion while running non-interactively.")
+
+        if not click.confirm("Confirm delete schema?"):
+            return
+
+    reply = _capi.schemaDelete(_resolve_id(schema_id))
+    _generic_reply_handler(reply, _print_ack_reply)
+
+
+@_schema.command(name="search")
+@click.option("--id", "schema_id", type=str, required=False, help="Schema ID query text.")
+@click.option("--text", type=str, required=False, help="Text search in description.")
+@click.option("--owner", type=str, required=False, help="Filter by owner ID.")
+@click.option(
+    "--sort",
+    type=str,
+    required=False,
+    help="Sort option (id, title, owner, ct, ut, text).",
+)
+@click.option(
+    "--sort-rev",
+    is_flag=True,
+    required=False,
+    help="Sort in reverse order (not available for text).",
+)
+@click.option("-O", "--offset", default=0, help="Start list at offset.")
+@click.option("-C", "--count", default=20, help="Limit list to count results.")
+@_global_output_options
+def _schemaSearch(schema_id, text, owner, sort, sort_rev, offset, count):
+    """
+    Search for schemas. At least one search option should be specified. Results
+    are returned as a listing of matching schemas.
+    """
+
+    reply = _capi.schemaSearch(
+        schema_id=schema_id,
+        text=text,
+        owner=owner,
+        sort=sort,
+        sort_rev=sort_rev if sort_rev else None,
+        offset=offset,
+        count=count,
+    )
+    _generic_reply_handler(reply, _print_schema_listing)
+
+
+@_schema.command(name="validate")
+@click.argument("schema_id", metavar="SCHEMA_ID")
+@click.option(
+    "-m",
+    "--metadata",
+    type=str,
+    required=False,
+    help="Inline metadata JSON string to validate.",
+)
+@click.option(
+    "-f",
+    "--metadata-file",
+    type=str,
+    required=False,
+    help="Path to local JSON file containing metadata to validate.",
+)
+@_global_output_options
+def _schemaValidate(schema_id, metadata, metadata_file):
+    """
+    Validate metadata against a schema without creating or modifying a record.
+    Useful for pre-checking metadata before using it with 'data create' or
+    'data update' with --schema-enforce. The SCHEMA_ID is the schema to
+    validate against (format: "id:version").
+    """
+
+    if metadata and metadata_file:
+        raise Exception("Cannot specify both --metadata and --metadata-file options.")
+
+    if not metadata and not metadata_file:
+        raise Exception("Must specify either --metadata or --metadata-file.")
+
+    reply = _capi.metadataValidate(
+        schema_id,
+        metadata=metadata,
+        metadata_file=metadata_file,
+    )
+    _generic_reply_handler(reply, _print_metadata_validate)
+
+
+# =============================================================================
 # ---------------------------------------------------------- Endpoint Functions
 # =============================================================================
 
@@ -2787,6 +3107,84 @@ def _print_query(message):
             "  {:<18} {}".format("Category: ", _arrayToDotted(message.query.cat_tags))
         )
 
+def _print_schema_listing(message):
+    if len(message.schema) == 0:
+        click.echo("(no schemas)")
+        return
+
+    df_idx = 1
+    global _list_items
+    _list_items = []
+
+    for s in message.schema:
+        _list_items.append(s.id)
+        pub_flag = " [pub]" if s.pub else ""
+        depr_flag = " [DEPRECATED]" if s.depr else ""
+        click.echo(
+            "{:2}. {:30} v{:<5} {:20}{}{}".format(
+                df_idx,
+                s.id,
+                s.ver,
+                s.own_nm if s.own_nm else s.own_id,
+                pub_flag,
+                depr_flag,
+            )
+        )
+        df_idx += 1
+
+    if message.total > message.offset + message.count:
+        click.echo(
+            "  [{}-{} of {}]".format(
+                message.offset + 1,
+                min(message.offset + message.count, message.total),
+                message.total,
+            )
+        )
+
+
+def _print_schema(message):
+    for s in message.schema:
+        click.echo("{:<15}{:<50}".format("ID: ", s.id))
+        click.echo("{:<15}{:<50}".format("Version: ", str(s.ver)))
+        click.echo("{:<15}{:<50}".format("Owner: ", s.own_nm if s.own_nm else s.own_id))
+        click.echo("{:<15}{:<50}".format("Public: ", "Yes" if s.pub else "No"))
+        click.echo("{:<15}{:<50}".format("Deprecated: ", "Yes" if s.depr else "No"))
+        click.echo("{:<15}{:<50}".format("Ref Count: ", str(s.cnt)))
+
+        _wrap_text(s.desc if s.desc else "", "Description:", 15)
+
+        if _verbosity == 2:
+            schema_def = getattr(s, 'def')
+            if schema_def:
+                click.echo("Definition:\n")
+                try:
+                    json_obj = jsonlib.loads(schema_def)
+                    _printJSON(json_obj, 2, 2)
+                    click.echo("\n")
+                except Exception:
+                    click.echo("  " + schema_def + "\n")
+            else:
+                click.echo("{:<15}{:<50}".format("Definition: ", "(none)"))
+
+            if len(s.uses):
+                click.echo("Uses:")
+                for ref in s.uses:
+                    click.echo("  {} v{}".format(ref.id, ref.ver))
+
+            if len(s.used_by):
+                click.echo("Used By:")
+                for ref in s.used_by:
+                    click.echo("  {} v{}".format(ref.id, ref.ver))
+
+
+def _print_metadata_validate(message):
+    if message.errors:
+        if _output_mode == _OM_TEXT:
+            click.echo("Validation FAILED:\n")
+            _wrap_text(message.errors, "", 2)
+    else:
+        if _output_mode == _OM_TEXT:
+            click.echo("Validation passed.")
 
 def _wrap_text(text, prefix, indent, compact=False):
     if len(text) == 0:

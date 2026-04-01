@@ -263,10 +263,141 @@ class TestDataFedPythonAPIRecordCRUD(unittest.TestCase):
         result = self._df_api.repoList(list_all=True)
 
 
+    def test_record_with_schema_enforcement(self):
+            """Test record create and update with schema validation and enforcement."""
+    
+            # Create a schema to use with records
+            schema_def = json.dumps({
+                "type": "object",
+                "properties": {
+                    "temperature": {"type": "number"},
+                    "pressure": {"type": "number"},
+                    "sample_id": {"type": "string"}
+                },
+                "required": ["temperature", "sample_id"]
+            })
+    
+            schema_result = self._df_api.schemaCreate(
+                "test_rec_schema",
+                definition=schema_def,
+                description="Schema for record integration test",
+            )
+
+            schema_id = schema_result[0].schema[0].id  # should be "test_rec_schema:1"
+            self.assertIn(":", schema_id, f"Expected versioned schema ID, got: {schema_id}")
+            # --- Record create with valid metadata and schema enforce ---
+            valid_metadata = json.dumps({
+                "temperature": 300.5,
+                "pressure": 101.3,
+                "sample_id": "S-001"
+            })
+    
+            data_result = self._df_api.dataCreate(
+                title="Schema Enforced Record",
+                metadata=valid_metadata,
+                schema=schema_id,
+                schema_enforce=True,
+                parent_id="root",
+            )
+    
+            rec_id = data_result[0].data[0].id
+            self.assertEqual(data_result[0].data[0].title, "Schema Enforced Record")
+            # No md_err_msg means validation passed
+            self.assertFalse(data_result[0].data[0].md_err_msg)
+    
+            # --- Record create with invalid metadata and schema enforce should fail ---
+            invalid_metadata = json.dumps({
+                "temperature": "not_a_number",
+                "sample_id": 12345
+            })
+    
+            with self.assertRaises(Exception):
+                self._df_api.dataCreate(
+                    title="Should Fail",
+                    metadata=invalid_metadata,
+                    schema=schema_id,
+                    schema_enforce=True,
+                    parent_id="root",
+                )
+    
+            # --- Record create with invalid metadata but NO enforce (warning only) ---
+            warn_result = self._df_api.dataCreate(
+                title="Schema Warn Record",
+                metadata=invalid_metadata,
+                schema=schema_id,
+                parent_id="root",
+            )
+    
+            warn_rec_id = warn_result[0].data[0].id
+            # Should have md_err_msg set but record still created
+            self.assertTrue(warn_result[0].data[0].md_err_msg)
+    
+            # --- Record update with valid metadata merge ---
+            merge_metadata = json.dumps({"pressure": 200.0})
+    
+            update_result = self._df_api.dataUpdate(
+                rec_id,
+                metadata=merge_metadata,
+                schema=schema_id,
+                schema_enforce=True,
+            )
+    
+            self.assertFalse(update_result[0].data[0].md_err_msg)
+    
+            # --- Record update with metadata set (replace) and enforce ---
+            # Missing required field "sample_id" should fail with enforce
+            incomplete_metadata = json.dumps({"temperature": 400.0})
+    
+            with self.assertRaises(Exception):
+                self._df_api.dataUpdate(
+                    rec_id,
+                    metadata=incomplete_metadata,
+                    metadata_set=True,
+                    schema=schema_id,
+                    schema_enforce=True,
+                )
+    
+            # --- Pre-validate metadata before committing ---
+            validate_result = self._df_api.metadataValidate(
+                schema_id,
+                metadata=valid_metadata,
+            )
+    
+            # No errors expected
+            self.assertFalse(validate_result[0].errors)
+    
+            validate_result_bad = self._df_api.metadataValidate(
+                schema_id,
+                metadata=invalid_metadata,
+            )
+    
+            # Errors expected
+            self.assertTrue(validate_result_bad[0].errors)
+    
+            # --- Cleanup ---
+            task_result = self._df_api.dataDelete([rec_id, warn_rec_id])
+    
+            status = task_result[0].task[0].status
+            count = 0
+            while status < 3:
+                if count > 20:
+                    break
+                time.sleep(self._timeout)
+                task_result = self._df_api.taskView(task_result[0].task[0].id)
+                status = task_result[0].task[0].status
+                count = count + 1
+    
+            self.assertEqual(status, 3)
+    
+            self._df_api.schemaDelete(schema_id)
+
+
 if __name__ == "__main__":
     suite = unittest.TestSuite()
     # Add them in the order they should be executed
     suite.addTest(TestDataFedPythonAPIRecordCRUD("test_record_create_delete"))
+    suite.addTest(TestDataFedPythonAPIRecordCRUD("test_record_with_schema_enforcement"))
+
     runner = unittest.TextTestRunner()
     result = runner.run(suite)
     # wasSuccessful() return True which is not 0
