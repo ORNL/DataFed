@@ -893,7 +893,7 @@ router
                 off +
                 "," +
                 cnt +
-                " return {_id:i._id,id:i.id,ver:i.ver,cnt:i.cnt,pub:i.pub,own_nm:i.own_nm,own_id:i.own_id," +
+                " return {_id:i._id,id:CONCAT(i.id,':',TO_STRING(i.ver)),ver:i.ver,cnt:i.cnt,pub:i.pub,own_nm:i.own_nm,own_id:i.own_id," +
                 "type: NOT_NULL(i.type, 'json-schema')," +
                 "format: NOT_NULL(i.format, 'json')}";
 
