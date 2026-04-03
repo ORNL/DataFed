@@ -1182,7 +1182,7 @@ class API:
 
             reply = self._mapi.sendRecv(msg)
 
-            if reply[0].task and wait:
+            if reply[0].HasField("task") and wait:
                 msg2 = sdms.TaskViewRequest()
                 msg2.task_id = reply[0].task.id
                 elapsed = 0
