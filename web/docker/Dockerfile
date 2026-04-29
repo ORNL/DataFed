@@ -77,14 +77,11 @@ ENV          DATAFED_DIR="$DATAFED_DIR"
 ENV            BUILD_DIR="$BUILD_DIR"
 ENV          DATAFED_DEFAULT_LOG_PATH="$DATAFED_INSTALL_PATH/logs"
 
-RUN apt update && apt install -y make g++
-
 WORKDIR ${DATAFED_DIR}
 
 USER datafed
 
 RUN mkdir -p ${DATAFED_DEFAULT_LOG_PATH}; chown root:datafed ${DATAFED_DEFAULT_LOG_PATH}; chmod -R g+rw ${DATAFED_DEFAULT_LOG_PATH}
-COPY --from=ws-build --chown=datafed:root ${DATAFED_DEPENDENCIES_ROOT}/scripts/  {DATAFED_DEPENDENCIES_ROOT}/scripts/
 
 COPY --chown=datafed:root ./scripts/generate_datafed.sh             ${BUILD_DIR}/scripts/generate_datafed.sh
 COPY --chown=datafed:root ./scripts/export_dependency_version.sh    ${BUILD_DIR}/scripts/export_dependency_version.sh
