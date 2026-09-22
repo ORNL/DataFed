@@ -36,10 +36,20 @@ build-dependencies:
 
             while [ $ELAPSED -lt $TIMEOUT ]; do
               # Get pipeline status
-              PIPELINE_STATUS=$(curl --silent --fail --show-error \
+              CURL_RESPONSE=$(curl --silent --show-error \
                 --header "PRIVATE-TOKEN: $GITLAB_DATAFED_DEPENDENCIES_REPO_API_TOKEN" \
-                "$CI_API_V4_URL/projects/$DATAFED_DEPENDENCIES_GITLAB_PROJECT_ID/pipelines/$PIPELINE_ID" | jq -r '.status')
-              
+                --write-out "\n%{http_code}" \
+                "$CI_API_V4_URL/projects/$DATAFED_DEPENDENCIES_GITLAB_PROJECT_ID/pipelines/$PIPELINE_ID")
+              CURL_HTTP_CODE=$(echo "$CURL_RESPONSE" | tail -1)
+              PIPELINE_STATUS=$(echo "$CURL_RESPONSE" | head -1 | jq -r '.status // "unknown"')
+
+              if [ "$CURL_HTTP_CODE" != "200" ]; then
+                echo "⚠️  GitLab API returned HTTP $CURL_HTTP_CODE, retrying in ${POLL_INTERVAL}s..."
+                sleep $POLL_INTERVAL
+                ELAPSED=$((ELAPSED + POLL_INTERVAL))
+                continue
+              fi
+
               echo "Pipeline $PIPELINE_ID status: $PIPELINE_STATUS (elapsed: ${ELAPSED}s)"
               
               case "$PIPELINE_STATUS" in
