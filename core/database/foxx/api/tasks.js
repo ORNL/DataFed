@@ -2091,7 +2091,7 @@ var tasks_func = (function () {
                     files = [file];
                     //console.log("rec",file.id,"first in xfr, sz:",file.size);
 
-                    for (k = j + 1; k < rm.files.length; ) {
+                    for (k = j + 1; k < rm.files.length;) {
                         file = rm.files[k];
                         if (sz + file.size <= g_lib.GLOB_MAX_XFR_SIZE) {
                             //console.log("rec",file.id,"added to xfr, sz:",file.size);

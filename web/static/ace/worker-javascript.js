@@ -1177,7 +1177,7 @@
                                         this._events.removeListener &&
                                             this.emit("removeListener", e, t));
                                 else if (o(n)) {
-                                    for (u = s; u-- > 0; )
+                                    for (u = s; u-- > 0;)
                                         if (n[u] === t || (n[u].listener && n[u].listener === t)) {
                                             r = u;
                                             break;
@@ -9669,7 +9669,7 @@
                             l = n - a,
                             c = n - o;
                         if (f < a) for (var h = 0; h < l; ++h) this[f + h] = this[a + h];
-                        else if (f > a) for (h = l; h--; ) this[f + h] = this[a + h];
+                        else if (f > a) for (h = l; h--;) this[f + h] = this[a + h];
                         if (s && e === c) ((this.length = c), this.push.apply(this, i));
                         else {
                             this.length = c + s;

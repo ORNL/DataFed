@@ -427,6 +427,7 @@ end_to_end_web_test:
         - '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"' # This loads nvm
         - nvm install 18
         - nvm use 18
+        - npm cache clean --force
         - npm install
         - sudo npx playwright install-deps
         - npx playwright install

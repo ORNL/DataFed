@@ -1196,7 +1196,7 @@
                                     (e.repeat = u =
                                         function (e, t) {
                                             var n;
-                                            for (n = ""; 0 < t; )
+                                            for (n = ""; 0 < t;)
                                                 (1 & t && (n += e), (t >>>= 1), (e += e));
                                             return n;
                                         }),
@@ -1209,7 +1209,7 @@
                                     (e.count = function (e, t) {
                                         var n, r;
                                         if (((n = r = 0), !t.length)) return 1 / 0;
-                                        for (; (r = 1 + e.indexOf(t, r)); ) n++;
+                                        for (; (r = 1 + e.indexOf(t, r));) n++;
                                         return n;
                                     }),
                                     (e.merge = function (e, t) {
@@ -2313,7 +2313,7 @@
                                                                                     0 <=
                                                                                     t.call(a, Q)
                                                                                 ) {
-                                                                                    for (; x(); )
+                                                                                    for (; x();)
                                                                                         T()
                                                                                             ? g()
                                                                                             : C()
@@ -2647,7 +2647,7 @@
                                                                                                 ],
                                                                                             )))
                                                                                 )
-                                                                                    for (; x(); ) {
+                                                                                    for (; x();) {
                                                                                         var rt =
                                                                                                 X(),
                                                                                             it =
@@ -5060,7 +5060,7 @@
                                                         key: "outdentToken",
                                                         value: function (n, r, i) {
                                                             var s, o, u, a;
-                                                            for (s = this.indent - n; 0 < n; )
+                                                            for (s = this.indent - n; 0 < n;)
                                                                 ((u =
                                                                     this.indents[
                                                                         this.indents.length - 1
@@ -5605,7 +5605,7 @@
                                                                 this.chunk.slice(0, S) !== i)
                                                             )
                                                                 return null;
-                                                            for (C = this.chunk.slice(S); ; ) {
+                                                            for (C = this.chunk.slice(S); ;) {
                                                                 var A = r.exec(C),
                                                                     O = _slicedToArray(A, 1);
                                                                 if (
@@ -6264,7 +6264,7 @@
                                                         key: "suppressSemicolons",
                                                         value: function () {
                                                             var n, r, i;
-                                                            for (i = []; ";" === this.value(); )
+                                                            for (i = []; ";" === this.value();)
                                                                 (this.tokens.pop(),
                                                                     ((n =
                                                                         null == (r = this.prev())
@@ -25420,7 +25420,7 @@
                                                     e
                                                 );
                                             };
-                                            for (var y = {}, b, w, E, S, x, T, N, C, k; ; ) {
+                                            for (var y = {}, b, w, E, S, x, T, N, C, k; ;) {
                                                 if (
                                                     ((E = n[n.length - 1]),
                                                     this.defaultActions[E]
@@ -28883,7 +28883,7 @@
                                                                         })
                                                                     );
                                                                 }
-                                                                for (r = this, a = []; ; ) {
+                                                                for (r = this, a = []; ;) {
                                                                     if (r.variable instanceof t) {
                                                                         (a.push(r),
                                                                             (r = r.variable));
@@ -37352,10 +37352,7 @@
                                             {
                                                 key: "sourceLocation",
                                                 value: function (t) {
-                                                    for (
-                                                        var n;
-                                                        !((n = this.columns[t]) || 0 >= t);
-                                                    )
+                                                    for (var n; !((n = this.columns[t]) || 0 >= t);)
                                                         t--;
                                                     return n && [n.sourceLine, n.sourceColumn];
                                                 },
@@ -37463,7 +37460,7 @@
                                                                             s++
                                                                         )
                                                                             if (((p = m[s]), !!p)) {
-                                                                                for (; b < p.line; )
+                                                                                for (; b < p.line;)
                                                                                     ((o = 0),
                                                                                         (d = !1),
                                                                                         (r += ";"),
@@ -38320,7 +38317,7 @@
                             l = n - a,
                             c = n - o;
                         if (f < a) for (var h = 0; h < l; ++h) this[f + h] = this[a + h];
-                        else if (f > a) for (h = l; h--; ) this[f + h] = this[a + h];
+                        else if (f > a) for (h = l; h--;) this[f + h] = this[a + h];
                         if (s && e === c) ((this.length = c), this.push.apply(this, i));
                         else {
                             this.length = c + s;

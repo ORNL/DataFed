@@ -264,12 +264,10 @@
                         }
 
                         // Autocomplete will create its own tag from a selection and close automatically.
-                        if (
-                            !(
-                                that.options.autocomplete.autoFocus &&
-                                that.tagInput.data("autocomplete-open")
-                            )
-                        ) {
+                        if (!(
+                            that.options.autocomplete.autoFocus &&
+                            that.tagInput.data("autocomplete-open")
+                        )) {
                             that.tagInput.autocomplete("close");
                             that.createTag(that._cleanedInput());
                         }

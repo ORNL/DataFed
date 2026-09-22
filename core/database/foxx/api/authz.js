@@ -120,6 +120,38 @@ module.exports = (function () {
         }
     };
 
+    obj.writeRecord = function (client, path) {
+        const permission = permissions.PERM_WR_DATA;
+        const path_components = pathModule.splitPOSIXPath(path);
+        const data_key = path_components.at(-1);
+
+        if (!client) {
+            throw [
+                error.ERR_PERM_DENIED,
+                "Unknown client does not have write permissions on " + path,
+            ];
+        } else if (!obj.isRecordActionAuthorized(client, data_key, permission)) {
+            throw [
+                error.ERR_PERM_DENIED,
+                "Client " + client._id + " does not have write permissions on " + path,
+            ];
+        }
+
+        let record = new Record(data_key);
+        // This does not mean the record exists in the repo it checks if an entry
+        // exists in the database.
+        if (!record.exists()) {
+            // If the record does not exist then the path would not be consistent.
+            throw [error.ERR_PERM_DENIED, "Invalid record specified: " + path];
+        }
+
+        // This will tell us if the proposed path is consistent with what we expect
+        // GridFTP will fail if the posix file path does not exist.
+        if (!record.isPathConsistent(path)) {
+            throw [record.error(), record.errorMessage()];
+        }
+    };
+
     obj.authz_strategy = {
         read: {
             [PathType.USER_PATH]: obj.none,
@@ -131,22 +163,22 @@ module.exports = (function () {
             [PathType.REPO_PATH]: obj.none,
         },
         write: {
-            [PathType.USER_PATH]: obj.none,
-            [PathType.USER_RECORD_PATH]: obj.none,
-            [PathType.PROJECT_PATH]: obj.none,
-            [PathType.PROJECT_RECORD_PATH]: obj.none,
-            [PathType.REPO_BASE_PATH]: obj.none,
-            [PathType.REPO_ROOT_PATH]: obj.none,
-            [PathType.REPO_PATH]: obj.none,
+            [PathType.USER_PATH]: obj.denied,
+            [PathType.USER_RECORD_PATH]: obj.writeRecord,
+            [PathType.PROJECT_PATH]: obj.denied,
+            [PathType.PROJECT_RECORD_PATH]: obj.writeRecord,
+            [PathType.REPO_BASE_PATH]: obj.denied,
+            [PathType.REPO_ROOT_PATH]: obj.denied,
+            [PathType.REPO_PATH]: obj.denied,
         },
         create: {
-            [PathType.USER_PATH]: obj.none,
+            [PathType.USER_PATH]: obj.denied,
             [PathType.USER_RECORD_PATH]: obj.createRecord,
-            [PathType.PROJECT_PATH]: obj.none,
+            [PathType.PROJECT_PATH]: obj.denied,
             [PathType.PROJECT_RECORD_PATH]: obj.createRecord,
-            [PathType.REPO_BASE_PATH]: obj.none,
-            [PathType.REPO_ROOT_PATH]: obj.none,
-            [PathType.REPO_PATH]: obj.none,
+            [PathType.REPO_BASE_PATH]: obj.denied,
+            [PathType.REPO_ROOT_PATH]: obj.denied,
+            [PathType.REPO_PATH]: obj.denied,
         },
         delete: {
             [PathType.USER_PATH]: obj.denied,
