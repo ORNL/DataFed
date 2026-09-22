@@ -3727,7 +3727,7 @@
                                 var n = N,
                                     r = i.INITIAL[e],
                                     s = 0;
-                                for (var o = r & 4095; o != 0; ) {
+                                for (var o = r & 4095; o != 0;) {
                                     var u,
                                         a = n < x ? S.charCodeAt(n) : 0;
                                     ++n;
@@ -9144,7 +9144,7 @@
                                 var n = N,
                                     r = i.INITIAL[e],
                                     s = 0;
-                                for (var o = r & 4095; o != 0; ) {
+                                for (var o = r & 4095; o != 0;) {
                                     var u,
                                         a = n < x ? S.charCodeAt(n) : 0;
                                     ++n;
@@ -35948,7 +35948,7 @@
                                 var n = cc,
                                     r = i.INITIAL[e],
                                     s = 0;
-                                for (var o = r & 8191; o != 0; ) {
+                                for (var o = r & 8191; o != 0;) {
                                     var u,
                                         a = n < fc ? ac.charCodeAt(n) : 0;
                                     ++n;
@@ -60203,7 +60203,7 @@
                                 var n = Zl,
                                     r = i.INITIAL[e],
                                     s = 0;
-                                for (var o = r & 4095; o != 0; ) {
+                                for (var o = r & 4095; o != 0;) {
                                     var u,
                                         a = n < Gl ? Ql.charCodeAt(n) : 0;
                                     ++n;
@@ -70292,7 +70292,7 @@
                             l = n - a,
                             c = n - o;
                         if (f < a) for (var h = 0; h < l; ++h) this[f + h] = this[a + h];
-                        else if (f > a) for (h = l; h--; ) this[f + h] = this[a + h];
+                        else if (f > a) for (h = l; h--;) this[f + h] = this[a + h];
                         if (s && e === c) ((this.length = c), this.push.apply(this, i));
                         else {
                             this.length = c + s;

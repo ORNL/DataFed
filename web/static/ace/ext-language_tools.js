@@ -430,7 +430,7 @@
                     );
                 }),
                 (this.findMatchingSnippet = function (e, t, n) {
-                    for (var r = e.length; r--; ) {
+                    for (var r = e.length; r--;) {
                         var i = e[r];
                         if (i.startRe && !i.startRe.test(t)) continue;
                         if (i.endRe && !i.endRe.test(n)) continue;
@@ -624,7 +624,7 @@
                     this.$inChange = !0;
                     var n = this.editor.session,
                         r = n.getTextRange(e.firstNonLinked);
-                    for (var i = e.length; i--; ) {
+                    for (var i = e.length; i--;) {
                         var s = e[i];
                         if (!s.linked) continue;
                         var o = t.snippetManager.tmStrFormat(r, s.original);
@@ -640,7 +640,7 @@
                     var e = this.editor.selection.lead,
                         t = this.editor.selection.anchor,
                         n = this.editor.selection.isEmpty();
-                    for (var r = this.ranges.length; r--; ) {
+                    for (var r = this.ranges.length; r--;) {
                         if (this.ranges[r].linked) continue;
                         var i = this.ranges[r].contains(e.row, e.column),
                             s = n || this.ranges[r].contains(t.row, t.column);
@@ -670,7 +670,7 @@
                     if (!this.editor.inVirtualSelectionMode) {
                         var n = this.editor.multiSelect;
                         n.toSingleRange(t.firstNonLinked.clone());
-                        for (var r = t.length; r--; ) {
+                        for (var r = t.length; r--;) {
                             if (t.hasLinkedRanges && t[r].linked) continue;
                             n.addRange(t[r].clone(), !0);
                         }
@@ -689,7 +689,7 @@
                         u = this.ranges;
                     (e.forEach(function (e, n) {
                         var r = this.$openTabstops[n] || e;
-                        for (var i = e.length; i--; ) {
+                        for (var i = e.length; i--;) {
                             var a = e[i],
                                 f = o.fromPoints(a.start, a.end || a.start);
                             (d(f.start, t),
@@ -1568,7 +1568,7 @@
                             f = [];
                         (o.forEach(function (e) {
                             var t = a[e] || [];
-                            for (var n = t.length; n--; ) {
+                            for (var n = t.length; n--;) {
                                 var r = t[n],
                                     i = r.name || r.tabTrigger;
                                 if (!i) continue;

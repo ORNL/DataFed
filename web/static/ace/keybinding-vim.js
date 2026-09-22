@@ -1775,7 +1775,7 @@ define("ace/keyboard/vim", [
                     t.inVirtualSelectionMode = !0;
                     var n = t.rangeList.ranges;
                     n.length || (n = [this.ace.multiSelect.getRange()]);
-                    for (var r = n.length; r--; ) this.ace.session.replace(n[r], e[r] || "");
+                    for (var r = n.length; r--;) this.ace.session.replace(n[r], e[r] || "");
                     t.inVirtualSelectionMode = !1;
                 }),
                 (this.getSelection = function () {
