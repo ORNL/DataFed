@@ -257,7 +257,7 @@
                             l = n - a,
                             c = n - o;
                         if (f < a) for (var h = 0; h < l; ++h) this[f + h] = this[a + h];
-                        else if (f > a) for (h = l; h--; ) this[f + h] = this[a + h];
+                        else if (f > a) for (h = l; h--;) this[f + h] = this[a + h];
                         if (s && e === c) ((this.length = c), this.push.apply(this, i));
                         else {
                             this.length = c + s;
@@ -966,7 +966,7 @@
                         (e[173] = "-"),
                         (function () {
                             var t = ["cmd", "ctrl", "alt", "shift"];
-                            for (var n = Math.pow(2, t.length); n--; )
+                            for (var n = Math.pow(2, t.length); n--;)
                                 e.KEY_MODS[n] =
                                     t
                                         .filter(function (t) {
@@ -3712,7 +3712,7 @@
                         var s,
                             o = !1,
                             u = this.$editor.commands;
-                        for (var a = this.$handlers.length; a--; ) {
+                        for (var a = this.$handlers.length; a--;) {
                             s = this.$handlers[a].handleKeyboard(this.$data, e, t, n, r);
                             if (!s || !s.command) continue;
                             (s.command == "null"
@@ -5029,7 +5029,7 @@
                         if (e.start == undefined) {
                             if (this.rangeList) {
                                 this.toSingleRange(e[0]);
-                                for (var t = e.length; t--; ) {
+                                for (var t = e.length; t--;) {
                                     var n = o.fromPoints(e[t].start, e[t].end);
                                     (e[t].isBackwards && (n.cursor = n.start),
                                         this.addRange(n, !0));
@@ -5044,7 +5044,7 @@
                     (this.isEqual = function (e) {
                         if ((e.length || this.rangeCount) && e.length != this.rangeCount) return !1;
                         if (!e.length || !this.ranges) return this.getRange().isEqual(e);
-                        for (var t = this.ranges.length; t--; )
+                        for (var t = this.ranges.length; t--;)
                             if (!this.ranges[t].isEqual(e[t])) return !1;
                         return !0;
                     }));
@@ -5386,7 +5386,7 @@
                                 var s = e[t];
                                 n && (s = s.toLowerCase());
                                 var o = s.split(r || "|");
-                                for (var u = o.length; u--; ) i[o[u]] = t;
+                                for (var u = o.length; u--;) i[o[u]] = t;
                             }),
                             Object.getPrototypeOf(i) && (i.__proto__ = null),
                             (this.$keywordList = Object.keys(i)),
@@ -6744,7 +6744,7 @@
                                     return new s(a, e.offset, a, e.offset + e.length);
                                 })),
                                 (this.cache[a] = f.length ? f : ""));
-                            for (var l = f.length; l--; )
+                            for (var l = f.length; l--;)
                                 t.drawSingleLineMarker(e, f[l].toScreenRange(n), this.clazz, i);
                         }
                     }));
@@ -6941,7 +6941,7 @@
                 }),
                 (this.addList = function (e) {
                     var t = [];
-                    for (var n = e.length; n--; ) t.push.apply(t, this.add(e[n]));
+                    for (var n = e.length; n--;) t.push.apply(t, this.add(e[n]));
                     return t;
                 }),
                 (this.substractPoint = function (e) {
@@ -9294,7 +9294,7 @@
                         t = e.replace(r, t);
                         if (n.preserveCase) {
                             t = t.split("");
-                            for (var s = Math.min(e.length, e.length); s--; ) {
+                            for (var s = Math.min(e.length, e.length); s--;) {
                                 var o = e[s];
                                 o && o.toLowerCase() != o
                                     ? (t[s] = t[s].toUpperCase())
@@ -9547,7 +9547,7 @@
                                     return { key: n.toUpperCase(), hashId: -1 };
                             }
                             var s = 0;
-                            for (var o = t.length; o--; ) {
+                            for (var o = t.length; o--;) {
                                 var u = r.KEY_MODS[t[o]];
                                 if (u == null)
                                     return (
@@ -9614,7 +9614,7 @@
                     (r.implement(this, s),
                         (this.exec = function (e, t, n) {
                             if (Array.isArray(e)) {
-                                for (var r = e.length; r--; ) if (this.exec(e[r], t, n)) return !0;
+                                for (var r = e.length; r--;) if (this.exec(e[r], t, n)) return !0;
                                 return !1;
                             }
                             typeof e == "string" && (e = this.commands[e]);
@@ -11225,7 +11225,7 @@
                                     s = this.selection.rangeList.ranges;
                                 if (i.length > s.length || i.length < 2 || !i[1])
                                     return this.commands.exec("insertstring", this, t);
-                                for (var o = s.length; o--; ) {
+                                for (var o = s.length; o--;) {
                                     var u = s[o];
                                     (u.isEmpty() || r.remove(u), r.insert(u.start, i[o]));
                                 }
@@ -12374,7 +12374,7 @@
     define("ace/undomanager", ["require", "exports", "module", "ace/range"], function (e, t, n) {
         "use strict";
         function i(e, t) {
-            for (var n = t; n--; ) {
+            for (var n = t; n--;) {
                 var r = e[n];
                 if (r && !r[0].ignore) {
                     while (n < t - 1) {
@@ -12462,7 +12462,7 @@
             return [t, e];
         }
         function d(e, t) {
-            for (var n = e.length; n--; )
+            for (var n = e.length; n--;)
                 for (var r = 0; r < t.length; r++)
                     if (!p(e[n], t[r])) {
                         while (n < e.length) {
@@ -12538,7 +12538,7 @@
         }
         function b(e, t) {
             t = l(t);
-            for (var n = e.length; n--; ) {
+            for (var n = e.length; n--;) {
                 var r = e[n];
                 for (var i = 0; i < r.length; i++) {
                     var s = r[i],
@@ -12585,7 +12585,7 @@
                 (this.markIgnored = function (e, t) {
                     t == null && (t = this.$rev + 1);
                     var n = this.$undoStack;
-                    for (var r = n.length; r--; ) {
+                    for (var r = n.length; r--;) {
                         var i = n[r][0];
                         if (i.id <= e) break;
                         i.id < t && (i.ignore = !0);
@@ -12594,7 +12594,7 @@
                 }),
                 (this.getSelection = function (e, t) {
                     var n = this.selections;
-                    for (var r = n.length; r--; ) {
+                    for (var r = n.length; r--;) {
                         var i = n[r];
                         if (i.rev < e) return (t && (i = n[r + 1]), i);
                     }
@@ -12607,7 +12607,7 @@
                     var n = this.$undoStack,
                         r = null,
                         i = 0;
-                    for (var s = n.length; s--; ) {
+                    for (var s = n.length; s--;) {
                         var o = n[s][0];
                         o.id < t && !r && (r = s + 1);
                         if (o.id <= e) {
@@ -13891,11 +13891,11 @@
         ((function () {
             ((this.$updateOpacity = function (e) {
                 var t = this.cursors;
-                for (var n = t.length; n--; ) r.setStyle(t[n].style, "opacity", e ? "" : "0");
+                for (var n = t.length; n--;) r.setStyle(t[n].style, "opacity", e ? "" : "0");
             }),
                 (this.$startCssAnimation = function () {
                     var e = this.cursors;
-                    for (var t = e.length; t--; )
+                    for (var t = e.length; t--;)
                         e[t].style.animationDuration = this.blinkInterval + "ms";
                     setTimeout(
                         function () {
@@ -15862,7 +15862,7 @@
                     }),
                     (this.updateAnchors = function (e) {
                         this.pos.onChange(e);
-                        for (var t = this.others.length; t--; ) this.others[t].onChange(e);
+                        for (var t = this.others.length; t--;) this.others[t].onChange(e);
                         this.updateMarkers();
                     }),
                     (this.updateMarkers = function () {
@@ -15879,7 +15879,7 @@
                                     )));
                             };
                         n(this.pos, this.mainClass);
-                        for (var i = this.others.length; i--; ) n(this.others[i], this.othersClass);
+                        for (var i = this.others.length; i--;) n(this.others[i], this.othersClass);
                     }),
                     (this.onCursorChange = function (e) {
                         if (this.$updating || !this.session) return;
@@ -16279,7 +16279,7 @@
                                 var t = this.rangeList.ranges.pop();
                                 (e.push(t), (this.rangeCount = 0));
                             }
-                            for (var n = e.length; n--; ) {
+                            for (var n = e.length; n--;) {
                                 var r = this.ranges.indexOf(e[n]);
                                 this.ranges.splice(r, 1);
                             }
@@ -16421,7 +16421,7 @@
                     }),
                     (this.removeSelectionMarkers = function (e) {
                         var t = this.session.$selectionMarkers;
-                        for (var n = e.length; n--; ) {
+                        for (var n = e.length; n--;) {
                             var r = e[n];
                             if (!r.marker) continue;
                             this.session.removeMarker(r.marker);
@@ -16491,7 +16491,7 @@
                         u._eventRegistry = {};
                         var h = new s(o);
                         this.inVirtualSelectionMode = !0;
-                        for (var p = f.length; p--; ) {
+                        for (var p = f.length; p--;) {
                             if (i) while (p > 0 && f[p].start.row == f[p - 1].end.row) p--;
                             (h.fromOrientedRange(f[p]),
                                 (h.index = p),
@@ -16560,7 +16560,7 @@
                         if (!i.length) return 0;
                         var s = this.multiSelect;
                         n || s.toSingleRange(i[0]);
-                        for (var o = i.length; o--; ) s.addRange(i[o], !0);
+                        for (var o = i.length; o--;) s.addRange(i[o], !0);
                         return (
                             r && s.rangeList.rangeAtPoint(r.start) && s.addRange(r, !0),
                             i.length
@@ -16592,7 +16592,7 @@
                         var t = this.session,
                             n = t.multiSelect,
                             r = n.ranges;
-                        for (var i = r.length; i--; ) {
+                        for (var i = r.length; i--;) {
                             var s = r[i];
                             if (s.isEmpty()) {
                                 var o = t.getWordRange(s.start.row, s.start.column);
@@ -16604,12 +16604,12 @@
                         }
                         n.mergeOverlappingRanges();
                         var u = [];
-                        for (var i = r.length; i--; ) {
+                        for (var i = r.length; i--;) {
                             var s = r[i];
                             u.unshift(t.getTextRange(s));
                         }
                         e < 0 ? u.unshift(u.pop()) : u.push(u.shift());
-                        for (var i = r.length; i--; ) {
+                        for (var i = r.length; i--;) {
                             var s = r[i],
                                 o = s.clone();
                             (t.replace(s, u[i]),

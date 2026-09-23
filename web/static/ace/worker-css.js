@@ -2954,12 +2954,10 @@
                                         this._readWhitespace());
                                     try {
                                         for (;;) {
-                                            if (
-                                                !(
-                                                    n.match(Tokens.SEMICOLON) ||
-                                                    (t && this._margin())
-                                                )
-                                            ) {
+                                            if (!(
+                                                n.match(Tokens.SEMICOLON) ||
+                                                (t && this._margin())
+                                            )) {
                                                 if (!this._declaration()) break;
                                                 if (!n.match(Tokens.SEMICOLON)) break;
                                             }
@@ -6828,7 +6826,7 @@
                             l = n - a,
                             c = n - o;
                         if (f < a) for (var h = 0; h < l; ++h) this[f + h] = this[a + h];
-                        else if (f > a) for (h = l; h--; ) this[f + h] = this[a + h];
+                        else if (f > a) for (h = l; h--;) this[f + h] = this[a + h];
                         if (s && e === c) ((this.length = c), this.push.apply(this, i));
                         else {
                             this.length = c + s;

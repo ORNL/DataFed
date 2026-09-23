@@ -10,9 +10,7 @@ const base_url = `${baseUrl}/`;
 
 after(function () {
     // cleanup collections if needed
-    const collections = [
-        /* list collections to truncate */
-    ];
+    const collections = [/* list collections to truncate */];
     collections.forEach((name) => {
         let col = db._collection(name);
         if (col) col.truncate();
@@ -22,9 +20,7 @@ after(function () {
 describe("unit_version_router: the Foxx microservice version/ endpoint", () => {
     beforeEach(() => {
         // ensure collections exist & trimmed/initialized
-        const collections = [
-            /* list collections */
-        ];
+        const collections = [/* list collections */];
         collections.forEach((name) => {
             let col = db._collection(name);
             if (col) {
