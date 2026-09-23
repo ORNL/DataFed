@@ -669,10 +669,7 @@ the registration page.
                                     logger.info(
                                         "/ui/authn",
                                         getCurrentLineNumber(),
-                                        "User: " +
-                                            uid +
-                                            " verified, mapped to: " +
-                                            username,
+                                        "User: " + uid + " verified, mapped to: " + username,
                                     );
 
                                     // Store only data needed for active session
