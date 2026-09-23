@@ -84,6 +84,46 @@ module.exports = (function () {
         const permission = permissions.PERM_NONE;
     };
 
+    /**
+     * Authorizes access to a user's repository folder.
+     *
+     * User folders are private to their owner, except for DataFed administrators.
+     */
+    obj.readUserFolder = function (client, path) {
+        const path_components = pathModule.splitPOSIXPath(path);
+        const user_id = "u/" + path_components.at(-1);
+
+        if (!client || !permissions.hasAdminPermUser(client, user_id)) {
+            throw [
+                error.ERR_PERM_DENIED,
+                "Client " + client?._id + " does not have read permissions on " + path,
+            ];
+        }
+    };
+
+    /**
+     * Authorizes access to a project's repository folder.
+     *
+     * Any project member, manager, owner, or DataFed administrator may see the
+     * folder. Non-members must not be able to discover project contents through
+     * the repository even if they have a valid Globus identity.
+     */
+    obj.readProjectFolder = function (client, path) {
+        const path_components = pathModule.splitPOSIXPath(path);
+        const project_id = "p/" + path_components.at(-1);
+
+        if (
+            !client ||
+            (!client.is_admin &&
+                g_lib.getProjectRole(client._id, project_id) === g_lib.PROJ_NO_ROLE)
+        ) {
+            throw [
+                error.ERR_PERM_DENIED,
+                "Client " + client?._id + " does not have read permissions on " + path,
+            ];
+        }
+    };
+
     obj.denied = function (client, path) {
         throw error.ERR_PERM_DENIED;
     };
@@ -154,9 +194,9 @@ module.exports = (function () {
 
     obj.authz_strategy = {
         read: {
-            [PathType.USER_PATH]: obj.none,
+            [PathType.USER_PATH]: obj.readUserFolder,
             [PathType.USER_RECORD_PATH]: obj.readRecord,
-            [PathType.PROJECT_PATH]: obj.none,
+            [PathType.PROJECT_PATH]: obj.readProjectFolder,
             [PathType.PROJECT_RECORD_PATH]: obj.readRecord,
             [PathType.REPO_BASE_PATH]: obj.none,
             [PathType.REPO_ROOT_PATH]: obj.none,

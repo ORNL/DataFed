@@ -199,6 +199,24 @@ function defaultWorkingSetupProject() {
     });
 }
 
+function addUserWithIdentity(user_key, uuid, is_admin = false) {
+    const user_id = "u/" + user_key;
+    const uuid_id = "uuid/" + uuid;
+
+    g_db.u.save({
+        _key: user_key,
+        _id: user_id,
+        is_admin: is_admin,
+    });
+    g_db.uuid.save({ _id: uuid_id });
+    g_db.ident.save({
+        _from: user_id,
+        _to: uuid_id,
+    });
+
+    return user_id;
+}
+
 // NOTE: describe block strings are compared against test specification during test call, not file name
 describe("unit_authz_router: the Foxx microservice authz_router", () => {
     beforeEach(() => {
@@ -211,6 +229,7 @@ describe("unit_authz_router: the Foxx microservice authz_router", () => {
         g_db.g.truncate();
         g_db.p.truncate();
         g_db.owner.truncate();
+        g_db.admin.truncate();
         g_db.member.truncate();
         g_db.d.truncate();
         g_db.alloc.truncate();
@@ -229,6 +248,7 @@ describe("unit_authz_router: the Foxx microservice authz_router", () => {
             "g",
             "p",
             "owner",
+            "admin",
             "member",
             "d",
             "alloc",
@@ -356,6 +376,88 @@ describe("unit_authz_router: the Foxx microservice authz_router", () => {
 
         // assert
         expect(response.status).to.equal(204);
+    });
+
+    it("unit_authz_router: gridftp read action allows a user to see their own folder.", () => {
+        defaultWorkingSetup();
+        const user_uuid = "AAAAAAAA-BBBB-CCCC-DDDD-111111111111";
+        const user_key = "george";
+        addUserWithIdentity(user_key, user_uuid);
+        const user_folder_path = repo_path + "/user/" + user_key;
+        const request_string =
+            `${authz_base_url}/gridftp?client=` +
+            user_uuid +
+            `&repo=` +
+            encodeURIComponent(repo_id) +
+            `&file=` +
+            encodeURIComponent(user_folder_path) +
+            `&act=read`;
+
+        const response = request.get(request_string);
+
+        expect(response.status).to.equal(204);
+    });
+
+    it("unit_authz_router: gridftp read action denies a user access to another user's folder.", () => {
+        defaultWorkingSetup();
+        const other_uuid = "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE";
+        addUserWithIdentity("george", other_uuid);
+        const user_folder_path = repo_path + "/user/" + james_key;
+        const request_string =
+            `${authz_base_url}/gridftp?client=` +
+            other_uuid +
+            `&repo=` +
+            encodeURIComponent(repo_id) +
+            `&file=` +
+            encodeURIComponent(user_folder_path) +
+            `&act=read`;
+
+        const response = request.get(request_string);
+
+        expect(response.status).to.equal(400);
+    });
+
+    it("unit_authz_router: gridftp read action allows a project member to see the project folder.", () => {
+        defaultWorkingSetupProject();
+        const member_uuid = "AAAAAAAA-BBBB-CCCC-DDDD-FFFFFFFFFFFF";
+        const member_id = addUserWithIdentity("george", member_uuid);
+        const members_group = g_db.g.firstExample({ uid: project_id, gid: "members" });
+        g_db.member.save({
+            _from: members_group._id,
+            _to: member_id,
+        });
+        const project_folder_path = repo_path + "/project/" + project_key;
+        const request_string =
+            `${authz_base_url}/gridftp?client=` +
+            member_uuid +
+            `&repo=` +
+            encodeURIComponent(repo_id) +
+            `&file=` +
+            encodeURIComponent(project_folder_path) +
+            `&act=read`;
+
+        const response = request.get(request_string);
+
+        expect(response.status).to.equal(204);
+    });
+
+    it("unit_authz_router: gridftp read action denies a non-member access to a project folder.", () => {
+        defaultWorkingSetupProject();
+        const nonmember_uuid = "AAAAAAAA-BBBB-CCCC-DDDD-GGGGGGGGGGGG";
+        addUserWithIdentity("george", nonmember_uuid);
+        const project_folder_path = repo_path + "/project/" + project_key;
+        const request_string =
+            `${authz_base_url}/gridftp?client=` +
+            nonmember_uuid +
+            `&repo=` +
+            encodeURIComponent(repo_id) +
+            `&file=` +
+            encodeURIComponent(project_folder_path) +
+            `&act=read`;
+
+        const response = request.get(request_string);
+
+        expect(response.status).to.equal(400);
     });
     //
     // ===== PERM CHECK TESTS =====
