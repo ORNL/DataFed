@@ -672,13 +672,7 @@ the registration page.
                                         "User: " +
                                             uid +
                                             " verified, mapped to: " +
-                                            username +
-                                            " acc:" +
-                                            xfr_token.access_token +
-                                            ", ref: " +
-                                            xfr_token.refresh_token +
-                                            ", exp:" +
-                                            xfr_token.expires_in,
+                                            username,
                                     );
 
                                     // Store only data needed for active session
