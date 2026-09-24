@@ -792,7 +792,7 @@ the registration page.
     );
 });
 
-app.get("/api/usr/register", (a_req, a_resp) => {
+app.post("/api/usr/register", (a_req, a_resp) => {
     logger.debug("/api/usr/register", getCurrentLineNumber(), "Starting register.");
 
     if (!a_req.session.uid) {
@@ -813,7 +813,7 @@ app.get("/api/usr/register", (a_req, a_resp) => {
             "",
             {
                 uid: a_req.session.uid,
-                password: a_req.query.pw,
+                password: a_req.body.password,
                 name: a_req.session.name,
                 email: a_req.session.email,
                 uuid: a_req.session.uuids,
@@ -927,12 +927,12 @@ app.get("/api/usr/view", (a_req, a_resp) => {
     );
 });
 
-app.get("/api/usr/update", (a_req, a_resp) => {
-    var params = { uid: a_req.query.uid };
-    if (a_req.query.email != undefined) params.email = a_req.query.email;
-    if (a_req.query.pw != undefined) params.password = a_req.query.pw;
-    if (a_req.query.opts != undefined) {
-        params.options = a_req.query.opts;
+app.post("/api/usr/update", (a_req, a_resp) => {
+    var params = { uid: a_req.body.uid };
+    if (a_req.body.email != undefined) params.email = a_req.body.email;
+    if (a_req.body.password != undefined) params.password = a_req.body.password;
+    if (a_req.body.options != undefined) {
+        params.options = a_req.body.options;
     }
 
     sendMessage("UserUpdateRequest", params, a_req, a_resp, function (reply) {

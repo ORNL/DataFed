@@ -492,11 +492,7 @@ export function userListCollab_url(a_offset, a_count) {
 }
 
 export function userRegister(a_password, a_cb) {
-    _asyncGet(
-        "/api/usr/register" + (a_password ? "?pw=" + encodeURIComponent(a_password) : ""),
-        null,
-        a_cb,
-    );
+    _asyncPost("/api/usr/register", { password: a_password }, a_cb);
 }
 
 export function userFindByName_url(a_search_word, a_offset, a_count) {
@@ -534,15 +530,13 @@ export function userRevokeCredentials(a_cb) {
 }
 
 export function userUpdate(a_uid, a_pw, a_email, a_opts, a_cb) {
-    _asyncGet(
-        "/api/usr/update?uid=" +
-            encodeURIComponent(a_uid) +
-            (a_pw ? "&pw=" + encodeURIComponent(a_pw) : "") +
-            (a_email ? "&email=" + encodeURIComponent(a_email) : "") +
-            (a_opts ? "&opts=" + encodeURIComponent(JSON.stringify(a_opts)) : ""),
-        null,
-        a_cb,
-    );
+    const data = { uid: a_uid };
+
+    if (a_pw) data.password = a_pw;
+    if (a_email) data.email = a_email;
+    if (a_opts) data.options = a_opts;
+
+    _asyncPost("/api/usr/update", data, a_cb);
 }
 
 export function annotationView_url(a_id) {
