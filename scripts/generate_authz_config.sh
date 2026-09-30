@@ -25,6 +25,9 @@ Help() {
   echo "-p, --port                          The DataFed port."
   echo "-u, --user                          The user the authz module will run as."
   echo "-g, --globus-collection-base-path   The POSIX path to the Guest Globus Collection."
+  echo "    --relative-path-to-repo         Path between the collection root and the repo"
+  echo "                                    directory. Omit when the repo directory sits"
+  echo "                                    directly under the collection root."
 }
 
 REPO_ID="datafed-home"
@@ -55,13 +58,19 @@ else
   local_DATAFED_GCS_COLLECTION_BASE_PATH=$(printenv DATAFED_GCS_COLLECTION_BASE_PATH)
 fi
 
+if [ -z "${DATAFED_GCS_RELATIVE_PATH_TO_REPO}" ]; then
+  local_DATAFED_REL_PATH_TO_REPO=""
+else
+  local_DATAFED_REL_PATH_TO_REPO=$(printenv DATAFED_GCS_RELATIVE_PATH_TO_REPO)
+fi
+
 if [ -z "${DATAFED_GLOBUS_REPO_USER}" ]; then
   local_DATAFED_AUTHZ_USER="$DATAFED_GLOBUS_REPO_USER"
 else
   local_DATAFED_AUTHZ_USER=$(printenv DATAFED_GLOBUS_REPO_USER)
 fi
 
-VALID_ARGS=$(getopt -o hr:d:g: --long 'help',repo-id:,user:,domain:,globus-collection-path -- "$@")
+VALID_ARGS=$(getopt -o hr:d:g: --long 'help',repo-id:,user:,domain:,globus-collection-path,relative-path-to-repo: -- "$@")
 if [[ $? -ne 0 ]]; then
   exit 1
 fi
@@ -97,6 +106,11 @@ while [ : ]; do
     local_DATAFED_GCS_COLLECTION_BASE_PATH=$2
     shift 2
     ;;
+  --relative-path-to-repo)
+    echo "Processing 'relative path to repo' option. Input argument is '$2'"
+    local_DATAFED_REL_PATH_TO_REPO=$2
+    shift 2
+    ;;
   --)
     shift
     break
@@ -121,6 +135,12 @@ log_path=${local_DATAFED_LOG_PATH}/datafed-gsi-authz.log
 user=$local_DATAFED_AUTHZ_USER
 globus-collection-path=$local_DATAFED_GCS_COLLECTION_BASE_PATH
 EOF
+
+# Optional by design: omitted entirely when empty — an empty
+# 'relative_path_to_repo=' line would be rejected by the authz module.
+if [ -n "$local_DATAFED_REL_PATH_TO_REPO" ]; then
+  echo "relative_path_to_repo=${local_DATAFED_REL_PATH_TO_REPO}" >>"$PATH_TO_CONFIG_DIR/$CONFIG_FILE_NAME"
+fi
 
 echo
 echo "Config file is being placed here: $PATH_TO_CONFIG_DIR/${CONFIG_FILE_NAME}"

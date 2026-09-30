@@ -47,6 +47,49 @@ function validateAndNormalizeRepoPath(obj) {
     return obj.path; // return the normalized path if needed
 }
 
+/**
+ * Repository paths are interpreted per GridFTP endpoint: the authz route
+ * resolves which repo owns a file by longest path prefix among the repos on
+ * the requesting endpoint. If two repos on the same endpoint have nested or
+ * identical paths, that resolution is ambiguous. The nested repo's root
+ * becomes a directory inside the outer repo, and users of one repo can be
+ * locked out of, or see the listing of, directories belonging to the other.
+ *
+ * Throws if a_path is equal to, above, or below the path of any other repo
+ * on a_endpoint. Paths are compared by whole path components: /data/B and
+ * /data/B2 do not overlap; /data/B and /data/B/C do.
+ *
+ * @param {string} a_endpoint - endpoint the repo is served by
+ * @param {string} a_path - repo path (absolute within the collection)
+ * @param {string} [a_exclude_id] - repo being updated, excluded from the check
+ */
+function assertNoRepoPathOverlap(a_endpoint, a_path, a_exclude_id) {
+    const norm = (p) => p.replace(/\/+$/, "") + "/";
+    const candidate = norm(a_path);
+
+    g_db.repo
+        .byExample({ endpoint: a_endpoint })
+        .toArray()
+        .filter((r) => r._id !== a_exclude_id && r.path)
+        .forEach((r) => {
+            const existing = norm(r.path);
+            if (candidate.startsWith(existing) || existing.startsWith(candidate)) {
+                throw [
+                    error.ERR_INVALID_PARAM,
+                    "Repository path " +
+                        a_path +
+                        " overlaps repository " +
+                        r._id +
+                        " (" +
+                        r.path +
+                        ") on endpoint " +
+                        a_endpoint +
+                        ". Repositories on the same endpoint must not be nested.",
+                ];
+            }
+        });
+}
+
 router
     .get("/list", function (req, res) {
         var client;
@@ -223,9 +266,17 @@ router
                         g_lib.procInputParam(req.body, "domain", false, obj);
                         validateAndNormalizeRepoPath(obj);
 
+                        if (!obj.endpoint) {
+                            throw [
+                                error.ERR_INVALID_PARAM,
+                                "A Globus repository requires an endpoint.",
+                            ];
+                        }
+                        assertNoRepoPathOverlap(obj.endpoint, obj.path);
+
                         if (req.body.exp_path) {
                             obj.exp_path = req.body.exp_path;
-                            if (!obj.exp_path.endsWith("/")) obj.path += "/";
+                            if (!obj.exp_path.endsWith("/")) obj.exp_path += "/";
                         }
                     }
 
@@ -364,6 +415,26 @@ router
                     if (req.body.address) obj.address = req.body.address;
 
                     if (req.body.endpoint) obj.endpoint = req.body.endpoint;
+
+                    // Overlap is a property of the repo's final state: a path
+                    // change, an endpoint change, or both can create one. Check
+                    // the merged result, not just the fields in this request.
+                    const current = g_db.repo.document(req.body.id);
+                    const final_path = obj.path || current.path;
+                    const final_endpoint = obj.endpoint || current.endpoint;
+                    if (final_path) {
+                        if (!final_endpoint) {
+                            throw [
+                                error.ERR_INVALID_PARAM,
+                                "A repository with a path requires an endpoint.",
+                            ];
+                        }
+                        assertNoRepoPathOverlap(final_endpoint, final_path, req.body.id);
+                    }
+
+                    var repo = g_db._update(req.body.id, obj, {
+                        returnNew: true,
+                    });
 
                     var repo = g_db._update(req.body.id, obj, {
                         returnNew: true,

@@ -186,19 +186,37 @@ class Repo {
         return PathType.UNKNOWN;
     }
 
-    static resolveFromPath(file_path) {
+    /**
+     * Resolve the repo that owns file_path by longest path prefix.
+     *
+     * Repo paths are only meaningful relative to the GridFTP endpoint that
+     * serves them: /mnt/datafed on endpoint E1 and /mnt/datafed on endpoint
+     * E2 are unrelated directories on different hosts. When a_endpoint is
+     * given, only repos served by that endpoint are considered, so a request
+     * from E1 can never resolve to a repo hosted on E2.
+     *
+     * @param {string} file_path - canonical POSIX path
+     * @param {string} [a_endpoint] - endpoint of the requesting GridFTP server
+     * @returns {Repo}
+     */
+    static resolveFromPath(file_path, a_endpoint) {
         var canonical = pathModule.normalizePOSIXPath(file_path);
 
         if (canonical !== file_path) {
             throw [error.ERR_PERM_DENIED, "Path contains invalid sequences: " + file_path];
         }
 
-        var repos = g_db.repo.all().toArray();
+        var repos = a_endpoint
+            ? g_db.repo.byExample({ endpoint: a_endpoint }).toArray()
+            : g_db.repo.all().toArray();
         var best_match = null;
         var best_length = 0;
 
         for (var i = 0; i < repos.length; i++) {
             var repo_path = repos[i].path;
+            if (!repo_path) {
+                continue;
+            }
             if (repo_path.charAt(repo_path.length - 1) !== "/") {
                 repo_path += "/";
             }

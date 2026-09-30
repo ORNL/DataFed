@@ -18,6 +18,10 @@
 #include "common/envelope.pb.h"
 #include "common/TraceException.hpp"
 
+// Standard includes
+#include <cstring>
+#include <string>
+
 extern "C" {
 #include "Config.h"
 }
@@ -28,6 +32,8 @@ public:
   // The below settings are simply for testing and are not
   // used in anyway in a production environment.
   ConfigFixture() {
+    // Mirror loadConfig(): zero the whole struct so every field starts empty.
+    std::memset(&config, 0, sizeof(config));
     std::string repo_id = "datafed-one-repo-to-rule-them-all";
     std::string server_addr = "tcp://ruler:7513";
     std::string pub_key = "=+r^&Qc&}f<Pho7ViJwVM5(Ze^o%UnnyA:XjF}7Q";
@@ -121,10 +127,10 @@ BOOST_AUTO_TEST_CASE(TestIsTestPath_LongerPath) {
 
 BOOST_AUTO_TEST_CASE(TestIsTestPath_NoTestPath) {
   SDMS::LogContext log_context;
-  // Setup a valid test path
+  // No test path configured
   SDMS::AuthzWorker worker(&config, log_context);
 
-  // Test when path is shorter should be valid
+  // Without a test path, nothing should match
   BOOST_CHECK(!worker.isTestPath("/valid/test/path/foo"));
 }
 
@@ -150,6 +156,16 @@ BOOST_AUTO_TEST_CASE(InvalidPathNoPrefixTest) {
   SDMS::AuthzWorker worker(&config, log_context);
   std::string invalid_path = "/wrong/root/subdir/file.txt";
   BOOST_CHECK(worker.isPathValid(invalid_path) == false);
+}
+
+BOOST_AUTO_TEST_CASE(InvalidPathPartialComponentTest) {
+  // A sibling directory sharing a character prefix with the collection root
+  // is NOT inside the collection. Fails until isPathValid requires '/' or
+  // end-of-string immediately after the root prefix.
+  SDMS::LogContext log_context;
+  SDMS::AuthzWorker worker(&config, log_context);
+  std::string sibling_path = "/globus/rootkit/file.txt";
+  BOOST_CHECK(worker.isPathValid(sibling_path) == false);
 }
 
 BOOST_AUTO_TEST_CASE(ExactRootPathTest) {
@@ -338,6 +354,17 @@ BOOST_AUTO_TEST_CASE(GetAuthzPathRootPathTest) {
   BOOST_CHECK_EQUAL(worker.getAuthzPath(root_path), expected_result);
 }
 
+BOOST_AUTO_TEST_CASE(GetAuthzPathRootPathNoTrailingSlashTest) {
+  // The collection root without a trailing slash yields the EMPTY string.
+  // isRepoAncestor() depends on treating "" as the collection root.
+  SDMS::LogContext log_context;
+  SDMS::AuthzWorker worker(&config, log_context);
+  char root_path[] = "ftp://hostname/globus/root";
+  std::string expected_result = "";
+
+  BOOST_CHECK_EQUAL(worker.getAuthzPath(root_path), expected_result);
+}
+
 BOOST_AUTO_TEST_CASE(GetAuthzPathDeepPathTest) {
   // Test a valid full FTP path with a deep path
   SDMS::LogContext log_context;
@@ -364,7 +391,6 @@ BOOST_AUTO_TEST_CASE(ProcessResponseWithError) {
   response.error_msg = "Sample error message";
 
   BOOST_CHECK_EQUAL(worker.processResponse(response), 1);
-  // Verify that DL_ERROR was called with appropriate error message
 }
 
 BOOST_AUTO_TEST_CASE(ProcessResponseWithNullMessage) {
@@ -376,7 +402,6 @@ BOOST_AUTO_TEST_CASE(ProcessResponseWithNullMessage) {
   response.error = false;
 
   BOOST_CHECK_THROW(worker.processResponse(response), TraceException);
-  // Verify that DL_ERROR was called with the "message is not defined" error
 }
 
 BOOST_AUTO_TEST_CASE(ProcessResponseWithValidMessage) {
@@ -438,9 +463,134 @@ BOOST_AUTO_TEST_CASE(ProcessResponseWithNackReply) {
 
   SDMS::LogContext log_context;
   SDMS::AuthzWorker worker(&config, log_context);
-  // Verify that DL_DEBUG was called with "Received NACK reply" for NACK case
+  // A NACK from the core is an authorization denial: processResponse
+  // returns 1 (and logs the NACK's reason).
   BOOST_CHECK_EQUAL(worker.processResponse(response), 1);
-  // Verify error occurs
+}
+
+// ---------------------------------------------------------------------------
+// isRepoAncestor
+//
+// NOTE: name retained for compatibility; semantics are now "is the collection
+// root". It operates on COLLECTION-RELATIVE paths (the output of
+// getAuthzPath()), never on raw FTP URLs. The collection root is the ONLY
+// path decided locally — the callout has no knowledge of repo layout.
+// Everything below the root is forwarded to the core, which resolves the
+// owning repo from the collection-relative path (repo.path).
+// ---------------------------------------------------------------------------
+
+// Collection root "/" (the dev environment: globus-collection-path=/).
+BOOST_AUTO_TEST_CASE(IsRepoAncestor_RootIsSlash) {
+  SDMS::LogContext log_context;
+  std::strcpy(config.globus_collection_path, "/");
+  SDMS::AuthzWorker worker(&config, log_context);
+
+  char url_root[] = "ftp://host_name/";
+  BOOST_CHECK(worker.isRepoAncestor(worker.getAuthzPath(url_root)));
+
+  // Below the root: always the core's decision, however ancestor-like.
+  char url_mnt[] = "ftp://host_name/mnt";
+  BOOST_CHECK(!worker.isRepoAncestor(worker.getAuthzPath(url_mnt)));
+
+  char url_base[] = "ftp://host_name/mnt/collection_root/";
+  BOOST_CHECK(!worker.isRepoAncestor(worker.getAuthzPath(url_base)));
+
+  char url_repo[] = "ftp://host_name/mnt/collection_root/repo_id";
+  BOOST_CHECK(!worker.isRepoAncestor(worker.getAuthzPath(url_repo)));
+
+  char url_record[] = "ftp://host_name/mnt/collection_root/repo_id/user/u1/f";
+  BOOST_CHECK(!worker.isRepoAncestor(worker.getAuthzPath(url_record)));
+}
+
+// Real collection root path.
+BOOST_AUTO_TEST_CASE(IsRepoAncestor_RealCollectionPath) {
+  SDMS::LogContext log_context;
+  std::strcpy(config.globus_collection_path, "/mnt/collection_root");
+  SDMS::AuthzWorker worker(&config, log_context);
+
+  // getAuthzPath() yields "" (no trailing slash) or "/" (trailing slash)
+  // for the collection root; both are the root.
+  char url_root[] = "ftp://host_name/mnt/collection_root";
+  BOOST_CHECK_EQUAL(worker.getAuthzPath(url_root), "");
+  BOOST_CHECK(worker.isRepoAncestor(worker.getAuthzPath(url_root)));
+
+  char url_root_slash[] = "ftp://host_name/mnt/collection_root/";
+  BOOST_CHECK_EQUAL(worker.getAuthzPath(url_root_slash), "/");
+  BOOST_CHECK(worker.isRepoAncestor(worker.getAuthzPath(url_root_slash)));
+
+  // Repo directly under the root, and nested one level deeper: both core.
+  char url_repo[] = "ftp://host_name/mnt/collection_root/repo_id";
+  BOOST_CHECK(!worker.isRepoAncestor(worker.getAuthzPath(url_repo)));
+
+  char url_nested[] =
+      "ftp://host_name/mnt/collection_root/relative_path_in_coll/repo_id";
+  BOOST_CHECK(!worker.isRepoAncestor(worker.getAuthzPath(url_nested)));
+
+  char url_intermediate[] =
+      "ftp://host_name/mnt/collection_root/relative_path_in_coll";
+  BOOST_CHECK(!worker.isRepoAncestor(worker.getAuthzPath(url_intermediate)));
+}
+
+// Regression guard: repo_id must play no part in the local decision.
+// (Multiple repos may be served by one endpoint; the core resolves the repo.)
+BOOST_AUTO_TEST_CASE(IsRepoAncestor_IndependentOfRepoId) {
+  SDMS::LogContext log_context;
+  std::strcpy(config.globus_collection_path, "/mnt/collection_root");
+  char url_root[] = "ftp://host_name/mnt/collection_root/";
+  char url_repo[] = "ftp://host_name/mnt/collection_root/repo_id";
+
+  for (const char *id : {"repo/repo_id", "repo_id", "repo/other_repo"}) {
+    std::strcpy(config.repo_id, id);
+    SDMS::AuthzWorker worker(&config, log_context);
+    BOOST_CHECK(worker.isRepoAncestor(worker.getAuthzPath(url_root)));
+    BOOST_CHECK(!worker.isRepoAncestor(worker.getAuthzPath(url_repo)));
+  }
+}
+
+// Paths above or outside the collection root never reach isRepoAncestor:
+// getAuthzPath() rejects them. GCS confines requests to the collection, so
+// these only occur on misconfiguration — a hard failure is correct.
+BOOST_AUTO_TEST_CASE(GetAuthzPath_OutsideCollectionRootThrows) {
+  SDMS::LogContext log_context;
+  std::strcpy(config.globus_collection_path, "/mnt/collection_root");
+  SDMS::AuthzWorker worker(&config, log_context);
+
+  char url_above[] = "ftp://host_name/mnt";
+  BOOST_CHECK_THROW(worker.getAuthzPath(url_above), TraceException);
+
+  char url_outside[] = "ftp://host_name/repo_id";
+  BOOST_CHECK_THROW(worker.getAuthzPath(url_outside), TraceException);
+
+  // Sibling sharing a character prefix with the root. Fails until
+  // isPathValid() matches whole path components.
+  char url_sibling[] = "ftp://host_name/mnt/collection_root_evil/file";
+  BOOST_CHECK_THROW(worker.getAuthzPath(url_sibling), TraceException);
+}
+
+// Raw FTP URLs (pre-sanitization coordinates) must never produce a local
+// allow — the bug of placing the check in libauthz.c against the raw object.
+BOOST_AUTO_TEST_CASE(IsRepoAncestor_RawURLNeverAllowed) {
+  SDMS::LogContext log_context;
+  std::strcpy(config.globus_collection_path, "/");
+  SDMS::AuthzWorker worker(&config, log_context);
+
+  BOOST_CHECK(!worker.isRepoAncestor("ftp://host_name/"));
+  BOOST_CHECK(!worker.isRepoAncestor("ftp://host_name/mnt"));
+}
+
+// A trailing slash on globus-collection-path must not shift the
+// collection-relative coordinates sent to the core.
+BOOST_AUTO_TEST_CASE(GetAuthzPath_TrailingSlashOnCollectionPath) {
+  SDMS::LogContext log_context;
+  std::strcpy(config.globus_collection_path, "/mnt/collection_root/");
+  SDMS::AuthzWorker worker(&config, log_context);
+
+  char url_root[] = "ftp://host_name/mnt/collection_root/";
+  BOOST_CHECK(worker.isRepoAncestor(worker.getAuthzPath(url_root)));
+
+  char url_repo[] = "ftp://host_name/mnt/collection_root/repo_id";
+  BOOST_CHECK_EQUAL(worker.getAuthzPath(url_repo), "/repo_id");
+  BOOST_CHECK(!worker.isRepoAncestor(worker.getAuthzPath(url_repo)));
 }
 
 BOOST_AUTO_TEST_SUITE_END()
