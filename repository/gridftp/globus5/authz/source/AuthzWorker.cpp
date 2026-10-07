@@ -60,6 +60,14 @@ AuthzWorker::AuthzWorker(struct Config *a_config, LogContext log_context)
   // Convert config item to string for easier manipulation
   m_local_globus_path_root = std::string(m_config->globus_collection_path);
 
+  // Normalize: strip trailing slashes, but keep "/" itself. A trailing slash
+  // would make getAuthzPath() strip one character too many and send the core
+  // a path without its leading '/' (e.g. "repo_id" instead of "/repo_id").
+  while (m_local_globus_path_root.size() > 1 &&
+         m_local_globus_path_root.back() == '/') {
+    m_local_globus_path_root.pop_back();
+  }
+
   m_test_path = std::string(m_config->test_path);
   // NOTE the test_path MUST end with '/' this is to prevent authorization
   // by accident to a subfolder i.e.
@@ -219,24 +227,38 @@ bool AuthzWorker::isTestPath(const std::string &posix_path) const {
  * - Logs an error if the path is shorter than `m_local_globus_path_root`.
  */
 bool AuthzWorker::isPathValid(const std::string &posix_path) const {
-  if (m_local_globus_path_root.length() > posix_path.length()) {
-    std::string err_message =
-        "Provided path is not properly formatted, should be prefixed with "
-        "globus_root_collection_path: ";
-    err_message += m_local_globus_path_root + " but is: " + posix_path;
-    DL_ERROR(m_log_context, err_message);
+  const std::string &root = m_local_globus_path_root;
+
+  // Root "/" contains every absolute path.
+  if (root == "/") {
+    if (!posix_path.empty() && posix_path[0] == '/') {
+      return true;
+    }
+    DL_ERROR(m_log_context,
+             "Provided path is not an absolute path: " << posix_path);
     return false;
   }
 
-  auto prefix = posix_path.substr(0, m_local_globus_path_root.length());
-  if (prefix.compare(m_local_globus_path_root) != 0) {
-    std::string err_message =
-        "Provided path is not properly formatted, should be prefixed with "
-        "globus_root_collection_path: ";
-    err_message += m_local_globus_path_root + " but is: " + prefix;
-    DL_ERROR(m_log_context, err_message);
+  // The root must be a prefix of the path...
+  if (posix_path.compare(0, root.size(), root) != 0) {
+    DL_ERROR(m_log_context,
+             "Provided path is not properly formatted, should be prefixed "
+             "with globus_root_collection_path: "
+                 << root << " but is: " << posix_path);
     return false;
   }
+
+  // ...and must end on a path component boundary: the path is either exactly
+  // the root, or continues with '/'. Without this check, root "/globus/root"
+  // would accept "/globus/rootkit/...", a sibling directory outside the
+  // collection.
+  if (posix_path.size() != root.size() && posix_path[root.size()] != '/') {
+    DL_ERROR(m_log_context,
+             "Provided path is outside the collection root: "
+                 << posix_path << " (root: " << root << ")");
+    return false;
+  }
+
   return true;
 }
 
