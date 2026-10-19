@@ -18,7 +18,7 @@ services:
             DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
             DATAFED_CORE_ADDRESS_PORT_INTERNAL: "datafed-core:7513"
             UID: "${DATAFED_UID}"
-        image: savannah.ornl.gov/datafed/web:v5.1.1
+        image: datafed-web:latest
         ports:
             - "8080:443" # This must be the same port that is mapped to the host for redirects to work
         volumes:
@@ -28,7 +28,7 @@ services:
             - datafed-internal
 
     datafed-core:
-        image: savannah.ornl.gov/datafed/core:v5.1.0
+        image: datafed-core:latest
         depends_on:
             datafed-foxx:
                 condition: service_healthy
@@ -118,7 +118,7 @@ services:
             DATAFED_GCS_COLLECTION_BASE_PATH: "${DATAFED_GCS_COLLECTION_BASE_PATH}"
             UID: "${DATAFED_UID}"
             HOST_HOSTNAME: "localhost"
-        image: savannah.ornl.gov/datafed/repo:v5.1.0
+        image: datafed-repo:latest
         volumes:
             - ./keys:/opt/datafed/keys
             - ./logs:${DATAFED_CONTAINER_LOG_PATH}
@@ -154,7 +154,7 @@ services:
             DATAFED_GCS_IP: "${DATAFED_GCS_IP}"
             DATAFED_REPO_DOMAIN: "${DATAFED_REPO_DOMAIN}"
         network_mode: host
-        image: savannah.ornl.gov/datafed/gcs:v5.1.0
+        image: datafed-gcs:latest
         volumes:
             - ./keys:/opt/datafed/keys
             - ./globus:/opt/datafed/globus
