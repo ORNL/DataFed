@@ -336,7 +336,7 @@ describe("integration_repo_router: the Foxx microservice repo_router create endp
             domain: "old-domain",
             capacity: 0,
             type: "metadata",
-	    endpoint: repo_endpoint,
+            endpoint: repo_endpoint,
         });
 
         // arrange: admin edge (repo -> user)

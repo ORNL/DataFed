@@ -124,9 +124,7 @@ module.exports = (function () {
             )
             .toArray();
 
-        return project_ids.some(
-            (p) => g_lib.getProjectRole(client._id, p) !== g_lib.PROJ_NO_ROLE,
-        );
+        return project_ids.some((p) => g_lib.getProjectRole(client._id, p) !== g_lib.PROJ_NO_ROLE);
     };
 
     obj.readRecord = function (client, path) {

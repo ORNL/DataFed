@@ -526,7 +526,6 @@ describe("unit_authz_router: the Foxx microservice authz_router", () => {
         expect(response.status).to.equal(400);
     });
 
-
     it("unit_authz_router: gridftp denies when the originating repo has no endpoint.", () => {
         defaultWorkingSetup();
         g_db.repo.update(repo_key, { endpoint: null });
@@ -544,7 +543,11 @@ describe("unit_authz_router: the Foxx microservice authz_router", () => {
         defaultWorkingSetup();
         // Second repo on the same endpoint; the request names it as origin,
         // but the file belongs to the first repo.
-        g_db.repo.save({ _key: "sibling-repo", path: "/mnt/sibling-repo", endpoint: repo_endpoint });
+        g_db.repo.save({
+            _key: "sibling-repo",
+            path: "/mnt/sibling-repo",
+            endpoint: repo_endpoint,
+        });
 
         const response = request.get(
             `${authz_base_url}/gridftp?client=${james_uuid}` +
@@ -596,5 +599,5 @@ describe("unit_authz_router: the Foxx microservice authz_router", () => {
         );
 
         expectDenied(response, "does not match any known repository");
-    }); 
+    });
 });

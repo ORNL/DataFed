@@ -307,7 +307,6 @@ router
     .summary("Checks authorization")
     .description("Checks authorization");
 
-
 router
     .get("/perm/check", function (req, res) {
         let client = null;
