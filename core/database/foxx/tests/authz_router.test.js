@@ -157,6 +157,7 @@ function defaultWorkingSetupProject() {
     const repo_data = {
         _key: repo_key,
         path: repo_path,
+        endpoint: repo_endpoint,
     };
     g_db.repo.save(repo_data, { waitForSync: true });
 

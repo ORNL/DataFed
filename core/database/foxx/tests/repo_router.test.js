@@ -7,6 +7,7 @@ const { baseUrl } = module.context;
 const g_db = require("@arangodb").db;
 
 const repo_base_url = `${baseUrl}/repo`;
+const repo_endpoint = "11111111-2222-3333-4444-555555555555";
 
 // NOTE: describe block strings are compared against test specification during test call, not file name
 describe("integration_repo_router: the Foxx microservice repo_router create endpoint", () => {
@@ -335,6 +336,7 @@ describe("integration_repo_router: the Foxx microservice repo_router create endp
             domain: "old-domain",
             capacity: 0,
             type: "metadata",
+	    endpoint: repo_endpoint,
         });
 
         // arrange: admin edge (repo -> user)

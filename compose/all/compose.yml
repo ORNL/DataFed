@@ -18,7 +18,7 @@ services:
             DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
             DATAFED_CORE_ADDRESS_PORT_INTERNAL: "datafed-core:7513"
             UID: "${DATAFED_UID}"
-        image: datafed-web:latest
+        image: savannah.ornl.gov/datafed/web:v5.1.1
         ports:
             - "8080:443" # This must be the same port that is mapped to the host for redirects to work
         volumes:
@@ -28,7 +28,7 @@ services:
             - datafed-internal
 
     datafed-core:
-        image: datafed-core:latest
+        image: savannah.ornl.gov/datafed/core:v5.1.0
         depends_on:
             datafed-foxx:
                 condition: service_healthy
@@ -45,6 +45,7 @@ services:
             DATAFED_DATABASE_IP_ADDRESS_PORT: "${DATAFED_DATABASE_IP_ADDRESS}:${DATAFED_DATABASE_PORT}"
             DATAFED_CORE_LOG_LEVEL: "${DATAFED_CORE_LOG_LEVEL}"
             SSL_CERT_FILE: "/opt/datafed/keys/datafed-arango.crt"
+            DATAFED_LINKML_SCHEMA_API_URL: "http://schemaservice:8080/v1"
         user: "${DATAFED_UID}:0"
         security_opt:
             - no-new-privileges:true
@@ -56,6 +57,7 @@ services:
             - ./logs:${DATAFED_CONTAINER_LOG_PATH}
         networks:
             - datafed-internal
+            - datafed-linkml
 
     datafed-foxx:
         image: datafed-foxx:latest
@@ -116,7 +118,7 @@ services:
             DATAFED_GCS_COLLECTION_BASE_PATH: "${DATAFED_GCS_COLLECTION_BASE_PATH}"
             UID: "${DATAFED_UID}"
             HOST_HOSTNAME: "localhost"
-        image: datafed-repo:latest
+        image: savannah.ornl.gov/datafed/repo:v5.1.0
         volumes:
             - ./keys:/opt/datafed/keys
             - ./logs:${DATAFED_CONTAINER_LOG_PATH}
@@ -152,7 +154,7 @@ services:
             DATAFED_GCS_IP: "${DATAFED_GCS_IP}"
             DATAFED_REPO_DOMAIN: "${DATAFED_REPO_DOMAIN}"
         network_mode: host
-        image: datafed-gcs:latest
+        image: savannah.ornl.gov/datafed/gcs:v5.1.0
         volumes:
             - ./keys:/opt/datafed/keys
             - ./globus:/opt/datafed/globus
@@ -166,3 +168,6 @@ volumes:
 networks:
     datafed-internal:
         driver: bridge
+    datafed-linkml:
+        external: true
+        name: datafed-linkml
