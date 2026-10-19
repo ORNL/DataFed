@@ -39,6 +39,7 @@ const repo_key = "datafed-at-hot-potato";
 const repo_id = "repo/" + repo_key;
 const repo_path = "/mnt/repo_name";
 const file_path = repo_path + "/user/" + james_key + "/" + valid_key;
+const repo_endpoint = "11111111-2222-3333-4444-555555555555";
 
 // Test Project information
 const project_key = "physics";
@@ -65,6 +66,7 @@ function defaultWorkingSetup() {
     const repo_data = {
         _key: repo_key,
         path: repo_path,
+        endpoint: repo_endpoint,
     };
     // Create nodes
     //recordRepoAndUserSetup(valid_key, base_user_data, repo_data);
@@ -215,6 +217,15 @@ function addUserWithIdentity(user_key, uuid, is_admin = false) {
     });
 
     return user_id;
+}
+
+/**
+ * Assert a denial, and that it was denied for the expected reason.
+ * Status alone is not enough: any earlier failure also returns 400.
+ */
+function expectDenied(response, reason) {
+    expect(response.status).to.equal(400);
+    expect(response.body, "denial body").to.include(reason);
 }
 
 // NOTE: describe block strings are compared against test specification during test call, not file name
@@ -513,4 +524,76 @@ describe("unit_authz_router: the Foxx microservice authz_router", () => {
         const response = request.get(request_string);
         expect(response.status).to.equal(400);
     });
+
+
+    it("unit_authz_router: gridftp denies when the originating repo has no endpoint.", () => {
+        defaultWorkingSetup();
+        g_db.repo.update(repo_key, { endpoint: null });
+
+        const response = request.get(
+            `${authz_base_url}/gridftp?client=${james_uuid}` +
+                `&repo=${encodeURIComponent(repo_id)}` +
+                `&file=${encodeURIComponent(file_path)}&act=create`,
+        );
+
+        expectDenied(response, "missing endpoint");
+    });
+
+    it("unit_authz_router: gridftp allows a file in another repo on the same endpoint.", () => {
+        defaultWorkingSetup();
+        // Second repo on the same endpoint; the request names it as origin,
+        // but the file belongs to the first repo.
+        g_db.repo.save({ _key: "sibling-repo", path: "/mnt/sibling-repo", endpoint: repo_endpoint });
+
+        const response = request.get(
+            `${authz_base_url}/gridftp?client=${james_uuid}` +
+                `&repo=${encodeURIComponent("repo/sibling-repo")}` +
+                `&file=${encodeURIComponent(file_path)}&act=create`,
+        );
+
+        expect(response.status).to.equal(204);
+    });
+
+    it("unit_authz_router: gridftp denies a file in a repo served by a different endpoint.", () => {
+        defaultWorkingSetup();
+        g_db.repo.save({
+            _key: "other-endpoint-repo",
+            path: "/mnt/other-endpoint-repo",
+            endpoint: "99999999-8888-7777-6666-555555555555",
+        });
+
+        const response = request.get(
+            `${authz_base_url}/gridftp?client=${james_uuid}` +
+                `&repo=${encodeURIComponent("repo/other-endpoint-repo")}` +
+                `&file=${encodeURIComponent(file_path)}&act=create`,
+        );
+
+        // With endpoint-scoped resolution, the path doesn't resolve to any repo
+        // on the requesting endpoint, so it fails in resolveFromPath.
+        expectDenied(response, "does not match any known repository");
+    });
+
+    it("unit_authz_router: gridftp allows lookup on an ancestor of a repo the client can access.", () => {
+        defaultWorkingSetup();
+
+        const response = request.get(
+            `${authz_base_url}/gridftp?client=${james_uuid}` +
+                `&repo=${encodeURIComponent(repo_id)}` +
+                `&file=${encodeURIComponent("/mnt")}&act=lookup`,
+        );
+
+        expect(response.status).to.equal(204);
+    });
+
+    it("unit_authz_router: gridftp denies non-traversal actions on an ancestor path.", () => {
+        defaultWorkingSetup();
+
+        const response = request.get(
+            `${authz_base_url}/gridftp?client=${james_uuid}` +
+                `&repo=${encodeURIComponent(repo_id)}` +
+                `&file=${encodeURIComponent("/mnt")}&act=write`,
+        );
+
+        expectDenied(response, "does not match any known repository");
+    }); 
 });
