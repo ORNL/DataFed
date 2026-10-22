@@ -24,34 +24,6 @@ module.exports = (function () {
     }
 
     /**
-     * True if the client holds read or write permission on at least one record
-     * owned by a_owner_id (u/... or p/...) that is stored in this repo. Lets
-     * ACL-shared records be reached through their owner's folder.
-     *
-     * SCHEMA ASSUMPTIONS (verify): 'owner' edges run d -> u|p, 'loc' edges
-     * run d -> repo. Cost grows with the owner's record count in the repo;
-     * acceptable once per folder hop, not per file.
-     */
-    function hasAnySharedRecordAccess(client, a_owner_id, repo) {
-        const records = g_db
-            ._query(
-                `FOR o IN owner
-                   FILTER o._to == @owner
-                   FOR l IN loc
-                     FILTER l._from == o._from AND l._to == @repo
-                     RETURN DOCUMENT(o._from)`,
-                { owner: a_owner_id, repo: repo.id() },
-            )
-            .toArray();
-
-        return records.some(
-            (d) =>
-                permissions.hasPermissions(client, d, permissions.PERM_RD_DATA) ||
-                permissions.hasPermissions(client, d, permissions.PERM_WR_DATA),
-        );
-    }
-
-    /**
      * Checks if a client has the required permissions on a record.
      *
      * @param {object} a_client - A user document representing the client being verified.
@@ -224,20 +196,16 @@ module.exports = (function () {
     /**
      * Authorizes traversal (lookup/chdir) of a user's repository folder.
      *
-     * Allowed for the owner and DataFed administrators, and for any client
-     * holding read/write permission on at least one of the user's records in
-     * this repo, so that records shared via ACL remain reachable.
+     * Allowed only for the owner and DataFed administrators. GridFTP also uses
+     * lookup for directory listings, so a record ACL must not grant folder access.
      */
-    obj.traverseUserFolder = function (client, path, repo) {
+    obj.traverseUserFolder = function (client, path) {
         if (!client) {
             deny(client, "traverse", path);
         }
         const user_id = "u/" + pathModule.splitPOSIXPath(path).at(-1);
 
         if (permissions.hasAdminPermUser(client, user_id)) {
-            return;
-        }
-        if (hasAnySharedRecordAccess(client, user_id, repo)) {
             return;
         }
         deny(client, "traverse", path);
@@ -269,11 +237,10 @@ module.exports = (function () {
     /**
      * Authorizes traversal (lookup/chdir) of a project's repository folder.
      *
-     * Allowed for DataFed administrators and anyone with a role in the
-     * project, and for any client holding read/write permission on at least
-     * one of the project's records in this repo (ACL sharing).
+     * Allowed only for DataFed administrators and anyone with a role in the
+     * project. A record ACL must not grant access to the project's directory listing.
      */
-    obj.traverseProjectFolder = function (client, path, repo) {
+    obj.traverseProjectFolder = function (client, path) {
         if (!client) {
             deny(client, "traverse", path);
         }
@@ -283,9 +250,6 @@ module.exports = (function () {
             return;
         }
         if (g_lib.getProjectRole(client._id, project_id) !== g_lib.PROJ_NO_ROLE) {
-            return;
-        }
-        if (hasAnySharedRecordAccess(client, project_id, repo)) {
             return;
         }
         deny(client, "traverse", path);

@@ -239,9 +239,8 @@ router
             //       lookup / USER_PATH (/mnt/datafed/B/user/alice)
             //                                 -> traverseUserFolder:
             //       alice owns the folder                     -> ALLOW
-            //       (bob, holding an ACL grant on one of alice's records
-            //        in repo/B                                -> ALLOW)
-            //       (bob, with no grant                       -> DENY)
+            //       (bob, even with an ACL grant on one of alice's records
+            //        in repo/B                                -> DENY)
             //   R3: read / USER_RECORD_PATH   -> readRecord:
             //       alice has PERM_RD_DATA on d/1234, and the record's
             //       stored path matches the requested path    -> ALLOW
