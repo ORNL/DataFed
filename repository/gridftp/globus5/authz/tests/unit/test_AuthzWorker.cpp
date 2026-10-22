@@ -355,12 +355,11 @@ BOOST_AUTO_TEST_CASE(GetAuthzPathRootPathTest) {
 }
 
 BOOST_AUTO_TEST_CASE(GetAuthzPathRootPathNoTrailingSlashTest) {
-  // The collection root without a trailing slash yields the EMPTY string.
-  // isRepoAncestor() depends on treating "" as the collection root.
+  // The collection root must be nonempty for core authorization.
   SDMS::LogContext log_context;
   SDMS::AuthzWorker worker(&config, log_context);
   char root_path[] = "ftp://hostname/globus/root";
-  std::string expected_result = "";
+  std::string expected_result = "/";
 
   BOOST_CHECK_EQUAL(worker.getAuthzPath(root_path), expected_result);
 }
@@ -468,87 +467,8 @@ BOOST_AUTO_TEST_CASE(ProcessResponseWithNackReply) {
   BOOST_CHECK_EQUAL(worker.processResponse(response), 1);
 }
 
-// ---------------------------------------------------------------------------
-// isRepoAncestor
-//
-// NOTE: name retained for compatibility; semantics are now "is the collection
-// root". It operates on COLLECTION-RELATIVE paths (the output of
-// getAuthzPath()), never on raw FTP URLs. The collection root is the ONLY
-// path decided locally — the callout has no knowledge of repo layout.
-// Everything below the root is forwarded to the core, which resolves the
-// owning repo from the collection-relative path (repo.path).
-// ---------------------------------------------------------------------------
-
-// Collection root "/" (the dev environment: globus-collection-path=/).
-BOOST_AUTO_TEST_CASE(IsRepoAncestor_RootIsSlash) {
-  SDMS::LogContext log_context;
-  std::strcpy(config.globus_collection_path, "/");
-  SDMS::AuthzWorker worker(&config, log_context);
-
-  char url_root[] = "ftp://host_name/";
-  BOOST_CHECK(worker.isRepoAncestor(worker.getAuthzPath(url_root)));
-
-  // Below the root: always the core's decision, however ancestor-like.
-  char url_mnt[] = "ftp://host_name/mnt";
-  BOOST_CHECK(!worker.isRepoAncestor(worker.getAuthzPath(url_mnt)));
-
-  char url_base[] = "ftp://host_name/mnt/collection_root/";
-  BOOST_CHECK(!worker.isRepoAncestor(worker.getAuthzPath(url_base)));
-
-  char url_repo[] = "ftp://host_name/mnt/collection_root/repo_id";
-  BOOST_CHECK(!worker.isRepoAncestor(worker.getAuthzPath(url_repo)));
-
-  char url_record[] = "ftp://host_name/mnt/collection_root/repo_id/user/u1/f";
-  BOOST_CHECK(!worker.isRepoAncestor(worker.getAuthzPath(url_record)));
-}
-
-// Real collection root path.
-BOOST_AUTO_TEST_CASE(IsRepoAncestor_RealCollectionPath) {
-  SDMS::LogContext log_context;
-  std::strcpy(config.globus_collection_path, "/mnt/collection_root");
-  SDMS::AuthzWorker worker(&config, log_context);
-
-  // getAuthzPath() yields "" (no trailing slash) or "/" (trailing slash)
-  // for the collection root; both are the root.
-  char url_root[] = "ftp://host_name/mnt/collection_root";
-  BOOST_CHECK_EQUAL(worker.getAuthzPath(url_root), "");
-  BOOST_CHECK(worker.isRepoAncestor(worker.getAuthzPath(url_root)));
-
-  char url_root_slash[] = "ftp://host_name/mnt/collection_root/";
-  BOOST_CHECK_EQUAL(worker.getAuthzPath(url_root_slash), "/");
-  BOOST_CHECK(worker.isRepoAncestor(worker.getAuthzPath(url_root_slash)));
-
-  // Repo directly under the root, and nested one level deeper: both core.
-  char url_repo[] = "ftp://host_name/mnt/collection_root/repo_id";
-  BOOST_CHECK(!worker.isRepoAncestor(worker.getAuthzPath(url_repo)));
-
-  char url_nested[] =
-      "ftp://host_name/mnt/collection_root/relative_path_in_coll/repo_id";
-  BOOST_CHECK(!worker.isRepoAncestor(worker.getAuthzPath(url_nested)));
-
-  char url_intermediate[] =
-      "ftp://host_name/mnt/collection_root/relative_path_in_coll";
-  BOOST_CHECK(!worker.isRepoAncestor(worker.getAuthzPath(url_intermediate)));
-}
-
-// Regression guard: repo_id must play no part in the local decision.
-// (Multiple repos may be served by one endpoint; the core resolves the repo.)
-BOOST_AUTO_TEST_CASE(IsRepoAncestor_IndependentOfRepoId) {
-  SDMS::LogContext log_context;
-  std::strcpy(config.globus_collection_path, "/mnt/collection_root");
-  char url_root[] = "ftp://host_name/mnt/collection_root/";
-  char url_repo[] = "ftp://host_name/mnt/collection_root/repo_id";
-
-  for (const char *id : {"repo/repo_id", "repo_id", "repo/other_repo"}) {
-    std::strcpy(config.repo_id, id);
-    SDMS::AuthzWorker worker(&config, log_context);
-    BOOST_CHECK(worker.isRepoAncestor(worker.getAuthzPath(url_root)));
-    BOOST_CHECK(!worker.isRepoAncestor(worker.getAuthzPath(url_repo)));
-  }
-}
-
-// Paths above or outside the collection root never reach isRepoAncestor:
-// getAuthzPath() rejects them. GCS confines requests to the collection, so
+// getAuthzPath() rejects paths above or outside the collection root.
+// GCS confines requests to the collection, so
 // these only occur on misconfiguration — a hard failure is correct.
 BOOST_AUTO_TEST_CASE(GetAuthzPath_OutsideCollectionRootThrows) {
   SDMS::LogContext log_context;
@@ -567,17 +487,6 @@ BOOST_AUTO_TEST_CASE(GetAuthzPath_OutsideCollectionRootThrows) {
   BOOST_CHECK_THROW(worker.getAuthzPath(url_sibling), TraceException);
 }
 
-// Raw FTP URLs (pre-sanitization coordinates) must never produce a local
-// allow — the bug of placing the check in libauthz.c against the raw object.
-BOOST_AUTO_TEST_CASE(IsRepoAncestor_RawURLNeverAllowed) {
-  SDMS::LogContext log_context;
-  std::strcpy(config.globus_collection_path, "/");
-  SDMS::AuthzWorker worker(&config, log_context);
-
-  BOOST_CHECK(!worker.isRepoAncestor("ftp://host_name/"));
-  BOOST_CHECK(!worker.isRepoAncestor("ftp://host_name/mnt"));
-}
-
 // A trailing slash on globus-collection-path must not shift the
 // collection-relative coordinates sent to the core.
 BOOST_AUTO_TEST_CASE(GetAuthzPath_TrailingSlashOnCollectionPath) {
@@ -586,11 +495,10 @@ BOOST_AUTO_TEST_CASE(GetAuthzPath_TrailingSlashOnCollectionPath) {
   SDMS::AuthzWorker worker(&config, log_context);
 
   char url_root[] = "ftp://host_name/mnt/collection_root/";
-  BOOST_CHECK(worker.isRepoAncestor(worker.getAuthzPath(url_root)));
+  BOOST_CHECK_EQUAL(worker.getAuthzPath(url_root), "/");
 
   char url_repo[] = "ftp://host_name/mnt/collection_root/repo_id";
   BOOST_CHECK_EQUAL(worker.getAuthzPath(url_repo), "/repo_id");
-  BOOST_CHECK(!worker.isRepoAncestor(worker.getAuthzPath(url_repo)));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -444,28 +444,10 @@ std::string AuthzWorker::getAuthzPath(char *full_ftp_path) {
                     " local_path: " + local_path + " prefix: " + prefix);
     }
   }
+  // The core requires a nonempty path, including for the collection root.
+  if (local_path.size() == prefix.length())
+    return "/";
   return local_path.substr(prefix.length());
-}
-
-/**
- * True when sanitized_path (collection-relative, as produced by getAuthzPath)
- * is a PROPER ancestor of the repo root directory. Used only to allow
- * filesystem traversal (lookup/chdir) toward the repo; the repo root itself
- * and everything below it are decided by the core.
- */
-bool AuthzWorker::isRepoAncestor(const std::string &sanitized_path) const {
-  std::string p = sanitized_path;
-  while (p.size() > 1 && p.back() == '/')
-    p.pop_back();
-  // getAuthzPath() yields "" for the collection root when the root is a real
-  // path, and "/" when the root is "/". Both are proper ancestors, since
-  // m_local_globus_path_root is at least "/<repo_dir>".
-  if (p.empty() || p == "/")
-    return true;
-  // Component-safe proper-ancestor test: m_local_globus_path_root == p + "/" + <more>
-  return m_local_globus_path_root.size() > p.size() &&
-         m_local_globus_path_root.compare(0, p.size(), p) == 0 &&
-         m_local_globus_path_root[p.size()] == '/';
 }
 
 /**
@@ -619,16 +601,6 @@ int AuthzWorker::checkAuth(char *client_id, char *path, char *action) {
   std::string sanitized_path = getAuthzPath(path);
 
   if (isTestPath(sanitized_path)) {
-    return 0;
-  }
-
-  if ((strcmp(action, "lookup") == 0 || strcmp(action, "chdir") == 0) &&
-      isRepoAncestor(sanitized_path)) {
-    DL_INFO(m_log_context,
-            "Local allow: " << action << " on repo-ancestor path '"
-                            << sanitized_path
-                            << "' (repo root: " << m_local_globus_path_root
-                            << "), client: " << client_id);
     return 0;
   }
 

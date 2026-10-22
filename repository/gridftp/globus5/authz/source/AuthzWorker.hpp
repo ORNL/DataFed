@@ -55,7 +55,6 @@ public:
   std::string removeOrigin(char *full_ftp_url) const;
 
   int processResponse(ICommunicator::Response &response);
-  bool isRepoAncestor(const std::string &sanitized_path) const;
 
 private:
   void initCommunicator();
