@@ -750,8 +750,7 @@ the registration page.
                         logger.error(
                             "ui/authn",
                             getCurrentLineNumber(),
-                            "Error: Globus introspection failed. User token:",
-                            xfr_token,
+                            "Error: Globus introspection failed for user.",
                         );
                         a_resp.redirect("/ui/error");
                     }
@@ -762,8 +761,7 @@ the registration page.
                 logger.error(
                     "ui/authn",
                     getCurrentLineNumber(),
-                    "Error: Globus introspection failed. User token:",
-                    xfr_token,
+                    "Error: Globus introspection failed.",
                 );
                 a_resp.redirect("/ui/error");
             });
