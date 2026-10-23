@@ -5,6 +5,7 @@ const router = createRouter();
 const joi = require("joi");
 const error = require("./lib/error_codes");
 const permissions = require("./lib/permissions");
+const pathModule = require("./posix_path");
 const { RepositoryType } = require("./models/repositories/types");
 const { Repositories } = require("./models/repositories/repositories");
 const { Result } = require("./lib/result");
@@ -26,6 +27,9 @@ function validateAndNormalizeRepoPath(obj) {
     if (!obj.path.startsWith("/")) {
         throw [error.ERR_INVALID_PARAM, "Repository path must be an absolute file system path."];
     }
+
+    // Resolve dot segments and repeated slashes before checking the repo key.
+    obj.path = pathModule.normalizePOSIXPath(obj.path);
 
     // Ensure trailing slash
     if (!obj.path.endsWith("/")) {
@@ -64,7 +68,7 @@ function validateAndNormalizeRepoPath(obj) {
  * @param {string} [a_exclude_id] - repo being updated, excluded from the check
  */
 function assertNoRepoPathOverlap(a_endpoint, a_path, a_exclude_id) {
-    const norm = (p) => p.replace(/\/+$/, "") + "/";
+    const norm = (p) => pathModule.normalizePOSIXPath(p).replace(/\/+$/, "") + "/";
     const candidate = norm(a_path);
 
     g_db.repo
@@ -382,25 +386,7 @@ router
                     g_lib.procInputParam(req.body, "domain", true, obj);
 
                     if (req.body.path) {
-                        if (!req.body.path.startsWith("/"))
-                            throw [
-                                error.ERR_INVALID_PARAM,
-                                "Repository path must be an absolute path file system path.",
-                            ];
-
                         obj.path = req.body.path;
-                        if (!obj.path.endsWith("/")) obj.path += "/";
-
-                        // Last part of storage path MUST end with the repo ID
-                        var idx = obj.path.lastIndexOf("/", obj.path.length - 2);
-                        var key = req.body.id.substr(5);
-                        if (obj.path.substr(idx + 1, obj.path.length - idx - 2) != key)
-                            throw [
-                                error.ERR_INVALID_PARAM,
-                                "Last part of repository path must be repository ID suffix (" +
-                                    key +
-                                    ")",
-                            ];
                     }
 
                     if (req.body.exp_path) {
@@ -429,7 +415,11 @@ router
                                 "A repository with a path requires an endpoint.",
                             ];
                         }
-                        assertNoRepoPathOverlap(final_endpoint, final_path, req.body.id);
+                        obj.path = validateAndNormalizeRepoPath({
+                            path: final_path,
+                            key: req.body.id.substr(5),
+                        });
+                        assertNoRepoPathOverlap(final_endpoint, obj.path, req.body.id);
                     }
 
                     var repo = g_db._update(req.body.id, obj, {
