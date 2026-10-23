@@ -24,6 +24,40 @@ module.exports = (function () {
     }
 
     /**
+     * Checks for read or write access to a record in this repository, optionally
+     * restricted to an owner's folder. Use the destination of an in-flight move,
+     * matching Record.isPathConsistent(). Directory lookup may reveal sibling IDs;
+     * each record's permissions still control access to its contents.
+     */
+    function hasSharedRecordAccess(client, repo, owner_id = null) {
+        const records = g_db
+            ._query(
+                `FOR l IN loc
+                   LET repo_id = l.new_repo ? l.new_repo : l._to
+                   LET uid = l.new_repo AND l.new_owner ? l.new_owner : l.uid
+                   FILTER repo_id == @repo
+                   FILTER @owner == null OR uid == @owner
+                   LET record = DOCUMENT(l._from)
+                   FILTER record != null
+                   RETURN record`,
+                { repo: repo.id(), owner: owner_id },
+            )
+            .toArray();
+
+        return records.some(
+            (record) =>
+                permissions.hasAdminPermObject(client, record._id) ||
+                permissions.hasPermissions(
+                    client,
+                    record,
+                    permissions.PERM_RD_DATA | permissions.PERM_WR_DATA,
+                    false,
+                    true,
+                ),
+        );
+    }
+
+    /**
      * Checks if a client has the required permissions on a record.
      *
      * @param {object} a_client - A user document representing the client being verified.
@@ -63,7 +97,8 @@ module.exports = (function () {
     /**
      * True if the client may use the repository at all: DataFed admin, repo
      * admin, or holder of an allocation on the repo, directly or through a
-     * project in which the client has any role.
+     * project in which the client has any role, or read/write access to a record
+     * stored in the repository.
      *
      * SCHEMA ASSUMPTIONS (verify): 'admin' edges run repo -> u, 'alloc' edges
      * run u|p -> repo. Prefer an existing permissions/g_lib helper if one
@@ -96,7 +131,10 @@ module.exports = (function () {
             )
             .toArray();
 
-        return project_ids.some((p) => g_lib.getProjectRole(client._id, p) !== g_lib.PROJ_NO_ROLE);
+        return (
+            project_ids.some((p) => g_lib.getProjectRole(client._id, p) !== g_lib.PROJ_NO_ROLE) ||
+            hasSharedRecordAccess(client, repo)
+        );
     };
 
     obj.readRecord = function (client, path) {
@@ -196,16 +234,20 @@ module.exports = (function () {
     /**
      * Authorizes traversal (lookup/chdir) of a user's repository folder.
      *
-     * Allowed only for the owner and DataFed administrators. GridFTP also uses
-     * lookup for directory listings, so a record ACL must not grant folder access.
+     * Allowed for the owner, DataFed administrators, and clients with read/write
+     * access to a record in this folder. Listing sibling record IDs is accepted
+     * so that shared records remain reachable through GridFTP.
      */
-    obj.traverseUserFolder = function (client, path) {
+    obj.traverseUserFolder = function (client, path, repo) {
         if (!client) {
             deny(client, "traverse", path);
         }
         const user_id = "u/" + pathModule.splitPOSIXPath(path).at(-1);
 
         if (permissions.hasAdminPermUser(client, user_id)) {
+            return;
+        }
+        if (hasSharedRecordAccess(client, repo, user_id)) {
             return;
         }
         deny(client, "traverse", path);
@@ -237,10 +279,11 @@ module.exports = (function () {
     /**
      * Authorizes traversal (lookup/chdir) of a project's repository folder.
      *
-     * Allowed only for DataFed administrators and anyone with a role in the
-     * project. A record ACL must not grant access to the project's directory listing.
+     * Allowed for DataFed administrators, anyone with a role in the project, and
+     * clients with read/write access to a record in this folder. Directory lookup
+     * may reveal sibling record IDs to recipients of shared records.
      */
-    obj.traverseProjectFolder = function (client, path) {
+    obj.traverseProjectFolder = function (client, path, repo) {
         if (!client) {
             deny(client, "traverse", path);
         }
@@ -250,6 +293,9 @@ module.exports = (function () {
             return;
         }
         if (g_lib.getProjectRole(client._id, project_id) !== g_lib.PROJ_NO_ROLE) {
+            return;
+        }
+        if (hasSharedRecordAccess(client, repo, project_id)) {
             return;
         }
         deny(client, "traverse", path);

@@ -234,13 +234,15 @@ router
             //
             //   R1: lookup / REPO_BASE_PATH   -> traverseRepo:
             //       alice has an allocation on repo/B        -> ALLOW
+            //       (bob has only read/write access to a shared record
+            //        in repo/B                                -> ALLOW)
             //       (a user with no access to repo/B         -> DENY)
             //   R2: lookup / REPO_ROOT_PATH   -> traverseRepo    -> ALLOW
             //       lookup / USER_PATH (/mnt/datafed/B/user/alice)
             //                                 -> traverseUserFolder:
             //       alice owns the folder                     -> ALLOW
-            //       (bob, even with an ACL grant on one of alice's records
-            //        in repo/B                                -> DENY)
+            //       (bob, with read/write access to one of alice's records
+            //        in repo/B                                -> ALLOW)
             //   R3: read / USER_RECORD_PATH   -> readRecord:
             //       alice has PERM_RD_DATA on d/1234, and the record's
             //       stored path matches the requested path    -> ALLOW
