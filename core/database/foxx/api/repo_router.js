@@ -346,7 +346,11 @@ router
                 capacity: joi.number().integer().min(0).required(),
                 pub_key: joi.string().optional(),
                 address: joi.string().optional(),
-                endpoint: joi.string().optional(),
+                endpoint: joi.string().when("type", {
+                    is: joi.string().valid(RepositoryType.METADATA).required(),
+                    then: joi.optional(),
+                    otherwise: joi.required(),
+                }),
                 path: joi.string().optional(),
                 exp_path: joi.string().optional(),
                 admins: joi.array().items(joi.string()).required(),
