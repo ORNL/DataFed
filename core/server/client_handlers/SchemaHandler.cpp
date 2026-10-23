@@ -342,7 +342,7 @@ std::string SchemaHandler::validateMetadataContent(
     auto &storage = m_schema_factory.getStorage(schema_type);
     auto storage_result = storage.retrieveContent(
         a_sch_id, schema_def, log_context);
-    if (!storage_result.Ok) {
+    if (!storage_result.success) {
       return "Failed to retrieve schema content: " + storage_result.error + "\n";
     }
     schema_def = storage_result.content;
@@ -422,7 +422,7 @@ void SchemaHandler::handleView(const std::string &a_uid,
       auto result = storage.retrieveContent(
           record->id(), record->def(), log_context);
 
-      if (result.Ok) {
+      if (result.success) {
         record->set_def(result.content);
       } else {
         DL_WARNING(log_context,
@@ -466,7 +466,7 @@ void SchemaHandler::handleSearch(const std::string &a_uid,
       auto result = storage.retrieveContent(
           record->id(), record->def(), log_context);
 
-      if (result.Ok) {
+      if (result.success) {
         record->set_def(result.content);
       } else {
         DL_WARNING(log_context,
