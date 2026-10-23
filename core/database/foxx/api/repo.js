@@ -197,7 +197,7 @@ class Repo {
      *
      * @param {string} file_path - canonical POSIX path
      * @param {string} [a_endpoint] - endpoint of the requesting GridFTP server
-     * @returns {Repo}
+     * @returns {Repo} Repository whose root is the longest matching prefix of the file path.
      */
     static resolveFromPath(file_path, a_endpoint) {
         var canonical = pathModule.normalizePOSIXPath(file_path);

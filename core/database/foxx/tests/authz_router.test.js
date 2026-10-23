@@ -223,6 +223,9 @@ function addUserWithIdentity(user_key, uuid, is_admin = false) {
 /**
  * Assert a denial, and that it was denied for the expected reason.
  * Status alone is not enough: any earlier failure also returns 400.
+ *
+ * @param {object} response - HTTP response returned by the authorization route.
+ * @param {string} reason - Expected text in the denial response body.
  */
 function expectDenied(response, reason) {
     expect(response.status).to.equal(400);

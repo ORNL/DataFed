@@ -15,6 +15,10 @@ module.exports = (function () {
     /**
      * Throws a permission-denied error that carries a reason, so the NACK
      * returned to the GridFTP authz callout says why access was refused.
+     *
+     * @param {object|null} client - DataFed client requesting access, if resolved.
+     * @param {string} action - Operation being denied.
+     * @param {string} path - Requested repository path.
      */
     function deny(client, action, path) {
         throw [
@@ -28,6 +32,11 @@ module.exports = (function () {
      * restricted to an owner's folder. Use the destination of an in-flight move,
      * matching Record.isPathConsistent(). Directory lookup may reveal sibling IDs;
      * each record's permissions still control access to its contents.
+     *
+     * @param {object} client - DataFed client whose record permissions are checked.
+     * @param {Repo} repo - Repository containing the records to check.
+     * @param {string|null} [owner_id=null] - Owner folder to check, or null for all owners.
+     * @returns {boolean} Whether the client can read or write at least one matching record.
      */
     function hasSharedRecordAccess(client, repo, owner_id = null) {
         const records = g_db
@@ -103,6 +112,10 @@ module.exports = (function () {
      * SCHEMA ASSUMPTIONS (verify): 'admin' edges run repo -> u, 'alloc' edges
      * run u|p -> repo. Prefer an existing permissions/g_lib helper if one
      * covers this.
+     *
+     * @param {object|null} client - DataFed client requesting repository access.
+     * @param {Repo} repo - Repository whose access is checked.
+     * @returns {boolean} Whether the client has repository traversal access.
      */
     obj.hasRepoAccess = function (client, repo) {
         if (!client) {
@@ -175,6 +188,10 @@ module.exports = (function () {
      * upload (write/create), so either permission suffices. The check is
      * against the database record, so it also works before an upload's file
      * exists on disk.
+     *
+     * @param {object|null} client - DataFed client requesting the lookup.
+     * @param {string} path - Record path relative to the collection root.
+     * @param {Repo} repo - Repository supplied by the authorization strategy.
      */
     obj.lookupRecord = function (client, path, repo) {
         if (!client) {
@@ -207,6 +224,10 @@ module.exports = (function () {
      * Authorizes traversal (lookup/chdir) of the directories from the
      * collection down to <repo>/user and <repo>/project. They hold only
      * structure, no data. Requires a known client with access to this repo.
+     *
+     * @param {object|null} client - DataFed client requesting directory traversal.
+     * @param {string} path - Directory path relative to the collection root.
+     * @param {Repo} repo - Repository whose directory is being traversed.
      */
     obj.traverseRepo = function (client, path, repo) {
         if (!client || !obj.hasRepoAccess(client, repo)) {
@@ -218,6 +239,9 @@ module.exports = (function () {
      * Authorizes access to a user's repository folder.
      *
      * User folders are private to their owner, except for DataFed administrators.
+     *
+     * @param {object|null} client - DataFed client requesting folder read access.
+     * @param {string} path - User folder path relative to the collection root.
      */
     obj.readUserFolder = function (client, path) {
         const path_components = pathModule.splitPOSIXPath(path);
@@ -237,6 +261,10 @@ module.exports = (function () {
      * Allowed for the owner, DataFed administrators, and clients with read/write
      * access to a record in this folder. Listing sibling record IDs is accepted
      * so that shared records remain reachable through GridFTP.
+     *
+     * @param {object|null} client - DataFed client requesting folder traversal.
+     * @param {string} path - User folder path relative to the collection root.
+     * @param {Repo} repo - Repository containing the user folder.
      */
     obj.traverseUserFolder = function (client, path, repo) {
         if (!client) {
@@ -259,6 +287,9 @@ module.exports = (function () {
      * Any project member, manager, owner, or DataFed administrator may see the
      * folder. Non-members must not be able to discover project contents through
      * the repository even if they have a valid Globus identity.
+     *
+     * @param {object|null} client - DataFed client requesting folder read access.
+     * @param {string} path - Project folder path relative to the collection root.
      */
     obj.readProjectFolder = function (client, path) {
         const path_components = pathModule.splitPOSIXPath(path);
@@ -282,6 +313,10 @@ module.exports = (function () {
      * Allowed for DataFed administrators, anyone with a role in the project, and
      * clients with read/write access to a record in this folder. Directory lookup
      * may reveal sibling record IDs to recipients of shared records.
+     *
+     * @param {object|null} client - DataFed client requesting folder traversal.
+     * @param {string} path - Project folder path relative to the collection root.
+     * @param {Repo} repo - Repository containing the project folder.
      */
     obj.traverseProjectFolder = function (client, path, repo) {
         if (!client) {
