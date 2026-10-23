@@ -16,6 +16,7 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <google/protobuf/stubs/common.h>
 #include <google/protobuf/util/json_util.h>
 #include <nlohmann/json.hpp>
 #include <zmq.h>
@@ -1767,7 +1768,11 @@ void DatabaseAPI::queryCreate(const SDMS::QueryCreateRequest &a_request,
 
   options.always_print_enums_as_ints = false;
   options.preserve_proto_field_names = true;
+#if GOOGLE_PROTOBUF_VERSION >= 5026000
+  options.always_print_fields_with_no_presence = true;
+#else
   options.always_print_primitive_fields = true;
+#endif
 
   auto stat = google::protobuf::util::MessageToJsonString(a_request.query(),
                                                           &query_json, options);
@@ -1838,7 +1843,11 @@ void DatabaseAPI::queryUpdate(const SDMS::QueryUpdateRequest &a_request,
     string query_json;
     options.always_print_enums_as_ints = false;
     options.preserve_proto_field_names = true;
+#if GOOGLE_PROTOBUF_VERSION >= 5026000
+    options.always_print_fields_with_no_presence = true;
+#else
     options.always_print_primitive_fields = true;
+#endif
     auto stat = google::protobuf::util::MessageToJsonString(
         final_query, &query_json, options);
     if (!stat.ok()) {

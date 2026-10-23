@@ -18,6 +18,10 @@
 #include "common/envelope.pb.h"
 #include "common/TraceException.hpp"
 
+// Standard includes
+#include <cstring>
+#include <string>
+
 extern "C" {
 #include "Config.h"
 }
@@ -28,6 +32,8 @@ public:
   // The below settings are simply for testing and are not
   // used in anyway in a production environment.
   ConfigFixture() {
+    // Mirror loadConfig(): zero the whole struct so every field starts empty.
+    std::memset(&config, 0, sizeof(config));
     std::string repo_id = "datafed-one-repo-to-rule-them-all";
     std::string server_addr = "tcp://ruler:7513";
     std::string pub_key = "=+r^&Qc&}f<Pho7ViJwVM5(Ze^o%UnnyA:XjF}7Q";
@@ -121,10 +127,10 @@ BOOST_AUTO_TEST_CASE(TestIsTestPath_LongerPath) {
 
 BOOST_AUTO_TEST_CASE(TestIsTestPath_NoTestPath) {
   SDMS::LogContext log_context;
-  // Setup a valid test path
+  // No test path configured
   SDMS::AuthzWorker worker(&config, log_context);
 
-  // Test when path is shorter should be valid
+  // Without a test path, nothing should match
   BOOST_CHECK(!worker.isTestPath("/valid/test/path/foo"));
 }
 
@@ -150,6 +156,16 @@ BOOST_AUTO_TEST_CASE(InvalidPathNoPrefixTest) {
   SDMS::AuthzWorker worker(&config, log_context);
   std::string invalid_path = "/wrong/root/subdir/file.txt";
   BOOST_CHECK(worker.isPathValid(invalid_path) == false);
+}
+
+BOOST_AUTO_TEST_CASE(InvalidPathPartialComponentTest) {
+  // A sibling directory sharing a character prefix with the collection root
+  // is NOT inside the collection. Fails until isPathValid requires '/' or
+  // end-of-string immediately after the root prefix.
+  SDMS::LogContext log_context;
+  SDMS::AuthzWorker worker(&config, log_context);
+  std::string sibling_path = "/globus/rootkit/file.txt";
+  BOOST_CHECK(worker.isPathValid(sibling_path) == false);
 }
 
 BOOST_AUTO_TEST_CASE(ExactRootPathTest) {
@@ -338,6 +354,16 @@ BOOST_AUTO_TEST_CASE(GetAuthzPathRootPathTest) {
   BOOST_CHECK_EQUAL(worker.getAuthzPath(root_path), expected_result);
 }
 
+BOOST_AUTO_TEST_CASE(GetAuthzPathRootPathNoTrailingSlashTest) {
+  // The collection root must be nonempty for core authorization.
+  SDMS::LogContext log_context;
+  SDMS::AuthzWorker worker(&config, log_context);
+  char root_path[] = "ftp://hostname/globus/root";
+  std::string expected_result = "/";
+
+  BOOST_CHECK_EQUAL(worker.getAuthzPath(root_path), expected_result);
+}
+
 BOOST_AUTO_TEST_CASE(GetAuthzPathDeepPathTest) {
   // Test a valid full FTP path with a deep path
   SDMS::LogContext log_context;
@@ -364,7 +390,6 @@ BOOST_AUTO_TEST_CASE(ProcessResponseWithError) {
   response.error_msg = "Sample error message";
 
   BOOST_CHECK_EQUAL(worker.processResponse(response), 1);
-  // Verify that DL_ERROR was called with appropriate error message
 }
 
 BOOST_AUTO_TEST_CASE(ProcessResponseWithNullMessage) {
@@ -376,7 +401,6 @@ BOOST_AUTO_TEST_CASE(ProcessResponseWithNullMessage) {
   response.error = false;
 
   BOOST_CHECK_THROW(worker.processResponse(response), TraceException);
-  // Verify that DL_ERROR was called with the "message is not defined" error
 }
 
 BOOST_AUTO_TEST_CASE(ProcessResponseWithValidMessage) {
@@ -438,9 +462,43 @@ BOOST_AUTO_TEST_CASE(ProcessResponseWithNackReply) {
 
   SDMS::LogContext log_context;
   SDMS::AuthzWorker worker(&config, log_context);
-  // Verify that DL_DEBUG was called with "Received NACK reply" for NACK case
+  // A NACK from the core is an authorization denial: processResponse
+  // returns 1 (and logs the NACK's reason).
   BOOST_CHECK_EQUAL(worker.processResponse(response), 1);
-  // Verify error occurs
+}
+
+// getAuthzPath() rejects paths above or outside the collection root.
+// GCS confines requests to the collection, so
+// these only occur on misconfiguration — a hard failure is correct.
+BOOST_AUTO_TEST_CASE(GetAuthzPath_OutsideCollectionRootThrows) {
+  SDMS::LogContext log_context;
+  std::strcpy(config.globus_collection_path, "/mnt/collection_root");
+  SDMS::AuthzWorker worker(&config, log_context);
+
+  char url_above[] = "ftp://host_name/mnt";
+  BOOST_CHECK_THROW(worker.getAuthzPath(url_above), TraceException);
+
+  char url_outside[] = "ftp://host_name/repo_id";
+  BOOST_CHECK_THROW(worker.getAuthzPath(url_outside), TraceException);
+
+  // Sibling sharing a character prefix with the root. Fails until
+  // isPathValid() matches whole path components.
+  char url_sibling[] = "ftp://host_name/mnt/collection_root_evil/file";
+  BOOST_CHECK_THROW(worker.getAuthzPath(url_sibling), TraceException);
+}
+
+// A trailing slash on globus-collection-path must not shift the
+// collection-relative coordinates sent to the core.
+BOOST_AUTO_TEST_CASE(GetAuthzPath_TrailingSlashOnCollectionPath) {
+  SDMS::LogContext log_context;
+  std::strcpy(config.globus_collection_path, "/mnt/collection_root/");
+  SDMS::AuthzWorker worker(&config, log_context);
+
+  char url_root[] = "ftp://host_name/mnt/collection_root/";
+  BOOST_CHECK_EQUAL(worker.getAuthzPath(url_root), "/");
+
+  char url_repo[] = "ftp://host_name/mnt/collection_root/repo_id";
+  BOOST_CHECK_EQUAL(worker.getAuthzPath(url_repo), "/repo_id");
 }
 
 BOOST_AUTO_TEST_SUITE_END()
