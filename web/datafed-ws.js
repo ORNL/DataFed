@@ -669,16 +669,7 @@ the registration page.
                                     logger.info(
                                         "/ui/authn",
                                         getCurrentLineNumber(),
-                                        "User: " +
-                                            uid +
-                                            " verified, mapped to: " +
-                                            username +
-                                            " acc:" +
-                                            xfr_token.access_token +
-                                            ", ref: " +
-                                            xfr_token.refresh_token +
-                                            ", exp:" +
-                                            xfr_token.expires_in,
+                                        "User: " + uid + " verified, mapped to: " + username,
                                     );
 
                                     // Store only data needed for active session
@@ -759,8 +750,7 @@ the registration page.
                         logger.error(
                             "ui/authn",
                             getCurrentLineNumber(),
-                            "Error: Globus introspection failed. User token:",
-                            xfr_token,
+                            "Error: Globus introspection failed for user.",
                         );
                         a_resp.redirect("/ui/error");
                     }
@@ -771,8 +761,7 @@ the registration page.
                 logger.error(
                     "ui/authn",
                     getCurrentLineNumber(),
-                    "Error: Globus introspection failed. User token:",
-                    xfr_token,
+                    "Error: Globus introspection failed.",
                 );
                 a_resp.redirect("/ui/error");
             });
