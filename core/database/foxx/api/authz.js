@@ -146,7 +146,7 @@ module.exports = (function () {
         const record = new Record(data_key);
 
         if (!record.exists()) {
-            throw [error.ERR_NOT_FOUND, "Record not found: " + path];
+            deny(client, "lookup", path);
         }
 
         if (
