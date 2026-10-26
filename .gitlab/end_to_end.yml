@@ -423,10 +423,11 @@ end_to_end_web_test:
     tags:
         - ci-datafed-client
     script:
+        - source external/DataFedDependencies/scripts/dependency_versions.sh
         - cd tests/end-to-end/web-UI
         - '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"' # This loads nvm
-        - nvm install 18
-        - nvm use 18
+        - nvm install "$DATAFED_NODE_VERSION"
+        - nvm use "$DATAFED_NODE_VERSION"
         - npm cache clean --force
         - npm install
         - sudo npx playwright install-deps

@@ -3,8 +3,6 @@ SCRIPT=$(realpath "${BASH_SOURCE[0]}")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/..")
 
-source "${PROJECT_ROOT}/scripts/dependency_versions.sh"
-
 # This script should be run after generating the .env file as it will pull
 # values from the .env file
 Help() {
@@ -80,6 +78,8 @@ sed -i 's/=\([^"]*\)/="\1"/' "${DIRECTORY}/.env_shell"
 
 # Cleanup after loading env
 rm "${DIRECTORY}/.env_shell"
+
+source "${PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_versions.sh"
 
 DATAFED_GLOBUS_REDIRECT_CRED_FILE_PATH="$DATAFED_GLOBUS_REDIRECT_CRED_FILE_PATH" \
   DATAFED_GCS_ROOT_NAME="$DATAFED_GCS_ROOT_NAME" \

@@ -11,12 +11,18 @@ jobs:
               with:
                   token: ${{ secrets.GITHUB_TOKEN }}
                   ref: ${{ github.head_ref || github.ref }}
+                  submodules: true
 
             # Step 2: Set up Node.js environment
+            - name: Load dependency versions
+              id: versions
+              run: |
+                  source external/DataFedDependencies/scripts/dependency_versions.sh
+                  echo "version=${DATAFED_NODE_VERSION}" >> "$GITHUB_OUTPUT"
             - name: Set up Node.js
               uses: actions/setup-node@v4
               with:
-                  node-version: "18"
+                  node-version: ${{ steps.versions.outputs.version }}
 
             # Step 3: Install Prettier
             - name: Install Prettier

@@ -118,6 +118,9 @@ else
   echo "INFO - Creating new .env file at $ENV_FILE_PATH"
 fi
 
+# Dependency pins take precedence over values from the existing .env file.
+source "${PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_versions.sh"
+
 local_DATAFED_KEY_DIR="${COMPOSE_ENV_DIR}/keys"
 if [ ! -d "$local_DATAFED_KEY_DIR" ]; then
   mkdir -p "$local_DATAFED_KEY_DIR"
@@ -315,6 +318,7 @@ DATAFED_WEB_KEY_PATH=${local_DATAFED_WEB_KEY_PATH}
 DATAFED_DATABASE_PASSWORD=${local_DATAFED_DATABASE_PASSWORD}
 DATAFED_DATABASE_IP_ADDRESS=${local_DATAFED_DATABASE_IP_ADDRESS}
 DATAFED_DATABASE_PORT=${local_DATAFED_DATABASE_PORT}
+DATAFED_ARANGODB_VERSION=${DATAFED_ARANGODB_VERSION}
 DATAFED_ENABLE_FOXX_TESTS=${local_DATAFED_ENABLE_FOXX_TESTS}
 EOF
 

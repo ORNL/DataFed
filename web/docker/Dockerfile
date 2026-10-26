@@ -33,7 +33,6 @@ RUN mkdir -p ${DATAFED_DEPENDENCIES_ROOT}/scripts && \
         mv ./scripts/generate_dependencies_config.sh ${DATAFED_DEPENDENCIES_ROOT}/scripts/generate_dependencies_config.sh
 
 COPY ./CMakeLists.txt                 ${BUILD_DIR}
-COPY ./scripts/dependency_versions.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_datafed.sh    ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_ws_config.sh  ${BUILD_DIR}/scripts/
 COPY ./scripts/install_ws.sh          ${BUILD_DIR}/scripts/

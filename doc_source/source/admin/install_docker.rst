@@ -272,13 +272,14 @@ Notes on running arango in a container can be found on their official web site. 
 
 .. code-block:: bash
 
+   source external/DataFedDependencies/scripts/dependency_versions.sh
    docker run -d \
        --restart=always \
         --network datafed-network \
         -p 8529:8529 \
         -v "/opt/datafed/keys/datafed-arango.pem:/usr/local/share/ca-certificates/datafed-arango.pem:ro" \
         -e ARANGO_ROOT_PASSWORD="" \
-        arangodb/arangodb:latest \
+        "arangodb/arangodb:${DATAFED_ARANGODB_VERSION}" \
         --ssl.keyfile /usr/local/share/ca-certificates/datafed-arango.pem \
         --server.endpoint ssl://0.0.0.0:8529
 

@@ -7,14 +7,15 @@ jobs:
         if: ${{ always() }}
         steps:
             - uses: actions/checkout@v2
-            - name: Update debian
-              run: apt update
-            - name: Install dependencies
               with:
                   submodules: recursive
                   fetch-depth: 0
+            - name: Update debian
+              run: apt update
+            - name: Install dependencies
               run: |
                   ./scripts/generate_datafed.sh
+                  ./external/DataFedDependencies/scripts/generate_dependencies_config.sh
                   ./external/DataFedDependencies/scripts/install_core_dependencies.sh
             - name: Build
               run: |

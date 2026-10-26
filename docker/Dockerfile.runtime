@@ -23,7 +23,7 @@ RUN echo $DATAFED_DIR
 # Recommended to mount ssh public key on run
 RUN adduser --disabled-password --gecos "" datafed
 
-COPY ./scripts/dependency_versions.sh  ${BUILD_DIR}/scripts/
+COPY ./external/DataFedDependencies/scripts/dependency_versions.sh  ${BUILD_DIR}/external/DataFedDependencies/scripts/
 RUN mkdir -p ${DATAFED_DIR}
 RUN mkdir -p /opt/datafed
 RUN mkdir -p /var/log/datafed

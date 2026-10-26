@@ -16,7 +16,7 @@ build-gcs-base:
     script:
         - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
         - echo "$BRANCH_LOWER"
-        - source "scripts/dependency_versions.sh"
+        - source "external/DataFedDependencies/scripts/dependency_versions.sh"
         - cd "external/globus-connect-server-deploy/docker"
         - git fetch origin "$DATAFED_GCS_SUBMODULE_VERSION"
         - git checkout "$DATAFED_GCS_SUBMODULE_VERSION"
