@@ -10,6 +10,13 @@ ARG DATAFED_DEPENDENCIES_INSTALL_PATH="/opt/datafed/dependencies"
 ARG                         BUILD_DIR="$DATAFED_DIR/source"
 ARG         DATAFED_DEPENDENCIES_ROOT="$BUILD_DIR/external/DataFedDependencies"
 ARG                           LIB_DIR="/usr/local/lib"
+# CI passes the dependency version explicitly; local builds use this default.
+ARG          DATAFED_ARANGODB_VERSION="3.12.12.1"
+ARG            ARANGODB_CLIENT_IMAGE="arangodb/enterprise:${DATAFED_ARANGODB_VERSION}"
+
+# The legacy public Debian repository stops at 3.12.4.3. Use the vendor's
+# versioned image for the matching client and its JavaScript/ICU runtime data.
+FROM ${ARANGODB_CLIENT_IMAGE} AS arangodb-client
 
 FROM ${DEPENDENCIES} AS foxx-build
 
@@ -66,16 +73,13 @@ RUN mkdir -p ${DATAFED_DIR}
 RUN mkdir -p ${DATAFED_INSTALL_PATH}
 RUN mkdir -p ${DATAFED_DEFAULT_LOG_PATH}
 
-RUN curl -OL https://download.arangodb.com/arangodb312/DEBIAN/Release.key; apt-key add - < Release.key
-
-# RUN echo 'deb https://download.arangodb.com/arangodb311/DEBIAN/ /' | tee /etc/apt/sources.list.d/arangodb.list
-# If trust the site but the gpg key has expired can add [trusted=yes]
-
-RUN echo 'deb [trusted=yes] https://download.arangodb.com/arangodb312/DEBIAN/ /' | tee /etc/apt/sources.list.d/arangodb.list
-RUN apt update
+COPY --from=arangodb-client /usr/bin/arangosh /usr/bin/arangosh
+COPY --from=arangodb-client /usr/share/arangodb3/ /usr/share/arangodb3/
+COPY --from=arangodb-client /etc/arangodb3/arangosh.conf /etc/arangodb3/arangosh.conf
 RUN . "${DATAFED_DEPENDENCIES_ROOT}/scripts/dependency_versions.sh" && \
-    apt install "arangodb3-client=${DATAFED_ARANGODB_VERSION}*" -y
-RUN arangosh --version
+    client_version="$(arangosh --version)" && \
+    printf '%s\n' "$client_version" | grep -F "build-repository: refs/tags/v${DATAFED_ARANGODB_VERSION} " && \
+    arangosh --server.endpoint none --javascript.execute-string 'print("ArangoDB client runtime OK")'
 
 USER root
 

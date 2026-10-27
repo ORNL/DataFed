@@ -3,6 +3,22 @@
 These are Dockerfiles for building different types of containers for the DataFed project
 These docker commands will be run from the top-level directory and structured as:
 
+The Foxx image copies `arangosh` and its JavaScript/ICU runtime data from the
+versioned vendor image, avoiding the obsolete public ArangoDB Debian repository.
+For local Foxx builds, pass the same version used by the dependency image:
+
+```bash
+source external/DataFedDependencies/scripts/dependency_versions.sh
+docker build -f docker/Dockerfile.foxx \
+  --build-arg DEPENDENCIES=<dependencies-image> \
+  --build-arg DATAFED_ARANGODB_VERSION="$DATAFED_ARANGODB_VERSION" \
+  -t datafed-foxx:local .
+```
+
+CI passes this version automatically. `ARANGODB_CLIENT_IMAGE` can optionally
+select a mirrored image or digest; the build checks its client release tag
+against the dependency version and runs JavaScript locally without a database.
+
 ### Build image
 ```
 docker build -f <Dockerfile> -t <Tag> .
