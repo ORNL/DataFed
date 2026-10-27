@@ -151,9 +151,10 @@ else
     --disable-https "$extra_collection_arg"
 fi
 
-echo "When creating a guest collection it must be created in: $DATAFED_GCS_COLLECTION_ROOT_PATH"
-echo "And the display name should be exactly: $GUEST_COLLECTION_NAME"
-echo "You will also need to add permissions for all Globus users so that they have write access."
-echo ""
-echo "When registering the repository with DataFed the ID must be: $DATAFED_REPO_ID_AND_DIR"
-echo "When registering the repository with DataFed path is abs to the mapped collection and must be listed as: ${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}"
+echo "Storage gateway configured for these repository filesystem paths:"
+for repo_path in "${DATAFED_CONFIGURED_REPO_PATHS[@]}"; do
+  printf '  %s\n' "$repo_path"
+done
+printf 'Guest collection: %s\n' "$GUEST_COLLECTION_NAME"
+printf 'Guest collection base: %s\n' "${DATAFED_GCS_COLLECTION_BASE_PATH:-/}"
+echo "DataFed registration forms will be generated after guest collection setup."

@@ -15,6 +15,40 @@ you might have your repository on a different machine, or may have multiple
 repositories connected to a single metadata server. 
 NOTE You will need a machine with firewall exceptions to run the compose files.
 
+The `all` and `repo` Compose environments default to two logical repositories,
+`bam` and `bambar`, served by the same repository container and GCS container.
+For a new `.env`, `generate_env.sh` configures:
+
+```bash
+DATAFED_REPO_ID_AND_DIR=bam
+DATAFED_SECONDARY_REPO_ID_AND_DIR=bambar
+DATAFED_REPO_IDS=bam,bambar
+DATAFED_GCS_COLLECTION_ROOT_PATH=/mnt/data
+DATAFED_GCS_COLLECTION_BASE_PATH=/
+```
+
+`DATAFED_HOST_COLLECTION_MOUNT` holds `bam` data (default:
+`$HOME/compose_collection`). `DATAFED_HOST_SECONDARY_COLLECTION_MOUNT` holds
+`bambar` data (default: the first host path with `-bambar` appended). Both paths
+are mounted identically into both services, at `/mnt/data/bam` and
+`/mnt/data/bambar`. Startup generates separate registration forms in `globus/`
+for registering each repository with DataFed.
+
+When GCS startup finishes, its logs list each repository's registration fields
+and both form filenames. Sign in as a DataFed system administrator, open
+**Manage Data Repositories**, and choose **New** for each repository. Copy the
+corresponding form values, choose capacity and administrators, then save. Register
+the `DATAFED_REPO_ID_AND_DIR` repository first and keep it registered because the
+shared authorization callout uses it as its origin. Create allocations on both
+repositories before testing uploads. Forms are generated locally; startup does
+not automatically register repositories or grant DataFed allocations.
+
+Run `./generate_env.sh` in `compose/all` or `compose/repo` to populate the new
+settings. Existing `.env` values are preserved, including existing repository
+IDs, storage paths, and collection bases. If an explicit `DATAFED_REPO_IDS`
+already exists, include both configured IDs in it to provision both repositories.
+Do not change an existing guest collection's base merely to add the second repo.
+
 ## 1. Metadata Compose Services
 
 The following steps are used to stand up the metadata Compose file from scratch.

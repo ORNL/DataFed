@@ -25,7 +25,7 @@ class MultiRepoSetupTest(unittest.TestCase):
                      "scripts/globus/generate_repo_form.sh"):
             target = self.root / name
             target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(SOURCE / name, target)
+            shutil.copy2(SOURCE / name, target)
         (self.root / "config").mkdir()
         (self.root / "config/datafed.sh").write_text("")
         (self.root / "keys").mkdir()
@@ -160,6 +160,55 @@ state_file.write_text(json.dumps(state))
         result = self.run_script("scripts/globus/setup_globus.sh")
         self.assertNotEqual(result.returncode, 0)
         self.assertFalse((self.root / "active-policy.json").exists())
+
+    def test_startup_registration_summary_uses_each_generated_form(self):
+        (self.root / "state.json").write_text(json.dumps({"gateways": [], "collections": [
+            {"id": "guest", "display_name": "Test Collection Guest"}]}))
+        entrypoint = (SOURCE / "repository/docker/entrypoint_authz.sh").read_text()
+        start = entrypoint.index('"${BUILD_DIR}/scripts/globus/generate_repo_form.sh" -j -s')
+        end = entrypoint.index('echo "Container is running."', start)
+        prefix = 'source "$BUILD_DIR/scripts/repo_paths.sh"\ndatafed_load_repo_paths\n'
+        env = dict(self.env, BUILD_DIR=str(self.root))
+        # Exercise the real post-setup startup block for both supported bases.
+        for base in (str(self.root / "data"), "/"):
+            with self.subTest(base=base):
+                env["DATAFED_GCS_COLLECTION_BASE_PATH"] = base
+                result = subprocess.run(["bash", "-euc", prefix + entrypoint[start:end]],
+                                        cwd=self.root, env=env, text=True, capture_output=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                for key in ("bam", "bambar"):
+                    form_path = self.root / "globus" / (key + "-repo-form.json")
+                    form = json.loads(form_path.read_text())
+                    expected = "/" + key if base != "/" else str(self.root / "data" / key)
+                    self.assertEqual(form["path"], expected)
+                    self.assertIn("Repository: " + key, result.stdout)
+                    self.assertIn("Path (relative to guest collection): " + expected, result.stdout)
+                    self.assertIn("JSON form: " + str(form_path), result.stdout)
+                    self.assertTrue(form_path.with_suffix(".sh").exists())
+                self.assertIn('Register "bam" first', result.stdout)
+                self.assertIn("Manage Data Repositories", result.stdout)
+                self.assertIn("set capacity and administrators", result.stdout)
+
+    def test_json_and_shell_forms_preserve_literal_values(self):
+        title = 'Test "quoted" $HOME'
+        public_key = "k$HOME" + "x" * 34
+        self.env["DATAFED_GCS_ROOT_NAME"] = title
+        (self.root / "keys/datafed-repo-key.pub").write_text(public_key)
+        (self.root / "state.json").write_text(json.dumps({"gateways": [], "collections": [
+            {"id": "guest", "display_name": title + " Collection Guest"}]}))
+        result = self.run_script("scripts/globus/generate_repo_form.sh", "-j", "-s")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for key in ("bam", "bambar"):
+            form = json.loads((self.root / (key + "-repo-form.json")).read_text())
+            self.assertEqual(form["title"], title)
+            self.assertEqual(form["pub_key"], public_key)
+            result = subprocess.run(
+                ["bash", "-euc", 'source "$1"; printf "%s\\n%s\\n%s" '
+                 '"$DATAFED_REPO_ID" "$DATAFED_REPO_TITLE" "$DATAFED_REPO_PUBLIC_KEY"',
+                 "bash", str(self.root / (key + "-repo-form.sh"))],
+                env=self.env, text=True, capture_output=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stdout.splitlines(), [key, title, public_key])
 
     def test_missing_or_changed_collection_cache_never_requests_automatic_deletion(self):
         # Load the pure decision function without authenticating to Globus.

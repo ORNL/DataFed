@@ -56,3 +56,28 @@ datafed_load_repo_paths() {
     return 1
   fi
 }
+
+datafed_print_repo_registration() {
+  local forms_dir="$1" id form
+  printf '\nDataFed repository registration required\n'
+  echo "Storage setup does not automatically register repositories with DataFed."
+  echo "Sign in to DataFed as a system administrator."
+  echo "Open Manage Data Repositories and choose New for each repository below."
+  echo "Copy its form values into the registration fields, set capacity and administrators, then Save."
+  printf 'Register "%s" first and keep it registered: it is the shared authorization origin.\n' \
+    "$DATAFED_REPO_ID_AND_DIR"
+
+  for id in "${DATAFED_CONFIGURED_REPO_IDS[@]}"; do
+    form="$forms_dir/$id-repo-form.json"
+    # Read the same collection-relative path and UUID that the user will register.
+    jq -er --arg id "$id" '
+      if .id != $id then error("Repository form ID does not match configuration")
+      else "\nRepository: \(.id)\n  Title: \(.title)\n  Srvr. Address: \(.address)\n  Public Key: \(.pub_key)\n  End-point ID: \(.endpoint)\n  Path (relative to guest collection): \(.path)" end
+    ' "$form" || return 1
+    printf '  JSON form: %s\n  Shell form: %s/%s-repo-form.sh\n' "$form" "$forms_dir" "$id"
+  done
+  echo
+  echo "With the supplied Compose files, these forms are in ./globus/ beside compose.yml."
+  echo "The repositories share a collection and service; register each ID with its own Path."
+  echo "After registration, create user/project allocations on each repository before uploading data."
+}
