@@ -10,7 +10,7 @@ check-ws-image:
         COMPONENT: "ws"
         BUILD_INTERMEDIATE: "TRUE"
         INTERMEDIATE_LAYER_NAME: "build"
-        WATCHED_PATHS: "docker scripts web cmake common/proto .gitlab-ci.yml CMakeLists.txt"
+        WATCHED_PATHS: "docker scripts web cmake common/proto external/DataFedDependencies .gitlab-ci.yml CMakeLists.txt"
 
 check-core-image:
     extends: .image_check
