@@ -137,8 +137,13 @@ if( BUILD_WEB_SERVER )
      DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/web/proto3/")
 
   if( ENABLE_UNIT_TESTS )
-    add_test(NAME unit_tests_web COMMAND "${DEPENDENCY_INSTALL_PATH}/nvm/versions/node/${LOCAL_NODE_VERSION}/bin/npm" "test")
-    set_tests_properties(unit_tests_web PROPERTIES WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/web)
+    set(WEB_NODE_BIN "${DEPENDENCY_INSTALL_PATH}/nvm/versions/node/${LOCAL_NODE_VERSION}/bin")
+    add_test(NAME unit_tests_web COMMAND "${WEB_NODE_BIN}/npm" "test")
+    # npm and test runners use /usr/bin/env node. Use the same Node installation
+    # as npm, even when CI supplies a PATH from a different dependency image.
+    set_tests_properties(unit_tests_web PROPERTIES
+      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/web
+      ENVIRONMENT "PATH=${WEB_NODE_BIN}:$ENV{PATH}")
   endif()
 
 endif()
