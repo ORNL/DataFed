@@ -32,7 +32,7 @@ datafed_load_repo_paths() {
     echo "Repository root must be inside the collection base path" >&2
     return 1
   fi
-  IFS=',' read -r -a DATAFED_CONFIGURED_REPO_IDS <<< "$ids"
+  IFS=',' read -r -a DATAFED_CONFIGURED_REPO_IDS <<<"$ids"
   for id in "${DATAFED_CONFIGURED_REPO_IDS[@]}"; do
     # Match repository keys, but disallow path traversal and shell metacharacters.
     if [[ ! "$id" =~ ^[a-z0-9_.-]{1,40}$ || "$id" == . || "$id" == .. || "$seen" == *",$id,"* ]]; then
