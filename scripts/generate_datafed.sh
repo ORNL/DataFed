@@ -125,6 +125,12 @@ else
   local_DATAFED_GCS_COLLECTION_ROOT_PATH=$(printenv DATAFED_GCS_COLLECTION_ROOT_PATH)
 fi
 
+local_DATAFED_REPO_IDS="${DATAFED_REPO_IDS:-}"
+if [[ ! "$local_DATAFED_REPO_IDS" =~ ^[a-z0-9_.,-]*$ ]]; then
+  echo "Invalid DATAFED_REPO_IDS: use comma-separated repository keys" >&2
+  exit 1
+fi
+
 local_DATAFED_REPO_ID_AND_DIR=""
 if [ -z "${DATAFED_REPO_ID_AND_DIR}" ]; then
   local_DATAFED_REPO_ID_AND_DIR=""
@@ -338,6 +344,8 @@ export DATAFED_GCS_COLLECTION_ROOT_PATH="$local_DATAFED_GCS_COLLECTION_ROOT_PATH
 # collection, avoid using spaces in the name.
 # i.e. DATAFED_REPO_ID_AND_DIR="datafed-home"
 export DATAFED_REPO_ID_AND_DIR="$local_DATAFED_REPO_ID_AND_DIR"
+# Optional comma-separated repository keys served by this container pair.
+export DATAFED_REPO_IDS="$local_DATAFED_REPO_IDS"
 # Institutionally allowed domains, users that have accounts in these domains
 # will have the ability to store data on the repository.
 # i.e. ornl.gov or cu.edu or gmail.com by default clients.auth.globus.org

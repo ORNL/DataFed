@@ -226,6 +226,74 @@ Here is an example for the repository service:
         -v "/local/collection/path:$DATAFED_GCS_COLLECTION_ROOT_PATH/$DATAFED_REPO_ID_AND_DIR"
         -t "datafed-repo:latest" 
 
+Multiple Repositories on One Container Pair
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+One GCS container and one repository container can serve multiple sibling
+repository directories. Set the following variables on both containers, keeping
+the existing collection base path unchanged when extending a deployed service:
+
+.. code-block:: bash
+
+    DATAFED_REPO_ID_AND_DIR=bam
+    DATAFED_REPO_IDS=bam,bambar
+    DATAFED_GCS_COLLECTION_ROOT_PATH=/mnt/data
+    DATAFED_GCS_COLLECTION_BASE_PATH=/mnt/data
+
+``DATAFED_REPO_IDS`` is an optional comma-separated list of repository keys.
+When omitted or empty, setup uses only ``DATAFED_REPO_ID_AND_DIR``, preserving
+single-repository deployments. The latter remains the authorization origin and
+must be included in the list and registered in DataFed. Keys must be unique,
+lowercase, at most 40 characters, and contain only letters, digits, underscores,
+hyphens, or periods; ``.`` and ``..`` are rejected.
+
+Mount each repository's storage at the same location in both containers. The
+repository list does not create host bind mounts. For example, add these volume
+entries to both ``datafed-gcs`` and ``datafed-repo`` in a Compose override file:
+
+.. code-block:: yaml
+
+    volumes:
+      - /srv/bam:/mnt/data/bam
+      - /srv/bambar:/mnt/data/bambar
+
+Use the same backing directories in both containers and retain the shared key
+mounts. Replace any existing mount targeting the same directory with the intended
+mount rather than mapping two different host directories there. Generated
+``docker run`` scripts also accept multiple mounts through their existing
+``--repo-volume-mounts`` option.
+
+Startup creates each repository's ``user`` and ``project`` directories and
+reconciles the gateway policy to allow only the listed repository roots. Adding
+an ID then recreating the containers preserves existing collection IDs; removing
+an ID removes its gateway allowance, but does not delete files or unregister the
+repository. Coordinate removal with DataFed allocations and active transfers.
+Symbolic links at repository roots or their ``user``/``project`` directories are
+rejected during provisioning.
+
+Setup generates a separate ``<id>-repo-form.json`` and ``<id>-repo-form.sh`` for
+each repository under ``/opt/datafed/globus``. Register each repository with its
+own form. They share the guest collection UUID, service address, and public key,
+but have distinct collection-relative paths. In the example above these are
+``/bam`` and ``/bambar``. With an existing collection base of ``/``, keep that base;
+the forms instead use ``/mnt/data/bam`` and ``/mnt/data/bambar``.
+
+Keep ``/opt/datafed/globus`` persistent, including its collection base-path cache.
+Startup refuses to delete an existing guest collection solely because its cache
+is missing or its configured base changed. For a missing cache, verify the actual
+guest collection root before restoring the cache with
+``scripts/globus/utils.py``'s ``cache_base_path`` helper. Changing the collection
+base is a separate migration: collection UUIDs and registered paths may change.
+The existing ``DATAFED_FORCE_RECREATE_GUEST_COLLECTION`` override remains an
+explicit request to recreate the collection and should not be used when adding
+another repository.
+
+Provisioning regression tests run without contacting Globus:
+
+.. code-block:: bash
+
+    python3 -m unittest discover -s tests -p test_multi_repo_setup.py
+
 Globus Service
 ------------
 

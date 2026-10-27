@@ -152,6 +152,7 @@ RUN apt update
 RUN apt-get install wget jq bind9-host build-essential -y
 RUN apt-get reinstall globus-connect-server54 libsqlite3-dev -y
 
+COPY --chown=datafed:root ./scripts/repo_paths.sh ${BUILD_DIR}/scripts/repo_paths.sh
 COPY --chown=datafed:root ./scripts/generate_datafed.sh               ${BUILD_DIR}/scripts/
 
 RUN ${BUILD_DIR}/scripts/generate_datafed.sh

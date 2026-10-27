@@ -9,7 +9,9 @@ set -euf -o pipefail
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath ${SOURCE}/../../)
-source ${PROJECT_ROOT}/config/datafed.sh
+source "${PROJECT_ROOT}/config/datafed.sh"
+source "${PROJECT_ROOT}/scripts/repo_paths.sh"
+datafed_load_repo_paths
 
 if [ -z "$DATAFED_GCS_ROOT_NAME" ]; then
   echo "DATAFED_GCS_ROOT_NAME is not defined cannot run $SCRIPT"
@@ -57,7 +59,10 @@ GATEWAY_NAME="${DATAFED_GCS_ROOT_NAME} Storage Gateway"
 COLLECTION_NAME="${DATAFED_GCS_ROOT_NAME} Collection Mapped"
 GUEST_COLLECTION_NAME="${DATAFED_GCS_ROOT_NAME} Collection Guest"
 
-gateway_line=$(globus-connect-server storage-gateway list | grep "$GATEWAY_NAME" || echo "")
+gateway_line=$(globus-connect-server storage-gateway list -F json | jq -er --arg name "$GATEWAY_NAME" '
+  [(if type == "array" then . else .data end)[] | select(.display_name == $name)]
+  | if length > 1 then error("Ambiguous storage gateway name")
+    else (.[0].id // "") end')
 
 echo "$DATAFED_GLOBUS_REPO_USER"
 cat <<EOF >mapping.json
@@ -79,10 +84,9 @@ EOF
 # from the domain
 DOMAINS="--domain $DATAFED_GLOBUS_ALLOWED_DOMAINS --domain clients.auth.globus.org"
 
-echo "{" >path_restriction.json
-echo "  \"DATA_TYPE\": \"path_restrictions#1.0.0\"," >>path_restriction.json
-echo "  \"read_write\": [\"${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}\"]" >>path_restriction.json
-echo "}" >>path_restriction.json
+# Replace the complete policy on startup, using only explicitly configured roots.
+jq -n --args '{DATA_TYPE: "path_restrictions#1.0.0", read_write: $ARGS.positional}' \
+  "${DATAFED_CONFIGURED_REPO_PATHS[@]}" >path_restriction.json
 
 if [ -z "$gateway_line" ]; then
   # Check if it already exists
@@ -94,9 +98,7 @@ if [ -z "$gateway_line" ]; then
 
 else
 
-  spaces_in_name=$(echo $GATEWAY_NAME | awk '{print gsub("[ \t]",""); exit}')
-  columns=$(($spaces_in_name + 3))
-  uuid_of_storage_gateway=$(globus-connect-server storage-gateway list | grep "$GATEWAY_NAME" | awk -v col=$columns '{ print $col }')
+  uuid_of_storage_gateway="$gateway_line"
 
   globus-connect-server storage-gateway update posix \
     "$uuid_of_storage_gateway" \
@@ -107,14 +109,17 @@ else
 fi
 
 # Create project/ and /user folders
-mkdir -p "${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}/user"
-mkdir -p "${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}/project"
+for repo_path in "${DATAFED_CONFIGURED_REPO_PATHS[@]}"; do
+  mkdir -p -- "$repo_path/user" "$repo_path/project"
+done
 
-collection_line=$(globus-connect-server collection list | grep "$COLLECTION_NAME" || echo "")
-
-spaces_in_name=$(echo $GATEWAY_NAME | awk '{print gsub("[ \t]",""); exit}')
-columns=$(($spaces_in_name + 3))
-uuid_of_storage_gateway=$(globus-connect-server storage-gateway list | grep "$GATEWAY_NAME" | awk -v col=$columns '{ print $col }')
+collection_line=$(globus-connect-server collection list -F json | jq -er --arg name "$COLLECTION_NAME" '
+  [(if type == "array" then . else .data end)[] | select(.display_name == $name)]
+  | if length > 1 then error("Ambiguous mapped collection name")
+    else (.[0].id // "") end')
+uuid_of_storage_gateway=$(globus-connect-server storage-gateway list -F json | jq -er --arg name "$GATEWAY_NAME" '
+  [(if type == "array" then . else .data end)[] | select(.display_name == $name)]
+  | if length == 1 then .[0].id else error("Expected one storage gateway") end')
 
 # If not empty
 extra_collection_arg=""
@@ -136,7 +141,7 @@ if [ -z "$collection_line" ]; then
     --disable-https "$extra_collection_arg"
 else
 
-  uuid_of_collection=$(globus-connect-server collection list | grep "$COLLECTION_NAME" | awk '{ print $1 }')
+  uuid_of_collection="$collection_line"
   # NOTE enable-anonymous-writes is allowed without a subscription
   # NOTE allow-guest-collections requires a subscription
   globus-connect-server collection update \

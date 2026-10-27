@@ -81,6 +81,8 @@ fi
 "${PROJECT_ROOT}/scripts/generate_datafed.sh"
 
 source "${PROJECT_ROOT}/config/datafed.sh"
+source "${PROJECT_ROOT}/scripts/repo_paths.sh"
+datafed_load_repo_paths
 
 # After datafed.sh has been run created
 "${PROJECT_ROOT}/scripts/generate_authz_config.sh"
@@ -183,10 +185,10 @@ if [ ! -d "${log_path}" ]; then
   mkdir -p "${log_path}"
 fi
 
-if [ ! -d "${DATAFED_GCS_COLLECTION_ROOT_PATH}" ]; then
-  mkdir -p ""${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}""
-  chown -R datafed:root "${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}"
-fi
+for repo_path in "${DATAFED_CONFIGURED_REPO_PATHS[@]}"; do
+  mkdir -p -- "$repo_path/user" "$repo_path/project"
+  chown datafed:root "$repo_path" "$repo_path/user" "$repo_path/project"
+done
 
 # Run this as the dataflow user
 # setup globus command will also create the folders /proeject and user
