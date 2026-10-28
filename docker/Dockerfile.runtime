@@ -33,5 +33,7 @@ RUN chown -R datafed:root /var/log/datafed
 RUN chown -R datafed:root ${DATAFED_DIR}
 WORKDIR ${DATAFED_DIR}
 
-RUN apt update
-RUN apt install -y grep libcurl4 wget
+RUN apt-get update --error-on=any && \
+    apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends ca-certificates curl grep wget && \
+    rm -rf /var/lib/apt/lists/*

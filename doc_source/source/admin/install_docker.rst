@@ -104,7 +104,7 @@ correct permissions. You can create the directories by running the following scr
 
 .. code-block:: bash
 
-        ./scripts/globus/setup_collection_directory.sh all
+        ./scripts/globus/setup_collection_directory.sh -c all
 
 For convenience, development installations are fully supported utilizing docker compose.
 Once fully built and configured, the development instance can be started with the following commands:
@@ -247,21 +247,32 @@ must be included in the list and registered in DataFed. Keys must be unique,
 lowercase, at most 40 characters, and contain only letters, digits, underscores,
 hyphens, or periods; ``.`` and ``..`` are rejected.
 
-Mount each repository's storage at the same location in both containers. The
-repository list does not create host bind mounts. For example, add these volume
-entries to both ``datafed-gcs`` and ``datafed-repo`` in a Compose override file:
+For Compose deployments, define the repositories and host locations in
+``repositories.json`` beside ``compose.yml`` instead of adding numbered mount
+environment variables:
 
-.. code-block:: yaml
+.. code-block:: json
 
-    volumes:
-      - /srv/bam:/mnt/data/bam
-      - /srv/bambar:/mnt/data/bambar
+    {
+      "authorization_origin": "bam",
+      "repositories": [
+        {"id": "bam", "host_path": "/srv/bam"},
+        {"id": "bambar", "host_path": "/srv/bambar"},
+        {"id": "images", "host_path": "/archive/images"}
+      ]
+    }
 
-Use the same backing directories in both containers and retain the shared key
-mounts. Replace any existing mount targeting the same directory with the intended
-mount rather than mapping two different host directories there. Generated
-``docker run`` scripts also accept multiple mounts through their existing
-``--repo-volume-mounts`` option.
+Run ``./generate_env.sh -c`` in the Compose directory after editing this file. It
+generates the identical mount list for both services and derives the runtime
+repository IDs from the manifest. Any number of entries can be used; host paths
+must be distinct and non-nested. The first run creates the manifest using the
+existing mount settings, or the ``bam``/``bambar`` defaults for a new environment.
+See ``compose/README.md`` for the complete Compose workflow.
+
+For direct ``docker run`` deployments, set the runtime environment variables
+shown above and mount each repository's storage at the same location in both
+containers. Generated launch scripts accept multiple mounts through their
+existing ``--repo-volume-mounts`` option.
 
 Startup creates each repository's ``user`` and ``project`` directories and
 reconciles the gateway policy to allow only the listed repository roots. Adding

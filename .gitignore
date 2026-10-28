@@ -12,6 +12,8 @@ compose/**/globus
 compose/**/keys
 compose/**/logs
 compose/**/unset_env.sh
+compose/**/repositories.json
+compose/**/.repositories.compose.json
 config/datafed.sh
 config/datafed-authz.cfg
 config/datafed-core.cfg
@@ -43,6 +45,7 @@ python/datafed_pkg/datafed/Version_pb2.py
 python/datafed_pkg/datafed/__pycache__/
 python/datafed_pkg/dist/
 web/package.json
+web/zeromq-compat/
 repository/gridftp/globus5/authz/mock_core/Version.hpp
 repository/gridftp/globus5/authz/source/Version.hpp
 repository/server/Version.hpp

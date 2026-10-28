@@ -107,6 +107,9 @@ services:
 
     # Needs the datafed-core to be up so it doesn't fail when trying to connect
     datafed-repo:
+        extends:
+            file: .repositories.compose.json
+            service: repository-storage
         depends_on: ["datafed-core"]
         environment:
             DATAFED_ZEROMQ_SESSION_SECRET: "${DATAFED_ZEROMQ_SESSION_SECRET}"
@@ -116,16 +119,12 @@ services:
             DATAFED_CORE_ADDRESS_PORT_INTERNAL: "${DATAFED_DOMAIN}:7513"
             DATAFED_GCS_COLLECTION_ROOT_PATH: "${DATAFED_GCS_COLLECTION_ROOT_PATH}"
             DATAFED_GCS_COLLECTION_BASE_PATH: "${DATAFED_GCS_COLLECTION_BASE_PATH}"
-            DATAFED_REPO_ID_AND_DIR: "${DATAFED_REPO_ID_AND_DIR:-bam}"
-            DATAFED_REPO_IDS: "${DATAFED_REPO_IDS:-${DATAFED_REPO_ID_AND_DIR:-bam},${DATAFED_SECONDARY_REPO_ID_AND_DIR:-bambar}}"
             UID: "${DATAFED_UID}"
             HOST_HOSTNAME: "localhost"
         image: datafed-repo:latest
         volumes:
             - ./keys:/opt/datafed/keys
             - ./logs:${DATAFED_CONTAINER_LOG_PATH}
-            - ${DATAFED_HOST_COLLECTION_MOUNT}:${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR:-bam}
-            - ${DATAFED_HOST_SECONDARY_COLLECTION_MOUNT:-./collections/bambar}:${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_SECONDARY_REPO_ID_AND_DIR:-bambar}
         ports:
             - 9000:9000 # Communication core server
         networks:
@@ -136,6 +135,9 @@ services:
     # Needs port 443 for control port
     # Needs the datafed-web server to be up so that it can download the public key
     datafed-gcs:
+        extends:
+            file: .repositories.compose.json
+            service: repository-storage
         depends_on: ["datafed-web"]
         environment:
             DATAFED_ZEROMQ_SESSION_SECRET: "${DATAFED_ZEROMQ_SESSION_SECRET}"
@@ -144,8 +146,6 @@ services:
             DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
             DATAFED_CORE_ADDRESS_PORT_INTERNAL: "datafed-core:7513"
             DATAFED_GCS_ROOT_NAME: "${DATAFED_GCS_ROOT_NAME}"
-            DATAFED_REPO_ID_AND_DIR: "${DATAFED_REPO_ID_AND_DIR:-bam}"
-            DATAFED_REPO_IDS: "${DATAFED_REPO_IDS:-${DATAFED_REPO_ID_AND_DIR:-bam},${DATAFED_SECONDARY_REPO_ID_AND_DIR:-bambar}}"
             DATAFED_GLOBUS_SUBSCRIPTION: "${DATAFED_GLOBUS_SUBSCRIPTION}"
             DATAFED_GLOBUS_CONTROL_PORT: "${DATAFED_GLOBUS_CONTROL_PORT}"
             DATAFED_GCS_COLLECTION_BASE_PATH: "${DATAFED_GCS_COLLECTION_BASE_PATH}"
@@ -163,8 +163,6 @@ services:
             - ./keys:/opt/datafed/keys
             - ./globus:/opt/datafed/globus
             - ./logs:${DATAFED_CONTAINER_LOG_PATH}
-            - ${DATAFED_HOST_COLLECTION_MOUNT}:${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR:-bam}
-            - ${DATAFED_HOST_SECONDARY_COLLECTION_MOUNT:-./collections/bambar}:${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_SECONDARY_REPO_ID_AND_DIR:-bambar}
 
 volumes:
     foxx_tmp:

@@ -15,39 +15,57 @@ you might have your repository on a different machine, or may have multiple
 repositories connected to a single metadata server. 
 NOTE You will need a machine with firewall exceptions to run the compose files.
 
-The `all` and `repo` Compose environments default to two logical repositories,
-`bam` and `bambar`, served by the same repository container and GCS container.
-For a new `.env`, `generate_env.sh` configures:
+The `all` and `repo` Compose environments use a single `repositories.json` file
+beside `compose.yml` to define any number of logical repositories. Each entry
+specifies its ID and a separate host storage location:
 
-```bash
-DATAFED_REPO_ID_AND_DIR=bam
-DATAFED_SECONDARY_REPO_ID_AND_DIR=bambar
-DATAFED_REPO_IDS=bam,bambar
-DATAFED_GCS_COLLECTION_ROOT_PATH=/mnt/data
-DATAFED_GCS_COLLECTION_BASE_PATH=/
+```json
+{
+  "authorization_origin": "bam",
+  "repositories": [
+    {"id": "bam", "host_path": "/srv/datafed/bam"},
+    {"id": "bambar", "host_path": "/srv/datafed/bambar"},
+    {"id": "images", "host_path": "/archive/images"}
+  ]
+}
 ```
 
-`DATAFED_HOST_COLLECTION_MOUNT` holds `bam` data (default:
-`$HOME/compose_collection`). `DATAFED_HOST_SECONDARY_COLLECTION_MOUNT` holds
-`bambar` data (default: the first host path with `-bambar` appended). Both paths
-are mounted identically into both services, at `/mnt/data/bam` and
-`/mnt/data/bambar`. Startup generates separate registration forms in `globus/`
-for registering each repository with DataFed.
+Run `./generate_env.sh -c` in `compose/all` or `compose/repo`. On the first run,
+it creates `repositories.json` with the `bam` and `bambar` defaults. When
+migrating an existing `.env`, it preserves the previously configured IDs and
+host mount locations in this manifest instead. Once the manifest exists, it is
+the source of truth; numbered mount variables are no longer needed.
+
+Edit the manifest to add, remove, or change repositories, then run
+`./generate_env.sh -c` again before `docker compose up -d`. The `-c` option
+preserves existing certificates. Relative host paths
+are resolved against the Compose directory, and `~` is expanded. Host paths
+must be distinct and non-nested; IDs must be valid, unique repository keys.
+The authorization origin must be one of those IDs.
+
+The generator writes `.repositories.compose.json`, which both services inherit
+using Compose `extends`. It supplies the identical bind mounts and repository
+IDs to the repo and GCS containers. It works with both `docker compose up` and
+`docker compose -f compose.yml up`; no additional override argument is needed.
+Do not edit the generated file. Both it and the local manifest are gitignored.
+Python 3 is required to generate the configuration.
+
+The container destination for each repository is
+`${DATAFED_GCS_COLLECTION_ROOT_PATH}/<id>`. New environments default to
+`/mnt/data` with a guest collection base of `/`; existing root and collection
+base settings are preserved. Keep an existing guest collection's base unchanged
+when adding another repository. Adding an entry changes the permitted repository
+roots; removing an entry removes its mount and gateway allowance without deleting
+host data or unregistering its DataFed repository.
 
 When GCS startup finishes, its logs list each repository's registration fields
-and both form filenames. Sign in as a DataFed system administrator, open
-**Manage Data Repositories**, and choose **New** for each repository. Copy the
-corresponding form values, choose capacity and administrators, then save. Register
-the `DATAFED_REPO_ID_AND_DIR` repository first and keep it registered because the
-shared authorization callout uses it as its origin. Create allocations on both
-repositories before testing uploads. Forms are generated locally; startup does
-not automatically register repositories or grant DataFed allocations.
-
-Run `./generate_env.sh` in `compose/all` or `compose/repo` to populate the new
-settings. Existing `.env` values are preserved, including existing repository
-IDs, storage paths, and collection bases. If an explicit `DATAFED_REPO_IDS`
-already exists, include both configured IDs in it to provision both repositories.
-Do not change an existing guest collection's base merely to add the second repo.
+and both form filenames under the mounted `globus/` directory. Sign in as a
+DataFed system administrator, open **Manage Data Repositories**, and choose
+**New** for each repository. Copy the corresponding form values, choose capacity
+and administrators, then save. Register `authorization_origin` first and keep it
+registered because the shared authorization callout uses it as its origin.
+Create allocations on each repository before testing uploads. Startup does not
+automatically register repositories or grant DataFed allocations.
 
 ## 1. Metadata Compose Services
 

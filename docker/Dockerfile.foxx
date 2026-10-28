@@ -81,6 +81,74 @@ RUN . "${DATAFED_DEPENDENCIES_ROOT}/scripts/dependency_versions.sh" && \
     printf '%s\n' "$client_version" | grep -F "build-repository: refs/tags/v${DATAFED_ARANGODB_VERSION} " && \
     arangosh --server.endpoint none --javascript.execute-string 'print("ArangoDB client runtime OK")'
 
+# Resolve the deployment CLI during the image build, with patched transitive
+# dependencies. The final image does not need npm, compilers, or Python.
+COPY ./docker/foxx/package.json ${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/package.json
+RUN . "${DATAFED_DEPENDENCIES_ROOT}/scripts/dependency_versions.sh" && \
+    export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm" && \
+    . "$NVM_DIR/nvm.sh" && nvm use "$DATAFED_NODE_VERSION" && \
+    npm install --prefix "${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm" --omit=dev --ignore-scripts && \
+    mkdir -p "${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/bin" && \
+    ln -s ../node_modules/.bin/foxx "${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/bin/foxx" && \
+    mkdir -p /foxx-cmake/share && \
+    cp -a ${DATAFED_DEPENDENCIES_INSTALL_PATH}/share/cmake-* /foxx-cmake/share/
+
+FROM ${RUNTIME} AS foxx
+SHELL ["/bin/bash", "-c"]
+ARG DATAFED_DIR
+ARG BUILD_DIR
+ARG DATAFED_INSTALL_PATH
+ARG DATAFED_DEPENDENCIES_INSTALL_PATH
+ARG DATAFED_DEPENDENCIES_ROOT
+ENV                         BUILD_DIR="${BUILD_DIR}"
+ENV                              HOME="${BUILD_DIR}"
+ENV                       DATAFED_DIR="${DATAFED_DIR}"
+ENV DATAFED_DEPENDENCIES_INSTALL_PATH="${DATAFED_DEPENDENCIES_INSTALL_PATH}"
+ENV         DATAFED_DEPENDENCIES_ROOT="${DATAFED_DEPENDENCIES_ROOT}"
+ENV              DATAFED_INSTALL_PATH="$DATAFED_INSTALL_PATH"
+ENV          DATAFED_DEFAULT_LOG_PATH="$DATAFED_INSTALL_PATH/logs"
+# Set to false by default to avoid wiping the database
+ENV                 ENABLE_FOXX_TESTS="FALSE"
+# Database name — defaults to production. Override at runtime with
+# docker run -e DATAFED_DATABASE_NAME=sdms_test for testing.
+ENV            DATAFED_DATABASE_NAME="sdms"
+ENV            DATAFED_TEST_DATABASE_NAME="sdms_test"
+# Production containers are allowed to target the "sdms" database.
+# install_foxx.sh refuses "sdms" without this flag to prevent test
+# fixtures from accidentally writing to production.
+ENV             ALLOW_PRODUCTION_DB="true"
+ENV DATAFED_ALLOW_TESTING_PROD_DATABASE="false"
+
+RUN apt-get update --error-on=any && \
+    apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends make && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=foxx-build /usr/bin/arangosh /usr/bin/arangosh
+COPY --from=foxx-build /usr/share/arangodb3/ /usr/share/arangodb3/
+COPY --from=foxx-build /etc/arangodb3/arangosh.conf /etc/arangodb3/arangosh.conf
+COPY --from=foxx-build ${BUILD_DIR}/CMakeLists.txt ${BUILD_DIR}/CMakeLists.txt
+COPY --from=foxx-build ${BUILD_DIR}/cmake ${BUILD_DIR}/cmake
+COPY --from=foxx-build ${BUILD_DIR}/core ${BUILD_DIR}/core
+COPY --from=foxx-build ${BUILD_DIR}/config ${BUILD_DIR}/config
+COPY --from=foxx-build ${BUILD_DIR}/scripts ${BUILD_DIR}/scripts
+COPY --from=foxx-build ${BUILD_DIR}/docker ${BUILD_DIR}/docker
+COPY --from=foxx-build ${DATAFED_DEPENDENCIES_ROOT}/scripts ${DATAFED_DEPENDENCIES_ROOT}/scripts
+COPY --from=foxx-build ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake
+COPY --from=foxx-build ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/ctest ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/ctest
+COPY --from=foxx-build /foxx-cmake/share/ ${DATAFED_DEPENDENCIES_INSTALL_PATH}/share/
+COPY --from=foxx-build ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm
+COPY --from=foxx-build ${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm ${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm
+
+# Retain nvm's node selection, but omit its bundled package manager and caches.
+RUN rm -rf ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm/versions/node/*/lib/node_modules \
+           ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm/versions/node/*/bin/npm \
+           ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm/versions/node/*/bin/npx \
+           ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm/.cache \
+           ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm/.git \
+           ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm/test && \
+    mkdir -p ${DATAFED_INSTALL_PATH}/logs
+
 USER root
 
 # Here we are selective with permissions because of the performance implications
@@ -90,7 +158,6 @@ RUN chown -R datafed:root /home/datafed \
                  ${BUILD_DIR}/config \
                  ${BUILD_DIR}/scripts \
                  ${BUILD_DIR}/core/ \
-                 ${BUILD_DIR}/common/ \
                  ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm \
                  ${BUILD_DIR}/external/DataFedDependencies/ && \
     chown datafed:root ${BUILD_DIR} ${DATAFED_DEPENDENCIES_INSTALL_PATH} && \

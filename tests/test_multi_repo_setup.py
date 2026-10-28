@@ -22,7 +22,7 @@ class MultiRepoSetupTest(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         for name in ("scripts/repo_paths.sh", "scripts/globus/setup_globus.sh",
-                     "scripts/globus/generate_repo_form.sh"):
+                     "scripts/globus/generate_repo_form.sh", "scripts/globus/clean_globus.sh"):
             target = self.root / name
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(SOURCE / name, target)
@@ -101,6 +101,28 @@ state_file.write_text(json.dumps(state))
                 result = self.run_script("scripts/globus/setup_globus.sh")
                 self.assertNotEqual(result.returncode, 0)
                 self.assertFalse((self.root / "calls.jsonl").exists())
+
+    def test_cleanup_uses_exact_shared_resource_names(self):
+        (self.root / "state.json").write_text(json.dumps({
+            "gateways": [{"id": "other-gateway", "display_name": "Test Sister Storage Gateway"},
+                         {"id": "gateway", "display_name": "Test Storage Gateway"}],
+            "collections": [{"id": "other-collection", "display_name": "Test Sister Collection Mapped"},
+                            {"id": "mapped", "display_name": "Test Collection Mapped"}]}))
+        result = self.run_script("scripts/globus/clean_globus.sh")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        calls = [json.loads(line) for line in (self.root / "calls.jsonl").read_text().splitlines()]
+        deletions = [call for call in calls if call[1] == "delete"]
+        self.assertEqual(deletions, [["collection", "delete", "mapped"],
+                                     ["storage-gateway", "delete", "gateway"]])
+
+    def test_cleanup_rejects_ambiguous_names_before_deleting_anything(self):
+        (self.root / "state.json").write_text(json.dumps({
+            "gateways": [{"id": str(i), "display_name": "Test Storage Gateway"} for i in range(2)],
+            "collections": [{"id": "mapped", "display_name": "Test Collection Mapped"}]}))
+        result = self.run_script("scripts/globus/clean_globus.sh")
+        self.assertNotEqual(result.returncode, 0)
+        calls = [json.loads(line) for line in (self.root / "calls.jsonl").read_text().splitlines()]
+        self.assertTrue(all(call[1] == "list" for call in calls))
 
     def test_symlinked_repository_is_rejected(self):
         (self.root / "data").mkdir()

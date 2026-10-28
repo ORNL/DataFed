@@ -144,13 +144,13 @@ COPY --chown=datafed:root ./scripts/generate_gsi-authz_config.sh      ${BUILD_DI
 COPY --chown=datafed:root ./scripts/globus/create_guest_collection.py ${BUILD_DIR}/scripts/globus/create_guest_collection.py
 COPY --chown=datafed:root ./scripts/globus/utils.py                   ${BUILD_DIR}/scripts/globus/utils.py
 COPY --chown=datafed:root ./scripts/globus/__init__.py                ${BUILD_DIR}/scripts/globus/__init__.py
-# These extra copy statements are necessary as the authz binary is built in the GCS container
-# and not the dependencies container so we must copy the build dependencies as well as the
-# runtime depedencies
-
-RUN apt update
-RUN apt-get install wget jq bind9-host build-essential -y
-RUN apt-get reinstall globus-connect-server54 libsqlite3-dev -y
+# Authz is compiled in the dependencies stage. Keep compilers and SQLite/kernel
+# development headers out of the transfer service, while updating GCS and its
+# runtime dependencies through the configured signed package repositories.
+RUN apt-get update --error-on=any && \
+    apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends wget jq bind9-host globus-connect-server54 && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY --chown=datafed:root ./scripts/repo_paths.sh ${BUILD_DIR}/scripts/repo_paths.sh
 COPY --chown=datafed:root ./scripts/generate_datafed.sh               ${BUILD_DIR}/scripts/

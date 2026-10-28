@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.17.0)
-project( DataFed CXX C )
+project( DataFed LANGUAGES NONE )
 include(./cmake/Version.cmake)
 include(./cmake/Utils.cmake)
 
@@ -9,7 +9,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
-find_package(Threads REQUIRED)
 
 # Globus version to compile repo server with
 if( NOT DEFINED GLOBUS_VERSION )
@@ -26,6 +25,12 @@ OPTION(BUILD_REPO_SERVER "Build DataFed Repo Server" FALSE)
 OPTION(BUILD_PYTHON_CLIENT "Build python client" TRUE)
 OPTION(BUILD_TESTS "Build Tests" TRUE)
 OPTION(BUILD_WEB_SERVER "Build DataFed Web Server" TRUE)
+# Foxx only configures JavaScript and invokes deployment scripts. It does not
+# need a compiler or development headers in its runtime container.
+if(BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON OR BUILD_PYTHON_CLIENT OR BUILD_WEB_SERVER)
+  enable_language(C CXX)
+  find_package(Threads REQUIRED)
+endif()
 OPTION(ENABLE_UNIT_TESTS "Enable unit tests" TRUE)
 OPTION(ENABLE_INTEGRATION_TESTS "Enable integration tests" TRUE)
 OPTION(ENABLE_MEMORY_TESTS "Enable memory tests" FALSE)
