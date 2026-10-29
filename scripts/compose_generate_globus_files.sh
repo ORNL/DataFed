@@ -51,7 +51,7 @@ fi
 # all mounts before making any remote Globus changes.
 if [ -f "${DIRECTORY}/repositories.json" ]; then
   python3 "${PROJECT_ROOT}/scripts/compose_generate_repositories.py" \
-    --directory "$DIRECTORY" --host-paths > /dev/null
+    --directory "$DIRECTORY" --host-paths >/dev/null
 fi
 
 if [ ! -f "${DIRECTORY}/.env" ]; then

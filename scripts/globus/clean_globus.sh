@@ -24,7 +24,7 @@ resource_id() {
     | if length == 0 then ""
       elif length == 1 then .[0].id
       else error("Multiple Globus resources have the same display name") end
-  ' <<< "$1"
+  ' <<<"$1"
 }
 
 # Resolve both before making any changes; ambiguity must fail closed.

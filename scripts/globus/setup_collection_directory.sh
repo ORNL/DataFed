@@ -112,9 +112,9 @@ setup_directories() {
   paths_file=$(mktemp)
   trap 'rm -f "$paths_file"; trap - RETURN' RETURN
   python3 "${PROJECT_ROOT}/scripts/compose_generate_repositories.py" \
-    --directory "${PROJECT_ROOT}/compose/${COMPOSE_DIR}" --host-paths > "$paths_file"
+    --directory "${PROJECT_ROOT}/compose/${COMPOSE_DIR}" --host-paths >"$paths_file"
   local -a paths=()
-  mapfile -d '' -t paths < "$paths_file"
+  mapfile -d '' -t paths <"$paths_file"
 
   # Validate every existing directory before creating any. Ownership changes
   # require an administrator; never recursively chown mounted repository data.
