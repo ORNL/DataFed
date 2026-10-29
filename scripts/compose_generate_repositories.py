@@ -70,7 +70,6 @@ def shared_service(config, directory):
     if origin not in ids:
         raise ValueError("authorization_origin must name a configured repository")
     return {"environment": {"DATAFED_REPO_ID_AND_DIR": origin,
-                            "DATAFED_REPO_IDS": ",".join(ids),
                             "DATAFED_REPO_IDS_AND_DIRS": ",".join(relative_paths)}, "volumes": volumes}
 
 

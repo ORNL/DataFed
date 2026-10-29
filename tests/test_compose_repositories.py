@@ -31,7 +31,7 @@ class ComposeRepositoriesTest(unittest.TestCase):
 
     def test_defaults_keep_two_repositories_and_migration_keeps_existing_mounts(self):
         settings = generator.generate(self.directory, {})
-        self.assertEqual(settings["DATAFED_REPO_IDS"], "bam,bambar")
+        self.assertNotIn("DATAFED_REPO_IDS", settings)
         self.assertEqual(settings["DATAFED_REPO_IDS_AND_DIRS"], "bam,bambar")
         self.assertEqual(len(self.generated()["volumes"]), 2)
         (self.directory / "repositories.json").unlink()
@@ -40,7 +40,8 @@ class ComposeRepositoriesTest(unittest.TestCase):
             "DATAFED_SECONDARY_REPO_ID_AND_DIR": "other",
             "DATAFED_HOST_COLLECTION_MOUNT": "/srv/legacy",
             "DATAFED_HOST_SECONDARY_COLLECTION_MOUNT": "/archive/other"})
-        self.assertEqual(settings["DATAFED_REPO_IDS"], "legacy,other")
+        self.assertEqual(settings["DATAFED_REPO_IDS_AND_DIRS"], "legacy,other")
+        self.assertNotIn("DATAFED_REPO_IDS", settings)
         self.assertEqual([v["source"] for v in self.generated()["volumes"]],
                          ["/srv/legacy", "/archive/other"])
 
@@ -48,7 +49,7 @@ class ComposeRepositoriesTest(unittest.TestCase):
         settings = generator.generate(self.directory, {
             "DATAFED_REPO_ID_AND_DIR": "bam", "DATAFED_REPO_IDS": "old",
             "DATAFED_REPO_IDS_AND_DIRS": "path1/bam,path2/foo,path3/path5/images"})
-        self.assertEqual(settings["DATAFED_REPO_IDS"], "bam,foo,images")
+        self.assertNotIn("DATAFED_REPO_IDS", settings)
         self.assertEqual(settings["DATAFED_REPO_IDS_AND_DIRS"],
                          "path1/bam,path2/foo,path3/path5/images")
         config = json.loads((self.directory / "repositories.json").read_text())
@@ -61,7 +62,7 @@ class ComposeRepositoriesTest(unittest.TestCase):
                          for i in range(10)]
         self.manifest(repositories)
         settings = generator.generate(self.directory, {"DATAFED_REPO_IDS": "old"})
-        self.assertEqual(settings["DATAFED_REPO_IDS"].split(","), [r["id"] for r in repositories])
+        self.assertEqual(settings["DATAFED_REPO_IDS_AND_DIRS"].split(","), [r["id"] for r in repositories])
         self.assertEqual(len(self.generated()["volumes"]), 11)
         self.assertEqual(self.generated()["volumes"][0]["source"], str(self.directory / "collections/bam"))
         self.manifest(repositories[:1])
@@ -172,7 +173,7 @@ class ComposeRepositoriesTest(unittest.TestCase):
         result = subprocess.run(command, env=env, capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         dotenv = (compose / ".env").read_text()
-        self.assertIn("DATAFED_REPO_IDS=existing,bambar,third\n", dotenv)
+        self.assertNotIn("DATAFED_REPO_IDS=", dotenv)
         self.assertIn("DATAFED_REPO_IDS_AND_DIRS=existing,bambar,nested/third\n", dotenv)
         self.assertIn("DATAFED_GCS_COLLECTION_ROOT_PATH=/custom/root\n", dotenv)
         self.assertNotIn("SECONDARY", dotenv)
@@ -203,7 +204,7 @@ class ComposeRepositoriesTest(unittest.TestCase):
                 self.assertNotIn("repository-storage", services)
                 for name in ("datafed-repo", "datafed-gcs"):
                     service = services[name]
-                    self.assertEqual(service["environment"]["DATAFED_REPO_IDS"], "bam,bambar,images")
+                    self.assertNotIn("DATAFED_REPO_IDS", service["environment"])
                     self.assertEqual(service["environment"]["DATAFED_REPO_IDS_AND_DIRS"],
                                      "path1/bam,bambar,path3/path5/images")
                     self.assertEqual(service["environment"]["DATAFED_REPO_ID_AND_DIR"], "bam")

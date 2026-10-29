@@ -57,8 +57,10 @@ Python 3 is required to generate the configuration.
 
 The container destination for each repository is
 `${DATAFED_GCS_COLLECTION_ROOT_PATH}/<relative_path>`. For the example above, the
-generator supplies `DATAFED_REPO_IDS_AND_DIRS=path1/bam,path2/foo,path3/path5/images`
-and derives the compatibility list `DATAFED_REPO_IDS=bam,foo,images`.
+generator supplies `DATAFED_REPO_IDS_AND_DIRS=path1/bam,path2/foo,path3/path5/images`.
+The runtime derives repository IDs from the final directory names. Existing
+`DATAFED_REPO_IDS` settings are accepted during migration; generated Compose
+configuration uses the path list alone.
 New environments default to
 `/mnt/data` with a guest collection base of `/`; existing root and collection
 base settings are preserved. Keep an existing guest collection's base unchanged
