@@ -256,7 +256,6 @@ GUEST_COLLECTION_NAME="${DATAFED_GCS_ROOT_NAME} Collection Guest"
 MAPPED_COLLECTION_NAME="${DATAFED_GCS_ROOT_NAME} Collection Mapped"
 PATH_TO_GUEST_ROOT="${DATAFED_GCS_COLLECTION_ROOT_PATH}"
 
-
 uuid_of_collection=$(globus-connect-server collection list -F json | jq -er --arg name "$GUEST_COLLECTION_NAME" '
   [(if type == "array" then . else .data end)[] | select(.display_name == $name)]
   | if length == 1 then .[0].id else error("Expected one guest collection") end')

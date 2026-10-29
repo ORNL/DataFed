@@ -37,13 +37,13 @@ datafed_load_repo_paths() {
     echo "Repository root must be inside the collection base path" >&2
     return 1
   fi
-  IFS=',' read -r -a relative_paths <<< "$entries"
+  IFS=',' read -r -a relative_paths <<<"$entries"
   for entry in "${relative_paths[@]}"; do
     if [[ "$entry" == /* || "$entry" == */ || "$entry" == *//* ]]; then
       echo "Repository paths must be relative and canonical: $entry" >&2
       return 1
     fi
-    IFS='/' read -r -a components <<< "$entry"
+    IFS='/' read -r -a components <<<"$entry"
     for component in "${components[@]}"; do
       if [[ "$component" == . || "$component" == .. ]]; then
         echo "Repository paths cannot contain . or .. components: $entry" >&2
@@ -67,7 +67,7 @@ datafed_load_repo_paths() {
     done
     # Never provision through a symlink into another repository or directory.
     for child in "$repo_path" "$repo_path/user" "$repo_path/project"; do
-      if [[ "$(realpath -m -- "$child")" != "$child" || ( -e "$child" && ! -d "$child" ) ]]; then
+      if [[ "$(realpath -m -- "$child")" != "$child" || (-e "$child" && ! -d "$child") ]]; then
         echo "Repository paths must be directories without symbolic links: $child" >&2
         return 1
       fi
