@@ -116,7 +116,6 @@ run-authz-unit-job:
         - echo "-e DATAFED_AUTHZ_USER=\"datafed\" \\" >> run_globus.sh
         - echo "-e UID=\"$USER_ID\" \\" >> run_globus.sh
         - echo "-e BUILD_WITH_METADATA_SERVICES=\"FALSE\" \\" >> run_globus.sh
-        - echo "-e DATAFED_REPO_ID_AND_DIR=\"${CI_DATAFED_REPO_ID_AND_DIR}\" \\" >> run_globus.sh
         - echo "-e DATAFED_GCS_IP=\"${CI_DATAFED_GCS_IP}\" \\" >> run_globus.sh
         - echo "-e DATAFED_REPO_DOMAIN=\"${CI_DATAFED_REPO_DOMAIN}\" \\" >> run_globus.sh
         - echo "-v \"${DATAFED_GLOBUS_DIR}:/opt/datafed/globus\" \\" >> run_globus.sh
@@ -124,7 +123,7 @@ run-authz-unit-job:
         - echo "-v \"${DATAFED_HOST_COLLECTION_MOUNT}:/mnt/datafed\" \\" >> run_globus.sh
         - echo "--entrypoint bash \\" >> run_globus.sh
         - echo "-t \"${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:${CI_COMMIT_SHA}\" \\" >> run_globus.sh
-        - echo "-c 'cd /datafed/source; /opt/datafed/dependencies/bin/cmake --build build --target test'" >> run_globus.sh
+        - echo "-c 'cd /datafed/source && /opt/datafed/dependencies/bin/ctest --test-dir build --output-on-failure'" >> run_globus.sh
         - chmod +x run_globus.sh
         - ./run_globus.sh
 

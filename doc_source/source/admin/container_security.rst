@@ -71,6 +71,44 @@ an APT package does not patch an independent Python environment or a static bina
 Verification
 ------------
 
+Provisioning and web-manifest regression tests are available to run locally.
+Live end-to-end setup configures all repository paths from one list in both
+services. The client repository test registers every generated form and waits for successful
+allocation creation/deletion tasks on every repository before removing them.
+
+Define one GitLab CI/CD variable for the shared-service end-to-end jobs:
+
+.. code-block:: bash
+
+   CI_DATAFED_REPO_IDS_AND_DIRS=path1/bam,path2/bambar,path3/path5/images
+
+Each final directory name is its repository ID; IDs must be unique valid keys.
+Paths are relative to ``DATAFED_GCS_COLLECTION_ROOT_PATH``; these CI jobs use
+``/mnt/datafed``, giving ``/mnt/datafed/path1/bam``,
+``/mnt/datafed/path2/bambar``, and ``/mnt/datafed/path3/path5/images``. Both
+services receive the same list. CI loops over all entries to clean stale forms,
+wait for startup, collect ``repo-forms/`` artifacts, and test shared-service
+allocations. No separate primary or secondary CI ID variable is required.
+
+The first entry supplies the shared callout's existing authorization identity
+(``bam`` in this example). CI registers it first and removes it last. Keep the
+first entry stable across the setup jobs; authorization still resolves each
+request against the owning repository's registered path and permissions. The
+other API test suites use the first form as their single-repository fixture.
+
+The GCS unit job invokes CTest directly, so its runtime does not need ``make`` or
+compilers. Foxx deployment and test scripts reuse the preinstalled Node and CLI
+without loading privileged installation helpers.
+
+If an existing guest collection has no local base-path cache, provisioning asks
+the authenticated GCS API for collection details. Reuse requires the expected
+guest ID, provisioning client as owner, mapped collection ID, and an exposed absolute ``collection_base_path``
+matching configuration. Missing private fields, access failures, changed paths,
+or mismatched identities still stop startup without deleting the collection.
+Restore a verified cache or correct the provisioning client's access in those
+cases; do not populate the cache by guessing from the requested environment path.
+`GCS collection API <https://docs.globus.org/globus-connect-server/v5/api/openapi/>`_.
+
 Repository provisioning regression tests do not require a Globus account:
 
 .. code-block:: bash

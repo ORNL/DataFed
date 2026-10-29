@@ -256,7 +256,6 @@ GUEST_COLLECTION_NAME="${DATAFED_GCS_ROOT_NAME} Collection Guest"
 MAPPED_COLLECTION_NAME="${DATAFED_GCS_ROOT_NAME} Collection Mapped"
 PATH_TO_GUEST_ROOT="${DATAFED_GCS_COLLECTION_ROOT_PATH}"
 
-RELATIVE_PATH=$(remove_base "$DATAFED_GCS_COLLECTION_BASE_PATH" "$PATH_TO_GUEST_ROOT")
 
 uuid_of_collection=$(globus-connect-server collection list -F json | jq -er --arg name "$GUEST_COLLECTION_NAME" '
   [(if type == "array" then . else .data end)[] | select(.display_name == $name)]
@@ -289,9 +288,10 @@ else
   local_address="$repo_domain_name"
 fi
 
-for DATAFED_REPO_ID_AND_DIR in "${DATAFED_CONFIGURED_REPO_IDS[@]}"; do
+for repo_index in "${!DATAFED_CONFIGURED_REPO_IDS[@]}"; do
+  DATAFED_REPO_ID_AND_DIR="${DATAFED_CONFIGURED_REPO_IDS[$repo_index]}"
   # This will remove any extra // at the beginning of the FULL_RELATIVE_PATH
-  FULL_RELATIVE_PATH="${RELATIVE_PATH}/$DATAFED_REPO_ID_AND_DIR"
+  FULL_RELATIVE_PATH=$(remove_base "$DATAFED_GCS_COLLECTION_BASE_PATH" "${DATAFED_CONFIGURED_REPO_PATHS[$repo_index]}")
   FULL_RELATIVE_PATH=$(remove_leading_slashes "$FULL_RELATIVE_PATH")
   FULL_RELATIVE_PATH="/${FULL_RELATIVE_PATH}"
 

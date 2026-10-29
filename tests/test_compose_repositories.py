@@ -32,6 +32,7 @@ class ComposeRepositoriesTest(unittest.TestCase):
     def test_defaults_keep_two_repositories_and_migration_keeps_existing_mounts(self):
         settings = generator.generate(self.directory, {})
         self.assertEqual(settings["DATAFED_REPO_IDS"], "bam,bambar")
+        self.assertEqual(settings["DATAFED_REPO_IDS_AND_DIRS"], "bam,bambar")
         self.assertEqual(len(self.generated()["volumes"]), 2)
         (self.directory / "repositories.json").unlink()
         settings = generator.generate(self.directory, {
@@ -42,6 +43,17 @@ class ComposeRepositoriesTest(unittest.TestCase):
         self.assertEqual(settings["DATAFED_REPO_IDS"], "legacy,other")
         self.assertEqual([v["source"] for v in self.generated()["volumes"]],
                          ["/srv/legacy", "/archive/other"])
+
+    def test_migration_preserves_relative_repository_directories(self):
+        settings = generator.generate(self.directory, {
+            "DATAFED_REPO_ID_AND_DIR": "bam", "DATAFED_REPO_IDS": "old",
+            "DATAFED_REPO_IDS_AND_DIRS": "path1/bam,path2/foo,path3/path5/images"})
+        self.assertEqual(settings["DATAFED_REPO_IDS"], "bam,foo,images")
+        self.assertEqual(settings["DATAFED_REPO_IDS_AND_DIRS"],
+                         "path1/bam,path2/foo,path3/path5/images")
+        config = json.loads((self.directory / "repositories.json").read_text())
+        self.assertEqual([repo["relative_path"] for repo in config["repositories"]],
+                         settings["DATAFED_REPO_IDS_AND_DIRS"].split(","))
 
     def test_manifest_handles_many_repositories_and_overrides_old_environment(self):
         repositories = [{"id": "bam", "host_path": "./collections/bam"}]
@@ -67,7 +79,14 @@ class ComposeRepositoriesTest(unittest.TestCase):
                  ([{"id": "bam", "host_path": ""}], "bam"),
                  ([good, {"id": "other", "host_path": "/srv/bam/child"}], "bam"),
                  ([good, {"id": "other", "host_path": "/srv/bam"}], "bam"),
+                 ([{"id": "bam", "relative_path": "path/foo", "host_path": "/srv/bam"}], "bam"),
+                 ([{"relative_path": "path/bam", "host_path": "/srv/bam"},
+                   {"relative_path": "other/bam", "host_path": "/srv/other"}], "bam"),
+                 ([good, {"relative_path": "bam/child", "host_path": "/srv/child"}], "bam"),
                  ([good], "missing"), ([], "bam")]
+        cases += [([{"relative_path": path, "host_path": "/srv/bam"}], "bam") for path in
+                  ("/bam", "path/../bam", "./bam", "path/./bam", "path//bam", "path/bam/",
+                   "path/bam,other", "path/$bam", "path/bam\n", "path/BAM", "", None)]
         for repositories, origin in cases:
             with self.subTest(repositories=repositories, origin=origin):
                 self.manifest(repositories, origin)
@@ -117,7 +136,7 @@ class ComposeRepositoriesTest(unittest.TestCase):
         result = subprocess.run(["bash", str(scripts / "compose_generate_globus_files.sh"),
                                  "-d", str(self.directory)], capture_output=True, text=True)
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("Invalid or duplicate repository ID", result.stderr)
+        self.assertIn("Invalid repository relative_path or ID", result.stderr)
         self.assertFalse((self.directory / "globus").exists())
 
     def test_environment_generator_migrates_once_then_uses_manifest(self):
@@ -148,12 +167,13 @@ class ComposeRepositoriesTest(unittest.TestCase):
         config = json.loads((compose / "repositories.json").read_text())
         self.assertEqual(config["repositories"][0]["host_path"], "/srv/existing")
         self.assertEqual(config["repositories"][1]["host_path"], "/archive/bambar")
-        config["repositories"].append({"id": "third", "host_path": "/srv/third"})
+        config["repositories"].append({"relative_path": "nested/third", "host_path": "/srv/third"})
         (compose / "repositories.json").write_text(json.dumps(config))
         result = subprocess.run(command, env=env, capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         dotenv = (compose / ".env").read_text()
         self.assertIn("DATAFED_REPO_IDS=existing,bambar,third\n", dotenv)
+        self.assertIn("DATAFED_REPO_IDS_AND_DIRS=existing,bambar,nested/third\n", dotenv)
         self.assertIn("DATAFED_GCS_COLLECTION_ROOT_PATH=/custom/root\n", dotenv)
         self.assertNotIn("SECONDARY", dotenv)
         self.assertNotIn("HOST_COLLECTION_MOUNT", dotenv)
@@ -163,9 +183,9 @@ class ComposeRepositoriesTest(unittest.TestCase):
         plugin = subprocess.run(["docker", "compose", "version"], capture_output=True)
         if plugin.returncode:
             self.skipTest("Docker Compose plugin is unavailable")
-        repositories = [{"id": "bam", "host_path": "./data/bam"},
+        repositories = [{"id": "bam", "relative_path": "path1/bam", "host_path": "./data/bam"},
                         {"id": "bambar", "host_path": "./data/bambar"},
-                        {"id": "images", "host_path": "./data/$literal images"}]
+                        {"relative_path": "path3/path5/images", "host_path": "./data/$literal images"}]
         self.manifest(repositories)
         generator.generate(self.directory, {})
         (self.directory / ".env").write_text(
@@ -184,12 +204,14 @@ class ComposeRepositoriesTest(unittest.TestCase):
                 for name in ("datafed-repo", "datafed-gcs"):
                     service = services[name]
                     self.assertEqual(service["environment"]["DATAFED_REPO_IDS"], "bam,bambar,images")
+                    self.assertEqual(service["environment"]["DATAFED_REPO_IDS_AND_DIRS"],
+                                     "path1/bam,bambar,path3/path5/images")
                     self.assertEqual(service["environment"]["DATAFED_REPO_ID_AND_DIR"], "bam")
                     actual = {v["target"]: v["source"] for v in service["volumes"]}
                     for repo in repositories:
                         # Compose's canonical output retains $$ escapes so the
                         # rendered document can itself be used as Compose input.
-                        self.assertEqual(actual["/mnt/data/" + repo["id"]],
+                        self.assertEqual(actual["/mnt/data/" + repo.get("relative_path", repo.get("id"))],
                                          str(self.directory / repo["host_path"]).replace("$", "$$"))
 
 

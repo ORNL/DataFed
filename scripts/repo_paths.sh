@@ -3,13 +3,18 @@
 # datafed_load_repo_paths; this does not change the caller's shell options.
 
 datafed_load_repo_paths() {
-  local ids="${DATAFED_REPO_IDS:-${DATAFED_REPO_ID_AND_DIR:-}}"
-  local anchor="${DATAFED_REPO_ID_AND_DIR:-}" id root seen="," found=false
+  local entries="${DATAFED_REPO_IDS_AND_DIRS:-${DATAFED_REPO_IDS:-${DATAFED_REPO_ID_AND_DIR:-}}}"
+  local anchor="${DATAFED_REPO_ID_AND_DIR:-}" id root entry component other seen="," found=false
+  local -a relative_paths=() components=()
   DATAFED_CONFIGURED_REPO_IDS=()
   DATAFED_CONFIGURED_REPO_PATHS=()
 
-  if [[ ! "$ids" =~ ^[a-z0-9_.,-]+$ || "$ids" == ,* || "$ids" == *, || "$ids" == *,,* ]]; then
-    echo "Repository IDs must be a nonempty comma-separated list" >&2
+  if [[ ! "$entries" =~ ^[a-zA-Z0-9_.,/-]+$ || "$entries" == ,* || "$entries" == *, || "$entries" == *,,* ]]; then
+    echo "Repository paths must be a nonempty comma-separated list relative to ROOT_PATH" >&2
+    return 1
+  fi
+  if [[ -z "${DATAFED_REPO_IDS_AND_DIRS:-}" && "$entries" == */* ]]; then
+    echo "Use DATAFED_REPO_IDS_AND_DIRS for relative repository paths" >&2
     return 1
   fi
   root="${DATAFED_GCS_COLLECTION_ROOT_PATH:-}"
@@ -32,8 +37,20 @@ datafed_load_repo_paths() {
     echo "Repository root must be inside the collection base path" >&2
     return 1
   fi
-  IFS=',' read -r -a DATAFED_CONFIGURED_REPO_IDS <<< "$ids"
-  for id in "${DATAFED_CONFIGURED_REPO_IDS[@]}"; do
+  IFS=',' read -r -a relative_paths <<< "$entries"
+  for entry in "${relative_paths[@]}"; do
+    if [[ "$entry" == /* || "$entry" == */ || "$entry" == *//* ]]; then
+      echo "Repository paths must be relative and canonical: $entry" >&2
+      return 1
+    fi
+    IFS='/' read -r -a components <<< "$entry"
+    for component in "${components[@]}"; do
+      if [[ "$component" == . || "$component" == .. ]]; then
+        echo "Repository paths cannot contain . or .. components: $entry" >&2
+        return 1
+      fi
+    done
+    id="${entry##*/}"
     # Match repository keys, but disallow path traversal and shell metacharacters.
     if [[ ! "$id" =~ ^[a-z0-9_.-]{1,40}$ || "$id" == . || "$id" == .. || "$seen" == *",$id,"* ]]; then
       echo "Invalid or duplicate repository ID: $id" >&2
@@ -41,14 +58,21 @@ datafed_load_repo_paths() {
     fi
     seen+="$id,"
     [[ "$id" != "$anchor" ]] || found=true
-    local repo_path="${root%/}/$id" child
-    # Never provision through a symlink into another repository or directory.
-    for child in "$repo_path" "$repo_path/user" "$repo_path/project"; do
-      if [[ "$(realpath -m -- "$child")" != "$child" ]]; then
-        echo "Repository directories must not be symbolic links: $child" >&2
+    local repo_path="${root%/}/$entry" child
+    for other in "${DATAFED_CONFIGURED_REPO_PATHS[@]}"; do
+      if [[ "$repo_path" == "$other" || "$repo_path" == "$other/"* || "$other" == "$repo_path/"* ]]; then
+        echo "Repository paths cannot overlap: $entry" >&2
         return 1
       fi
     done
+    # Never provision through a symlink into another repository or directory.
+    for child in "$repo_path" "$repo_path/user" "$repo_path/project"; do
+      if [[ "$(realpath -m -- "$child")" != "$child" || ( -e "$child" && ! -d "$child" ) ]]; then
+        echo "Repository paths must be directories without symbolic links: $child" >&2
+        return 1
+      fi
+    done
+    DATAFED_CONFIGURED_REPO_IDS+=("$id")
     DATAFED_CONFIGURED_REPO_PATHS+=("$repo_path")
   done
   if [[ "$found" != true ]]; then

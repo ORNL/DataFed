@@ -64,6 +64,7 @@ COPY ./cmake                           ${BUILD_DIR}/cmake
 COPY ./docker/entrypoint_foxx.sh       ${BUILD_DIR}/docker/entrypoint_foxx.sh
 COPY ./core/database                   ${BUILD_DIR}/core/database
 COPY ./scripts/install_foxx.sh         ${BUILD_DIR}/scripts/
+COPY ./scripts/foxx_runtime.sh         ${BUILD_DIR}/scripts/
 
 # Create datafed user, prefer more secure login options than password
 # Recommended to mount ssh public key on run

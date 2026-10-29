@@ -17,15 +17,16 @@ NOTE You will need a machine with firewall exceptions to run the compose files.
 
 The `all` and `repo` Compose environments use a single `repositories.json` file
 beside `compose.yml` to define any number of logical repositories. Each entry
-specifies its ID and a separate host storage location:
+specifies its directory relative to `DATAFED_GCS_COLLECTION_ROOT_PATH` and a
+separate host storage location. The final directory name becomes its repository ID:
 
 ```json
 {
   "authorization_origin": "bam",
   "repositories": [
-    {"id": "bam", "host_path": "/srv/datafed/bam"},
-    {"id": "bambar", "host_path": "/srv/datafed/bambar"},
-    {"id": "images", "host_path": "/archive/images"}
+    {"relative_path": "path1/bam", "host_path": "/srv/datafed/bam"},
+    {"relative_path": "path2/foo", "host_path": "/srv/datafed/foo"},
+    {"relative_path": "path3/path5/images", "host_path": "/archive/images"}
   ]
 }
 ```
@@ -42,16 +43,23 @@ preserves existing certificates. Relative host paths
 are resolved against the Compose directory, and `~` is expanded. Host paths
 must be distinct and non-nested; IDs must be valid, unique repository keys.
 The authorization origin must be one of those IDs.
+Existing entries with only `id` keep their directory at `<ROOT_PATH>/<id>`.
+If both `id` and `relative_path` are supplied, the ID must match the final
+component of the relative path. Absolute paths, `.`/`..` components, overlapping
+repository directories, and duplicate IDs are rejected.
 
 The generator writes `.repositories.compose.json`, which both services inherit
 using Compose `extends`. It supplies the identical bind mounts and repository
-IDs to the repo and GCS containers. It works with both `docker compose up` and
+paths to the repo and GCS containers. It works with both `docker compose up` and
 `docker compose -f compose.yml up`; no additional override argument is needed.
 Do not edit the generated file. Both it and the local manifest are gitignored.
 Python 3 is required to generate the configuration.
 
 The container destination for each repository is
-`${DATAFED_GCS_COLLECTION_ROOT_PATH}/<id>`. New environments default to
+`${DATAFED_GCS_COLLECTION_ROOT_PATH}/<relative_path>`. For the example above, the
+generator supplies `DATAFED_REPO_IDS_AND_DIRS=path1/bam,path2/foo,path3/path5/images`
+and derives the compatibility list `DATAFED_REPO_IDS=bam,foo,images`.
+New environments default to
 `/mnt/data` with a guest collection base of `/`; existing root and collection
 base settings are preserved. Keep an existing guest collection's base unchanged
 when adding another repository. Adding an entry changes the permitted repository

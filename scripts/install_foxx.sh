@@ -18,6 +18,7 @@ SOURCE=$(dirname "$SCRIPT")
 DATAFED_PROJECT_ROOT=$(realpath ${SOURCE}/..)
 source "${DATAFED_PROJECT_ROOT}/config/datafed.sh"
 source "${DATAFED_PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_versions.sh"
+source "${DATAFED_PROJECT_ROOT}/scripts/foxx_runtime.sh"
 
 Help() {
   echo "$(basename $0) Will set up a configuration file for the core server"
@@ -254,16 +255,7 @@ fi
 
 # Container builds provide the CLI in advance; deployment should not download
 # tooling or require sudo. Retain installation for non-container deployments.
-export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
-if [ -x "${DATAFED_DEPENDENCIES_INSTALL_PATH}/npm/bin/foxx" ]; then
-  . "${NVM_DIR}/nvm.sh"
-  nvm use "$DATAFED_NODE_VERSION"
-else
-  source "${DATAFED_PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_install_functions.sh"
-  install_nvm
-  install_node
-  install_foxx_cli
-fi
+datafed_use_foxx_runtime "$DATAFED_PROJECT_ROOT"
 
 FOXX_PREFIX=""
 if ! command -v foxx >/dev/null 2>&1; then

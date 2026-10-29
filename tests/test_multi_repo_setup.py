@@ -62,6 +62,7 @@ state_file.write_text(json.dumps(state))
         self.env = dict(os.environ, TEST_ROOT=str(self.root),
                         PATH=str(self.root / "bin") + ":" + os.environ["PATH"],
                         DATAFED_REPO_ID_AND_DIR="bam", DATAFED_REPO_IDS="bam,bambar",
+                        DATAFED_REPO_IDS_AND_DIRS="",
                         DATAFED_GCS_COLLECTION_ROOT_PATH=str(self.root / "data"),
                         DATAFED_GCS_COLLECTION_BASE_PATH=str(self.root / "data"),
                         DATAFED_GCS_ROOT_NAME="Test", DATAFED_GLOBUS_SUBSCRIPTION="",
@@ -101,6 +102,59 @@ state_file.write_text(json.dumps(state))
                 result = self.run_script("scripts/globus/setup_globus.sh")
                 self.assertNotEqual(result.returncode, 0)
                 self.assertFalse((self.root / "calls.jsonl").exists())
+
+    def test_nested_relative_paths_drive_policy_and_registration_forms(self):
+        entries = ("path1/bam", "path2/foo", "path3/path5/images")
+        self.env["DATAFED_REPO_IDS_AND_DIRS"] = ",".join(entries)
+        # The new setting takes precedence over a previously configured flat list.
+        self.env["DATAFED_REPO_IDS"] = "old"
+        result = self.run_script("scripts/globus/setup_globus.sh")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        policy = json.loads((self.root / "active-policy.json").read_text())
+        self.assertEqual(policy["read_write"], [str(self.root / "data" / p) for p in entries])
+        for entry in entries:
+            self.assertTrue((self.root / "data" / entry / "user").is_dir())
+            self.assertTrue((self.root / "data" / entry / "project").is_dir())
+        state = json.loads((self.root / "state.json").read_text())
+        state["collections"].append({"id": "guest", "display_name": "Test Collection Guest"})
+        (self.root / "state.json").write_text(json.dumps(state))
+        for base in (str(self.root / "data"), "/"):
+            self.env["DATAFED_GCS_COLLECTION_BASE_PATH"] = base
+            result = self.run_script("scripts/globus/generate_repo_form.sh", "-j", "-s")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            for entry in entries:
+                key = entry.rsplit("/", 1)[-1]
+                expected = "/" + entry if base != "/" else str(self.root / "data" / entry)
+                form = json.loads((self.root / (key + "-repo-form.json")).read_text())
+                self.assertEqual(form["id"], key)
+                self.assertEqual(form["endpoint"], "guest")
+                self.assertEqual(form["path"], expected)
+                result = subprocess.run(
+                    ["bash", "-euc", 'source "$1"; printf "%s" "$DATAFED_REPO_RELATIVE_PATH"',
+                     "bash", str(self.root / (key + "-repo-form.sh"))],
+                    env=self.env, text=True, capture_output=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stdout, expected)
+
+    def test_unsafe_relative_paths_fail_before_any_globus_call(self):
+        for entries in ("/bam", "path/bam,../other", "path/../bam", "./bam", "path/./bam",
+                        "path//bam", "path/bam/", "path/bam,other/bam", "bam,bam/child",
+                        "bam/child,bam", "path/foo,other", "path/bam,", ",path/bam",
+                        "path/bam,,foo", "path/bam,$(id)", "path/bam,foo\nbar",
+                        "path/BAM", "path/bam,other/" + "x" * 41):
+            with self.subTest(entries=entries):
+                self.env["DATAFED_REPO_IDS_AND_DIRS"] = entries
+                result = self.run_script("scripts/globus/setup_globus.sh")
+                self.assertNotEqual(result.returncode, 0, result.stdout)
+                self.assertFalse((self.root / "calls.jsonl").exists())
+
+    def test_symlinked_parent_of_nested_repository_is_rejected(self):
+        (self.root / "data").mkdir()
+        (self.root / "data/path1").symlink_to(self.root)
+        self.env["DATAFED_REPO_IDS_AND_DIRS"] = "path1/bam"
+        result = self.run_script("scripts/globus/setup_globus.sh")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse((self.root / "calls.jsonl").exists())
 
     def test_cleanup_uses_exact_shared_resource_names(self):
         (self.root / "state.json").write_text(json.dumps({
@@ -145,6 +199,7 @@ state_file.write_text(json.dumps(state))
         self.assertFalse((self.root / "calls.jsonl").exists())
 
     def test_generated_config_preserves_repository_list(self):
+        self.env["DATAFED_REPO_IDS_AND_DIRS"] = "path1/bam,path2/foo,path3/path5/images"
         shutil.copyfile(SOURCE / "scripts/generate_datafed.sh",
                         self.root / "scripts/generate_datafed.sh")
         dependencies = self.root / "external/DataFedDependencies/scripts"
@@ -155,11 +210,15 @@ state_file.write_text(json.dumps(state))
         result = self.run_script("scripts/generate_datafed.sh")
         self.assertEqual(result.returncode, 0, result.stderr)
         result = subprocess.run(
-            ["bash", "-c", 'source "$1"; printf "%s" "$DATAFED_REPO_IDS"',
-             "bash", str(self.root / "config/datafed.sh")],
+            ["bash", "-euc", 'source "$1"; source "$2"; datafed_load_repo_paths; '
+             'printf "%s\\n" "$DATAFED_REPO_IDS" "$DATAFED_REPO_IDS_AND_DIRS" '
+             '"${DATAFED_CONFIGURED_REPO_PATHS[@]}"',
+             "bash", str(self.root / "config/datafed.sh"), str(self.root / "scripts/repo_paths.sh")],
             text=True, capture_output=True, env=self.env)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(result.stdout, "bam,bambar")
+        self.assertEqual(result.stdout.splitlines(), ["bam,bambar", self.env["DATAFED_REPO_IDS_AND_DIRS"],
+                         *[str(self.root / "data" / entry) for entry in
+                           self.env["DATAFED_REPO_IDS_AND_DIRS"].split(",")]])
 
     def test_form_generation_preserves_shared_collection_and_distinct_paths(self):
         state = {"gateways": [], "collections": [
@@ -174,6 +233,29 @@ state_file.write_text(json.dumps(state))
             self.assertEqual(form["endpoint"], "guest")
             self.assertEqual(form["path"], "/" + key)
             self.assertEqual(form["pub_key"], "k" * 40)
+
+    def test_generated_launch_scripts_forward_relative_paths_to_both_containers(self):
+        entries = "path1/bam,path2/foo,path3/path5/images"
+        self.env["DATAFED_REPO_IDS_AND_DIRS"] = entries
+        shutil.copy2(SOURCE / "scripts/generate_repo_container_scripts.sh", self.root / "scripts")
+        docker = self.root / "bin/docker"
+        docker.write_text("#!/usr/bin/env python3\nimport json, os, pathlib, sys\n"
+                          "(pathlib.Path(os.environ['TEST_ROOT']) / 'docker-args.json').write_text("
+                          "json.dumps(sys.argv[1:]))\n")
+        docker.chmod(0o755)
+        mounts = ",".join("/host/" + entry.rsplit("/", 1)[-1] + ":/mnt/data/" + entry
+                          for entry in entries.split(","))
+        result = self.run_script("scripts/generate_repo_container_scripts.sh", "-t", "test",
+                                 "-i", "127.0.0.1", "-d", "repo.example.org", "-v", mounts)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for script in ("run_repo_container.sh", "run_gcs_container.sh"):
+            result = self.run_script("scripts/" + script)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            args = json.loads((self.root / "docker-args.json").read_text())
+            self.assertIn("DATAFED_REPO_IDS_AND_DIRS=" + entries, args)
+            self.assertIn("DATAFED_REPO_ID_AND_DIR=bam", args)
+            for mount in mounts.split(","):
+                self.assertIn(mount, args)
 
     def test_ambiguous_gateway_name_fails_without_mutating_policy(self):
         (self.root / "state.json").write_text(json.dumps({"collections": [], "gateways": [
@@ -247,6 +329,33 @@ state_file.write_text(json.dumps(state))
             else:
                 with self.assertRaises(RuntimeError):
                     decide("guest", "/data", "/cache")
+
+    def test_missing_cache_can_only_be_recovered_from_matching_authenticated_details(self):
+        tree = ast.parse((SOURCE / "scripts/globus/create_guest_collection.py").read_text())
+        function = next(n for n in tree.body if isinstance(n, ast.FunctionDef)
+                        and n.name == "should_recreate_guest_collection")
+        namespace = {"os": types.SimpleNamespace(getenv=lambda *a: "false"),
+                     "utils": types.SimpleNamespace(get_cached_base_path=lambda *a: None)}
+        exec(compile(ast.Module(body=[function], type_ignores=[]), "decision", "exec"), namespace)
+        decide = namespace[function.name]
+        good = {"id": "guest", "collection_type": "guest", "mapped_collection_id": "mapped",
+                "identity_id": "owner", "collection_base_path": "/data/"}
+        for details in (good, {**good, "id": "other"}, {**good, "collection_type": "mapped"},
+                        {**good, "mapped_collection_id": "other"},
+                        {**good, "identity_id": "other"},
+                        {**good, "collection_base_path": "/elsewhere"},
+                        {**good, "collection_base_path": None}, {**good, "collection_base_path": "~"}):
+            with self.subTest(details=details):
+                client = types.SimpleNamespace(get_collection=lambda *a: details)
+                if details == good:
+                    self.assertFalse(decide("guest", "/data", "/cache", client, "mapped", "owner")[0])
+                else:
+                    with self.assertRaises(RuntimeError):
+                        decide("guest", "/data", "/cache", client, "mapped", "owner")
+        def denied(*args):
+            raise PermissionError("Not authorized")
+        with self.assertRaisesRegex(RuntimeError, "no collection was deleted"):
+            decide("guest", "/data", "/cache", types.SimpleNamespace(get_collection=denied), "mapped", "owner")
 
 
 if __name__ == "__main__":
