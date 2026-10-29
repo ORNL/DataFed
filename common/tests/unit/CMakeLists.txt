@@ -34,3 +34,9 @@ foreach(PROG
   endif( ENABLE_MEMORY_TESTS )
 endforeach(PROG)
 
+if(ENABLE_UNIT_TESTS)
+  # Includes timed proxy runs and a short idle shutdown regression. Fail promptly
+  # if shutdown hangs instead of consuming CTest's default 1500-second timeout.
+  set_tests_properties(unit_test_ProxyBasicZMQ PROPERTIES TIMEOUT 30)
+endif()
+

@@ -67,6 +67,7 @@ by subsequent documents on this site.
    :caption: Administration
 
    admin/install_docker
+   admin/container_security
    admin/install_bare_metal
 
 .. toctree::
@@ -74,6 +75,7 @@ by subsequent documents on this site.
    :caption: Development
 
    dev/project
+   dev/web_dependencies
    dev/design
    dev/testing
    dev/release

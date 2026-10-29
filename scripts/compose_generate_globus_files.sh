@@ -1,9 +1,8 @@
 #!/bin/bash
+set -e -o pipefail
 SCRIPT=$(realpath "${BASH_SOURCE[0]}")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/..")
-
-source "${PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_versions.sh"
 
 # This script should be run after generating the .env file as it will pull
 # values from the .env file
@@ -45,6 +44,14 @@ done
 
 if [ ! -d "${DIRECTORY}" ]; then
   echo "The provided directory does not seem to exist: ${DIRECTORY}"
+  exit 1
+fi
+
+# One endpoint is shared by every repository in this Compose manifest. Validate
+# all mounts before making any remote Globus changes.
+if [ -f "${DIRECTORY}/repositories.json" ]; then
+  python3 "${PROJECT_ROOT}/scripts/compose_generate_repositories.py" \
+    --directory "$DIRECTORY" --host-paths >/dev/null
 fi
 
 if [ ! -f "${DIRECTORY}/.env" ]; then
@@ -80,6 +87,8 @@ sed -i 's/=\([^"]*\)/="\1"/' "${DIRECTORY}/.env_shell"
 
 # Cleanup after loading env
 rm "${DIRECTORY}/.env_shell"
+
+source "${PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_versions.sh"
 
 DATAFED_GLOBUS_DEPLOYMENT_KEY_PATH="$DATAFED_HOST_DEPLOYMENT_KEY_PATH" \
   DATAFED_GLOBUS_CRED_FILE_PATH="$DATAFED_HOST_CRED_FILE_PATH" \

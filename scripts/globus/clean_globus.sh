@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e -o pipefail
 
 SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
@@ -13,26 +14,27 @@ fi
 GATEWAY_NAME="${DATAFED_GCS_ROOT_NAME} Storage Gateway"
 COLLECTION_NAME="${DATAFED_GCS_ROOT_NAME} Collection Mapped"
 
-# Removing the mapped collection will also remove any guest collections
+# This removes the shared mapped collection (including guest collections) and
+# gateway for ALL repositories served by this instance. Match complete names so
+# another instance with a similar name is never selected.
+resource_id() {
+  jq -er --arg name "$2" '
+    (if type == "array" then . else .data end)
+    | map(select(.display_name == $name))
+    | if length == 0 then ""
+      elif length == 1 then .[0].id
+      else error("Multiple Globus resources have the same display name") end
+  ' <<<"$1"
+}
 
-collection_line=$(globus-connect-server collection list | grep "$COLLECTION_NAME")
-if [ ! -z "$collection_line" ]; then
-  uuid_of_collection=$(globus-connect-server collection list | grep "$COLLECTION_NAME" | awk '{ print $1 }')
+# Resolve both before making any changes; ambiguity must fail closed.
+uuid_of_collection=$(resource_id "$(globus-connect-server collection list --format json)" "$COLLECTION_NAME")
+uuid_of_storage_gateway=$(resource_id "$(globus-connect-server storage-gateway list --format json)" "$GATEWAY_NAME")
 
-  globus-connect-server collection update \
-    "$uuid_of_collection" \
-    --no-delete-protected
-
+if [ -n "$uuid_of_collection" ]; then
+  globus-connect-server collection update "$uuid_of_collection" --no-delete-protected
   globus-connect-server collection delete "$uuid_of_collection"
 fi
-
-gateway_line=$(globus-connect-server storage-gateway list | grep "$GATEWAY_NAME")
-if [ ! -z "$gateway_line" ]; then
-
-  spaces_in_name=$(echo "$GATEWAY_NAME" | awk '{print gsub("[ \t]",""); exit}')
-  columns=$(($spaces_in_name + 3))
-  uuid_of_storage_gateway=$(globus-connect-server storage-gateway list | grep "$GATEWAY_NAME" | awk -v col=$columns '{ print $col }')
-
-  # Check if it already exists
-  globus-connect-server storage-gateway delete "${uuid_of_storage_gateway}"
+if [ -n "$uuid_of_storage_gateway" ]; then
+  globus-connect-server storage-gateway delete "$uuid_of_storage_gateway"
 fi

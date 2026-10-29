@@ -47,6 +47,7 @@ void Config::loadRepositoryConfig(AuthenticationManager &auth_manager,
   // Find which repos are temp_repos that are no longer in m_repos
 
   DL_TRACE(log_context, "Registered repos are:");
+  std::map<std::string, std::string> service_identities;
   for (RepoData &r : temp_repos) {
     {
       // Validate repo settings (in case an admin manually edits repo config)
@@ -76,6 +77,13 @@ void Config::loadRepositoryConfig(AuthenticationManager &auth_manager,
         continue;
       }
 
+      // Shared service keys have a stable representative, independent of the
+      // database's repository ordering. Logical repo routing still uses its ID.
+      auto &repo_identity = service_identities[r.pub_key()];
+      if (repo_identity.empty() || r.id() < repo_identity) {
+        repo_identity = r.id();
+      }
+
       // Cache pub key for ZAP handler
       // Historical bug (DAPS-1625): Repository keys could be incorrectly cached as 
       // transient/session keys if loadRepositoryConfig() was called before the 
@@ -92,18 +100,18 @@ void Config::loadRepositoryConfig(AuthenticationManager &auth_manager,
         // Key exists in both maps - this is an inconsistent state
         DL_WARNING(log_context, "Repo " << r.id() << " key found in BOTH TRANSIENT and SESSION maps. "
                    << "Removing from both and adding to PERSISTENT.");
-        auth_manager.migrateKey(PublicKeyType::TRANSIENT, PublicKeyType::PERSISTENT, r.pub_key(), r.id());
-        auth_manager.migrateKey(PublicKeyType::SESSION, PublicKeyType::PERSISTENT, r.pub_key(), r.id());
+        auth_manager.migrateKey(PublicKeyType::TRANSIENT, PublicKeyType::PERSISTENT, r.pub_key(), repo_identity);
+        auth_manager.migrateKey(PublicKeyType::SESSION, PublicKeyType::PERSISTENT, r.pub_key(), repo_identity);
       } else if (in_transient) {
         DL_INFO(log_context, "Repo " << r.id() << " key found in TRANSIENT map, migrating to PERSISTENT");
-        auth_manager.migrateKey(PublicKeyType::TRANSIENT, PublicKeyType::PERSISTENT, r.pub_key(), r.id());
+        auth_manager.migrateKey(PublicKeyType::TRANSIENT, PublicKeyType::PERSISTENT, r.pub_key(), repo_identity);
       } else if (in_session) {
         DL_INFO(log_context, "Repo " << r.id() << " key found in SESSION map, migrating to PERSISTENT");
-        auth_manager.migrateKey(PublicKeyType::SESSION, PublicKeyType::PERSISTENT, r.pub_key(), r.id());
+        auth_manager.migrateKey(PublicKeyType::SESSION, PublicKeyType::PERSISTENT, r.pub_key(), repo_identity);
       } else {
         // Normal case - add as new PERSISTENT key
         DL_TRACE(log_context, "Adding repo " << r.id() << " key as new PERSISTENT key");
-        auth_manager.addKey(PublicKeyType::PERSISTENT, r.pub_key(), r.id());
+        auth_manager.addKey(PublicKeyType::PERSISTENT, r.pub_key(), repo_identity);
       }
 
       // Cache repo data for data handling

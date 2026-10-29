@@ -73,6 +73,10 @@ parse_arguments() {
 }
 
 validate_environment() {
+  if [[ ! "$COMPOSE_DIR" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+    log_error "Invalid compose directory name"
+    exit 1
+  fi
   local env_file="${PROJECT_ROOT}/compose/${COMPOSE_DIR}/.env"
 
   if [ ! -d "${PROJECT_ROOT}/compose/${COMPOSE_DIR}" ]; then
@@ -82,14 +86,14 @@ validate_environment() {
   fi
 
   if [ -f "${env_file}" ]; then
-    source <(grep -v '^#' "${env_file}")
+    DATAFED_UID=$(sed -n 's/^DATAFED_UID=//p' "$env_file" | tr -d '\"\047')
     log_info "Loaded environment variables from ${env_file}"
   else
     log_error ".env file not found in ${COMPOSE_DIR}"
     exit 1
   fi
 
-  local required_vars=("DATAFED_UID" "DATAFED_HOST_COLLECTION_MOUNT" "DATAFED_REPO_ID_AND_DIR")
+  local required_vars=("DATAFED_UID")
   for var in "${required_vars[@]}"; do
     if [ -z "${!var:-}" ]; then
       log_error "${var} is not set"
@@ -103,36 +107,37 @@ validate_environment() {
   fi
 }
 
-check_permissions() {
-  local host_collection_dir="${DATAFED_HOST_COLLECTION_MOUNT}/${DATAFED_REPO_ID_AND_DIR}"
+setup_directories() {
+  local paths_file host_path dir_uid
+  paths_file=$(mktemp)
+  trap 'rm -f "$paths_file"; trap - RETURN' RETURN
+  python3 "${PROJECT_ROOT}/scripts/compose_generate_repositories.py" \
+    --directory "${PROJECT_ROOT}/compose/${COMPOSE_DIR}" --host-paths >"$paths_file"
+  local -a paths=()
+  mapfile -d '' -t paths <"$paths_file"
 
-  if [ ! -w "$(dirname "${DATAFED_HOST_COLLECTION_MOUNT}")" ]; then
-    log_error "Insufficient permissions to create ${host_collection_dir}"
-    exit 1
-  fi
-
-  if [ -d "${DATAFED_HOST_COLLECTION_MOUNT}" ]; then
-    log_info "Directory ${DATAFED_HOST_COLLECTION_MOUNT} exists, validating UID ownership"
-    local dir_uid
-    dir_uid=$(stat -c %u "${DATAFED_HOST_COLLECTION_MOUNT}")
-
-    if [ "${dir_uid}" -ne "${DATAFED_UID}" ]; then
-      log_error "Directory UID doesn't match expected UID ${DATAFED_UID}"
-      echo "Please see an administrator to chown the directory, or choose another directory"
+  # Validate every existing directory before creating any. Ownership changes
+  # require an administrator; never recursively chown mounted repository data.
+  for host_path in "${paths[@]}"; do
+    if [ -e "$host_path" ]; then
+      if [ ! -d "$host_path" ]; then
+        log_error "Not a directory: $host_path"
+        exit 1
+      fi
+      dir_uid=$(stat -c %u "$host_path")
+      if [ "$dir_uid" -ne "$DATAFED_UID" ]; then
+        log_error "Directory $host_path must be owned by UID $DATAFED_UID; ask an administrator to set ownership"
+        exit 1
+      fi
+    elif [ "$(id -u)" -ne "$DATAFED_UID" ]; then
+      log_error "Run as UID $DATAFED_UID to create $host_path"
       exit 1
     fi
-  fi
-}
-
-setup_directory() {
-  local host_collection_dir="${DATAFED_HOST_COLLECTION_MOUNT}/${DATAFED_REPO_ID_AND_DIR}"
-
-  if [ -d "${host_collection_dir}" ]; then
-    log_info "Directory ${host_collection_dir} already exists, skipping creation"
-  else
-    mkdir -p "${host_collection_dir}"
-    log_success "Created new collection directory ${host_collection_dir}"
-  fi
+  done
+  for host_path in "${paths[@]}"; do
+    mkdir -p -- "$host_path"
+    log_success "Repository directory ready: $host_path"
+  done
 }
 
 ############################################################
@@ -141,8 +146,7 @@ setup_directory() {
 main() {
   parse_arguments "$@"
   validate_environment
-  check_permissions
-  setup_directory
+  setup_directories
 }
 
 main "$@"

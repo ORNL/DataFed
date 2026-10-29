@@ -5,6 +5,9 @@ SCRIPT=$(realpath "$0")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/../..")
 
+source "${PROJECT_ROOT}/scripts/repo_paths.sh"
+datafed_load_repo_paths
+
 "${PROJECT_ROOT}/scripts/generate_datafed.sh"
 "${PROJECT_ROOT}/scripts/generate_repo_config.sh"
 "${PROJECT_ROOT}/scripts/install_repo.sh"
@@ -16,8 +19,10 @@ if [ -n "$UID" ]; then
   chown -R datafed:root "${PROJECT_ROOT}"
   chown -R datafed:root "${DATAFED_INSTALL_PATH}/repo/"
   # Make sure the folder exists
-  mkdir -p "${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}"
-  chown -R datafed:root "${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}"
+  for repo_path in "${DATAFED_CONFIGURED_REPO_PATHS[@]}"; do
+    mkdir -p -- "$repo_path/user" "$repo_path/project"
+    chown -R datafed:root "$repo_path"
+  done
 fi
 
 log_path="$DATAFED_DEFAULT_LOG_PATH"

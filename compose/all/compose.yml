@@ -45,6 +45,7 @@ services:
             DATAFED_DATABASE_IP_ADDRESS_PORT: "${DATAFED_DATABASE_IP_ADDRESS}:${DATAFED_DATABASE_PORT}"
             DATAFED_CORE_LOG_LEVEL: "${DATAFED_CORE_LOG_LEVEL}"
             SSL_CERT_FILE: "/opt/datafed/keys/datafed-arango.crt"
+            DATAFED_LINKML_SCHEMA_API_URL: "http://schemaservice:8080/v1"
         user: "${DATAFED_UID}:0"
         security_opt:
             - no-new-privileges:true
@@ -56,6 +57,7 @@ services:
             - ./logs:${DATAFED_CONTAINER_LOG_PATH}
         networks:
             - datafed-internal
+            - datafed-linkml
 
     datafed-foxx:
         image: datafed-foxx:latest
@@ -85,7 +87,7 @@ services:
             - datafed-internal
 
     arango:
-        image: arangodb/arangodb:3.12.4
+        image: arangodb/arangodb:${DATAFED_ARANGODB_VERSION:?Run generate_env.sh to load dependency versions}
         environment:
             ARANGO_ROOT_PASSWORD: "${DATAFED_DATABASE_PASSWORD}"
         volumes:
@@ -105,6 +107,9 @@ services:
 
     # Needs the datafed-core to be up so it doesn't fail when trying to connect
     datafed-repo:
+        extends:
+            file: .repositories.compose.json
+            service: repository-storage
         depends_on: ["datafed-core"]
         environment:
             DATAFED_ZEROMQ_SESSION_SECRET: "${DATAFED_ZEROMQ_SESSION_SECRET}"
@@ -120,7 +125,6 @@ services:
         volumes:
             - ./keys:/opt/datafed/keys
             - ./logs:${DATAFED_CONTAINER_LOG_PATH}
-            - ${DATAFED_HOST_COLLECTION_MOUNT}:${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}
         ports:
             - 9000:9000 # Communication core server
         networks:
@@ -131,6 +135,9 @@ services:
     # Needs port 443 for control port
     # Needs the datafed-web server to be up so that it can download the public key
     datafed-gcs:
+        extends:
+            file: .repositories.compose.json
+            service: repository-storage
         depends_on: ["datafed-web"]
         environment:
             DATAFED_ZEROMQ_SESSION_SECRET: "${DATAFED_ZEROMQ_SESSION_SECRET}"
@@ -139,12 +146,12 @@ services:
             DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
             DATAFED_CORE_ADDRESS_PORT_INTERNAL: "datafed-core:7513"
             DATAFED_GCS_ROOT_NAME: "${DATAFED_GCS_ROOT_NAME}"
-            DATAFED_REPO_ID_AND_DIR: "${DATAFED_REPO_ID_AND_DIR}"
             DATAFED_GLOBUS_SUBSCRIPTION: "${DATAFED_GLOBUS_SUBSCRIPTION}"
             DATAFED_GLOBUS_CONTROL_PORT: "${DATAFED_GLOBUS_CONTROL_PORT}"
             DATAFED_GCS_COLLECTION_BASE_PATH: "${DATAFED_GCS_COLLECTION_BASE_PATH}"
             DATAFED_GCS_COLLECTION_ROOT_PATH: "${DATAFED_GCS_COLLECTION_ROOT_PATH}"
             DATAFED_REPO_USER: "datafed"
+            DATAFED_GCS_RELATIVE_PATH_TO_REPO: "${DATAFED_GCS_RELATIVE_PATH_TO_REPO}"
             UID: "${DATAFED_UID}"
             HOST_HOSTNAME: "localhost"
             DATAFED_AUTHZ_USER: "datafed"
@@ -156,7 +163,6 @@ services:
             - ./keys:/opt/datafed/keys
             - ./globus:/opt/datafed/globus
             - ./logs:${DATAFED_CONTAINER_LOG_PATH}
-            - ${DATAFED_HOST_COLLECTION_MOUNT}:${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}
 
 volumes:
     foxx_tmp:
@@ -165,3 +171,6 @@ volumes:
 networks:
     datafed-internal:
         driver: bridge
+    datafed-linkml:
+        external: true
+        name: datafed-linkml

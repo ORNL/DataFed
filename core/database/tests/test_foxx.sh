@@ -15,7 +15,7 @@ SOURCE=$(dirname "$SCRIPT")
 DATAFED_PROJECT_ROOT=$(realpath ${SOURCE}/../../../)
 source "${DATAFED_PROJECT_ROOT}/config/datafed.sh"
 source "${DATAFED_PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_versions.sh"
-source "${DATAFED_PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_install_functions.sh"
+source "${DATAFED_PROJECT_ROOT}/scripts/foxx_runtime.sh"
 
 Help() {
   echo "$(basename $0) Will run a Foxx unit test"
@@ -131,8 +131,7 @@ fi
 # syntax for the REST http endpoints with curl so we are going to try the node module
 
 # Will only install if not already present
-install_nvm
-install_node
+datafed_use_foxx_runtime "$DATAFED_PROJECT_ROOT"
 
 FOXX_PREFIX=""
 if ! command -v foxx >/dev/null 2>&1; then

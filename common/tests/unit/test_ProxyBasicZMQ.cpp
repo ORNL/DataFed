@@ -71,6 +71,36 @@ BOOST_GLOBAL_FIXTURE(GlobalProtobufTeardown);
 
 BOOST_AUTO_TEST_SUITE(ProxyBasicZMQTest)
 
+BOOST_AUTO_TEST_CASE(testing_ProxyBasicZMQ_IdleShutdown) {
+  CredentialFactory cred_factory;
+  auto credentials = cred_factory.create(
+      ProtocolType::ZQTP, {{CredentialType::PUBLIC_KEY, public_key},
+                           {CredentialType::PRIVATE_KEY, secret_key},
+                           {CredentialType::SERVER_KEY, server_key}});
+
+  // An idle capture thread must stop without receiving any traffic. A zero
+  // duration also checks that shutdown does not depend on subscription timing.
+  for (const auto duration : {std::chrono::milliseconds(0),
+                              std::chrono::milliseconds(1),
+                              std::chrono::milliseconds(20)}) {
+    auto client_options = baseClientOptions();
+    client_options.connection_life = SocketConnectionLife::PERSISTENT;
+    client_options.host = "proxy_idle_backend_" + std::to_string(duration.count());
+    auto server_options = baseServerOptions();
+    server_options.host = "proxy_idle_frontend_" + std::to_string(duration.count());
+
+    ProxyBasicZMQ proxy(
+        {{SocketRole::CLIENT, client_options}, {SocketRole::SERVER, server_options}},
+        {{SocketRole::CLIENT, credentials.get()},
+         {SocketRole::SERVER, credentials.get()}},
+        LogContext{});
+    proxy.setRunDuration(duration);
+    const auto start = std::chrono::steady_clock::now();
+    proxy.run();
+    BOOST_CHECK(std::chrono::steady_clock::now() - start < std::chrono::seconds(2));
+  }
+}
+
 BOOST_AUTO_TEST_CASE(testing_ProxyBasicZMQ) {
 
   { // Extra scope here is so that the destructors of all items will be called

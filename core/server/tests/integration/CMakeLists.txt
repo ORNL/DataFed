@@ -11,7 +11,7 @@ set(MOCK_SCHEMA_PORT "4011"
 set(MOCK_SCHEMA_PULL "true"
     CACHE STRING "Pull the mock image before starting (set to 'false' for offline/local builds)")
 
-set(ARANGO_IMAGE "arangodb/arangodb:3.12.4"
+set(ARANGO_IMAGE "arangodb/arangodb:${LOCAL_ARANGODB_VERSION}"
     CACHE STRING "Docker image for the ArangoDB test instance (with Foxx services)")
 set(ARANGO_PORT "8529"
     CACHE STRING "Host port for the ArangoDB test container")

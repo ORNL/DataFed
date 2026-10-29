@@ -124,24 +124,27 @@ if [ -z "$local_GITLAB_DATAFEDCI_REPO_API_TOKEN" ]; then
   exit 2
 fi
 
-data=$(curl -s --retry 5 -i -X POST \
+if ! data=$(curl -sS --retry 5 -i --write-out '\n%{http_code}' -X POST \
   -H "Content-Type: application/json" \
   -d "{
         \"auth\": {
             \"identity\": {
                 \"methods\": [\"application_credential\"],
                 \"application_credential\": {
-                    \"id\": \"$OS_APP_ID\",
-                    \"secret\": \"$OS_APP_SECRET\"
+                    \"id\": \"$local_OS_APP_ID\",
+                    \"secret\": \"$local_OS_APP_SECRET\"
                 }
             }
         }
     }" \
-  https://orc-open.ornl.gov:13000/v3/auth/tokens)
-error_code="$?"
-if [ "$error_code" == "6" ]; then
-  echo "Unable to connect to Open Stack API endpoints, make sure you are"
-  echo "connected to the network"
+  https://orc-open.ornl.gov:13000/v3/auth/tokens); then
+  echo "OpenStack authentication request failed; check network connectivity." >&2
+  exit 2
+fi
+auth_status=${data##*$'\n'}
+data=${data%$'\n'*}
+if [ "$auth_status" != "201" ]; then
+  echo "OpenStack authentication returned HTTP $auth_status (expected 201); check application credentials and permissions." >&2
   exit 2
 fi
 
@@ -182,13 +185,35 @@ wait_for_running_infrastructure_pipelines_to_finish() {
   done
 }
 
+# An API error must not be interpreted as a missing VM.
+fetch_compute_instances() {
+  local response http_status
+  if ! response=$(curl -sS --retry 5 -H "X-Auth-Token: $1" \
+    --write-out '\n%{http_code}' "${2%/}/servers/detail"); then
+    echo "OpenStack VM lookup failed; check network connectivity." >&2
+    exit 2
+  fi
+  http_status=${response##*$'\n'}
+  compute_instances=${response%$'\n'*}
+  if [ "$http_status" != "200" ]; then
+    echo "OpenStack VM lookup at ${2%/}/servers/detail returned HTTP $http_status (401: invalid/expired token; 403: access denied)." >&2
+    printf '%s\n' "$compute_instances" >&2
+    exit 2
+  fi
+  if ! jq -e '(.servers | type) == "array"' <<<"$compute_instances" >/dev/null 2>&1; then
+    echo "OpenStack VM lookup returned invalid JSON or no servers array." >&2
+    exit 2
+  fi
+  echo "OpenStack VM lookup at ${2%/}/servers/detail returned $(jq '.servers | length' <<<"$compute_instances") visible VMs."
+}
+
 # Will search the open research cloud for instance that is running with the
 # provided identity
 find_orc_instance_by_id() {
   local SANITIZED_TOKEN="$1"
   local SANITIZED_URL="$2"
   local COMPUTE_INSTANCE_ID="$3"
-  compute_instances=$(curl -s --retry 5 -H "X-Auth-Token: $SANITIZED_TOKEN" "$SANITIZED_URL/servers/detail" | jq)
+  fetch_compute_instances "$SANITIZED_TOKEN" "$SANITIZED_URL"
   local instance_id=$(echo "$compute_instances" | jq --arg COMPUTE_INSTANCE_ID "$COMPUTE_INSTANCE_ID" '.servers[] | select(.id==$COMPUTE_INSTANCE_ID) | .id' | sed 's/\"//g')
   local instance_name=$(echo "$compute_instances" | jq --arg COMPUTE_INSTANCE_ID "$COMPUTE_INSTANCE_ID" '.servers[] | select(.id==$COMPUTE_INSTANCE_ID) | .name' | sed 's/\"//g')
   if [ "$instance_id" == "$COMPUTE_INSTANCE_ID" ]; then
@@ -203,7 +228,7 @@ find_orc_instance_by_name() {
   local SANITIZED_TOKEN="$1"
   local SANITIZED_URL="$2"
   local COMPUTE_INSTANCE_NAME="$3"
-  compute_instances=$(curl -s --retry 5 -H "X-Auth-Token: $SANITIZED_TOKEN" "$SANITIZED_URL/servers/detail" | jq)
+  fetch_compute_instances "$SANITIZED_TOKEN" "$SANITIZED_URL"
   instance_id=$(echo "$compute_instances" | jq --arg COMPUTE_INSTANCE_NAME "$COMPUTE_INSTANCE_NAME" '.servers[] | select (.name==$COMPUTE_INSTANCE_NAME) | .id ' | sed 's/\"//g')
   if [ -z "$instance_id" ]; then
     echo "Missing: $COMPUTE_INSTANCE_NAME"
@@ -227,8 +252,16 @@ fi
 compute_url=$(echo "$body" | jq '.token.catalog[] | select(.name=="nova") |.endpoints[] | select(.interface=="public") | .url ')
 sanitize_compute_url=$(echo $compute_url | sed 's/\"//g')
 header=$(echo "$data" | sed 's/{\"token.*//')
-subject_token=$(echo "$data" | grep "X-Subject-Token" | awk '{print $2}')
-sanitize_subject_token=${subject_token:0:268}
+subject_token=$(awk 'tolower($1) == "x-subject-token:" {sub(/\r$/, "", $2); print $2}' <<<"$data")
+sanitize_subject_token="$subject_token"
+if [ -z "$sanitize_subject_token" ]; then
+  echo "OpenStack authentication returned no X-Subject-Token header." >&2
+  exit 2
+fi
+if [ -z "$sanitize_compute_url" ]; then
+  echo "OpenStack authentication returned no public Nova endpoint." >&2
+  exit 2
+fi
 
 ################################################################################
 # Check 1 - Are there running pipelines

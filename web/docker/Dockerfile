@@ -33,14 +33,16 @@ RUN mkdir -p ${DATAFED_DEPENDENCIES_ROOT}/scripts && \
         mv ./scripts/generate_dependencies_config.sh ${DATAFED_DEPENDENCIES_ROOT}/scripts/generate_dependencies_config.sh
 
 COPY ./CMakeLists.txt                 ${BUILD_DIR}
-COPY ./scripts/dependency_versions.sh ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_datafed.sh    ${BUILD_DIR}/scripts/
 COPY ./scripts/generate_ws_config.sh  ${BUILD_DIR}/scripts/
 COPY ./scripts/install_ws.sh          ${BUILD_DIR}/scripts/
+COPY ./scripts/generate_web_package.cjs ${BUILD_DIR}/scripts/
 COPY ./scripts/export_dependency_version.sh ${BUILD_DIR}/scripts/
 COPY ./cmake                          ${BUILD_DIR}/cmake
 COPY ./common/proto3                  ${BUILD_DIR}/common/proto3
 COPY ./web                            ${BUILD_DIR}/web
+COPY ./external/DataFedDependencies/web/package.json ${DATAFED_DEPENDENCIES_ROOT}/web/package.json
+COPY ./external/DataFedDependencies/web/zeromq-compat ${DATAFED_DEPENDENCIES_ROOT}/web/zeromq-compat
 
 RUN ${DATAFED_DEPENDENCIES_ROOT}/scripts/generate_dependencies_config.sh && \
         ${BUILD_DIR}/scripts/generate_datafed.sh && \
@@ -56,7 +58,13 @@ RUN ${DATAFED_DEPENDENCIES_ROOT}/scripts/generate_dependencies_config.sh && \
           -DENABLE_INTEGRATION_TESTS=False
 RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build
 RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build --target install
-# Only part of the final install can be done here
+# Resolve the application manifest and security overrides rather than retaining
+# a dependency image's older node_modules tree. Keep dev modules for ws-build's
+# unit-test entrypoint; the final stage prunes them.
+RUN . "${DATAFED_DEPENDENCIES_ROOT}/scripts/dependency_versions.sh" && \
+    export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm" && \
+    . "$NVM_DIR/nvm.sh" && nvm use "$DATAFED_NODE_VERSION" && \
+    npm --prefix "${BUILD_DIR}/web" install --install-links
 
 ENTRYPOINT ["/opt/datafed/dependencies/bin/cmake", "--build", "build", "--target", "test"]
 
@@ -93,11 +101,25 @@ COPY --from=ws-build --chown=datafed:root ${DATAFED_DEPENDENCIES_INSTALL_PATH}/n
 COPY --from=ws-build --chown=datafed:root ${BUILD_DIR}/web ${BUILD_DIR}/web
 COPY --from=ws-build --chown=datafed:root ${DATAFED_DEPENDENCIES_ROOT}/scripts ${DATAFED_DEPENDENCIES_ROOT}/scripts
 COPY --from=ws-build --chown=datafed:root ${DATAFED_INSTALL_PATH}/web ${DATAFED_INSTALL_PATH}/web
-COPY --from=ws-build --chown=datafed:root /usr/bin/curl /usr/bin/curl
 
 WORKDIR ${BUILD_DIR}/web
 
 USER root
+
+# The runtime needs Node and production application modules, not npm's bundled
+# dependency tree or the web unit-test dependencies. Keep the source entrypoint's
+# module resolution pointed at the same production modules as the installed app.
+RUN . "${DATAFED_DEPENDENCIES_ROOT}/scripts/dependency_versions.sh" && \
+    export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm" && \
+    . "$NVM_DIR/nvm.sh" && nvm use "$DATAFED_NODE_VERSION" && \
+    npm --prefix "${BUILD_DIR}/web" prune --omit=dev --ignore-scripts && \
+    ln -s "${BUILD_DIR}/web/node_modules" "${DATAFED_INSTALL_PATH}/web/node_modules" && \
+    rm -rf ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm/versions/node/*/lib/node_modules \
+           ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm/versions/node/*/bin/npm \
+           ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm/versions/node/*/bin/npx \
+           ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm/.cache \
+           ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm/.git \
+           ${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm/test
 
 ENTRYPOINT ["/datafed/source/web/docker/entrypoint.sh"]
 CMD ["/datafed/source/web/datafed-ws.js", "/datafed/source/config/datafed-ws.cfg"]

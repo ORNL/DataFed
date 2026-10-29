@@ -18,7 +18,7 @@ SOURCE=$(dirname "$SCRIPT")
 DATAFED_PROJECT_ROOT=$(realpath ${SOURCE}/..)
 source "${DATAFED_PROJECT_ROOT}/config/datafed.sh"
 source "${DATAFED_PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_versions.sh"
-source "${DATAFED_PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_install_functions.sh"
+source "${DATAFED_PROJECT_ROOT}/scripts/foxx_runtime.sh"
 
 Help() {
   echo "$(basename $0) Will set up a configuration file for the core server"
@@ -253,13 +253,9 @@ fi
 # The web deployment requires manual interaction, and I could not figure out the
 # syntax for the REST http endpoints with curl so we are going to try the node module
 
-# 1. Install nvm which will allow us to update node
-echo "INFO - Installing nvm"
-install_nvm
-echo "INFO - Installing node"
-install_node
-echo "INFO - Installing foxx_cli"
-install_foxx_cli
+# Container builds provide the CLI in advance; deployment should not download
+# tooling or require sudo. Retain installation for non-container deployments.
+datafed_use_foxx_runtime "$DATAFED_PROJECT_ROOT"
 
 FOXX_PREFIX=""
 if ! command -v foxx >/dev/null 2>&1; then

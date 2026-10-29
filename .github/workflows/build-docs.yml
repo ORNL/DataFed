@@ -31,13 +31,21 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v3
-            - name: Set up Python
-              uses: actions/setup-python@v2
               with:
-                  python-version: 3.9
+                  submodules: true
+            - name: Load dependency versions
+              id: versions
+              run: |
+                  source external/DataFedDependencies/scripts/dependency_versions.sh
+                  echo "version=${DATAFED_PYTHON_VERSION_FULL}" >> "$GITHUB_OUTPUT"
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: ${{ steps.versions.outputs.version }}
             - name: generate config file
               run: |
                   ./scripts/generate_datafed.sh
+                  ./external/DataFedDependencies/scripts/generate_dependencies_config.sh
             - name: Install documentation build dependencies
               run: |
                   sudo ./external/DataFedDependencies/scripts/install_docs_dependencies.sh

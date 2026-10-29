@@ -15,6 +15,66 @@ you might have your repository on a different machine, or may have multiple
 repositories connected to a single metadata server. 
 NOTE You will need a machine with firewall exceptions to run the compose files.
 
+The `all` and `repo` Compose environments use a single `repositories.json` file
+beside `compose.yml` to define any number of logical repositories. Each entry
+specifies its directory relative to `DATAFED_GCS_COLLECTION_ROOT_PATH` and a
+separate host storage location. The final directory name becomes its repository ID:
+
+```json
+{
+  "authorization_origin": "bam",
+  "repositories": [
+    {"relative_path": "path1/bam", "host_path": "/srv/datafed/bam"},
+    {"relative_path": "path2/foo", "host_path": "/srv/datafed/foo"},
+    {"relative_path": "path3/path5/images", "host_path": "/archive/images"}
+  ]
+}
+```
+
+Run `./generate_env.sh -c` in `compose/all` or `compose/repo`. On the first run,
+it creates `repositories.json` with the `bam` and `bambar` defaults. When
+migrating an existing `.env`, it preserves the previously configured IDs and
+host mount locations in this manifest instead. Once the manifest exists, it is
+the source of truth; numbered mount variables are no longer needed.
+
+Edit the manifest to add, remove, or change repositories, then run
+`./generate_env.sh -c` again before `docker compose up -d`. The `-c` option
+preserves existing certificates. Relative host paths
+are resolved against the Compose directory, and `~` is expanded. Host paths
+must be distinct and non-nested; IDs must be valid, unique repository keys.
+The authorization origin must be one of those IDs.
+Existing entries with only `id` keep their directory at `<ROOT_PATH>/<id>`.
+If both `id` and `relative_path` are supplied, the ID must match the final
+component of the relative path. Absolute paths, `.`/`..` components, overlapping
+repository directories, and duplicate IDs are rejected.
+
+The generator writes `.repositories.compose.json`, which both services inherit
+using Compose `extends`. It supplies the identical bind mounts and repository
+paths to the repo and GCS containers. It works with both `docker compose up` and
+`docker compose -f compose.yml up`; no additional override argument is needed.
+Do not edit the generated file. Both it and the local manifest are gitignored.
+Python 3 is required to generate the configuration.
+
+The container destination for each repository is
+`${DATAFED_GCS_COLLECTION_ROOT_PATH}/<relative_path>`. For the example above, the
+generator supplies `DATAFED_REPO_IDS_AND_DIRS=path1/bam,path2/foo,path3/path5/images`
+and derives the compatibility list `DATAFED_REPO_IDS=bam,foo,images`.
+New environments default to
+`/mnt/data` with a guest collection base of `/`; existing root and collection
+base settings are preserved. Keep an existing guest collection's base unchanged
+when adding another repository. Adding an entry changes the permitted repository
+roots; removing an entry removes its mount and gateway allowance without deleting
+host data or unregistering its DataFed repository.
+
+When GCS startup finishes, its logs list each repository's registration fields
+and both form filenames under the mounted `globus/` directory. Sign in as a
+DataFed system administrator, open **Manage Data Repositories**, and choose
+**New** for each repository. Copy the corresponding form values, choose capacity
+and administrators, then save. Register `authorization_origin` first and keep it
+registered because the shared authorization callout uses it as its origin.
+Create allocations on each repository before testing uploads. Startup does not
+automatically register repositories or grant DataFed allocations.
+
 ## 1. Metadata Compose Services
 
 The following steps are used to stand up the metadata Compose file from scratch.

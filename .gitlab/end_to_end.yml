@@ -239,6 +239,37 @@ end-to-end-repo-setup:
         - ci-datafed-globus
         - docker
     script:
+        - &configure-repository-ci-env |
+            : "${CI_DATAFED_REPO_IDS_AND_DIRS:?Define repository paths relative to ROOT_PATH}"
+            if [[ ! "$CI_DATAFED_REPO_IDS_AND_DIRS" =~ ^[a-zA-Z0-9_.,/-]+$ ||
+                  "$CI_DATAFED_REPO_IDS_AND_DIRS" = ,* || "$CI_DATAFED_REPO_IDS_AND_DIRS" = *, ||
+                  "$CI_DATAFED_REPO_IDS_AND_DIRS" = *,,* ]]; then
+              echo "ERROR - Define a nonempty comma-separated repository path list" >&2
+              exit 1
+            fi
+            IFS=',' read -r -a ci_repo_paths <<< "$CI_DATAFED_REPO_IDS_AND_DIRS"
+            ci_repo_ids=()
+            ci_seen_ids=","
+            for repo_path in "${ci_repo_paths[@]}"; do
+              repo_id="${repo_path##*/}"
+              if [[ ! "$repo_path" =~ ^[a-zA-Z0-9_.-]+(/[a-zA-Z0-9_.-]+)*$ ||
+                    "$repo_path" =~ (^|/)\.\.?(/|$) ||
+                    ! "$repo_id" =~ ^[a-z0-9_.-]{1,40}$ || "$ci_seen_ids" = *",$repo_id,"* ]]; then
+                echo "ERROR - Repository paths must be relative, canonical, and have unique valid final IDs" >&2
+                exit 1
+              fi
+              for other_path in "${ci_repo_paths[@]}"; do
+                if [[ "$other_path" = "$repo_path/"* ]]; then
+                  echo "ERROR - Repository paths must not overlap" >&2
+                  exit 1
+                fi
+              done
+              ci_seen_ids+="$repo_id,"
+              ci_repo_ids+=("$repo_id")
+            done
+            # The shared callout uses the first repository as its origin.
+            export DATAFED_REPO_ID_AND_DIR="${ci_repo_ids[0]}"
+            export DATAFED_REPO_IDS_AND_DIRS="$CI_DATAFED_REPO_IDS_AND_DIRS"
         - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
         - echo "$BRANCH_LOWER"
         - mkdir -p "$HOST_LOG_FILE_PATH"
@@ -263,7 +294,8 @@ end-to-end-repo-setup:
         - echo "-e DATAFED_HTTPS_SERVER_PORT=\"443\" \\" >> "${RUN_FILE}"
         - echo "-e DATAFED_DOMAIN=\"$CI_DATAFED_DOMAIN\" \\" >> "${RUN_FILE}"
         - echo "-e DATAFED_CORE_ADDRESS_PORT_INTERNAL=\"${CI_DATAFED_DOMAIN}:7513\" \\" >> "${RUN_FILE}"
-        - echo "-e DATAFED_REPO_ID_AND_DIR=\"${CI_DATAFED_REPO_ID_AND_DIR}\" \\" >> "${RUN_FILE}"
+        - echo "-e DATAFED_REPO_ID_AND_DIR=\"${DATAFED_REPO_ID_AND_DIR}\" \\" >> "${RUN_FILE}"
+        - echo "-e DATAFED_REPO_IDS_AND_DIRS=\"${CI_DATAFED_REPO_IDS_AND_DIRS}\" \\" >> "${RUN_FILE}"
         - echo "-e DATAFED_DEFAULT_LOG_PATH=\"$CONTAINER_LOG_FILE_PATH\" \\" >> "${RUN_FILE}"
         - echo "-e DATAFED_GCS_COLLECTION_BASE_PATH=\"/mnt\" \\" >> "${RUN_FILE}"
         - echo "-e UID=\"$USER_ID\" \\" >> "${RUN_FILE}"
@@ -301,6 +333,7 @@ end-to-end-gcs-authz-setup:
         - ci-datafed-globus
         - docker
     script:
+        - *configure-repository-ci-env
         - BRANCH_LOWER=$(echo "$CI_COMMIT_REF_NAME" | tr '[:upper:]' '[:lower:]')
         - echo "$BRANCH_LOWER"
         - mkdir -p "$HOST_LOG_FILE_PATH"
@@ -336,7 +369,8 @@ end-to-end-gcs-authz-setup:
         - echo "-e DATAFED_AUTHZ_USER=\"datafed\" \\" >> run_globus.sh
         - echo "-e UID=\"$USER_ID\" \\" >> run_globus.sh
         - echo "-e BUILD_WITH_METADATA_SERVICES=\"FALSE\" \\" >> run_globus.sh
-        - echo "-e DATAFED_REPO_ID_AND_DIR=\"${CI_DATAFED_REPO_ID_AND_DIR}\" \\" >> run_globus.sh
+        - echo "-e DATAFED_REPO_ID_AND_DIR=\"${DATAFED_REPO_ID_AND_DIR}\" \\" >> run_globus.sh
+        - echo "-e DATAFED_REPO_IDS_AND_DIRS=\"${CI_DATAFED_REPO_IDS_AND_DIRS}\" \\" >> run_globus.sh
         - echo "-e DATAFED_GCS_IP=\"${CI_DATAFED_GCS_IP}\" \\" >> run_globus.sh
         - echo "-e DATAFED_REPO_DOMAIN=\"${CI_DATAFED_REPO_DOMAIN}\" \\" >> run_globus.sh
         - echo "-v \"${DATAFED_GLOBUS_DIR}:/opt/datafed/globus\" \\" >> run_globus.sh
@@ -345,26 +379,34 @@ end-to-end-gcs-authz-setup:
         - echo "-v \"/shared/datafed-repo-key.pub\":/opt/datafed/keys/datafed-repo-key.pub \\" >> run_globus.sh
         - echo "-v \"/shared/datafed-repo-key.priv\":/opt/datafed/keys/datafed-repo-key.priv \\" >> run_globus.sh
         - echo "-t \"${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:${CI_COMMIT_SHA}\"" >> run_globus.sh
-        - if [ -f "${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh" ]; then rm "${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh"; fi
+        - |
+            for repo_id in "${ci_repo_ids[@]}"; do
+              rm -f "${DATAFED_GLOBUS_DIR}/${repo_id}-repo-form.sh" "${DATAFED_GLOBUS_DIR}/${repo_id}-repo-form.json"
+            done
         - chmod +x run_globus.sh
         - ./run_globus.sh
-        # Check that repo form has been created before saying job is a success the
-        # repo-form is needed before the next job can move forward. In addition
-        # ensure that the container has not died due to an error.
+        # Wait for and collect every configured repository's forms.
         - |
-            while [ ! -f "${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh" ]
-            do
-              echo "Waiting for ${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh"
-              sleep 10
-              ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:${CI_COMMIT_SHA}"
+            setup_deadline=$((SECONDS + 600))
+            mkdir -p repo-forms
+            for repo_id in "${ci_repo_ids[@]}"; do
+              while [ ! -f "${DATAFED_GLOBUS_DIR}/${repo_id}-repo-form.sh" ] ||
+                    [ ! -f "${DATAFED_GLOBUS_DIR}/${repo_id}-repo-form.json" ]; do
+                echo "Waiting for repository forms: ${repo_id}"
+                sleep 10
+                if [ "$SECONDS" -ge "$setup_deadline" ] || ! ./scripts/container_run_test.sh -e -c "1" -t "${REGISTRY}/${PROJECT}/${COMPONENT}-${BRANCH_LOWER}:${CI_COMMIT_SHA}"; then
+                  docker logs "${COMPONENT}-${BRANCH_LOWER}-${CI_COMMIT_SHORT_SHA}-${random_string}"
+                  exit 1
+                fi
+              done
+              cat "${DATAFED_GLOBUS_DIR}/${repo_id}-repo-form.sh"
+              for format in sh json; do
+                cp "${DATAFED_GLOBUS_DIR}/${repo_id}-repo-form.${format}" repo-forms/
+              done
             done
-        - cat "${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh"
-        - cp ${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh .
-        - cp ${DATAFED_GLOBUS_DIR}/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.json .
     artifacts:
         paths:
-            - "${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.sh"
-            - "${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.json"
+            - "repo-forms/"
 
 end_to_end_client-test:
     variables:
@@ -391,7 +433,13 @@ end_to_end_client-test:
     tags:
         - ci-datafed-client
     script:
-        - export DATAFED_REPO_FORM_PATH="$(pwd)/${CI_DATAFED_REPO_ID_AND_DIR}-repo-form.json"
+        - *configure-repository-ci-env
+        - export DATAFED_REPO_FORMS_DIR="$(pwd)/repo-forms"
+        - export DATAFED_REPO_FORM_PATH="${DATAFED_REPO_FORMS_DIR}/${DATAFED_REPO_ID_AND_DIR}-repo-form.json"
+        - |
+            for repo_id in "${ci_repo_ids[@]}"; do
+              test -f "${DATAFED_REPO_FORMS_DIR}/${repo_id}-repo-form.json"
+            done
         - env > env_file
         - . /shared/install/python/datafed/bin/activate
         - ./scripts/generate_datafed.sh
@@ -423,10 +471,11 @@ end_to_end_web_test:
     tags:
         - ci-datafed-client
     script:
+        - source external/DataFedDependencies/scripts/dependency_versions.sh
         - cd tests/end-to-end/web-UI
         - '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"' # This loads nvm
-        - nvm install 18
-        - nvm use 18
+        - nvm install "$DATAFED_NODE_VERSION"
+        - nvm use "$DATAFED_NODE_VERSION"
         - npm cache clean --force
         - npm install
         - sudo npx playwright install-deps

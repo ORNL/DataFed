@@ -118,6 +118,9 @@ else
   echo "INFO - Creating new .env file at $ENV_FILE_PATH"
 fi
 
+# Dependency pins take precedence over values from the existing .env file.
+source "${PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_versions.sh"
+
 local_DATAFED_KEY_DIR="${COMPOSE_ENV_DIR}/keys"
 if [ ! -d "$local_DATAFED_KEY_DIR" ]; then
   mkdir -p "$local_DATAFED_KEY_DIR"
@@ -156,15 +159,21 @@ local_DATAFED_ENABLE_FOXX_TESTS=$(get_env_value "DATAFED_ENABLE_FOXX_TESTS" "FAL
 local_DATAFED_DATABASE_PORT=$(get_env_value "DATAFED_DATABASE_PORT" "8529")
 local_DATAFED_GCS_ROOT_NAME=$(get_env_value "DATAFED_GCS_ROOT_NAME" "DataFed_Compose")
 local_DATAFED_GCS_IP=$(get_env_value "DATAFED_GCS_IP" "")
-local_DATAFED_REPO_ID_AND_DIR=$(get_env_value "DATAFED_REPO_ID_AND_DIR" "datafed-repo")
-local_DATAFED_HOST_COLLECTION_MOUNT=$(get_env_value "DATAFED_HOST_COLLECTION_MOUNT" "$HOME/compose_collection")
 local_DATAFED_HOST_DEPLOYMENT_KEY_PATH=$(get_env_value "DATAFED_HOST_DEPLOYMENT_KEY_PATH" "${local_DATAFED_GLOBUS_KEY_DIR}/deployment-key.json")
 local_DATAFED_HOST_CRED_FILE_PATH=$(get_env_value "DATAFED_HOST_CRED_FILE_PATH" "${local_DATAFED_GLOBUS_KEY_DIR}/client_cred.json")
 local_DATAFED_GCS_COLLECTION_BASE_PATH=$(get_env_value "DATAFED_GCS_COLLECTION_BASE_PATH" "/")
-local_DATAFED_GCS_COLLECTION_ROOT_PATH=$(get_env_value "DATAFED_GCS_COLLECTION_ROOT_PATH" "/mnt/datafed")
+local_DATAFED_GCS_COLLECTION_ROOT_PATH=$(get_env_value "DATAFED_GCS_COLLECTION_ROOT_PATH" "/mnt/data")
 local_DATAFED_GLOBUS_CONTROL_PORT=$(get_env_value "DATAFED_GLOBUS_CONTROL_PORT" "443")
 local_DATAFED_GLOBUS_SUBSCRIPTION=$(get_env_value "DATAFED_GLOBUS_SUBSCRIPTION" "")
 local_DATAFED_CORE_LOG_LEVEL=$(get_env_value "DATAFED_CORE_LOG_LEVEL" "3")
+
+# One manifest controls both containers' mounts and the runtime repository list.
+# Validate before replacing .env or changing any existing certificate files.
+repo_config_env=""
+if [ "$BUILD_REPO" = "TRUE" ]; then
+  repo_config_env=$(python3 "${PROJECT_ROOT}/scripts/compose_generate_repositories.py" \
+    --directory "$COMPOSE_ENV_DIR") || exit 1
+fi
 
 need_web_certs="FALSE"
 # Check if we need to generate certificates
@@ -315,6 +324,7 @@ DATAFED_WEB_KEY_PATH=${local_DATAFED_WEB_KEY_PATH}
 DATAFED_DATABASE_PASSWORD=${local_DATAFED_DATABASE_PASSWORD}
 DATAFED_DATABASE_IP_ADDRESS=${local_DATAFED_DATABASE_IP_ADDRESS}
 DATAFED_DATABASE_PORT=${local_DATAFED_DATABASE_PORT}
+DATAFED_ARANGODB_VERSION=${DATAFED_ARANGODB_VERSION}
 DATAFED_ENABLE_FOXX_TESTS=${local_DATAFED_ENABLE_FOXX_TESTS}
 EOF
 
@@ -333,8 +343,6 @@ if [ "${BUILD_REPO}" == "TRUE" ]; then
   cat <<EOF >>"$ENV_FILE_PATH"
 DATAFED_GCS_ROOT_NAME=${local_DATAFED_GCS_ROOT_NAME}
 DATAFED_GCS_IP=${local_DATAFED_GCS_IP}
-DATAFED_REPO_ID_AND_DIR=${local_DATAFED_REPO_ID_AND_DIR}
-DATAFED_HOST_COLLECTION_MOUNT=${local_DATAFED_HOST_COLLECTION_MOUNT}
 DATAFED_HOST_DEPLOYMENT_KEY_PATH=${local_DATAFED_HOST_DEPLOYMENT_KEY_PATH}
 DATAFED_HOST_CRED_FILE_PATH=${local_DATAFED_HOST_CRED_FILE_PATH}
 DATAFED_GLOBUS_CONTROL_PORT=${local_DATAFED_GLOBUS_CONTROL_PORT}
@@ -343,6 +351,8 @@ DATAFED_REPO_DOMAIN=${local_DATAFED_REPO_DOMAIN}
 DATAFED_GCS_COLLECTION_BASE_PATH=${local_DATAFED_GCS_COLLECTION_BASE_PATH}
 DATAFED_GCS_COLLECTION_ROOT_PATH=${local_DATAFED_GCS_COLLECTION_ROOT_PATH}
 EOF
+  printf '%s\n' "$repo_config_env" >>"$ENV_FILE_PATH"
+  echo "INFO - Repository mounts generated from ${COMPOSE_ENV_DIR}/repositories.json"
 fi
 
 unset_env_file_name="${COMPOSE_ENV_DIR}/unset_env.sh"
