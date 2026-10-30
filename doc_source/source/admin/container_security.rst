@@ -132,6 +132,14 @@ services receive the same list. CI loops over all entries to clean stale forms,
 wait for startup, collect ``repo-forms/`` artifacts, and test shared-service
 allocations. No separate primary or secondary CI ID variable is required.
 
+Before reusing its test storage, CI stops the old repo and GCS containers. It
+removes stale contents through a root container bound only to the configured
+test directory under ``/shared/collections``, without following symlinks or
+crossing filesystems. The mount root is retained and assigned to the runner.
+CI then creates every configured directory as the runner, including intermediate
+parents. This avoids root-owned parents left by container-side ``mkdir -p``
+preventing cleanup of nested repositories in later runs.
+
 The first entry supplies the shared callout's existing authorization identity
 (``bam`` in this example). CI registers it first and removes it last. Keep the
 first entry stable across the setup jobs; authorization still resolves each
