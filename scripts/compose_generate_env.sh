@@ -239,9 +239,12 @@ if [ "$need_web_certs" = "TRUE" ]; then
   openssl genrsa -out "$local_DATAFED_WEB_KEY_PATH" 2048
   openssl req -new -key "$local_DATAFED_WEB_KEY_PATH" \
     -out "${local_DATAFED_WEB_CSR_PATH}" \
-    -subj "/C=US/ST=TN/L=DataFed/O=DataFed/OU=DataFed/CN=${local_DATAFED_DOMAIN}"
+    -subj "/C=US/ST=TN/L=DataFed/O=DataFed/OU=DataFed/CN=${local_DATAFED_DOMAIN}" \
+    -addext "subjectAltName=DNS:${local_DATAFED_DOMAIN}"
   openssl x509 -req -days 3650 \
     -in "${local_DATAFED_WEB_CSR_PATH}" \
+    -CAcreateserial \
+    -copy_extensions copy \
     -signkey "$local_DATAFED_WEB_KEY_PATH" \
     -out "$local_DATAFED_WEB_CERT_PATH"
 fi
@@ -258,9 +261,12 @@ if [ "$need_arango_certs" = "TRUE" ]; then
   openssl genrsa -out "$local_DATAFED_ARANGO_KEY_PATH" 2048
   openssl req -new -key "$local_DATAFED_ARANGO_KEY_PATH" \
     -out "${local_DATAFED_ARANGO_CSR_PATH}" \
-    -subj "/C=US/ST=TN/L=DataFed/O=DataFed/OU=DataFed/CN=arango"
+    -subj "/C=US/ST=TN/L=DataFed/O=DataFed/OU=DataFed/CN=arango" \
+    -addext "subjectAltName=DNS:arango"
   openssl x509 -req -days 3650 \
     -in "${local_DATAFED_ARANGO_CSR_PATH}" \
+    -CAcreateserial \
+    -copy_extensions copy \
     -signkey "$local_DATAFED_ARANGO_KEY_PATH" \
     -out "$local_DATAFED_ARANGO_CERT_PATH"
 
