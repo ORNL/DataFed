@@ -42,11 +42,21 @@ args = sys.argv[1:]
 with (root / 'calls.jsonl').open('a') as out:
     out.write(json.dumps(args) + '\\n')
 name = os.environ['DATAFED_GCS_ROOT_NAME']
+def list_response(records, default_format):
+    shape = os.environ.get('TEST_GCS_LIST_FORMAT', default_format)
+    if shape == 'pages':
+        return [{'DATA_TYPE': 'result#1.0.0', 'data': [record]} for record in records] or [{'data': []}]
+    if shape == 'response':
+        return {'data': records}
+    return records
 if args[:2] == ['storage-gateway', 'list']:
-    print(json.dumps({'data': state['gateways']}))
+    print(json.dumps(list_response(state['gateways'], 'pages')))
 elif args[:2] == ['collection', 'list']:
-    print(json.dumps(state['collections']))
+    print(json.dumps(list_response(state['collections'], 'records')))
 elif args[:3] == ['storage-gateway', 'create', 'posix']:
+    if any(gateway['display_name'] == args[3] for gateway in state['gateways']):
+        print('HTTP status: 409; storage gateways with this display_name already exist', file=sys.stderr)
+        sys.exit(1)
     state['gateways'].append({'id': 'gateway', 'display_name': args[3]})
 elif args[:2] == ['collection', 'create']:
     state['collections'].append({'id': 'mapped', 'display_name': name + ' Collection Mapped'})
@@ -93,6 +103,31 @@ state_file.write_text(json.dumps(state))
         self.assertEqual(result.returncode, 0, result.stderr)
         policy = json.loads((self.root / "active-policy.json").read_text())
         self.assertEqual(policy["read_write"], [str(self.root / "data/bam")])
+
+    def test_cli_list_formats_reuse_existing_gateway_and_collection(self):
+        # The GCS CLI emits an array of result pages for gateway lists. Put the
+        # desired resource on a later page, alongside similar unrelated names.
+        state = {"gateways": [
+            {"id": "other-gateway", "display_name": "Test Sister Storage Gateway"},
+            {"id": "gateway", "display_name": "Test Storage Gateway"}],
+            "collections": [
+                {"id": "other", "display_name": "Test Collection Mapped Other"},
+                {"id": "mapped", "display_name": "Test Collection Mapped"},
+                {"id": "guest", "display_name": "Test Collection Guest"}]}
+        (self.root / "state.json").write_text(json.dumps(state))
+        for shape in ("pages", "records", "response"):
+            with self.subTest(shape=shape):
+                self.env["TEST_GCS_LIST_FORMAT"] = shape
+                result = self.run_script("scripts/globus/setup_globus.sh")
+                self.assertEqual(result.returncode, 0, result.stderr)
+                result = self.run_script("scripts/globus/generate_repo_form.sh", "-j")
+                self.assertEqual(result.returncode, 0, result.stderr)
+                for key in ("bam", "bambar"):
+                    form = json.loads((self.root / (key + "-repo-form.json")).read_text())
+                    self.assertEqual(form["endpoint"], "guest")
+        calls = [json.loads(line) for line in (self.root / "calls.jsonl").read_text().splitlines()]
+        self.assertTrue(all(call[1] != "create" for call in calls))
+        self.assertEqual(json.loads((self.root / "state.json").read_text()), state)
 
     def test_invalid_config_fails_before_any_globus_call(self):
         for ids in ("../bam", "bam,../other", "bam,bam", "bambar", "bam,", "bam,,bambar",
@@ -157,6 +192,7 @@ state_file.write_text(json.dumps(state))
         self.assertFalse((self.root / "calls.jsonl").exists())
 
     def test_cleanup_uses_exact_shared_resource_names(self):
+        self.env["TEST_GCS_LIST_FORMAT"] = "pages"
         (self.root / "state.json").write_text(json.dumps({
             "gateways": [{"id": "other-gateway", "display_name": "Test Sister Storage Gateway"},
                          {"id": "gateway", "display_name": "Test Storage Gateway"}],

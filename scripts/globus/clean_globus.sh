@@ -19,8 +19,8 @@ COLLECTION_NAME="${DATAFED_GCS_ROOT_NAME} Collection Mapped"
 # another instance with a similar name is never selected.
 resource_id() {
   jq -er --arg name "$2" '
-    (if type == "array" then . else .data end)
-    | map(select(.display_name == $name))
+    [(if type == "array" then .[] else .data[] end)
+     | (if has("data") then .data[] else . end) | select(.display_name == $name)]
     | if length == 0 then ""
       elif length == 1 then .[0].id
       else error("Multiple Globus resources have the same display name") end

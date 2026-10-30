@@ -60,7 +60,8 @@ COLLECTION_NAME="${DATAFED_GCS_ROOT_NAME} Collection Mapped"
 GUEST_COLLECTION_NAME="${DATAFED_GCS_ROOT_NAME} Collection Guest"
 
 gateway_line=$(globus-connect-server storage-gateway list -F json | jq -er --arg name "$GATEWAY_NAME" '
-  [(if type == "array" then . else .data end)[] | select(.display_name == $name)]
+  [(if type == "array" then .[] else .data[] end)
+   | (if has("data") then .data[] else . end) | select(.display_name == $name)]
   | if length > 1 then error("Ambiguous storage gateway name")
     else (.[0].id // "") end')
 
@@ -114,11 +115,13 @@ for repo_path in "${DATAFED_CONFIGURED_REPO_PATHS[@]}"; do
 done
 
 collection_line=$(globus-connect-server collection list -F json | jq -er --arg name "$COLLECTION_NAME" '
-  [(if type == "array" then . else .data end)[] | select(.display_name == $name)]
+  [(if type == "array" then .[] else .data[] end)
+   | (if has("data") then .data[] else . end) | select(.display_name == $name)]
   | if length > 1 then error("Ambiguous mapped collection name")
     else (.[0].id // "") end')
 uuid_of_storage_gateway=$(globus-connect-server storage-gateway list -F json | jq -er --arg name "$GATEWAY_NAME" '
-  [(if type == "array" then . else .data end)[] | select(.display_name == $name)]
+  [(if type == "array" then .[] else .data[] end)
+   | (if has("data") then .data[] else . end) | select(.display_name == $name)]
   | if length == 1 then .[0].id else error("Expected one storage gateway") end')
 
 # If not empty
