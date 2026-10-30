@@ -3,7 +3,7 @@
 # docker build -f web/docker/Dockerfile .
 ARG                        BUILD_BASE="debian:bookworm-slim"
 ARG                      DEPENDENCIES="dependencies"
-ARG                           RUNTIME="runtime"
+ARG                           RUNTIME="debian:trixie-slim"
 ARG                       DATAFED_DIR="/datafed"
 ARG              DATAFED_INSTALL_PATH="/opt/datafed"
 ARG DATAFED_DEPENDENCIES_INSTALL_PATH="/opt/datafed/dependencies"
@@ -87,9 +87,22 @@ ENV          DATAFED_DEFAULT_LOG_PATH="$DATAFED_INSTALL_PATH/logs"
 
 WORKDIR ${DATAFED_DIR}
 
-USER datafed
+# The web service needs Node, certificates, and its startup shell utilities.
+# Use a dedicated runtime without the shared image's curl/wget dependency tree.
+RUN apt-get update --error-on=any && \
+    apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends ca-certificates libstdc++6 passwd && \
+    apt-get purge -y --auto-remove mount && \
+    rm -rf /var/lib/apt/lists/* && \
+    if ! id -u datafed >/dev/null 2>&1; then \
+      useradd --create-home --user-group --shell /bin/bash datafed; \
+    fi && \
+    mkdir -p "${BUILD_DIR}" "${DATAFED_INSTALL_PATH}/web" \
+             "${DATAFED_INSTALL_PATH}/logs" /var/log/datafed && \
+    chown -R datafed:root "${DATAFED_DIR}" "${DATAFED_INSTALL_PATH}" /var/log/datafed && \
+    chmod g+rw "${DATAFED_INSTALL_PATH}/logs"
 
-RUN mkdir -p ${DATAFED_DEFAULT_LOG_PATH}; chown root:datafed ${DATAFED_DEFAULT_LOG_PATH}; chmod -R g+rw ${DATAFED_DEFAULT_LOG_PATH}
+USER datafed
 
 COPY --chown=datafed:root ./scripts/generate_datafed.sh             ${BUILD_DIR}/scripts/generate_datafed.sh
 COPY --chown=datafed:root ./scripts/export_dependency_version.sh    ${BUILD_DIR}/scripts/export_dependency_version.sh

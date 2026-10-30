@@ -4,11 +4,53 @@ Container vulnerability remediation
 The runtime, GCS, web, and Foxx Dockerfiles apply available distribution updates
 using the configured package repositories. APT index download failures fail the
 build instead of silently using an incomplete index. Rebuild the shared runtime
-before its dependent core, repository, web, and Foxx images. Use ``--pull`` and
+before its dependent core, repository, and Foxx images. Use ``--pull`` and
 ``--no-cache`` when refreshing security packages: cached Docker layers do not
 re-run package updates. Rebuild the dependency and GCS base images as well when
-those images supply affected components. No CI configuration changes are required
-by these Dockerfile changes.
+those images supply affected components.
+
+The final web stage uses a separate ``debian:trixie-slim`` runtime. Both the CI
+builder and ``compose_build_images.sh`` select this base instead of the shared
+Bookworm runtime. It installs certificates and the Node C++ runtime, applies
+available updates, and removes the unused ``mount`` command package. It retains
+the existing configuration scripts, TLS setup, and privilege drop to the
+``datafed`` account. The web builder and other service runtimes are unchanged.
+``RUNTIME`` remains a build argument for a compatible custom or mirrored web base.
+An override must provide the desired security updates; selecting the older shared
+runtime reintroduces its packages.
+
+The web service does not use the shared runtime's ``curl`` or ``wget`` packages.
+The dedicated base excludes those commands and their curl/LDAP dependency tree.
+The verified rebuild moved zlib from ``1:1.2.13.dfsg-1`` to
+``1:1.3.dfsg+really1.3.1-1+b1``, gzip to ``1.13-1+deb13u1``, and util-linux
+libraries to ``2.41.5-0+deb13u1``. Debian marks these versions fixed for
+``CVE-2023-45853``, ``CVE-2026-41992``, ``CVE-2026-53613``, and
+``CVE-2026-53615`` respectively. Package inventory and Node/entrypoint checks
+verify the image contents and startup tools; a fresh registry scan of the final
+image digest is still required.
+`zlib <https://security-tracker.debian.org/tracker/CVE-2023-45853>`_,
+`gzip <https://security-tracker.debian.org/tracker/CVE-2026-41992>`_,
+`util-linux mount <https://security-tracker.debian.org/tracker/CVE-2026-53613>`_,
+`util-linux probing <https://security-tracker.debian.org/tracker/CVE-2026-53615>`_.
+
+Debian 13 still has open findings for ncurses ``CVE-2025-69720``, ACL
+``CVE-2026-54369``, and util-linux ``CVE-2026-76642`` / ``CVE-2026-78408`` /
+``CVE-2026-78409`` / ``CVE-2026-78410``. Do not force-remove essential packages,
+mix unstable libraries into the runtime, or mark this entire group fixed because
+the base release changed. Ncurses' finding concerns ``infocmp``; mount-related
+findings need assessment against the remaining libraries and commands.
+`ncurses <https://security-tracker.debian.org/tracker/CVE-2025-69720>`_,
+`ACL <https://security-tracker.debian.org/tracker/CVE-2026-54369>`_,
+`util-linux <https://security-tracker.debian.org/tracker/CVE-2026-76642>`_.
+
+The rebuilt web image contains neither ``systemd-homed`` nor Perl's
+``Archive::Tar`` module. ``CVE-2026-16742`` and ``CVE-2026-9538`` concern those
+components; reports against ``libsystemd0``/``libudev1`` or ``perl-base`` require
+a binary-level applicability assessment. Record the image digest and evidence
+when supplying a scoped VEX/not-affected assessment. An assessment does not patch
+an unrelated vulnerable library or justify suppressing the whole source package.
+`systemd-homed <https://security-tracker.debian.org/tracker/CVE-2026-16742>`_,
+`Archive::Tar <https://security-tracker.debian.org/tracker/CVE-2026-9538>`_.
 
 The GCS final stage no longer installs ``build-essential`` or
 ``libsqlite3-dev``. Authz is compiled in the builder stage. Foxx now uses the
