@@ -204,12 +204,16 @@ def should_recreate_guest_collection(collection_id, current_base_path, cache_dir
     
     # Compare base paths
     if cached_base_path is None:
-        # The list response can omit private fields. The authenticated owner can
-        # request collection details; never infer the existing root from env.
+        # Request private roots explicitly; never infer an existing root from env.
         if client is None or expected_mapped_id is None or expected_owner_id is None:
             raise RuntimeError("Existing guest collection has no cached base path; authoritative verification is required.")
         try:
-            details = client.get_collection(collection_id)
+            details = client.get_collection(
+                collection_id, query_params={"include": "private_policies"}
+            )
+            mapped_details = client.get_collection(
+                expected_mapped_id, query_params={"include": "private_policies"}
+            )
         except Exception as error:
             raise RuntimeError(
                 "Cannot verify the existing guest collection base path. Restore its verified "
@@ -219,10 +223,21 @@ def should_recreate_guest_collection(collection_id, current_base_path, cache_dir
                 or details.get("mapped_collection_id") != expected_mapped_id
                 or details.get("identity_id") != expected_owner_id):
             raise RuntimeError("Guest collection identity, owner, or mapped collection does not match; refusing reuse.")
-        existing_path = details.get("collection_base_path")
-        if not isinstance(existing_path, str) or not existing_path.startswith("/"):
-            raise RuntimeError("Guest collection details do not expose an absolute collection_base_path; restore a verified cache.")
-        if existing_path.rstrip("/") != current_base_path.rstrip("/"):
+        if (mapped_details.get("id") != expected_mapped_id
+                or mapped_details.get("collection_type") != "mapped"):
+            raise RuntimeError("Mapped collection identity or type does not match; refusing reuse.")
+        existing_path = details.get("root_path")
+        mapped_root = mapped_details.get("root_path")
+        for path, label in ((existing_path, "Guest"), (mapped_root, "Mapped")):
+            if not isinstance(path, str) or not path.startswith("/"):
+                raise RuntimeError(
+                    f"{label} collection details do not expose an absolute root_path; "
+                    "restore a verified cache or verify administrator access to both collections."
+                )
+        # collection_base_path is a creation input relative to the mapped root;
+        # root_path is the authoritative absolute path returned by GCS.
+        expected_path = os.path.normpath(os.path.join(mapped_root, current_base_path.lstrip("/")))
+        if os.path.normpath(existing_path) != expected_path:
             raise RuntimeError("Guest collection base path differs from configuration; explicit migration is required.")
         print(f"Verified existing guest collection base path from GCS: {existing_path!r}")
         return False, "Existing guest collection root verified through the authenticated GCS API"

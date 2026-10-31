@@ -13,6 +13,21 @@ source "${PROJECT_ROOT}/config/datafed.sh"
 source "${PROJECT_ROOT}/scripts/repo_paths.sh"
 datafed_load_repo_paths
 
+# Keep diagnostics on stderr so JSON list output can still be parsed by jq.
+# Print only the operation names; arguments may contain sensitive policy data.
+run_gcs() {
+  local status
+  printf 'Globus setup: %s %s\n' "$1" "$2" >&2
+  if globus-connect-server "$@"; then
+    return 0
+  else
+    status=$?
+    printf 'Globus setup: %s %s failed (exit %s). Inspect /var/log/globus-connect-server/gcs-manager/gcs.log for the server exception.\n' \
+      "$1" "$2" "$status" >&2
+    return "$status"
+  fi
+}
+
 if [ -z "$DATAFED_GCS_ROOT_NAME" ]; then
   echo "DATAFED_GCS_ROOT_NAME is not defined cannot run $SCRIPT"
   exit 1
@@ -59,7 +74,7 @@ GATEWAY_NAME="${DATAFED_GCS_ROOT_NAME} Storage Gateway"
 COLLECTION_NAME="${DATAFED_GCS_ROOT_NAME} Collection Mapped"
 GUEST_COLLECTION_NAME="${DATAFED_GCS_ROOT_NAME} Collection Guest"
 
-gateway_line=$(globus-connect-server storage-gateway list -F json | jq -er --arg name "$GATEWAY_NAME" '
+gateway_line=$(run_gcs storage-gateway list -F json | jq -er --arg name "$GATEWAY_NAME" '
   [(if type == "array" then .[] else .data[] end)
    | (if has("data") then .data[] else . end) | select(.display_name == $name)]
   | if length > 1 then error("Ambiguous storage gateway name")
@@ -91,7 +106,7 @@ jq -n --args '{DATA_TYPE: "path_restrictions#1.0.0", read_write: $ARGS.positiona
 
 if [ -z "$gateway_line" ]; then
   # Check if it already exists
-  globus-connect-server storage-gateway create posix \
+  run_gcs storage-gateway create posix \
     "$GATEWAY_NAME" \
     ${DOMAINS} \
     --restrict-paths file:path_restriction.json \
@@ -101,7 +116,7 @@ else
 
   uuid_of_storage_gateway="$gateway_line"
 
-  globus-connect-server storage-gateway update posix \
+  run_gcs storage-gateway update posix \
     "$uuid_of_storage_gateway" \
     --restrict-paths file:path_restriction.json \
     ${DOMAINS} \
@@ -114,12 +129,12 @@ for repo_path in "${DATAFED_CONFIGURED_REPO_PATHS[@]}"; do
   mkdir -p -- "$repo_path/user" "$repo_path/project"
 done
 
-collection_line=$(globus-connect-server collection list -F json | jq -er --arg name "$COLLECTION_NAME" '
+collection_line=$(run_gcs collection list -F json | jq -er --arg name "$COLLECTION_NAME" '
   [(if type == "array" then .[] else .data[] end)
    | (if has("data") then .data[] else . end) | select(.display_name == $name)]
   | if length > 1 then error("Ambiguous mapped collection name")
     else (.[0].id // "") end')
-uuid_of_storage_gateway=$(globus-connect-server storage-gateway list -F json | jq -er --arg name "$GATEWAY_NAME" '
+uuid_of_storage_gateway=$(run_gcs storage-gateway list -F json | jq -er --arg name "$GATEWAY_NAME" '
   [(if type == "array" then .[] else .data[] end)
    | (if has("data") then .data[] else . end) | select(.display_name == $name)]
   | if length == 1 then .[0].id else error("Expected one storage gateway") end')
@@ -127,7 +142,7 @@ uuid_of_storage_gateway=$(globus-connect-server storage-gateway list -F json | j
 # If not empty
 extra_collection_arg=""
 if [ -n "${DATAFED_GLOBUS_SUBSCRIPTION}" ]; then
-  globus-connect-server endpoint set-subscription-id "${DATAFED_GLOBUS_SUBSCRIPTION}"
+  run_gcs endpoint set-subscription-id "${DATAFED_GLOBUS_SUBSCRIPTION}"
   extra_collection_arg="--allow-guest-collections"
 fi
 
@@ -135,7 +150,7 @@ if [ -z "$collection_line" ]; then
 
   # NOTE enable-anonymous-writes is allowed without a subscription
   # NOTE allow-guest-collections requires a subscription
-  globus-connect-server collection create \
+  run_gcs collection create \
     "$uuid_of_storage_gateway" \
     "/" \
     "$COLLECTION_NAME" \
@@ -147,7 +162,7 @@ else
   uuid_of_collection="$collection_line"
   # NOTE enable-anonymous-writes is allowed without a subscription
   # NOTE allow-guest-collections requires a subscription
-  globus-connect-server collection update \
+  run_gcs collection update \
     "$uuid_of_collection" \
     --enable-anonymous-writes \
     --default-directory "/" \
