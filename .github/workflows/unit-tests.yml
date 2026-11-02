@@ -21,7 +21,7 @@ jobs:
                   ./external/DataFedDependencies/scripts/install_core_dependencies.sh
             - name: Build
               run: |
-                  /opt/datafed/dependencies/bin/cmake -S. -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_WEB_SERVER=OFF
+                  /opt/datafed/dependencies/bin/cmake -S. -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_WEB_SERVER=OFF -DENABLE_INTEGRATION_TESTS=OFF
                   /opt/datafed/dependencies/bin/cmake --build build -j4
             - name: Run tests
               run: |
