@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.17.0)
-project( DataFed CXX C )
+project( DataFed LANGUAGES NONE )
 include(./cmake/Version.cmake)
 include(./cmake/Utils.cmake)
 
@@ -9,7 +9,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
-find_package(Threads REQUIRED)
 
 # Globus version to compile repo server with
 if( NOT DEFINED GLOBUS_VERSION )
@@ -26,6 +25,12 @@ OPTION(BUILD_REPO_SERVER "Build DataFed Repo Server" FALSE)
 OPTION(BUILD_PYTHON_CLIENT "Build python client" TRUE)
 OPTION(BUILD_TESTS "Build Tests" TRUE)
 OPTION(BUILD_WEB_SERVER "Build DataFed Web Server" TRUE)
+# Foxx only configures JavaScript and invokes deployment scripts. It does not
+# need a compiler or development headers in its runtime container.
+if(BUILD_REPO_SERVER OR BUILD_CORE_SERVER OR BUILD_AUTHZ OR BUILD_COMMON OR BUILD_PYTHON_CLIENT OR BUILD_WEB_SERVER)
+  enable_language(C CXX)
+  find_package(Threads REQUIRED)
+endif()
 OPTION(ENABLE_UNIT_TESTS "Enable unit tests" TRUE)
 OPTION(ENABLE_INTEGRATION_TESTS "Enable integration tests" TRUE)
 OPTION(ENABLE_MEMORY_TESTS "Enable memory tests" FALSE)
@@ -66,17 +71,18 @@ endif()
 
 file(READ "${PROJECT_SOURCE_DIR}/external/DataFedDependencies/scripts/dependency_versions.sh" DEPENDENCY_VERSIONS)
 
-get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_DYNAMIC_LIBRARY_PROTOBUF_VERSION" PROTOBUF_LIBRARY_VERSION)
-get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_PROTOBUF_VERSION" PROTOBUF_COMPILER_VERSION)
-get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_NLOHMANN_JSON_VERSION" NLOHMANN_JSON_VERSION)
-get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_LIBZMQ_VERSION" LIBZMQ_VERSION)
-get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_LIBSODIUM_VERSION" LIBSODIUM_VERSION)
-get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_JSON_SCHEMA_VALIDATOR_VERSION" JSON_SCHEMA_VALIDATOR_VERSION)
-get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_OPENSSL" LOCAL_OPENSSL_VERSION)
-get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_LIBCURL" LOCAL_CURL_VERSION)
-get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_BOOST" LOCAL_BOOST_VERSION)
-get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_ZLIB_VERSION" LOCAL_ZLIB_VERSION)
-get_version_from_script(${DEPENDENCY_VERSIONS} "DATAFED_NODE_VERSION" LOCAL_NODE_VERSION)
+get_version_from_script("${DEPENDENCY_VERSIONS}" "DATAFED_DYNAMIC_LIBRARY_PROTOBUF_VERSION" PROTOBUF_LIBRARY_VERSION)
+get_version_from_script("${DEPENDENCY_VERSIONS}" "DATAFED_PROTOBUF_VERSION" PROTOBUF_COMPILER_VERSION)
+get_version_from_script("${DEPENDENCY_VERSIONS}" "DATAFED_NLOHMANN_JSON_VERSION" NLOHMANN_JSON_VERSION)
+get_version_from_script("${DEPENDENCY_VERSIONS}" "DATAFED_LIBZMQ_VERSION" LIBZMQ_VERSION)
+get_version_from_script("${DEPENDENCY_VERSIONS}" "DATAFED_LIBSODIUM_VERSION" LIBSODIUM_VERSION)
+get_version_from_script("${DEPENDENCY_VERSIONS}" "DATAFED_JSON_SCHEMA_VALIDATOR_VERSION" JSON_SCHEMA_VALIDATOR_VERSION)
+get_version_from_script("${DEPENDENCY_VERSIONS}" "DATAFED_OPENSSL" LOCAL_OPENSSL_VERSION)
+get_version_from_script("${DEPENDENCY_VERSIONS}" "DATAFED_LIBCURL" LOCAL_CURL_VERSION)
+get_version_from_script("${DEPENDENCY_VERSIONS}" "DATAFED_BOOST" LOCAL_BOOST_VERSION)
+get_version_from_script("${DEPENDENCY_VERSIONS}" "DATAFED_ZLIB_VERSION" LOCAL_ZLIB_VERSION)
+get_version_from_script("${DEPENDENCY_VERSIONS}" "DATAFED_NODE_VERSION" LOCAL_NODE_VERSION)
+get_version_from_script("${DEPENDENCY_VERSIONS}" "DATAFED_ARANGODB_VERSION" LOCAL_ARANGODB_VERSION)
 # Prioritize the CMD line argument over config file
 if(NOT DEFINED DATAFED_INSTALL_PATH)
   get_value_from_datafed_sh("DATAFED_INSTALL_PATH" DATAFED_INSTALL_PATH)
@@ -136,8 +142,13 @@ if( BUILD_WEB_SERVER )
      DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/web/proto3/")
 
   if( ENABLE_UNIT_TESTS )
-    add_test(NAME unit_tests_web COMMAND "${DEPENDENCY_INSTALL_PATH}/nvm/versions/node/${LOCAL_NODE_VERSION}/bin/npm" "test")
-    set_tests_properties(unit_tests_web PROPERTIES WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/web)
+    set(WEB_NODE_BIN "${DEPENDENCY_INSTALL_PATH}/nvm/versions/node/${LOCAL_NODE_VERSION}/bin")
+    add_test(NAME unit_tests_web COMMAND "${WEB_NODE_BIN}/npm" "test")
+    # npm and test runners use /usr/bin/env node. Use the same Node installation
+    # as npm, even when CI supplies a PATH from a different dependency image.
+    set_tests_properties(unit_tests_web PROPERTIES
+      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/web
+      ENVIRONMENT "PATH=${WEB_NODE_BIN}:$ENV{PATH}")
   endif()
 
 endif()

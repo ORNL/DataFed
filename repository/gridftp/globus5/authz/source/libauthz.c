@@ -168,6 +168,16 @@ bool decodeUUID(const char *a_input, char *a_uuid) {
   return true;
 }
 
+// IMPORTANT: The DATAFED_AUTHZ_CFG_FILE env variable must be set in the gridFTP
+// service script (usually /etc/init.d/globus-gridftp-server). This variable
+// points to the configuration file used for DataFed comm settings
+static struct Config g_config;
+
+// Function to access g_config for testing
+struct Config getConfig() {
+  return g_config;
+}
+
 gss_ctx_id_t findContext(globus_gsi_authz_handle_t a_handle) {
   struct ContextHandleEntry *c = &g_active_contexts[0];
   struct ContextHandleEntry *e = c + MAX_ACTIVE_CTX;
@@ -204,16 +214,6 @@ bool clearContext(globus_gsi_authz_handle_t a_handle) {
   }
 
   return true;
-}
-
-// IMPORTANT: The DATAFED_AUTHZ_CFG_FILE env variable must be set in the gridFTP
-// service script (usually /etc/init.d/globus-gridftp-server). This variable
-// points to the configuration file used for DataFed comm settings
-static struct Config g_config;
-
-// Function to access g_config for testing
-struct Config getConfig() {
-  return g_config;
 }
 
 bool setConfigVal(const char *a_label, char *a_dest, char *a_src,
@@ -334,10 +334,28 @@ bool loadConfig() {
         AUTHZ_LOG_INIT(g_config.log_path);
       } else if (strcmp(buf, "test_path") == 0)
         err = setConfigVal("test_path", g_config.test_path, val, MAX_PATH_LEN);
-      else if (strcmp(buf, "globus-collection-path") == 0)
+      else if (strcmp(buf, "globus-collection-path") == 0) {
         err = setConfigVal("globus-collection-path",
                            g_config.globus_collection_path, val, MAX_PATH_LEN);
-      else if (strcmp(buf, "pub_key") == 0)
+        if (!err) {
+          // Absolute POSIX path of the Globus collection root on this host.
+          // Normal form: leading '/', no trailing '/', except the root "/"
+          // itself, which is valid (setup_globus.sh creates the mapped
+          // collection at "/").
+          char *p = g_config.globus_collection_path;
+          if (p[0] != '/') {
+            AUTHZ_LOG_ERROR(
+                "DataFed - 'globus-collection-path' must be an absolute path "
+                "(start with '/'), got '%s' at line %i.\n",
+                p, lc);
+            err = true;
+          } else {
+            size_t n = strlen(p);
+            while (n > 1 && p[n - 1] == '/')
+              p[--n] = '\0';
+          }
+        }
+      } else if (strcmp(buf, "pub_key") == 0)
         err = loadKeyFile(g_config.pub_key, val);
       else if (strcmp(buf, "priv_key") == 0)
         err = loadKeyFile(g_config.priv_key, val);
@@ -508,14 +526,6 @@ globus_result_t gsi_authz_authorize_async(va_list ap) {
                   callout_id_mapped1);
   AUTHZ_LOG_INFO("Allowed collection path: %s, action: %s, object is %s\n",
                  g_config.globus_collection_path, action, object);
-  if (strcmp(action, "lookup") == 0 || strcmp(action, "chdir") == 0) {
-    AUTHZ_LOG_INFO("Allowed collection path: %s, action: %s, object is %s\n",
-                   g_config.globus_collection_path, action, object);
-    result = GLOBUS_SUCCESS;
-    callback(callback_arg, handle, result);
-    return result;
-  }
-
   AUTHZ_LOG_ERROR("gsi_authz_authorize_async, handle: %p, act: %s, obj: %s\n",
                   handle, action, object);
 

@@ -170,7 +170,8 @@ for item in collection_list["data"]:
         print(f"Collection data keys: {list(item.keys())}")
         break
 
-def should_recreate_guest_collection(collection_id, current_base_path, cache_directory):
+def should_recreate_guest_collection(collection_id, current_base_path, cache_directory,
+                                     client=None, expected_mapped_id=None, expected_owner_id=None):
     """
     Determine if the guest collection should be recreated based on base path changes.
     
@@ -203,9 +204,48 @@ def should_recreate_guest_collection(collection_id, current_base_path, cache_dir
     
     # Compare base paths
     if cached_base_path is None:
-        return True, "No cached base path available, recreating collection to ensure consistency"
+        # Request private roots explicitly; never infer an existing root from env.
+        if client is None or expected_mapped_id is None or expected_owner_id is None:
+            raise RuntimeError("Existing guest collection has no cached base path; authoritative verification is required.")
+        try:
+            details = client.get_collection(
+                collection_id, query_params={"include": "private_policies"}
+            )
+            mapped_details = client.get_collection(
+                expected_mapped_id, query_params={"include": "private_policies"}
+            )
+        except Exception as error:
+            raise RuntimeError(
+                "Cannot verify the existing guest collection base path. Restore its verified "
+                "cache or grant the provisioning client access to collection details; no collection was deleted."
+            ) from error
+        if (details.get("id") != collection_id or details.get("collection_type") != "guest"
+                or details.get("mapped_collection_id") != expected_mapped_id
+                or details.get("identity_id") != expected_owner_id):
+            raise RuntimeError("Guest collection identity, owner, or mapped collection does not match; refusing reuse.")
+        if (mapped_details.get("id") != expected_mapped_id
+                or mapped_details.get("collection_type") != "mapped"):
+            raise RuntimeError("Mapped collection identity or type does not match; refusing reuse.")
+        existing_path = details.get("root_path")
+        mapped_root = mapped_details.get("root_path")
+        for path, label in ((existing_path, "Guest"), (mapped_root, "Mapped")):
+            if not isinstance(path, str) or not path.startswith("/"):
+                raise RuntimeError(
+                    f"{label} collection details do not expose an absolute root_path; "
+                    "restore a verified cache or verify administrator access to both collections."
+                )
+        # collection_base_path is a creation input relative to the mapped root;
+        # root_path is the authoritative absolute path returned by GCS.
+        expected_path = os.path.normpath(os.path.join(mapped_root, current_base_path.lstrip("/")))
+        if os.path.normpath(existing_path) != expected_path:
+            raise RuntimeError("Guest collection base path differs from configuration; explicit migration is required.")
+        print(f"Verified existing guest collection base path from GCS: {existing_path!r}")
+        return False, "Existing guest collection root verified through the authenticated GCS API"
     elif cached_base_path != current_base_path:
-        return True, f"Base path changed from '{cached_base_path}' to '{current_base_path}'"
+        raise RuntimeError(
+            f"Guest collection base path changed from {cached_base_path!r} to "
+            f"{current_base_path!r}; explicit migration is required."
+        )
     else:
         return False, f"Base path unchanged ('{cached_base_path}'), keeping existing guest collection"
 
@@ -216,11 +256,11 @@ recreate_reason = ""
 if guest_collection_found:
     print(f"Found existing guest collection {guest_collection_id}")
     
-    # Since we can't retrieve the base path from the Globus API for guest collections,
-    # we'll use a local cache file to track the last known base path
+    # Prefer the persistent cache; recover a missing cache only from authenticated
+    # collection details when GCS exposes the private base-path field.
     cache_dir = os.path.dirname(CRED_FILE_PATH)
     should_recreate_collection, recreate_reason = should_recreate_guest_collection(
-        guest_collection_id, BASE_PATH, cache_dir
+        guest_collection_id, BASE_PATH, cache_dir, final_client, mapped_collection_id, client_id
     )
     
     print(f"Decision: {recreate_reason}")

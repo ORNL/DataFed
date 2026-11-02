@@ -89,6 +89,7 @@ RUN ldconfig
 
 USER datafed
 
+COPY --chown=datafed:root ./scripts/repo_paths.sh ${BUILD_DIR}/scripts/repo_paths.sh
 COPY --chown=datafed:root ./scripts/generate_datafed.sh          ${BUILD_DIR}/scripts/generate_datafed.sh
 COPY --chown=datafed:root ./scripts/generate_repo_config.sh      ${BUILD_DIR}/scripts/generate_repo_config.sh
 COPY --chown=datafed:root ./scripts/install_repo.sh              ${BUILD_DIR}/scripts/install_repo.sh

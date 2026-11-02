@@ -1,5 +1,6 @@
 // Local DataFed includes
 #include "ClientWorker.hpp"
+#include "RepositoryServiceIdentity.hpp"
 #include "TaskMgr.hpp"
 #include "Version.hpp"
 
@@ -1173,10 +1174,14 @@ std::unique_ptr<IMessage>
 ClientWorker::procRepoAuthzRequest(const std::string &a_uid,
                                    std::unique_ptr<IMessage> &&msg_request,
                                    LogContext log_context) {
-  (void)a_uid;
   log_context.correlation_id =
       std::get<std::string>(msg_request->get(MessageAttribute::CORRELATION_ID));
   PROC_MSG_BEGIN(RepoAuthzRequest, AckReply, log_context)
+
+  if (!repositoryServiceMayAuthorize(m_config.getRepos(), a_uid,
+                                     request->repo())) {
+    EXCEPT(AUTHN_ERROR, "Repository credential does not authorize this origin");
+  }
 
   DL_DEBUG(log_context, "AUTHZ repo: " << a_uid
                                        << ", usr: " << request->client()
