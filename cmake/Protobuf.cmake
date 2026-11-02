@@ -20,7 +20,7 @@ function(find_protobuf_library)
   # version cmake fails with using find_package with a REQUIRED statement
   # because looks at both of these numbers which are different so here
   # we compare the version of protoc differently from the library
-  if(NOT ${Protobuf_VERSION} STREQUAL ${PROTOBUF_LIBRARY_VERSION} )
+  if(NOT "${Protobuf_VERSION}" STREQUAL "${PROTOBUF_LIBRARY_VERSION}" )
     message(FATAL_ERROR "Versions of proto library (${Protobuf_VERSION}) and the required version (${PROTOBUF_LIBRARY_VERSION}) do not match.")
   endif()
 
@@ -48,7 +48,7 @@ function(find_protobuf_library)
   # Remove the first word using string(REGEX REPLACE ...)
   string(REGEX REPLACE "${regex}" "" PROTOBUF_COMPILER_VERSION_ACTUAL "${PROTOBUF_COMPILER_VERSION_OUTPUT}")
 
-  if(NOT ${PROTOBUF_COMPILER_VERSION_ACTUAL} STREQUAL ${PROTOBUF_COMPILER_VERSION} )
+  if(NOT "${PROTOBUF_COMPILER_VERSION_ACTUAL}" STREQUAL "${PROTOBUF_COMPILER_VERSION}" )
     message(FATAL_ERROR "Versions of protoc compiler (${PROTOBUF_COMPILER_VERSION_ACTUAL}) and the required version (${PROTOBUF_COMPILER_VERSION}) do not match.")
   endif()
 

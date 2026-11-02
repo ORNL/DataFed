@@ -104,7 +104,7 @@ correct permissions. You can create the directories by running the following scr
 
 .. code-block:: bash
 
-        ./scripts/globus/setup_collection_directory.sh all
+        ./scripts/globus/setup_collection_directory.sh -c all
 
 For convenience, development installations are fully supported utilizing docker compose.
 Once fully built and configured, the development instance can be started with the following commands:
@@ -226,6 +226,98 @@ Here is an example for the repository service:
         -v "/local/collection/path:$DATAFED_GCS_COLLECTION_ROOT_PATH/$DATAFED_REPO_ID_AND_DIR"
         -t "datafed-repo:latest" 
 
+Multiple Repositories on One Container Pair
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+One GCS container and one repository container can serve multiple
+repository directories. Set the following variables on both containers, keeping
+the existing collection base path unchanged when extending a deployed service:
+
+.. code-block:: bash
+
+    DATAFED_REPO_ID_AND_DIR=bam
+    DATAFED_REPO_IDS_AND_DIRS=path1/bam,path2/foo,path3/path5/images
+    DATAFED_GCS_COLLECTION_ROOT_PATH=/mnt/data
+    DATAFED_GCS_COLLECTION_BASE_PATH=/mnt/data
+
+``DATAFED_REPO_IDS_AND_DIRS`` is a comma-separated list of directories relative
+to ``DATAFED_GCS_COLLECTION_ROOT_PATH``. Each final directory name is its
+repository ID. The example creates ``/mnt/data/path1/bam``,
+``/mnt/data/path2/foo``, and ``/mnt/data/path3/path5/images``. The shared
+``DATAFED_REPO_ID_AND_DIR`` remains the authorization origin (``bam`` here) and
+must match one of these IDs and be registered in DataFed. Keys must be unique,
+lowercase, at most 40 characters, and contain only letters, digits, underscores,
+hyphens, or periods. Absolute entries, empty components, ``.``/``..`` components,
+overlapping repository roots, and duplicate final names are rejected.
+
+For compatibility, when the new variable is omitted or empty, setup uses the
+existing flat ``DATAFED_REPO_IDS`` list (each ID directly under the root). If
+both lists are empty, it uses only ``DATAFED_REPO_ID_AND_DIR``. A nonempty
+``DATAFED_REPO_IDS_AND_DIRS`` takes precedence over the old list.
+
+For Compose deployments, define the repositories and host locations in
+``repositories.json`` beside ``compose.yml`` instead of adding numbered mount
+environment variables:
+
+.. code-block:: json
+
+    {
+      "authorization_origin": "bam",
+      "repositories": [
+        {"relative_path": "path1/bam", "host_path": "/srv/bam"},
+        {"relative_path": "path2/foo", "host_path": "/srv/foo"},
+        {"relative_path": "path3/path5/images", "host_path": "/archive/images"}
+      ]
+    }
+
+Run ``./generate_env.sh -c`` in the Compose directory after editing this file. It
+generates the identical mount list for both services and derives the runtime
+repository paths and IDs from the manifest. Existing ``id``-only entries keep
+their directories directly under the root; an optional explicit ``id`` must
+match the final directory name when ``relative_path`` is also supplied.
+Any number of entries can be used; host paths
+must be distinct and non-nested. The first run creates the manifest using the
+existing mount settings, or the ``bam``/``bambar`` defaults for a new environment.
+See ``compose/README.md`` for the complete Compose workflow.
+
+For direct ``docker run`` deployments, set the runtime environment variables
+shown above and mount each repository's storage at the same location in both
+containers. Generated launch scripts accept multiple mounts through their
+existing ``--repo-volume-mounts`` option.
+
+Startup creates each repository's ``user`` and ``project`` directories and
+reconciles the gateway policy to allow only the listed repository roots. Adding
+an ID then recreating the containers preserves existing collection IDs; removing
+an ID removes its gateway allowance, but does not delete files or unregister the
+repository. Coordinate removal with DataFed allocations and active transfers.
+Symbolic links anywhere along repository paths or their ``user``/``project``
+directories are rejected during provisioning.
+
+Setup generates a separate ``<id>-repo-form.json`` and ``<id>-repo-form.sh`` for
+each repository under ``/opt/datafed/globus``. Register each repository with its
+own form. They share the guest collection UUID, service address, and public key,
+but have distinct collection-relative paths. In the example above these are
+``/path1/bam``, ``/path2/foo``, and ``/path3/path5/images``. With an existing
+collection base of ``/``, keep that base; the forms instead use
+``/mnt/data/path1/bam``, ``/mnt/data/path2/foo``, and
+``/mnt/data/path3/path5/images``.
+
+Keep ``/opt/datafed/globus`` persistent, including its collection base-path cache.
+Startup refuses to delete an existing guest collection solely because its cache
+is missing or its configured base changed. For a missing cache, verify the actual
+guest collection root before restoring the cache with
+``scripts/globus/utils.py``'s ``cache_base_path`` helper. Changing the collection
+base is a separate migration: collection UUIDs and registered paths may change.
+The existing ``DATAFED_FORCE_RECREATE_GUEST_COLLECTION`` override remains an
+explicit request to recreate the collection and should not be used when adding
+another repository.
+
+Provisioning regression tests run without contacting Globus:
+
+.. code-block:: bash
+
+    python3 -m unittest discover -s tests -p test_multi_repo_setup.py
+
 Globus Service
 ------------
 
@@ -272,13 +364,14 @@ Notes on running arango in a container can be found on their official web site. 
 
 .. code-block:: bash
 
+   source external/DataFedDependencies/scripts/dependency_versions.sh
    docker run -d \
        --restart=always \
         --network datafed-network \
         -p 8529:8529 \
         -v "/opt/datafed/keys/datafed-arango.pem:/usr/local/share/ca-certificates/datafed-arango.pem:ro" \
         -e ARANGO_ROOT_PASSWORD="" \
-        arangodb/arangodb:latest \
+        "arangodb/arangodb:${DATAFED_ARANGODB_VERSION}" \
         --ssl.keyfile /usr/local/share/ca-certificates/datafed-arango.pem \
         --server.endpoint ssl://0.0.0.0:8529
 

@@ -18,8 +18,13 @@ mkdir -p "${DATAFED_INSTALL_PATH}/web"
 mkdir -p "${DATAFED_INSTALL_PATH}/keys"
 mkdir -p "${DATAFED_DEFAULT_LOG_PATH}"
 
-# Install web node modules
-cp "$PROJECT_ROOT/web/package.json" "${DATAFED_INSTALL_PATH}/web/"
+# Install the CMake-generated manifest and its relative local dependency.
+if [ ! -f "$PROJECT_ROOT/web/package.json" ] || [ ! -d "$PROJECT_ROOT/web/zeromq-compat" ]; then
+  echo "ERROR - Configure the web build with CMake before running install_ws.sh" >&2
+  exit 1
+fi
+cp "$PROJECT_ROOT/web/package.json" "${DATAFED_INSTALL_PATH}/web/" || exit 1
+cp -R "$PROJECT_ROOT/web/zeromq-compat" "${DATAFED_INSTALL_PATH}/web/" || exit 1
 install_nvm
 install_node
 install_foxx_cli

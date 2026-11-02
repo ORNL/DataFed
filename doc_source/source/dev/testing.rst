@@ -12,13 +12,12 @@ ArangoDB supports running small applications called *Foxx microservices*. You ca
 1. Start an ArangoDB Container
 ---------------------------
 
-First, pull the official ArangoDB Docker image:
-
-NOTE: the use of 3.12.4 is what has been tested, other minor versions changes of ArangoDB should also work.
+From the DataFed repository root, load the dependency versions and pull the official ArangoDB Docker image:
 
 .. code-block:: bash
 
-   docker pull arangodb/arangodb:3.12.4
+   source external/DataFedDependencies/scripts/dependency_versions.sh
+   docker pull "arangodb/arangodb:${DATAFED_ARANGODB_VERSION}"
 
 Next, run the container, specifying a root password for the database:
 
@@ -27,7 +26,7 @@ Next, run the container, specifying a root password for the database:
    docker run -d \
      -e ARANGO_ROOT_PASSWORD="<password>" \
      -p 8529:8529 \
-     arangodb/arangodb:3.12.4
+     "arangodb/arangodb:${DATAFED_ARANGODB_VERSION}"
 
 You now have a running ArangoDB instance to install Foxx services and run tests against.
 

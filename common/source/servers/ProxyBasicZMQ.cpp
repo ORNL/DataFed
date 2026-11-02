@@ -11,6 +11,7 @@
 #include "common/TraceException.hpp"
 
 // Standard includes
+#include <atomic>
 #include <chrono>
 #include <iostream>
 #include <memory>
@@ -186,33 +187,44 @@ void ProxyBasicZMQ::run() {
     DL_INFO(log_context,
             "Launching control thread for duration: " << duration.count());
     void *context = InprocContext::getContext();
-    auto control_local = zmq_socket(context, ZMQ_PUB);
+    auto control_local = zmq_socket(context, ZMQ_REQ);
+    if (not control_local) {
+      EXCEPT(1, "Problem creating timer control socket");
+    }
+    if (zmq_connect(control_local, address.c_str())) {
+      zmq_close(control_local);
+      EXCEPT(1, "Problem connecting timer control socket");
+    }
     DL_INFO(log_context, "CONTROL: Sleeping");
     std::this_thread::sleep_for(duration);
-    zmq_bind(control_local, address.c_str());
     DL_INFO(log_context, "CONTROL: TERMINATE");
     std::string command = "TERMINATE";
-    zmq_send(control_local, command.c_str(), command.size(), 0);
+    if (zmq_send(control_local, command.c_str(), command.size(), 0) < 0) {
+      zmq_close(control_local);
+      EXCEPT(1, "Problem sending terminate command");
+    }
+    // Keep the peer alive until the proxy acknowledges the command.
+    char reply;
+    if (zmq_recv(control_local, &reply, sizeof(reply), 0) < 0) {
+      zmq_close(control_local);
+      EXCEPT(1, "Problem receiving terminate acknowledgement");
+    }
     int rc_local = zmq_close(control_local);
     if (rc_local) {
-      EXCEPT(1, "Problem closing control socket from PUBLISHING thread");
+      EXCEPT(1, "Problem closing timer control socket");
     }
   };
 
   std::thread control_thread;
-  if (m_run_infinite_loop == false) {
-    control_thread = std::thread(terminate_call, m_run_duration,
-                                 m_addresses[SocketRole::CONTROL],
-                                 m_thread_count, m_log_context);
-    ++m_thread_count;
-  }
 
   /**
    * Thread is for debugging purposes mostly, for logging the messages
    * that are sent through the steerable proxy.
    **/
-  auto proxy_log_call = [](const std::string address, int thread_id,
-                           LogContext log_context) {
+  std::atomic<bool> capture_running{true};
+  auto proxy_log_call = [&capture_running](const std::string address,
+                                           int thread_id,
+                                           LogContext log_context) {
     log_context.thread_name += "-capture_thread";
     log_context.thread_id = thread_id;
     void *context = InprocContext::getContext();
@@ -224,8 +236,7 @@ void ProxyBasicZMQ::run() {
     int events_detected = 0;
     uint32_t timeout_milliseconds = 50;
     DL_INFO(log_context, "CAPTURE: Starting thread");
-    bool terminate = false;
-    while (true) {
+    while (capture_running.load()) {
       events_detected =
           zmq_poll(items, num_items_in_array, timeout_milliseconds);
       if (events_detected > 0) {
@@ -246,15 +257,8 @@ void ProxyBasicZMQ::run() {
           std::string new_msg((char *)zmq_msg_data(&zmq_msg),
                               zmq_msg_size(&zmq_msg));
           DL_TRACE(log_context, "CAPTURE: msg is = " << new_msg);
-          if (new_msg.compare("TERMINATE") == 0) {
-            DL_INFO(log_context, "CAPTURE: received TERMINATE message.");
-            terminate = true;
-          }
         }
         zmq_msg_close(&zmq_msg);
-        if (terminate) {
-          break;
-        }
       }
     }
 
@@ -300,22 +304,18 @@ void ProxyBasicZMQ::run() {
    * In the case that we need to exit early or run the proxy for a fixed
    * amount of time.
    *
-   * WARNING the order matters the SUB only works for sockets bind and or
-   * connects made to it after it has been created and connected
+   * Bind before starting the timer. REQ/REP queues and acknowledges the command
+   * without the subscription race of a PUB/SUB control channel.
    **/
   void *control_socket = nullptr;
   if (m_run_infinite_loop == false) {
-    control_socket = zmq_socket(ctx, ZMQ_SUB);
+    control_socket = zmq_socket(ctx, ZMQ_REP);
     if (not control_socket) {
       EXCEPT(1, "Problem creating control socket");
     }
-    int rc = zmq_setsockopt(control_socket, ZMQ_SUBSCRIBE, "", 0);
+    int rc = zmq_bind(control_socket, m_addresses[SocketRole::CONTROL].c_str());
     if (rc) {
-      EXCEPT(1, "Problem subscribing control socket");
-    }
-    rc = zmq_connect(control_socket, m_addresses[SocketRole::CONTROL].c_str());
-    if (rc) {
-      EXCEPT(1, "Problem connecting control socket");
+      EXCEPT(1, "Problem binding control socket");
     }
     int linger = 100;
     zmq_setsockopt(control_socket, ZMQ_LINGER, &linger, sizeof(linger));
@@ -336,12 +336,20 @@ void ProxyBasicZMQ::run() {
     zmq_setsockopt(capture_socket, ZMQ_LINGER, &linger, sizeof(linger));
   }
 
+  if (m_run_infinite_loop == false) {
+    control_thread = std::thread(terminate_call, m_run_duration,
+                                 m_addresses[SocketRole::CONTROL],
+                                 m_thread_count, m_log_context);
+    ++m_thread_count;
+  }
+
   // Connect backend to frontend via a proxy
   zmq_proxy_steerable(router_frontend_socket, dealer_backend_socket,
                       capture_socket, control_socket);
 
-  // Give the threads a chance to finish what they are doing
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  // The capture stream contains forwarded traffic, not control commands.
+  // Stop its polling loop explicitly when the proxy returns.
+  capture_running.store(false);
   if (m_debug_output) {
     capture_thread.join();
   }

@@ -16,7 +16,7 @@ PROJECT_ROOT=$(realpath "${SOURCE}/../..")
 
 "${PROJECT_ROOT}/scripts/generate_datafed.sh"
 "${PROJECT_ROOT}/scripts/generate_ws_config.sh"
-. "${PROJECT_ROOT}/scripts/dependency_versions.sh"
+. "${PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_versions.sh"
 
 export NVM_DIR="${DATAFED_DEPENDENCIES_INSTALL_PATH}/nvm"
 export NODE_VERSION="$DATAFED_NODE_VERSION"
@@ -24,7 +24,7 @@ export NODE_VERSION="$DATAFED_NODE_VERSION"
 
 echo "NODE VERSION $NODE_VERSION"
 echo "Which node"
-NODE_PATH=$(su datafed -c ". ${NVM_DIR}/nvm.sh; nvm which node")
+NODE_PATH=$(su datafed -c ". ${NVM_DIR}/nvm.sh; nvm which ${DATAFED_NODE_VERSION}")
 # Do this as root
 if [ ! -L "/usr/local/bin/node" ]; then
   ln -s "$NODE_PATH" /usr/local/bin/node
