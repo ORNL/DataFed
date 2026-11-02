@@ -6,12 +6,14 @@ jobs:
         container: debian:bookworm
         if: ${{ always() }}
         steps:
+            - name: Install checkout dependencies
+              run: |
+                  apt-get update
+                  apt-get install -y --no-install-recommends git ca-certificates
             - uses: actions/checkout@v2
               with:
                   submodules: recursive
                   fetch-depth: 0
-            - name: Update debian
-              run: apt update
             - name: Install dependencies
               run: |
                   ./scripts/generate_datafed.sh
