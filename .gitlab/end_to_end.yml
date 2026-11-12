@@ -460,7 +460,9 @@ end_to_end_client-test:
               test -f "${DATAFED_REPO_FORMS_DIR}/${repo_id}-repo-form.json"
             done
         - env > env_file
+        - export LD_LIBRARY_PATH="/shared/install/lib:/shared/install/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
         - . /shared/install/python/datafed/bin/activate
+        - python -c 'import ssl; print(ssl.OPENSSL_VERSION)'
         - ./scripts/generate_datafed.sh
         - >
             cmake -S. -B build
