@@ -89,14 +89,12 @@ if [[ "$BUILD_METADATA" == "TRUE" ]]; then
   docker build -f \
     "${PROJECT_ROOT}/web/docker/Dockerfile" \
     --build-arg DEPENDENCIES="datafed-dependencies:latest" \
-    --build-arg RUNTIME="datafed-runtime" \
     --target ws-build \
     "${PROJECT_ROOT}" \
     -t datafed-web-build:latest
   docker build -f \
     "${PROJECT_ROOT}/web/docker/Dockerfile" \
     --build-arg DEPENDENCIES="datafed-dependencies:latest" \
-    --build-arg RUNTIME="datafed-runtime" \
     "${PROJECT_ROOT}" \
     -t datafed-web:latest
   docker build -f \
@@ -111,7 +109,19 @@ if [[ "$BUILD_REPO" == "TRUE" ]]; then
   source "${PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_versions.sh"
   cd "${PROJECT_ROOT}/external/globus-connect-server-deploy/docker"
   git checkout "$DATAFED_GCS_SUBMODULE_VERSION"
-  docker build --progress plain --tag "gcs-ubuntu-base:latest" - <"./docker-files/Dockerfile.debian-12"
+  # Parameterize the upstream Dockerfile so this stage also honors --base-image.
+  # Pip in Debian 12's venv needs an explicit CA bundle to trust custom CAs.
+  awk '
+    /^FROM debian:12$/ {
+      print "ARG BASE_IMAGE=debian:12"
+      print "FROM ${BASE_IMAGE}"
+      print "ENV PIP_CERT=${PIP_CERT:-/etc/ssl/certs/ca-certificates.crt}"
+      next
+    }
+    { print }
+  ' "./docker-files/Dockerfile.debian-12" |
+    docker build --progress plain --tag "gcs-ubuntu-base:latest" \
+      --build-arg "BASE_IMAGE=${BASE_IMAGE:-debian:12}" -
   cd "${PROJECT_ROOT}"
   "${PROJECT_ROOT}"/external/DataFedDependencies/scripts/build_image.sh --base-image "$BASE_IMAGE"
   if [ "$BASE_IMAGE" == "" ]; then

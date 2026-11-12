@@ -81,6 +81,8 @@ fi
 "${PROJECT_ROOT}/scripts/generate_datafed.sh"
 
 source "${PROJECT_ROOT}/config/datafed.sh"
+source "${PROJECT_ROOT}/scripts/repo_paths.sh"
+datafed_load_repo_paths
 
 # After datafed.sh has been run created
 "${PROJECT_ROOT}/scripts/generate_authz_config.sh"
@@ -183,10 +185,10 @@ if [ ! -d "${log_path}" ]; then
   mkdir -p "${log_path}"
 fi
 
-if [ ! -d "${DATAFED_GCS_COLLECTION_ROOT_PATH}" ]; then
-  mkdir -p ""${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}""
-  chown -R datafed:root "${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}"
-fi
+for repo_path in "${DATAFED_CONFIGURED_REPO_PATHS[@]}"; do
+  mkdir -p -- "$repo_path/user" "$repo_path/project"
+  chown datafed:root "$repo_path" "$repo_path/user" "$repo_path/project"
+done
 
 # Run this as the dataflow user
 # setup globus command will also create the folders /proeject and user
@@ -207,17 +209,14 @@ GCS_CLI_ENDPOINT_ID="$GCS_CLI_ENDPOINT_ID" \
 
 "${BUILD_DIR}/scripts/globus/generate_repo_form.sh" -j -s
 
-# Why is this approach being used?
-#
-# Wild card expansion with *form was not working from within the script.
-find /opt/datafed/authz/ -name '*form.json' -or -name '*form.sh' | while read -r file; do
-  if [ -e "$file" ]; then
-    echo "Moving $file to /opt/datafed/globus/"
-    mv "$file" /opt/datafed/globus/
-  else
-    echo "No matching files found for pattern: $file"
-  fi
+mkdir -p "${DATAFED_INSTALL_PATH}/globus"
+for repo_id in "${DATAFED_CONFIGURED_REPO_IDS[@]}"; do
+  for extension in json sh; do
+    mv -- "${repo_id}-repo-form.${extension}" "${DATAFED_INSTALL_PATH}/globus/"
+  done
 done
+
+datafed_print_repo_registration "${DATAFED_INSTALL_PATH}/globus"
 
 echo "Container is running."
 

@@ -4,6 +4,7 @@ foreach(PROG
     test_AuthenticationManager
     test_DatabaseAPI
     test_JsonSchemaValidator
+    test_RepositoryServiceIdentity
     test_SchemaServiceFactory
     test_SchemaHandler
 )

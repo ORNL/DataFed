@@ -5,6 +5,9 @@
 # --env file variables will not be default exist in the container.
 services:
     datafed-repo:
+        extends:
+            file: .repositories.compose.json
+            service: repository-storage
         environment:
             DATAFED_DOMAIN: "${DATAFED_DOMAIN}"
             DATAFED_HTTPS_SERVER_PORT: "${DATAFED_HTTPS_SERVER_PORT}"
@@ -12,14 +15,12 @@ services:
             DATAFED_CORE_ADDRESS_PORT_INTERNAL: "${DATAFED_DOMAIN}:7513"
             DATAFED_GCS_COLLECTION_ROOT_PATH: "${DATAFED_GCS_COLLECTION_ROOT_PATH}"
             DATAFED_GCS_COLLECTION_BASE_PATH: "${DATAFED_GCS_COLLECTION_BASE_PATH}"
-            DATAFED_REPO_ID_AND_DIR: "${DATAFED_REPO_ID_AND_DIR}"
             UID: "${DATAFED_UID}"
             HOST_HOSTNAME: "localhost"
         image: datafed-repo:latest
         volumes:
             - ./keys:/opt/datafed/keys
             - ./logs:${DATAFED_CONTAINER_LOG_PATH}
-            - ${DATAFED_HOST_COLLECTION_MOUNT}:${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}
         ports:
             - 9000:9000 # Communication core server
 
@@ -36,13 +37,15 @@ services:
     # is needed so that the metadata services know how to communicate with the
     # repo service.
     datafed-gcs:
+        extends:
+            file: .repositories.compose.json
+            service: repository-storage
         environment:
             DATAFED_DOMAIN: "${DATAFED_DOMAIN}"
             DATAFED_HTTPS_SERVER_PORT: "${DATAFED_HTTPS_SERVER_PORT}"
             DATAFED_DEFAULT_LOG_PATH: "${DATAFED_CONTAINER_LOG_PATH}"
             DATAFED_CORE_ADDRESS_PORT_INTERNAL: "datafed-core:7513"
             DATAFED_GCS_ROOT_NAME: "${DATAFED_GCS_ROOT_NAME}"
-            DATAFED_REPO_ID_AND_DIR: "${DATAFED_REPO_ID_AND_DIR}"
             DATAFED_GLOBUS_SUBSCRIPTION: "${DATAFED_GLOBUS_SUBSCRIPTION}"
             DATAFED_GLOBUS_CONTROL_PORT: "${DATAFED_GLOBUS_CONTROL_PORT}"
             DATAFED_GCS_COLLECTION_BASE_PATH: "${DATAFED_GCS_COLLECTION_BASE_PATH}"
@@ -60,4 +63,3 @@ services:
             - ./keys:/opt/datafed/keys
             - ./globus:/opt/datafed/globus
             - ./logs:${DATAFED_CONTAINER_LOG_PATH}
-            - ${DATAFED_HOST_COLLECTION_MOUNT}:${DATAFED_GCS_COLLECTION_ROOT_PATH}/${DATAFED_REPO_ID_AND_DIR}

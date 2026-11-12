@@ -9,6 +9,7 @@ FILE_NAME=$(basename "${SCRIPT}")
 SOURCE=$(dirname "$SCRIPT")
 PROJECT_ROOT=$(realpath "${SOURCE}/..")
 source "${PROJECT_ROOT}/config/datafed.sh"
+source "${PROJECT_ROOT}/external/DataFedDependencies/scripts/dependency_versions.sh"
 
 VERSION="1.0.0"
 echo "$FILE_NAME $VERSION"
@@ -122,7 +123,7 @@ docker run -d \\
 	-p 8529:8529 \\
 	-v arangodb_data:/var/lib/arangodb3:Z \\
 	-v "$local_BACKUP_DIRECTORY:/backups" \\
-	-t "arangodb/enterprise:3.12" 
+	-t "arangodb/enterprise:${DATAFED_ARANGODB_VERSION}"
 EOF
 
 cat <<EOF >"$STOP_ARANGO_SCRIPT"

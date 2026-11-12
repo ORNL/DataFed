@@ -25,7 +25,7 @@ WORKDIR ${BUILD_DIR}
 
 COPY ./common ${BUILD_DIR}/common
 COPY ./CMakeLists.txt ${BUILD_DIR}
-COPY ./scripts/dependency_versions.sh ${BUILD_DIR}/scripts/
+COPY ./external/DataFedDependencies/scripts/dependency_versions.sh ${BUILD_DIR}/external/DataFedDependencies/scripts/
 COPY ./scripts/generate_datafed.sh ${BUILD_DIR}/scripts/
 COPY ./cmake ${BUILD_DIR}/cmake
 COPY ./python ${BUILD_DIR}/python
@@ -47,7 +47,8 @@ RUN ${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/cmake --build build --target pydata
 WORKDIR ${BUILD_DIR}/python/datafed_pkg
 
 # Install datafed client
-RUN python3 -m pip install .
+RUN . "${BUILD_DIR}/external/DataFedDependencies/scripts/dependency_versions.sh" && \
+    "${DATAFED_DEPENDENCIES_INSTALL_PATH}/bin/python${DATAFED_PYTHON_VERSION}" -m pip install --user .
 
 WORKDIR /home/datafed
 

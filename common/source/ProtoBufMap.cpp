@@ -74,7 +74,7 @@ uint16_t ProtoBufMap::getMessageType(const ::google::protobuf::Message& msg) con
     
     // Otherwise, look up by message type name
     const auto* msg_desc = msg.GetDescriptor();
-    return getMessageType(msg_desc->name());
+    return getMessageType(std::string(msg_desc->name()));
 }
 
 const proto::Descriptor* ProtoBufMap::getDescriptorType(uint16_t field_number) const {
@@ -105,7 +105,7 @@ uint16_t ProtoBufMap::getMessageType(const std::string& message_name) const {
 std::string ProtoBufMap::toString(uint16_t field_number) const {
     const auto* desc = getDescriptorType(field_number);
     if (desc) {
-        return desc->name();
+        return std::string(desc->name());
     }
     return "Unknown(" + std::to_string(field_number) + ")";
 }

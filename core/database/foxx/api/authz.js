@@ -13,6 +13,60 @@ module.exports = (function () {
     let obj = {};
 
     /**
+     * Throws a permission-denied error that carries a reason, so the NACK
+     * returned to the GridFTP authz callout says why access was refused.
+     *
+     * @param {object|null} client - DataFed client requesting access, if resolved.
+     * @param {string} action - Operation being denied.
+     * @param {string} path - Requested repository path.
+     */
+    function deny(client, action, path) {
+        throw [
+            error.ERR_PERM_DENIED,
+            "Client " + (client?._id ?? "unknown") + " denied " + action + " on " + path,
+        ];
+    }
+
+    /**
+     * Checks for read or write access to a record in this repository, optionally
+     * restricted to an owner's folder. Use the destination of an in-flight move,
+     * matching Record.isPathConsistent(). Directory lookup may reveal sibling IDs;
+     * each record's permissions still control access to its contents.
+     *
+     * @param {object} client - DataFed client whose record permissions are checked.
+     * @param {Repo} repo - Repository containing the records to check.
+     * @param {string|null} [owner_id=null] - Owner folder to check, or null for all owners.
+     * @returns {boolean} Whether the client can read or write at least one matching record.
+     */
+    function hasSharedRecordAccess(client, repo, owner_id = null) {
+        const records = g_db
+            ._query(
+                `FOR l IN loc
+                   LET repo_id = l.new_repo ? l.new_repo : l._to
+                   LET uid = l.new_repo AND l.new_owner ? l.new_owner : l.uid
+                   FILTER repo_id == @repo
+                   FILTER @owner == null OR uid == @owner
+                   LET record = DOCUMENT(l._from)
+                   FILTER record != null
+                   RETURN record`,
+                { repo: repo.id(), owner: owner_id },
+            )
+            .toArray();
+
+        return records.some(
+            (record) =>
+                permissions.hasAdminPermObject(client, record._id) ||
+                permissions.hasPermissions(
+                    client,
+                    record,
+                    permissions.PERM_RD_DATA | permissions.PERM_WR_DATA,
+                    false,
+                    true,
+                ),
+        );
+    }
+
+    /**
      * Checks if a client has the required permissions on a record.
      *
      * @param {object} a_client - A user document representing the client being verified.
@@ -49,6 +103,53 @@ module.exports = (function () {
         return false;
     };
 
+    /**
+     * True if the client may use the repository at all: DataFed admin, repo
+     * admin, or holder of an allocation on the repo, directly or through a
+     * project in which the client has any role, or read/write access to a record
+     * stored in the repository.
+     *
+     * SCHEMA ASSUMPTIONS (verify): 'admin' edges run repo -> u, 'alloc' edges
+     * run u|p -> repo. Prefer an existing permissions/g_lib helper if one
+     * covers this.
+     *
+     * @param {object|null} client - DataFed client requesting repository access.
+     * @param {Repo} repo - Repository whose access is checked.
+     * @returns {boolean} Whether the client has repository traversal access.
+     */
+    obj.hasRepoAccess = function (client, repo) {
+        if (!client) {
+            return false;
+        }
+        if (client.is_admin) {
+            return true;
+        }
+
+        const repo_id = repo.id();
+
+        if (g_db.admin.firstExample({ _from: repo_id, _to: client._id })) {
+            return true;
+        }
+
+        if (g_db.alloc.firstExample({ _from: client._id, _to: repo_id })) {
+            return true;
+        }
+
+        const project_ids = g_db
+            ._query(
+                `FOR a IN alloc
+                   FILTER a._to == @repo AND STARTS_WITH(a._from, 'p/')
+                   RETURN a._from`,
+                { repo: repo_id },
+            )
+            .toArray();
+
+        return (
+            project_ids.some((p) => g_lib.getProjectRole(client._id, p) !== g_lib.PROJ_NO_ROLE) ||
+            hasSharedRecordAccess(client, repo)
+        );
+    };
+
     obj.readRecord = function (client, path) {
         const permission = permissions.PERM_RD_DATA;
         const path_components = pathModule.splitPOSIXPath(path);
@@ -80,12 +181,163 @@ module.exports = (function () {
         }
     };
 
+    /**
+     * Authorizes lookup (stat) on a record file.
+     *
+     * GridFTP stats the file both before a download (read) and before an
+     * upload (write/create), so either permission suffices. The check is
+     * against the database record, so it also works before an upload's file
+     * exists on disk.
+     *
+     * @param {object|null} client - DataFed client requesting the lookup.
+     * @param {string} path - Record path relative to the collection root.
+     * @param {Repo} repo - Repository supplied by the authorization strategy.
+     */
+    obj.lookupRecord = function (client, path, repo) {
+        if (!client) {
+            deny(client, "lookup", path);
+        }
+        const data_key = pathModule.splitPOSIXPath(path).at(-1);
+        const record = new Record(data_key);
+
+        if (!record.exists()) {
+            deny(client, "lookup", path);
+        }
+
+        if (
+            !obj.isRecordActionAuthorized(client, data_key, permissions.PERM_RD_DATA) &&
+            !obj.isRecordActionAuthorized(client, data_key, permissions.PERM_WR_DATA)
+        ) {
+            deny(client, "lookup", path);
+        }
+
+        if (!record.isPathConsistent(path)) {
+            throw [record.error(), record.errorMessage()];
+        }
+    };
+
     obj.none = function (client, path) {
         const permission = permissions.PERM_NONE;
     };
 
+    /**
+     * Authorizes traversal (lookup/chdir) of the directories from the
+     * collection down to <repo>/user and <repo>/project. They hold only
+     * structure, no data. Requires a known client with access to this repo.
+     *
+     * @param {object|null} client - DataFed client requesting directory traversal.
+     * @param {string} path - Directory path relative to the collection root.
+     * @param {Repo} repo - Repository whose directory is being traversed.
+     */
+    obj.traverseRepo = function (client, path, repo) {
+        if (!client || !obj.hasRepoAccess(client, repo)) {
+            deny(client, "traverse", path);
+        }
+    };
+
+    /**
+     * Authorizes access to a user's repository folder.
+     *
+     * User folders are private to their owner, except for DataFed administrators.
+     *
+     * @param {object|null} client - DataFed client requesting folder read access.
+     * @param {string} path - User folder path relative to the collection root.
+     */
+    obj.readUserFolder = function (client, path) {
+        const path_components = pathModule.splitPOSIXPath(path);
+        const user_id = "u/" + path_components.at(-1);
+
+        if (!client || !permissions.hasAdminPermUser(client, user_id)) {
+            throw [
+                error.ERR_PERM_DENIED,
+                "Client " + client?._id + " does not have read permissions on " + path,
+            ];
+        }
+    };
+
+    /**
+     * Authorizes traversal (lookup/chdir) of a user's repository folder.
+     *
+     * Allowed for the owner, DataFed administrators, and clients with read/write
+     * access to a record in this folder. Listing sibling record IDs is accepted
+     * so that shared records remain reachable through GridFTP.
+     *
+     * @param {object|null} client - DataFed client requesting folder traversal.
+     * @param {string} path - User folder path relative to the collection root.
+     * @param {Repo} repo - Repository containing the user folder.
+     */
+    obj.traverseUserFolder = function (client, path, repo) {
+        if (!client) {
+            deny(client, "traverse", path);
+        }
+        const user_id = "u/" + pathModule.splitPOSIXPath(path).at(-1);
+
+        if (permissions.hasAdminPermUser(client, user_id)) {
+            return;
+        }
+        if (hasSharedRecordAccess(client, repo, user_id)) {
+            return;
+        }
+        deny(client, "traverse", path);
+    };
+
+    /**
+     * Authorizes access to a project's repository folder.
+     *
+     * Any project member, manager, owner, or DataFed administrator may see the
+     * folder. Non-members must not be able to discover project contents through
+     * the repository even if they have a valid Globus identity.
+     *
+     * @param {object|null} client - DataFed client requesting folder read access.
+     * @param {string} path - Project folder path relative to the collection root.
+     */
+    obj.readProjectFolder = function (client, path) {
+        const path_components = pathModule.splitPOSIXPath(path);
+        const project_id = "p/" + path_components.at(-1);
+
+        if (
+            !client ||
+            (!client.is_admin &&
+                g_lib.getProjectRole(client._id, project_id) === g_lib.PROJ_NO_ROLE)
+        ) {
+            throw [
+                error.ERR_PERM_DENIED,
+                "Client " + client?._id + " does not have read permissions on " + path,
+            ];
+        }
+    };
+
+    /**
+     * Authorizes traversal (lookup/chdir) of a project's repository folder.
+     *
+     * Allowed for DataFed administrators, anyone with a role in the project, and
+     * clients with read/write access to a record in this folder. Directory lookup
+     * may reveal sibling record IDs to recipients of shared records.
+     *
+     * @param {object|null} client - DataFed client requesting folder traversal.
+     * @param {string} path - Project folder path relative to the collection root.
+     * @param {Repo} repo - Repository containing the project folder.
+     */
+    obj.traverseProjectFolder = function (client, path, repo) {
+        if (!client) {
+            deny(client, "traverse", path);
+        }
+        const project_id = "p/" + pathModule.splitPOSIXPath(path).at(-1);
+
+        if (client.is_admin) {
+            return;
+        }
+        if (g_lib.getProjectRole(client._id, project_id) !== g_lib.PROJ_NO_ROLE) {
+            return;
+        }
+        if (hasSharedRecordAccess(client, repo, project_id)) {
+            return;
+        }
+        deny(client, "traverse", path);
+    };
+
     obj.denied = function (client, path) {
-        throw error.ERR_PERM_DENIED;
+        deny(client, "action", path);
     };
 
     obj.createRecord = function (client, path) {
@@ -154,13 +406,13 @@ module.exports = (function () {
 
     obj.authz_strategy = {
         read: {
-            [PathType.USER_PATH]: obj.none,
+            [PathType.USER_PATH]: obj.readUserFolder,
             [PathType.USER_RECORD_PATH]: obj.readRecord,
-            [PathType.PROJECT_PATH]: obj.none,
+            [PathType.PROJECT_PATH]: obj.readProjectFolder,
             [PathType.PROJECT_RECORD_PATH]: obj.readRecord,
-            [PathType.REPO_BASE_PATH]: obj.none,
-            [PathType.REPO_ROOT_PATH]: obj.none,
-            [PathType.REPO_PATH]: obj.none,
+            [PathType.REPO_BASE_PATH]: obj.denied,
+            [PathType.REPO_ROOT_PATH]: obj.denied,
+            [PathType.REPO_PATH]: obj.denied,
         },
         write: {
             [PathType.USER_PATH]: obj.denied,
@@ -190,22 +442,22 @@ module.exports = (function () {
             [PathType.REPO_PATH]: obj.denied,
         },
         chdir: {
-            [PathType.USER_PATH]: obj.none,
-            [PathType.USER_RECORD_PATH]: obj.none,
-            [PathType.PROJECT_PATH]: obj.none,
-            [PathType.PROJECT_RECORD_PATH]: obj.none,
-            [PathType.REPO_BASE_PATH]: obj.none,
-            [PathType.REPO_ROOT_PATH]: obj.none,
-            [PathType.REPO_PATH]: obj.none,
+            [PathType.USER_PATH]: obj.traverseUserFolder,
+            [PathType.USER_RECORD_PATH]: obj.denied,
+            [PathType.PROJECT_PATH]: obj.traverseProjectFolder,
+            [PathType.PROJECT_RECORD_PATH]: obj.denied,
+            [PathType.REPO_BASE_PATH]: obj.traverseRepo,
+            [PathType.REPO_ROOT_PATH]: obj.traverseRepo,
+            [PathType.REPO_PATH]: obj.traverseRepo,
         },
         lookup: {
-            [PathType.USER_PATH]: obj.none,
-            [PathType.USER_RECORD_PATH]: obj.none,
-            [PathType.PROJECT_PATH]: obj.none,
-            [PathType.PROJECT_RECORD_PATH]: obj.none,
-            [PathType.REPO_BASE_PATH]: obj.none,
-            [PathType.REPO_ROOT_PATH]: obj.none,
-            [PathType.REPO_PATH]: obj.none,
+            [PathType.USER_PATH]: obj.traverseUserFolder,
+            [PathType.USER_RECORD_PATH]: obj.lookupRecord,
+            [PathType.PROJECT_PATH]: obj.traverseProjectFolder,
+            [PathType.PROJECT_RECORD_PATH]: obj.lookupRecord,
+            [PathType.REPO_BASE_PATH]: obj.traverseRepo,
+            [PathType.REPO_ROOT_PATH]: obj.traverseRepo,
+            [PathType.REPO_PATH]: obj.traverseRepo,
         },
     };
 
