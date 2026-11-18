@@ -846,7 +846,7 @@ function showSelectedItemForm(item) {
             dep = item.deps[i];
             id = dep.id + (dep.alias ? " (" + dep.alias + ")" : "");
 
-            if (dep.dir == "DEP_OUT") {
+            if (dep.dir === "DIR_OUT") {
                 switch (dep.type) {
                     case "DEP_IS_DERIVED_FROM":
                         text += "Derived from " + id + "<br>";

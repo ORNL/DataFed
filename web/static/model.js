@@ -65,8 +65,8 @@ export const ENCRYPT_NONE = 0;
 export const ENCRYPT_AVAIL = 1;
 export const ENCRYPT_FORCE = 2;
 
-export const DEP_IN = 0;
-export const DEP_OUT = 1;
+export const DIR_IN = 0;
+export const DIR_OUT = 1;
 
 export const DEP_IS_DERIVED_FROM = 0;
 export const DEP_IS_COMPONENT_OF = 1;
@@ -119,8 +119,8 @@ export const NoteStateFromString = {
 };
 
 export const DepDirFromString = {
-    DEP_IN: DEP_IN,
-    DEP_OUT: DEP_OUT,
+    DIR_IN: DIR_IN,
+    DIR_OUT: DIR_OUT,
 };
 
 export const DepTypeFromString = {
@@ -128,6 +128,17 @@ export const DepTypeFromString = {
     DEP_IS_COMPONENT_OF: DEP_IS_COMPONENT_OF,
     DEP_IS_NEW_VERSION_OF: DEP_IS_NEW_VERSION_OF,
 };
+
+// Only the record declaring a relationship can edit it. Incoming references
+// belong to other records and must not become additions/removals on this one.
+export function editableDependencies(dependencies = []) {
+    return dependencies
+        .filter((dep) => dep.dir === "DIR_OUT")
+        .map((dep) => ({
+            id: dep.alias || dep.id,
+            type: DepTypeFromString[dep.type],
+        }));
+}
 
 export const TaskTypeFromString = {
     TT_DATA_GET: TT_DATA_GET,

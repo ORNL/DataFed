@@ -1023,14 +1023,14 @@ function GraphPanel(a_id, a_frame, a_parent) {
                     for (i in rec.deps) {
                         dep = rec.deps[i];
 
-                        if (dep.dir === "DEP_IN") id = dep.id + "-" + rec.id;
+                        if (dep.dir === "DIR_IN") id = dep.id + "-" + rec.id;
                         else id = rec.id + "-" + dep.id;
 
                         link = findLink(id);
                         if (link) continue;
 
                         link = { id: id, ty: model.DepTypeFromString[dep.type] };
-                        if (dep.dir === "DEP_IN") {
+                        if (dep.dir === "DIR_IN") {
                             link.source = dep.id;
                             link.target = rec.id;
                         } else {
@@ -1208,7 +1208,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
                     dep_cnt = 0;
                     for (j in item.dep) {
                         l = item.dep[j];
-                        if (l.dir === "DEP_OUT") {
+                        if (l.dir === "DIR_OUT") {
                             if (l1[l.id] !== model.DepTypeFromString[l.type]) {
                                 same = false;
                                 break;
@@ -1238,7 +1238,7 @@ function GraphPanel(a_id, a_frame, a_parent) {
                 // See if this node might need to be added to graph
                 for (j in item.dep) {
                     l = item.dep[j];
-                    if (l.dir === "DEP_OUT" && findNode(l.id)) {
+                    if (l.dir === "DIR_OUT" && findNode(l.id)) {
                         //console.log("must reload graph (new ext deps)");
                         inst.load(focus_node_id, sel_node_id);
                         return;

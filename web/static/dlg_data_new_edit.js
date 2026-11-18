@@ -563,21 +563,12 @@ export function show(a_mode, a_data, a_parent, a_upd_perms, a_cb) {
                 }
 
                 if (a_data.deps && a_data.deps.length) {
-                    var i, dep, row;
-                    for (i in a_data.deps) {
-                        dep = a_data.deps[i];
-                        if (dep.dir === "DEP_OUT") {
-                            orig_deps.push({
-                                id: dep.alias ? dep.alias : dep.id,
-                                type: model.DepTypeFromString[dep.type],
-                            });
-                            row = $("#ref-table tr:last", frame);
-                            $("input", row).val(dep.alias ? dep.alias : dep.id);
-                            $("select", row)
-                                .val(model.DepTypeFromString[dep.type])
-                                .selectmenu("refresh");
-                            addRef();
-                        }
+                    orig_deps = model.editableDependencies(a_data.deps);
+                    for (const dep of orig_deps) {
+                        const row = $("#ref-table tr:last", frame);
+                        $("input", row).val(dep.id);
+                        $("select", row).val(dep.type).selectmenu("refresh");
+                        addRef();
                     }
                 }
 
